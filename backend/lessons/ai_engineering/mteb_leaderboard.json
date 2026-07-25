@@ -1,0 +1,160 @@
+{
+  "id": "mteb_leaderboard",
+  "topic": "mteb_leaderboard",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "MTEB Leaderboard: Choosing the Right Embedding Model"
+  },
+  "description": {
+    "en": "Learn how to read the MTEB (Massive Text Embedding Benchmark) leaderboard and pick the right embedding model for your RAG system by balancing accuracy, size, latency, and dimension cost."
+  },
+  "xp_reward": 60,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Leaderboard That Picks Your Embedder\n\nVaathiyaar leans over your shoulder as you scroll through Hugging Face. \"Stop,\" he says. \"Before you write a single line of RAG code, answer one question: *which embedding model?* Get this wrong and no amount of clever prompting will save you â€” garbage retrieval means garbage answers. Luckily, the community already built the answer key. It's called **MTEB**: the Massive Text Embedding Benchmark.\"\n\n### What MTEB Actually Measures\n\nMTEB evaluates embedding models across **hundreds of datasets** grouped into task categories: Retrieval, Semantic Textual Similarity (STS), Classification, Clustering, Reranking, and more. The leaderboard at `mteb/leaderboard` on Hugging Face Spaces ranks models by their average score â€” but the average is a trap.\n\n\"If you're building RAG,\" Vaathiyaar warns, \"the **Retrieval** column matters far more than the overall average. A model can ace classification and still fetch terrible passages.\"\n\n### The Real Trade-off Table\n\n| Model | MTEB Avg | Params | Dim | Runs on CPU? |\n|---|---|---|---|---|\n| all-MiniLM-L6-v2 | ~56 | 22M | 384 | Yes, fast |\n| bge-base-en-v1.5 | ~64 | 109M | 768 | Yes |\n| gte-large-en-v1.5 | ~65 | 434M | 1024 | Slow |\n| e5-mistral-7b-instruct | ~67 | 7B | 4096 | No (GPU) |\n\nNotice the pattern: **each point of MTEB score gets exponentially more expensive**. Going from 56 â†’ 64 costs you 5Ã— the parameters. Going from 65 â†’ 67 costs a GPU and 4096-dim vectors that quadruple your vector-database storage bill.\n\n### Scoring Models Programmatically\n\n\"Never eyeball a leaderboard when you can code the decision,\" says Vaathiyaar.\n\n```python\ncandidates = {\n    \"all-MiniLM-L6-v2\":  {\"retrieval\": 41.9, \"params_m\": 22,   \"dim\": 384},\n    \"bge-base-en-v1.5\":  {\"retrieval\": 53.2, \"params_m\": 109,  \"dim\": 768},\n    \"e5-mistral-7b\":     {\"retrieval\": 56.9, \"params_m\": 7110, \"dim\": 4096},\n}\n\ndef pick(candidates, max_params_m):\n    ok = {n: c for n, c in candidates.items() if c[\"params_m\"] <= max_params_m}\n    return max(ok, key=lambda n: ok[n][\"retrieval\"])\n\nprint(pick(candidates, 200))  # bge-base-en-v1.5\n```\n\nThree lines of filtering beat an afternoon of leaderboard-scrolling. Constrain by what your hardware allows, *then* maximize the metric your application actually uses.\n\n### The Homie Rule of Thumb\n\nFor a local-first assistant like Homie, the decision tree is short: if it must run on CPU alongside everything else, a 22Mâ€“109M parameter model is the ceiling. `all-MiniLM-L6-v2` embeds thousands of sentences per second on a laptop; `bge-base-en-v1.5` buys ~11 retrieval points for a still-tolerable slowdown. The 7B giants only make sense when a GPU is guaranteed and storage is cheap.\n\n> **Key Insight:** The best embedding model is not the one at the top of the MTEB leaderboard â€” it's the highest-scoring model *on your task category* that fits your latency, memory, and vector-storage budget. Filter first, then rank.\n"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": {
+        "en": "**Vaathiyaar:** \"Every RAG system lives or dies by its embedder. MTEB â€” the Massive Text Embedding Benchmark â€” is the community's answer key. Today you'll learn to read it like an engineer: filter by constraints first, rank by the right column second.\""
+      }
+    },
+    {
+      "type": "CodeStepper",
+      "id": "mteb_model_picker",
+      "code": "candidates = {\n    \"all-MiniLM-L6-v2\":  {\"retrieval\": 41.9, \"params_m\": 22,   \"dim\": 384},\n    \"bge-base-en-v1.5\":  {\"retrieval\": 53.2, \"params_m\": 109,  \"dim\": 768},\n    \"gte-large-en-v1.5\": {\"retrieval\": 57.9, \"params_m\": 434,  \"dim\": 1024},\n    \"e5-mistral-7b\":     {\"retrieval\": 56.9, \"params_m\": 7110, \"dim\": 4096},\n}\n\nMAX_PARAMS_M = 200\nMAX_DIM = 1024\n\naffordable = {n: c for n, c in candidates.items()\n              if c[\"params_m\"] <= MAX_PARAMS_M and c[\"dim\"] <= MAX_DIM}\n\nbest = max(affordable, key=lambda n: affordable[n][\"retrieval\"])\n\nstorage_gb = affordable[best][\"dim\"] * 4 * 1_000_000 / 1e9\nprint(f\"Ship: {best} ({storage_gb:.1f} GB per 1M vectors)\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": {
+            "en": "We start with a shortlist pulled from the MTEB leaderboard. Each entry records the Retrieval score (the column that matters for RAG), parameter count in millions, and embedding dimension."
+          }
+        },
+        {
+          "line": 2,
+          "explanation": {
+            "en": "all-MiniLM-L6-v2: only 22M parameters and 384-dim vectors. The baseline that runs anywhere â€” even a Raspberry Pi."
+          }
+        },
+        {
+          "line": 4,
+          "explanation": {
+            "en": "gte-large-en-v1.5 scores higher on Retrieval than models 16Ã— its size â€” leaderboard rank by *average* would have hidden this."
+          }
+        },
+        {
+          "line": 5,
+          "explanation": {
+            "en": "e5-mistral-7b: a 7-billion-parameter giant producing 4096-dim vectors. Top of the average leaderboard, but look at the cost."
+          }
+        },
+        {
+          "line": 8,
+          "explanation": {
+            "en": "Now we encode our real-world constraints as code. Homie must run on CPU, so we cap parameters at 200M."
+          }
+        },
+        {
+          "line": 9,
+          "explanation": {
+            "en": "Dimension caps matter too: every extra dimension multiplies vector-database storage and similarity-search latency."
+          }
+        },
+        {
+          "line": 11,
+          "explanation": {
+            "en": "Filter FIRST. A dict comprehension keeps only models that satisfy both hardware constraints â€” the giants drop out before we ever rank."
+          }
+        },
+        {
+          "line": 14,
+          "explanation": {
+            "en": "Rank SECOND. max() with a key function picks the highest Retrieval score among survivors. Note: not the highest average â€” the highest score on OUR task."
+          }
+        },
+        {
+          "line": 16,
+          "explanation": {
+            "en": "Engineers think in bills: dim Ã— 4 bytes (float32) Ã— 1M chunks. A 768-dim model needs ~3 GB per million vectors; 4096-dim would need ~16 GB."
+          }
+        },
+        {
+          "line": 17,
+          "explanation": {
+            "en": "Final answer: bge-base-en-v1.5 â€” the best retriever that actually fits the deployment. The leaderboard informed the decision; constraints made it."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish",
+      "effect": "confetti",
+      "message": {
+        "en": "You can now read MTEB like an engineer â€” filter by constraints, rank by task. Homie's RAG thanks you!"
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "The MTEB leaderboard gives you scores, but your hardware gives you limits. Complete `pick_model` so it returns the name of the model with the **highest `mteb` score** among models whose `params_m` is **less than or equal to** `max_params_m`. Filter first, then rank!"
+      },
+      "starter_code": "models = {\n    \"all-MiniLM-L6-v2\": {\"mteb\": 56.3, \"params_m\": 22},\n    \"bge-base-en-v1.5\": {\"mteb\": 63.6, \"params_m\": 109},\n    \"gte-large-en-v1.5\": {\"mteb\": 65.4, \"params_m\": 434},\n    \"e5-mistral-7b\": {\"mteb\": 66.6, \"params_m\": 7110},\n}\n\ndef pick_model(models, max_params_m):\n    # 1. Keep only models with params_m <= max_params_m\n    # 2. Return the NAME of the one with the highest mteb score\n    pass\n\nprint(pick_model(models, 500))\nprint(pick_model(models, 50))",
+      "expected_output": "gte-large-en-v1.5\nall-MiniLM-L6-v2",
+      "hints": {
+        "en": [
+          "Build a filtered dict first: `{n: m for n, m in models.items() if m['params_m'] <= max_params_m}`.",
+          "Use `max()` with a `key` function to rank by score: `max(filtered, key=lambda n: filtered[n]['mteb'])`.",
+          "Iterating over a dict gives you its keys (the model names) â€” so `max()` over the filtered dict already returns a name, not a score."
+        ]
+      },
+      "test_code": "assert pick_model(models, 500) == \"gte-large-en-v1.5\", f\"Expected gte-large-en-v1.5 for budget 500, got {pick_model(models, 500)}\"\nassert pick_model(models, 50) == \"all-MiniLM-L6-v2\", f\"Expected all-MiniLM-L6-v2 for budget 50, got {pick_model(models, 50)}\"\nassert pick_model(models, 10000) == \"e5-mistral-7b\", f\"With no real budget the 7B giant should win, got {pick_model(models, 10000)}\"\nassert pick_model(models, 109) == \"bge-base-en-v1.5\", f\"Budget boundary should be inclusive (<=), got {pick_model(models, 109)}\"\nprint(\"All tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "MTEB's overall average treats every task category equally â€” but a RAG system cares mostly about Retrieval. Complete `weighted_score` so it returns the sum of each category's score multiplied by its weight. Then compare the retrieval-weighted score against the plain average and see how the ranking changes."
+      },
+      "starter_code": "categories = {\"Retrieval\": 54.2, \"STS\": 82.1, \"Classification\": 75.9, \"Clustering\": 46.1}\nrag_weights = {\"Retrieval\": 0.6, \"STS\": 0.2, \"Classification\": 0.1, \"Clustering\": 0.1}\n\ndef weighted_score(categories, weights):\n    # Return sum of score * weight over all categories\n    pass\n\nprint(round(weighted_score(categories, rag_weights), 2))",
+      "expected_output": "61.14",
+      "hints": {
+        "en": [
+          "Loop over `categories.items()` and look up each category's weight with `weights[name]`.",
+          "You can do it in one line: `sum(score * weights[name] for name, score in categories.items())`.",
+          "0.6*54.2 + 0.2*82.1 + 0.1*75.9 + 0.1*46.1 = 61.14 â€” a RAG-weighted view scores this model lower than its plain average (64.58), because its Retrieval column is weak."
+        ]
+      },
+      "test_code": "assert abs(weighted_score(categories, rag_weights) - 61.14) < 0.01, f\"Expected 61.14, got {weighted_score(categories, rag_weights)}\"\nequal = {k: 0.25 for k in categories}\nassert abs(weighted_score(categories, equal) - 64.575) < 0.01, f\"Equal weights should give the plain average 64.575, got {weighted_score(categories, equal)}\"\nonly_retrieval = {\"Retrieval\": 1.0, \"STS\": 0.0, \"Classification\": 0.0, \"Clustering\": 0.0}\nassert abs(weighted_score(categories, only_retrieval) - 54.2) < 0.01, \"Weight 1.0 on Retrieval should return exactly the Retrieval score\"\nprint(\"All tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "mteb_benchmark",
+      "embedding_model_selection",
+      "retrieval_metrics",
+      "accuracy_vs_cost_tradeoff",
+      "constraint_based_ranking",
+      "vector_storage_math"
+    ],
+    "concepts_required": [
+      "dictionaries",
+      "dict_comprehensions",
+      "lambda_functions",
+      "max_with_key",
+      "embeddings_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "interactive_story",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "rag_engineer",
+      "ai_engineering_core"
+    ]
+  },
+  "generated": true
+}
