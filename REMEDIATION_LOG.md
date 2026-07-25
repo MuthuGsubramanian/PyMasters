@@ -134,3 +134,44 @@ bootstrap path to admin on a brand-new DB now that reserved-email registration i
 production with password `admin123`, removing the seed does NOT fix that existing row.
 Rotate its password (or delete it if unused) after confirming via the restored replica —
 report `created_at`/`is_super_admin`/last-login first, per the plan. Left open.
+
+## Phase 3 — [CRITICAL] Verify Litestream backups before any IAM change
+
+**This is a gate, not a code change.** No file was modified. Findings from the terraform +
+config (live GCP inspection blocked by the stale-gcloud/non-interactive auth from Phase 0):
+
+**IAM discrepancy — confirmed in code.**
+- `infra/terraform/iam.tf` grants the runtime SA **project-wide `roles/storage.objectViewer`**
+  (read-only). Read-only cannot support Litestream replication (which must WRITE objects).
+- `litestream.yml` asserts the runtime SA holds `roles/storage.objectAdmin` on
+  `pymasters-app-db`.
+- `infra/terraform/storage.tf` DOES grant `objectAdmin` — but on bucket
+  **`pymasters-app-pymasters-data`**, a *different* bucket from the Litestream target
+  **`pymasters-app-db`**. The backup bucket `pymasters-app-db` is **not defined in
+  terraform at all** — its IAM was set out-of-band and is unverifiable from the repo.
+
+**What this means.** Either (a) `objectAdmin` on `pymasters-app-db` was granted manually to
+the runtime SA (so replication works and `litestream.yml` is right), or (b) only the
+project-wide read-only binding applies and **Litestream replication has been failing —
+i.e. there are no usable backups.** I cannot disambiguate without live access
+(`gcloud storage ls gs://pymasters-app-db/`, `litestream generations`, newest snapshot vs
+the 6h `snapshot-interval`).
+
+**Terraform is not the full source of truth.** `cloud-run.tf` mounts only `ollama-api-key`;
+the running service also reads `JWT_SECRET` and the GitHub/LinkedIn OAuth secrets, set
+out-of-band via `deploy.yml`/gcloud. So the real secret set is larger than terraform shows.
+
+**Decision (follows the plan's explicit rule).** **Do NOT narrow any IAM binding.** Both the
+storage narrowing (could break unverified-but-possibly-working replication → data loss) and
+the secret narrowing (would revoke the runtime SA's access to `JWT_SECRET`/OAuth secrets
+terraform doesn't list → app crash) are unsafe blind. This BLOCKS the IAM sub-tasks of
+Phase 4; the sandbox-egress sub-task proceeds independently.
+
+**Required live verification (human with `gcloud auth login`), before any IAM narrowing:**
+1. `gcloud storage ls gs://pymasters-app-db/` — does the bucket exist and hold generations?
+2. Check newest snapshot timestamp vs `snapshot-interval: 6h` — is replication current?
+3. `gcloud projects get-iam-policy pymasters-app` + bucket policy — what does the runtime SA
+   actually hold on `pymasters-app-db`?
+4. Enumerate every secret the running service mounts (deploy.yml + `gcloud run services
+   describe pymasters`) before scoping `secretAccessor`.
+If replication is broken, FIX it and confirm a fresh snapshot lands first.
