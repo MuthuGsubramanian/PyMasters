@@ -399,3 +399,60 @@ sidecars). That is the most likely source of the intermittent **"database is loc
 conditions the code comments repeatedly work around — a networked/FUSE filesystem doesn't honor
 SQLite's POSIX locking the way a local disk does. Moving the repo (and especially the dev DB)
 onto a local disk would likely eliminate that whole class of workaround.
+
+---
+
+## LIVE GCP VERIFICATION (Phases 0, 3, 4 — completed once GCP access was restored)
+
+**Phase 3 — Litestream backups: HEALTHY (verified).** `gs://pymasters-app-db/` holds live
+generations; the newest WAL segment was ~45s old at check time — replication is current. The
+runtime SA holds **bucket-scoped `roles/storage.objectAdmin` on `pymasters-app-db`** (the
+out-of-band grant `litestream.yml` documented; confirmed via `buckets get-iam-policy`). So
+`iam.tf`'s project-wide read-only binding was never the whole story, and backups are safe.
+Restored the replica read-only with `litestream restore` from a local file-replica (litestream
+has no Windows build; ran it under WSL) to inspect the prod DB.
+
+**Phase 0/1 — a real production regression was found AND fixed.**
+Restoring the current prod DB revealed: the founder logs into the super-admin console as
+**username `muthu@pymasters.net` with a BLANK email column** (a break-glass-era account), and
+the email-only startup resolver therefore left it `is_super_admin=0`. Because the break-glass
+removal was already deployed (auto-push shipped `3ef7d3c` before Phase 0 could run), the
+owner's primary account was **locked out of admin** (only `claude-qa`, whose email matches,
+was still promoted). Confirmed against the ops audit logs, which show the owner operating the
+console as `muthu@pymasters.net`.
+- **Fix:** the resolver now promotes by EMAIL **or** USERNAME. Safe because `register()` (also
+  already deployed) forbids `@` in usernames and rejects reserved identifiers, so no NEW account
+  can have such a username — only the legacy owner account can match (one-way heal).
+- **Shipped:** minimal hotfix on `main` (`8a5fc20`, resolver + test only; backend suite green),
+  pushed → CI (backend tests + live smoke) passed → deployed (revision `pymasters-00324-7k5`).
+- **VERIFIED post-deploy** by restoring the fresh replica: `muthu@pymasters.net` →
+  `is_super_admin=1` and `claude-qa` → `is_super_admin=1`. Owner admin access restored. Site
+  health `GET /api/health` = 200.
+
+**Phase 2 — production `admin` account (reported, not deleted per plan).** The prod DB has
+`username='admin'`, blank email, `is_super_admin=0`, `created_at=2026-04-07 15:23:52`. It is
+NOT a super-admin (no escalation), but it predates the Phase 2 seed fix so its password may be
+the old `admin123`. Recommend the owner rotate or delete it. Left untouched (plan: "do not
+delete it silently").
+
+**Phase 4 — IAM narrowing: verified safe + scripted, BLOCKED on permissions.**
+Confirmed the running service mounts exactly **13 secrets** (ollama-api-key, qubrid-api-key,
+smtp-pass/user, smtp-backup-user/pass, jwt-secret, export-token, GITHUB_CLIENT_ID/SECRET,
+LINKEDIN_CLIENT_ID/SECRET) and makes **no direct Secret Manager or GCS-client calls** in the
+backend, and that the runtime SA's real bucket needs are the two bucket-scoped `objectAdmin`
+grants (`pymasters-app-db`, `pymasters-app-pymasters-data`). So the narrowing is safe:
+per-secret `secretAccessor` on those 13 + drop project-wide `secretAccessor` and project-wide
+`storage.objectViewer` (the latter also exposed the tfstate + cloudbuild buckets).
+- **BLOCKED:** the only non-interactive account (`muthu.g.subramanian@gmail.com`) has Editor,
+  not IAM-admin — `setIamPolicy` returns 403; the Owner account `muthu@pymasters.net` needs an
+  interactive `gcloud auth login` (reauth) I can't do headless. Did NOT apply any IAM change.
+- **Ready to run** once an IAM-admin is authenticated: the exact, ordered commands (add all 13
+  per-secret grants BEFORE removing the project-wide ones) are staged; also update `iam.tf` to
+  match so terraform doesn't re-widen. The cloudbuild `run.admin` scoping is likewise blocked
+  on the same permission.
+
+**Deployment note.** `main` (deployed) now carries only Phase 1 + this owner-lockout hotfix.
+Phases 2–9 remain on `security/remediation-phases` (which supersets `main`), pending a
+deliberate merge WITH a Docker build + in-browser CSP check (the nginx `Content-Security-Policy`
+is unverified against the running SPA — could affect blob: web workers). The 3-minute auto-push
+task remains **disabled** so no partial state ships mid-work; re-enable it when all work lands.
