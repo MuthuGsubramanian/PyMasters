@@ -105,3 +105,32 @@ username; the server now returns a clean 422, but a nicer inline client-side mes
 Phase 8 candidate, not done here.
 
 ---
+
+## Phase 2 — [CRITICAL] Default admin account
+
+**Defect.** `init_db()` seeded username `admin` with hardcoded password `admin123` on
+any empty users table. `start.sh` reaches an empty DB when there is no GCS replica and no
+baked-in seed, so this well-known credential could exist in production; nothing
+rate-limits login (Phase 5 addresses that).
+
+**Production check (required by the plan).** Could NOT query production directly (same
+stale-gcloud blocker as Phase 0). The **local dev DB** contains a matching row:
+`username='admin'`, `is_super_admin=0`, `created_at=2026-04-07 15:23:52`, empty email.
+This is a dev DB, not proof of the prod row — but it makes the risk concrete.
+
+**Change (`main.py`).** Removed the hardcoded `admin123` seed. On an empty DB it now seeds
+`admin` with `secrets.token_urlsafe(18)` (or `BOOTSTRAP_ADMIN_PASSWORD` if pinned by ops),
+prints the password ONCE to stdout, and marks it `is_super_admin=1` — that is the only
+bootstrap path to admin on a brand-new DB now that reserved-email registration is blocked
+(Phase 1). I deliberately did NOT change or delete any existing `admin` row.
+
+**Test evidence.** `backend/tests/test_admin_seed.py` (3 tests).
+- RED: `3 failed` — `admin`/`admin123` logged in successfully before the change.
+- GREEN: `3 passed`; full suite `288 passed, 1 skipped`.
+- Proves: `admin123` login now 401; the printed random password logs in; env-pinned
+  password works and `admin123` still fails.
+
+**Not done / follow-up for a human with prod access.** If a real `admin` row exists in
+production with password `admin123`, removing the seed does NOT fix that existing row.
+Rotate its password (or delete it if unused) after confirming via the restored replica —
+report `created_at`/`is_super_admin`/last-login first, per the plan. Left open.

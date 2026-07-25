@@ -663,16 +663,31 @@ def init_db():
             except Exception as e:
                 print(f"Table init {getattr(_ensure, '__name__', _ensure)}: {e}")
 
-        # Create a test user if empty
+        # Bootstrap admin, ONLY on a truly empty DB (rare: first-ever boot with no
+        # GCS replica and no baked-in seed). Never a hardcoded password — that put a
+        # well-known 'admin'/'admin123' super-user into production. Use a random,
+        # strong password printed ONCE to stdout (visible only in the boot logs), or
+        # a value pinned via BOOTSTRAP_ADMIN_PASSWORD for deterministic ops setup.
+        # It is seeded as super-admin because the reserved-email registration block
+        # means this is the only path to admin access on a brand-new database.
         cursor.execute("SELECT count(*) FROM users")
         existing = cursor.fetchone()[0]
         if existing == 0:
-            print("Seeding default admin user...")
-            hashed = hash_pw("admin123")
+            import secrets
+            pinned = os.getenv("BOOTSTRAP_ADMIN_PASSWORD")
+            bootstrap_pw = pinned or secrets.token_urlsafe(18)
+            hashed = hash_pw(bootstrap_pw)
             cursor.execute(
-                "INSERT INTO users (id, username, password_hash, name, created_at, points, unlocked_modules, preferred_language, onboarding_completed) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?, ?, ?)",
+                "INSERT INTO users (id, username, password_hash, name, created_at, points, "
+                "unlocked_modules, preferred_language, onboarding_completed, is_super_admin) "
+                "VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?, ?, ?, 1)",
                 [str(uuid.uuid4()), "admin", hashed, "Administrator", json.dumps(["module_1"]), "en", 0]
             )
+            if pinned:
+                print("[bootstrap] Seeded 'admin' super-user from BOOTSTRAP_ADMIN_PASSWORD (env).")
+            else:
+                print(f"[bootstrap] admin password: {bootstrap_pw}  "
+                      "(shown ONCE — record it now; change it after first login)")
 
         # Commit schema + migrations BEFORE seeding. The seed routines open their
         # own connections; if the outer write transaction is still open they hit
