@@ -130,11 +130,13 @@ def test_startup_resolver_sets_owner_column(m):
     assert row[0] == 1
 
 
-def test_resolver_matches_email_not_username(m):
-    """A user whose USERNAME equals an owner email string must NOT be promoted —
-    only the email column is matched (usernames can no longer contain '@' anyway)."""
+def test_resolver_promotes_legacy_owner_username_with_blank_email(m):
+    """The founder's real prod account has username == the reserved email and a
+    BLANK email column (break-glass era). The resolver MUST promote it, or the
+    owner is locked out of admin once column-only authorization ships. This is
+    safe: register() forbids '@' and reserved identifiers, so no NEW account can
+    have such a username — only the legacy owner account can match."""
     _insert_user("uname-owner", "someusername", email="", is_super=0)
-    # Directly set a username equal to an owner email to simulate a legacy row.
     conn = sqlite3.connect(os.environ["DB_PATH"])
     conn.execute("UPDATE users SET username=? WHERE id=?", [OWNER_EMAIL, "uname-owner"])
     conn.commit()
@@ -143,6 +145,18 @@ def test_resolver_matches_email_not_username(m):
     conn = sqlite3.connect(os.environ["DB_PATH"])
     row = conn.execute(
         "SELECT COALESCE(is_super_admin,0) FROM users WHERE id=?", ["uname-owner"]
+    ).fetchone()
+    conn.close()
+    assert row[0] == 1
+
+
+def test_resolver_ignores_unrelated_username(m):
+    """A normal user whose username is NOT a reserved email is never promoted."""
+    _insert_user("normal", "just-a-user", email="nobody@example.com", is_super=0)
+    m.init_db()
+    conn = sqlite3.connect(os.environ["DB_PATH"])
+    row = conn.execute(
+        "SELECT COALESCE(is_super_admin,0) FROM users WHERE id=?", ["normal"]
     ).fetchone()
     conn.close()
     assert row[0] == 0
