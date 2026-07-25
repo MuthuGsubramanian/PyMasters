@@ -583,62 +583,80 @@ def execute_code(request: dict = Body(...), user_id: str = Depends(get_current_u
     }
 
 
+# Packages the Playground advertises. These are meant to be BAKED INTO THE IMAGE
+# (requirements.txt), not installed at request time. The endpoint below reports
+# which are actually importable in the running interpreter.
+ALLOWED_PACKAGES = {
+    "numpy", "pandas", "matplotlib", "seaborn", "scipy", "scikit-learn",
+    "requests", "beautifulsoup4", "flask", "fastapi", "django",
+    "pillow", "opencv-python", "torch", "tensorflow", "transformers",
+    "langchain", "openai", "anthropic", "chromadb", "faiss-cpu",
+    "pytest", "black", "isort", "rich", "typer", "click",
+    "pydantic", "sqlalchemy", "aiohttp", "httpx", "boto3",
+    "redis", "celery", "PyPDF2", "openpyxl", "python-dotenv",
+    "tiktoken", "nltk", "spacy", "networkx", "sympy",
+}
+
+# distribution name → import name, where they differ.
+_IMPORT_NAMES = {
+    "scikit_learn": "sklearn", "beautifulsoup4": "bs4", "opencv_python": "cv2",
+    "pillow": "PIL", "python_dotenv": "dotenv", "faiss_cpu": "faiss",
+    "pypdf2": "PyPDF2",
+}
+
+
+def _norm(name: str) -> str:
+    return name.lower().replace("-", "_").replace(".", "_")
+
+
+_ALLOWED_NORMALIZED = {_norm(p) for p in ALLOWED_PACKAGES}
+
+
 @router.post("/install-package")
 def install_package(request: dict = Body(...), user_id: str = Depends(get_current_user_id)):
     """
-    Install an allowlisted Python package via pip. Authenticated + tightly
-    rate-limited (installs mutate the shared interpreter).
-    """
-    import subprocess
-    import os
+    Report whether an allowlisted package is already available in the runtime.
 
+    This does NOT install anything. Installing into the live serving interpreter at
+    request time was unsafe: heavy wheels (torch/tensorflow) blow the 1Gi memory /
+    60s limits, a resolver-driven downgrade of pydantic or fastapi can break the app
+    on the next import, and installs vanish on revision restart so behaviour drifts by
+    instance age. Packages are instead baked into the image (backend/requirements.txt);
+    this endpoint tells the user what is already importable so they can just `import` it.
+    """
     if not _install_limiter.allow(user_id):
         wait = _install_limiter.retry_after(user_id)
-        return {"success": False, "error": f"Install rate limit reached. Try again in {wait}s."}
+        return {"success": False, "error": f"Rate limit reached. Try again in {wait}s."}
 
-    package = request.get("package", "").strip()
-
+    package = (request.get("package") or "").strip()
     if not package:
         return {"success": False, "error": "No package name provided"}
 
-    # Whitelist common safe packages
-    ALLOWED_PACKAGES = {
-        "numpy", "pandas", "matplotlib", "seaborn", "scipy", "scikit-learn",
-        "requests", "beautifulsoup4", "flask", "fastapi", "django",
-        "pillow", "opencv-python", "torch", "tensorflow", "transformers",
-        "langchain", "openai", "anthropic", "chromadb", "faiss-cpu",
-        "pytest", "black", "isort", "rich", "typer", "click",
-        "pydantic", "sqlalchemy", "aiohttp", "httpx", "boto3",
-        "redis", "celery", "PyPDF2", "openpyxl", "python-dotenv",
-        "tiktoken", "nltk", "spacy", "networkx", "sympy",
-    }
-
-    # Normalize package name
-    pkg_normalized = package.lower().replace("-", "_").replace(".", "_")
-    allowed_normalized = {p.lower().replace("-", "_").replace(".", "_") for p in ALLOWED_PACKAGES}
-
-    if pkg_normalized not in allowed_normalized:
+    pkg_normalized = _norm(package)
+    if pkg_normalized not in _ALLOWED_NORMALIZED:
         return {
             "success": False,
-            "error": f"Package '{package}' is not in the allowed list. Contact support to request it.",
+            "error": f"Package '{package}' is not on the allowed list. Contact support to request it.",
             "allowed": sorted(ALLOWED_PACKAGES),
         }
 
-    python_cmd = "python3" if os.name != "nt" else "python"
-
+    import importlib.util
+    import_name = _IMPORT_NAMES.get(pkg_normalized, pkg_normalized)
     try:
-        result = subprocess.run(
-            [python_cmd, "-m", "pip", "install", package],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
+        available = importlib.util.find_spec(import_name) is not None
+    except (ImportError, ValueError):
+        available = False
 
-        if result.returncode == 0:
-            return {"success": True, "output": result.stdout}
-        else:
-            return {"success": False, "error": result.stderr}
-    except subprocess.TimeoutExpired:
-        return {"success": False, "error": "Installation timed out"}
-    except Exception as e:
-        return {"success": False, "error": str(e)}
+    if available:
+        return {
+            "success": True,
+            "already_available": True,
+            "output": f"'{package}' is already available in the PyMasters runtime — just import it.",
+        }
+    return {
+        "success": False,
+        "installed": False,
+        "error": (f"'{package}' is allowlisted but not bundled in this runtime image. "
+                  "Runtime installation is disabled; it must be added to the image "
+                  "(backend/requirements.txt). Contact support to request it."),
+    }

@@ -247,3 +247,32 @@ service runs as a single instance (`min=max=1` in `cloud-run.tf`). The moment it
 horizontally the counters fragment per-instance and it becomes trivially bypassable — move
 to a shared store (Redis/Memorystore) before scaling out. Same caveat the limiter's own
 docstring already carried; now it also guards the auth surface.
+
+## Phase 6 — [HIGH] /install-package mutated the live interpreter
+
+**Defect.** `routes/playground.py::install_package` ran `pip install <pkg>` into the serving
+container: torch/tensorflow exceed the 1Gi memory + 60s timeout, a resolver-driven downgrade
+of pydantic/fastapi could break the app on the next import, and installs vanished on revision
+restart so behaviour varied by instance age. (It also would have silently broken once Phase 4
+blocked sandbox egress — though install ran in the serving process, not the sandbox.)
+
+**Decision — pre-baked allowlist + no-op reporter (not a per-execution venv).** A throwaway
+per-execution venv was rejected: it needs network egress (which Phase 4 removes from the
+sandbox), adds pip-download latency to every run, and still can't fit heavy wheels in the
+limits. Baking the allowlist into the image keeps behaviour deterministic across instances
+and needs no egress. The heavy wheels (torch/tensorflow) are intentionally NOT baked (they'd
+blow image size); the endpoint reports them as "not bundled" rather than attempting a doomed
+install.
+
+**Change.** `install_package` no longer imports `subprocess` or shells out. It validates the
+package against the allowlist, then uses `importlib.util.find_spec` (with a dist→import name
+map, e.g. scikit-learn→sklearn) to report whether it's already importable. Available →
+`{success, already_available}`; allowlisted-but-unbundled → `{success:false, installed:false}`
+with a message that runtime install is disabled and it must be added to requirements.txt.
+
+**Test evidence.** `backend/tests/test_install_package_noop.py` (4 tests) with an autouse
+fixture that makes ANY `subprocess.run`/`Popen` call raise.
+- RED: `2 failed` — the old code shelled out to pip (the guard caught the tensorflow call).
+- GREEN: `4 passed`; full suite `301 passed, 2 skipped`.
+- Proves: an available package is reported without pip; an unlisted one is rejected; an
+  allowlisted-but-unbundled one does NOT install; empty name rejected.
