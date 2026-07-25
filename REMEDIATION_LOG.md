@@ -221,3 +221,29 @@ which I could not do (Phase 3). Recommended bindings to apply AFTER verification
 - `cloudbuild_run_admin`: replace project-wide `roles/run.admin` with `roles/run.developer`
   on the specific `pymasters` service + keep `iam.serviceAccountUser` on the runtime SA.
   Verify a full deploy still succeeds before removing the broad role.
+
+## Phase 5 — [HIGH] Authentication hardening
+
+**CORS.** Removed `"*"` from `main.py` origins. With `allow_credentials=True`, the wildcard
+made Starlette echo any caller's Origin, defeating same-origin protection for credentialed
+requests. `allow_methods/headers=["*"]` are kept (harmless without a wildcard origin).
+
+**Rate limiting.** Added IP-keyed `SlidingWindowRateLimiter`s to the three unauthenticated
+auth endpoints (previously unlimited): login (15/60s), register (8/300s), forgot-password
+(5/900s), keyed on first-hop `X-Forwarded-For`/client IP. Added a per-username failed-login
+lockout (5 failures/300s): once tripped, even the correct password is refused until the
+window elapses. Added `SlidingWindowRateLimiter.reset()` so a successful login clears the
+username's failure counter.
+
+**Test evidence.** `backend/tests/test_auth_hardening.py` (6 tests).
+- RED: `4 failed, 2 passed` (unlisted origin was echoed; endpoints unthrottled).
+- GREEN: `6 passed`; full suite `297 passed, 2 skipped`.
+- Proves: unlisted origin not echoed and not `*`; listed origin still echoed; login/register/
+  forgot all return 429 past their limits; N failures lock the username (correct password →
+  429); a success resets the counter.
+
+**Caveat (per the plan).** This limiter is **IN-PROCESS**. It is only effective while the
+service runs as a single instance (`min=max=1` in `cloud-run.tf`). The moment it scales
+horizontally the counters fragment per-instance and it becomes trivially bypassable — move
+to a shared store (Redis/Memorystore) before scaling out. Same caveat the limiter's own
+docstring already carried; now it also guards the auth surface.

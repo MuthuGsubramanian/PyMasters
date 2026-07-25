@@ -803,6 +803,9 @@ app.include_router(discovery_router)
 app.include_router(payments_router)
 
 # --- CORS ---
+# NB: no "*" here. With allow_credentials=True, a wildcard makes Starlette echo
+# ANY caller's Origin back with Access-Control-Allow-Credentials, defeating the
+# same-origin policy for credentialed requests. Only explicit origins are allowed.
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -810,7 +813,6 @@ origins = [
     "https://www.pymasters.net",
     "https://pymasters.net",
     "http://localhost:80",
-    "*"
 ]
 
 app.add_middleware(
@@ -820,6 +822,38 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- Auth rate limiting (Phase 5) ---
+# Unauthenticated auth endpoints are keyed on client IP. NOTE: this limiter is
+# IN-PROCESS; it is only effective while the service runs as a single instance
+# (min=max=1, see cloud-run.tf). If it ever scales horizontally, move this to a
+# shared store (Redis/Memorystore) or it becomes trivially bypassable per-instance.
+from ratelimit import SlidingWindowRateLimiter as _SWRL
+
+_login_ip_limiter = _SWRL(max_calls=15, window_seconds=60)
+_register_ip_limiter = _SWRL(max_calls=8, window_seconds=300)
+_forgot_ip_limiter = _SWRL(max_calls=5, window_seconds=900)
+# Per-username failed-login lockout: after this many failures within the window a
+# username is refused (even with the correct password) until the window elapses.
+_login_fail_limiter = _SWRL(max_calls=5, window_seconds=300)
+
+
+def _client_ip(request) -> str:
+    """Best-effort client IP; first hop of X-Forwarded-For (Cloud Run appends it)."""
+    if request is None:
+        return "unknown"
+    fwd = request.headers.get("x-forwarded-for", "")
+    if fwd:
+        return fwd.split(",")[0].strip() or "unknown"
+    return (request.client.host if request.client else None) or "unknown"
+
+
+def _enforce_ip_limit(limiter, request, what: str) -> None:
+    key = _client_ip(request)
+    if not limiter.allow(key):
+        wait = max(1, limiter.retry_after(key))
+        raise HTTPException(status_code=429, detail=f"Too many {what}. Try again in {wait}s.",
+                            headers={"Retry-After": str(wait)})
 
 # --- Models ---
 class UserRegister(BaseModel):
@@ -958,6 +992,7 @@ def register(user: UserRegister, request: Request = None):
     # (tests/test_register.py) keep working; FastAPI always injects a real
     # Request on HTTP calls, so telemetry is unaffected in production.
     print(f"Register request for: {user.username}")
+    _enforce_ip_limit(_register_ip_limiter, request, "signup attempts")
     uname = (user.username or "").strip()
     if not uname:
         raise HTTPException(status_code=422, detail="Username is required.")
@@ -1087,6 +1122,15 @@ def register(user: UserRegister, request: Request = None):
 def login(user: UserLogin, request: Request = None):
     # `request` optional for direct unit-test calls; FastAPI injects it on HTTP.
     print(f"Login request for: {user.username}")
+    _enforce_ip_limit(_login_ip_limiter, request, "login attempts")
+    uname = user.username or ""
+    # Per-username lockout: refuse (even a correct password) while the username has
+    # too many recent failures. retry_after > 0 only once the window is full.
+    _locked_wait = _login_fail_limiter.retry_after(uname)
+    if _locked_wait > 0:
+        raise HTTPException(status_code=429,
+                            detail=f"Too many failed logins for this account. Try again in {_locked_wait}s.",
+                            headers={"Retry-After": str(_locked_wait)})
     conn = sqlite3.connect(DB_PATH)
     try:
         cursor = conn.cursor()
@@ -1098,7 +1142,11 @@ def login(user: UserLogin, request: Request = None):
         record = cursor.fetchone()
 
         if not record or not verify_pw(user.password, record[6]):
+            _login_fail_limiter.allow(uname)  # record the failure toward lockout
             raise HTTPException(status_code=401, detail="Invalid credentials")
+
+        # Successful auth: clear this username's failed-login counter.
+        _login_fail_limiter.reset(uname)
 
         # Transparent upgrade: re-hash legacy (non-bcrypt) passwords with bcrypt on login.
         if record[6] and not str(record[6]).startswith("$2"):
@@ -1189,8 +1237,9 @@ def change_password(req: ChangePasswordRequest, caller: str = Depends(get_curren
         conn.close()
 
 @app.post("/api/auth/forgot-password")
-def forgot_password(req: ForgotPasswordRequest):
+def forgot_password(req: ForgotPasswordRequest, request: Request = None):
     """Email a password-reset link. Always returns ok (doesn't leak account existence)."""
+    _enforce_ip_limit(_forgot_ip_limiter, request, "password-reset requests")
     import secrets as _secrets
     from datetime import datetime, timedelta
     conn = sqlite3.connect(DB_PATH)
