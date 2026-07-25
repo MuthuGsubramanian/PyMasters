@@ -41,9 +41,12 @@ def _conn():
     return c
 
 
-def is_break_glass(username: str, email: str) -> bool:
-    idents = {(username or "").lower(), (email or "").lower()}
-    return bool(idents & SUPER_ADMINS)
+def is_reserved_identifier(*identifiers) -> bool:
+    """True if any supplied identifier (username or email) is a reserved
+    super-admin address. Used to REJECT writes — never to grant access.
+    Matching is case-insensitive and ignores blanks."""
+    vals = {str(x).strip().lower() for x in identifiers if x and str(x).strip()}
+    return bool(vals & SUPER_ADMINS)
 
 
 def _validate_expiry(expires_at):
@@ -63,14 +66,16 @@ def _validate_expiry(expires_at):
 def require_super_admin(user_id: str):
     conn = _conn()
     row = conn.execute(
-        "SELECT username, email, COALESCE(is_super_admin,0) AS is_super_admin FROM users WHERE id = ?", [user_id]
+        "SELECT COALESCE(is_super_admin,0) AS is_super_admin FROM users WHERE id = ?", [user_id]
     ).fetchone()
     conn.close()
-    if not row:
+    # Authorize on the is_super_admin COLUMN only. No string matching against
+    # user-controlled username/email — those are unverified and were the source
+    # of the founder-account-takeover escalation. SUPER_ADMIN_EMAILS is resolved
+    # into this column at startup (see init_db), so the real owner still passes.
+    if not row or int(row["is_super_admin"]) != 1:
         raise HTTPException(status_code=403, detail="Super admin access required")
-    if is_break_glass(row["username"], row["email"]) or int(row["is_super_admin"]) == 1:
-        return True
-    raise HTTPException(status_code=403, detail="Super admin access required")
+    return True
 
 
 def _actor_name(conn, user_id: str) -> str:
@@ -391,7 +396,8 @@ def user_detail(target_id: str, caller: str = Depends(get_current_user_id)):
         "WHERE target_type='user' AND target_id = ? ORDER BY created_at DESC LIMIT 10", [target_id]).fetchall()]
     conn.close()
     d = dict(u)
-    d["break_glass"] = is_break_glass(d["username"], d["email"])
+    # Display-only flag: does this row hold super-admin (the column, not a string match).
+    d["break_glass"] = bool(int(d.get("is_super_admin") or 0))
     d["has_email"] = bool((d["email"] or "").strip())
     d["lessons_completed"] = lessons
     d["last_active"] = last_active
@@ -435,6 +441,9 @@ def edit_user(target_id: str, req: EditUserRequest, caller: str = Depends(get_cu
     for f in ["name", "email", "account_type"]:
         v = getattr(req, f, None)
         if v is not None:
+            if f == "email" and is_reserved_identifier(v):
+                conn.close()
+                raise HTTPException(status_code=400, detail="This email address is reserved.")
             sets.append(f"{f} = ?"); vals.append(v.strip()); detail[f] = v.strip()
     if sets:
         vals.append(target_id)
