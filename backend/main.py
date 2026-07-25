@@ -722,18 +722,29 @@ def init_db():
         except Exception as e:
             print(f"Paths seed: {e}")
 
-        # Resolve SUPER_ADMIN_EMAILS into the is_super_admin column, matching on
-        # EMAIL only (never username). This runs on every boot, before any admin
-        # request is served, so the real owner accounts are always authorized
-        # even though require_super_admin no longer trusts email/username strings.
+        # Resolve SUPER_ADMIN_EMAILS into the is_super_admin column. This runs on
+        # every boot, before any admin request is served, so the real owner
+        # accounts are always authorized even though require_super_admin no longer
+        # trusts email/username strings at request time.
+        #
+        # Matches on EMAIL or USERNAME. Username-matching is required because the
+        # founder's own legacy account has username == the reserved email with a
+        # BLANK email column (created in the break-glass era), so an email-only
+        # match would leave the owner locked out of admin. It is SAFE here even
+        # though request-time authorization must never trust a username: register()
+        # now forbids '@' in usernames AND rejects reserved identifiers, so no NEW
+        # account can ever have a username equal to a reserved email. Only the
+        # pre-existing owner account can match — this is a one-way legacy heal, not
+        # a self-service escalation path.
         try:
             from routes.admin import SUPER_ADMINS
             if SUPER_ADMINS:
                 placeholders = ",".join("?" for _ in SUPER_ADMINS)
                 cursor.execute(
                     f"UPDATE users SET is_super_admin = 1 "
-                    f"WHERE lower(email) IN ({placeholders})",
-                    list(SUPER_ADMINS),
+                    f"WHERE lower(email) IN ({placeholders}) "
+                    f"OR lower(username) IN ({placeholders})",
+                    list(SUPER_ADMINS) + list(SUPER_ADMINS),
                 )
                 conn.commit()
         except Exception as e:
