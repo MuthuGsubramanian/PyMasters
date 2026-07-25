@@ -464,9 +464,9 @@ def delete_user(target_id: str, caller: str = Depends(get_current_user_id)):
     if not row:
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
-    if is_break_glass(row["username"], row["email"]):
+    if is_reserved_identifier(row["email"]):
         conn.close()
-        raise HTTPException(status_code=400, detail="Cannot delete a break-glass (env) super admin")
+        raise HTTPException(status_code=400, detail="Cannot delete a reserved (env) super admin")
     # Delete playground messages FIRST (child rows keyed by conversation_id,
     # not user_id): the subquery resolves the target's conversation ids from
     # playground_conversations, so it must run BEFORE that parent table is
@@ -505,9 +505,9 @@ def set_super_admin(target_id: str, req: SuperAdminRequest, caller: str = Depend
     if not row:
         conn.close()
         raise HTTPException(status_code=404, detail="User not found")
-    if is_break_glass(row["username"], row["email"]):
+    if is_reserved_identifier(row["email"]):
         conn.close()
-        raise HTTPException(status_code=400, detail="Break-glass (env) admins are managed via env, not the console")
+        raise HTTPException(status_code=400, detail="Reserved (env) admins are managed via env, not the console")
     if target_id == caller and not req.value:
         conn.close()
         raise HTTPException(status_code=400, detail="You cannot remove your own super-admin access")

@@ -159,3 +159,23 @@ def test_admin_edit_user_cannot_set_reserved_email(client):
         headers=_headers("owner2"),
     )
     assert resp.status_code == 400
+
+
+# --- Protective guards for reserved (env-managed) owner accounts -----------------
+
+def test_reserved_owner_cannot_be_deleted(client):
+    _insert_user("boss", "boss", email="muthu.g.subramanian@gmail.com", is_super=1)
+    _insert_user("target-owner", "targetowner", email=OWNER_EMAIL, is_super=1)
+    resp = client.delete("/api/admin/users/target-owner", headers=_headers("boss"))
+    assert resp.status_code == 400
+
+
+def test_reserved_owner_super_admin_not_toggleable_via_console(client):
+    _insert_user("boss2", "boss2", email="muthu.g.subramanian@gmail.com", is_super=1)
+    _insert_user("target-owner2", "targetowner2", email=OWNER_EMAIL, is_super=1)
+    resp = client.post(
+        "/api/admin/users/target-owner2/super-admin",
+        json={"value": False},
+        headers=_headers("boss2"),
+    )
+    assert resp.status_code == 400
