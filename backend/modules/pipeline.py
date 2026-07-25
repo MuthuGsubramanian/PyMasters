@@ -5,7 +5,7 @@ import re
 import uuid
 import sqlite3
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from vaathiyaar.engine import call_vaathiyaar, VaathiyaarUnavailable
 from vaathiyaar.profiler import get_student_profile
 from vaathiyaar.modelfile import LANG_NAMES
@@ -44,7 +44,7 @@ def _update_job_status(job_id, status, stage_data=None, error=None):
         conn = sqlite3.connect(_get_db_path())
         conn.execute(
             "UPDATE module_generation_jobs SET status = ?, current_stage_data = ?, error_message = ?, updated_at = ? WHERE id = ?",
-            [status, json.dumps(stage_data) if stage_data else None, error, datetime.utcnow().isoformat(), job_id],
+            [status, json.dumps(stage_data) if stage_data else None, error, datetime.now(timezone.utc).isoformat(), job_id],
         )
         conn.commit()
     except Exception as exc:  # pragma: no cover - best-effort status write
@@ -453,14 +453,14 @@ def stage_5_assembly(job_id, user_id, topic, outline, narrative, animation, chal
                 json.dumps(lesson_data),
                 trigger,
                 trigger_detail,
-                datetime.utcnow().isoformat(),
+                datetime.now(timezone.utc).isoformat(),
             ],
         )
 
         # Mark the job as completed and store the result lesson id
         conn.execute(
             "UPDATE module_generation_jobs SET status = ?, result_lesson_id = ?, updated_at = ? WHERE id = ?",
-            ["completed", lesson_id, datetime.utcnow().isoformat(), job_id],
+            ["completed", lesson_id, datetime.now(timezone.utc).isoformat(), job_id],
         )
         conn.commit()
     finally:

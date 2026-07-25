@@ -362,3 +362,40 @@ dependency, so `npm install` fails on Windows with `EBADPLATFORM` (had to `--for
 It should be an `optionalDependency` (npm resolves the right platform binary automatically).
 Linux CI is unaffected. Noted for Phase 9-style cleanup; not changed here to avoid perturbing
 the working Linux/Docker build.
+
+## Phase 9 — [LOW] Repo hygiene
+
+Done only after everything above was green.
+
+**Untracked (kept on disk via `git rm --cached`; 86 files):** `_archive/` (61 files, already
+gitignored), the 15 `.fuse_hidden*` SQLite artifacts in `backend/`, `.idea/.gitignore`, the
+legacy Streamlit `static/` frontend (3 files), and `backend/lessons/aws_enterprise/.writetest`.
+
+**Ignore rules:** added `.fuse_hidden*` to both `.gitignore` and `.dockerignore`; added
+`static/` to `.gitignore` (already in `.dockerignore`).
+
+**LICENSE:** added. **Choice flagged for the owner:** PyMasters is a commercial product (paid
+plans, B2B, Razorpay), so a permissive OSS license (MIT/Apache) would inadvertently give the
+code away. I used a conservative **proprietary "All rights reserved"** notice — it asserts
+rights without granting any and is trivially replaceable if open-sourcing is intended. Confirm
+this is the license you want.
+
+**Deprecated `datetime.utcnow()`:** replaced in `routes/organizations.py` (13 calls) and
+`modules/pipeline.py` (3 calls) with timezone-aware equivalents. organizations.py gained
+`_utcnow()` (aware UTC) and `_as_utc()` (normalizes a parsed value to aware UTC, assuming UTC
+for legacy naive strings) — the three expiry-comparison sites now wrap the stored value with
+`_as_utc()` so a legacy naive timestamp compared against aware-now does NOT raise TypeError.
+pipeline.py's three sites are write-only, so a plain `datetime.now(timezone.utc)` suffices.
+Left `utcnow()` in access.py/lifecycle.py/main.py/notifications/profile.py untouched — the plan
+scoped Phase 9 to the two named files (no adjacent cleanup).
+
+**Test evidence.** `backend/tests/test_org_datetime.py` (3 tests).
+- RED: `ImportError` (`_utcnow`/`_as_utc` missing).
+- GREEN: `3 passed`; org enrollment/enterprise suites still pass (19 passed together).
+
+**FUSE note (as requested).** The 15 `.fuse_hidden*` files confirm the working tree lives on a
+FUSE / cloud-sync mount (Google Drive / rclone / gcsfuse produce these half-deleted-inode
+sidecars). That is the most likely source of the intermittent **"database is locked"** SQLite
+conditions the code comments repeatedly work around — a networked/FUSE filesystem doesn't honor
+SQLite's POSIX locking the way a local disk does. Moving the repo (and especially the dev DB)
+onto a local disk would likely eliminate that whole class of workaround.
