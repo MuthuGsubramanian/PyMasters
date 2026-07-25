@@ -175,3 +175,49 @@ Phase 4; the sandbox-egress sub-task proceeds independently.
 4. Enumerate every secret the running service mounts (deploy.yml + `gcloud run services
    describe pymasters`) before scoping `secretAccessor`.
 If replication is broken, FIX it and confirm a fresh snapshot lands first.
+
+## Phase 4 — [CRITICAL] Sandbox egress and IAM blast radius
+
+**Defect.** `vaathiyaar/execution.py` deliberately did not block network access, and
+`/api/playground/execute` allows arbitrary imports. Composed with the runtime SA's
+project-wide `secretAccessor` + `objectViewer`, any authenticated user could hit the
+metadata server, take the SA token, and read every secret + the user-DB bucket.
+
+### Done — sandbox egress blocked (OS-level)
+`execution.py` now runs the child through `_net_isolation_prefix()`: an unprivileged
+network namespace (`unshare --net`) giving the child only a down loopback and no route
+out, so it cannot reach `169.254.169.254` or any host. This is a namespace, not a Python
+module blocklist (the plan's explicit "don't rely on module blocklisting"). Probed once
+and cached; falls back to `()` (no isolation) where the platform forbids the namespace,
+so execution never breaks.
+
+**Test evidence.** `backend/tests/test_sandbox_egress.py` (4 tests).
+- RED: `ImportError` (`_net_isolation_prefix`/`_build_child_command` missing).
+- GREEN: `3 passed, 1 skipped`; full suite `291 passed, 2 skipped`.
+- `test_isolation_prefix_is_wired_into_the_child_command` deterministically proves the
+  interpreter runs THROUGH the prefix (red→green watchable on Windows).
+- `test_metadata_endpoint_is_unreachable_from_sandbox` actually attempts a socket connect
+  to the metadata server and asserts it fails — **runs on platforms where the namespace can
+  be created** (Linux CI); skipped on Windows dev (no `unshare`). The `/install-package`
+  flow does NOT use the sandbox's egress, so this block doesn't silently break it (Phase 6).
+
+**Live verification still required (Cloud Run / gVisor).** Whether `unshare --net` is
+permitted under Cloud Run's gVisor sandbox must be confirmed in the running container
+(e.g. a playground exec doing `socket.connect(('169.254.169.254',80))` — expect failure).
+If gVisor forbids the namespace, `_net_isolation_prefix()` returns `()` and egress is NOT
+blocked in prod — then the least-privilege IAM below becomes the essential control.
+
+### NOT done — IAM narrowing (BLOCKED by Phase 3)
+Per the plan's ordering, no IAM binding is narrowed until Litestream backups are verified,
+which I could not do (Phase 3). Recommended bindings to apply AFTER verification:
+- `runtime_secret_accessor`: replace project-wide `roles/secretmanager.secretAccessor`
+  with per-secret `google_secret_manager_secret_iam_member` on EACH secret the running
+  service actually reads (ollama-api-key + JWT_SECRET + GitHub/LinkedIn OAuth secrets —
+  enumerate from `deploy.yml` + `gcloud run services describe` first; terraform lists only
+  ollama-api-key, so a blind scope would break the app).
+- `runtime_storage_viewer`: drop the project-wide `roles/storage.objectViewer`; grant only
+  the write level Litestream needs on the `pymasters-app-db` bucket (which is not yet in
+  terraform — import it first). Do NOT touch until replication is confirmed healthy.
+- `cloudbuild_run_admin`: replace project-wide `roles/run.admin` with `roles/run.developer`
+  on the specific `pymasters` service + keep `iam.serviceAccountUser` on the runtime SA.
+  Verify a full deploy still succeeds before removing the broad role.

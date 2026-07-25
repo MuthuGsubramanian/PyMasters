@@ -17,14 +17,59 @@ Security model — defense in depth, since this runs arbitrary student code:
 
 This is strong but not a true jail. For fully untrusted public traffic, additionally
 wrap the process in an OS sandbox (gVisor / Firecracker / a locked-down container).
-Network access is NOT blocked here (the Playground's pip flow needs it).
+
+  6. NETWORK EGRESS is blocked at the OS level: on POSIX the child runs inside a
+     fresh network namespace with no route out (`unshare --net`), so it cannot reach
+     the cloud metadata server (169.254.169.254) to steal the runtime SA token, nor
+     any other host. This is a namespace, not a Python module blocklist (which is
+     bypassable). Where the platform can't create the namespace (Windows dev; a
+     container that forbids user namespaces) the prefix is empty and egress is NOT
+     blocked there — the compensating control is least-privilege IAM on the runtime
+     SA (see REMEDIATION_LOG Phase 3/4). /install-package does not depend on the
+     sandbox's egress (it runs pip in its own flow — see Phase 6).
 """
 import ast
+import functools
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+
+
+@functools.lru_cache(maxsize=1)
+def _net_isolation_prefix() -> tuple:
+    """A command prefix that runs the child with NO network egress, or () if the
+    platform can't provide one.
+
+    Uses an unprivileged network namespace (`unshare --net`): the child gets only a
+    down loopback interface and no default route, so every outbound connection —
+    including to the GCP metadata endpoint — fails. Probed once and cached; falls
+    back to user-namespace mapping for kernels that require it, then to () (no
+    isolation) so execution still works on platforms that forbid the namespace.
+    """
+    if os.name == "nt":
+        return ()
+    unshare = shutil.which("unshare")
+    if not unshare:
+        return ()
+    for variant in (("--net",), ("--user", "--map-root-user", "--net")):
+        try:
+            probe = subprocess.run(
+                [unshare, *variant, "true"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5,
+            )
+            if probe.returncode == 0:
+                return (unshare, *variant)
+        except Exception:
+            continue
+    return ()
+
+
+def _build_child_command(python_cmd: str, script_path: str) -> list:
+    """The exact argv for the sandbox child: network-isolation prefix (if any),
+    then the interpreter in isolated mode running the user script."""
+    return list(_net_isolation_prefix()) + [python_cmd, "-I", "-B", script_path]
 
 # Modules a beginner/intermediate lesson never legitimately needs, and which
 # grant system, filesystem, network, process or introspection-escape powers.
@@ -265,7 +310,7 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
             popen_kwargs["preexec_fn"] = _posix_limits(timeout)
 
         proc = subprocess.Popen(
-            [python_cmd, "-I", "-B", script_path], **popen_kwargs
+            _build_child_command(python_cmd, script_path), **popen_kwargs
         )
         try:
             stdout, stderr = proc.communicate(timeout=timeout)
