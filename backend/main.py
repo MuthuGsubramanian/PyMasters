@@ -11,11 +11,16 @@ import random
 
 # --- Database Setup ---
 import os
+import re
 import json
 import requests
 from dotenv import load_dotenv
 load_dotenv()
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
+
+# Allowed characters for a NEW username (enforced on create only). Excludes '@'
+# and whitespace so a username can never resemble an email address.
+_USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 
 # --- Route imports ---
 from routes.language import router as language_router
@@ -702,6 +707,23 @@ def init_db():
         except Exception as e:
             print(f"Paths seed: {e}")
 
+        # Resolve SUPER_ADMIN_EMAILS into the is_super_admin column, matching on
+        # EMAIL only (never username). This runs on every boot, before any admin
+        # request is served, so the real owner accounts are always authorized
+        # even though require_super_admin no longer trusts email/username strings.
+        try:
+            from routes.admin import SUPER_ADMINS
+            if SUPER_ADMINS:
+                placeholders = ",".join("?" for _ in SUPER_ADMINS)
+                cursor.execute(
+                    f"UPDATE users SET is_super_admin = 1 "
+                    f"WHERE lower(email) IN ({placeholders})",
+                    list(SUPER_ADMINS),
+                )
+                conn.commit()
+        except Exception as e:
+            print(f"Super-admin resolve: {e}")
+
     except Exception as e:
         print(f"DB Init Error: {e}")
     finally:
@@ -924,22 +946,33 @@ def register(user: UserRegister, request: Request = None):
     uname = (user.username or "").strip()
     if not uname:
         raise HTTPException(status_code=422, detail="Username is required.")
+    # Constrain the username charset (enforced on CREATE only; existing accounts
+    # are unaffected). Excluding '@' means a username can never resemble an email,
+    # which is what let a self-registered account impersonate a super-admin.
+    if not _USERNAME_RE.match(uname):
+        raise HTTPException(
+            status_code=422,
+            detail="Username may contain only letters, digits, and . _ - (max 64 chars).",
+        )
     if not user.password:
         raise HTTPException(status_code=422, detail="Password is required.")
 
     account_type = "organization" if user.account_type == "organization" else "individual"
     email = (user.email or "").strip()
 
-    # Super-admin allowlist gate. Email is unverified, so we refuse to register
-    # reserved super-admin addresses to prevent founder-level account takeover.
+    # Reject reserved super-admin identifiers on BOTH username and email. Email is
+    # unverified and username is user-controlled, so registering either as a
+    # reserved address is refused to prevent founder-level account takeover.
+    # Note: registration NEVER grants super-admin; that comes solely from the
+    # is_super_admin column, resolved from SUPER_ADMIN_EMAILS at startup.
     try:
-        from routes.admin import SUPER_ADMINS
+        from routes.admin import is_reserved_identifier
     except Exception:
-        SUPER_ADMINS = set()
-    if email and email.lower() in SUPER_ADMINS:
-        raise HTTPException(status_code=400, detail="This email address is reserved.")
-    is_super = uname.lower() in SUPER_ADMINS
-    onboarding_flag = 1 if is_super else 0
+        def is_reserved_identifier(*_a):
+            return False
+    if is_reserved_identifier(uname, email):
+        raise HTTPException(status_code=400, detail="This identifier is reserved.")
+    onboarding_flag = 0
 
     # Organization payload. We require the name up-front so org signups can't
     # silently degrade to individual accounts.

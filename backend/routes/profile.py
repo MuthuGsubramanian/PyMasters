@@ -730,6 +730,18 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = D
                 return True
             return False
 
+        # Reject reserved super-admin addresses on this write path. Email is never
+        # verified, so allowing a self-service email change to a reserved owner
+        # address is one of the founder-account-takeover vectors.
+        if "email" in fields_set:
+            try:
+                from routes.admin import is_reserved_identifier
+            except Exception:
+                def is_reserved_identifier(*_a):
+                    return False
+            if is_reserved_identifier(data.email):
+                raise HTTPException(status_code=400, detail="This email address is reserved.")
+
         # 1. Update users table (identity + social links) — provided columns only.
         user_updates = [
             ("name", data.name, "name" in fields_set),
