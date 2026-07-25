@@ -1361,6 +1361,16 @@ export default function Classroom() {
         return () => setSidebarCollapsed(false);
     }, [phase, setSidebarCollapsed]);
 
+    // Inside a lesson this page mounts its own context-aware Vaathiyaar chat
+    // (hints, lesson context, module suggestions), so hide the global floating
+    // panel — otherwise two chat launchers overlap bottom-right.
+    const setVaathiyaarHidden = outletCtx.setVaathiyaarHidden;
+    useEffect(() => {
+        if (typeof setVaathiyaarHidden !== 'function') return;
+        setVaathiyaarHidden(phase !== 'select');
+        return () => setVaathiyaarHidden(false);
+    }, [phase, setVaathiyaarHidden]);
+
     const chatEndRef = useRef(null);
     const streamControllerRef = useRef(null);
 
@@ -1893,7 +1903,10 @@ export default function Classroom() {
                    the lesson stays full-screen and the chat never overlaps content ── */}
             {phase !== 'select' && (
                 <>
-                    <TTSControls tts={tts} />
+                    {/* !right-24 keeps the TTS trigger clear of the chat FAB
+                        (fixed bottom-6 right-4/6) — the corner previously
+                        stacked TTS + local chat + global panel launchers. */}
+                    <TTSControls tts={tts} className="!right-24" />
                     {chatOpen && (
                         <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[min(94vw,400px)] max-h-[70vh] flex flex-col pointer-events-auto rounded-2xl border border-border-default bg-bg-surface backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.28)] overflow-hidden">
                             <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border-default flex-shrink-0">
@@ -1998,7 +2011,9 @@ export default function Classroom() {
             {phase === 'select' && !voiceOpen && (
                 <button
                     onClick={() => setVoiceOpen(true)}
-                    className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
+                    // right-24 keeps this clear of the global Vaathiyaar chat
+                    // launcher (fixed bottom-5 right-5) shown on the selector.
+                    className="fixed bottom-6 right-24 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
                     title="Talk to Vaathiyaar (voice)"
                 >
                     <Mic size={18} /> <span className="text-sm font-semibold hidden sm:inline">Talk to Vaathiyaar</span>

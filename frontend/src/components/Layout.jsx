@@ -39,6 +39,11 @@ export default function Layout() {
     // sidebar everywhere; child pages (e.g. Classroom during a lesson) can request
     // collapse via the Outlet context below.
     const [collapsed, setCollapsed] = useState(false);
+    // Pages that mount their own Vaathiyaar chat surface (Classroom during a
+    // lesson has a context-aware chat with hints) request the global floating
+    // panel to hide via the Outlet context, so learners never see two
+    // overlapping chat launchers.
+    const [vaathiyaarHidden, setVaathiyaarHidden] = useState(false);
     const [isSuper, setIsSuper] = useState(false);
     useEffect(() => {
         if (user?.id) getAdminCheck(user.id).then((r) => setIsSuper(!!r.data?.is_super_admin)).catch(() => {});
@@ -302,13 +307,13 @@ export default function Layout() {
                     }}
                 />
                 <div className="p-6 max-w-7xl mx-auto relative z-10 min-h-full">
-                    <Outlet context={{ sidebarCollapsed: collapsed, setSidebarCollapsed: setCollapsed }} />
+                    <Outlet context={{ sidebarCollapsed: collapsed, setSidebarCollapsed: setCollapsed, setVaathiyaarHidden }} />
                 </div>
             </main>
 
             <GlobalSearch />
             <ReleaseNotes />
-            <VaathiyaarPanel />
+            {!vaathiyaarHidden && <VaathiyaarPanel />}
         </div>
     );
 }
