@@ -323,3 +323,42 @@ wrong move here breaks ALL code execution or the container boot in production.
    file-I/O. Fail-closed: if root and the drop fails, abort the spawn (never run code as root).
 Acceptance ("image builds, starts non-root, app serves, headers verified") requires the Docker
 build I could not run — left for a human with a build environment.
+
+## Phase 8 — [MEDIUM] Frontend test coverage
+
+**Context.** ~24.6k lines of JSX, zero test files; CI gated on backend pytest only.
+
+**Harness.** Added **Vitest + jsdom** (`frontend/vitest.config.js`, `npm test` → `vitest run`)
+— deliberately minimal (no @testing-library) because the heavy visual components (Classroom's
+GSAP scroll-sync, framer-motion) don't render meaningfully in jsdom, and the scroll-sync
+rewrite is explicitly out of scope.
+
+**Coverage — the API client (`src/__tests__/api.test.js`, 8 tests).** The `api.js` axios
+interceptors are the client-side contract under EVERY authenticated journey (login, playground
+execute, profile save, admin calls), so testing them covers those paths at the layer that is
+robust in jsdom. Tests drive the real axios instance through a stub adapter so the actual
+interceptors run:
+- request interceptor attaches `Bearer <token>` from the stored session; sends no auth header
+  when logged out or when the stored session is corrupt JSON;
+- `getAuthHeaders()` (used by streaming fetch) returns the header / empty object;
+- response interceptor clears the session on 401; normalizes a Pydantic 422 array `detail`
+  into a string (the guard that prevents the "Objects are not valid as a React child" crash);
+  leaves a plain string detail untouched.
+These are characterization tests for existing (correct) behaviour — the point of Phase 8 is to
+establish the harness + lock in the client-side auth contract, not red-first feature TDD.
+
+**CI gate.** Added a `frontend-test` job to `.github/workflows/deploy.yml` (Node 20, `npm ci`,
+`npm test`) and made `deploy` require `needs: [test, frontend-test]` — so a frontend test
+failure now blocks deploy, same as backend pytest.
+
+**Evidence.** `npm test` → `1 file, 8 passed`.
+
+**Not done (needs a heavier tool).** Full DOM/E2E of the rendered journeys (login form submit,
+lesson load + scroll-sync, playground execute round-trip, admin route gating in the router)
+needs Playwright against a running app — out of scope here; the unit harness is the foundation.
+
+**Env finding.** `frontend/package.json` pins `@rollup/rollup-linux-x64-gnu` as a HARD
+dependency, so `npm install` fails on Windows with `EBADPLATFORM` (had to `--force` locally).
+It should be an `optionalDependency` (npm resolves the right platform binary automatically).
+Linux CI is unaffected. Noted for Phase 9-style cleanup; not changed here to avoid perturbing
+the working Linux/Docker build.
