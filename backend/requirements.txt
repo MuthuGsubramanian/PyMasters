@@ -1,19 +1,32 @@
-fastapi
-uvicorn
-pydantic
-pydantic-settings
-python-multipart
-python-jose[cryptography]
-passlib[bcrypt]
-requests
-ollama
-python-dotenv
-pytest
-httpx
-twilio>=9.0.0
-faster-whisper>=1.0.0
-google-genai>=1.0.0
-razorpay>=1.4.2
-numpy
-fastembed>=0.4.0
+# PyMasters backend — direct dependencies, EXACTLY pinned for reproducible images.
+# Pins are the versions currently resolving (verified against the working venv;
+# the full test suite passes on these). A resolved transitive lockfile lives in
+# requirements.lock.txt. Regenerate both with pip-compile on the Linux target when
+# bumping anything (see the lockfile header).
+fastapi==0.135.2
+uvicorn==0.42.0
+pydantic==2.13.4
+pydantic-settings==2.13.1
+python-multipart==0.0.22
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+# bcrypt is imported DIRECTLY at main.py (passlib 1.7.x mis-detects bcrypt 4.x+),
+# so it must be a declared, pinned dependency in its own right — not merely a
+# transitive extra of passlib. This is the root cause the main.py workaround exists for.
+bcrypt==5.0.0
+requests==2.33.0
+ollama==0.6.1
+python-dotenv==1.2.2
+pytest==9.0.2
+httpx==0.28.1
+twilio==9.10.4
+faster-whisper==1.2.1
+google-genai==2.10.0
+razorpay==2.0.1
+numpy==2.4.6
+fastembed==0.8.0
+# helix-db is an OPT-IN semantic backend (disabled in prod; the live semantic layer
+# uses fastembed). It is not resolved in the reproducible dev/CI env, so it is left
+# range-pinned rather than falsely pinned to a version that was never verified here.
+# Candidate for removal — see REMEDIATION_LOG Phase 7.
 helix-db>=0.1.0

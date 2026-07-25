@@ -276,3 +276,50 @@ fixture that makes ANY `subprocess.run`/`Popen` call raise.
 - GREEN: `4 passed`; full suite `301 passed, 2 skipped`.
 - Proves: an available package is reported without pip; an unlisted one is rejected; an
   allowlisted-but-unbundled one does NOT install; empty name rejected.
+
+## Phase 7 — [HIGH] Container hardening and reproducibility
+
+### Done & verified — dependency pinning
+`backend/requirements.txt` had no exact pins. Now every direct dep is pinned to the version
+currently resolving (verified against the working venv; the full suite passes on them), and
+**`bcrypt==5.0.0` is declared explicitly** — it is imported directly at `main.py` because
+passlib 1.7.x mis-detects bcrypt 4.x+, so it must be a first-class pinned dep, not just a
+transitive extra of `passlib[bcrypt]`. This is the root cause the `main.py` bcrypt workaround
+exists for. Added `backend/requirements.lock.txt` (full transitive resolution). Provenance is
+in its header: seeded from the dev/CI resolution, the one Windows-only entry (`win32_setctime`)
+stripped so the Linux build succeeds, version-pinned but NOT hash-pinned — regenerate with
+`pip-compile --generate-hashes` on the Linux target for supply-chain integrity. `helix-db`
+stays range-pinned (opt-in, not installed in the reproducible env; candidate for removal).
+
+### Done & verified (config) — nginx security headers + gzip
+`nginx.conf` now sets `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`,
+`X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, and a
+starter `Content-Security-Policy` (permissive enough for the React/Vite bundle + https third
+parties like Razorpay; tighten toward nonces later). Because nginx `add_header` in a location
+REPLACES inherited headers, the security headers are repeated in the `/assets/` and `/`
+locations that set cache headers. Enabled `gzip` for text/JS/CSS/JSON/svg/wasm — the JS bundle
+previously shipped uncompressed on every page load. **Header behaviour must be confirmed with a
+real request against the running container** (I have no Docker locally to do so).
+
+### NOT applied — non-root execution (needs a Docker/Linux build+boot test)
+`supervisord.conf` runs as root with no `USER` in the Dockerfile, so student code runs as root.
+I did NOT ship a fix because it is un-buildable and un-testable in this session (no Docker),
+and every failure mode is high blast radius: the pre-baked whisper/fastembed model caches live
+in root's `$HOME` (unreadable by a new app user → runtime re-download / cold-start regression),
+nginx-as-non-root needs its pid/temp/log paths relocated, and the correct privilege-drop for
+the sandbox child must chain AFTER the Phase 4 network namespace (which needs root to create) —
+i.e. `unshare --net setpriv --reuid <sandbox> --regid <sandbox> --clear-groups python ...`. A
+wrong move here breaks ALL code execution or the container boot in production.
+
+**Recommended patch (apply + `docker build` + boot-test before deploying):**
+1. Dockerfile: `RUN useradd --system --uid 10001 appuser` and a `pmsandbox` (uid 10002) user;
+   download the whisper/fastembed models with `HF_HOME=/app/.cache` and `chown -R appuser /app`
+   AFTER the model-download RUN steps; keep nginx master as root (it drops its own workers).
+2. supervisord.conf: add `user=appuser` to the `[program:backend]` and `[program:litestream]`
+   blocks (nginx stays root to bind/serve). This alone makes student code run as appuser.
+3. execution.py: for defence-in-depth where the backend runs as root, prefix the child with
+   `setpriv --reuid 10002 --regid 10002 --clear-groups` INSIDE the `unshare --net` wrapper, and
+   `os.chown` the throwaway work_dir to that uid so the dropped child can read the script and do
+   file-I/O. Fail-closed: if root and the drop fails, abort the spawn (never run code as root).
+Acceptance ("image builds, starts non-root, app serves, headers verified") requires the Docker
+build I could not run — left for a human with a build environment.
