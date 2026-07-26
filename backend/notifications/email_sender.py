@@ -106,6 +106,105 @@ def build_reset_email(name: str, reset_link: str) -> tuple:
     return text, html
 
 
+def _admin_card(header_sub: str, title: str, rows: list, footer: str = "") -> str:
+    """Shared inline-styled HTML card for owner/admin notification emails."""
+    row_html = "".join(
+        f'<tr><td style="padding:4px 10px 4px 0; color:#64748b; font-size:13px; vertical-align:top; white-space:nowrap;">{k}</td>'
+        f'<td style="padding:4px 0; color:#334155; font-size:13px;">{v}</td></tr>'
+        for k, v in rows if v
+    )
+    return f"""
+    <div style="font-family: -apple-system, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px;">
+        <div style="background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; padding: 22px; border-radius: 12px 12px 0 0;">
+            <h2 style="margin: 0;">PyMasters</h2>
+            <p style="margin: 4px 0 0; opacity: 0.9; font-size: 14px;">{header_sub}</p>
+        </div>
+        <div style="background: white; padding: 26px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
+            <p style="color: #334155; font-size: 16px; margin-top: 0;"><strong>{title}</strong></p>
+            <table style="border-collapse: collapse;">{row_html}</table>
+            {f'<p style="color: #94a3b8; font-size: 12px; margin-top: 18px;">{footer}</p>' if footer else ''}
+        </div>
+    </div>
+    """
+
+
+def build_support_notification_email(kind: str, name: str, email: str, message: str,
+                                     extra: str = "") -> tuple:
+    """Owner notification for a new support submission. Returns (text, html)."""
+    label = "Student access request" if kind == "access" else "Issue report"
+    admin_link = f"{APP_BASE_URL}/dashboard/admin"
+    text = (
+        f"New {label.lower()} on PyMasters.\n\n"
+        f"From: {name or '-'} <{email}>\n"
+        f"{('Details: ' + extra + chr(10)) if extra else ''}"
+        f"Message:\n{message or '-'}\n\n"
+        f"Review in the Super Admin console: {admin_link}\n\n— PyMasters"
+    )
+    html = _admin_card(
+        "Support", label,
+        [("From", f"{name or '-'} &lt;{email}&gt;"), ("Details", extra), ("Message", message or "-")],
+        f'Review and act in the <a href="{admin_link}" style="color:#7c3aed;">Super Admin console</a>.',
+    )
+    return text, html
+
+
+def build_tutor_session_email(name: str, email: str, topic: str, preferred_at: str,
+                              timezone_name: str, duration: int, notes: str) -> tuple:
+    """Owner notification for a new live-tutor session request. Returns (text, html)."""
+    admin_link = f"{APP_BASE_URL}/dashboard/admin"
+    when = f"{preferred_at} ({timezone_name})" if timezone_name else preferred_at
+    text = (
+        f"New live tutor session request on PyMasters.\n\n"
+        f"From: {name or '-'} <{email}>\nTopic: {topic}\nWhen: {when}\n"
+        f"Duration: {duration} min\nNotes: {notes or '-'}\n\n"
+        f"Confirm or decline in the Super Admin console: {admin_link}\n\n— PyMasters"
+    )
+    html = _admin_card(
+        "Live tutor sessions", "New session request",
+        [("From", f"{name or '-'} &lt;{email}&gt;"), ("Topic", topic), ("When", when),
+         ("Duration", f"{duration} min"), ("Notes", notes or "-")],
+        f'Confirm or decline in the <a href="{admin_link}" style="color:#7c3aed;">Super Admin console</a>.',
+    )
+    return text, html
+
+
+def build_access_decision_email(name: str, approved: bool, note: str = "",
+                                needs_signup: bool = False) -> tuple:
+    """Requester-facing outcome of a student-access request. Returns (text, html)."""
+    greeting = f"Vanakkam{(' ' + name) if name else ''}!"
+    if approved:
+        body = ("Your student access request has been approved — you now have free "
+                "full access to PyMasters for 3 months.")
+        action = (f"Create your account with this email address to activate it: {APP_BASE_URL}/login"
+                  if needs_signup else f"Log in and start learning: {APP_BASE_URL}/login")
+    else:
+        body = "We couldn't approve your student access request this time."
+        action = f"You can reply to this email or submit a new request with a clearer student ID at {APP_BASE_URL}."
+    text = f"{greeting}\n\n{body}\n{('Note from the team: ' + note + chr(10)) if note else ''}{action}\n\n— PyMasters"
+    html = _admin_card(
+        "Student access",
+        "Request approved 🎉" if approved else "Request update",
+        [("", body), ("Note", note), ("Next step", action)],
+    )
+    return text, html
+
+
+def build_tutor_status_email(name: str, topic: str, preferred_at: str, status: str,
+                             note: str = "") -> tuple:
+    """Requester-facing tutor-session status update. Returns (text, html)."""
+    greeting = f"Vanakkam{(' ' + name) if name else ''}!"
+    lines = {
+        "confirmed": f'Your live tutor session on "{topic}" is confirmed for {preferred_at}.',
+        "cancelled": f'Your live tutor session request on "{topic}" ({preferred_at}) has been cancelled.',
+        "completed": f'Your live tutor session on "{topic}" is marked completed. Keep practicing!',
+    }
+    body = lines.get(status, f'Your live tutor session on "{topic}" is now: {status}.')
+    text = f"{greeting}\n\n{body}\n{('Note: ' + note + chr(10)) if note else ''}\n— PyMasters"
+    html = _admin_card("Live tutor sessions", f"Session {status}",
+                       [("", body), ("Note", note)])
+    return text, html
+
+
 def build_invite_email(org_name: str, role: str, invite_link: str, inviter: str = None) -> tuple:
     """Build email content for an organization invite. Returns (text, html)."""
     who = f"{inviter} has invited you" if inviter else "You've been invited"
