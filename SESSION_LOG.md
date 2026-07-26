@@ -150,3 +150,16 @@ advance" in reduced mode.
   a hardware screen-reader read-aloud isn't drivable through the extension, so verification is at
   the ARIA-semantics + content-update level.)
 - Backend untouched (frontend-only).
+
+## Phase 7 — [F8] Review queue as default landing (medium item)
+**Change (`pages/Dashboard.jsx`, frontend-only):** moved `<ReviewQueue>` from one panel in the
+left column to the very top of the dashboard, full-width, above the welcome banner. It already
+self-hides when nothing is due, so: returning learner with decayed recall → lands on their
+reviews first (default landing state); new/caught-up learner → unchanged normal dashboard.
+Review links use `?lesson=` which F3 now redirects to the lesson route (consistent).
+
+**F8 browser QA (local, qatester with 2 seeded decayed-mastery rows) — PASS:**
+- `/review/due` returns 2 due (variables_intro, for_loops, recall 0.0, ~41 days). ✓
+- Dashboard renders "Due for Review (2)" at the top, full width, ABOVE the greeting, with both
+  lessons + Review buttons. ✓
+- No-due case self-hides → normal dashboard (by construction — same self-hiding component). ✓

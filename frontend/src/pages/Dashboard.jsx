@@ -387,6 +387,12 @@ export function Overview() {
             animate="visible"
             className="space-y-8 pb-8"
         >
+            {/* ─── F8: Review queue is the default landing for a RETURNING learner.
+                It self-hides when nothing is due, so a caught-up / new learner sees the
+                normal dashboard; a learner with decayed recall lands on their reviews
+                first, at full width, instead of one panel down the left column. ─── */}
+            <ReviewQueue userId={user?.id} />
+
             {/* ─── Welcome Banner ────────────────────────────────────────── */}
             <motion.div variants={itemVariants}>
                 <Card className="relative overflow-hidden shadow-sm">
@@ -497,9 +503,7 @@ export function Overview() {
             <div className="grid lg:grid-cols-3 gap-6">
                 {/* Left Column (2/3) */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* ─── Spaced-repetition review queue (renders only when due) ─ */}
-                    <ReviewQueue userId={user?.id} />
-
+                    {/* Review queue moved to the top of the dashboard (F8). */}
                     {/* ─── Daily Recommendation Card ─────────────────────── */}
                     <motion.div variants={itemVariants}>
                     <Card interactive className="relative overflow-hidden shadow-sm group hover:shadow-xl transition-all duration-500">
