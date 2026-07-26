@@ -260,23 +260,80 @@ export default function Playground() {
                         </div>
                     </div>
 
-                    {/* Code editor area. Scrolls internally when the viewport is
-                        too short (≈<600px) so the editor never collapses to a
-                        sliver — the min-h on the editor row guarantees a usable
-                        typing surface at any window height. */}
-                    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto dark-scrollbar">
-                        <div className="flex-1 flex min-h-[160px] overflow-hidden">
-                            <PythonEditor
-                                value={code}
-                                onChange={setCode}
-                                onRun={handleRunCode}
-                                height="calc(100% - 28px)"
-                                placeholder="# Write Python code here...&#10;# Press Ctrl+Enter to run"
-                            />
+                    {/* Two-column body: code editor on the LEFT, output on the RIGHT.
+                        Side-by-side on desktop (≥lg); stacks vertically on smaller
+                        screens so the editor never collapses to a sliver. */}
+                    <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
+                        {/* Left column — editor + toolbar + package installer */}
+                        <div className="flex flex-col min-h-0 flex-1 lg:w-3/5 lg:border-r border-border-strong">
+                            <div className="flex-1 min-h-[180px] overflow-hidden">
+                                <PythonEditor
+                                    value={code}
+                                    onChange={setCode}
+                                    onRun={handleRunCode}
+                                    height="100%"
+                                    placeholder="# Write Python code here...&#10;# Press Ctrl+Enter to run"
+                                />
+                            </div>
+
+                            {/* Action buttons */}
+                            <div className="flex items-center gap-2 px-4 py-2.5 border-t border-border-strong surface-code flex-shrink-0">
+                                <button
+                                    onClick={handleRunCode}
+                                    disabled={running || !code.trim()}
+                                    className={`flex items-center gap-1.5 text-xs font-bold text-white rounded-xl px-4 py-2 transition-all duration-300 ${
+                                        running
+                                            ? 'bg-green-600 animate-pulse cursor-wait'
+                                            : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-green-500/20'
+                                    } disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100`}
+                                >
+                                    {running ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+                                    {running ? 'Running...' : 'Run Code'}
+                                </button>
+                                <span className="text-[10px] text-code-foreground/50 font-mono hidden sm:inline">Ctrl+Enter</span>
+                                <button
+                                    onClick={handleClearTerminal}
+                                    className="flex items-center gap-1.5 text-xs font-medium text-code-foreground/70 bg-white/5 border border-white/10 rounded-xl px-3 py-2 hover:bg-white/10 hover:text-code-foreground transition-all duration-200"
+                                >
+                                    <Trash2 size={13} />
+                                    Clear
+                                </button>
+                                <div className="flex-1" />
+                                <button
+                                    onClick={handleSendToVaathiyaar}
+                                    disabled={!code.trim()}
+                                    title="Open Vaathiyaar and ask for a review of this code"
+                                    className="flex items-center gap-1.5 text-xs font-bold text-accent-primary bg-accent-primary/10 border border-accent-primary/30 rounded-xl px-3 py-2 hover:bg-accent-primary/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    <Send size={13} />
+                                    <span className="hidden sm:inline">Send to Vaathiyaar</span>
+                                </button>
+                            </div>
+
+                            {/* Package installer */}
+                            <div className="flex items-center gap-2 px-4 py-2.5 border-t border-white/[0.04] flex-shrink-0">
+                                <span className="text-[10px] text-code-foreground/50 font-mono flex-shrink-0">pip install</span>
+                                <input
+                                    type="text"
+                                    value={installPkg}
+                                    onChange={(e) => setInstallPkg(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleInstallPackage()}
+                                    placeholder="package-name"
+                                    aria-label="Package name to install"
+                                    className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-code-foreground placeholder-code-foreground/40 font-mono focus:outline-none focus:border-green-500/40"
+                                />
+                                <button
+                                    onClick={handleInstallPackage}
+                                    disabled={!installPkg.trim() || installing}
+                                    className="text-[10px] font-bold text-green-300 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-1.5 hover:bg-green-500/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    {installing ? 'Installing...' : 'Install'}
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Output panel */}
-                        <div className="flex-shrink-0 border-t border-border-strong" style={{ maxHeight: '35%' }}>
+                        {/* Right column — output pane */}
+                        <div className="flex flex-col min-h-0 flex-1 lg:w-2/5 border-t lg:border-t-0 border-border-strong surface-code">
                             <OutputPanel
                                 output={output}
                                 error=""
@@ -286,61 +343,6 @@ export default function Playground() {
                                 onAskAI={handleAskAIForHelp}
                                 code={code}
                             />
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="flex items-center gap-2 px-4 py-2.5 border-t border-border-strong surface-code flex-shrink-0">
-                            <button
-                                onClick={handleRunCode}
-                                disabled={running || !code.trim()}
-                                className={`flex items-center gap-1.5 text-xs font-bold text-white rounded-xl px-4 py-2 transition-all duration-300 ${
-                                    running
-                                        ? 'bg-green-600 animate-pulse cursor-wait'
-                                        : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-green-500/20'
-                                } disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100`}
-                            >
-                                {running ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-                                {running ? 'Running...' : 'Run Code'}
-                            </button>
-                            <span className="text-[10px] text-code-foreground/50 font-mono hidden sm:inline">Ctrl+Enter</span>
-                            <button
-                                onClick={handleClearTerminal}
-                                className="flex items-center gap-1.5 text-xs font-medium text-code-foreground/70 bg-white/5 border border-white/10 rounded-xl px-3 py-2 hover:bg-white/10 hover:text-code-foreground transition-all duration-200"
-                            >
-                                <Trash2 size={13} />
-                                Clear
-                            </button>
-                            <div className="flex-1" />
-                            <button
-                                onClick={handleSendToVaathiyaar}
-                                disabled={!code.trim()}
-                                title="Open Vaathiyaar and ask for a review of this code"
-                                className="flex items-center gap-1.5 text-xs font-bold text-accent-primary bg-accent-primary/10 border border-accent-primary/30 rounded-xl px-3 py-2 hover:bg-accent-primary/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                                <Send size={13} />
-                                Send to Vaathiyaar
-                            </button>
-                        </div>
-
-                        {/* Package installer */}
-                        <div className="flex items-center gap-2 px-4 py-2.5 border-t border-white/[0.04] flex-shrink-0">
-                            <span className="text-[10px] text-code-foreground/50 font-mono flex-shrink-0">pip install</span>
-                            <input
-                                type="text"
-                                value={installPkg}
-                                onChange={(e) => setInstallPkg(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleInstallPackage()}
-                                placeholder="package-name"
-                                aria-label="Package name to install"
-                                className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-code-foreground placeholder-code-foreground/40 font-mono focus:outline-none focus:border-green-500/40"
-                            />
-                            <button
-                                onClick={handleInstallPackage}
-                                disabled={!installPkg.trim() || installing}
-                                className="text-[10px] font-bold text-green-300 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-1.5 hover:bg-green-500/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                                {installing ? 'Installing...' : 'Install'}
-                            </button>
                         </div>
                     </div>
                 </div>

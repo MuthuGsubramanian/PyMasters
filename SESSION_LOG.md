@@ -215,3 +215,13 @@ Per-route BODY strings (thousands across 24.6k lines of JSX) are NOT all extract
 BECAUSE the layer is fallback-safe, they can be migrated incrementally, route by route, with zero
 risk of a broken half-migrated state. That is the deliberate design response to the brief's
 "a half-migrated i18n layer is worse than none": make partial migration safe by construction.
+
+## Playground layout fix (user-requested, pre-QA)
+**Defect:** the playground stacked the editor over the output in a single column, leaving the
+right half of the pane blank and looking unfinished.
+**Change (`pages/Playground.jsx`):** restructured the terminal workspace into a two-column body —
+code editor (left, ~60%) with the Run/Clear/Send toolbar + pip-install row beneath it, and the
+output pane (right, ~40%). Side-by-side on desktop (≥lg); stacks vertically on smaller screens so
+the editor never collapses. Editor height set to fill its column.
+**Verified live:** editor left, output right; running `print('F2 autosave marker', answer)` shows
+"OUTPUT 135ms" + green result in the right pane. No blank space. Frontend-only.
