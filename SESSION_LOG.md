@@ -190,3 +190,28 @@ weak flags.
 - (Env note: a zombie uvicorn held :8001 with stale code and could not be killed; verified
   against a fresh backend on :8002 with vite repointed via VITE_API_URL. Pure environment
   hiccup, not a code issue.)
+
+## Phase 7 — [F4/i18n] UI-string extraction into i18n/ (medium item)
+**Approach — fallback-safe foundation so the layer is NEVER "worse than none":**
+- `i18n/index.js`: `t(key, defaultText)` now resolves locale → English → the inline English
+  source → key. Because every migrated call passes its English source, an untranslated (or
+  even un-keyed) string renders in English, exactly like before the migration. Partial coverage
+  is therefore safe and locales fill in incrementally.
+- New `hooks/useI18n.js`: `const { t } = useI18n()` reads the app language from ProfileContext.
+- **Migrated the global navigation completely** (`components/Layout.jsx` navItems — labels +
+  descriptions, the chrome shown on EVERY dashboard route) to `t('nav.*', 'English')`, and
+  populated all `nav.*` keys in `en.json` (source) + `ta.json` (Tamil).
+
+**i18n browser QA (local, qatester) — PASS (all three cases):**
+- Tamil (`ta`, has file): sidebar fully translated (மேலோட்டம், வகுப்பறை, விளையாட்டு மைதானம், …),
+  `<html lang="ta">`. ✓
+- Telugu (`te`, NO locale file): sidebar renders ENGLISH via fallback, `noRawKeys: true`, no
+  leaked keys — proves "never worse than none." ✓
+- English (`en`): source strings. ✓
+
+**Scope / honesty:** this migrates the app-wide navigation (present on all routes) and establishes
+the fallback-safe foundation + ergonomic hook + key convention (`area.name`, `area.name.desc`).
+Per-route BODY strings (thousands across 24.6k lines of JSX) are NOT all extracted here — but
+BECAUSE the layer is fallback-safe, they can be migrated incrementally, route by route, with zero
+risk of a broken half-migrated state. That is the deliberate design response to the brief's
+"a half-migrated i18n layer is worse than none": make partial migration safe by construction.

@@ -23,16 +23,22 @@ export const BLOCKED_LANGUAGES = [
 ];
 
 /**
- * useTranslation(language) — returns { t } where t(key) looks up the key in
- * translations[language] and falls back to English if the language or key is
- * not found.
+ * useTranslation(language) — returns { t } where `t(key, defaultText)` resolves
+ * to the current locale's string, else the English string, else the inline
+ * `defaultText` (the English source passed at the call site), else the key.
+ *
+ * The `defaultText` fallback is what makes a PARTIAL migration safe: every
+ * migrated string passes its own English source, so an untranslated (or even
+ * un-keyed) string renders the English text — identical to the pre-migration
+ * behaviour — instead of leaking a raw key. So the layer is never "worse than
+ * none," and locales can be filled in incrementally.
  */
 export function useTranslation(language = 'en') {
   const langDict = translations[language] || {};
   const fallback = translations['en'] || {};
 
-  function t(key) {
-    return langDict[key] ?? fallback[key] ?? key;
+  function t(key, defaultText) {
+    return langDict[key] ?? fallback[key] ?? defaultText ?? key;
   }
 
   return { t };

@@ -29,9 +29,11 @@ import DarkModeToggle from './DarkModeToggle';
 import ReleaseNotes from './ReleaseNotes';
 import VaathiyaarPanel from './VaathiyaarPanel';
 import { getAdminCheck, getProfileStats, getAccessStatus } from '../api';
+import useI18n from '../hooks/useI18n';
 
 export default function Layout() {
     const { user, logout, activeOrg } = useAuth();
+    const { t } = useI18n();
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -116,29 +118,29 @@ export default function Layout() {
     // more hooks than during the previous render", white-screening the app.
     const navItems = useMemo(() => {
         const items = [
-            { icon: LayoutDashboard, label: 'Overview', path: '/dashboard', desc: 'Your command center' },
-            { icon: Map, label: 'Evolution', path: '/dashboard/paths', desc: 'Your AI learning journey' },
-            { icon: Brain, label: 'Knowledge Map', path: '/dashboard/knowledge', desc: "What you know, mapped live" },
-            { icon: GraduationCap, label: 'Classroom', path: '/dashboard/classroom', desc: 'AI-guided lessons' },
-            { icon: Sparkles, label: 'Playground', path: '/dashboard/playground', desc: 'Free-form chat' },
-            { icon: TrendingUp, label: 'Trending', path: '/dashboard/trending', desc: 'AI & Python trends' },
-            { icon: Swords, label: 'Challenges', path: '/dashboard/challenges', desc: 'Weekly coding battles' },
-            { icon: BookOpen, label: 'Reference', path: '/dashboard/reference', desc: 'Quick cheat sheets' },
-            { icon: Lightbulb, label: 'Explains', path: '/dashboard/explains', desc: 'Visual concept essays' },
-            { icon: Trophy, label: 'Community', path: '/dashboard/community', desc: 'Rankings & members' },
+            { icon: LayoutDashboard, label: t('nav.overview', 'Overview'), path: '/dashboard', desc: t('nav.overview.desc', 'Your command center') },
+            { icon: Map, label: t('nav.evolution', 'Evolution'), path: '/dashboard/paths', desc: t('nav.evolution.desc', 'Your AI learning journey') },
+            { icon: Brain, label: t('nav.knowledge', 'Knowledge Map'), path: '/dashboard/knowledge', desc: t('nav.knowledge.desc', 'What you know, mapped live') },
+            { icon: GraduationCap, label: t('nav.classroom', 'Classroom'), path: '/dashboard/classroom', desc: t('nav.classroom.desc', 'AI-guided lessons') },
+            { icon: Sparkles, label: t('nav.playground', 'Playground'), path: '/dashboard/playground', desc: t('nav.playground.desc', 'Free-form chat') },
+            { icon: TrendingUp, label: t('nav.trending', 'Trending'), path: '/dashboard/trending', desc: t('nav.trending.desc', 'AI & Python trends') },
+            { icon: Swords, label: t('nav.challenges', 'Challenges'), path: '/dashboard/challenges', desc: t('nav.challenges.desc', 'Weekly coding battles') },
+            { icon: BookOpen, label: t('nav.reference', 'Reference'), path: '/dashboard/reference', desc: t('nav.reference.desc', 'Quick cheat sheets') },
+            { icon: Lightbulb, label: t('nav.explains', 'Explains'), path: '/dashboard/explains', desc: t('nav.explains.desc', 'Visual concept essays') },
+            { icon: Trophy, label: t('nav.community', 'Community'), path: '/dashboard/community', desc: t('nav.community.desc', 'Rankings & members') },
         ];
         if (activeOrg) {
-            items.push({ icon: Swords, label: 'Compete', path: '/dashboard/org-compete', desc: 'Org challenges & leaderboard' });
+            items.push({ icon: Swords, label: t('nav.compete', 'Compete'), path: '/dashboard/org-compete', desc: t('nav.compete.desc', 'Org challenges & leaderboard') });
         }
         if (activeOrg && (activeOrg.role === 'super_admin' || activeOrg.role === 'admin')) {
-            items.push({ icon: Building2, label: 'Admin Console', path: '/dashboard/org', desc: 'Members, invites & analytics' });
+            items.push({ icon: Building2, label: t('nav.org_admin', 'Admin Console'), path: '/dashboard/org', desc: t('nav.org_admin.desc', 'Members, invites & analytics') });
         }
         if (isSuper) {
-            items.push({ icon: Shield, label: 'Super Admin', path: '/dashboard/admin', desc: 'Platform monitoring & control' });
+            items.push({ icon: Shield, label: t('nav.super_admin', 'Super Admin'), path: '/dashboard/admin', desc: t('nav.super_admin.desc', 'Platform monitoring & control') });
         }
-        items.push({ icon: User, label: 'Profile', path: '/dashboard/profile', desc: 'Your settings' });
+        items.push({ icon: User, label: t('nav.profile', 'Profile'), path: '/dashboard/profile', desc: t('nav.profile.desc', 'Your settings') });
         return items;
-    }, [activeOrg, isSuper]);
+    }, [activeOrg, isSuper, t]);
 
     // All hooks above this line run unconditionally on every render.
     if (!user) return <Outlet />;
