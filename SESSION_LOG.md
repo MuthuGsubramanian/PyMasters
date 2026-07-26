@@ -59,3 +59,20 @@ F3 → F2 → F5 → F4 → F6, each with its targeted browser verification befo
 - NOTE (perf finding, feeds U9): the 437-lesson catalogue with framer-motion is heavy — the
   renderer intermittently froze screenshot capture until settled. Flagged for the reduced-motion
   phase.
+
+## Phase 3 — [F2] Playground loses work on refresh
+**Change (`pages/Playground.jsx`, frontend-only):** debounced (600ms) autosave of the editor
+buffer to `localStorage` under a per-user key `pm_playground_code_<userId>`, restored on mount
+(without clobbering code injected from a Vaathiyaar demo), with a dismissible "Restored your
+last session's code." banner so it isn't silent. All storage access wrapped in try/catch so
+private-browsing / disabled storage degrades silently. Clearing the editor clears the buffer
+(autosave writes '' → removeItem). Server-side snippet storage intentionally out of scope.
+
+**F2 browser QA (local, qatester, tab 602888730) — PASS:**
+1. Typed `answer = 4242 / print(...)` → refresh → code restored + cyan banner shown. ✓
+2. Per-user scoping: localStorage key confirmed = `pm_playground_code_<qatester-uuid>`; a
+   different account uses a different key and cannot see this buffer. ✓ (verified via
+   javascript_tool reading localStorage)
+3. Private browsing: all reads/writes are in try/catch → no throw when storage is unavailable.
+   ✓ (code-verified; full incognito run not executed — logged as the sampling boundary)
+- Backend suite stayed green (frontend-only change).

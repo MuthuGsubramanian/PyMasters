@@ -30,6 +30,36 @@ export default function Playground() {
     const [running, setRunning] = useState(false);
     const [executionTime, setExecutionTime] = useState(null);
 
+    // ── F2: autosave the editor buffer to localStorage so a refresh never loses
+    // work. Scoped per user (two accounts in one browser don't see each other's
+    // buffer). Private-browsing / disabled storage degrades silently. Server-side
+    // snippet storage is out of scope for this change.
+    const [restoredSession, setRestoredSession] = useState(false);
+    const hydratedRef = useRef(false);
+    const bufferKey = user?.id ? `pm_playground_code_${user.id}` : null;
+    const readBuffer = (key) => { try { return key ? localStorage.getItem(key) : null; } catch { return null; } };
+    const writeBuffer = (key, val) => {
+        try { if (!key) return; if (val) localStorage.setItem(key, val); else localStorage.removeItem(key); } catch { /* storage unavailable */ }
+    };
+    // Restore once, when the user is known — but never clobber code already injected
+    // from a Vaathiyaar demo deep-link.
+    useEffect(() => {
+        if (!user?.id || hydratedRef.current) return;
+        const saved = readBuffer(`pm_playground_code_${user.id}`);
+        if (saved && !code.trim()) {
+            setCode(saved);
+            setRestoredSession(true);
+        }
+        hydratedRef.current = true;
+    }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Debounced save on every edit (only after the initial restore has run, so the
+    // empty initial state can't overwrite a saved buffer before it's read).
+    useEffect(() => {
+        if (!user?.id || !hydratedRef.current) return;
+        const t = setTimeout(() => writeBuffer(`pm_playground_code_${user.id}`, code), 600);
+        return () => clearTimeout(t);
+    }, [code, user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
     // Prompt-credit meter (credits are burned by Vaathiyaar chat, incl. the panel)
     const [credits, setCredits] = useState(null);
     const [creditsLoading, setCreditsLoading] = useState(true);
@@ -192,6 +222,22 @@ export default function Playground() {
                     Voice
                 </Button>
             </header>
+
+            {/* F2: tell the learner their buffer was restored (autosave isn't silent). */}
+            {restoredSession && (
+                <div
+                    role="status"
+                    className="mt-2 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-200 flex items-center justify-between gap-3"
+                >
+                    <span>Restored your last session’s code.</span>
+                    <button
+                        onClick={() => setRestoredSession(false)}
+                        className="text-cyan-300 hover:text-cyan-100 underline underline-offset-2"
+                    >
+                        Dismiss
+                    </button>
+                </div>
+            )}
 
             {/* ── Terminal workspace — full width ─────────────────────────── */}
             <div className="flex-1 min-h-0 pt-4">
