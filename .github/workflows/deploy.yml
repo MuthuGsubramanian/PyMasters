@@ -48,9 +48,32 @@ jobs:
           JWT_SECRET: ci-gate-secret-long-enough-for-validation-abcdef
         run: python tests/live_smoke_community.py
 
+  frontend-test:
+    name: Frontend tests (pre-deploy gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: vitest
+        working-directory: frontend
+        run: npm test
+
   deploy:
     name: Build + Deploy to Cloud Run
-    needs: test
+    needs: [test, frontend-test]
     runs-on: ubuntu-latest
     permissions:
       contents: read

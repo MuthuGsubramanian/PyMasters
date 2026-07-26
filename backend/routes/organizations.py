@@ -9,10 +9,24 @@ import sqlite3
 import uuid
 import secrets
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel
+
+
+def _utcnow():
+    """Timezone-aware current UTC. Replaces the deprecated datetime.utcnow()."""
+    return datetime.now(timezone.utc)
+
+
+def _as_utc(dt):
+    """Normalize a parsed datetime to aware UTC. Values stored by the old code are
+    naive (no offset) and are assumed to be UTC; aware values are converted. This
+    keeps expiry comparisons aware-vs-aware so legacy rows don't raise TypeError."""
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
 
 from auth import get_current_user_id
 
@@ -164,7 +178,7 @@ def create_org(data: CreateOrgRequest, caller: str = Depends(get_current_user_id
     conn = sqlite3.connect(DB_PATH)
     try:
         _ensure_org_schema(conn)
-        now = datetime.utcnow().isoformat()
+        now = _utcnow().isoformat()
         conn.execute(
             "INSERT INTO organizations (id, name, type, domain, logo_url, description, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             [org_id, data.name, data.type, data.domain, data.logo_url, data.description, now, now]
@@ -232,7 +246,7 @@ def join_org(token: str, data: JoinOrgRequest, caller: str = Depends(get_current
             raise HTTPException(status_code=404, detail="Invalid invite token")
         if invite[5]:  # used
             raise HTTPException(status_code=400, detail="Invite already used")
-        if invite[4] and datetime.fromisoformat(invite[4]) < datetime.utcnow():
+        if invite[4] and _as_utc(datetime.fromisoformat(invite[4])) < _utcnow():
             raise HTTPException(status_code=400, detail="Invite has expired")
 
         # Check if already a member
@@ -243,7 +257,7 @@ def join_org(token: str, data: JoinOrgRequest, caller: str = Depends(get_current
         if existing:
             raise HTTPException(status_code=400, detail="Already a member of this organization")
 
-        now = datetime.utcnow().isoformat()
+        now = _utcnow().isoformat()
         conn.execute(
             "INSERT INTO org_members (org_id, user_id, role, joined_at) VALUES (?, ?, ?, ?)",
             [invite[1], data.user_id, invite[3], now]
@@ -279,7 +293,7 @@ def get_invite_info(token: str):
     conn.close()
     if not row:
         raise HTTPException(status_code=404, detail="Invalid invite token")
-    expired = bool(row[2]) and datetime.fromisoformat(row[2]) < datetime.utcnow()
+    expired = bool(row[2]) and _as_utc(datetime.fromisoformat(row[2])) < _utcnow()
     return {
         "email": row[0], "role": row[1], "expires_at": row[2],
         "used": bool(row[3]), "expired": expired,
@@ -306,7 +320,7 @@ def get_org(org_id: str, user_id: str = Query(None), caller: str = Depends(get_c
             "SELECT id, email, role, token, created_at, expires_at FROM org_invites WHERE org_id = ? AND used = 0 ORDER BY created_at DESC",
             [org_id]
         ).fetchall()
-        _now = datetime.utcnow()
+        _now = _utcnow()
         for r in inv_rows:
             # Compute live vs expired so the console doesn't present a dead
             # (un-redeemable) invite as still "pending". join_org already rejects
@@ -375,7 +389,7 @@ def update_org(org_id: str, data: UpdateOrgRequest, caller: str = Depends(get_cu
                 values.append(json.dumps(settings))
         if updates:
             updates.append("updated_at = ?")
-            values.append(datetime.utcnow().isoformat())
+            values.append(_utcnow().isoformat())
             values.append(org_id)
             conn.execute(f"UPDATE organizations SET {', '.join(updates)} WHERE id = ?", values)
             conn.commit()
@@ -427,11 +441,11 @@ def invite_member(org_id: str, data: InviteRequest, caller: str = Depends(get_cu
     data.role = _cap_invite_role(data.role, member["role"])
     invite_id = str(uuid.uuid4())
     token = secrets.token_urlsafe(32)
-    expires = (datetime.utcnow() + timedelta(days=7)).isoformat()
+    expires = (_utcnow() + timedelta(days=7)).isoformat()
     conn = sqlite3.connect(DB_PATH)
     conn.execute(
         "INSERT INTO org_invites (id, org_id, email, role, token, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [invite_id, org_id, data.email, data.role, token, datetime.utcnow().isoformat(), expires]
+        [invite_id, org_id, data.email, data.role, token, _utcnow().isoformat(), expires]
     )
     conn.commit()
     org_name = _org_name(conn, org_id)
@@ -470,8 +484,8 @@ def bulk_invite(org_id: str, data: BulkInviteRequest, caller: str = Depends(get_
 
     conn = sqlite3.connect(DB_PATH)
     invites = []
-    now = datetime.utcnow().isoformat()
-    expires = (datetime.utcnow() + timedelta(days=7)).isoformat()
+    now = _utcnow().isoformat()
+    expires = (_utcnow() + timedelta(days=7)).isoformat()
     for email, role in pairs:
         invite_id = str(uuid.uuid4())
         token = secrets.token_urlsafe(32)
@@ -584,7 +598,7 @@ def set_member_groups(org_id: str, member_id: str, data: SetGroupsRequest,
                 cleaned.append(name)
         cleaned = cleaned[:20]
 
-        now = datetime.utcnow().isoformat()
+        now = _utcnow().isoformat()
         conn.execute("DELETE FROM org_member_groups WHERE org_id = ? AND user_id = ?", [org_id, member_id])
         for name in cleaned:
             conn.execute(
@@ -790,7 +804,7 @@ def student_detail(org_id: str, member_id: str, caller: str = Depends(get_curren
         if last_active:
             try:
                 ts = datetime.fromisoformat(str(last_active).replace(" ", "T"))
-                if (datetime.utcnow() - ts) < timedelta(days=30):
+                if (_utcnow() - _as_utc(ts)) < timedelta(days=30):
                     status = "idle"
             except Exception:
                 status = "idle"

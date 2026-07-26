@@ -48,3 +48,8 @@ class SlidingWindowRateLimiter:
         if len(q) < self.max_calls or not q:
             return 0
         return max(0, int(round(self.window - (now - q[0]))))
+
+    def reset(self, key: str) -> None:
+        """Forget all recorded calls for a key (e.g. clear a username's failed-login
+        counter after a successful authentication)."""
+        self._calls.pop(key, None)

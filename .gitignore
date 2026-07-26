@@ -37,6 +37,14 @@ C:Users*
 *.db-wal
 *.db-shm
 
+# FUSE/cloud-sync half-written sidecars. Their presence means the repo lives on a
+# FUSE or cloud-sync mount (Google Drive / rclone / gcsfuse) — the likely source of
+# the intermittent "database is locked" conditions the code works around.
+.fuse_hidden*
+
+# Legacy Streamlit static frontend (superseded by the React app in frontend/).
+static/
+
 # LinkedIn OAuth token cache (secrets)
 pipeline/.linkedin_tokens.json
 
