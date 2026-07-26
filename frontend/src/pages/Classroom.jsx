@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useSearchParams, useOutletContext } from 'react-router-dom';
+import { useSearchParams, useOutletContext, useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -1323,6 +1323,10 @@ export default function Classroom() {
     const [currentLesson, setCurrentLesson] = useState(null);
     const [phase, setPhase] = useState('select');
     const [searchParams, setSearchParams] = useSearchParams();
+    // F3: the open lesson lives in the URL as /dashboard/classroom/:lessonId.
+    const { lessonId: routeLessonId } = useParams();
+    const navigate = useNavigate();
+    const [lessonNotFound, setLessonNotFound] = useState(null); // id that failed to resolve
     const [profileHint, setProfileHint] = useState('general');
     const [primaryTracks, setPrimaryTracks] = useState(null);
 
@@ -1409,11 +1413,14 @@ export default function Classroom() {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chatMessages]);
 
-    const handleSelectLesson = async (lesson) => {
+    // `fromUrl` = true when opened by the route effect (URL already correct), so we
+    // don't push a redundant history entry.
+    const handleSelectLesson = async (lesson, { fromUrl = false } = {}) => {
         try {
             const params = user?.id ? `?user_id=${user.id}` : '';
             const res = await api.get(`/classroom/lesson/${lesson.id}${params}`);
             const data = res.data.lesson ?? res.data;
+            setLessonNotFound(null);
             setCurrentLesson(data);
             recordSignal({
                 user_id: user?.id,
@@ -1428,8 +1435,14 @@ export default function Classroom() {
             setHintIndex(0);
             setEvalResult(null);
             setAttemptCount(0);
+            // Reflect the open lesson in the URL so it can be bookmarked / shared /
+            // refreshed and the back button steps between lessons (F3).
+            if (!fromUrl && lesson.id) {
+                navigate(`/dashboard/classroom/${encodeURIComponent(lesson.id)}`);
+            }
         } catch (err) {
             console.error('Failed to load lesson:', err);
+            if (fromUrl) setLessonNotFound(lesson.id); // deep-link to a bad id → graceful notice
         }
     };
 
@@ -1445,20 +1458,53 @@ export default function Classroom() {
     //                     lesson if one exists, otherwise pre-fill the "Learn
     //                     anything" box so the learner is one click from a custom
     //                     lesson on that topic. No generation is auto-fired.
+    // Legacy redirect: ?lesson=<id> → /dashboard/classroom/<id> so existing links,
+    // bookmarks and the review queue keep working after F3. Runs before the catalogue
+    // even loads; a bad id is handled by the route-segment branch below.
     useEffect(() => {
-        if (lessonsLoading || phase !== 'select' || currentLesson) return;
-
-        // 1. Exact lesson deep-link — unchanged behaviour (case-sensitive id/topic).
         const wantLesson = searchParams.get('lesson');
-        if (wantLesson) {
-            const match = lessons.find((l) => l.id === wantLesson || l.topic === wantLesson);
-            if (match) {
-                handleSelectLesson(match);
-                searchParams.delete('lesson');
-                setSearchParams(searchParams, { replace: true });
-            }
-            return; // lesson param takes priority; leave it if unmatched (catalogue may reload)
+        if (wantLesson && !routeLessonId) {
+            searchParams.delete('lesson');
+            const qs = searchParams.toString();
+            navigate(
+                `/dashboard/classroom/${encodeURIComponent(wantLesson)}${qs ? `?${qs}` : ''}`,
+                { replace: true },
+            );
         }
+    }, [searchParams, routeLessonId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Keep the open lesson in sync with the URL segment. Opening a lesson, switching
+    // between lessons via the back/forward buttons, and closing back to the selector
+    // all flow through here so the URL is always the source of truth (F3).
+    useEffect(() => {
+        if (lessonsLoading) return;
+
+        // 1. Lesson route segment /dashboard/classroom/:lessonId — open/switch to it.
+        //    Invalid id → surface a graceful notice instead of a blank/crash.
+        if (routeLessonId) {
+            if (currentLesson?.id === routeLessonId) return; // already open
+            const match = lessons.find((l) => l.id === routeLessonId || l.topic === routeLessonId);
+            if (match) {
+                setLessonNotFound(null);
+                handleSelectLesson(match, { fromUrl: true });
+            } else {
+                setLessonNotFound(routeLessonId);
+            }
+            return; // route lesson takes priority
+        }
+        // No lesson id in the URL. If one is open (e.g. browser Back out of a lesson),
+        // close it back to the selector.
+        if (currentLesson) {
+            setCurrentLesson(null);
+            setPhase('select');
+            setChatMessages([]);
+            setCode('');
+            setOutput('');
+            setEvalResult(null);
+            setHintIndex(0);
+        }
+        setLessonNotFound(null);
+        if (phase !== 'select') return;
 
         // 2. Trending topic deep-link — resolve the trending TITLE to the most
         //    relevant catalogue lesson, then fall back to seeding "Learn anything".
@@ -1524,7 +1570,7 @@ export default function Classroom() {
             searchParams.delete('topic');
             setSearchParams(searchParams, { replace: true });
         }
-    }, [lessons, lessonsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [lessons, lessonsLoading, routeLessonId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleIntroComplete = () => {
         // Load the lesson's practice scaffold into the editor when entering the
@@ -1742,6 +1788,7 @@ export default function Classroom() {
         setOutput('');
         setEvalResult(null);
         setHintIndex(0);
+        if (routeLessonId) navigate('/dashboard/classroom'); // clear the lesson from the URL (F3)
     };
 
     const handleRetry = () => {
@@ -1758,6 +1805,7 @@ export default function Classroom() {
         setOutput('');
         setEvalResult(null);
         setHintIndex(0);
+        if (routeLessonId) navigate('/dashboard/classroom'); // clear the lesson from the URL (F3)
     };
 
     // Page transition variants
@@ -1771,6 +1819,21 @@ export default function Classroom() {
         <div className="min-h-screen pb-48">
             <div className="max-w-6xl mx-auto px-6 py-8">
                 <VaathiyaarMessage />
+                {/* F3: deep-link to an unknown lesson id → graceful notice, not a crash. */}
+                {lessonNotFound && phase === 'select' && (
+                    <div
+                        role="alert"
+                        className="mb-6 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 flex items-center justify-between gap-3"
+                    >
+                        <span>That lesson link didn’t match any lesson. Pick one below to get started.</span>
+                        <button
+                            onClick={() => setLessonNotFound(null)}
+                            className="text-amber-300 hover:text-amber-100 underline underline-offset-2"
+                        >
+                            Dismiss
+                        </button>
+                    </div>
+                )}
                 {/* Back button when in a lesson */}
                 {phase !== 'select' && (
                     <motion.button

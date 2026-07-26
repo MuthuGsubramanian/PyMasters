@@ -161,6 +161,9 @@ export default function App() {
                 <Route path="knowledge" element={<ErrorBoundary><KnowledgeMap /></ErrorBoundary>} />
                 <Route path="upgrade" element={<ErrorBoundary><Upgrade /></ErrorBoundary>} />
                 <Route path="classroom" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
+                {/* Lesson id as a real route segment so open lessons are linkable /
+                    bookmarkable / refreshable (F3). Same component; it reads :lessonId. */}
+                <Route path="classroom/:lessonId" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
                 <Route path="playground" element={<ErrorBoundary><Playground /></ErrorBoundary>} />
                 <Route path="trending" element={<ErrorBoundary><Trending /></ErrorBoundary>} />
                 <Route path="challenges" element={<ErrorBoundary><Challenges /></ErrorBoundary>} />

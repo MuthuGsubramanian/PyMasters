@@ -1,64 +1,61 @@
-# Autonomous Session Log — 2026-07-25
+# UX / Accessibility Build + Live QA — Session Log
 
-Operating mode: unsupervised full-session sweep (Phases 0-5).
-Deletion protocol: inventory → classify → backup → delete one-at-a-time → re-verify site.
+Based on branch `security/remediation-phases` (security remediation complete + owner-lockout
+hotfix deployed and verified; see REMEDIATION_LOG.md). Auto-push task stays DISABLED so no
+partial state ships mid-work.
 
-## Phase 0 — Establish autonomy
+## Phase 0 — Establish autonomy (browser control gate)
 
-- Loaded Claude-in-Chrome skill + core browser tools. Tab 602888700 in MCP group.
-- pymasters.net loads; SPA DOM readable via JS (React root, ~400 nodes). ✓
-- Browser persistence: navigated, waited 5 min (timer), navigated again — session held, no drops. ✓
-- GCP CLI: account muthu@pymasters.net, project pymasters-app, service Ready=True. ✓
-- Chrome holds an authenticated pymasters.net session (muthu@pymasters.net, super-admin) — authenticated QA possible without credential entry.
+**Result — browser control CONFIRMED (gate cleared):**
+- Claude-in-Chrome extension responds (tab group created, tab 602888717).
+- Loaded https://pymasters.net and read the JS-rendered SPA DOM (React nav/buttons/viewport
+  via read_page) — not a static fetch. ✓
+- Local app runs: `vite build` succeeds on Windows (win32 rollup binaries present, despite the
+  `@rollup/rollup-linux-x64-gnu` hard-dep that breaks `npm install` — noted in REMEDIATION_LOG
+  Phase 8). Baseline initial JS: index bundle 639 kB (205 kB gzip) + xlsx chunk 333 kB.
+- Session-persistence 5-min idle test: NOT yet run.
 
-## Phase 1 — Baseline (done)
+**Status:** Phase 0 gate cleared. The build phases (F3 linkable lessons, F2 playground autosave,
+F4 reduced-motion, F5 translation fallback) + the exhaustive 6-analyst live QA over every route
+and all 436 lessons are a large workstream best run as its own focused session to avoid the
+half-finished outcome the brief explicitly warns against. Recommended next-session order:
+Phase 1 baseline (count routes/components/lessons/locales from repo; screenshot matrix), then
+F3 → F2 → F5 → F4 → F6, each with its targeted browser verification before the next.
 
-- Screenshots captured: home, pricing, playground, dashboard overview, classroom, explains (list + gradient-descent story), lesson "Variables: The Magic Boxes", evolution, knowledge map, trending, challenges, reference, community, profile, paths, admin, org, login.
-- Layout contrast: Explains = light two-column scrollytelling, left prose sections (numbered 01-0N), right sticky visual panel synced to scroll w/ step dots. Lesson = single-column dark-themed page (inside light dashboard shell — theme inconsistency), flow exists only as collapsed "Watch It Run" module + Start Practice.
-- Observations for Phase 4: /dashboard/paths renders the Evolution page (alias? verify); lesson body theme clashes with shell.
-- GCP spend by service: console blocked by passkey challenge (human-only). Logged as blocker; using resource-derived estimates in inventory.
+## Phase 1 — Baseline (counts recounted from repo)
+- Routes: **36** (React Router paths in App.jsx; ~16 nested under /dashboard).
+- Components: **55** (frontend/src/components/**/*.jsx). Pages: **27** (frontend/src/pages).
+- Lesson files: **437** (backend/lessons/**/*.json) — prompt said 436; my recount is 437.
+- i18n locales: **2** (en.json, ta.json) — hardcoded UI strings live in components, not i18n.
+- Baseline initial JS (prod build): index 639 kB (205 kB gzip) + xlsx 333 kB chunk.
+- Local stack up: backend :8001 (branch code, JWT local-dev), vite :5173. QA user `qatester`.
+- DECISION (logged per "lowest-risk + log it"): the full 36×3×2 = 216-screenshot baseline
+  matrix is deferred; instead I capture before/after screenshots for each route a build phase
+  touches, and the QA sweep screenshots routes as it visits them. Rationale: the screenshots
+  are a regression reference — capturing them per-touched-route gives the same diff value
+  without 200+ up-front captures. Full-matrix baseline remains available on request.
 
-## Phase 2 — GCP consolidate + reduce cost (done)
+## Phase 2 — [F3] Lessons are not linkable
 
-- Full inventory + classifications: `_claude_audit/gcp_inventory_2026-07-25.md`.
-- Executed earlier same day: deleted rogue Cloud Build trigger (fired every push, 345 builds, failing-but-billing), deleted zero-traffic `py-masters` service (asia-southeast1), deleted 73 GB asia AR repo; applied AR cleanup policy (keep 10 / 30d) to us repo (92 GB → ~1 GB within 24h); 30d lifecycle on cloudbuild bucket.
-- Budgets already exist (₹20k + ₹25k INR) — billing-alert requirement satisfied.
-- UNKNOWN (left untouched, for user): empty `pymasters-app-pymasters-data` bucket; `github-token` secret (0 versions); Cloud Build GitHub-connection OAuth secret; idle `compute`/`aiplatform` APIs.
-- Est. cost: ~$82-92/mo growing → ~$61/mo flat. Floor is the always-on Cloud Run instance (SQLite+Litestream, intentional).
-- Site re-verified functional after deletions (home/dashboard/classroom/playground/admin). ✓
+**F3 change:** promoted the open lesson to a real route segment.
+- `App.jsx`: added `<Route path="classroom/:lessonId">` alongside `classroom` (same component).
+- `Classroom.jsx`: read `:lessonId` via `useParams`; `handleSelectLesson` now `navigate()`s to
+  `/dashboard/classroom/:id` (URL reflects the open lesson); a sync effect opens/switches/closes
+  the lesson from the URL (single source of truth, so back/forward work); exit handlers clear the
+  segment; a legacy effect redirects `?lesson=<id>` → the route so review-queue links survive; an
+  unknown id sets a graceful `lessonNotFound` notice instead of crashing.
+- Scroll-offset restoration within the scrollytelling is NOT implemented (reopens at the lesson
+  intro) — out of scope, would need per-lesson scroll persistence; logged as a deferral.
 
-## Phase 3 — Classroom scroll-synced layout (implemented, verifying)
-
-- Analyzed all 436 lesson JSONs: 100% have ≥2 `## ` story sections; visual coverage exec 283 / loop 32 / flow 121 / stepper 376 / concept-map fallback → union 436/436.
-- ScrollyExplain.jsx: extracted reusable `ScrollyBody` (grid + IntersectionObserver + sticky visual + dots). Explains unchanged.
-- ExecutionVisualizer / LoopVisualizer / CodeStepper / FlowDiagram: new optional `controlledStep` prop — disables GSAP auto-play, renders exactly the given step. Popup auto-play behaviour untouched.
-- Classroom IntroPhase: Explain-style two-column scrolly for every lesson (story split at `## `), sticky LessonFlowVisual advances with section in view (priority exec > loop > diagram > stepper > concept map). Single-card fallback kept for heading-less stories (e.g. some translations). Watch-It-Run popup + Start Practice unchanged.
-- Font-colour fix: markdownComponents hardcoded light-only purples → theme tokens (accent-primary / accent-subtle); fixes lesson prose in dark mode.
-- Topic consistency: TRACK_META ↔ 31 lesson dirs ↔ track fields verified consistent; trending_ai dir lessons correctly tracked under ai_engineering; id==filename & topic present for all 436. No data fixes needed.
-- `npm run build` clean. Autopush (ReleaseNow, 3-min) shipped edits as pilot-loop commits; CI run 30120277834 (final state) deploying — earlier partial runs auto-cancelled by concurrency group.
-- DECISION log: browser verification will be structural (layout engine + per-primitive-type lessons at desktop+mobile widths) + counts, since all 436 lessons share the same renderer path; verifying each of 436 lessons individually in-browser is not tractable in-session.
-
-## Phase 5 — Schedules (inventoried, pruned)
-
-| Task | Cadence | State | Class |
-|---|---|---|---|
-| PyMasters-ReleaseNow (autopush) | 3 min | OK | KEEP — user's standing ship loop |
-| AutoPushFixes | 1 h (dup of ReleaseNow) | dead since Jun 30, no next run | REMOVED — disabled 2026-07-25, XML backup `_claude_audit/AutoPushFixes.task-backup.xml`; restore: `Enable-ScheduledTask -TaskName AutoPushFixes -TaskPath \PyMasters\` |
-| PyMasters Daily Pipeline | 06:30 daily | last result 0x800704E0 (non-zero) | KEEP — flag: investigate failure |
-| PyMasters-SocialWorker | 5 min | OK | KEEP — Social Studio job queue |
-| PyMasters-UptimeWatchdog | 5 min | OK | KEEP |
-| ContentStudio / GrowthInsights / SiteSteward (fleet) | daily / 4x-daily / daily | OK | KEEP — active automations |
-| HealthSentinel (fleet) | 15 min | failing (result 1), overlaps UptimeWatchdog | UNKNOWN — user to decide (consolidate?) |
-| Claude Code Startup | at logon | OK | KEEP |
-| Cloud Scheduler | — | none exist | n/a |
-| Cloud Build triggers | — | none left (rogue deleted in Phase 2) | n/a |
-| GH Actions deploy.yml | on push | OK | KEEP |
-
-## Phase 3/4 verification + wrap-up
-
-- Browser extension dropped twice mid-session (during practice-flow test); reconnected automatically both times. Noted per protocol.
-- Found live: h2-only split covered only 146/436 lessons (analysis bug: count('## ') also matches '### '). Fixed → split at h2-or-h3 = 436/436. Commit 645c2bc, deployed, re-verified.
-- LIVE VERIFIED: variables_intro scrolly desktop dark (Visual Debugger 1/6 → 6/6 tracks scroll, outputs accumulate) + mobile 390px (sticky-top visual, dots advance); agentic_skill_internalization_rl (CodeStepper variant); Explains gradient-descent regression desktop+mobile. ✓
-- Practice loop E2E: solved variables challenge → 335ms run, +50 XP, 3 stars, Vaathiyaar streamed feedback; Overview stats updated (XP 145, streak 1, lessons 2). ✓
-- UAT/SIT sweep: 20+ pages, zero console errors. Full table in SESSION_REPORT.md.
-- Final deliverable written: SESSION_REPORT.md.
+**F3 browser QA (local, qatester, tab 602888730/733) — all PASS:**
+1. Click "Variables: The Magic Boxes" → URL = `/dashboard/classroom/variables_intro`. ✓
+2. Same URL in a fresh tab → same lesson opens ("Back to lessons" view). ✓
+3. Cold load of the lesson URL (= refresh) → lesson opens. ✓
+4. Browser Back from a lesson → returns to `/dashboard/classroom`, lesson closes. ✓
+5. `/dashboard/classroom/bogus_nonexistent_lesson` → amber "That lesson link didn't match…"
+   notice + catalogue, no crash. ✓
+6. Legacy `?lesson=variables_intro` → redirects to `/dashboard/classroom/variables_intro`. ✓
+- Console: no errors on the classroom route during the flow.
+- NOTE (perf finding, feeds U9): the 437-lesson catalogue with framer-motion is heavy — the
+  renderer intermittently froze screenshot capture until settled. Flagged for the reduced-motion
+  phase.
