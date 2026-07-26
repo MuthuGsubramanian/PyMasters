@@ -6,8 +6,6 @@
 >
 > **Source of truth for values:** `frontend/src/index.css` defines every token below. If this
 > document and `index.css` ever disagree, `index.css` wins — update this file, not the CSS.
->
-> Aligned with: `docs/superpowers/specs/2026-04-05-theme-system-overhaul-design.md`
 
 ---
 

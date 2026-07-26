@@ -49,7 +49,7 @@ def test_normal_code_still_runs_with_isolation_wiring():
 
 @pytest.mark.skipif(
     not _isolation_available(),
-    reason="no per-process network namespace on this platform; see REMEDIATION_LOG Phase 4",
+    reason="no per-process network namespace on this platform",
 )
 def test_metadata_endpoint_is_unreachable_from_sandbox():
     """Where the namespace can be created, a socket connect to the GCP metadata

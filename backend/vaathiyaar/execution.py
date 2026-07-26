@@ -25,8 +25,8 @@ wrap the process in an OS sandbox (gVisor / Firecracker / a locked-down containe
      bypassable). Where the platform can't create the namespace (Windows dev; a
      container that forbids user namespaces) the prefix is empty and egress is NOT
      blocked there — the compensating control is least-privilege IAM on the runtime
-     SA (see REMEDIATION_LOG Phase 3/4). /install-package does not depend on the
-     sandbox's egress (it runs pip in its own flow — see Phase 6).
+     SA. /install-package does not depend on the sandbox's egress (it runs pip in
+     its own flow).
 """
 import ast
 import functools
