@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import useReducedMotion from '../hooks/useReducedMotion';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // ScrollyExplain — MLU-Explain-style scrollytelling engine.
@@ -25,8 +26,12 @@ import { ArrowLeft, Clock } from 'lucide-react';
 export function ScrollyBody({ steps, Visual }) {
     const [active, setActive] = useState(0);
     const stepRefs = useRef([]);
+    const reducedMotion = useReducedMotion();
 
     useEffect(() => {
+        // F4: no scroll-driven advancement under reduced motion — the explicit
+        // step controls drive `active` instead (below). Skip the observer entirely.
+        if (reducedMotion) return undefined;
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
@@ -41,7 +46,65 @@ export function ScrollyBody({ steps, Visual }) {
         );
         stepRefs.current.forEach((el) => el && observer.observe(el));
         return () => observer.disconnect();
-    }, [steps.length]);
+    }, [steps.length, reducedMotion]);
+
+    // Clamp active if the step count shrinks.
+    useEffect(() => { if (active > steps.length - 1) setActive(Math.max(0, steps.length - 1)); }, [steps.length, active]);
+
+    // ── F4: reduced-motion path — one step at a time, driven by prev/next controls.
+    // Same `Visual` receiving the same stepIndex, so the teaching is complete; only
+    // the scroll-driven motion is removed. Keyboard: ← / → move between steps.
+    if (reducedMotion) {
+        const step = steps[active] || steps[0];
+        const go = (d) => setActive((a) => Math.min(steps.length - 1, Math.max(0, a + d)));
+        return (
+            <div
+                className="lg:grid lg:grid-cols-2 lg:gap-10"
+                role="group"
+                aria-roledescription="Step-by-step lesson"
+                onKeyDown={(e) => { if (e.key === 'ArrowRight') go(1); else if (e.key === 'ArrowLeft') go(-1); }}
+            >
+                <div className="order-2 lg:order-2 lg:col-start-2 lg:row-start-1 h-[42vh] lg:h-[70vh] mb-6 lg:mb-0">
+                    <div className="panel rounded-2xl h-full p-3 lg:p-5 flex flex-col overflow-hidden">
+                        <div className="flex-1 min-h-0"><Visual stepIndex={active} /></div>
+                        <div className="flex items-center justify-center gap-1.5 pt-2 flex-shrink-0" aria-hidden="true">
+                            {steps.map((_, i) => (
+                                <span key={i} className={`rounded-full ${i === active ? 'w-4 h-1.5 bg-accent-primary' : 'w-1.5 h-1.5 bg-bg-inset'}`} />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+                <div className="lg:col-start-1 lg:row-start-1 flex flex-col justify-center">
+                    <div className="max-w-md" aria-live="polite">
+                        {step?.title && (
+                            <h2 className="text-lg font-bold font-display text-text-primary mb-2">
+                                <span className="text-accent-primary mr-2 font-mono text-sm">{String(active + 1).padStart(2, '0')}</span>
+                                {step.title}
+                            </h2>
+                        )}
+                        <div className="text-[15px] text-text-secondary leading-relaxed space-y-3">{step?.body}</div>
+                    </div>
+                    <div className="flex items-center gap-3 mt-6">
+                        <button
+                            onClick={() => go(-1)}
+                            disabled={active === 0}
+                            className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium border border-border-default bg-bg-elevated text-text-secondary hover:bg-bg-inset disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <ChevronLeft size={16} /> Previous
+                        </button>
+                        <span className="text-xs text-text-muted tabular-nums">Step {active + 1} of {steps.length}</span>
+                        <button
+                            onClick={() => go(1)}
+                            disabled={active >= steps.length - 1}
+                            className="inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium border border-accent-primary/40 bg-accent-subtle text-accent-primary hover:bg-accent-primary/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            Next <ChevronRight size={16} />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="lg:grid lg:grid-cols-2 lg:gap-10">

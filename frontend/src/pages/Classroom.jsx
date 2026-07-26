@@ -32,6 +32,7 @@ import OutputPanel from '../components/OutputPanel';
 import LearnAnything from '../components/LearnAnything';
 import VoiceTutor from '../components/VoiceTutor';
 import { Badge } from '../components/ui';
+import useReducedMotion from '../hooks/useReducedMotion';
 
 // Display labels for the F5 "not available in your language yet" notice.
 const LANG_LABELS = {
@@ -656,6 +657,7 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
 }
 
 function IntroPhase({ lesson, language, onComplete, username }) {
+    const reducedMotion = useReducedMotion();
     const storyContent =
         lesson.active_story || resolveText(lesson.story_variants, language);
 
@@ -773,7 +775,7 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                     <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-text-primary">Vaathiyaar</span>
                         <span className="text-emerald-500 text-[10px] font-medium">Teaching</span>
-                        <span className="text-[11px] text-text-muted">· scroll — the flow follows you</span>
+                        <span className="text-[11px] text-text-muted">· {reducedMotion ? 'use the step controls to advance' : 'scroll — the flow follows you'}</span>
                     </div>
                     <ScrollyBody steps={scrollySteps} Visual={SyncedVisual} />
                 </>

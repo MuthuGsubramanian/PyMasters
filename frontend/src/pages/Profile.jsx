@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import { getProfile, recordSignal, changePassword } from '../api';
 import api from '../api';
+import { isReducedMotion, setReduceMotionPref } from '../hooks/useReducedMotion';
 import clsx from 'clsx';
 import LanguageSelector from '../components/LanguageSelector';
 import { Card, StatCard, Button, Badge, Avatar, FormField } from '../components/ui';
@@ -346,6 +347,9 @@ export default function Profile() {
     const [voiceSpeed, setVoiceSpeed] = useState(1.0);
     const [voiceSelection, setVoiceSelection] = useState('default');
     const [autoPlayAnimations, setAutoPlayAnimations] = useState(true);
+    // F4: reduced-motion preference (local, applies immediately; overrides the OS
+    // setting in both directions). Not persisted to the server.
+    const [reduceMotion, setReduceMotionState] = useState(() => isReducedMotion());
     const [hintLevel, setHintLevel] = useState(2);
 
     // ─── Stats ──────────────────────────────────────────────────────────────
@@ -1011,6 +1015,13 @@ export default function Profile() {
                                 description="Automatically play code visualizations"
                                 checked={autoPlayAnimations}
                                 onChange={(v) => { setAutoPlayAnimations(v); setIsDirty(true); }}
+                            />
+
+                            <ToggleSwitch
+                                label="Reduce motion"
+                                description="Suppress animations and replace scroll-driven lessons with step controls. Overrides your device setting. Applies immediately."
+                                checked={reduceMotion}
+                                onChange={(v) => { setReduceMotionState(v); setReduceMotionPref(v); }}
                             />
                         </div>
 

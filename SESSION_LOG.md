@@ -108,3 +108,27 @@ makes F3's fresh-tab / refresh cases actually render content (they previously sh
   lesson content renders. ✓ (screenshot)
 - Covered lesson (`adv_generators`) as Tamil user → Tamil content, NO notice. ✓
 - Backend: `tests/test_translation_fallback_flag.py` (3) RED→GREEN.
+
+## Phase 6 — [U9] Reduced-motion support (F4)
+**Hook (`hooks/useReducedMotion.js`):** single source of truth — user toggle (localStorage
+`pm_reduce_motion`) overrides OS `prefers-reduced-motion` in both directions; reflects the
+effective value onto `<html class="reduce-motion">`.
+**Global (`index.css` + `index.html`):** `.reduce-motion` suppresses animation/transition
+durations and `scroll-behavior`; a pre-React inline script sets the class pre-paint (no flash).
+Class-driven (not raw `@media`) so the toggle can override the OS either way.
+**Lesson flow (`components/ScrollyExplain.jsx`):** under reduced motion `ScrollyBody` swaps the
+IntersectionObserver scroll-advancement for explicit Previous/Next controls (+ "Step X of N",
+← / → keys) driving the SAME `stepIndex` into the SAME synced `Visual` — the teaching is intact,
+only the motion is removed. `Classroom.jsx` subtitle switches to "use the step controls to
+advance" in reduced mode.
+**Settings toggle (`pages/Profile.jsx`):** a "Reduce motion" `ToggleSwitch` that calls
+`setReduceMotionPref` — applies immediately, overrides the device setting.
+
+**F4 browser QA (local, qatester) — PASS:**
+- Reduced ON → open `variables_intro`: step controls render ("Previous" disabled | "Step 1 of
+  4" | "Next"), one section shown, no scroll layout. ✓
+- Click "Next" → "Step 2 of 4" AND the synced Visual Debugger advanced Step 1/6 → 3/6 (variables
+  x=42, name="Ada", scores=[90,85]) — the lesson is fully completable via controls. ✓
+- Reduced OFF (`pref='0'`, overriding any OS reduce) → no step controls, scroll hint + scroll-
+  driven behaviour return, `.reduce-motion` class absent. ✓ (toggle overrides both directions)
+- Backend untouched (frontend-only).

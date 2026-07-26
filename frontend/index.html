@@ -30,6 +30,15 @@
 
     <!-- Primary Meta -->
     <title>PyMasters — Learn Python with AI</title>
+    <!-- F4: apply reduced-motion pre-paint (user toggle overrides OS) to avoid a flash of animation. -->
+    <script>
+      try {
+        var p = localStorage.getItem('pm_reduce_motion');
+        var os = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var on = p === '1' ? true : p === '0' ? false : os;
+        if (on) document.documentElement.classList.add('reduce-motion');
+      } catch (e) {}
+    </script>
     <meta name="description" content="PyMasters is an AI-powered Python learning platform. Learn from Vaathiyaar, your personal AI teacher who adapts to your pace — from Python foundations to deep learning. Built for individual learners, schools, and enterprises." />
     <meta name="keywords" content="learn python, AI tutor, python course, machine learning course, deep learning, vaathiyaar, python for schools, python for enterprise" />
     <meta name="author" content="PyMasters" />

@@ -278,3 +278,19 @@
 .perspective-800 {
   perspective: 800px;
 }
+
+/* ── F4: reduced motion ───────────────────────────────────────────────────────
+   Suppression is driven by the `.reduce-motion` class on <html>, which JS sets
+   from the user toggle (if any) else the OS setting — so the toggle overrides the
+   OS in both directions. A tiny inline script in index.html sets it pre-paint. */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+}
+html.reduce-motion { scroll-behavior: auto !important; }
