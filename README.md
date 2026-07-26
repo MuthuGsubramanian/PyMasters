@@ -1,126 +1,72 @@
 <div align="center">
 
+<img src="docs/assets/pymasters-logo.png" alt="PyMasters logo" width="180">
+
 # PyMasters
 
-**Learn Python, AI, and cloud engineering by doing — in an interactive classroom with a built-in code playground and AI tutor.**
+**Master Python, AI, and cloud engineering — interactively, at your own pace, in your own language.**
 
-[**pymasters.net**](https://www.pymasters.net)
-
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.135-009688?logo=fastapi&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
-![Google Cloud Run](https://img.shields.io/badge/Deployed_on-Cloud_Run-4285F4?logo=googlecloud&logoColor=white)
-![License](https://img.shields.io/badge/License-Proprietary-red)
+### 🚀 [Start learning free at pymasters.net](https://www.pymasters.net)
 
 </div>
 
 ---
 
-## Overview
+## What is PyMasters?
 
-PyMasters is a production web platform for learning Python and modern AI/cloud engineering. Instead of static tutorials, every lesson is an interactive experience: scroll-synced visualizations explain concepts step by step, code runs directly in the browser against a sandboxed execution backend, and an AI tutor (**Vaathiyaar**) answers questions in context — in the learner's own language.
+PyMasters is an interactive learning platform that teaches Python and modern AI engineering the way it should be taught: **by doing**. No videos to sit through, no walls of text — every lesson is a hands-on experience where concepts come alive as you scroll, code runs right in your browser, and a personal AI tutor is always one click away.
 
-The catalog spans **430+ lessons** across Python fundamentals, data structures & algorithms, web frameworks (FastAPI, Django, Flask), machine learning and deep learning, LLM/agent engineering, and multi-cloud architecture (AWS, Azure, GCP).
+Whether you're writing your first `print()` or architecting multi-cloud AI systems, there's a track for you — **430+ lessons** and counting.
 
-## Features
+## ✨ Features
 
-- **Interactive classroom** — scrollytelling lesson layout with step-synchronized visualizers, quizzes, and linkable lessons
-- **Code playground** — CodeMirror editor with server-side sandboxed Python execution and on-demand package installation
-- **Vaathiyaar AI tutor** — context-aware chat assistant available across the app, with graceful degradation when AI providers are unavailable
-- **Challenges** — auto-graded coding challenges with progress tracking, autosave, and an archive of past challenges
-- **Multilingual** — 8 supported languages with on-demand lesson translation and safe English fallback
-- **Semantic search** — local embedding-based search and related-lesson recommendations (no external vector service required)
-- **Accounts & organizations** — JWT authentication, social login (GitHub, LinkedIn), profiles, and institutional/organization support
-- **Accessibility** — reduced-motion support, ARIA live regions, and light/dark themes
+### 📖 Lessons that explain themselves
+Forget static tutorials. PyMasters lessons use **scroll-synchronized visualizations** — as you read, animated diagrams step through exactly what the code is doing: variables changing, loops iterating, neural networks learning. Complex ideas become something you can *see*.
 
-## Architecture
+### 💻 Code without leaving the page
+Every lesson has runnable code, and the built-in **Playground** gives you a full Python editor with real execution — write, run, and experiment instantly. Need a library? Install packages on demand. No setup, no installs, no "works on my machine."
 
-```
-┌────────────────────┐         ┌───────────────────────────────┐
-│  React 19 SPA      │  HTTPS  │  FastAPI backend              │
-│  Vite · Tailwind 4 │ ──────► │  ├─ Auth (JWT + OAuth)        │
-│  CodeMirror editor │         │  ├─ Lessons / Challenges API  │
-└────────────────────┘         │  ├─ Sandboxed code execution  │
-                               │  ├─ Vaathiyaar AI tutor       │
-                               │  └─ Semantic search (ONNX)    │
-                               └──────────────┬────────────────┘
-                                              │
-                               ┌──────────────┴────────────────┐
-                               │  SQLite + Litestream          │
-                               │  (replicated to Cloud Storage)│
-                               └───────────────────────────────┘
-```
+### 🧑‍🏫 Vaathiyaar — your personal AI tutor
+Stuck on a concept? **Vaathiyaar** (Tamil for *teacher*) is available throughout the app and understands exactly which lesson you're on. Ask it to re-explain, simplify, give another example, or debug your code — like having a patient mentor on call, 24/7.
 
-- **Frontend**: React 19 (Vite), Tailwind CSS 4, Framer Motion/GSAP, React Router 7
-- **Backend**: FastAPI (Python 3.11+), Pydantic v2, SQLite with Litestream replication
-- **AI**: Ollama Cloud–backed tutor with a pluggable provider chain; fastembed (ONNX) for local semantic search
-- **Runtime**: Docker image running Nginx + Uvicorn under supervisord
-- **Infrastructure**: Google Cloud Run, deployed via GitHub Actions
+### 🏆 Challenges that check your work
+Put your skills to the test with **auto-graded coding challenges**. Get instant feedback, track your streaks and progress, and revisit past challenges from the archive. Your work autosaves as you go.
 
-## Getting Started
+### 🌏 Learn in your language
+PyMasters speaks **8 languages** — including Tamil, Hindi, and more. Lessons translate on demand, and Vaathiyaar tutors you in whichever language you're most comfortable thinking in.
 
-### Prerequisites
+### 🔍 Find exactly what you need
+**Smart semantic search** understands what you mean, not just what you type. Search "how do I stop my loop running forever" and land on the right lesson — plus related-lesson suggestions to keep your momentum going.
 
-- **Node.js** 18+
-- **Python** 3.11+
-- An **Ollama Cloud** API key for AI features *(optional — everything else runs without it)*
-- **Docker** *(optional, for the production stack)*
+### 🎓 Structured learning tracks
 
-### Quick start (Windows)
+| Track | What you'll master |
+|---|---|
+| 🐍 **Python Fundamentals** | Variables to OOP — a complete foundation |
+| 🧮 **Data Structures & Algorithms** | Interview-ready DSA with visual walkthroughs |
+| 🌐 **Web Development** | FastAPI, Django, Flask, and REST APIs |
+| 🤖 **Machine Learning & Deep Learning** | From linear regression to transformers |
+| 🧠 **AI Engineering** | LLMs, RAG, agents, prompt engineering, local models |
+| ☁️ **Cloud & Enterprise AI** | AWS, Azure, GCP, and multi-cloud architecture |
 
-```bash
-.\start_dev.bat
-```
+### 👥 For teams and institutions
+Running a classroom or training a team? PyMasters supports **organization accounts** with member management and progress visibility — plus easy sign-in with GitHub or LinkedIn.
 
-This launches the backend API at `http://localhost:8001` and the frontend at `http://localhost:5173`.
+### ♿ Built for everyone
+Light and dark themes, reduced-motion support, screen-reader-friendly announcements, and shareable lesson links — learning should never have barriers.
 
-### Manual setup
+## 🚀 Getting started
 
-**Backend**
+1. Visit **[pymasters.net](https://www.pymasters.net)**
+2. Create a free account (or continue with GitHub / LinkedIn)
+3. Pick a track and start coding — right in your browser
 
-```bash
-cd backend
-cp .env.example .env          # fill in OLLAMA_API_KEY to enable AI features
-pip install -r requirements.txt
-python -m uvicorn main:app --reload --port 8001
-```
+That's it. No downloads, no environment setup, no credit card.
 
-The SQLite database is created and seeded automatically on first start. Interactive API docs are served at `http://localhost:8001/docs`.
+---
 
-**Frontend**
+<div align="center">
 
-```bash
-cd frontend
-npm install
-npm run dev                   # http://localhost:5173, proxies API calls to :8001
-```
+Copyright © 2026 PyMasters ([pymasters.net](https://www.pymasters.net)). All rights reserved. See [LICENSE](LICENSE).
 
-### Running tests
-
-```bash
-cd backend && python -m pytest          # backend suite
-cd frontend && npm test                 # frontend suite (Vitest)
-```
-
-## Production Deployment
-
-Run the full stack locally with Docker:
-
-```bash
-docker-compose up --build -d
-```
-
-The production deployment targets Google Cloud Run: a single container serves the built frontend through Nginx and the API through Uvicorn, with the SQLite database continuously replicated to Google Cloud Storage via Litestream. Deploys run through GitHub Actions (`.github/workflows/deploy.yml`).
-
-## Security
-
-- **Sandboxed code execution** — learner code runs in an isolated subprocess with import/resource restrictions, wall-clock timeouts, and (on supported platforms) a dedicated network namespace with no egress
-- **Authentication** — JWT (HS256) with token-version-based session revocation; OAuth sign-in via GitHub and LinkedIn
-- **Hardened runtime** — strict Content Security Policy, per-endpoint rate limiting, and least-privilege service accounts in production
-
-## License
-
-Copyright © 2026 PyMasters ([pymasters.net](https://www.pymasters.net)). All rights reserved.
-
-This is proprietary software — see [LICENSE](LICENSE) for details.
+</div>
