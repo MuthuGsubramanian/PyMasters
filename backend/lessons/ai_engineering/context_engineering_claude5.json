@@ -1,0 +1,159 @@
+{
+  "id": "context_engineering_claude5",
+  "topic": "context_engineering_claude5",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "The New Rules of Context Engineering for Claude 5 Models"
+  },
+  "description": {
+    "en": "Learn how the Claude 5 generation (Fable 5, Opus 4.8, Sonnet 5) changed the game: sampling knobs and thinking budgets are gone, and cache-friendly context layout, effort control, and window management are the skills that matter now."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Context Window Is the New Prompt\n\nVanakkam, nanba! Vaathiyaar here. For years we treated prompting like spell-casting â€” longer incantations, ALL-CAPS commands, a nervous twiddle of the `temperature` knob. The Claude 5 generation (Fable 5, Opus 4.8, Sonnet 5) quietly retired most of those tricks. Sampling knobs are rejected outright with a 400 error, fixed thinking budgets are gone, and the models follow instructions so literally that shouting makes things *worse*. What separates a good AI engineer now is **context engineering**: deciding what goes into the window, in what order, and how it stays lean over a long session.\n\n### Rule 1: Stable prefix first â€” caching is a byte-level prefix match\n\nPrompt caching keys on the exact bytes of your prompt prefix. One changed byte â€” a timestamp, an unsorted JSON dump, a reordered tool definition â€” invalidates everything after it. So freeze your system prompt, serialize tools deterministically, and push anything volatile (this turn's question, per-request IDs) to the very end.\n\n| Old habit | New rule |\n|---|---|\n| Tuning `temperature` / `top_p` | Removed â€” steer with prompts and `effort` |\n| `thinking: {budget_tokens: 8000}` | `thinking: {\"type\": \"adaptive\"}` |\n| Timestamps inside the system prompt | Frozen prefix; inject dynamic facts late in `messages` |\n| \"CRITICAL: YOU MUST use the tool!\" | Calm, precise trigger conditions |\n| Hand-trimming old history | Server-side compaction + context editing |\n\n### Rule 2: Steer depth with effort, not token budgets\n\nAdaptive thinking lets the model decide *when* and *how much* to reason; your dial is `output_config.effort` â€” `low` for quick lookups, `high` as the default, `xhigh` for hard agentic work. On Claude Fable 5, thinking is always on and can't be disabled at all.\n\n```python\nimport anthropic\n\nclient = anthropic.Anthropic()\n\nresponse = client.messages.create(\n    model=\"claude-opus-4-8\",\n    max_tokens=16000,\n    thinking={\"type\": \"adaptive\"},\n    output_config={\"effort\": \"high\"},\n    system=[{\n        \"type\": \"text\",\n        \"text\": FROZEN_SYSTEM,  # no dates, no UUIDs\n        \"cache_control\": {\"type\": \"ephemeral\"},\n    }],\n    messages=history + [{\"role\": \"user\", \"content\": question}],\n)\nprint(response.usage.cache_read_input_tokens)  # non-zero means cache hit\n```\n\n### Rule 3: Keep the window lean â€” let the platform prune\n\nWhen a session runs long, don't hand-trim history. Compaction summarizes older turns server-side (just remember to append the full `response.content`, compaction blocks included), and context editing clears stale tool results instead of summarizing them. One more Claude 5 surprise: over-prescriptive, step-by-step prompts written for older models actually *reduce* output quality. State the goal and the constraints â€” not the steps.\n\n### These rules travel â€” even to a laptop\n\nThe same physics governs a local RAG pipeline: a frozen preamble maximizes KV-cache reuse in llama.cpp, retrieved chunks belong after the stable prefix, and old tool outputs should be evicted before fresh evidence. Context engineering is model-agnostic thinking about one scarce resource: the window.\n\n> **Key Insight:** Stop tuning the model and start engineering the window. Order content from most stable to most volatile, control depth with effort instead of budgets, and prune with compaction â€” the prefix you keep byte-identical is the money you don't spend twice."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "props": {
+        "title": {
+          "en": "The Knobs Are Gone"
+        },
+        "text": {
+          "en": "Claude 5 generation models rejected your old tricks: temperature, top_p, and thinking budgets all return errors now. The new lever is the context window itself â€” what you put in it, in what order, and how you keep it lean."
+        }
+      }
+    },
+    {
+      "type": "CodeStepper",
+      "props": {
+        "title": {
+          "en": "Building a cache-friendly Claude 5 request"
+        },
+        "steps": [
+          {
+            "code": "import anthropic\n\nclient = anthropic.Anthropic()",
+            "explanation": {
+              "en": "Start with the SDK client. Credentials come from the environment â€” never hardcode keys."
+            }
+          },
+          {
+            "code": "FROZEN_SYSTEM = \"You are Vaathiyaar, a precise Python tutor.\"",
+            "explanation": {
+              "en": "Rule 1: the system prompt is frozen. No timestamps, no user IDs, no random values â€” one changed byte invalidates the whole cache behind it."
+            }
+          },
+          {
+            "code": "system_blocks = [{\n    \"type\": \"text\",\n    \"text\": FROZEN_SYSTEM,\n    \"cache_control\": {\"type\": \"ephemeral\"},\n}]",
+            "explanation": {
+              "en": "Place a cache breakpoint on the last stable block. Everything before it is served at roughly 10% of input price on later calls."
+            }
+          },
+          {
+            "code": "history = load_history(session_id)",
+            "explanation": {
+              "en": "Session-level context comes next: it changes per session, but stays stable within one, so it extends the reusable prefix turn after turn."
+            }
+          },
+          {
+            "code": "messages = history + [{\"role\": \"user\", \"content\": question}]",
+            "explanation": {
+              "en": "The volatile part â€” this turn's question â€” goes last, after everything cacheable. Order equals money."
+            }
+          },
+          {
+            "code": "response = client.messages.create(\n    model=\"claude-opus-4-8\",\n    max_tokens=16000,",
+            "explanation": {
+              "en": "Notice what's missing: no temperature, no top_p, no top_k. The Claude 5 generation rejects sampling knobs with a 400 error."
+            }
+          },
+          {
+            "code": "    thinking={\"type\": \"adaptive\"},\n    output_config={\"effort\": \"high\"},",
+            "explanation": {
+              "en": "Adaptive thinking replaces budget_tokens. Effort â€” low, medium, high, xhigh, max â€” is the new dial for reasoning depth and token spend."
+            }
+          },
+          {
+            "code": "    system=system_blocks,\n    messages=messages,\n)",
+            "explanation": {
+              "en": "Assemble in render order: tools, then system, then messages â€” stable to volatile, exactly how the cache reads it."
+            }
+          },
+          {
+            "code": "print(response.usage.cache_read_input_tokens)",
+            "explanation": {
+              "en": "Always verify. If this stays 0 across repeated calls, a silent invalidator â€” a timestamp, an unsorted dict â€” is hiding in your prefix."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "ParticleEffect",
+      "props": {
+        "effect": "confetti",
+        "message": {
+          "en": "You now think in windows, not knobs. Context engineer unlocked!"
+        }
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Prompt caching is a prefix match, so stable content must come before volatile content. Implement order_for_cache(blocks), where blocks is a list of (stability, text) tuples and stability is one of \"static\", \"session\", or \"turn\". Return the texts ordered static first, then session, then turn â€” preserving the original relative order within each group (a stable sort)."
+      },
+      "starter_code": "def order_for_cache(blocks):\n    \"\"\"Order context blocks so cacheable content comes first.\n\n    blocks: list of (stability, text) tuples where stability is\n    \"static\", \"session\", or \"turn\".\n    Returns a list of texts ordered static -> session -> turn,\n    preserving original order within each group.\n    \"\"\"\n    # TODO: group the texts by stability, then concatenate\n    # the groups in cache-friendly order\n    pass\n\n\nblocks = [\n    (\"turn\", \"What is a decorator?\"),\n    (\"static\", \"You are Vaathiyaar, a Python tutor.\"),\n    (\"session\", \"Student level: intermediate\"),\n    (\"static\", \"Always answer with runnable examples.\"),\n]\nfor text in order_for_cache(blocks):\n    print(text)",
+      "expected_output": "You are Vaathiyaar, a Python tutor.\nAlways answer with runnable examples.\nStudent level: intermediate\nWhat is a decorator?",
+      "hints": {
+        "en": [
+          "Define the priority order as a list or dict: [\"static\", \"session\", \"turn\"].",
+          "A simple approach: loop over the three stability levels, and for each level collect matching texts from blocks in their original order.",
+          "Python's sorted() with key=lambda b: priority[b[0]] also works â€” sorted() is a stable sort, so ties keep their original order."
+        ]
+      },
+      "test_code": "blocks = [(\"turn\", \"Q\"), (\"static\", \"A\"), (\"session\", \"S\"), (\"static\", \"B\")]\nresult = order_for_cache(blocks)\nassert result == [\"A\", \"B\", \"S\", \"Q\"], f\"wrong order: {result}\"\nassert order_for_cache([]) == [], \"empty input should return an empty list\"\nassert order_for_cache([(\"session\", \"x\")]) == [\"x\"]\nprint(\"All tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Long sessions overflow the context window, and the new rule is: never drop the stable prefix â€” evict the oldest volatile turns first. Implement trim_context(messages, budget), where messages[0] is the system message and budget is a character budget for the combined length of all kept message contents. Always keep the system message (even if it alone exceeds the budget), then keep as many of the most recent messages as fit, returning the result in chronological order."
+      },
+      "starter_code": "def trim_context(messages, budget):\n    \"\"\"Trim conversation history to fit a character budget.\n\n    messages: list of {\"role\": ..., \"content\": ...} dicts;\n              messages[0] is the system message.\n    budget:   max total characters across kept contents.\n\n    The system message is ALWAYS kept. Then walk the remaining\n    messages from newest to oldest, keeping each one only if it\n    still fits in the budget. Return kept messages in\n    chronological order.\n    \"\"\"\n    # TODO: start with the system message and its length,\n    # then add recent messages while they fit\n    pass\n\n\nhistory = [\n    {\"role\": \"system\", \"content\": \"Tutor.\"},\n    {\"role\": \"user\", \"content\": \"aaaaaaaaaa\"},\n    {\"role\": \"assistant\", \"content\": \"bbbbbbbbbb\"},\n    {\"role\": \"user\", \"content\": \"cccccccccc\"},\n]\nfor m in trim_context(history, 27):\n    print(m[\"role\"], len(m[\"content\"]))",
+      "expected_output": "system 6\nassistant 10\nuser 10",
+      "hints": {
+        "en": [
+          "Track a running total starting at len(messages[0][\"content\"]), since the system message is always kept.",
+          "Iterate over messages[1:] in reverse (newest first) and collect a message only if total + len(content) stays within the budget.",
+          "You collected the kept messages newest-first â€” reverse that list before prepending the system message so the output is chronological."
+        ]
+      },
+      "test_code": "history = [\n    {\"role\": \"system\", \"content\": \"Tutor.\"},\n    {\"role\": \"user\", \"content\": \"aaaaaaaaaa\"},\n    {\"role\": \"assistant\", \"content\": \"bbbbbbbbbb\"},\n    {\"role\": \"user\", \"content\": \"cccccccccc\"},\n]\nkept = trim_context(history, 27)\nassert [m[\"role\"] for m in kept] == [\"system\", \"assistant\", \"user\"], kept\nassert kept[-1][\"content\"] == \"cccccccccc\", \"most recent message must survive\"\nassert [m[\"role\"] for m in trim_context(history, 1000)] == [\"system\", \"user\", \"assistant\", \"user\"], \"big budget keeps everything\"\nassert [m[\"role\"] for m in trim_context(history, 5)] == [\"system\"], \"system message is always kept\"\nprint(\"All tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "context_engineering",
+      "prompt_caching",
+      "adaptive_thinking",
+      "effort_parameter",
+      "context_window_management"
+    ],
+    "concepts_required": [
+      "functions",
+      "lists",
+      "dictionaries",
+      "api_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "conceptual_coding",
+    "estimated_minutes": 25,
+    "category": "llm_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
