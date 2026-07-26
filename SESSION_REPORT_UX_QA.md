@@ -3,8 +3,13 @@
 > Note: `SESSION_REPORT.md` already holds a **different (prior) session's** report (2026-07-25
 > GCP cleanup), tracked in git, so this session's report is kept here to avoid overwriting it.
 
-Branch: `security/remediation-phases` (not deployed; auto-push disabled). Per-phase build detail
-and evidence live in `SESSION_LOG.md`; this report summarizes what shipped and the QA sweep.
+**Git state (corrected):** the UX work landed on **local `main`** (10 commits ahead of
+`origin/main`, **unpushed / not deployed**; auto-push disabled), built on the deployed owner-
+lockout hotfix `8a5fc20`. It is NOT on `security/remediation-phases` (earlier log lines that said
+so are wrong). `main` and `security/remediation-phases` have **diverged**: `main` has the hotfix +
+this UX work; the branch has the security remediation Phases 2–9 (see `REMEDIATION_LOG.md`). To ship
+everything, merge the branch into `main` (with a Docker build + in-browser CSP check for the
+branch's container changes), then push. Per-phase build detail is in `SESSION_LOG.md`.
 
 ## 1. Summary
 Shipped eight UX fixes plus a user-requested playground layout fix, each committed per finding and
