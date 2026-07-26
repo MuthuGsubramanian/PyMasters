@@ -132,3 +132,21 @@ advance" in reduced mode.
 - Reduced OFF (`pref='0'`, overriding any OS reduce) → no step controls, scroll hint + scroll-
   driven behaviour return, `.reduce-motion` class absent. ✓ (toggle overrides both directions)
 - Backend untouched (frontend-only).
+
+## Phase 5 — [U10] Dynamic results silent to screen readers
+**Change (frontend-only):** polite live regions + `aria-busy` on the dynamic result surfaces:
+- `components/OutputPanel.jsx` (playground execution): the output body is now
+  `role="status" aria-live="polite" aria-busy={running}` with an `aria-label` — the result is
+  announced once when it lands, and busy state is conveyed during the run.
+- `pages/Classroom.jsx` FeedbackPhase: the grading-verdict panel (verdict + XP pill) is
+  `role="status" aria-live="polite"`.
+- `pages/Challenges.jsx`: the submission-result panel is `role="status" aria-live="polite"`.
+- The streaming Vaathiyaar chat is deliberately NOT made assertive (would talk over the user).
+
+**U10 browser QA (local, qatester) — PASS:**
+- Playground output element carries `role=status, aria-live=polite, aria-busy` (false idle);
+  after Run, `aria-busy` toggles and the output text ("F2 autosave marker 4242") appears inside
+  the live region → announced once (non-streaming, so no per-partial spam). ✓ (verified via DOM;
+  a hardware screen-reader read-aloud isn't drivable through the extension, so verification is at
+  the ARIA-semantics + content-update level.)
+- Backend untouched (frontend-only).

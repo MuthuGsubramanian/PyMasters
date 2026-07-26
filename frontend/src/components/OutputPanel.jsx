@@ -70,7 +70,14 @@ export default function OutputPanel({
                 )}
             </div>
 
-            <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 font-mono text-xs leading-relaxed bg-[#0d1117]">
+            <div
+                ref={scrollRef}
+                className="flex-1 overflow-y-auto p-4 font-mono text-xs leading-relaxed bg-[#0d1117]"
+                role="status"
+                aria-live="polite"
+                aria-busy={running}
+                aria-label="Code output"
+            >
                 {running ? (
                     <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2 text-amber-400">

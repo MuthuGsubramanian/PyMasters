@@ -1174,6 +1174,8 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount
 
             {/* Success celebration or retry panel */}
             <motion.div
+                role="status"
+                aria-live="polite"
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ duration: 0.5, ease: 'backOut' }}
