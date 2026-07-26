@@ -163,3 +163,30 @@ Review links use `?lesson=` which F3 now redirects to the lesson route (consiste
 - Dashboard renders "Due for Review (2)" at the top, full width, ABOVE the greeting, with both
   lessons + Review buttons. ✓
 - No-due case self-hides → normal dashboard (by construction — same self-hiding component). ✓
+
+## Phase 7 — [F6] Browsable challenge archive filtered by weak concepts (medium item)
+**Backend (`routes/challenges.py`):** `CATEGORY_CONCEPTS` maps each of the 12 challenge
+categories to knowledge-graph concept ids; `_user_weak_concepts` returns the concepts the
+learner has practiced but not mastered (0 < mastery < 0.65) via `get_user_mastery_map` (which
+joins `lesson_concepts` → `concepts`). New endpoint `GET /api/challenges/archive?weak_only=`
+returns all challenges, each annotated with `concepts`, `targets_weak_concept`, and the matched
+`weak_concepts` names; weak-targeting sorts first; `weak_only=true` filters to them. Acting user
+is the JWT identity (no IDOR on private mastery). This joins challenges + user_mastery + the
+concept graph, as specified.
+**Frontend (`api.js` + `pages/Challenges.jsx`):** a `ChallengeArchive` section below the weekly
+challenge — a card grid (title, category, difficulty, XP, purple "Weak: <concept>" badge) with
+a "Focus on my weak areas" checkbox driving `weak_only`.
+
+**F6 backend tests:** `tests/test_challenge_archive.py` (4) RED→GREEN — lists all; flags the DP
+challenge for a DP-weak user with the concept name; `weak_only` filters; a new learner has no
+weak flags.
+
+**F6 browser QA (local, qatester seeded weak in dynamic_programming 0.3 + string_algorithms 0.42)
+— PASS:**
+- Archive renders "2 of your concepts need reinforcement"; weak-targeting challenges sorted
+  first with badges: Fibonacci→"Weak: Dynamic Programming", Anagram + Pattern Matching→"Weak:
+  String Algorithms". ✓
+- "Focus on my weak areas" → grid narrows to exactly those 3 challenges. ✓
+- (Env note: a zombie uvicorn held :8001 with stale code and could not be killed; verified
+  against a fresh backend on :8002 with vite repointed via VITE_API_URL. Pure environment
+  hiccup, not a code issue.)

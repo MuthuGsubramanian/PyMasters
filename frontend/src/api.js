@@ -248,6 +248,8 @@ export const getReleaseNotes = () => api.get('/release-notes');
 export const getWeeklyChallenge = () => api.get('/challenges/weekly');
 export const submitChallenge = (data) => api.post('/challenges/submit', data);
 export const getChallengeLeaderboard = () => api.get('/challenges/leaderboard');
+export const getChallengeArchive = (weakOnly = false) =>
+    api.get('/challenges/archive', { params: { weak_only: weakOnly } });
 
 // Quick reference
 export const getQuickReference = (topic) => api.get(`/reference/${topic}`);

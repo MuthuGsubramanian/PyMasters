@@ -14,7 +14,7 @@ import sqlite3
 import datetime
 from typing import List, Optional, Tuple
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from auth import get_current_user_id
@@ -717,9 +717,86 @@ CHALLENGES: List[dict] = [
 ]
 
 
+# F6: map each challenge category to the knowledge-graph concept ids it exercises,
+# so the archive can flag challenges that target a learner's WEAK concepts (joining
+# challenges → user_mastery → the concept graph). Ids verified against graph.concepts.
+CATEGORY_CONCEPTS = {
+    "Dynamic Programming": ["dynamic_programming", "memoization", "recursion"],
+    "Strings & Hashing": ["string_algorithms", "string_methods", "hash_tables", "dictionaries"],
+    "Arrays & Matrices": ["arrays", "lists", "nested_structures"],
+    "Data Structures": ["arrays", "linked_lists", "stacks", "queues", "hash_tables", "lists", "dictionaries"],
+    "Decorators & Metaprogramming": ["decorators", "decorator_patterns", "metaclasses", "functools_module"],
+    "Generators & Iterators": ["generators", "generator_expressions", "iterators", "itertools_module"],
+    "Graphs & Trees": ["graphs", "graphs_advanced", "binary_trees", "bst"],
+    "Pattern Matching": ["regex", "regex_advanced", "string_algorithms"],
+    "Search Algorithms": ["binary_search", "two_pointers"],
+    "Async Programming": ["async_basics", "async_advanced"],
+    "Context Managers": ["context_managers", "contextlib_module"],
+    "Type Hints & Generics": ["type_hints", "typing_module"],
+}
+
+# Below this, a touched concept counts as "weak" for the archive filter.
+_WEAK_MASTERY = 0.65
+
+
+def _user_weak_concepts(db_path: str, user_id: str) -> dict:
+    """{concept_id: display_name} the learner is WEAK in: concepts they've practiced
+    (mastery data exists via the lesson→concept graph) but not yet mastered
+    (0 < mastery < threshold). Empty for a brand-new learner who hasn't practiced
+    anything — the weak filter is a returning-learner feature."""
+    weak = {}
+    if not user_id:
+        return weak
+    try:
+        from graph.queries import get_user_mastery_map
+        from graph.concepts import CONCEPTS
+        cname = {c[0]: c[1] for c in CONCEPTS}
+        # get_user_mastery_map joins lesson_concepts → concepts and returns 0.0 for
+        # untouched concepts; > 0 means the learner has real progress on it.
+        for cid, m in (get_user_mastery_map(db_path, user_id) or {}).items():
+            if 0.0 < m < _WEAK_MASTERY:
+                weak[cid] = cname.get(cid, cid)
+    except Exception as e:  # graph optional — archive still works, just no weak flags
+        print(f"[challenge archive] weak-concept calc failed: {e}")
+    return weak
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
+
+@router.get("/archive")
+def challenge_archive(
+    user_id: str = Query(default=None),
+    weak_only: bool = Query(default=False),
+    caller: str = Depends(get_current_user_id),
+):
+    """Browsable archive of all challenges. Each is annotated with the concepts it
+    exercises and whether it targets one of the LEARNER's weak concepts (F6). The
+    acting user is the JWT identity, never the query param (no IDOR on private
+    mastery data). `weak_only=true` returns only weak-targeting challenges."""
+    weak = _user_weak_concepts(_get_db_path(), caller)
+    out = []
+    for ch in CHALLENGES:
+        concepts = CATEGORY_CONCEPTS.get(ch.get("category", ""), [])
+        matched = [weak[c] for c in concepts if c in weak]
+        out.append({
+            "id": ch["id"],
+            "title": ch["title"],
+            "difficulty": ch["difficulty"],
+            "category": ch.get("category", ""),
+            "xp_reward": ch.get("xp_reward", 0),
+            "concepts": concepts,
+            "targets_weak_concept": bool(matched),
+            "weak_concepts": matched[:4],
+        })
+    if weak_only:
+        out = [c for c in out if c["targets_weak_concept"]]
+    diff_order = {"easy": 0, "medium": 1, "hard": 2}
+    # Weak-targeting first, then easy → hard.
+    out.sort(key=lambda c: (not c["targets_weak_concept"], diff_order.get(c["difficulty"], 1)))
+    return {"challenges": out, "weak_concept_count": len(weak), "total": len(out)}
+
 
 @router.get("/weekly")
 def get_weekly_challenge():

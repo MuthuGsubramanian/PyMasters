@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
-import { getWeeklyChallenge, submitChallenge, getChallengeLeaderboard } from '../api';
+import { getWeeklyChallenge, submitChallenge, getChallengeLeaderboard, getChallengeArchive } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import { Card, Button, Badge, Table, TBody, TD } from '../components/ui';
 
@@ -114,6 +114,88 @@ function LeaderboardRow({ entry, rank }) {
         {rank <= 3 && <Trophy size={14} className="text-yellow-400 inline-block" />}
       </TD>
     </motion.tr>
+  );
+}
+
+// ─── F6: browsable challenge archive, filterable by the learner's weak concepts ──
+function ChallengeArchive() {
+  const [items, setItems] = useState([]);
+  const [weakOnly, setWeakOnly] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [weakCount, setWeakCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getChallengeArchive(weakOnly)
+      .then((r) => { if (!cancelled) { setItems(r.data?.challenges || []); setWeakCount(r.data?.weak_concept_count || 0); } })
+      .catch(() => { if (!cancelled) setItems([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [weakOnly]);
+
+  const diffCls = (d) => DIFFICULTY[(d || '').charAt(0).toUpperCase() + (d || '').slice(1)] || DIFFICULTY.Medium;
+
+  return (
+    <Card className="mt-4 p-5">
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+        <div>
+          <h2 className="text-lg font-bold font-display text-text-primary flex items-center gap-2">
+            <Code2 size={18} className="text-accent-primary" /> Challenge Archive
+          </h2>
+          <p className="text-xs text-text-muted">
+            Browse every challenge{weakCount > 0 ? ` — ${weakCount} of your concepts need reinforcement` : ''}.
+          </p>
+        </div>
+        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={weakOnly}
+            onChange={(e) => setWeakOnly(e.target.checked)}
+            className="accent-accent-primary w-4 h-4"
+            aria-label="Show only challenges targeting my weak concepts"
+          />
+          <span className="text-text-secondary">Focus on my weak areas</span>
+        </label>
+      </div>
+
+      {loading ? (
+        <div className="py-10 text-center text-text-muted text-sm flex items-center justify-center gap-2" role="status" aria-live="polite">
+          <Loader2 size={16} className="animate-spin" /> Loading…
+        </div>
+      ) : items.length === 0 ? (
+        <div className="py-10 text-center text-text-muted text-sm">
+          {weakOnly ? "No archived challenges target your weak concepts right now — nice work." : 'No challenges available.'}
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 gap-3">
+          {items.map((c) => {
+            const d = diffCls(c.difficulty);
+            return (
+              <div
+                key={c.id}
+                className={clsx('rounded-xl border p-4 bg-bg-elevated transition-colors',
+                  c.targets_weak_concept ? 'border-accent-primary/40' : 'border-border-default')}
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <h3 className="text-sm font-semibold text-text-primary">{c.title}</h3>
+                  <span className={clsx('text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap', d.bg, d.text, d.border)}>{d.label}</span>
+                </div>
+                <p className="text-xs text-text-muted mb-2">{c.category}</p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[11px] text-amber-500 font-semibold flex items-center gap-1"><Zap size={11} /> +{c.xp_reward} XP</span>
+                  {c.targets_weak_concept && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-accent-subtle text-accent-primary border border-accent-primary/30 flex items-center gap-1">
+                      <Flame size={10} /> {c.weak_concepts?.length ? `Weak: ${c.weak_concepts.slice(0, 2).join(', ')}` : 'Weak area'}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -582,6 +664,9 @@ export default function Challenges() {
             </Card>
           </div>
         </div>
+
+        {/* F6: browsable archive filtered by weak concepts */}
+        <ChallengeArchive />
       </div>
     </div>
   );
