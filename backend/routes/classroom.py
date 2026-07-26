@@ -822,13 +822,28 @@ def get_lesson(
     #      English, exactly as before, so lesson loading never breaks.
     story_variants = lesson.get("story_variants", {})
     en_story = story_variants.get("en") if isinstance(story_variants, dict) else None
+    # Track which language the learner is ACTUALLY served so the UI can tell them
+    # when a lesson isn't available in their language yet (F5 — no silent fallback).
+    served_lang = "en"
     if story_variants and preferred_lang in story_variants:
         lesson["active_story"] = story_variants[preferred_lang]
+        served_lang = preferred_lang
     elif preferred_lang != "en" and en_story:
         translated = _ondemand_translate(db_path, lesson_id, preferred_lang, "story", en_story)
-        lesson["active_story"] = translated if translated is not None else en_story
+        if translated is not None:
+            lesson["active_story"] = translated
+            served_lang = preferred_lang  # on-demand translation succeeded
+        else:
+            lesson["active_story"] = en_story
+            served_lang = "en"            # translation unavailable → English fallback
     elif en_story:
         lesson["active_story"] = en_story
+        served_lang = "en"
+    # Signals for the client. story_is_fallback is True only when the learner asked
+    # for a non-English language but is being shown English.
+    lesson["requested_language"] = preferred_lang
+    lesson["story_language"] = served_lang
+    lesson["story_is_fallback"] = bool(preferred_lang != "en" and served_lang == "en" and en_story)
 
     # Set active_title if title is a dict of variants (same cache-first path).
     title = lesson.get("title", "")

@@ -76,3 +76,35 @@ private-browsing / disabled storage degrades silently. Clearing the editor clear
 3. Private browsing: all reads/writes are in try/catch → no throw when storage is unavailable.
    ✓ (code-verified; full incognito run not executed — logged as the sampling boundary)
 - Backend suite stayed green (frontend-only change).
+
+## Phase 4 — [F5] Silent translation fallback
+**Backend (`routes/classroom.py`):** `get_lesson` now returns `requested_language`,
+`story_language`, and `story_is_fallback` — True only when a non-English learner is served
+English because their language variant is missing AND on-demand translation didn't produce
+localized content. Additive; no existing field changed.
+**Frontend (`pages/Classroom.jsx`):** an amber inline notice in the lesson intro —
+"Not available in {Language} yet — showing English." with a "Change language" link to
+profile — rendered when `currentLesson.story_is_fallback`. `LANG_LABELS` maps codes to names.
+No translation is performed (out of scope).
+**Report (`scripts/translation_coverage_report.py` → `TRANSLATION_COVERAGE_REPORT.md`):**
+scans all lessons; emits per-locale coverage, the exact lessons missing each locale, and
+every translated variant lacking `##`/`###` headings (regresses to single-card layout).
+Current: 436 lessons, 7 locales (ta 35%, es/fr/ko/te ~10%, it/ml ~9%), 12 heading-gap variants.
+
+**Also fixed [F3 deep-link render bug found during F5 QA]:** a cold-load deep-link to a lesson
+URL left the page BLANK — the catalogue mounted first in phase 'select' and the immediate swap
+to the lesson stalled `AnimatePresence mode="wait"` (currentLesson null while phase 'intro').
+Fix: don't mount the catalogue during a deep-link; show a "Loading lesson…" placeholder until
+the lesson resolves; open by id directly when the lesson isn't in the loaded catalogue. This
+makes F3's fresh-tab / refresh cases actually render content (they previously showed only the
+"Back to lessons" header over a blank body — I under-verified this in the F3 pass).
+
+**F5 + F3-fix browser QA (local, qatester set to Tamil) — PASS:**
+- Backend flag verified live: GET the en-only lesson as the Tamil user → `story_is_fallback:
+  true, requested_language: ta, story_language: en`; a covered lesson → false (curl + in-page
+  fetch).
+- Uncovered lesson (`all_minilm_l6_v2_local_semantic_search`) deep-linked as Tamil user →
+  amber "Not available in Tamil yet — showing English." + "Change language" link + full English
+  lesson content renders. ✓ (screenshot)
+- Covered lesson (`adv_generators`) as Tamil user → Tamil content, NO notice. ✓
+- Backend: `tests/test_translation_fallback_flag.py` (3) RED→GREEN.

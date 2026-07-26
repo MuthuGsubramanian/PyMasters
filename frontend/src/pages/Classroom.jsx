@@ -33,6 +33,13 @@ import LearnAnything from '../components/LearnAnything';
 import VoiceTutor from '../components/VoiceTutor';
 import { Badge } from '../components/ui';
 
+// Display labels for the F5 "not available in your language yet" notice.
+const LANG_LABELS = {
+    ta: 'Tamil', hi: 'Hindi', te: 'Telugu', ml: 'Malayalam', kn: 'Kannada',
+    bn: 'Bengali', mr: 'Marathi', gu: 'Gujarati', it: 'Italian', es: 'Spanish',
+    fr: 'French', de: 'German', pt: 'Portuguese', ja: 'Japanese', zh: 'Chinese',
+};
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Thinking bubble — animated dots while Vaathiyaar processes
 // ──────────────────────────────────────────────────────────────────────────────
@@ -1480,16 +1487,15 @@ export default function Classroom() {
         if (lessonsLoading) return;
 
         // 1. Lesson route segment /dashboard/classroom/:lessonId — open/switch to it.
-        //    Invalid id → surface a graceful notice instead of a blank/crash.
+        //    Prefer the catalogue entry (has track/metadata); otherwise open by id
+        //    directly so a deep-link to any valid lesson works even when it isn't in
+        //    the loaded catalogue. handleSelectLesson surfaces a graceful notice on a
+        //    real 404 (unknown id) rather than crashing.
         if (routeLessonId) {
             if (currentLesson?.id === routeLessonId) return; // already open
             const match = lessons.find((l) => l.id === routeLessonId || l.topic === routeLessonId);
-            if (match) {
-                setLessonNotFound(null);
-                handleSelectLesson(match, { fromUrl: true });
-            } else {
-                setLessonNotFound(routeLessonId);
-            }
+            setLessonNotFound(null);
+            handleSelectLesson(match || { id: routeLessonId, track: '' }, { fromUrl: true });
             return; // route lesson takes priority
         }
         // No lesson id in the URL. If one is open (e.g. browser Back out of a lesson),
@@ -1848,7 +1854,22 @@ export default function Classroom() {
                 )}
 
                 <AnimatePresence mode="wait">
-                    {phase === 'select' && (
+                    {/* F3: on a cold-load deep-link the catalogue must NOT mount first —
+                        starting in 'select' and immediately swapping to the lesson stalls
+                        AnimatePresence (mode="wait") and leaves the page blank. Show a brief
+                        loading state until the lesson resolves; the catalogue only renders
+                        when there's no lesson in the URL (or the id was invalid). */}
+                    {routeLessonId && !currentLesson && !lessonNotFound && (
+                        <motion.div
+                            key="lesson-loading"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="flex items-center justify-center py-24 text-text-muted text-sm"
+                        >
+                            Loading lesson…
+                        </motion.div>
+                    )}
+                    {phase === 'select' && (!routeLessonId || lessonNotFound) && (
                         <motion.div
                             key="select"
                             variants={pageVariants}
@@ -1883,6 +1904,26 @@ export default function Classroom() {
                             exit="exit"
                             transition={{ duration: 0.3, ease: 'easeOut' }}
                         >
+                            {/* F5: this lesson isn't in the learner's language yet — say so
+                                inline (no silent English fallback) with a way to change it. */}
+                            {currentLesson.story_is_fallback && (
+                                <div
+                                    role="status"
+                                    className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-200 flex items-center justify-between gap-3"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Globe2 size={15} className="flex-shrink-0" />
+                                        Not available in {LANG_LABELS[currentLesson.requested_language]
+                                            || (currentLesson.requested_language || '').toUpperCase()} yet — showing English.
+                                    </span>
+                                    <button
+                                        onClick={() => navigate('/dashboard/profile')}
+                                        className="text-amber-300 hover:text-amber-100 underline underline-offset-2 whitespace-nowrap"
+                                    >
+                                        Change language
+                                    </button>
+                                </div>
+                            )}
                             {currentLesson?.id && podcastManifest[currentLesson.id] && (
                                 <div className="flex justify-end mb-3">
                                     <button
