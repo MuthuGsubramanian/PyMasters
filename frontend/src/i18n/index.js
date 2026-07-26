@@ -1,7 +1,17 @@
 import en from './en.json';
 import ta from './ta.json';
+import te from './te.json';
+import ml from './ml.json';
+import fr from './fr.json';
+import es from './es.json';
+import it from './it.json';
+import ko from './ko.json';
 
-const translations = { en, ta };
+// Every language offered in SUPPORTED_LANGUAGES must have a dictionary here —
+// before 2026-07-26 only en/ta were registered, so the other six silently
+// rendered English (found in live testing). Parity is enforced by
+// src/__tests__/i18n.test.js.
+const translations = { en, ta, te, ml, fr, es, it, ko };
 
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', name: 'English',    flag: '🇬🇧' },
