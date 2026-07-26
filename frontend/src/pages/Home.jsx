@@ -4,9 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import {
     ArrowRight, Sparkles, Brain, Layers, Code2, Zap,
     BookOpen, Star, MessageSquare, Cpu, GraduationCap,
-    Play, Terminal, Building2, ShieldCheck, Mail
+    Play, Terminal, Building2, ShieldCheck, Mail,
+    LifeBuoy, CalendarClock, BadgeCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import SupportModal from '../components/SupportModal';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
 import PymastersHero from '../assets/pymasters-hero.svg';
 
@@ -293,6 +295,9 @@ export default function Home() {
     const ctaTarget = user ? '/dashboard/classroom' : '/login';
     const navRef = useRef(null);
     const [scrolled, setScrolled] = useState(false);
+    const [supportOpen, setSupportOpen] = useState(false);
+    const [supportTab, setSupportTab] = useState('access');
+    const openSupport = (tab) => { setSupportTab(tab); setSupportOpen(true); };
 
     useEffect(() => { document.title = 'PyMasters — Learn Python with AI'; }, []);
 
@@ -320,6 +325,7 @@ export default function Home() {
                         <a href="#curriculum" className="text-sm text-slate-300 hover:text-white transition-colors">Curriculum</a>
                         <a href="#features" className="text-sm text-slate-300 hover:text-white transition-colors">Features</a>
                         <a href="#organizations" className="text-sm text-slate-300 hover:text-white transition-colors">For Schools</a>
+                        <button onClick={() => openSupport('issue')} className="text-sm text-slate-300 hover:text-white transition-colors">Support</button>
                         <button onClick={() => navigate('/pricing')} className="text-sm text-slate-300 hover:text-white transition-colors">Pricing</button>
                         {user ? (
                             <button onClick={() => navigate('/dashboard')} className="text-sm text-slate-300 hover:text-white transition-colors">Dashboard</button>
@@ -593,6 +599,61 @@ export default function Home() {
                 </div>
             </section>
 
+            {/* ── STUDENTS & LIVE TUTORING ── */}
+            <section id="support" className="relative py-24 px-4 sm:px-6">
+                <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-5">
+                    {/* Free student access */}
+                    <div className="rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-950/30 via-slate-900/40 to-transparent p-8 sm:p-10 flex flex-col">
+                        <span className="inline-flex w-fit items-center gap-2 px-3 py-1 mb-5 rounded-full text-[11px] font-semibold tracking-wider uppercase text-emerald-300 bg-emerald-500/10 border border-emerald-500/30">
+                            <BadgeCheck size={12} aria-hidden="true" />
+                            For Students
+                        </span>
+                        <h2 className="text-white text-2xl sm:text-3xl font-bold font-display leading-tight mb-3">
+                            Are you a student?{' '}
+                            <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #10b981, #06b6d4)' }}>
+                                It's free.
+                            </span>
+                        </h2>
+                        <p className="text-slate-300/90 text-sm leading-relaxed mb-6">
+                            Upload your student ID and get <span className="text-white font-semibold">3 months of full access, completely free</span> —
+                            every track, Vaathiyaar, live code execution, all of it. We verify IDs manually and reply within a day.
+                        </p>
+                        <button
+                            onClick={() => openSupport('access')}
+                            className="mt-auto w-fit inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-cyan-500 hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-emerald-900/40"
+                        >
+                            <GraduationCap size={16} aria-hidden="true" />
+                            Get free student access
+                        </button>
+                    </div>
+
+                    {/* Live tutor sessions */}
+                    <div className="rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-950/30 via-slate-900/40 to-transparent p-8 sm:p-10 flex flex-col">
+                        <span className="inline-flex w-fit items-center gap-2 px-3 py-1 mb-5 rounded-full text-[11px] font-semibold tracking-wider uppercase text-purple-200 bg-purple-500/10 border border-purple-500/30">
+                            <CalendarClock size={12} aria-hidden="true" />
+                            Live Tutoring
+                        </span>
+                        <h2 className="text-white text-2xl sm:text-3xl font-bold font-display leading-tight mb-3">
+                            Prefer a{' '}
+                            <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #a855f7, #06b6d4)' }}>
+                                human touch?
+                            </span>
+                        </h2>
+                        <p className="text-slate-300/90 text-sm leading-relaxed mb-6">
+                            Book a <span className="text-white font-semibold">live 1-on-1 session</span> with a PyMasters tutor —
+                            pick a topic and a time that works for you, and we'll confirm by email. Great for getting unstuck or planning your path.
+                        </p>
+                        <button
+                            onClick={() => navigate('/dashboard/live-tutor')}
+                            className="mt-auto w-fit inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-purple-900/40"
+                        >
+                            <CalendarClock size={16} aria-hidden="true" />
+                            Schedule a live session
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             {/* ── FINAL CTA ── */}
             <section className="relative py-24 px-4 sm:px-6 text-center">
                 <div className="relative max-w-3xl mx-auto">
@@ -636,10 +697,33 @@ export default function Home() {
                         <Link to="/terms" className="hover:text-cyan-400 transition-colors">Terms</Link>
                         <Link to="/privacy" className="hover:text-cyan-400 transition-colors">Privacy</Link>
                         <Link to="/security" className="hover:text-cyan-400 transition-colors">Security</Link>
+                        <button onClick={() => openSupport('issue')} className="hover:text-cyan-400 transition-colors">Support</button>
                         <a href="mailto:legal@pymasters.net" className="hover:text-cyan-400 transition-colors">Contact</a>
                     </nav>
                 </div>
             </footer>
+
+            {/* ── FLOATING SUPPORT LAUNCHER ──
+                Home renders no other fixed corner elements (nav is top-fixed),
+                so the bottom-right corner is free — verified against the
+                overlay-collision QA rule. Hidden while the modal is open. */}
+            {!supportOpen && (
+                <button
+                    onClick={() => openSupport('access')}
+                    aria-label="Open support"
+                    className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 pl-3.5 pr-4 py-3 rounded-full text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 shadow-xl shadow-purple-900/50 hover:scale-[1.04] active:scale-[0.97] transition-transform"
+                >
+                    <LifeBuoy size={17} aria-hidden="true" />
+                    Support
+                </button>
+            )}
+
+            <SupportModal
+                open={supportOpen}
+                onClose={() => setSupportOpen(false)}
+                initialTab={supportTab}
+                user={user}
+            />
         </div>
     );
 }

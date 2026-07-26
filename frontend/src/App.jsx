@@ -68,6 +68,7 @@ const OrgCompete = lazyRetry(() => import('./pages/OrgCompete'), 'OrgCompete');
 const KnowledgeMap = lazyRetry(() => import('./pages/KnowledgeMap'), 'KnowledgeMap');
 const Pricing = lazyRetry(() => import('./pages/Pricing'), 'Pricing');
 const Upgrade = lazyRetry(() => import('./pages/Upgrade'), 'Upgrade');
+const LiveTutor = lazyRetry(() => import('./pages/LiveTutor'), 'LiveTutor');
 
 function PageLoader() {
   return (
@@ -172,6 +173,7 @@ export default function App() {
                 <Route path="reference" element={<ErrorBoundary><Reference /></ErrorBoundary>} />
                 <Route path="explains" element={<ErrorBoundary><Explains /></ErrorBoundary>} />
                 <Route path="explains/:slug" element={<ErrorBoundary><Explains /></ErrorBoundary>} />
+                <Route path="live-tutor" element={<ErrorBoundary><LiveTutor /></ErrorBoundary>} />
                 <Route path="profile" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
                 <Route path="org/setup" element={<ErrorBoundary><OrgSetup /></ErrorBoundary>} />
                 <Route path="org" element={<ErrorBoundary><OrgDashboard /></ErrorBoundary>} />

@@ -14,6 +14,7 @@ import {
     X,
     User,
     TrendingUp,
+    CalendarClock,
     Building2,
     Swords,
     BookOpen,
@@ -128,6 +129,7 @@ export default function Layout() {
             { icon: BookOpen, label: t('nav.reference', 'Reference'), path: '/dashboard/reference', desc: t('nav.reference.desc', 'Quick cheat sheets') },
             { icon: Lightbulb, label: t('nav.explains', 'Explains'), path: '/dashboard/explains', desc: t('nav.explains.desc', 'Visual concept essays') },
             { icon: Trophy, label: t('nav.community', 'Community'), path: '/dashboard/community', desc: t('nav.community.desc', 'Rankings & members') },
+            { icon: CalendarClock, label: t('nav.live_tutor', 'Live Tutor'), path: '/dashboard/live-tutor', desc: t('nav.live_tutor.desc', 'Book a 1-on-1 session') },
         ];
         if (activeOrg) {
             items.push({ icon: Swords, label: t('nav.compete', 'Compete'), path: '/dashboard/org-compete', desc: t('nav.compete.desc', 'Org challenges & leaderboard') });

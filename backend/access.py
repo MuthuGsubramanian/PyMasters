@@ -23,7 +23,11 @@ TRIAL_DAYS = 7
 # The day trial enforcement first shipped; do not backdate.
 FEATURE_EPOCH = datetime(2026, 7, 2)
 
-PAID_PLANS = {"beginner", "pro", "enterprise"}
+# "student" is the free 3-month plan granted through the homepage support flow
+# (student-ID verification). It is assigned-only — payments.py sells only the
+# plans in its own PLAN_PRICING — but for access purposes it behaves like any
+# other admin-assigned, time-boxed plan.
+PAID_PLANS = {"beginner", "pro", "enterprise", "student"}
 
 # Tracks reserved for organization/enterprise users (MSG, 2026-07-02):
 # cloud + enterprise-AI curriculum is a B2B differentiator, hidden from

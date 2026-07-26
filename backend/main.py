@@ -49,6 +49,9 @@ from routes.discovery import router as discovery_router
 from routes.payments import router as payments_router, ensure_payments_table
 from routes.telemetry import router as telemetry_router, ensure_telemetry_tables, record_login
 from routes.semantic import router as semantic_router
+from routes.support import router as support_router, ensure_support_tables
+from routes.tutor_sessions import router as tutor_sessions_router, ensure_tutor_session_tables
+from routes.platform_settings import router as platform_settings_router, ensure_platform_settings_table
 from auth import create_access_token, get_current_user_id, _current_token_version
 
 
@@ -657,7 +660,8 @@ def init_db():
         conn.commit()
         for _ensure in (ensure_social_tables, ensure_org_challenge_tables,
                         ensure_oauth_tables, ensure_payments_table,
-                        ensure_telemetry_tables):
+                        ensure_telemetry_tables, ensure_support_tables,
+                        ensure_tutor_session_tables, ensure_platform_settings_table):
             try:
                 _ensure(DB_PATH)
             except Exception as e:
@@ -812,6 +816,9 @@ app.include_router(oauth_router)
 app.include_router(github_oauth_router)
 app.include_router(discovery_router)
 app.include_router(payments_router)
+app.include_router(support_router)
+app.include_router(tutor_sessions_router)
+app.include_router(platform_settings_router)
 
 # --- CORS ---
 # NB: no "*" here. With allow_credentials=True, a wildcard makes Starlette echo
@@ -1101,6 +1108,14 @@ def register(user: UserRegister, request: Request = None):
 
         # Telemetry: first login = signup (background geo, fail-silent).
         record_login(user_id, request)
+
+        # Consume a super-admin-approved student-access request for this email
+        # (support flow): grants the 90-day student plan. Fail-silent.
+        try:
+            from routes.support import apply_approved_access_grant
+            apply_approved_access_grant(user_id, email)
+        except Exception as e:
+            print(f"[register] access-grant check failed: {e!r}")
 
         return {
             "id": user_id,

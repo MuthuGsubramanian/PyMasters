@@ -301,6 +301,28 @@ export const getPaymentConfig = () => api.get('/payments/config');
 export const createPaymentOrder = (plan) => api.post('/payments/create-order', { plan });
 export const verifyPayment = (payload) => api.post('/payments/verify', payload);
 
+// Support (public homepage entry points + super-admin review queue)
+export const submitAccessRequest = (formData) =>
+    api.post('/support/access-request', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+export const submitIssueReport = (data) => api.post('/support/issue', data);
+export const adminListSupportRequests = (params = {}) => api.get('/support/admin/requests', { params });
+export const adminGetSupportAttachment = (attachmentId) =>
+    api.get(`/support/admin/attachments/${attachmentId}`, { responseType: 'blob' });
+export const adminDecideSupportRequest = (requestId, action, note = '') =>
+    api.post(`/support/admin/requests/${requestId}/${action}`, { note });
+
+// Live tutor sessions
+export const createTutorSession = (data) => api.post('/tutor-sessions', data);
+export const getMyTutorSessions = () => api.get('/tutor-sessions/mine');
+export const cancelTutorSession = (sessionId) => api.post(`/tutor-sessions/${sessionId}/cancel`);
+export const adminListTutorSessions = (params = {}) => api.get('/tutor-sessions/admin/list', { params });
+export const adminSetTutorSessionStatus = (sessionId, status, note = '') =>
+    api.post(`/tutor-sessions/admin/${sessionId}/status`, { status, note });
+
+// Platform settings (super-admin)
+export const getNotificationEmails = () => api.get('/admin/settings/notification-emails');
+export const setNotificationEmails = (emails) => api.put('/admin/settings/notification-emails', { emails });
+
 // Telemetry (Super Admin analytics: presence, visits, ops activity, logins)
 export const trackVisit = (userId, path) =>
     api.post('/track/visit', { user_id: userId || null, path: path || '' }).catch(() => {});

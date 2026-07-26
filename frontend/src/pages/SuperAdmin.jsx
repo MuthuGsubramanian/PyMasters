@@ -9,6 +9,7 @@ import api, {
 import { safeErrorMsg } from '../utils/errorUtils';
 import UserAdminDrawer from '../components/UserAdminDrawer';
 import OrgAdminDrawer from '../components/OrgAdminDrawer';
+import { SupportAdminTab, SettingsAdminTab } from '../components/SupportAdminTab';
 import {
     Badge, Card, StatCard, Button, Tabs,
     Table, THead, TH, TBody, TR, TD,
@@ -17,11 +18,13 @@ import {
     Shield, Users, Building2, GraduationCap, Activity, Sparkles, TrendingUp,
     Search, Ban, CheckCircle2, Loader2, School, Briefcase, BookOpen, Lock,
     Radio, Globe2, Rocket, MapPin, Clapperboard, Send, RefreshCw,
+    LifeBuoy, Settings,
 } from 'lucide-react';
 
 // Matches the public pricing tiers (2026-07-02): Free 7-day trial,
 // Beginner ₹299/mo, Pro ₹999/mo, enterprise = custom org deals.
-const PLANS = ['free', 'beginner', 'pro', 'enterprise'];
+// student = free 3-month access granted via the homepage support flow.
+const PLANS = ['free', 'student', 'beginner', 'pro', 'enterprise'];
 
 const JOB_STATUS_STYLE = {
     pending: 'bg-amber-500/10 text-amber-600 border-amber-500/30',
@@ -444,7 +447,7 @@ export default function SuperAdmin() {
         );
     }
 
-    const TABS = [{ key: 'overview', label: 'Overview', icon: TrendingUp }, { key: 'users', label: 'Users', icon: Users }, { key: 'orgs', label: 'Organizations', icon: Building2 }, { key: 'social', label: 'Social Studio', icon: Clapperboard }, { key: 'admins', label: 'Admins', icon: Shield }, { key: 'audit', label: 'Audit', icon: Activity }];
+    const TABS = [{ key: 'overview', label: 'Overview', icon: TrendingUp }, { key: 'users', label: 'Users', icon: Users }, { key: 'orgs', label: 'Organizations', icon: Building2 }, { key: 'support', label: 'Support', icon: LifeBuoy }, { key: 'social', label: 'Social Studio', icon: Clapperboard }, { key: 'admins', label: 'Admins', icon: Shield }, { key: 'audit', label: 'Audit', icon: Activity }, { key: 'settings', label: 'Settings', icon: Settings }];
 
     return (
         <div className="space-y-5">
@@ -462,6 +465,12 @@ export default function SuperAdmin() {
 
             {/* SOCIAL STUDIO */}
             {tab === 'social' && <SocialStudioTab />}
+
+            {/* SUPPORT INBOX (access requests · issues · tutor sessions) */}
+            {tab === 'support' && <SupportAdminTab />}
+
+            {/* PLATFORM SETTINGS */}
+            {tab === 'settings' && <SettingsAdminTab />}
 
             {/* OVERVIEW */}
             {tab === 'overview' && (

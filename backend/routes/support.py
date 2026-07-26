@@ -13,8 +13,6 @@ the requester has no account yet, the approval is stored and consumed
 automatically when they register with the same email (hook in main.register).
 """
 
-import io
-import json
 import os
 import re
 import sqlite3
