@@ -10,7 +10,9 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { Avatar, Badge, Button } from './ui';
 
-const PLANS = ['free', 'pro', 'enterprise'];
+// Keep in sync with SuperAdmin.jsx PLANS: student = free 3-month access
+// granted via the homepage support flow (assigned-only, not purchasable).
+const PLANS = ['free', 'student', 'beginner', 'pro', 'enterprise'];
 const ROLES = ['member', 'manager', 'admin', 'super_admin'];
 
 function relTime(ts) {
