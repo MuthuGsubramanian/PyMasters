@@ -27,8 +27,25 @@ from pipeline.utils.logger import get_logger
 log = get_logger("pipeline.social_worker")
 
 API_BASE = os.getenv("PYMASTERS_API", "https://pymasters.net/api")
-TOKEN = os.getenv("SOCIAL_WORKER_TOKEN", "")
 PYTHON = sys.executable
+
+
+def _load_token() -> str:
+    """Env var first; else the token file in the user profile. The file
+    fallback exists because Windows Task Scheduler launches don't reliably
+    see User-scope env vars set after the session started."""
+    tok = os.getenv("SOCIAL_WORKER_TOKEN", "").strip()
+    if tok:
+        return tok
+    path = os.path.join(os.path.expanduser("~"), ".pymasters", "social_worker_token")
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+TOKEN = _load_token()
 
 
 def _headers():
@@ -82,8 +99,15 @@ def run_job(job: dict) -> dict:
         result["tts_engine"] = vid.get("tts_engine")
         video_meta = vid.get("metadata")
         if vid.get("short_path"):
-            # Upload iff enabled + credentials present; graceful otherwise.
-            if os.getenv("YOUTUBE_UPLOAD") == "1" and os.getenv("YOUTUBE_CLIENT_SECRETS_FILE"):
+            # Upload iff enabled + credentials present AND already authorized
+            # (token cache exists). Without the cache the uploader would drop
+            # into its INTERACTIVE OAuth flow and hang forever in this
+            # headless worker (observed live 2026-07-18).
+            token_cache = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), ".youtube_token.json")
+            if (os.getenv("YOUTUBE_UPLOAD") == "1"
+                    and os.getenv("YOUTUBE_CLIENT_SECRETS_FILE")
+                    and os.path.exists(token_cache)):
                 up = subprocess.run(
                     [PYTHON, "-m", "pipeline.video.upload_youtube", "--date", today],
                     capture_output=True, text=True, timeout=1800,
