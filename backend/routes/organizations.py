@@ -29,11 +29,18 @@ def _as_utc(dt):
     return dt.astimezone(timezone.utc)
 
 from auth import get_current_user_id
+from ratelimit import SlidingWindowRateLimiter
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 APP_BASE_URL = os.getenv("APP_BASE_URL", "https://pymasters.net")
 
 router = APIRouter(prefix="/api/org", tags=["organizations"])
+
+# Per-user cap on org creation. A legitimate user creates one org, occasionally
+# a few; this only sheds abuse (self-provisioning many orgs to spam invites or
+# farm entitlement). NOT a business/seat gate — the entitlement-vs-membership
+# policy is a separate, deliberate decision (see access.py org handling).
+_create_org_limiter = SlidingWindowRateLimiter(max_calls=5, window_seconds=3600)
 
 
 def _send_invite_emails(org_name: str, recipients: list, inviter: str = None):
@@ -172,6 +179,11 @@ def _ensure_org_schema(conn):
 def create_org(data: CreateOrgRequest, caller: str = Depends(get_current_user_id)):
     """Create a new organization. Creator becomes super_admin."""
     data.user_id = caller
+    if not _create_org_limiter.allow(caller):
+        wait = max(1, _create_org_limiter.retry_after(caller))
+        raise HTTPException(status_code=429,
+                            detail=f"Too many organizations created recently. Try again in {wait}s.",
+                            headers={"Retry-After": str(wait)})
     if not (data.name or "").strip():
         raise HTTPException(status_code=400, detail="Organization name is required.")
     org_id = str(uuid.uuid4())

@@ -215,11 +215,19 @@ class SignalData(BaseModel):
 # ---------------------------------------------------------------------------
 
 @router.post("/onboarding")
-def onboarding(data: OnboardingData):
+def onboarding(data: OnboardingData, caller: str = Depends(get_current_user_id)):
     """
-    Save onboarding questionnaire for a user.
+    Save onboarding questionnaire for the AUTHENTICATED user.
     Blocks 'hi' as preferred_language.
+
+    Identity comes from the verified JWT (`caller`); the body's `user_id` is
+    overwritten so a client can only ever write its OWN onboarding. Previously
+    this endpoint took no auth and trusted `data.user_id`, so an unauthenticated
+    caller could overwrite any user's onboarding fields / mark onboarding
+    complete by supplying their id (IDOR). Mirrors the `data.user_id = caller`
+    pattern used by create_org / join_org and the /onboarding/skip guard.
     """
+    data.user_id = caller
     if data.preferred_language.lower() in BLOCKED_LANGUAGES:
         raise HTTPException(
             status_code=400,
@@ -248,11 +256,21 @@ def onboarding(data: OnboardingData):
 
 
 @router.post("/onboarding/org")
-def org_onboarding(data: OrgOnboardingData):
+def org_onboarding(data: OrgOnboardingData, caller: str = Depends(get_current_user_id)):
     """
-    Save org-focused onboarding for an organization admin.
+    Save org-focused onboarding for the AUTHENTICATED organization admin.
     Stores org profile data and marks the admin's onboarding as complete.
+
+    Identity comes from the verified JWT (`caller`); the body's `user_id` is
+    overwritten. Previously this endpoint took no auth and trusted
+    `data.user_id`, so an unauthenticated caller who supplied an org admin's id
+    could overwrite that ORGANIZATION's org_profiles (size/focus/skill/etc.) and
+    flip onboarding/preferred_language on any user row — cross-org tampering with
+    no auth. The org-profile write stays admin-gated below (the caller must be a
+    super_admin/admin of the org whose profile is written), now keyed off the
+    verified caller rather than a spoofable body field.
     """
+    data.user_id = caller
     if data.preferred_language.lower() in BLOCKED_LANGUAGES:
         raise HTTPException(
             status_code=400,
