@@ -7,7 +7,7 @@ import {
     adminListSupportRequests, adminGetSupportAttachment, adminDecideSupportRequest,
     adminListTutorSessions, adminSetTutorSessionStatus,
     getNotificationEmails, setNotificationEmails,
-    adminListOrgRequests, adminApproveOrgRequest, adminRejectOrgRequest,
+    adminListOrgRequests, adminApproveOrgRequest, adminRejectOrgRequest, adminDismissOrgRequest,
 } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import { Badge, Button, Card, Input, Tabs } from './ui';
@@ -257,6 +257,15 @@ function OrgRequestsList() {
         finally { setBusy(null); }
     };
 
+    // Remove a HANDLED (approved/rejected) request from the queue. Grants stay;
+    // this only clears the row (e.g. an orphan whose org was deleted).
+    const dismiss = async (r) => {
+        setBusy(r.id); setErr('');
+        try { await adminDismissOrgRequest(r.id); load(); }
+        catch (e) { setErr(safeErrorMsg(e, 'Could not dismiss')); }
+        finally { setBusy(null); }
+    };
+
     if (rows === null) return <div className="flex justify-center py-10"><Loader2 className="animate-spin text-accent-primary" size={20} /></div>;
     return (
         <div className="space-y-2">
@@ -291,6 +300,16 @@ function OrgRequestsList() {
                                 className="border-red-200 text-red-500 hover:bg-red-50">
                                 <XCircle size={12} aria-hidden="true" /> Reject
                             </Button>
+                        </div>
+                    )}
+                    {r.status !== 'pending' && (
+                        <div className="pt-1">
+                            <button disabled={busy === r.id} onClick={() => dismiss(r)}
+                                title="Remove this handled request from the queue"
+                                className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-red-500 disabled:opacity-40 transition-colors">
+                                {busy === r.id ? <Loader2 size={11} className="animate-spin" aria-hidden="true" /> : <Trash2 size={11} aria-hidden="true" />}
+                                Dismiss
+                            </button>
                         </div>
                     )}
                 </div>

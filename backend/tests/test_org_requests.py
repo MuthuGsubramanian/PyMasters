@@ -144,6 +144,25 @@ def test_admin_endpoints_require_super_admin(client):
     assert client.get("/api/admin/org-requests", headers=_auth(owner)).status_code == 403
 
 
+def test_dismiss_handled_request(client):
+    owner, org_id = _new_org(client)
+    client.post(f"/api/org/{org_id}/requests", json={"kind": "plan", "plan": "pro"}, headers=_auth(owner))
+    admin = _register(client)
+    _make_super_admin(admin["id"])
+    rid = client.get("/api/admin/org-requests", headers=_auth(admin)).json()["requests"][0]["id"]
+    # Can't dismiss while pending
+    assert client.delete(f"/api/admin/org-requests/{rid}", headers=_auth(admin)).status_code == 409
+    # Non-admin can't dismiss
+    assert client.delete(f"/api/admin/org-requests/{rid}", headers=_auth(owner)).status_code == 403
+    # Reject, then dismiss removes it from the queue
+    client.post(f"/api/admin/org-requests/{rid}/reject", headers=_auth(admin))
+    d = client.delete(f"/api/admin/org-requests/{rid}", headers=_auth(admin))
+    assert d.status_code == 200 and d.json()["dismissed"] == rid
+    assert client.get("/api/admin/org-requests", headers=_auth(admin)).json()["total"] == 0
+    # Dismissing a missing row -> 404
+    assert client.delete(f"/api/admin/org-requests/{rid}", headers=_auth(admin)).status_code == 404
+
+
 def test_invalid_kind_and_plan_rejected(client):
     owner, org_id = _new_org(client)
     assert client.post(f"/api/org/{org_id}/requests", json={"kind": "nonsense"},

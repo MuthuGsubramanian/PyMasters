@@ -334,3 +334,30 @@ def admin_reject_request(request_id: str, req: DecisionRequest = None,
     except Exception as e:
         print(f"[org_requests] reject email failed: {e!r}")
     return {"ok": True, "status": "rejected"}
+
+
+@router.delete("/api/admin/org-requests/{request_id}")
+def admin_delete_request(request_id: str, caller: str = Depends(get_current_user_id)):
+    """Dismiss (permanently remove) a HANDLED request row from the queue. Only
+    approved/rejected requests can be dismissed — a pending request must be
+    decided first, never silently dropped. Grants already applied by an approval
+    are untouched; this just clears the queue entry (e.g. an orphan whose org was
+    later deleted). Super-admin only, audited."""
+    from routes.admin import require_super_admin, _audit
+    require_super_admin(caller)
+    conn = _conn()
+    try:
+        row = conn.execute("SELECT status, org_id FROM org_admin_requests WHERE id = ?",
+                           [request_id]).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Request not found")
+        if row["status"] == "pending":
+            raise HTTPException(status_code=409,
+                                detail="Decide a pending request (approve/reject) before dismissing it.")
+        conn.execute("DELETE FROM org_admin_requests WHERE id = ?", [request_id])
+        _audit(conn, caller, "org_request.dismiss", "org_request", request_id,
+               {"was_status": row["status"], "org_id": row["org_id"]})
+        conn.commit()
+    finally:
+        conn.close()
+    return {"ok": True, "dismissed": request_id}

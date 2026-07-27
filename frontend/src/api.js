@@ -329,6 +329,7 @@ export const getOrgRequests = (orgId) => api.get(`/org/${orgId}/requests`);
 export const adminListOrgRequests = (status = '') => api.get('/admin/org-requests', { params: { status: status || undefined } });
 export const adminApproveOrgRequest = (requestId, data = {}) => api.post(`/admin/org-requests/${requestId}/approve`, data);
 export const adminRejectOrgRequest = (requestId, note = '') => api.post(`/admin/org-requests/${requestId}/reject`, { note });
+export const adminDismissOrgRequest = (requestId) => api.delete(`/admin/org-requests/${requestId}`);
 
 // Platform settings (super-admin)
 export const getNotificationEmails = () => api.get('/admin/settings/notification-emails');
