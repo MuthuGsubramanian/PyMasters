@@ -1,7 +1,7 @@
 ## Innovation Backlog
 
 *Auto-maintained by the PyMasters AI Intelligence Pipeline.*
-*Last updated: 2026-07-26*
+*Last updated: 2026-07-27*
 
 ### Ready to Build (scored >= 8, validated)
 
@@ -31,6 +31,7 @@
 - **Open-weight AI is having its Kubernetes moment** (score: 7, source: hackernews, added: 2026-07-26) — Open-weight ecosystem overview fits a PyMasters lesson and validates Homie's local-LLM positioning for marketing content [link](https://tobi.knaup.me/2026-07-25-open-weight-ai-is-having-its-kubernetes-moment/)
 - **Becoming a Research Engineer at a Big LLM Lab** (score: 7, source: hackernews, added: 2026-07-26) — Career-path content: adapt into a PyMasters guide on becoming an ML/research engineer [link](https://www.maxmynter.com/pages/blog/jobhunt)
 - **Bringing PyTorch Monarch to AMD GPUs** (score: 7, source: hackernews, added: 2026-07-26) — Tutorial on distributed PyTorch (Monarch) and the AMD GPU ecosystem for advanced learners [link](https://pytorch.org/blog/bringing-pytorch-monarch-to-amd-gpus-single-controller-distributed-training-on-rocm/)
+- **Attestable/scam-detection-corpus** (score: 7, source: huggingface, added: 2026-07-27) — Text-classification tutorial (train a scam detector); privacy-first local scam/phishing-detection plugin is a natural Homie feature [link](https://huggingface.co/datasets/Attestable/scam-detection-corpus)
 
 ### Evaluating (scored >= 6)
 
@@ -38,6 +39,8 @@
 - **open-llm-leaderboard/open_llm_leaderboard** (score: 6, source: huggingface, added: 2026-07-26) — Article/lesson on how to read LLM benchmarks and choose a model for your use case [link](https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard)
 - **black-forest-labs/FLUX.1-dev** (score: 6, source: huggingface, added: 2026-07-26) — Diffusion-model tutorial using FLUX.1-dev with the diffusers library [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev)
 - **black-forest-labs/FLUX.1-schnell** (score: 6, source: huggingface, added: 2026-07-26) — Fast 4-step image generation tutorial; borderline feasible as an optional Homie image-gen plugin on GPU machines [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-schnell)
+- **lmarena-ai/arena-leaderboard** (score: 6, source: huggingface, added: 2026-07-27) — Content on human-preference evals (Arena Elo) vs static benchmarks â€” good explainer/blog topic [link](https://huggingface.co/spaces/lmarena-ai/arena-leaderboard)
+- **Wattage: A token-spend profiler and cost-regression gate for AI agents** (score: 6, source: hackernews, added: 2026-07-27) — Tutorial on profiling token spend in agent pipelines; Homie could adopt similar cost/token tracking for local-vs-cloud model calls [link](https://github.com/faizannraza/wattage)
 
 ### Discovered (new)
 
