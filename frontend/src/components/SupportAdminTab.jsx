@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
     GraduationCap, Bug, CalendarClock, Loader2, RefreshCw, Eye,
-    CheckCircle2, XCircle, Check, Mail, Plus, Trash2, Save,
+    CheckCircle2, XCircle, Check, Mail, Plus, Trash2, Save, Building2,
 } from 'lucide-react';
 import {
     adminListSupportRequests, adminGetSupportAttachment, adminDecideSupportRequest,
     adminListTutorSessions, adminSetTutorSessionStatus,
     getNotificationEmails, setNotificationEmails,
+    adminListOrgRequests, adminApproveOrgRequest, adminRejectOrgRequest,
 } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import { Badge, Button, Card, Input, Tabs } from './ui';
@@ -221,13 +222,91 @@ function TutorSessionsList() {
     );
 }
 
-/** Support inbox: student access requests, issue reports, tutor sessions. */
+function orgReqSummary(r) {
+    if (r.kind === 'plan') return `Plan: ${r.payload?.plan || '?'}`;
+    if (r.kind === 'seats') return `${r.payload?.seats || '?'} seats`;
+    return r.kind;
+}
+
+function OrgRequestsList() {
+    const [rows, setRows] = useState(null);
+    const [busy, setBusy] = useState(null);
+    const [err, setErr] = useState('');
+    const load = useCallback(() => {
+        adminListOrgRequests().then((r) => setRows(r.data.requests || [])).catch((e) => { setRows([]); setErr(safeErrorMsg(e, 'Failed to load')); });
+    }, []);
+    useEffect(() => { load(); }, [load]);
+
+    const decide = async (r, approve) => {
+        let note = '';
+        if (!approve) {
+            const raw = window.prompt('Optional note to the org (emailed to the requester):', '');
+            if (raw === null) return;
+            note = raw.trim();
+        } else {
+            const raw = window.prompt(`Approve "${orgReqSummary(r)}" for ${r.org_name}? Optional note for the email:`, '');
+            if (raw === null) return;
+            note = raw.trim();
+        }
+        setBusy(r.id); setErr('');
+        try {
+            if (approve) await adminApproveOrgRequest(r.id, { note });
+            else await adminRejectOrgRequest(r.id, note);
+            load();
+        } catch (e) { setErr(safeErrorMsg(e, 'Action failed')); }
+        finally { setBusy(null); }
+    };
+
+    if (rows === null) return <div className="flex justify-center py-10"><Loader2 className="animate-spin text-accent-primary" size={20} /></div>;
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between">
+                <p className="text-xs text-text-muted">{rows.length} requests</p>
+                <button onClick={load} title="Refresh" className="p-1.5 rounded-lg text-text-muted hover:text-text-secondary hover:bg-bg-elevated transition-colors">
+                    <RefreshCw size={13} aria-hidden="true" />
+                </button>
+            </div>
+            {err && <p className="text-xs text-red-500" role="alert">{err}</p>}
+            {rows.length === 0 ? (
+                <p className="text-sm text-text-muted text-center py-8">No organization requests yet.</p>
+            ) : rows.map((r) => (
+                <div key={r.id} className="rounded-xl border border-border-default bg-bg-elevated/50 p-3.5 space-y-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Building2 size={14} className="text-accent-primary shrink-0" aria-hidden="true" />
+                        <span className="text-sm font-semibold text-text-primary">{r.org_name || 'Unknown org'}</span>
+                        <Badge variant={r.status === 'pending' ? 'warning' : r.status === 'approved' ? 'success' : 'danger'}>{r.status}</Badge>
+                        <span className="text-xs text-text-muted">{orgReqSummary(r)}</span>
+                        <span className="ml-auto text-[10px] text-text-muted">{rel(r.created_at)}</span>
+                    </div>
+                    {r.requester && <p className="text-[11px] text-text-muted">by {r.requester}</p>}
+                    {r.message && <p className="text-xs text-text-secondary whitespace-pre-wrap">{r.message}</p>}
+                    {r.admin_note && <p className="text-[11px] text-text-muted italic">Note: {r.admin_note}</p>}
+                    {r.status === 'pending' && (
+                        <div className="flex items-center gap-2 pt-1">
+                            <Button variant="primary" size="sm" disabled={busy === r.id} onClick={() => decide(r, true)}>
+                                {busy === r.id ? <Loader2 size={12} className="animate-spin" aria-hidden="true" /> : <CheckCircle2 size={12} aria-hidden="true" />}
+                                Approve & grant
+                            </Button>
+                            <Button variant="outline" size="sm" disabled={busy === r.id} onClick={() => decide(r, false)}
+                                className="border-red-200 text-red-500 hover:bg-red-50">
+                                <XCircle size={12} aria-hidden="true" /> Reject
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
+
+/** Support inbox: student access requests, issue reports, tutor sessions, org requests. */
 export function SupportAdminTab() {
     const [sub, setSub] = useState('access');
     const SUBS = [
         { key: 'access', label: 'Access Requests', icon: GraduationCap },
         { key: 'issues', label: 'Issues', icon: Bug },
         { key: 'tutoring', label: 'Tutor Sessions', icon: CalendarClock },
+        { key: 'org_requests', label: 'Org Requests', icon: Building2 },
     ];
     return (
         <div className="space-y-4">
@@ -235,6 +314,7 @@ export function SupportAdminTab() {
             {sub === 'access' && <RequestsList kind="access" />}
             {sub === 'issues' && <RequestsList kind="issue" />}
             {sub === 'tutoring' && <TutorSessionsList />}
+            {sub === 'org_requests' && <OrgRequestsList />}
         </div>
     );
 }

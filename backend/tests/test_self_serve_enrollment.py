@@ -1,18 +1,20 @@
 """
-test_self_serve_enrollment.py — locks the "self-sustained onboarding" contracts.
+test_self_serve_enrollment.py — self-sustained onboarding contracts.
 
-The portal must onboard new individuals and new organizations with ZERO
-super-admin intervention (MSG, 2026-07-05). These tests pin the invariants that
-make that true so a future refactor can't silently reintroduce a manual step:
+Onboarding stays hands-off for CREATION (no allowlist, no approval to sign up or
+start an org), but ENTITLEMENT is request-gated as of 2026-07-27 (supersedes the
+2026-07-05 "org member is auto-exempt" rule): a self-created org gets no free
+product access until the platform admin grants a plan. These tests pin:
 
-  1. Any authenticated user can self-create an organization and becomes its
-     super_admin (no allowlist, no admin approval).
-  2. An org member seated via the invite→join flow gets full learning access
-     immediately, with NO assigned plan (reason == "organization").
-  3. account_type=="organization" accounts are access-exempt on their own.
+  1. Any authenticated user can still self-create an organization and becomes its
+     super_admin (no allowlist, no admin approval to CREATE).
+  2. A member of a self-created org (not grandfathered, no plan) is NOT
+     auto-entitled — they fall to the individual trial until a plan is granted.
+  3. account_type=="organization" alone does not grant access.
   4. A brand-new individual is on trial (self-serve), not locked out.
 
-If any of these break, onboarding is no longer hands-off — fail the deploy.
+If any of these break, either onboarding is no longer hands-off, or the
+request-gated entitlement boundary has regressed — fail the deploy.
 """
 import os
 import sqlite3
@@ -91,11 +93,15 @@ def test_any_user_can_self_create_org_as_super_admin(db):
     )
     assert res["role"] == "super_admin"
     assert res["name"] == "Acme University"
-    # Self-creating an org grants org-level access with no assigned plan.
-    assert get_access_status(db, "founder")["reason"] == "organization"
+    # Creation stays hands-off, but a fresh (non-grandfathered, no-plan) org does
+    # NOT auto-entitle: the founder falls to the individual trial until the
+    # platform admin grants a plan (request-gated, 2026-07-27).
+    s = get_access_status(db, "founder")
+    assert s.get("reason") not in ("organization_grandfathered", "organization_plan")
+    assert s["status"] == "trial"
 
 
-def test_invited_member_gets_org_access_without_a_plan(db):
+def test_invited_member_of_new_org_is_not_auto_entitled(db):
     _add_user(db, "founder")
     org = create_org(CreateOrgRequest(name="Acme", user_id="x"), caller="founder")
     _add_user(db, "learner")
@@ -105,13 +111,28 @@ def test_invited_member_gets_org_access_without_a_plan(db):
     )
     joined = join_org(inv["token"], JoinOrgRequest(user_id="x"), caller="learner")
     assert joined["joined"] is True
+    # No plan on the org → the invited member is on trial, not org-entitled.
     s = get_access_status(db, "learner")
-    assert s["status"] == "active" and s["reason"] == "organization"
+    assert s.get("reason") not in ("organization_grandfathered", "organization_plan")
+    assert s["status"] == "trial"
 
 
-def test_organization_account_type_is_exempt(db):
+def test_org_gets_access_once_plan_granted(db):
+    _add_user(db, "founder")
+    org = create_org(CreateOrgRequest(name="Acme", user_id="x"), caller="founder")
+    # Platform admin grants a plan (simulating an approved request / admin action).
+    conn = sqlite3.connect(db)
+    conn.execute("UPDATE organizations SET plan = 'pro' WHERE id = ?", [org["id"]])
+    conn.commit(); conn.close()
+    s = get_access_status(db, "founder")
+    assert s["status"] == "active" and s["reason"] == "organization_plan" and s["plan"] == "pro"
+
+
+def test_organization_account_type_alone_is_not_exempt(db):
+    # An organization-typed account with no org membership and no plan is on
+    # trial — account_type by itself no longer grants access.
     _add_user(db, "orgacct", account_type="organization")
-    assert get_access_status(db, "orgacct")["reason"] == "organization"
+    assert get_access_status(db, "orgacct")["status"] == "trial"
 
 
 def test_new_individual_is_on_self_serve_trial(db):

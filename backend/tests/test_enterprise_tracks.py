@@ -29,6 +29,8 @@ def db(tmp_path):
         )
     """)
     conn.execute("CREATE TABLE org_members (org_id TEXT, user_id TEXT, role TEXT)")
+    conn.execute("CREATE TABLE organizations (id TEXT PRIMARY KEY, name TEXT, "
+                 "plan TEXT DEFAULT 'free', plan_expires_at TEXT, grandfathered INTEGER DEFAULT 0)")
     conn.commit()
     conn.close()
     return path
@@ -47,6 +49,8 @@ def db_full(tmp_path):
         )
     """)
     conn.execute("CREATE TABLE org_members (org_id TEXT, user_id TEXT, role TEXT)")
+    conn.execute("CREATE TABLE organizations (id TEXT PRIMARY KEY, name TEXT, "
+                 "plan TEXT DEFAULT 'free', plan_expires_at TEXT, grandfathered INTEGER DEFAULT 0)")
     conn.commit()
     conn.close()
     return path
@@ -65,8 +69,10 @@ def _add_user(db, uid, plan="free", plan_expires_at=None,
     conn.close()
 
 
-def _add_org_member(db, uid, org_id="org1"):
+def _add_org_member(db, uid, org_id="org1", grandfathered=0, plan="free", plan_expires_at=None):
     conn = sqlite3.connect(db)
+    conn.execute("INSERT OR IGNORE INTO organizations (id, name, plan, plan_expires_at, grandfathered) "
+                 "VALUES (?, ?, ?, ?, ?)", [org_id, org_id, plan, plan_expires_at, grandfathered])
     conn.execute("INSERT INTO org_members (org_id, user_id, role) VALUES (?, ?, 'member')",
                  [org_id, uid])
     conn.commit()
@@ -108,15 +114,34 @@ def test_expired_enterprise_plan_denied(db):
     assert has_enterprise_access(db, "u1") is False
 
 
-def test_org_member_allowed(db):
+# Request-gated policy (2026-07-27, supersedes 2026-07-02 "any org member"):
+# enterprise TRACKS require a grandfathered org OR an org on the enterprise plan.
+# A self-created org (not grandfathered, no/other plan) does NOT unlock them.
+
+def test_grandfathered_org_member_allowed(db):
     _add_user(db, "u1")
-    _add_org_member(db, "u1")
+    _add_org_member(db, "u1", grandfathered=1)
     assert has_enterprise_access(db, "u1") is True
 
 
-def test_organization_account_allowed(db):
-    _add_user(db, "u1", account_type="organization")
+def test_org_member_enterprise_plan_allowed(db):
+    _add_user(db, "u1")
+    _add_org_member(db, "u1", grandfathered=0, plan="enterprise")
     assert has_enterprise_access(db, "u1") is True
+
+
+def test_org_member_no_plan_denied(db):
+    # Self-created org, not grandfathered, no plan → no enterprise tracks.
+    _add_user(db, "u1")
+    _add_org_member(db, "u1", grandfathered=0, plan="free")
+    assert has_enterprise_access(db, "u1") is False
+
+
+def test_org_member_pro_plan_denied(db):
+    # Pro does not include enterprise tracks even at the org level.
+    _add_user(db, "u1")
+    _add_org_member(db, "u1", grandfathered=0, plan="pro")
+    assert has_enterprise_access(db, "u1") is False
 
 
 def test_super_admin_allowed(db):

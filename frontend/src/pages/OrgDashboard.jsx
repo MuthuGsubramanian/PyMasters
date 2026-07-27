@@ -7,6 +7,7 @@ import {
   getOrgGroups, updateOrg
 } from '../api';
 import StudentDrawer from '../components/StudentDrawer';
+import OrgRequestsPanel from '../components/OrgRequestsPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { safeErrorMsg } from '../utils/errorUtils';
 import {
@@ -17,7 +18,7 @@ import {
   Building2, Users, Mail, Send, Copy, Shield, Crown,
   UserX, BarChart3, TrendingUp, Trophy, Zap, Search,
   Plus, ChevronDown, ExternalLink, Check, AlertTriangle,
-  Upload, Rocket, X, Loader2, GraduationCap, Activity
+  Upload, Rocket, X, Loader2, GraduationCap, Activity, Inbox
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -29,6 +30,7 @@ const TABS = [
   { key: 'students', label: 'Students', icon: GraduationCap },
   { key: 'invites', label: 'Invites', icon: Mail },
   { key: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { key: 'requests', label: 'Requests', icon: Inbox },
 ];
 
 /* Relative time from a UTC-ish timestamp string (SQLite "YYYY-MM-DD HH:MM:SS" or ISO). */
@@ -404,6 +406,8 @@ export default function OrgDashboard() {
 
   /* ---- Derived (safe) ---- */
   const userId = user?.id || null;
+  // Component-scope org id (callbacks compute their own; this is for render).
+  const orgId = getOrgId(activeOrg);
 
   // Always-safe members array
   const safeMembers = Array.isArray(members) ? members : [];
@@ -754,6 +758,8 @@ export default function OrgDashboard() {
           if (t.key === 'analytics' && !canViewProgress) return false;
           if (t.key === 'invites' && !isAdmin) return false;
           if (t.key === 'students' && !canViewProgress) return false;
+          // Product-level requests (plan/enterprise/seats) are the org owner's call.
+          if (t.key === 'requests' && myRole !== 'super_admin') return false;
           return true;
         })}
         active={tab}
@@ -1304,6 +1310,10 @@ export default function OrgDashboard() {
                 </Card>
               )}
             </div>
+          )}
+
+          {tab === 'requests' && myRole === 'super_admin' && (
+            <OrgRequestsPanel orgId={orgId} />
           )}
         </motion.div>
       </AnimatePresence>

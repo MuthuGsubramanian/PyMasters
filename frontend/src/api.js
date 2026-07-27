@@ -319,6 +319,17 @@ export const adminListTutorSessions = (params = {}) => api.get('/tutor-sessions/
 export const adminSetTutorSessionStatus = (sessionId, status, note = '') =>
     api.post(`/tutor-sessions/admin/${sessionId}/status`, { status, note });
 
+// Org audit trail
+export const getOrgAuditLog = (orgId) => api.get(`/org/${orgId}/audit`);          // org super_admin (own org)
+export const adminGetOrgAudit = (orgId) => api.get(`/admin/orgs/${orgId}/audit`); // platform super admin
+
+// Org capability requests (org super_admin files; platform admin reviews)
+export const createOrgRequest = (orgId, data) => api.post(`/org/${orgId}/requests`, data);
+export const getOrgRequests = (orgId) => api.get(`/org/${orgId}/requests`);
+export const adminListOrgRequests = (status = '') => api.get('/admin/org-requests', { params: { status: status || undefined } });
+export const adminApproveOrgRequest = (requestId, data = {}) => api.post(`/admin/org-requests/${requestId}/approve`, data);
+export const adminRejectOrgRequest = (requestId, note = '') => api.post(`/admin/org-requests/${requestId}/reject`, { note });
+
 // Platform settings (super-admin)
 export const getNotificationEmails = () => api.get('/admin/settings/notification-emails');
 export const setNotificationEmails = (emails) => api.put('/admin/settings/notification-emails', { emails });

@@ -54,9 +54,15 @@ def has_enterprise_access(db_path: str, user_id: str | None) -> bool:
         return False
     status = get_access_status(db_path, user_id)
     reason = status.get("reason", "")
-    if reason in ("super_admin", "organization"):
+    # Super admins and grandfathered orgs keep the enterprise catalog. For any
+    # other entitlement, enterprise tracks require an actual 'enterprise' plan —
+    # a self-created org (or a pro/beginner plan) does NOT unlock them. The
+    # degraded fallback withholds enterprise by omission (fail-safe).
+    if reason in ("super_admin", "organization_grandfathered"):
         return True
-    return reason == "assigned_plan" and status.get("plan") == "enterprise"
+    if reason in ("organization_plan", "assigned_plan") and status.get("plan") == "enterprise":
+        return True
+    return False
 
 
 def _break_glass_idents() -> set:
@@ -108,9 +114,48 @@ def get_access_status(db_path: str, user_id: str) -> dict:
             conn.close()
             return {"status": "active", "plan": "free", "reason": "unknown_user"}
 
-        is_org_member = conn.execute(
-            "SELECT 1 FROM org_members WHERE user_id = ? LIMIT 1", [user_id]
-        ).fetchone() is not None
+        # Org entitlement (request-gated policy, 2026-07-27, supersedes the
+        # 2026-07-02 "any org member is entitled" rule). Bare org_members
+        # membership no longer grants access — a self-created org must be granted
+        # a plan by the platform admin. Entitlement now comes from the member's
+        # org(s): grandfathered orgs (every org that existed at migration time)
+        # keep full access forever; otherwise the org needs an unexpired PAID
+        # plan, and enterprise TRACKS additionally require that plan to be
+        # 'enterprise'. Result: ("grandfathered",None) | ("plan",best) |
+        # ("degraded",None) | None (member but not entitled → falls to trial).
+        org_entitlement = None
+        try:
+            org_rows = conn.execute(
+                "SELECT COALESCE(o.grandfathered,0) AS g, COALESCE(o.plan,'free') AS plan, "
+                "o.plan_expires_at AS exp FROM org_members om "
+                "JOIN organizations o ON o.id = om.org_id WHERE om.user_id = ?",
+                [user_id],
+            ).fetchall()
+            if org_rows:
+                if any(int(r["g"] or 0) == 1 for r in org_rows):
+                    org_entitlement = ("grandfathered", None)
+                else:
+                    best = None
+                    for r in org_rows:
+                        p = r["plan"]
+                        if p in PAID_PLANS:
+                            exp = _parse_dt(r["exp"])
+                            if exp is None or exp > datetime.utcnow():
+                                if p == "enterprise":
+                                    best = "enterprise"
+                                    break
+                                best = best or p
+                    if best:
+                        org_entitlement = ("plan", best)
+        except Exception:
+            # organizations table/columns absent (lagging replica or a minimal
+            # test fixture). Fail OPEN for basic access — an org member keeps
+            # learning — but withhold enterprise on this degraded path.
+            m = conn.execute(
+                "SELECT 1 FROM org_members WHERE user_id = ? LIMIT 1", [user_id]
+            ).fetchone()
+            if m:
+                org_entitlement = ("degraded", None)
 
         # Break-glass identity (nested try: some test fixtures create a users
         # table without username/email — behave exactly as before for them).
@@ -134,8 +179,18 @@ def get_access_status(db_path: str, user_id: str) -> dict:
     if int(u["is_super_admin"] or 0) == 1 or (idents & _break_glass_idents()):
         return {"status": "active", "plan": u["plan"], "reason": "super_admin"}
 
-    if is_org_member or u["account_type"] != "individual":
-        return {"status": "active", "plan": u["plan"], "reason": "organization"}
+    # Org-derived entitlement (see the org_entitlement computation above).
+    if org_entitlement is not None:
+        kind, org_plan = org_entitlement
+        if kind == "grandfathered":
+            return {"status": "active", "plan": u["plan"], "reason": "organization_grandfathered"}
+        if kind == "plan":
+            return {"status": "active", "plan": org_plan, "reason": "organization_plan"}
+        if kind == "degraded":
+            return {"status": "active", "plan": u["plan"], "reason": "organization_degraded"}
+    # NOTE: an org member with no entitlement (self-created org, no plan) is NOT
+    # granted here — they fall through to the individual trial/assigned-plan
+    # rules below until the platform admin approves a plan for their org.
 
     # Super-admin-assigned paid plan (optionally time-boxed).
     if u["plan"] in PAID_PLANS:

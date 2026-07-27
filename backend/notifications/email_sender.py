@@ -205,6 +205,44 @@ def build_tutor_status_email(name: str, topic: str, preferred_at: str, status: s
     return text, html
 
 
+def build_org_request_email(org_name: str, summary: str, message: str) -> tuple:
+    """Owner notification for a new org capability request. Returns (text, html)."""
+    admin_link = f"{APP_BASE_URL}/dashboard/admin"
+    text = (
+        f"New organization request on PyMasters.\n\n"
+        f"Org: {org_name}\nRequest: {summary}\n"
+        f"{('Message: ' + message + chr(10)) if message else ''}\n"
+        f"Review in the Super Admin console: {admin_link}\n\n— PyMasters"
+    )
+    html = _admin_card(
+        "Organization requests", "New request",
+        [("Org", org_name), ("Request", summary), ("Message", message or "-")],
+        f'Review and act in the <a href="{admin_link}" style="color:#7c3aed;">Super Admin console</a>.',
+    )
+    return text, html
+
+
+def build_org_request_decision_email(approved: bool, note: str, granted: dict) -> tuple:
+    """Requester-facing outcome of an org capability request. Returns (text, html)."""
+    if approved:
+        detail = ""
+        if granted.get("plan"):
+            detail = f"Your organization is now on the {granted['plan']} plan"
+            if granted.get("expires_at"):
+                detail += f" until {str(granted['expires_at'])[:10]}"
+            detail += "."
+        body = "Your organization request has been approved. " + detail
+    else:
+        body = "We couldn't approve your organization request this time."
+    text = f"Vanakkam!\n\n{body}\n{('Note from the team: ' + note + chr(10)) if note else ''}\n— PyMasters"
+    html = _admin_card(
+        "Organization requests",
+        "Request approved 🎉" if approved else "Request update",
+        [("", body), ("Note", note)],
+    )
+    return text, html
+
+
 def build_invite_email(org_name: str, role: str, invite_link: str, inviter: str = None) -> tuple:
     """Build email content for an organization invite. Returns (text, html)."""
     who = f"{inviter} has invited you" if inviter else "You've been invited"

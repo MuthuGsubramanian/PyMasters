@@ -49,6 +49,8 @@ from routes.discovery import router as discovery_router
 from routes.payments import router as payments_router, ensure_payments_table
 from routes.telemetry import router as telemetry_router, ensure_telemetry_tables, record_login
 from routes.semantic import router as semantic_router
+from routes.organizations import ensure_org_audit_table, ensure_org_entitlement_schema
+from routes.org_requests import router as org_requests_router, ensure_org_requests_table
 from routes.support import router as support_router, ensure_support_tables
 from routes.tutor_sessions import router as tutor_sessions_router, ensure_tutor_session_tables
 from routes.platform_settings import router as platform_settings_router, ensure_platform_settings_table
@@ -661,7 +663,9 @@ def init_db():
         for _ensure in (ensure_social_tables, ensure_org_challenge_tables,
                         ensure_oauth_tables, ensure_payments_table,
                         ensure_telemetry_tables, ensure_support_tables,
-                        ensure_tutor_session_tables, ensure_platform_settings_table):
+                        ensure_tutor_session_tables, ensure_platform_settings_table,
+                        ensure_org_audit_table, ensure_org_requests_table,
+                        ensure_org_entitlement_schema):
             try:
                 _ensure(DB_PATH)
             except Exception as e:
@@ -819,6 +823,7 @@ app.include_router(payments_router)
 app.include_router(support_router)
 app.include_router(tutor_sessions_router)
 app.include_router(platform_settings_router)
+app.include_router(org_requests_router)
 
 # --- CORS ---
 # NB: no "*" here. With allow_credentials=True, a wildcard makes Starlette echo

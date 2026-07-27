@@ -74,6 +74,49 @@ def _org_name(conn, org_id: str) -> str:
     row = conn.execute("SELECT name FROM organizations WHERE id = ?", [org_id]).fetchone()
     return row[0] if row else "your organization"
 
+
+def ensure_org_audit_table(db_path: str = None):
+    """Per-organization audit trail. Distinct from admin_audit (which records
+    PLATFORM-super-admin actions): this captures what org admins do INSIDE their
+    own org (role changes, invites, removals, deletes), which was previously
+    unrecorded anywhere. Read by org super_admins (own org) and the platform
+    console (any org)."""
+    conn = sqlite3.connect(db_path or DB_PATH)
+    try:
+        conn.execute("""CREATE TABLE IF NOT EXISTS org_audit (
+            id TEXT PRIMARY KEY,
+            org_id TEXT NOT NULL,
+            actor_id TEXT,
+            actor_name TEXT,
+            action TEXT NOT NULL,
+            target_type TEXT,
+            target_id TEXT,
+            detail TEXT DEFAULT '{}',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)""")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_org_audit_org ON org_audit (org_id, created_at)")
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def _org_audit(conn, org_id, actor_id, action, target_type=None, target_id=None, detail=None):
+    """Write an org_audit row on the caller's existing connection (committed by
+    the caller). Best-effort: auditing must never fail the underlying action, so
+    a logging error is swallowed."""
+    try:
+        r = conn.execute(
+            "SELECT COALESCE(NULLIF(name,''), username) FROM users WHERE id = ?", [actor_id]
+        ).fetchone()
+        actor_name = (r[0] if r else None) or actor_id
+        conn.execute(
+            "INSERT INTO org_audit (id, org_id, actor_id, actor_name, action, target_type, target_id, detail) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [str(uuid.uuid4()), org_id, actor_id, actor_name, action, target_type, target_id,
+             json.dumps(detail or {})],
+        )
+    except Exception as e:
+        print(f"[org_audit] failed to record {action} on {org_id}: {e!r}")
+
 # -- Role hierarchy -------------------------------------------------------
 ROLE_LEVELS = {"super_admin": 4, "admin": 3, "manager": 2, "member": 1}
 
@@ -169,10 +212,47 @@ def _ensure_org_schema(conn):
                      ("logo_url","TEXT DEFAULT ''"), ("description","TEXT DEFAULT ''"),
                      ("settings","TEXT DEFAULT '{}'"), ("plan","TEXT DEFAULT 'free'"),
                      ("plan_assigned_at","TEXT"), ("plan_expires_at","TEXT"),
-                     ("created_at","TIMESTAMP"), ("updated_at","TIMESTAMP")):
+                     ("created_at","TIMESTAMP"), ("updated_at","TIMESTAMP"),
+                     # Request-gated entitlement (2026-07-27): new orgs default 0
+                     # (not entitled until a plan is granted). Existing orgs are
+                     # backfilled to 1 once by ensure_org_entitlement_schema.
+                     ("grandfathered","INTEGER DEFAULT 0")):
         if col not in have:
             try: conn.execute(f"ALTER TABLE organizations ADD COLUMN {col} {ddl}")
             except Exception: pass
+
+
+def ensure_org_entitlement_schema(db_path: str = None):
+    """One-time grandfather migration for request-gated org entitlement.
+
+    Every organization that exists at migration time keeps its current
+    membership-based access (grandfathered=1); orgs created afterward default to
+    0 and must have a plan granted by the platform admin (via a request approval
+    or /api/admin/orgs/{id}/plan) before their members are entitled. The backfill
+    runs EXACTLY ONCE, guarded by a platform_settings sentinel rather than by
+    column-absence, so it is safe regardless of whether _ensure_org_schema added
+    the column first — never re-grandfathering orgs created post-migration."""
+    path = db_path or DB_PATH
+    conn = sqlite3.connect(path)
+    try:
+        _ensure_org_schema(conn)  # guarantees the grandfathered column exists
+        conn.commit()
+    finally:
+        conn.close()
+    try:
+        from routes.platform_settings import get_setting, set_setting
+        if get_setting("org_grandfather_migrated") is True:
+            return
+        conn = sqlite3.connect(path)
+        try:
+            conn.execute("UPDATE organizations SET grandfathered = 1")
+            conn.commit()
+        finally:
+            conn.close()
+        set_setting("org_grandfather_migrated", True)
+        print("[migration] grandfathered all existing organizations for request-gated entitlement")
+    except Exception as e:
+        print(f"[migration] org grandfather backfill skipped: {e!r}")
 
 
 @router.post("")
@@ -199,6 +279,8 @@ def create_org(data: CreateOrgRequest, caller: str = Depends(get_current_user_id
             "INSERT INTO org_members (org_id, user_id, role, joined_at) VALUES (?, ?, 'super_admin', ?)",
             [org_id, data.user_id, now]
         )
+        _org_audit(conn, org_id, caller, "org.create", "org", org_id,
+                   {"name": data.name, "type": data.type})
         conn.commit()
     except HTTPException:
         raise
@@ -278,6 +360,8 @@ def join_org(token: str, data: JoinOrgRequest, caller: str = Depends(get_current
             "UPDATE org_invites SET used = 1, used_by = ? WHERE id = ?",
             [data.user_id, invite[0]]
         )
+        _org_audit(conn, invite[1], caller, "member.join", "user", data.user_id,
+                   {"role": invite[3], "via": "invite"})
         conn.commit()
 
         org = conn.execute("SELECT name, type FROM organizations WHERE id = ?", [invite[1]]).fetchone()
@@ -366,6 +450,26 @@ def get_org(org_id: str, user_id: str = Query(None), caller: str = Depends(get_c
     }
 
 
+@router.get("/{org_id}/audit")
+def org_audit_log(org_id: str, limit: int = 100, caller: str = Depends(get_current_user_id)):
+    """The org's own audit trail. Requires super_admin of THIS org — the log can
+    reveal member emails and admin actions, so it's the org owner's view only
+    (the platform console reads it separately via /api/admin)."""
+    require_org_role(DB_PATH, org_id, caller, "super_admin")
+    limit = max(1, min(limit, 500))
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        rows = conn.execute(
+            "SELECT id, actor_name, action, target_type, target_id, detail, created_at "
+            "FROM org_audit WHERE org_id = ? ORDER BY created_at DESC LIMIT ?",
+            [org_id, limit],
+        ).fetchall()
+    finally:
+        conn.close()
+    return {"audit": [dict(r) for r in rows], "total": len(rows)}
+
+
 @router.put("/{org_id}")
 def update_org(org_id: str, data: UpdateOrgRequest, caller: str = Depends(get_current_user_id)):
     """Update organization. Requires admin+."""
@@ -404,6 +508,9 @@ def update_org(org_id: str, data: UpdateOrgRequest, caller: str = Depends(get_cu
             values.append(_utcnow().isoformat())
             values.append(org_id)
             conn.execute(f"UPDATE organizations SET {', '.join(updates)} WHERE id = ?", values)
+            _org_audit(conn, org_id, caller, "org.update", "org", org_id,
+                       {f: getattr(data, f) for f in ["name", "type", "domain", "description", "group_label"]
+                        if getattr(data, f, None) is not None})
             conn.commit()
     finally:
         conn.close()
@@ -459,6 +566,8 @@ def invite_member(org_id: str, data: InviteRequest, caller: str = Depends(get_cu
         "INSERT INTO org_invites (id, org_id, email, role, token, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
         [invite_id, org_id, data.email, data.role, token, _utcnow().isoformat(), expires]
     )
+    _org_audit(conn, org_id, caller, "member.invite", "invite", invite_id,
+               {"email": data.email, "role": data.role})
     conn.commit()
     org_name = _org_name(conn, org_id)
     conn.close()
@@ -506,6 +615,9 @@ def bulk_invite(org_id: str, data: BulkInviteRequest, caller: str = Depends(get_
             [invite_id, org_id, email, role, token, now, expires]
         )
         invites.append({"email": email, "token": token, "role": role})
+    if invites:
+        _org_audit(conn, org_id, caller, "member.invite_bulk", "org", org_id,
+                   {"count": len(invites)})
     conn.commit()
     org_name = _org_name(conn, org_id)
     conn.close()
@@ -546,6 +658,8 @@ def change_role(org_id: str, member_id: str, data: RoleChangeRequest, caller: st
         "UPDATE org_members SET role = ? WHERE org_id = ? AND user_id = ?",
         [data.new_role, org_id, member_id]
     )
+    _org_audit(conn, org_id, caller, "member.role_change", "user", member_id,
+               {"from": current[0], "to": data.new_role})
     conn.commit()
     conn.close()
     return {"updated": True, "new_role": data.new_role}
@@ -584,6 +698,7 @@ def remove_member(org_id: str, member_id: str, caller: str = Depends(get_current
             conn.close()
             raise HTTPException(status_code=400, detail="Cannot remove the last super admin")
     conn.execute("DELETE FROM org_members WHERE org_id = ? AND user_id = ?", [org_id, member_id])
+    _org_audit(conn, org_id, caller, "member.remove", "user", member_id, {"role": current[0]})
     conn.commit()
     conn.close()
     return {"removed": True}
@@ -618,6 +733,8 @@ def set_member_groups(org_id: str, member_id: str, data: SetGroupsRequest,
                 "VALUES (?, ?, ?, ?)",
                 [org_id, member_id, name, now],
             )
+        _org_audit(conn, org_id, caller, "member.set_groups", "user", member_id,
+                   {"groups": cleaned})
         conn.commit()
     finally:
         conn.close()
@@ -872,6 +989,8 @@ def delete_organization(org_id: str, caller: str = Depends(get_current_user_id))
         # Delete the organization itself
         cursor.execute("DELETE FROM organizations WHERE id = ?", [org_id])
 
+        _org_audit(conn, org_id, caller, "org.delete", "org", org_id,
+                   {"name": org["name"]})
         conn.commit()
         return {"deleted": True, "org_id": org_id}
     finally:

@@ -524,17 +524,48 @@ def set_user_org_role(target_id: str, req: UserRoleRequest, caller: str = Depend
     if req.role not in ("super_admin", "admin", "manager", "member"):
         raise HTTPException(status_code=400, detail="Invalid role")
     conn = _conn()
-    member = conn.execute("SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?",
+    member = conn.execute("SELECT role FROM org_members WHERE org_id = ? AND user_id = ?",
                           [req.org_id, target_id]).fetchone()
     if not member:
         conn.close()
         raise HTTPException(status_code=404, detail="User is not a member of that org")
+    # Last-super_admin guard — the org-scoped change_role has this, but the
+    # platform-side setter did not, so a platform admin could orphan an org by
+    # demoting its only super_admin (no one left who can manage members). Mirror
+    # the org-side guard here.
+    if member["role"] == "super_admin" and req.role != "super_admin":
+        remaining = conn.execute(
+            "SELECT COUNT(*) FROM org_members WHERE org_id = ? AND role = 'super_admin'",
+            [req.org_id]).fetchone()[0]
+        if remaining <= 1:
+            conn.close()
+            raise HTTPException(status_code=400,
+                                detail="Cannot demote the last super admin of this organization.")
     conn.execute("UPDATE org_members SET role = ? WHERE org_id = ? AND user_id = ?",
                  [req.role, req.org_id, target_id])
-    _audit(conn, caller, "user.role", "user", target_id, {"org_id": req.org_id, "role": req.role})
+    _audit(conn, caller, "user.role", "user", target_id,
+           {"org_id": req.org_id, "from": member["role"], "role": req.role})
     conn.commit()
     conn.close()
     return {"ok": True, "role": req.role}
+
+
+@router.get("/orgs/{org_id}/audit")
+def org_audit_platform(org_id: str, limit: int = 100, caller: str = Depends(get_current_user_id)):
+    """Platform-console view of an organization's own audit trail (org_audit,
+    written by routes/organizations.py). Super-admin only."""
+    require_super_admin(caller)
+    limit = max(1, min(limit, 500))
+    conn = _conn()
+    try:
+        rows = [dict(r) for r in conn.execute(
+            "SELECT id, actor_name, action, target_type, target_id, detail, created_at "
+            "FROM org_audit WHERE org_id = ? ORDER BY created_at DESC LIMIT ?",
+            [org_id, limit]).fetchall()]
+    except sqlite3.OperationalError:
+        rows = []  # table not yet created on a lagging replica
+    conn.close()
+    return {"audit": rows, "total": len(rows)}
 
 
 @router.post("/users/{target_id}/reset-password")

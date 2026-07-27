@@ -29,11 +29,17 @@ def client(tmp_path):
     importlib.reload(main_mod)
     main_mod.init_db()
     conn = sqlite3.connect(os.environ["DB_PATH"])
-    # An organization account (reason == "organization" ⇒ enterprise access).
+    # A user who belongs to an organization on the ENTERPRISE plan ⇒ enterprise
+    # access under the request-gated policy (2026-07-27). Bare account_type is no
+    # longer sufficient — the org must have an enterprise plan (or be
+    # grandfathered), which is what actually entitles the catalog.
     conn.execute(
         "INSERT INTO users (id, username, password_hash, name, account_type) "
         "VALUES (?, 'orguser', 'hash', 'Org', 'organization')", ["org-1"]
     )
+    conn.execute("INSERT INTO organizations (id, name, plan, grandfathered) "
+                 "VALUES ('ent-org', 'Enterprise Co', 'enterprise', 0)")
+    conn.execute("INSERT INTO org_members (org_id, user_id, role) VALUES ('ent-org', 'org-1', 'super_admin')")
     # A plain individual account (no enterprise access).
     conn.execute(
         "INSERT INTO users (id, username, password_hash, name, account_type) "
