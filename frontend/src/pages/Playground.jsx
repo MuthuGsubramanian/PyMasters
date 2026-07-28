@@ -64,7 +64,7 @@ export default function Playground() {
         if (!user?.id || hydratedRef.current) return;
         const saved = readBuffer(`pm_playground_code_${user.id}`);
         if (saved && !code.trim()) {
-            setCode(saved);
+            replaceCode(saved);
             setRestoredSession(true);
         }
         hydratedRef.current = true;
@@ -162,7 +162,7 @@ export default function Playground() {
         if (unsaved && !window.confirm(`Open “${f.name}”? Unsaved changes in the editor will be lost.`)) return;
         try {
             const r = await getPlaygroundFile(f.id);
-            setCode(r.data.file.code);
+            replaceCode(r.data.file.code);
             setCurrentFile({ id: r.data.file.id, name: r.data.file.name });
             setSavedCode(r.data.file.code);
             setFilesOpen(false);
@@ -232,7 +232,7 @@ export default function Playground() {
         const onInject = (e) => {
             const injected = e?.detail?.code;
             if (!injected) return;
-            setCode(injected);
+            replaceCode(injected);
             if (e?.detail?.run) executeRef.current?.(injected);
         };
         window.addEventListener('pm:vaathiyaar-inject', onInject);
@@ -293,7 +293,7 @@ export default function Playground() {
         if (code.trim() && code.trim() !== '# Write Python code here...') {
             if (!window.confirm('Clear all code? This cannot be undone.')) return;
         }
-        setCode('');
+        replaceCode('');
         setOutput('');
     };
 
@@ -467,6 +467,7 @@ export default function Playground() {
                         <div className="flex flex-col min-h-0 flex-1 lg:w-3/5 lg:border-r border-border-strong">
                             <div className="flex-1 min-h-[180px] overflow-hidden">
                                 <PythonEditor
+                                    key={docVersion}
                                     value={code}
                                     onChange={setCode}
                                     onRun={handleRunCode}
