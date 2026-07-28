@@ -54,6 +54,7 @@ from routes.org_requests import router as org_requests_router, ensure_org_reques
 from routes.org_curriculum import router as org_curriculum_router, ensure_org_curriculum_tables
 from routes.support import router as support_router, ensure_support_tables
 from routes.tutor_sessions import router as tutor_sessions_router, ensure_tutor_session_tables
+from routes.playground_files import router as playground_files_router, ensure_playground_files_tables
 from routes.platform_settings import router as platform_settings_router, ensure_platform_settings_table
 from auth import create_access_token, get_current_user_id, _current_token_version
 
@@ -676,7 +677,8 @@ def init_db():
                         ensure_telemetry_tables, ensure_support_tables,
                         ensure_tutor_session_tables, ensure_platform_settings_table,
                         ensure_org_audit_table, ensure_org_requests_table,
-                        ensure_org_curriculum_tables, ensure_org_entitlement_schema):
+                        ensure_org_curriculum_tables, ensure_org_entitlement_schema,
+                        ensure_playground_files_tables):
             try:
                 _ensure(DB_PATH)
             except Exception as e:
@@ -840,6 +842,7 @@ app.include_router(language_router)
 app.include_router(profile_router)
 app.include_router(classroom_router)
 app.include_router(playground_router)
+app.include_router(playground_files_router)
 app.include_router(notifications_router)
 app.include_router(modules_router)
 app.include_router(graph_router)

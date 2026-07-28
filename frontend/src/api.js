@@ -308,6 +308,13 @@ export const adminGetSupportAttachment = (attachmentId) =>
 export const adminDecideSupportRequest = (requestId, action, note = '') =>
     api.post(`/support/admin/requests/${requestId}/${action}`, { note });
 
+// Playground saved files
+export const getPlaygroundFiles = () => api.get('/playground/files');
+export const getPlaygroundFile = (fileId) => api.get(`/playground/files/${fileId}`);
+export const createPlaygroundFile = (data) => api.post('/playground/files', data);
+export const updatePlaygroundFile = (fileId, data) => api.put(`/playground/files/${fileId}`, data);
+export const deletePlaygroundFile = (fileId) => api.delete(`/playground/files/${fileId}`);
+
 // Live tutor sessions
 export const createTutorSession = (data) => api.post('/tutor-sessions', data);
 export const getMyTutorSessions = () => api.get('/tutor-sessions/mine');
