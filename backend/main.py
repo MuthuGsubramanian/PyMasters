@@ -113,6 +113,9 @@ def init_db():
     print(f"Initializing Database at: {DB_PATH}")
     conn = sqlite3.connect(DB_PATH)
     try:
+        # Wait up to 10s for a competing writer instead of failing a migration
+        # instantly on "database is locked" (notably under Litestream/WAL).
+        conn.execute("PRAGMA busy_timeout = 10000")
         cursor = conn.cursor()
 
         # Schema Migration: Add gamification columns if they don't exist
@@ -386,6 +389,13 @@ def init_db():
 
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_pg_conv_user ON playground_conversations(user_id, updated_at DESC)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_pg_msg_conv ON playground_messages(conversation_id, created_at)")
+        # learning_signals is the hottest, unbounded-growth table: filtered by
+        # user_id/created_at in ~15 dashboard + trigger-engine queries (some
+        # correlated-per-row), previously with NO index → full table scans that
+        # grow super-linearly and lengthen read-lock windows. These two cover the
+        # user+recency and user+type+topic access patterns.
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_ls_user_created ON learning_signals(user_id, created_at)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_ls_user_type_topic ON learning_signals(user_id, signal_type, topic)")
 
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS lesson_completions (
@@ -694,8 +704,15 @@ def init_db():
             if pinned:
                 print("[bootstrap] Seeded 'admin' super-user from BOOTSTRAP_ADMIN_PASSWORD (env).")
             else:
-                print(f"[bootstrap] admin password: {bootstrap_pw}  "
-                      "(shown ONCE — record it now; change it after first login)")
+                # SECURITY: never print the generated password — Cloud Run captures
+                # stdout into Cloud Logging, so logging the credential exposes it to
+                # anyone with Logging Viewer for the log-retention window. Set
+                # BOOTSTRAP_ADMIN_PASSWORD to seed a known password deterministically;
+                # otherwise this random one is unrecoverable (use the owner's
+                # SUPER_ADMIN_EMAILS account or the forgot-password flow instead).
+                print("[bootstrap] Seeded 'admin' super-user with a RANDOM password "
+                      "(not logged). Set BOOTSTRAP_ADMIN_PASSWORD to control it, or "
+                      "sign in via a SUPER_ADMIN_EMAILS account.")
 
         # Commit schema + migrations BEFORE seeding. The seed routines open their
         # own connections; if the outer write transaction is still open they hit
@@ -759,7 +776,10 @@ def init_db():
             print(f"Super-admin resolve: {e}")
 
     except Exception as e:
-        print(f"DB Init Error: {e}")
+        # Loud, grep-able failure with a traceback — a half-applied migration must
+        # not vanish behind a one-line print (Cloud Logging flags [FATAL]/severity).
+        import traceback
+        print(f"[FATAL] DB Init Error: {e}\n{traceback.format_exc()}")
     finally:
         conn.close()
 
@@ -771,9 +791,30 @@ async def lifespan(app: FastAPI):
     # is much less harmful than a deploy that times out waiting on init_db.
     # The /register hardening (clean 4xx + try/except around hash_pw and
     # the DB writes) is what actually fixes the user-reported 500, not this.
+    #
+    # 2026-07-27: init_db now runs SYNCHRONOUSLY before serving. Previously it ran
+    # in a daemon thread so uvicorn bound the port fast, but that let cold-start
+    # requests hit tables/columns before migrations finished (500s), and a failed
+    # migration was a silent print. init_db is fast (~1-2s, idempotent) and its
+    # connection sets busy_timeout, so it can't hang on a lock; the genuinely slow
+    # work — the semantic-index model build below — stays in its own daemon thread.
     import threading
-    t = threading.Thread(target=init_db, daemon=True)
-    t.start()
+    try:
+        init_db()
+    except Exception as e:
+        import traceback
+        print(f"[FATAL] init_db failed before serving: {e}\n{traceback.format_exc()}")
+
+    # Sandbox egress self-test (Cloud Run only) — logs whether user code can reach
+    # the metadata server. Background so it never delays readiness.
+    if os.environ.get("K_SERVICE"):
+        def _egress_probe():
+            try:
+                from vaathiyaar.execution import egress_self_test
+                egress_self_test()
+            except Exception as e:
+                print(f"[sandbox] egress self-test skipped: {e}")
+        threading.Thread(target=_egress_probe, daemon=True).start()
     # Semantic curriculum index (vector search / related lessons) builds in
     # its own daemon thread; endpoints report ready:false until it finishes.
     # Auto-start only where the real model should load (Cloud Run sets

@@ -241,9 +241,6 @@ export function getAuthHeaders() {
   return {};
 }
 
-// Release notes
-export const getReleaseNotes = () => api.get('/release-notes');
-
 // Weekly challenges
 export const getWeeklyChallenge = () => api.get('/challenges/weekly');
 export const submitChallenge = (data) => api.post('/challenges/submit', data);

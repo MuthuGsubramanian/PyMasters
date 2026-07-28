@@ -71,6 +71,55 @@ def _build_child_command(python_cmd: str, script_path: str) -> list:
     then the interpreter in isolated mode running the user script."""
     return list(_net_isolation_prefix()) + [python_cmd, "-I", "-B", script_path]
 
+
+def egress_self_test(timeout: int = 4) -> str:
+    """Boot diagnostic: run the SANDBOX child and check whether it can actually
+    reach the cloud metadata server (169.254.169.254). This turns the "is egress
+    really isolated on Cloud Run?" question into a fact visible in the boot logs.
+
+    Returns 'blocked' (child could not connect — good), 'REACHABLE' (child reached
+    the metadata endpoint — network isolation is NOT effective; the runtime SA
+    token is exposed to user code — logs a loud WARNING), or 'unknown' on error.
+    Runs the same argv real user code runs, so it measures the true control.
+    """
+    prefix = _net_isolation_prefix()
+    probe_src = (
+        "import socket\n"
+        "try:\n"
+        "    s = socket.create_connection(('169.254.169.254', 80), 1); s.close(); print('REACHABLE')\n"
+        "except Exception:\n"
+        "    print('blocked')\n"
+    )
+    tmp = None
+    try:
+        with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False) as f:
+            f.write(probe_src)
+            tmp = f.name
+        proc = subprocess.run(
+            list(prefix) + [sys.executable, "-I", "-B", tmp],
+            capture_output=True, text=True, timeout=timeout,
+        )
+        out = (proc.stdout or "").strip().splitlines()
+        result = out[-1] if out else "unknown"
+    except Exception:
+        result = "unknown"
+    finally:
+        if tmp:
+            try:
+                os.remove(tmp)
+            except OSError:
+                pass
+    isolated = bool(prefix)
+    if result == "REACHABLE":
+        print("[sandbox][SECURITY] WARNING: user-code sandbox CAN reach the cloud "
+              "metadata server (169.254.169.254) — network egress isolation is NOT "
+              f"effective (unshare prefix={'set' if isolated else 'ABSENT'}). Ensure "
+              "the runtime service account is minimal and/or block metadata egress.")
+    else:
+        print(f"[sandbox] egress self-test: {result} "
+              f"(network-isolation prefix {'active' if isolated else 'absent'})")
+    return result
+
 # Modules a beginner/intermediate lesson never legitimately needs, and which
 # grant system, filesystem, network, process or introspection-escape powers.
 _BLOCKED_MODULES = {

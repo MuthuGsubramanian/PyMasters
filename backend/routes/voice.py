@@ -12,9 +12,10 @@ return 503 and the client falls back to typing — never crashes the app.
 import os
 import tempfile
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 
 from ratelimit import SlidingWindowRateLimiter
+from auth import get_current_user_id
 
 router = APIRouter(prefix="/api/voice", tags=["voice"])
 
@@ -36,12 +37,19 @@ def _get_model():
 @router.post("/transcribe")
 async def transcribe(
     audio: UploadFile = File(...),
-    user_id: str = Form("anon"),
     language: str = Form("en"),
+    caller: str = Depends(get_current_user_id),
 ):
-    """Transcribe an uploaded audio clip → {text, language}."""
-    if not _limiter.allow(user_id):
-        wait = _limiter.retry_after(user_id)
+    """Transcribe an uploaded audio clip → {text, language}.
+
+    Requires auth: previously this endpoint was unauthenticated and keyed its
+    rate limit on a client-supplied `user_id` Form field ("anon" by default), so
+    a caller could send a unique id per request and run unbounded CPU-heavy
+    Whisper transcription on the single instance (cheap DoS / cost abuse). Now
+    the limiter keys off the JWT-verified caller and anonymous calls are refused.
+    """
+    if not _limiter.allow(caller):
+        wait = _limiter.retry_after(caller)
         raise HTTPException(status_code=429, detail=f"Too many requests — wait {wait}s.")
 
     data = await audio.read()

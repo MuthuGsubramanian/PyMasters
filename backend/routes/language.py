@@ -4,7 +4,7 @@ language.py — FastAPI APIRouter for language support queries.
 Prefix: /api/languages
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 
 router = APIRouter(prefix="/api/languages", tags=["languages"])
 
@@ -27,10 +27,12 @@ BLOCKED_LANGUAGES = {
 
 
 @router.get("")
-def list_languages():
+def list_languages(response: Response):
     """Return all supported and blocked languages."""
     supported = [{"code": code, "name": name} for code, name in SUPPORTED_LANGUAGES.items()]
     blocked = [{"code": code, "message": msg} for code, msg in BLOCKED_LANGUAGES.items()]
+    # Fully static (changes only on deploy) — let the browser/proxy cache it.
+    response.headers["Cache-Control"] = "public, max-age=3600"
     return {"supported": supported, "blocked": blocked}
 
 

@@ -71,6 +71,10 @@ jobs:
         working-directory: frontend
         run: npm test
 
+      - name: build (catches build-only breakage before the Docker build)
+        working-directory: frontend
+        run: npm run build
+
   deploy:
     name: Build + Deploy to Cloud Run
     needs: [test, frontend-test]
@@ -138,6 +142,21 @@ jobs:
         #     requests and widen the data-loss window on instance loss.
         #   The always-on 1 vCPU instance is therefore the accepted baseline
         #   cost; savings come from image cleanup + CI dedupe instead.
+
+      - name: Post-deploy health check (fail the run if the new revision is unhealthy)
+        # Verifies the just-deployed revision actually serves before the run is
+        # declared green. Does NOT auto-rollback (single-instance SQLite makes that
+        # non-trivial), but turns a bad deploy from "silently green" into a red run
+        # the owner is notified about. Retries to absorb cold-start.
+        run: |
+          URL=$(gcloud run services describe pymasters --region us-central1 --format 'value(status.url)')
+          echo "Probing $URL/health"
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$URL/health" || echo 000)
+            if [ "$code" = "200" ]; then echo "healthy ($code)"; exit 0; fi
+            echo "attempt $i: $code — retrying"; sleep 10
+          done
+          echo "New revision did not report healthy after ~2min"; exit 1
 
       - name: Prune old images from Artifact Registry (keep newest 5)
         # Every deploy pushes a ~1GB image tagged with the commit SHA; with the

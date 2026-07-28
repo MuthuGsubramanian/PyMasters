@@ -261,9 +261,39 @@ def _module_rank(track: str, module: str) -> tuple:
     return (2, 0, low)
 
 
-def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict]:
-    """List all lessons across all track subdirectories."""
-    base = Path(lessons_dir) if lessons_dir else LESSONS_DIR
+# Cache of the parsed static lesson catalogue, keyed by directory. The ~437
+# lesson JSON files (~8 MB) only change on deploy — a new deploy is a new process,
+# so a per-process cache is always fresh. Invalidated within a process if a file
+# is added/removed (the directory tree's max mtime changes). This turns the
+# classroom-home endpoint from "reparse 8 MB every request" into a dict lookup.
+_static_lessons_cache: dict = {}
+
+
+def _lessons_signature(base: Path) -> float:
+    """Cheap change-signature: newest mtime across track dirs + their json files.
+    Detects added/removed/edited lesson files without reparsing them."""
+    newest = 0.0
+    try:
+        for track_dir in base.iterdir():
+            if track_dir.is_dir() and track_dir.name != "__pycache__":
+                newest = max(newest, track_dir.stat().st_mtime)
+                for f in track_dir.glob("*.json"):
+                    m = f.stat().st_mtime
+                    if m > newest:
+                        newest = m
+    except OSError:
+        pass
+    return newest
+
+
+def _list_static_lessons(base: Path) -> list[dict]:
+    """Parsed static (on-disk) lessons, cached per-process and mtime-invalidated."""
+    key = str(base)
+    sig = _lessons_signature(base)
+    cached = _static_lessons_cache.get(key)
+    if cached is not None and cached[0] == sig:
+        return cached[1]
+
     lessons = []
     for track_dir in sorted(base.iterdir()):
         if track_dir.is_dir() and track_dir.name != "__pycache__":
@@ -295,6 +325,16 @@ def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict
                 L.get("id") or "",
             ))
             lessons.extend(track_lessons)
+    _static_lessons_cache[key] = (sig, lessons)
+    return lessons
+
+
+def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict]:
+    """List all lessons across all track subdirectories, plus a user's generated
+    lessons. The static portion is cached (see _list_static_lessons); we copy it
+    so callers/generated-lesson appends never mutate the shared cache."""
+    base = Path(lessons_dir) if lessons_dir else LESSONS_DIR
+    lessons = list(_list_static_lessons(base))
 
     # Generated lessons from database
     if user_id:
@@ -541,9 +581,14 @@ def chat_stream(request: ChatRequest, caller: str = Depends(get_current_user_id)
 
 
 @router.get("/lessons")
-async def list_lessons(user_id: str = None, authorization: str = Header(None)):
+def list_lessons(user_id: str = None, authorization: str = Header(None)):
     """
     List all available lessons, personalized to the user's onboarding profile.
+
+    NB: a plain `def` (not async) so FastAPI runs it in the threadpool — it does
+    blocking file/DB IO (lesson catalogue + profile lookups), which on a single
+    Cloud Run instance would otherwise stall the event loop for every concurrent
+    request. The catalogue itself is cached (see _list_static_lessons).
 
     Routing logic based on motivation & goal:
     - hobby / automation / games  → fun_automation track first, then python_fundamentals
