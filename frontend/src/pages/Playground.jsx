@@ -36,6 +36,17 @@ export default function Playground() {
     const [running, setRunning] = useState(false);
     const [executionTime, setExecutionTime] = useState(null);
 
+    // CodeMirror defers external `value` updates behind a typing latch driven by
+    // a 1ms setInterval; in hidden/throttled tabs that latch can take minutes to
+    // expire, so programmatic content swaps (file load, Vaathiyaar inject,
+    // restore) silently never render. Bumping this key remounts the editor with
+    // the new doc, bypassing the latch. Typing never bumps it.
+    const [docVersion, setDocVersion] = useState(0);
+    const replaceCode = (val) => {
+        setCode(val);
+        setDocVersion((v) => v + 1);
+    };
+
     // ── F2: autosave the editor buffer to localStorage so a refresh never loses
     // work. Scoped per user (two accounts in one browser don't see each other's
     // buffer). Private-browsing / disabled storage degrades silently. Server-side
