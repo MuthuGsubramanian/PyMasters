@@ -301,6 +301,13 @@ const TRACK_META = {
         accent: '#10b981',
         gradient: 'from-emerald-500/10 to-green-500/5',
     },
+    // Lessons an org/school admin generated and published to this member's cohort.
+    assigned: {
+        name: 'Assigned by Your Organization',
+        icon: <GraduationCap size={16} />,
+        accent: '#7c3aed',
+        gradient: 'from-purple-500/10 to-indigo-500/5',
+    },
     // Enterprise cloud curriculum — only served to org/enterprise users
     // (backend-gated; these entries are inert for everyone else).
     azure_enterprise: {
@@ -348,6 +355,7 @@ const TRACK_META = {
 };
 
 const DEFAULT_TRACK_ORDER = [
+    'assigned',
     'python_fundamentals', 'python_intermediate', 'fun_automation',
     'web_development', 'dsa',
     'ai_fundamentals', 'ai_ml_foundations', 'machine_learning',
@@ -526,7 +534,9 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                                                 <div className="ml-auto flex items-center gap-1.5">
                                                                     {isDone && <Badge variant="success">Done</Badge>}
                                                                     {!isDone && isOffPath && <Badge variant="neutral">Off your path</Badge>}
-                                                                    {lesson.generated && <Badge variant="primary">Custom</Badge>}
+                                                                    {lesson.assigned
+                                                                        ? <Badge variant="primary">Assigned</Badge>
+                                                                        : lesson.generated && <Badge variant="primary">Custom</Badge>}
                                                                     {lesson.xp_reward != null && (
                                                                         <span className="text-[10px] font-bold rounded-full px-2 py-0.5 text-amber-700 bg-amber-50 dark:text-amber-300 dark:bg-amber-500/10">+{lesson.xp_reward} XP</span>
                                                                     )}

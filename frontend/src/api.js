@@ -328,6 +328,17 @@ export const adminApproveOrgRequest = (requestId, data = {}) => api.post(`/admin
 export const adminRejectOrgRequest = (requestId, note = '') => api.post(`/admin/org-requests/${requestId}/reject`, { note });
 export const adminDismissOrgRequest = (requestId) => api.delete(`/admin/org-requests/${requestId}`);
 
+// Org curriculum (admin: topics/upload → lessons → review → publish to cohort)
+export const createOrgLessonSet = (orgId, data) => api.post(`/org/${orgId}/lesson-sets`, data);
+export const uploadOrgLessonSet = (orgId, formData) =>
+    api.post(`/org/${orgId}/lesson-sets/upload`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+export const getOrgLessonSets = (orgId) => api.get(`/org/${orgId}/lesson-sets`);
+export const publishOrgLessonItem = (orgId, setId, itemId) =>
+    api.post(`/org/${orgId}/lesson-sets/${setId}/items/${itemId}/publish`);
+export const unpublishOrgLessonItem = (orgId, setId, itemId) =>
+    api.post(`/org/${orgId}/lesson-sets/${setId}/items/${itemId}/unpublish`);
+export const deleteOrgLessonSet = (orgId, setId) => api.delete(`/org/${orgId}/lesson-sets/${setId}`);
+
 // Platform settings (super-admin)
 export const getNotificationEmails = () => api.get('/admin/settings/notification-emails');
 export const setNotificationEmails = (emails) => api.put('/admin/settings/notification-emails', { emails });

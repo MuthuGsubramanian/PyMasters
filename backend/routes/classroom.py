@@ -361,6 +361,34 @@ def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict
         except Exception:
             pass
 
+        # Org-assigned curriculum: lessons an org/school admin generated and
+        # PUBLISHED to this member's cohort (whole-org or their group). Surfaced
+        # as track="assigned" so the classroom can badge them. Deduped against
+        # ids already present (the creating admin also owns them as "generated").
+        try:
+            from routes.org_curriculum import published_lessons_for_user
+            seen_ids = {l.get("id") for l in lessons}
+            for lesson_data, set_title in published_lessons_for_user(_get_db_path(), user_id):
+                data = json.loads(lesson_data)
+                if data.get("id") in seen_ids:
+                    continue
+                seen_ids.add(data.get("id"))
+                lessons.append({
+                    "id": data.get("id"),
+                    "title": data.get("title", {}),
+                    "description": data.get("description", {}),
+                    "xp_reward": data.get("xp_reward", 50),
+                    "topic": data.get("topic"),
+                    "track": "assigned",
+                    "module": data.get("module"),
+                    "order": 0,
+                    "generated": True,
+                    "assigned": True,
+                    "assigned_set": set_title,
+                })
+        except Exception:
+            pass
+
     return lessons
 
 

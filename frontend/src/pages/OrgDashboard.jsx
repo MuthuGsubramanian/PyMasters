@@ -8,6 +8,7 @@ import {
 } from '../api';
 import StudentDrawer from '../components/StudentDrawer';
 import OrgRequestsPanel from '../components/OrgRequestsPanel';
+import OrgCurriculumPanel from '../components/OrgCurriculumPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { safeErrorMsg } from '../utils/errorUtils';
 import {
@@ -18,7 +19,7 @@ import {
   Building2, Users, Mail, Send, Copy, Shield, Crown,
   UserX, BarChart3, TrendingUp, Trophy, Zap, Search,
   Plus, ChevronDown, ExternalLink, Check, AlertTriangle,
-  Upload, Rocket, X, Loader2, GraduationCap, Activity, Inbox
+  Upload, Rocket, X, Loader2, GraduationCap, Activity, Inbox, BookOpen
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -29,6 +30,7 @@ const TABS = [
   { key: 'members', label: 'Members', icon: Users },
   { key: 'students', label: 'Students', icon: GraduationCap },
   { key: 'invites', label: 'Invites', icon: Mail },
+  { key: 'curriculum', label: 'Curriculum', icon: BookOpen },
   { key: 'analytics', label: 'Analytics', icon: BarChart3 },
   { key: 'requests', label: 'Requests', icon: Inbox },
 ];
@@ -758,6 +760,8 @@ export default function OrgDashboard() {
           if (t.key === 'analytics' && !canViewProgress) return false;
           if (t.key === 'invites' && !isAdmin) return false;
           if (t.key === 'students' && !canViewProgress) return false;
+          // Curriculum authoring (generate + publish lessons) is admin+.
+          if (t.key === 'curriculum' && !isAdmin) return false;
           // Product-level requests (plan/enterprise/seats) are the org owner's call.
           if (t.key === 'requests' && myRole !== 'super_admin') return false;
           return true;
@@ -1310,6 +1314,10 @@ export default function OrgDashboard() {
                 </Card>
               )}
             </div>
+          )}
+
+          {tab === 'curriculum' && isAdmin && (
+            <OrgCurriculumPanel orgId={orgId} groups={groups.map((g) => g.name)} />
           )}
 
           {tab === 'requests' && myRole === 'super_admin' && (
