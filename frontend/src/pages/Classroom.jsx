@@ -1159,7 +1159,7 @@ function RelatedLessons({ lessonId, language, onOpen }) {
     );
 }
 
-function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0, lessonId, onOpenRelated }) {
+function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0, lessonId, onOpenRelated, nextLesson = null, onNext }) {
     const success = evalResult?.passed ?? evalResult?.success ?? false;
     // Backend flags `struggling` after repeated failures; fall back to a local
     // count so the supportive UI still appears even without the signal.
@@ -1285,14 +1285,36 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount
                         </pre>
                     )}
 
-                    <div className="flex gap-3 pt-2">
+                    {success && nextLesson && (
+                        <p className="text-xs text-text-muted pt-1">
+                            Up next: <span className="font-semibold text-text-secondary">{resolveText(nextLesson.title, language)}</span>
+                        </p>
+                    )}
+                    <div className="flex flex-wrap gap-3 pt-2">
                         {success ? (
-                            <button
-                                onClick={onContinue}
-                                className="btn-neo btn-neo-primary flex items-center gap-2 py-2.5"
-                            >
-                                Continue <ChevronRight size={16} />
-                            </button>
+                            nextLesson ? (
+                                <>
+                                    <button
+                                        onClick={onNext}
+                                        className="btn-neo btn-neo-primary flex items-center gap-2 py-2.5"
+                                    >
+                                        Next lesson <ChevronRight size={16} />
+                                    </button>
+                                    <button
+                                        onClick={onContinue}
+                                        className="btn-neo btn-neo-ghost flex items-center gap-2 py-2.5"
+                                    >
+                                        Back to lessons
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={onContinue}
+                                    className="btn-neo btn-neo-primary flex items-center gap-2 py-2.5"
+                                >
+                                    Back to lessons <ChevronRight size={16} />
+                                </button>
+                            )
                         ) : (
                             <button
                                 onClick={onRetry}
@@ -1310,6 +1332,35 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount
             </motion.div>
         </div>
     );
+}
+
+// Flatten the lesson catalogue into the SAME order the learner sees in the
+// track accordion (LessonSelect): tracks in primary-then-default order, lessons
+// kept in list order within each track. Shared ordering guarantees "Next lesson"
+// walks the exact sequence shown on screen.
+function orderedLessonList(lessons, primaryTracks) {
+    const grouped = {};
+    (lessons || []).forEach((l) => {
+        const t = l.track || 'other';
+        if (!grouped[t]) grouped[t] = [];
+        grouped[t].push(l);
+    });
+    const base = primaryTracks && primaryTracks.length > 0
+        ? [...primaryTracks, ...DEFAULT_TRACK_ORDER.filter((t) => !primaryTracks.includes(t))]
+        : [...DEFAULT_TRACK_ORDER];
+    const order = base.filter((t) => grouped[t]?.length > 0);
+    Object.keys(grouped).forEach((t) => { if (!order.includes(t)) order.push(t); });
+    return order.flatMap((t) => grouped[t]);
+}
+
+// The lesson immediately after `currentLesson` in that sequence, or null when it
+// is the very last lesson (end of the catalogue).
+function getNextLesson(currentLesson, lessons, primaryTracks) {
+    if (!currentLesson?.id || !lessons?.length) return null;
+    const ordered = orderedLessonList(lessons, primaryTracks);
+    const i = ordered.findIndex((l) => l.id === currentLesson.id);
+    if (i === -1 || i + 1 >= ordered.length) return null;
+    return ordered[i + 1];
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -1817,6 +1868,18 @@ export default function Classroom() {
         setPhase('practice');
     };
 
+    // The next lesson in the on-screen sequence (null at end of catalogue). Drives
+    // the "Next lesson" CTA on the success screen so a learner flows straight into
+    // the next lesson instead of being dropped back on the track list to hunt.
+    const nextLesson = getNextLesson(currentLesson, lessons, primaryTracks);
+    const handleNextLesson = () => {
+        if (!nextLesson) { handleContinue(); return; }
+        handleSelectLesson(nextLesson).finally(() => {
+            const m = document.querySelector('main');
+            if (m) m.scrollTop = 0; // land at the top of the new lesson, not mid-scroll
+        });
+    };
+
     const handleBackToSelect = () => {
         setCurrentLesson(null);
         setPhase('select');
@@ -1998,6 +2061,8 @@ export default function Classroom() {
                                 attemptCount={attemptCount}
                                 onContinue={handleContinue}
                                 onRetry={handleRetry}
+                                nextLesson={nextLesson}
+                                onNext={handleNextLesson}
                                 lessonId={currentLesson?.id}
                                 onOpenRelated={handleSelectLesson}
                             /></ErrorBoundary>
