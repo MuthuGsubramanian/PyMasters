@@ -54,7 +54,7 @@ export default function OutputPanel({
                         {running ? 'Running...' : 'Output'}
                     </span>
                     {executionTime != null && !running && (
-                        <span className="text-[10px] text-slate-500 font-mono ml-2">
+                        <span className="text-[10px] text-slate-400 font-mono ml-2">
                             {executionTime < 1000 ? `${executionTime}ms` : `${(executionTime / 1000).toFixed(1)}s`}
                         </span>
                     )}
@@ -85,7 +85,7 @@ export default function OutputPanel({
                             <span>Executing...</span>
                         </div>
                         {slowRun && (
-                            <span className="text-[11px] text-slate-500 italic pl-6">
+                            <span className="text-[11px] text-slate-400 italic pl-6">
                                 First run can take a few seconds while the sandbox warms up…
                             </span>
                         )}
