@@ -30,7 +30,7 @@ const TIERS = [
     icon: GraduationCap,
     blurb: 'Try everything PyMasters offers — no card required.',
     features: [
-      'Full curriculum — 24 tracks, 425+ lessons',
+      'Full curriculum — 25 tracks, 340+ lessons',
       'Vaathiyaar, your AI tutor (chat + voice)',
       'Live Knowledge Map of what you know',
       'Code Playground with real execution',
