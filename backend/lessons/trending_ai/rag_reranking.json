@@ -1,0 +1,147 @@
+{
+  "id": "rag_reranking",
+  "topic": "rag_reranking",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 97,
+  "title": {
+    "en": "Reranking: The Two-Stage Trick That Fixes Bad RAG"
+  },
+  "description": {
+    "en": "Fast vector search casts a wide net; a reranker keeps only the truly relevant. Two-stage retrieval is the 2026 default for quality RAG. Build the rerank step that turns 'okay' retrieval into 'great'."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Why One Search Isn't Enough\n\n\"Vector search is fast but blurry,\" Vaathiyaar explains. \"It grabs the roughly-right passages in milliseconds — but the *best* one might rank 7th. So the 2026 quality standard is **two-stage retrieval**: a cheap first pass casts a wide net (say, top-50), then a smarter, slower **reranker** re-scores just those candidates and keeps the true top-k.\"\n\n### Stage 1: Recall. Stage 2: Precision.\n\n- **Stage 1 (retrieve):** cosine similarity over the whole index — fast, wide, approximate. Goal: don't *miss* the answer.\n- **Stage 2 (rerank):** a **cross-encoder** reads the query and each candidate *together* and scores real relevance. Slow, but only runs on the ~50 survivors. Goal: put the best one *first*.\n\nThe reranker gives each `(query, candidate)` pair a fresh relevance score. Your job is to sort the candidates by that score and keep the top-k. That reordering is what lifts RAG answer quality — frameworks like LlamaIndex and Haystack bake it in by default now.\n\n```\ncandidates = [\"doc_a\", \"doc_b\", \"doc_c\"]\nrerank_scores = [0.2, 0.9, 0.5]\ntop_2 -> [\"doc_b\", \"doc_c\"]      # 0.9, then 0.5\n```\n\n> **Vaathiyaar's rule:** if RAG retrieves the right document but *ranks it low*, you don't need a better embedder — you need a reranker. It is the cheapest big win in the whole pipeline.\n\nToday you implement `rerank(candidates, scores, k)` — return the top-k candidates ordered by their rerank score."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "two_stage_funnel",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Two-stage retrieval",
+          "children": [
+            "stage 1: fast, wide (top-50)",
+            "stage 2: reranker scores pairs",
+            "sort by rerank score",
+            "keep true top-k"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "paired = list(zip(candidates, scores))",
+          "highlight": "zip(candidates, scores)",
+          "explanation": {
+            "en": "Pair each candidate with its fresh reranker score"
+          }
+        },
+        {
+          "line": "paired.sort(key=lambda p: p[1], reverse=True)",
+          "highlight": "reverse=True",
+          "explanation": {
+            "en": "Sort by score, highest relevance first"
+          }
+        },
+        {
+          "line": "return [c for c, s in paired[:k]]",
+          "highlight": "paired[:k]",
+          "explanation": {
+            "en": "Keep the top-k candidates, dropping the scores"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Stage 1 order",
+        "items": [
+          "doc_a (0.2)",
+          "doc_b (0.9)  <- buried!",
+          "doc_c (0.5)"
+        ]
+      },
+      "right": {
+        "title": "After rerank",
+        "items": [
+          "doc_b (0.9)",
+          "doc_c (0.5)",
+          "doc_a dropped"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "retrieve -> 50 candidates (fast, blurry)",
+        "rerank    -> top 2: ['doc_b', 'doc_c']",
+        "answer quality: up"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "reranked",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `rerank(candidates, scores, k)` — the second stage of modern RAG. Pair each candidate with its reranker `scores` (same length), sort by score highest-first, and return the top-k **candidates** (not the scores). Then print `rerank([\"doc_a\", \"doc_b\", \"doc_c\"], [0.2, 0.9, 0.5], 2)` (expected: `['doc_b', 'doc_c']`)."
+      },
+      "starter_code": "def rerank(candidates: list, scores: list, k: int) -> list:\n    \"\"\"Return the top-k candidates ordered by their rerank score (desc).\"\"\"\n    # 1. pair candidates with scores (zip)\n    # 2. sort by score, descending\n    # 3. return the first k candidates (drop the scores)\n    pass\n\nprint(rerank([\"doc_a\", \"doc_b\", \"doc_c\"], [0.2, 0.9, 0.5], 2))",
+      "hints": {
+        "en": [
+          "paired = list(zip(candidates, scores))",
+          "paired.sort(key=lambda p: p[1], reverse=True)  — sort by the score",
+          "return [c for c, s in paired[:k]]  — keep candidates, drop scores"
+        ]
+      },
+      "expected_output": "['doc_b', 'doc_c']"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "rag",
+      "reranking",
+      "two_stage_retrieval",
+      "cross_encoder"
+    ],
+    "concepts_required": [
+      "lists",
+      "zip",
+      "sorting",
+      "list_comprehensions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

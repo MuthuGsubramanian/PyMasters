@@ -1,0 +1,161 @@
+{
+  "id": "llm_sampling_decoding",
+  "topic": "llm_sampling_decoding",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 98,
+  "title": {
+    "en": "How LLMs Choose Words: Greedy, Temperature & Top-K Decoding"
+  },
+  "description": {
+    "en": "An LLM outputs probabilities, not words. The decoding strategy — greedy, temperature, top-k — turns those numbers into text, and it's the knob behind 'creative' vs 'precise'. Build the greedy and top-k pickers yourself."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Model Doesn't Pick a Word. You Do.\n\n\"People think an LLM 'says' the next word,\" Vaathiyaar smiles. \"It doesn't. It hands you a **probability for every word in its vocabulary** and steps back. The **decoding strategy** — the code that turns those numbers into an actual choice — is *yours*. It's the difference between a model that's boringly deterministic and one that's wildly creative.\"\n\n### The Three Everyday Strategies\n\n- **Greedy:** always pick the single highest-probability token. Fast, repeatable, but can get stuck in loops (\"the the the\"). Great for code and extraction.\n- **Temperature:** flatten or sharpen the probabilities before choosing. High temperature = more surprising; low = more focused. It's the \"creativity dial.\"\n- **Top-k:** only consider the k most likely tokens, then choose among them. Cuts off the long tail of nonsense while keeping some variety.\n\n```\nlogits = [1.0, 3.0, 2.0, 0.5]   # one score per vocab token\ngreedy -> index 1               # highest score wins\ntop_2  -> indices {1, 2}        # the two best are eligible\n```\n\n### Why This Is the Most Practical Thing You'll Learn\n\nEvery \"temperature\" slider, every \"make it more creative,\" every reproducible eval run — all of it is decoding. Understand greedy and top-k and you can explain *why* an LLM repeated itself, or went off the rails, in one sentence.\n\n> **Vaathiyaar's rule:** if output is too random, lower temperature or k. If it's too repetitive, raise them. You are not at the model's mercy — you hold the decoder.\n\nToday you implement `greedy(logits)` (the index of the max) and see decoding from the inside."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "decoder_dial",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Decoding",
+          "children": [
+            "model -> a score per token",
+            "greedy: pick the max",
+            "temperature: creativity dial",
+            "top-k: only the k best eligible"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "best = 0",
+          "highlight": "best = 0",
+          "explanation": {
+            "en": "Assume the first token is the winner to start"
+          }
+        },
+        {
+          "line": "for i, score in enumerate(logits):",
+          "highlight": "enumerate(logits)",
+          "explanation": {
+            "en": "Walk every token's score with its index"
+          }
+        },
+        {
+          "line": "if score > logits[best]: best = i",
+          "highlight": "score > logits[best]",
+          "explanation": {
+            "en": "Greedy: keep the index of the highest score seen"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Greedy (temp 0)",
+        "items": [
+          "always the max",
+          "repeatable",
+          "code / extraction"
+        ]
+      },
+      "right": {
+        "title": "High temp / top-k",
+        "items": [
+          "samples the top few",
+          "creative, varied",
+          "writing / brainstorming"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "logits: [1.0, 3.0, 2.0, 0.5]",
+        "greedy -> token index 1",
+        "top-2 eligible -> {1, 2}"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "token_chosen",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `greedy(logits)` — the simplest decoder. `logits` is a list of one score per vocabulary token; return the **index** of the highest score (this is what 'temperature 0' does). Then print `greedy([1.0, 3.0, 2.0, 0.5])` (expected: `1`)."
+      },
+      "starter_code": "def greedy(logits: list) -> int:\n    \"\"\"Return the index of the highest-scoring token (greedy decoding).\"\"\"\n    # find the index of the maximum value in logits\n    pass\n\nprint(greedy([1.0, 3.0, 2.0, 0.5]))",
+      "hints": {
+        "en": [
+          "max(logits) gives the highest score",
+          "list.index(value) gives the position of that value",
+          "Combine them: logits.index(max(logits))"
+        ]
+      },
+      "expected_output": "1"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `top_k_indices(logits, k)` — the set of tokens top-k sampling is allowed to choose from. Return the indices of the k highest-scoring tokens, **sorted ascending** (so the answer is stable). Then print `top_k_indices([1.0, 3.0, 2.0, 0.5], 2)` (expected: `[1, 2]` — the two highest are at indices 1 and 2)."
+      },
+      "starter_code": "def top_k_indices(logits: list, k: int) -> list:\n    \"\"\"Return the indices of the k highest logits, sorted ascending.\"\"\"\n    # 1. rank indices by score (descending), take k\n    # 2. return them sorted ascending\n    pass\n\nprint(top_k_indices([1.0, 3.0, 2.0, 0.5], 2))",
+      "hints": {
+        "en": [
+          "Rank the indices by score: sorted(range(len(logits)), key=lambda i: logits[i], reverse=True)",
+          "Take the first k of those",
+          "Return them sorted() ascending for a stable result"
+        ]
+      },
+      "expected_output": "[1, 2]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "llm_decoding",
+      "greedy_decoding",
+      "temperature",
+      "top_k_sampling"
+    ],
+    "concepts_required": [
+      "lists",
+      "max_min",
+      "sorting",
+      "python_functions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

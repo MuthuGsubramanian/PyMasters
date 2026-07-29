@@ -1,0 +1,140 @@
+{
+  "id": "moe_expert_routing",
+  "topic": "moe_expert_routing",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 96,
+  "title": {
+    "en": "Mixture of Experts: How Big Models Only Use a Slice of Themselves"
+  },
+  "description": {
+    "en": "Mistral Small 4 has 119B parameters but activates only 6B per token. The trick is Mixture of Experts — a router that picks the top few experts per token. Build the router and understand modern efficient LLMs."
+  },
+  "xp_reward": 85,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## 119 Billion Parameters, but Only 6 Billion Do the Work\n\nVaathiyaar points at a spec sheet. \"**Mistral Small 4**: 119 billion total parameters, but only **6 billion active** per token. How? It's not one giant network — it's a committee of specialists, and a **router** that calls only the right few for each word. This is **Mixture of Experts (MoE)**, and in 2026 it's how nearly every efficient frontier model is built.\"\n\n### The Committee Model\n\nInstead of running *all* parameters for *every* token, an MoE layer holds many small **experts** and a tiny **gate** (router). For each token the gate scores every expert, and only the **top-k** highest-scoring experts actually run. The rest stay asleep.\n\nThe payoff: the model has the *knowledge capacity* of 119B parameters, but the *compute cost* of only the few experts it wakes up. Big brain, small bill.\n\n```\ngate_scores = [0.1, 0.7, 0.2, 0.9]   # one score per expert\ntop_2 experts -> indices [3, 1]       # 0.9 and 0.7 win\n```\n\n### Why Top-K, Not All?\n\nRunning every expert would throw away the whole advantage — you'd pay for 119B every token. Running just the top-1 or top-2 keeps quality high while activating a tiny fraction. Choosing **k** is the core MoE trade-off: bigger k = smarter but slower.\n\n> **Vaathiyaar's note:** when you read \"119B total / 6B active,\" you're reading an MoE routing decision. The router you build today is the exact mechanism deciding which 6B wake up.\n\nYou'll implement `route(gate_scores, k)` — return the indices of the top-k experts, highest score first."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "expert_committee",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Mixture of Experts",
+          "children": [
+            "many small experts",
+            "gate scores each",
+            "run only top-k",
+            "119B total / 6B active"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "ranked = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)",
+          "highlight": "reverse=True",
+          "explanation": {
+            "en": "Order expert indices by their gate score, highest first"
+          }
+        },
+        {
+          "line": "return ranked[:k]",
+          "highlight": "[:k]",
+          "explanation": {
+            "en": "Wake only the top-k experts; the rest stay asleep (and free)"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Dense (all experts)",
+        "items": [
+          "119B active/token",
+          "max compute",
+          "slow, costly"
+        ]
+      },
+      "right": {
+        "title": "MoE top-2",
+        "items": [
+          "~6B active/token",
+          "same knowledge",
+          "fast, cheap"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "gate: [0.1, 0.7, 0.2, 0.9]",
+        "route(k=2) -> [3, 1]  (0.9 then 0.7)",
+        "experts 0 and 2 stay asleep"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "experts_routed",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `route(gate_scores, k)` — the MoE router. `gate_scores` is a list of one score per expert; return the **indices** of the top-k experts, highest score first. Then print `route([0.1, 0.7, 0.2, 0.9], 2)` (expected: `[3, 1]` — expert 3 scored 0.9, expert 1 scored 0.7)."
+      },
+      "starter_code": "def route(gate_scores: list, k: int) -> list:\n    \"\"\"Return indices of the top-k experts by gate score, highest first.\"\"\"\n    # rank expert INDICES by their score (descending), take the first k\n    pass\n\nprint(route([0.1, 0.7, 0.2, 0.9], 2))",
+      "hints": {
+        "en": [
+          "Sort the INDICES, not the scores: sorted(range(len(gate_scores)), key=...)",
+          "key=lambda i: gate_scores[i] with reverse=True ranks by score descending",
+          "Take the first k with ranked[:k]"
+        ]
+      },
+      "expected_output": "[3, 1]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "mixture_of_experts",
+      "moe_routing",
+      "sparse_activation",
+      "efficient_llms"
+    ],
+    "concepts_required": [
+      "lists",
+      "sorting",
+      "lambda",
+      "python_functions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
