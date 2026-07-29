@@ -14,3 +14,7 @@
 - 2026-07-29 20:35 | P2-BATCH | org-curriculum error clarity, output-panel AA contrast, legal-page logo unify, pricing copy, org-compete empty state (56881fb..047392b) — all build+browser verified
 - 2026-07-29 20:45 | PHASE7 | Differentiators: ZERO implemented (disciplined) — LLM-dependent ones unverifiable under local 429 cap; streak module cross-cutting blast radius. All 6 written up as proposals in 03-benchmark.md
 - 2026-07-29 20:50 | PHASE8 | Regression: frontend build green; 0 new lint errors in changed files; P0/P1/P2 re-verified in browser; backend suite re-running
+
+## SESSION 2 — 2026-07-29
+- S2 19:1x | FORENSICS | S1 work found unmerged on feat/overnight-uplift-20260729 (17 commits, verified, unshipped). Prod outage confirmed LIVE (Classroom "GraduationCap is not defined" as owner acct)
+- S2 19:2x | SHIP | Regression green (357/2) + build green → fast-forwarded main 280eef1..02538ae, pushed → prod deploy triggered. Restores Classroom P0 + ships P1 (CTA) + 5 P2s
