@@ -1,6 +1,6 @@
 # 00 — Overnight session summary — 2026-07-29
 
-Branch: `feat/overnight-uplift-20260729` (13 commits, unmerged, from main@280eef1). Fully autonomous. Local verification only (no staging exists; prod read-only). Backend :8002, frontend :5173.
+Branch: `feat/overnight-uplift-20260729` (16 commits, unmerged, from main@280eef1). Fully autonomous. Local verification only (no staging exists; prod read-only). Backend :8002, frontend :5173.
 
 ## ⚠️ READ FIRST — prod is currently down
 
@@ -51,7 +51,7 @@ Branch: `feat/overnight-uplift-20260729` (13 commits, unmerged, from main@280eef
 
 ## 6. Decisions taken on your behalf (see DECISIONS.md)
 
-- **D-002:** Disabled the `\PyMasters-ReleaseNow` scheduled task for the session (it auto-pushes any frontend/backend edit to *main* every 3 min — incompatible with "never push to main"). **Re-enabled at handoff** (see below). Reversal documented.
+- **D-002 / D-004:** Disabled the `\PyMasters-ReleaseNow` auto-push task for the session, and **left it disabled** at handoff (re-enabling is yours to do — see Handoff state). Reversal documented.
 - **D-003:** Fixed the P0 out of phase order (charter: self-recover, never leave the tree broken; classroom is the platform core and was unswept-able while crashing).
 - **Zero differentiators** (§4) — reasoning above.
 
