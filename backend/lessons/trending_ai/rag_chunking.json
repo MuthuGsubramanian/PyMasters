@@ -1,0 +1,148 @@
+{
+  "id": "rag_chunking",
+  "topic": "rag_chunking",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 92,
+  "title": {
+    "en": "Chunking: How RAG Splits Documents (With Overlap)"
+  },
+  "description": {
+    "en": "Before retrieval comes chunking — the step that quietly makes or breaks every RAG app. Implement the sliding-window chunker LlamaIndex and Haystack use under the hood."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Step Everyone Skips (and Then Regrets)\n\n\"Teams spend weeks tuning their LLM and their vector database,\" Vaathiyaar sighs, \"then discover their RAG answers are bad because of the *boring* step in the middle: **chunking**. Split your documents wrong and the right answer gets sliced in half, landing in no chunk at all.\"\n\n### Why Chunk At All?\n\nEmbedding models have a size limit and retrieval works best on focused passages. So **LlamaIndex**, **Haystack**, and every other 2026 RAG framework break long documents into **chunks** — small windows of text — before embedding them.\n\n### The Overlap Trick\n\nIf you cut cleanly every N characters, a sentence spanning a boundary is torn apart and its meaning is lost. The fix is **overlap**: each chunk repeats the last slice of the previous one, so ideas that straddle a boundary survive in at least one whole chunk.\n\n```\ntext:    \"the quick brown fox jumps\"\nsize=10, overlap=3\n\nchunk 0: \"the quick \"\nchunk 1: \"k brown fo\"   <- 'k ' repeated from chunk 0\nchunk 2: \"fox jumps\"\n```\n\nThe window slides forward by `size - overlap` each step. Bigger overlap = safer boundaries but more chunks (and more storage and embedding cost). It's the single most important knob in a RAG pipeline, and almost nobody tunes it deliberately.\n\n> **Vaathiyaar's rule:** when RAG \"can't find\" an obvious fact, suspect chunking first. The fact was probably split across two chunks and fully present in neither.\n\nToday you implement the exact sliding-window chunker sitting inside those frameworks — `size` characters per chunk, sliding by `size - overlap`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "document_sliced",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "RAG ingestion",
+          "children": [
+            "long doc -> chunks",
+            "window of `size` chars",
+            "slide by size - overlap",
+            "overlap keeps boundaries whole"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "step = size - overlap",
+          "highlight": "size - overlap",
+          "explanation": {
+            "en": "How far the window advances each time — smaller step = more overlap"
+          }
+        },
+        {
+          "line": "for start in range(0, len(text), step):",
+          "highlight": "range(0, len(text), step)",
+          "explanation": {
+            "en": "Slide the window start forward by `step` until the text ends"
+          }
+        },
+        {
+          "line": "chunks.append(text[start:start + size])",
+          "highlight": "text[start:start + size]",
+          "explanation": {
+            "en": "Each chunk is a `size`-character slice from the current start"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "DataStructure",
+      "id": "chunks",
+      "structure": "list",
+      "items": [
+        "'the quick '",
+        "'k brown fo'",
+        "'fox jumps'"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "tradeoff",
+      "left": {
+        "title": "Big overlap",
+        "items": [
+          "safer boundaries",
+          "more chunks",
+          "higher cost"
+        ]
+      },
+      "right": {
+        "title": "No overlap",
+        "items": [
+          "cheap",
+          "splits ideas in half",
+          "misses facts"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "chunks_ready",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `chunk_text(text, size, overlap)` — the sliding-window chunker inside every RAG framework. Return a list of substrings, each up to `size` characters, where the window advances by `size - overlap` each step (so consecutive chunks share `overlap` characters). Then print the chunks for `chunk_text(\"abcdefg\", 3, 1)`."
+      },
+      "starter_code": "def chunk_text(text: str, size: int, overlap: int) -> list:\n    \"\"\"Split text into overlapping windows of `size` chars.\"\"\"\n    # step = size - overlap; slide start by step; slice text[start:start+size]\n    pass\n\nprint(chunk_text(\"abcdefg\", 3, 1))",
+      "hints": {
+        "en": [
+          "step = size - overlap  (how far the window slides each time)",
+          "for start in range(0, len(text), step): take text[start:start+size]",
+          "Stop once a chunk reaches the end of the text so you don't loop past it"
+        ]
+      },
+      "expected_output": "['abc', 'cde', 'efg']"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "rag",
+      "text_chunking",
+      "sliding_window",
+      "document_ingestion"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "strings",
+      "slicing",
+      "range"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

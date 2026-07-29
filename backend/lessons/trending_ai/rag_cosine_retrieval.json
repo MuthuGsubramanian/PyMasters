@@ -1,0 +1,160 @@
+{
+  "id": "rag_cosine_retrieval",
+  "topic": "rag_cosine_retrieval",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 91,
+  "title": {
+    "en": "The Heart of RAG: Cosine Similarity From Scratch"
+  },
+  "description": {
+    "en": "Every RAG system in 2026 — LlamaIndex, Haystack, RAGFlow — retrieves with one idea: cosine similarity over embeddings. Implement it yourself and RAG stops being magic."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The One Formula Behind Every RAG System\n\n\"RAG — Retrieval-Augmented Generation — sounds like a framework you install,\" Vaathiyaar says. \"It isn't. Strip away **LlamaIndex**, **Haystack**, and **RAGFlow** and you find the same beating heart: turn text into vectors, then find the vectors closest in *direction* to your question. That closeness is **cosine similarity**, and today you build it with nothing but a list and a loop.\"\n\n### Why Direction, Not Distance\n\nAn **embedding** turns a sentence into a list of numbers — a vector — where similar meanings point the same way. To rank documents against a query we don't measure how *far apart* the vectors are; we measure the **angle** between them. Same direction -> similar meaning, no matter the length.\n\nCosine similarity of vectors `a` and `b` is:\n\n> **cos = dot(a, b) / (norm(a) x norm(b))**\n\n- **dot(a, b)** = sum of `a[i] * b[i]` — how much they move together.\n- **norm(v)** = `sqrt(sum(v[i]^2))` — the vector's length.\n\nThe result runs from **-1** (opposite) through **0** (unrelated) to **1** (identical direction). Retrieval just sorts documents by this score and keeps the top-k.\n\n### That's the Whole Trick\n\n```\nquery  = [0.9, 0.1]        # \"how do I loop?\"\ndocs   = [[0.8, 0.2],      # \"for loops\"      -> high score\n          [0.1, 0.9]]      # \"file handling\"  -> low score\n```\n\nThe retriever returns \"for loops\" first. Swap these toy vectors for 384-dimensional embeddings from a model like all-MiniLM and you have production RAG — the exact code path inside every framework you'll ever `pip install`.\n\n> **Vaathiyaar's note:** understand this and you can debug *any* RAG system. Bad retrieval is almost never the LLM's fault — it's the vectors, or this score, going wrong."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "vectors_pointing",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "RAG retrieval",
+          "children": [
+            "text -> embedding vector",
+            "cosine = dot / (norm x norm)",
+            "score in [-1, 1]",
+            "sort, keep top-k"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "dot = sum(x*y for x, y in zip(a, b))",
+          "highlight": "sum(x*y",
+          "explanation": {
+            "en": "Dot product: multiply matching components, add them up"
+          }
+        },
+        {
+          "line": "na = sum(x*x for x in a) ** 0.5",
+          "highlight": "** 0.5",
+          "explanation": {
+            "en": "Norm = square root of the sum of squares (vector length)"
+          }
+        },
+        {
+          "line": "cos = dot / (na * nb)",
+          "highlight": "dot / (na * nb)",
+          "explanation": {
+            "en": "Divide out the lengths so only DIRECTION matters"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "scores",
+      "left": {
+        "title": "Same direction",
+        "items": [
+          "cos ~ 1.0",
+          "'for loops' vs 'how to loop'",
+          "RETRIEVED"
+        ]
+      },
+      "right": {
+        "title": "Unrelated",
+        "items": [
+          "cos ~ 0.0",
+          "'for loops' vs 'file I/O'",
+          "skipped"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "query: 'how do I loop?'",
+        "  for loops        score 0.98  <- top match",
+        "  file handling    score 0.31"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "match_found",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `cosine_similarity(a, b)` for two equal-length vectors (lists of floats): `dot(a, b) / (norm(a) * norm(b))`, rounded to 4 decimals. Use `sum(...)` and `** 0.5` for the square root — no imports needed. Then print the similarity of `[1, 0, 1]` and `[1, 0, 0]`."
+      },
+      "starter_code": "def cosine_similarity(a: list, b: list) -> float:\n    \"\"\"cos = dot(a,b) / (norm(a) * norm(b)), rounded to 4 dp.\"\"\"\n    # 1. dot product: sum of a[i]*b[i]\n    # 2. norm(v) = sqrt(sum of squares) = sum(x*x for x in v) ** 0.5\n    # 3. divide, round to 4 dp\n    pass\n\nprint(cosine_similarity([1, 0, 1], [1, 0, 0]))",
+      "hints": {
+        "en": [
+          "dot = sum(x*y for x, y in zip(a, b))",
+          "norm(v) = sum(x*x for x in v) ** 0.5  (** 0.5 is a square root)",
+          "return round(dot / (na * nb), 4)"
+        ]
+      },
+      "expected_output": "0.7071"
+    },
+    {
+      "instruction": {
+        "en": "Now build the retriever. Implement `top_match(query, docs)` that returns the **index** of the document vector with the highest cosine similarity to `query`. Reuse the same cosine formula. Print the index of the best match for query `[0.9, 0.1]` against docs `[[0.1, 0.9], [0.8, 0.2]]` (expected: 1)."
+      },
+      "starter_code": "def cosine(a, b):\n    dot = sum(x*y for x, y in zip(a, b))\n    na = sum(x*x for x in a) ** 0.5\n    nb = sum(x*x for x in b) ** 0.5\n    return dot / (na * nb)\n\ndef top_match(query: list, docs: list) -> int:\n    \"\"\"Return the index of the doc most similar to query.\"\"\"\n    # score each doc against the query, return the index of the max\n    pass\n\nprint(top_match([0.9, 0.1], [[0.1, 0.9], [0.8, 0.2]]))",
+      "hints": {
+        "en": [
+          "Score every doc: scores = [cosine(query, d) for d in docs]",
+          "The best index is scores.index(max(scores))",
+          "max() finds the highest score; .index() finds where it is"
+        ]
+      },
+      "expected_output": "1"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "rag",
+      "cosine_similarity",
+      "embeddings",
+      "vector_retrieval"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "list_comprehensions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

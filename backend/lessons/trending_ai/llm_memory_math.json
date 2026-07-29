@@ -1,0 +1,171 @@
+{
+  "id": "llm_memory_math",
+  "topic": "llm_memory_math",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 90,
+  "title": {
+    "en": "Will It Fit? The Memory Math for Running LLMs Locally"
+  },
+  "description": {
+    "en": "2026's small-model wave — Phi-4-mini, Gemma 4, Mistral Small — put real LLMs on laptops. Learn the one calculation that tells you which model fits in your RAM, and why quantization changes everything."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Question Every Local-AI Builder Asks First\n\nVaathiyaar taps the RAM sticker on a laptop. \"Before you download a single model in 2026, you answer one question: **will it fit?** Get it wrong and your machine swaps to disk and crawls. Get it right and a 12-billion-parameter model like Gemma 4 hums along on a 16 GB laptop.\"\n\nThe 2026 small-model wave — **Phi-4-mini** (3.8B), **Gemma 4** (12B), **Mistral Small 3.2** (24B) — is only useful if you can predict its footprint. And the whole game is a little arithmetic.\n\n### Weights Are Just Numbers, and Numbers Have a Size\n\nA model's parameters are floating-point numbers. Their memory cost is simply:\n\n> **bytes = number_of_parameters x bytes_per_parameter**\n\nAt full precision each weight is a 16-bit float — **2 bytes**. So a 7B model in bf16 is `7e9 x 2 = 14 GB` before you've done anything else.\n\n### Quantization: The Trick That Made Local LLMs Real\n\n**Quantization** stores each weight in fewer bits — 8-bit (1 byte), 4-bit (0.5 bytes), even lower — trading a little accuracy for a lot of RAM. That 14 GB model at 4-bit becomes `7e9 x 0.5 = 3.5 GB`. Suddenly it fits on a phone.\n\n| Precision | Bits/weight | Bytes/weight | 7B model |\n|---|---|---|---|\n| fp32 | 32 | 4 | 28 GB |\n| bf16 | 16 | 2 | 14 GB |\n| int8 | 8 | 1 | 7 GB |\n| int4 | 4 | 0.5 | 3.5 GB |\n\n### Don't Forget the Overhead\n\nWeights aren't the only tenant in RAM. The **KV cache** (attention's memory of the conversation), activations, and framework overhead add on top — a common rule of thumb is to reserve **~20% headroom**. So a model whose weights are 3.5 GB really wants ~4.2 GB free.\n\n> **The builder's rule:** `RAM needed = params x (bits / 8) x 1.2`. Memorize it. It is the difference between \"runs beautifully\" and \"why is my fan screaming?\"\n\nToday you'll implement exactly that calculation — the first tool every local-AI engineer writes."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "laptop_ram_fit",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Model RAM",
+          "children": [
+            "params x bytes/weight",
+            "quantization = fewer bits",
+            "+ ~20% overhead (KV cache)",
+            "fp32/bf16/int8/int4"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "precisions",
+      "left": {
+        "title": "bf16 (2 bytes)",
+        "items": [
+          "7B -> 14 GB",
+          "full accuracy",
+          "needs a GPU / 16GB+"
+        ]
+      },
+      "right": {
+        "title": "int4 (0.5 bytes)",
+        "items": [
+          "7B -> 3.5 GB",
+          "tiny accuracy loss",
+          "runs on a phone"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "bytes_per_weight = bits / 8",
+          "highlight": "bits / 8",
+          "explanation": {
+            "en": "8 bits to a byte: int4 -> 0.5 bytes, bf16 -> 2 bytes"
+          }
+        },
+        {
+          "line": "weight_bytes = params * bytes_per_weight",
+          "highlight": "params *",
+          "explanation": {
+            "en": "The dominant cost: one number per parameter"
+          }
+        },
+        {
+          "line": "total = weight_bytes * 1.2",
+          "highlight": "* 1.2",
+          "explanation": {
+            "en": "Reserve ~20% for KV cache, activations and framework overhead"
+          }
+        },
+        {
+          "line": "gb = total / 1e9",
+          "highlight": "/ 1e9",
+          "explanation": {
+            "en": "Bytes -> gigabytes so you can compare against your RAM sticker"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "VariableBox",
+      "id": "example",
+      "variables": [
+        {
+          "name": "params",
+          "value": "7e9"
+        },
+        {
+          "name": "bits",
+          "value": "4"
+        },
+        {
+          "name": "ram_gb",
+          "value": "4.2"
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "Gemma-4-12B @ int4 -> 7.2 GB  (fits 16GB laptop)",
+        "Mistral-Small-24B @ int4 -> 14.4 GB",
+        "Phi-4-mini-3.8B @ int8 -> 4.56 GB"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "fits_in_ram",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `model_ram_gb(params, bits)` — the calculation every local-LLM engineer runs first. `params` is the parameter count (e.g. 7e9 for 7B), `bits` is the precision (4, 8, or 16). Return the RAM needed in **gigabytes**, reserving 20% overhead for the KV cache, and rounded to 2 decimals: `params * (bits / 8) * 1.2 / 1e9`. Then print the requirement for a 7-billion-parameter model at 4-bit."
+      },
+      "starter_code": "def model_ram_gb(params: float, bits: int) -> float:\n    \"\"\"RAM (in GB) to run a model: params x bytes/weight x 1.2 overhead.\"\"\"\n    # 1. bytes per weight = bits / 8\n    # 2. weight bytes = params x bytes-per-weight\n    # 3. add 20% overhead, convert to GB, round to 2 dp\n    pass\n\nprint(model_ram_gb(7e9, 4))",
+      "hints": {
+        "en": [
+          "bytes_per_weight = bits / 8  (so 4-bit is 0.5 bytes)",
+          "Multiply by 1.2 to reserve 20% for the KV cache and overhead",
+          "Divide by 1e9 for gigabytes, then round(value, 2)"
+        ]
+      },
+      "expected_output": "4.2"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "quantization",
+      "model_memory_math",
+      "local_llm_deployment",
+      "kv_cache_overhead"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
