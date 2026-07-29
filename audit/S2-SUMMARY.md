@@ -8,6 +8,10 @@ On top of restoring it, the classroom is now materially better to use:
 - **Finish → Next lesson, one tap.** Completing a lesson used to drop you back on the track list to hunt; now the success screen shows "Up next: <title>" + a primary **Next lesson** button that loads the next lesson and lands at the top.
 - **Progress you can see.** Each track in the list shows "X of Y done" with a progress bar and an "X/Y" (or "✓ Done") badge; the in-lesson header now reads "Python Fundamentals · Lesson 2 of 36" for orientation.
 
+And there is **new content**: **12 brand-new AI-engineering lessons on July-2026 trends**, added to the `ai_engineering` / `trending_ai` module — local-LLM memory & quantization math, RAG (cosine retrieval, chunking, reranking), agents (type-safe/Pydantic-AI output, code-action/smolagents, LangGraph state graphs, MCP-style tool calling), Mixture-of-Experts routing, greedy/top-k decoding, context-window budgeting, and JSON extraction from messy LLM output. Each has a Vaathiyaar-narrated scrollytelling story, a visual walkthrough, and a hands-on coding challenge — and **every challenge was verified to pass through the real production grader**. Topics were grounded in a live web-search of current trends, not just training data.
+
+Honest note on generation: the platform's own auto-generation *pipeline* is blocked — the only local LLM provider (ollama) is at its weekly quota (429), there is no qubrid/gemini key locally, and the gcloud creds are stale so I couldn't fetch one. Rather than fake pipeline output, I authored these 12 lessons directly to the lesson schema and validated each against the deterministic sandbox grader. So: 12 real, verified lessons shipped; the automated pipeline remains quota-blocked (see blockers).
+
 Plus everything Session 1 built but never shipped is now live: anonymous "Get Started/Start Free" opens signup (was the sign-in page), hint icons are real icons (not emoji), org-curriculum failures show why, output-panel text meets AA contrast, the legal pages use the real brand logo, and the pricing page states honest catalogue numbers.
 
 ## 2. Commits shipped and merged (SHAs, on `main`, deployed)
