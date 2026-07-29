@@ -453,6 +453,9 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                         const meta = TRACK_META[track] || { name: humanizeTrack(track), icon: <BookOpen size={16} />, accent: '#64748b', gradient: 'from-slate-100 to-slate-50' };
                         const isExpanded = expandedTrack === track;
                         const lessonsInTrack = grouped[track];
+                        const doneInTrack = lessonsInTrack.filter((l) => completedLessons.has(l.id)).length;
+                        const trackComplete = doneInTrack > 0 && doneInTrack === lessonsInTrack.length;
+                        const trackPct = lessonsInTrack.length ? Math.round((doneInTrack / lessonsInTrack.length) * 100) : 0;
 
                         return (
                             <motion.div
@@ -471,14 +474,26 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                         style={{ background: `${meta.accent}15`, color: meta.accent }}>
                                         {meta.icon}
                                     </div>
-                                    <div className="flex-1 text-left">
+                                    <div className="flex-1 text-left min-w-0">
                                         <h2 className="text-sm font-bold text-text-primary">{meta.name}</h2>
-                                        <p className="text-xs text-text-muted">{lessonsInTrack.length} lessons</p>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <p className="text-xs text-text-muted">
+                                                {doneInTrack > 0 ? `${doneInTrack} of ${lessonsInTrack.length} done` : `${lessonsInTrack.length} lessons`}
+                                            </p>
+                                            {doneInTrack > 0 && (
+                                                <div className="h-1 w-16 rounded-full bg-bg-inset overflow-hidden shrink-0" aria-hidden="true">
+                                                    <div className="h-full rounded-full transition-all duration-500"
+                                                        style={{ width: `${trackPct}%`, background: trackComplete ? '#22c55e' : meta.accent }} />
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-[10px] font-bold px-2.5 py-1 rounded-full"
-                                            style={{ background: `${meta.accent}12`, color: meta.accent }}>
-                                            {lessonsInTrack.length}
+                                            style={trackComplete
+                                                ? { background: '#22c55e18', color: '#16a34a' }
+                                                : { background: `${meta.accent}12`, color: meta.accent }}>
+                                            {trackComplete ? '✓ Done' : `${doneInTrack}/${lessonsInTrack.length}`}
                                         </span>
                                         <ChevronRight
                                             size={16}
