@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Terminal } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import PymastersGlyph from '../assets/pymasters-glyph.svg';
 
 export default function Terms() {
     const navigate = useNavigate();
@@ -12,8 +13,8 @@ export default function Terms() {
             <nav className="px-6 py-5 border-b border-black/[0.06] bg-white/60 backdrop-blur-md sticky top-0 z-50">
                 <div className="max-w-4xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-                        <div className="w-8 h-8 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-lg flex items-center justify-center shadow-md shadow-cyan-500/20">
-                            <Terminal className="text-white" size={16} />
+                        <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-cyan-500 rounded-lg flex items-center justify-center shadow-md shadow-purple-500/20">
+                            <img src={PymastersGlyph} alt="" className="w-5 h-5" aria-hidden="true" />
                         </div>
                         <span className="font-display font-bold text-lg tracking-tight text-slate-900">PYMASTERS</span>
                     </div>
