@@ -16,7 +16,7 @@ import {
     BookOpen, ChevronRight, Play, RotateCcw,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
     Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones, Mic,
-    MessageCircle, X, Cloud, Building2, Network, GraduationCap
+    MessageCircle, X, Cloud, Building2, Network, GraduationCap, Lightbulb
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import useTTS from '../hooks/useTTS';
@@ -1046,7 +1046,7 @@ function PracticePhase({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     className="panel rounded-xl p-4 border border-amber-200 dark:border-amber-500/30 bg-amber-50/80 dark:bg-amber-500/10 flex items-start gap-3"
                 >
-                    <span className="text-amber-500 text-lg">💡</span>
+                    <Lightbulb size={18} className="text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />
                     <p className="text-text-secondary text-sm leading-relaxed">{m.content}</p>
                 </motion.div>
             ))}
@@ -1106,9 +1106,9 @@ function PracticePhase({
                 <div className="flex justify-end">
                     <button
                         onClick={onHint}
-                        className="btn-neo btn-neo-ghost text-sm py-2 px-4 gap-1.5"
+                        className="btn-neo btn-neo-ghost text-sm py-2 px-4 gap-1.5 inline-flex items-center"
                     >
-                        💡 Need a hint?
+                        <Lightbulb size={16} aria-hidden="true" /> Need a hint?
                         {hintIndex > 0 && (
                             <span className="ml-1.5 text-xs text-text-muted">
                                 ({hintIndex}/{challenge.hints.length})
