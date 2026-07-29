@@ -1,0 +1,146 @@
+{
+  "id": "tool_calling_dispatch",
+  "topic": "tool_calling_dispatch",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 101,
+  "title": {
+    "en": "Tool Calling: How Agents Actually Run Functions"
+  },
+  "description": {
+    "en": "The Model Context Protocol and every agent framework share one primitive: a model names a tool + args, and your code dispatches it to a real function. Build that dispatcher — the bridge between an LLM's intent and your code."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Where the Model Stops and Your Code Starts\n\n\"An LLM can't actually check the weather or query your database,\" Vaathiyaar says. \"It can only *ask* — by naming a **tool** and its **arguments**. Something on your side has to catch that request and run the real function. In 2026 the **Model Context Protocol (MCP)** standardized how tools are described, but the moment of truth is always the same: a **dispatcher** that maps a tool name to a Python function and calls it.\"\n\n### A Registry and a Call\n\nTwo pieces:\n- A **registry**: a dict mapping tool names to functions, e.g. `{\"add\": add, \"mul\": mul}`.\n- A **call** from the model: `{\"name\": \"add\", \"args\": {\"a\": 2, \"b\": 3}}`.\n\nThe dispatcher looks up the function by name and calls it with the args:\n\n```\nregistry = {\"add\": lambda a, b: a + b}\ncall     = {\"name\": \"add\", \"args\": {\"a\": 2, \"b\": 3}}\ndispatch(registry, call) -> 5\n```\n\n### Guard the Boundary\n\nThe model can hallucinate a tool that doesn't exist. A real dispatcher checks the name is in the registry first and refuses unknown tools — otherwise a made-up tool name crashes your agent. That one check is the difference between a robust agent and a fragile demo.\n\n> **Vaathiyaar's rule:** the model proposes; your dispatcher disposes. Validate the tool name, then call — never `eval` whatever the model dreamed up.\n\nToday you implement `dispatch(registry, call)`: look up the named tool and call it with `**args`, raising on an unknown tool."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "tool_bridge",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Tool calling",
+          "children": [
+            "model -> {name, args}",
+            "registry: name -> function",
+            "check name exists",
+            "call func(**args)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "name = call['name']",
+          "highlight": "call['name']",
+          "explanation": {
+            "en": "The model told us which tool it wants"
+          }
+        },
+        {
+          "line": "if name not in registry: raise ValueError(...)",
+          "highlight": "not in registry",
+          "explanation": {
+            "en": "Refuse hallucinated tools — never run something that doesn't exist"
+          }
+        },
+        {
+          "line": "return registry[name](**call['args'])",
+          "highlight": "(**call['args'])",
+          "explanation": {
+            "en": "Call the real function, unpacking the model's arguments"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "call: {'name':'add','args':{'a':2,'b':3}}",
+        "dispatch -> add(a=2, b=3) -> 5",
+        "call: {'name':'fly',...} -> ValueError: unknown tool 'fly'"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Naive",
+        "items": [
+          "eval the model output",
+          "runs anything",
+          "unsafe / crashes"
+        ]
+      },
+      "right": {
+        "title": "Dispatcher",
+        "items": [
+          "registry lookup",
+          "unknown -> reject",
+          "safe, predictable"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "tool_called",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `dispatch(registry, call)` — the tool-calling bridge. `registry` maps a tool name to a function; `call` is `{\"name\": ..., \"args\": {...}}`. If the name isn't in the registry, raise `ValueError(f\"unknown tool '{name}'\")`. Otherwise call the function with the args unpacked (`func(**args)`) and return its result. Then print the result of dispatching an `add` call with a=2, b=3."
+      },
+      "starter_code": "def dispatch(registry: dict, call: dict):\n    \"\"\"Look up call['name'] in registry and call it with call['args'].\"\"\"\n    # 1. name = call['name']; reject if not in registry\n    # 2. return registry[name](**call['args'])\n    pass\n\nregistry = {\"add\": lambda a, b: a + b, \"mul\": lambda a, b: a * b}\nprint(dispatch(registry, {\"name\": \"add\", \"args\": {\"a\": 2, \"b\": 3}}))",
+      "hints": {
+        "en": [
+          "name = call['name']",
+          "Guard: if name not in registry: raise ValueError(f\"unknown tool '{name}'\")",
+          "Call with unpacked args: registry[name](**call['args'])"
+        ]
+      },
+      "expected_output": "5"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "tool_calling",
+      "mcp",
+      "function_dispatch",
+      "agent_tools"
+    ],
+    "concepts_required": [
+      "dictionaries",
+      "functions",
+      "kwargs_unpacking"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

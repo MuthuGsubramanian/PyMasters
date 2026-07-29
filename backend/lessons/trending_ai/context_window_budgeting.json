@@ -1,0 +1,154 @@
+{
+  "id": "context_window_budgeting",
+  "topic": "context_window_budgeting",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 100,
+  "title": {
+    "en": "Fitting the Conversation: Token Budgets & Context Windows"
+  },
+  "description": {
+    "en": "Every LLM has a context limit, and long chats blow past it. The fix is a token budget: keep the most recent messages that fit and drop the rest. Build the trimmer every chatbot needs."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Wall Every Chatbot Hits\n\n\"A model's **context window** is finite — even 2026's big ones,\" Vaathiyaar says. \"Let a conversation grow and eventually the whole history won't fit. Send it anyway and you get an error, or worse, a silently truncated prompt. So every real chat app runs a **token budget**: before each call, it trims the history to what fits — keeping the *most recent* messages, because those matter most.\"\n\n### Newest First\n\nRecency wins. The system keeps the latest messages and drops the oldest until the total fits the budget. (Production apps often *summarize* the dropped history, but the core move is this fit-to-budget trim.)\n\n```\nmessages (oldest -> newest), each with a token count:\n  [(\"m1\", 40), (\"m2\", 30), (\"m3\", 25), (\"m4\", 20)]\nbudget = 60 tokens\n\nwalk from the NEWEST backwards, adding while it fits:\n  m4 (20) -> total 20  keep\n  m3 (25) -> total 45  keep\n  m2 (30) -> total 75  STOP (over 60)\nkept, in original order: [m3, m4]\n```\n\n### Why This Is Non-Negotiable\n\nSkip budgeting and your app breaks the moment a chat gets long — which is exactly when users are most invested. It's a tiny function that prevents your most embarrassing failure mode.\n\n> **Vaathiyaar's rule:** never send an unbounded history to an LLM. Budget every call. The newest tokens are the ones the model needs most.\n\nToday you implement `fit_budget(messages, budget)` — keep the newest messages that fit, returned in original order."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "token_budget",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Token budgeting",
+          "children": [
+            "context window is finite",
+            "walk newest -> oldest",
+            "add while it fits",
+            "return in original order"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "for msg, cost in reversed(messages):",
+          "highlight": "reversed(messages)",
+          "explanation": {
+            "en": "Start from the newest message and move backwards"
+          }
+        },
+        {
+          "line": "if total + cost > budget: break",
+          "highlight": "> budget",
+          "explanation": {
+            "en": "Stop as soon as the next message would overflow the window"
+          }
+        },
+        {
+          "line": "kept.append(msg); total += cost",
+          "highlight": "total += cost",
+          "explanation": {
+            "en": "It fits — keep it and add its cost to the running total"
+          }
+        },
+        {
+          "line": "return list(reversed(kept))",
+          "highlight": "reversed(kept)",
+          "explanation": {
+            "en": "We collected newest-first; flip back to original chat order"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "budget 60 | msgs (40,30,25,20)",
+        "keep newest that fit: m3(25)+m4(20)=45",
+        "-> ['m3', 'm4']"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "No budget",
+        "items": [
+          "send everything",
+          "context overflow",
+          "error / truncation"
+        ]
+      },
+      "right": {
+        "title": "Budgeted",
+        "items": [
+          "keep recent that fit",
+          "always valid",
+          "graceful"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "fits_budget",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `fit_budget(messages, budget)`. `messages` is a list of `(text, token_cost)` tuples in chat order (oldest first). Keep the **newest** messages whose costs sum to at most `budget`, and return their **texts in original order**. Then print `fit_budget([(\"m1\", 40), (\"m2\", 30), (\"m3\", 25), (\"m4\", 20)], 60)` (expected: `['m3', 'm4']`)."
+      },
+      "starter_code": "def fit_budget(messages: list, budget: int) -> list:\n    \"\"\"Keep the newest messages that fit in `budget`, in original order.\"\"\"\n    # walk from NEWEST (reversed) adding while total stays <= budget,\n    # then reverse back to original order and return the texts\n    pass\n\nprint(fit_budget([(\"m1\", 40), (\"m2\", 30), (\"m3\", 25), (\"m4\", 20)], 60))",
+      "hints": {
+        "en": [
+          "Walk newest-first: for text, cost in reversed(messages)",
+          "Stop when total + cost would exceed budget (break)",
+          "You collected newest-first, so return list(reversed(kept))"
+        ]
+      },
+      "expected_output": "['m3', 'm4']"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "context_window",
+      "token_budgeting",
+      "history_truncation",
+      "llm_apps"
+    ],
+    "concepts_required": [
+      "lists",
+      "tuples",
+      "loops",
+      "reversed"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

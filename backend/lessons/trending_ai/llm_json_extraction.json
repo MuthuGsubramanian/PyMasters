@@ -1,0 +1,146 @@
+{
+  "id": "llm_json_extraction",
+  "topic": "llm_json_extraction",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 102,
+  "title": {
+    "en": "Getting Clean JSON Out of a Messy LLM Reply"
+  },
+  "description": {
+    "en": "Ask an LLM for JSON and you often get JSON wrapped in prose and code fences. Build the extractor that finds the first real JSON object in a chatty reply — a survival skill for every structured-output pipeline."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## \"Return JSON\" Is a Suggestion, Not a Guarantee\n\n\"You ask the model for JSON,\" Vaathiyaar chuckles, \"and it says: *'Sure! Here you go:'* then a code fence, then the JSON, then *'Let me know if you need anything else!'* Your `json.loads` chokes on the friendly bits. So every structured-output pipeline in 2026 has a little **extractor** that fishes the real JSON object out of the chatter.\"\n\n### Find the Braces\n\nThe robust-enough trick: locate the first `{`, then walk forward tracking brace **depth** — `+1` on `{`, `-1` on `}` — until depth returns to zero. That span is one complete JSON object, prose and code fences ignored.\n\n```\nreply = 'Sure! ```json {\"ok\": true} ``` Done'\n        find first '{' ......^\n        depth: { =1 ... } =0  -> stop\nextracted -> '{\"ok\": true}'  -> json.loads -> {'ok': True}\n```\n\n### Why Depth, Not Just \"Next }\"\n\nJSON nests: `{\"a\": {\"b\": 1}}`. Grabbing text up to the *first* `}` would cut it in half. Counting depth handles nesting correctly — the object ends only when every `{` has been matched by a `}`.\n\n> **Vaathiyaar's rule:** never assume an LLM returns *only* what you asked for. Extract, then parse. Belt and suspenders keeps structured pipelines alive.\n\nToday you implement `extract_json(reply)` — return the first balanced `{...}` substring from a messy reply (as a string)."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "json_from_noise",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "JSON extraction",
+          "children": [
+            "find first '{'",
+            "track brace depth",
+            "depth back to 0 = object end",
+            "then json.loads"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "start = reply.index('{')",
+          "highlight": "index('{')",
+          "explanation": {
+            "en": "The JSON object begins at the first opening brace"
+          }
+        },
+        {
+          "line": "depth += 1 if ch == '{' else -1",
+          "highlight": "depth",
+          "explanation": {
+            "en": "Track nesting: up on '{', down on '}'"
+          }
+        },
+        {
+          "line": "if depth == 0: return reply[start:i+1]",
+          "highlight": "depth == 0",
+          "explanation": {
+            "en": "Every brace matched — this is one complete object"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "reply: 'Sure! {\"ok\": true} thanks!'",
+        "extract_json -> '{\"ok\": true}'",
+        "json.loads -> {'ok': True}"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "json.loads(reply)",
+        "items": [
+          "chokes on prose",
+          "JSONDecodeError",
+          "pipeline dies"
+        ]
+      },
+      "right": {
+        "title": "extract then load",
+        "items": [
+          "ignores the chatter",
+          "clean object",
+          "robust"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "json_extracted",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `extract_json(reply)` — pull the first complete JSON object out of a chatty reply. Find the first `{`, then scan forward tracking brace depth (`+1` on `{`, `-1` on `}`); when depth returns to 0 you've found the end. Return that `{...}` substring (as a string). Then print `extract_json('Sure! Here: {\"ok\": true, \"n\": {\"x\": 1}} — done')` (expected: `{\"ok\": true, \"n\": {\"x\": 1}}`)."
+      },
+      "starter_code": "def extract_json(reply: str) -> str:\n    \"\"\"Return the first balanced {...} substring from reply.\"\"\"\n    # 1. start = reply.index('{')\n    # 2. scan from start, depth += 1 on '{', -= 1 on '}'\n    # 3. when depth hits 0, return reply[start:i+1]\n    pass\n\nprint(extract_json('Sure! Here: {\"ok\": true, \"n\": {\"x\": 1}} -- done'))",
+      "hints": {
+        "en": [
+          "Find the start: start = reply.index('{')",
+          "Scan forward, depth += 1 on '{' and depth -= 1 on '}'",
+          "When depth == 0 after a '}', return reply[start:i+1]"
+        ]
+      },
+      "expected_output": "{\"ok\": true, \"n\": {\"x\": 1}}"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "structured_output",
+      "json_extraction",
+      "brace_matching",
+      "llm_output_parsing"
+    ],
+    "concepts_required": [
+      "strings",
+      "loops",
+      "indexing"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
