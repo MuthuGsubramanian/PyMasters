@@ -73,5 +73,5 @@ Branch: `feat/overnight-uplift-20260729` (13 commits, unmerged, from main@280eef
 ## Handoff state
 
 - Working tree: clean, all work committed to the session branch. Build green, backend tests green (357/2).
-- `\PyMasters-ReleaseNow` scheduled task: **re-enabled** at end of session (was disabled during — D-002). It will resume auto-pushing main-tip; since main is untouched and clean, nothing spurious ships.
+- `\PyMasters-ReleaseNow` scheduled task: **left DISABLED** (I disabled it for the session — D-002). I deliberately did NOT re-enable it: it auto-pushes any frontend/backend edit to *main* every ~3 min, and re-enabling while the repo sits on this unmerged feature branch (mid-review) is a state-change whose safety depends on decisions you haven't made yet (cherry-pick? merge?). **Re-enable it yourself when ready:** `schtasks /change /tn "\PyMasters-ReleaseNow" /enable` — do it only when the working tree is clean and checked out on main.
 - Test accounts created locally (delete when done): `qa_student_0729`, `qa_orgadmin_0729` (+ org "QA Test Academy"), `qa_superadmin_0729`. All on `muthu.g.subramanian+qa*0729@gmail.com` aliases.

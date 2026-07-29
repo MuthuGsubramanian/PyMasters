@@ -25,3 +25,9 @@ Reversal: n/a (config only).
 - **Why out of order**: Phase 2 sweep of classroom/lessons (the platform core) was impossible while the page crashed; charter rule 4 (self-recover, never leave the tree broken) + tie-breaker "blocks-a-core-journey first".
 - **Action**: 1-line import fix, verified in browser, committed 758879c on the session branch. NOT pushed to main (hard stop). **HANDOFF-CRITICAL: cherry-pick 758879c to main and deploy to restore prod.**
 - **Reversal**: revert 758879c (would re-break classroom).
+
+
+## D-004 — Left \PyMasters-ReleaseNow DISABLED at handoff (reversing part of D-002's plan) (2026-07-29 end)
+- D-002 planned to re-enable the auto-push task at handoff. On reflection I did NOT, because: the session ends with the repo on the unmerged feature branch, and re-enabling a task that force-ships frontend/backend edits to main every 3 min while work is mid-review is a state-changing action the user should authorize (they may want to cherry-pick 758879c only, or merge, or neither). Enabling it autonomously could auto-push unreviewed state or interact badly with the branch checkout.
+- **State at handoff:** task DISABLED. Working tree clean, on branch feat/overnight-uplift-20260729. main == origin/main == 280eef1 (untouched).
+- **Reversal / user action:** `schtasks /change /tn "\PyMasters-ReleaseNow" /enable` when clean + on main.
