@@ -4,6 +4,7 @@ import {
     getChallengeCatalog, getOrgChallengeSets, createOrgChallengeSet,
     archiveOrgChallengeSet, getChallengeSetLeaderboard, getOrgLeaderboard,
 } from '../api';
+import { useNavigate } from 'react-router-dom';
 import { Swords, Trophy, Crown, Medal, Plus, Loader2, X, ChevronLeft, Check } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -15,6 +16,7 @@ function rankBadge(rank) {
 }
 
 export default function OrgCompete() {
+    const navigate = useNavigate();
     useEffect(() => { document.title = 'Compete — PyMasters'; }, []);
     const { user, activeOrg } = useAuth();
     const orgId = activeOrg?.id || activeOrg?.org_id;
@@ -22,8 +24,33 @@ export default function OrgCompete() {
     const [tab, setTab] = useState('competitions');
 
     if (!orgId) {
-        return <div className="max-w-3xl mx-auto px-4 py-12 text-center text-text-muted">
-            You're not part of an organization yet.</div>;
+        return (
+            <div className="max-w-md mx-auto px-4 py-16 text-center">
+                <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-purple-500/15 to-cyan-500/15 flex items-center justify-center">
+                    <Swords size={28} className="text-purple-500 dark:text-purple-400" aria-hidden="true" />
+                </div>
+                <h1 className="text-xl font-bold text-text-primary font-display mb-2">Team competitions</h1>
+                <p className="text-sm text-text-secondary leading-relaxed mb-6">
+                    Org Compete is where members of a school or team race on shared coding
+                    challenges and climb a private leaderboard. Join an organization — or
+                    create one — to unlock it.
+                </p>
+                <div className="flex items-center justify-center gap-3">
+                    <button
+                        onClick={() => navigate('/dashboard/org')}
+                        className="btn-neo btn-neo-primary text-sm py-2 px-4 inline-flex items-center gap-1.5"
+                    >
+                        <Plus size={16} aria-hidden="true" /> Create an organization
+                    </button>
+                    <button
+                        onClick={() => navigate('/dashboard/challenges')}
+                        className="btn-neo btn-neo-ghost text-sm py-2 px-4"
+                    >
+                        Solo challenges
+                    </button>
+                </div>
+            </div>
+        );
     }
 
     return (
