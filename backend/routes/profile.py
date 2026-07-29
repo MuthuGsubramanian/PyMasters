@@ -549,7 +549,19 @@ def purge_user_data(cursor, user_id: str) -> None:
     except Exception:
         pass
 
+    # Social graph rows reference the user from either side.
+    try:
+        cursor.execute(
+            "DELETE FROM user_connections WHERE follower_id = ? OR following_id = ?",
+            [user_id, user_id]
+        )
+    except Exception:
+        pass
+
     # All remaining related tables are keyed directly by a user-id column.
+    # Deliberately NOT purged: payments (financial records outlive accounts),
+    # admin_audit / org_audit / lifecycle_log (audit trails), support_requests
+    # (ops history; entries are email-keyed and may predate the account).
     related_tables = [
         ("user_profiles", "user_id"),
         ("user_settings", "user_id"),
@@ -570,6 +582,13 @@ def purge_user_data(cursor, user_id: str) -> None:
         ("org_members", "user_id"),
         ("org_invites", "invited_by"),
         ("training_data", "user_id"),
+        ("playground_files", "user_id"),
+        ("tutor_sessions", "user_id"),
+        ("oauth_identities", "user_id"),
+        ("password_resets", "user_id"),
+        ("account_lifecycle", "user_id"),
+        ("login_events", "user_id"),
+        ("org_admin_requests", "requested_by"),
     ]
     for table, column in related_tables:
         try:
