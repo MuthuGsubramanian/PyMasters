@@ -1,0 +1,140 @@
+{
+  "id": "agent_state_graph",
+  "topic": "agent_state_graph",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 95,
+  "title": {
+    "en": "Agent Graphs: Build a Tiny LangGraph-Style State Machine"
+  },
+  "description": {
+    "en": "LangGraph became 2026's go-to for serious agents by modeling them as graphs of nodes over shared state. Build the minimal executor at its core and you'll understand every stateful agent you meet."
+  },
+  "xp_reward": 90,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Agents Are Just State Machines Wearing a Trench Coat\n\n\"When an agent gets serious — retries, branches, human approval steps — a simple loop falls apart,\" Vaathiyaar says. \"That's why **LangGraph** dominates production agents in 2026: it models the agent as a **graph**. Nodes do work on a shared **state**; edges decide where to go next. Retry a step? Loop an edge. Branch on a result? Conditional edge. It's just a state machine — and today you build the engine that runs one.\"\n\n### The Three Pieces\n\n1. **State** — a plain dict that flows through the graph. Each node reads it and returns an updated version.\n2. **Nodes** — functions `state -> state`. One might call an LLM; another might check a condition.\n3. **Edges** — a map from the current node to the next. The special node `\"END\"` stops the machine.\n\n### Running the Graph\n\nStart at an entry node. Run its function on the state, look up the next node via the edges, repeat — until you reach `\"END\"`. That loop, maybe 8 lines, is the beating heart of LangGraph.\n\n```\nnodes = {\"add\": lambda s: {**s, \"n\": s[\"n\"] + 1},\n         \"double\": lambda s: {**s, \"n\": s[\"n\"] * 2}}\nedges = {\"add\": \"double\", \"double\": \"END\"}\nrun(nodes, edges, \"add\", {\"n\": 3})   # add -> 4, double -> 8\n```\n\nReal graphs add conditional edges and cycles, but the executor is the same shape. Understand this and LangGraph, and every framework like it, stops being a black box.\n\n> **Vaathiyaar's rule:** if you can draw your agent as boxes and arrows, you can build it as a graph — and a graph you can reason about, test, and debug.\n\nToday you implement `run(nodes, edges, start, state)`: execute nodes, follow edges, stop at `\"END\"`, return the final state."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "state_graph",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Agent graph",
+          "children": [
+            "state = dict flowing through",
+            "node = state -> state",
+            "edges = next-node map",
+            "'END' stops it"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "current = start",
+          "highlight": "start",
+          "explanation": {
+            "en": "Begin at the entry node"
+          }
+        },
+        {
+          "line": "while current != 'END':",
+          "highlight": "!= 'END'",
+          "explanation": {
+            "en": "Keep stepping until we reach the terminal node"
+          }
+        },
+        {
+          "line": "state = nodes[current](state)",
+          "highlight": "nodes[current](state)",
+          "explanation": {
+            "en": "Run this node's function on the shared state"
+          }
+        },
+        {
+          "line": "current = edges[current]",
+          "highlight": "edges[current]",
+          "explanation": {
+            "en": "Follow the edge to the next node"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "FlowArrow",
+      "id": "flow",
+      "label": "add -> double -> END",
+      "duration_ms": 3000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "state {'n': 3}",
+        "  add    -> {'n': 4}",
+        "  double -> {'n': 8}",
+        "  END",
+        "final: {'n': 8}"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "graph_done",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `run(nodes, edges, start, state)` — a minimal LangGraph-style executor. `nodes` maps a name to a function `state -> state`; `edges` maps a node name to the next node name; `\"END\"` terminates. Starting at `start`, run the current node's function on `state`, then follow `edges` to the next node, until you reach `\"END\"`. Return the final state. Then run a graph that increments `n` then doubles it, starting from `{\"n\": 3}`, and print the result."
+      },
+      "starter_code": "def run(nodes: dict, edges: dict, start: str, state: dict) -> dict:\n    \"\"\"Walk the graph from `start`, applying nodes, until 'END'. Return state.\"\"\"\n    # current = start; while current != 'END': state = nodes[current](state); current = edges[current]\n    pass\n\nnodes = {\n    \"add\": lambda s: {**s, \"n\": s[\"n\"] + 1},\n    \"double\": lambda s: {**s, \"n\": s[\"n\"] * 2},\n}\nedges = {\"add\": \"double\", \"double\": \"END\"}\nprint(run(nodes, edges, \"add\", {\"n\": 3}))",
+      "hints": {
+        "en": [
+          "Track the current node: current = start",
+          "while current != 'END':  run the node, then move on",
+          "state = nodes[current](state); current = edges[current]"
+        ]
+      },
+      "expected_output": "{'n': 8}"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "langgraph",
+      "agent_state_machine",
+      "graph_execution",
+      "stateful_agents"
+    ],
+    "concepts_required": [
+      "dictionaries",
+      "functions",
+      "while_loops"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

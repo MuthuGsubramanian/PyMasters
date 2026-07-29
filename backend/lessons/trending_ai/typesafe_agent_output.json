@@ -1,0 +1,146 @@
+{
+  "id": "typesafe_agent_output",
+  "topic": "typesafe_agent_output",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 93,
+  "title": {
+    "en": "Type-Safe Agents: Validating LLM Output Like Pydantic AI"
+  },
+  "description": {
+    "en": "LLMs return text; your app needs trustworthy data. Pydantic AI's whole pitch is validated, typed output. Build the tiny validator at its core and never trust a raw model response again."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Problem With Trusting a Language Model\n\n\"An LLM will happily tell you a user's age is `\"forty-two\"`, or `42.0`, or forget the field entirely,\" Vaathiyaar warns. \"Feed that straight into your database and it explodes at 3am. This is why **Pydantic AI** became one of 2026's most-loved agent frameworks: it refuses to hand you output until it has been **validated against a schema** and coerced into real Python types.\"\n\n### Schemas Are Contracts\n\nA schema says: *this field is required, and it must be this type.* Pydantic AI turns the model's loose JSON into a checked object — or raises a clear error listing exactly what's wrong — so the rest of your code can trust its inputs.\n\n```\nschema = {\"name\": str, \"age\": int}\nraw    = {\"name\": \"Ada\", \"age\": \"42\"}   # age is a STRING from the LLM\n```\n\nA good validator does three things:\n1. **Checks presence** — every required field is there.\n2. **Coerces** — `\"42\"` becomes `42` when the target is `int` (LLMs love quoting numbers).\n3. **Rejects the impossible** — `\"forty-two\"` can't become an int, so it fails loudly.\n\n### Why Coercion Matters\n\nThe single most common LLM output bug is the *stringified number*. The model returns `\"age\": \"42\"` because JSON came out of a text generator. A validator that coerces `\"42\" -> 42` silently fixes the 90% case, while still rejecting genuine garbage like `\"forty-two\"`.\n\n> **Vaathiyaar's rule:** never let a raw model response cross into your business logic. Validate at the boundary — exactly once — and everything downstream gets to assume clean, typed data.\n\nToday you build that boundary: a `validate(data, schema)` that returns a clean, coerced dict or raises on anything it can't honestly fix."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "schema_gate",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Validate LLM output",
+          "children": [
+            "required fields present?",
+            "coerce '42' -> 42",
+            "reject 'forty-two'",
+            "typed dict downstream"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "for field, typ in schema.items():",
+          "highlight": "schema.items()",
+          "explanation": {
+            "en": "Walk the contract: each field name and its required type"
+          }
+        },
+        {
+          "line": "if field not in data: raise ValueError(...)",
+          "highlight": "not in data",
+          "explanation": {
+            "en": "A missing required field fails immediately and clearly"
+          }
+        },
+        {
+          "line": "clean[field] = typ(data[field])",
+          "highlight": "typ(data[field])",
+          "explanation": {
+            "en": "Coerce: int('42') -> 42. If it can't, Python raises for us"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Raw LLM output",
+        "items": [
+          "{'age': '42'}",
+          "untyped, untrusted",
+          "breaks downstream"
+        ]
+      },
+      "right": {
+        "title": "Validated",
+        "items": [
+          "{'age': 42}",
+          "real int",
+          "safe to use"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "validate({'name':'Ada','age':'42'}) -> {'name': 'Ada', 'age': 42}",
+        "validate({'name':'Ada'})          -> ValueError: missing 'age'"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "validated",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `validate(data, schema)` — the boundary that makes agent output trustworthy. `schema` maps field names to types, e.g. `{\"name\": str, \"age\": int}`. For each field: raise `ValueError` if it is missing, otherwise **coerce** the value with its type (so `\"42\"` becomes `42`). Return a new dict of the coerced values. Then print `validate({\"name\": \"Ada\", \"age\": \"42\"}, {\"name\": str, \"age\": int})`."
+      },
+      "starter_code": "def validate(data: dict, schema: dict) -> dict:\n    \"\"\"Return a dict with every schema field present and coerced to its type.\n    Raise ValueError if a required field is missing.\"\"\"\n    # for field, typ in schema.items():\n    #   - missing? raise ValueError(f\"missing '{field}'\")\n    #   - else coerce: typ(data[field])\n    pass\n\nprint(validate({\"name\": \"Ada\", \"age\": \"42\"}, {\"name\": str, \"age\": int}))",
+      "hints": {
+        "en": [
+          "Loop: for field, typ in schema.items()",
+          "Missing field -> raise ValueError(f\"missing '{field}'\")",
+          "Coerce by calling the type: typ(data[field]) turns '42' into 42"
+        ]
+      },
+      "expected_output": "{'name': 'Ada', 'age': 42}"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "pydantic_ai",
+      "structured_output",
+      "validation",
+      "type_coercion",
+      "agent_reliability"
+    ],
+    "concepts_required": [
+      "dictionaries",
+      "python_functions",
+      "exceptions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

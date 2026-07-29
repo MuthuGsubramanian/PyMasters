@@ -1,0 +1,146 @@
+{
+  "id": "code_action_agents",
+  "topic": "code_action_agents",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 94,
+  "title": {
+    "en": "Code-Action Agents: Why 2026's Agents Write Python, Not JSON"
+  },
+  "description": {
+    "en": "Hugging Face's smolagents proved agents that WRITE CODE beat agents that emit JSON tool-calls. Build the parser that pulls an executable action out of a model's reply — the first half of every code-agent loop."
+  },
+  "xp_reward": 85,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Shift That Changed How Agents Act\n\nFor years an \"AI agent\" meant a model emitting JSON like `{\"tool\": \"search\", \"args\": {...}}`. Then **smolagents** (Hugging Face) popularized a sharper idea in 2026: let the model **write Python code** as its action, and just run it. One code block can call three tools, loop, and branch — things rigid JSON tool-calls can't express. On many benchmarks, code-action agents win.\n\n### The Agent Loop, Simplified\n\nA code-action agent runs a tight loop:\n1. The model replies with a message containing a fenced code block.\n2. Your harness **extracts the code** from that reply.\n3. It **runs** the code, capturing the result as an *observation*.\n4. The observation goes back to the model, which writes the next action.\n\nThe whole thing hinges on step 2: reliably pulling the code out of a chatty model response. Models wrap their action like this:\n\n```\nSure! Let me compute that.\n```py\nresult = 6 * 7\n```\nThat should do it.\n```\n\nYour harness must ignore the prose and grab exactly what's between the ` ```py ` and the closing ` ``` `. Get this parser wrong and the agent tries to execute English.\n\n> **Vaathiyaar's note:** the \"intelligence\" of a code agent is the model's. The *reliability* is your parser's. Today you build the parser — the boundary between a model's chatter and real, runnable action.\n\nYou'll implement `extract_code`, returning just the Python inside the first ` ```py ` block."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "code_as_action",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Code-action loop",
+          "children": [
+            "model writes ```py ...```",
+            "harness extracts the code",
+            "run it -> observation",
+            "feed back, repeat"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "start = reply.index('```py') + len('```py')",
+          "highlight": "index('```py')",
+          "explanation": {
+            "en": "Find where the python code block opens, skip past the fence"
+          }
+        },
+        {
+          "line": "end = reply.index('```', start)",
+          "highlight": "index('```', start)",
+          "explanation": {
+            "en": "The next ``` after that is the closing fence"
+          }
+        },
+        {
+          "line": "code = reply[start:end].strip()",
+          "highlight": "reply[start:end]",
+          "explanation": {
+            "en": "Everything between the fences, trimmed, IS the action"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "model: 'Sure! ```py\\nresult = 6 * 7\\n``` done'",
+        "extract_code -> 'result = 6 * 7'",
+        "run -> observation: 42"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "JSON tool-call",
+        "items": [
+          "{'tool':'mul','a':6,'b':7}",
+          "one call, rigid",
+          "no loops/branches"
+        ]
+      },
+      "right": {
+        "title": "Code action",
+        "items": [
+          "result = 6 * 7",
+          "full Python",
+          "compose freely"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "action_extracted",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `extract_code(reply)` — the parser at the heart of a code-action agent. Given a model reply that contains a fenced block ` ```py ... ``` `, return just the code inside the first such block, stripped of leading/trailing whitespace. Assume exactly one ` ```py ` block exists. Then print the result for a reply that says: `Sure!\\n```py\\nresult = 6 * 7\\n```\\nDone`."
+      },
+      "starter_code": "def extract_code(reply: str) -> str:\n    \"\"\"Return the Python inside the first ```py ... ``` block, stripped.\"\"\"\n    # 1. find the opening fence '```py' and skip past it\n    # 2. find the next '```' after that (the closing fence)\n    # 3. slice between them and .strip()\n    pass\n\nreply = \"Sure!\\n```py\\nresult = 6 * 7\\n```\\nDone\"\nprint(extract_code(reply))",
+      "hints": {
+        "en": [
+          "start = reply.index('```py') + len('```py')  — position just after the opening fence",
+          "end = reply.index('```', start)  — the next fence after start is the close",
+          "return reply[start:end].strip()"
+        ]
+      },
+      "expected_output": "result = 6 * 7"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "smolagents",
+      "code_action_agents",
+      "agent_loop",
+      "response_parsing"
+    ],
+    "concepts_required": [
+      "strings",
+      "string_methods",
+      "python_functions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
