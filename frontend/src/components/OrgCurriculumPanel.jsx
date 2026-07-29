@@ -188,7 +188,11 @@ export default function OrgCurriculumPanel({ orgId, groups = [] }) {
                                                     <EyeOff size={11} aria-hidden="true" /> Unpublish
                                                 </Button>
                                             )}
-                                            {it.status === 'failed' && <span className="text-[10px] text-red-500" title={it.error}>failed</span>}
+                                            {it.status === 'failed' && (
+                                                <span className="text-[10px] text-red-500 max-w-[45%] truncate" title={it.error}>
+                                                    {it.error || 'Generation failed — try again'}
+                                                </span>
+                                            )}
                                         </li>
                                     ))}
                                 </ul>
