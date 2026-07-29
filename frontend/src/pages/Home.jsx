@@ -292,7 +292,7 @@ export default function Home() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const reduced = useReducedMotion();
-    const ctaTarget = user ? '/dashboard/classroom' : '/login';
+    const ctaTarget = user ? '/dashboard/classroom' : '/login?mode=signup';
     const navRef = useRef(null);
     const [scrolled, setScrolled] = useState(false);
     const [supportOpen, setSupportOpen] = useState(false);
