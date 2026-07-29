@@ -681,7 +681,7 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
     return <div className="h-full overflow-y-auto dark-scrollbar pr-1">{inner}</div>;
 }
 
-function IntroPhase({ lesson, language, onComplete, username }) {
+function IntroPhase({ lesson, language, onComplete, username, headerMeta = null }) {
     const reducedMotion = useReducedMotion();
     const storyContent =
         lesson.active_story || resolveText(lesson.story_variants, language);
@@ -783,6 +783,11 @@ function IntroPhase({ lesson, language, onComplete, username }) {
                     {lesson.xp_reward && (
                         <span className="text-[10px] font-bold text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-full px-2 py-0.5">
                             +{lesson.xp_reward} XP
+                        </span>
+                    )}
+                    {headerMeta && (
+                        <span className="text-[11px] text-text-muted font-medium truncate">
+                            {headerMeta.trackName} · Lesson {headerMeta.position} of {headerMeta.total}
                         </span>
                     )}
                 </div>
@@ -1887,6 +1892,19 @@ export default function Classroom() {
     // the "Next lesson" CTA on the success screen so a learner flows straight into
     // the next lesson instead of being dropped back on the track list to hunt.
     const nextLesson = getNextLesson(currentLesson, lessons, primaryTracks);
+
+    // Orientation for the lesson header: which track + position ("Python
+    // Fundamentals · Lesson 2 of 36"). Filter preserves list order, matching the
+    // numbering the learner saw in the track accordion.
+    const lessonHeaderMeta = (() => {
+        const t = currentLesson?.track;
+        if (!currentLesson?.id || !t) return null;
+        const inTrack = lessons.filter((l) => (l.track || 'other') === t);
+        const pos = inTrack.findIndex((l) => l.id === currentLesson.id);
+        if (pos < 0) return null;
+        const name = TRACK_META[t]?.name || humanizeTrack(t);
+        return { trackName: name, position: pos + 1, total: inTrack.length };
+    })();
     const handleNextLesson = () => {
         if (!nextLesson) { handleContinue(); return; }
         handleSelectLesson(nextLesson).finally(() => {
@@ -2031,6 +2049,7 @@ export default function Classroom() {
                                 language={language}
                                 onComplete={handleIntroComplete}
                                 username={user?.name || user?.username}
+                                headerMeta={lessonHeaderMeta}
                             />
                         </motion.div>
                     )}
