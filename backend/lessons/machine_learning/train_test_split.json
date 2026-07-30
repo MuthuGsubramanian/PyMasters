@@ -3,37 +3,53 @@
   "topic": "train_test_split",
   "track": "machine_learning",
   "module": "data_preparation",
-  "order": 8,
+  "order": 7,
   "title": {
-    "en": "Train/Test Split: The Discipline That Keeps ML Honest"
+    "en": "Train-Test Split & Cross-Validation",
+    "ta": "பயிற்சி-சோதனை பிரிப்பு & குறுக்கு சரிபார்ப்பு"
   },
   "description": {
-    "en": "A model that memorizes its answers looks perfect and fails in the real world. The fix is holding data back for testing. Build the split every ML project starts with — and understand why it's non-negotiable."
+    "en": "Learn to split data properly, understand overfitting vs underfitting, implement k-fold cross-validation, and use stratified splitting for imbalanced classes.",
+    "ta": "தரவை சரியாக பிரிக்க, அதிகப்படி பொருத்தம் vs குறைவான பொருத்தம் புரிந்துகொள்ள, k-fold குறுக்கு சரிபார்ப்பு செயல்படுத்த, மற்றும் சமநிலையற்ற வகுப்புகளுக்கு stratified splitting பயன்படுத்த கற்றுக்கொள்ளுங்கள்."
   },
-  "xp_reward": 70,
-  "next_unlock": null,
+  "xp_reward": 65,
   "story_variants": {
-    "en": "## Don't Grade the Exam With the Study Guide\n\n\"If you test a student on the exact questions they studied, a 100% score means nothing,\" Vaathiyaar says. \"Machine learning has the same trap. A model can **memorize** its training data and look flawless — then flop on anything new. So the first discipline of every ML project is the **train/test split**: hold some data back, never let the model see it during training, and use it to measure honest performance.\"\n\n### How the Split Works\n\nYou divide your dataset into two parts:\n- **Train** (usually ~80%): the model learns from these.\n- **Test** (usually ~20%): kept in a vault; used *once*, at the end, to estimate real-world accuracy.\n\nA common split keeps the first `train_ratio` fraction for training and the rest for testing:\n\n```\ndata = [10, 20, 30, 40, 50]   train_ratio = 0.8\ncut = int(5 * 0.8) = 4\ntrain = [10, 20, 30, 40]      test = [50]\n```\n\nIf the test score is much worse than the train score, the model **overfit** — it memorized instead of learning. That gap is the single most important number in applied ML.\n\n> **Vaathiyaar's rule:** never, ever evaluate on data the model trained on. The test set is sacred — touch it once, at the very end.\n\nToday you implement `split(data, train_ratio)` — return `(train, test)` by keeping the first `train_ratio` fraction for training."
+    "en": "## Vaathiyaar's Exam Strategy\n\nVaathiyaar holds up two stacks of papers. \"You wouldn't test a student with the same questions they practiced on, would you? That's cheating. Same rule applies to ML models.\"\n\n### Why Split Data?\n- **Training set**: The model learns patterns from this data\n- **Test set**: Evaluates how well the model generalizes to unseen data\n- **Never let the model see test data during training!**\n\n### Overfitting vs Underfitting\n- **Overfitting**: Model memorizes training data, fails on new data\n- **Underfitting**: Model is too simple, misses patterns in both\n\n```python\nfrom sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold\nfrom sklearn.datasets import load_iris\nfrom sklearn.tree import DecisionTreeClassifier\n\n# Load data\nX, y = load_iris(return_X_y=True)\n\n# Simple split\nX_train, X_test, y_train, y_test = train_test_split(\n    X, y, test_size=0.2, random_state=42, stratify=y\n)\n\n# Cross-validation\nmodel = DecisionTreeClassifier(random_state=42)\nscores = cross_val_score(model, X, y, cv=5)\nprint(f'CV Accuracy: {scores.mean():.2f} +/- {scores.std():.2f}')\n```"
   },
   "animation_sequence": [
     {
       "type": "StoryCard",
-      "id": "intro",
+      "id": "intro_card",
       "content": "story_variant",
-      "visual_theme": "data_split",
+      "visual_theme": "exam_hall",
       "duration_ms": 4000
     },
     {
       "type": "ConceptMap",
-      "id": "overview",
+      "id": "split_map",
       "nodes": [
         {
-          "label": "Train/test split",
+          "label": "Data Splitting",
           "children": [
-            "train ~80% learns",
-            "test ~20% in a vault",
-            "cut = int(n*ratio)",
-            "gap = overfitting"
+            "Train Set",
+            "Validation Set",
+            "Test Set"
+          ]
+        },
+        {
+          "label": "Cross-Validation",
+          "children": [
+            "K-Fold",
+            "Stratified K-Fold",
+            "Leave-One-Out"
+          ]
+        },
+        {
+          "label": "Problems",
+          "children": [
+            "Overfitting",
+            "Underfitting",
+            "Data Leakage"
           ]
         }
       ],
@@ -41,84 +57,314 @@
     },
     {
       "type": "CodeStepper",
-      "id": "calc",
+      "id": "split_code",
       "steps": [
         {
-          "line": "cut = int(len(data) * train_ratio)",
-          "highlight": "int(len(data) * train_ratio)",
+          "line": "from sklearn.model_selection import train_test_split, cross_val_score",
+          "highlight": "train_test_split",
           "explanation": {
-            "en": "The index where train ends and test begins"
+            "en": "Import splitting and cross-validation tools from sklearn"
           }
         },
         {
-          "line": "train = data[:cut]",
-          "highlight": "data[:cut]",
+          "line": "from sklearn.datasets import load_iris",
+          "highlight": "load_iris",
           "explanation": {
-            "en": "The first fraction the model learns from"
+            "en": "Load the classic Iris dataset — 150 samples, 4 features, 3 classes"
           }
         },
         {
-          "line": "test = data[cut:]",
-          "highlight": "data[cut:]",
+          "line": "from sklearn.tree import DecisionTreeClassifier",
+          "highlight": "DecisionTreeClassifier",
           "explanation": {
-            "en": "The held-out rest, never seen during training"
+            "en": "A simple model we will use to demonstrate splitting effects"
+          }
+        },
+        {
+          "line": "X, y = load_iris(return_X_y=True)",
+          "highlight": "return_X_y",
+          "explanation": {
+            "en": "Get features (X) and labels (y) directly as arrays"
+          }
+        },
+        {
+          "line": "print(f'Dataset: {X.shape[0]} samples, {X.shape[1]} features')",
+          "highlight": "shape",
+          "explanation": {
+            "en": "150 samples with 4 features each — a small but complete dataset"
+          }
+        },
+        {
+          "line": "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)",
+          "highlight": "test_size=0.2",
+          "explanation": {
+            "en": "Split 80% for training, 20% for testing — random_state ensures reproducibility"
+          }
+        },
+        {
+          "line": "print(f'Train: {X_train.shape[0]}, Test: {X_test.shape[0]}')",
+          "highlight": "Train",
+          "explanation": {
+            "en": "120 samples for training, 30 for testing"
+          }
+        },
+        {
+          "line": "X_train_s, X_test_s, y_train_s, y_test_s = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)",
+          "highlight": "stratify=y",
+          "explanation": {
+            "en": "Stratified split preserves class proportions in both train and test sets"
+          }
+        },
+        {
+          "line": "import numpy as np; print(f'Test class distribution: {np.bincount(y_test_s)}')",
+          "highlight": "bincount",
+          "explanation": {
+            "en": "Stratification ensures equal representation: [10, 10, 10] for 3 classes"
+          }
+        },
+        {
+          "line": "model = DecisionTreeClassifier(random_state=42)",
+          "highlight": "DecisionTreeClassifier",
+          "explanation": {
+            "en": "Create a decision tree classifier"
+          }
+        },
+        {
+          "line": "scores = cross_val_score(model, X, y, cv=5)",
+          "highlight": "cv=5",
+          "explanation": {
+            "en": "5-fold CV: split data into 5 parts, train on 4, test on 1, rotate 5 times"
+          }
+        },
+        {
+          "line": "print(f'CV scores: {scores}')",
+          "highlight": "scores",
+          "explanation": {
+            "en": "5 accuracy scores — one per fold — shows model consistency"
+          }
+        },
+        {
+          "line": "print(f'Mean: {scores.mean():.3f} +/- {scores.std():.3f}')",
+          "highlight": "mean",
+          "explanation": {
+            "en": "Average and standard deviation give a reliable performance estimate"
           }
         }
-      ],
-      "duration_ms": 5000
+      ]
     },
     {
-      "type": "TerminalOutput",
-      "id": "term",
-      "lines": [
-        "data [10,20,30,40,50] ratio 0.8",
-        "cut = 4",
-        "train [10,20,30,40]  test [50]"
-      ],
-      "duration_ms": 4000
+      "type": "VariableBox",
+      "id": "box_train_size",
+      "variable": "train_size",
+      "value": 120,
+      "data_type": "int",
+      "color": "#2ecc71"
     },
     {
-      "type": "ParticleEffect",
-      "id": "done",
-      "theme": "solved",
-      "duration_ms": 2000
+      "type": "VariableBox",
+      "id": "box_test_size",
+      "variable": "test_size",
+      "value": 30,
+      "data_type": "int",
+      "color": "#e74c3c"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_cv_mean",
+      "variable": "cv_mean_accuracy",
+      "value": 0.96,
+      "data_type": "float",
+      "color": "#3498db"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "Dataset: 150 samples, 4 features",
+        "Train: 120, Test: 30",
+        "Test class distribution: [10 10 10]",
+        "CV scores: [0.9667 0.9667 0.9    0.9667 1.    ]",
+        "Mean: 0.960 +/- 0.033"
+      ]
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "ev_tts",
+      "code": "from sklearn.model_selection import train_test_split, cross_val_score\nfrom sklearn.linear_model import LogisticRegression\nimport numpy as np\n\nnp.random.seed(42)\nX = np.random.randn(100, 5)\ny = (X[:, 0] + X[:, 1] > 0).astype(int)\n\nX_train, X_test, y_train, y_test = train_test_split(\n    X, y, test_size=0.2, stratify=y, random_state=42\n)\nprint(f'Train: {X_train.shape}, Test: {X_test.shape}')\nprint(f'Train label dist: {np.bincount(y_train)}')\nprint(f'Test label dist: {np.bincount(y_test)}')\n\nmodel = LogisticRegression()\ncv_scores = cross_val_score(model, X, y, cv=5)\nprint(f'CV Scores: {cv_scores}')\nprint(f'Mean CV: {cv_scores.mean():.3f} +/- {cv_scores.std():.3f}')",
+      "executionSteps": [
+        {
+          "line": 6,
+          "variables": {
+            "X.shape": "(100, 5)"
+          },
+          "output": "",
+          "explanation": "100 samples with 5 features"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "y": "binary labels"
+          },
+          "output": "",
+          "explanation": "Binary target based on first two features"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "stratify": "y"
+          },
+          "output": "",
+          "explanation": "Stratify preserves class proportions in both sets"
+        },
+        {
+          "line": 12,
+          "variables": {
+            "X_train": "(80, 5)",
+            "X_test": "(20, 5)"
+          },
+          "output": "Train: (80, 5), Test: (20, 5)",
+          "explanation": "80/20 split"
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "Train label dist: [40 40]",
+          "explanation": "Equal class distribution in training set"
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "Test label dist: [10 10]",
+          "explanation": "Equal class distribution in test set — stratification works"
+        },
+        {
+          "line": 17,
+          "variables": {
+            "cv": "5-fold"
+          },
+          "output": "",
+          "explanation": "5-fold cross-validation: train on 4 folds, test on 1, rotate"
+        },
+        {
+          "line": 19,
+          "variables": {
+            "mean_cv": "0.830"
+          },
+          "output": "Mean CV: 0.830 +/- 0.045",
+          "explanation": "Average across 5 folds — more reliable than single split"
+        }
+      ]
     }
   ],
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Implement `split(data, train_ratio)` — return a tuple `(train, test)` where `train` is the first `int(len(data) * train_ratio)` items and `test` is the rest. Then print `split([10, 20, 30, 40, 50], 0.8)` (expected: `([10, 20, 30, 40], [50])`)."
+        "en": "Load the wine dataset, perform a stratified 70/30 split, train a DecisionTreeClassifier, and compare training accuracy vs test accuracy to check for overfitting. Then run 5-fold cross-validation.",
+        "ta": "wine தரவுத்தொகுப்பை ஏற்றி, stratified 70/30 பிரிப்பு செய்து, DecisionTreeClassifier பயிற்சி அளித்து, overfitting சரிபார்க்க பயிற்சி துல்லியத்தை சோதனை துல்லியத்துடன் ஒப்பிடுங்கள். பின்னர் 5-fold cross-validation இயக்குங்கள்."
       },
-      "starter_code": "def split(data: list, train_ratio: float):\n    \"\"\"Return (train, test): first train_ratio fraction trains, the rest tests.\"\"\"\n    # cut = int(len(data) * train_ratio); slice into two\n    pass\n\nprint(split([10, 20, 30, 40, 50], 0.8))",
+      "starter_code": "from sklearn.datasets import load_wine\nfrom sklearn.model_selection import train_test_split, cross_val_score\nfrom sklearn.tree import DecisionTreeClassifier\n\nX, y = load_wine(return_X_y=True)\n\n# Stratified split\nX_train, X_test, y_train, y_test = train_test_split(\n    X, y, test_size=___, random_state=42, stratify=___\n)\n\n# Train and evaluate\nmodel = DecisionTreeClassifier(random_state=42)\nmodel.fit(___, ___)\ntrain_acc = model.score(X_train, y_train)\ntest_acc = model.score(___, ___)\nprint(f'Train accuracy: {train_acc:.3f}')\nprint(f'Test accuracy: {test_acc:.3f}')\nprint(f'Overfitting gap: {train_acc - test_acc:.3f}')\n\n# Cross-validation\nscores = cross_val_score(model, X, y, cv=___)\nprint(f'CV Mean: {scores.mean():.3f}')",
+      "expected_output": "Train accuracy: 1.000\nTest accuracy: 0.889\nOverfitting gap: 0.111\nCV Mean: 0.871",
       "hints": {
         "en": [
-          "cut = int(len(data) * train_ratio)",
-          "train = data[:cut], test = data[cut:]",
-          "Return them as a tuple (train, test)"
+          "test_size=0.3 for 70/30 split",
+          "stratify=y to preserve class distribution",
+          "Use cv=5 for 5-fold cross-validation"
+        ],
+        "ta": [
+          "70/30 பிரிப்புக்கு test_size=0.3",
+          "வகுப்பு விநியோகத்தை பாதுகாக்க stratify=y",
+          "5-fold cross-validation க்கு cv=5 பயன்படுத்துங்கள்"
+        ]
+      }
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does stratify=y do in train_test_split?",
+        "ta": "train_test_split-ல் stratify=y என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Shuffles the data randomly",
+          "Ensures class proportions are preserved in both splits",
+          "Removes minority classes",
+          "Increases the test set size"
+        ],
+        "ta": [
+          "தரவை சீரற்ற முறையில் கலக்குகிறது",
+          "இரு பிரிவுகளிலும் வகுப்பு விகிதங்கள் பாதுகாக்கப்படுவதை உறுதிசெய்கிறது",
+          "சிறுபான்மை வகுப்புகளை நீக்குகிறது",
+          "சோதனை தொகுப்பின் அளவை அதிகரிக்கிறது"
         ]
       },
-      "expected_output": "([10, 20, 30, 40], [50])"
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In 5-fold cross-validation, how many times is the model trained?",
+        "ta": "5-fold cross-validation-ல், மாடல் எத்தனை முறை பயிற்சி செய்யப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "1",
+          "3",
+          "5",
+          "10"
+        ],
+        "ta": [
+          "1",
+          "3",
+          "5",
+          "10"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "If training accuracy is 99% but test accuracy is 60%, what is happening?",
+        "ta": "பயிற்சி துல்லியம் 99% ஆனால் சோதனை துல்லியம் 60% என்றால், என்ன நடக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Underfitting",
+          "Overfitting",
+          "Perfect generalization",
+          "Data leakage"
+        ],
+        "ta": [
+          "குறைவான பொருத்தம்",
+          "அதிகப்படி பொருத்தம்",
+          "சரியான பொதுமைப்படுத்தல்",
+          "தரவு கசிவு"
+        ]
+      },
+      "correct": 1
     }
   ],
   "tags": {
     "concepts_taught": [
       "train_test_split",
+      "cross_validation",
+      "stratification",
       "overfitting",
-      "model_evaluation",
-      "data_preparation"
+      "underfitting"
     ],
     "concepts_required": [
-      "lists",
-      "slicing",
-      "tuples"
+      "numpy_basics",
+      "sklearn_basics"
     ],
     "difficulty": "beginner",
     "engagement_type": "hands_on",
-    "estimated_minutes": 20,
+    "estimated_minutes": 25,
+    "real_world_application": [
+      "model_validation",
+      "experiment_design"
+    ],
     "category": "machine_learning",
     "path_memberships": [
-      "machine_learning"
+      "ml_fundamentals"
     ]
-  },
-  "generated": false
+  }
 }
