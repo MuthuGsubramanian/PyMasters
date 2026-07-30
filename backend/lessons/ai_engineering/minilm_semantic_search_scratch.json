@@ -1,0 +1,151 @@
+{
+  "id": "minilm_semantic_search_scratch",
+  "topic": "minilm_semantic_search_scratch",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "all-MiniLM-L6-v2: Semantic Search From Scratch"
+  },
+  "description": {
+    "en": "Build a working semantic search engine with the world's most-downloaded embedding model â€” 22M parameters, 384 dimensions, fast enough to run on any laptop CPU."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The 90 MB Model Behind Half the Internet's Search\n\n\"Every few months a giant new model grabs the headlines,\" Vaathiyaar says, \"and every one of those months, a tiny 90 MB file called **all-MiniLM-L6-v2** quietly serves more downloads than almost anything else on Hugging Face. Why? Because it does one job â€” turning sentences into meaning-vectors â€” well enough, *fast enough*, and **on a plain CPU**. Today you'll use it to build semantic search from scratch.\"\n\n### Why This Model, of All Models?\n\nAn embedding model maps a sentence to a fixed-length vector where similar meanings land close together. all-MiniLM-L6-v2 is the sweet spot of that trade-off:\n\n| Model | Dims | Size | Speed (CPU) | Runs where? |\n|---|---|---|---|---|\n| **all-MiniLM-L6-v2** | 384 | ~90 MB | ~14k sent/s (GPU), fast on CPU | Your laptop, ONNX, Rust, browsers |\n| all-mpnet-base-v2 | 768 | ~420 MB | ~3x slower | Laptop, but heavier |\n| API embeddings (e.g. OpenAI) | 1536+ | cloud only | network latency | Someone else's computer |\n\nSix transformer layers (that's the *L6*), 22M parameters, exported to **PyTorch, TensorFlow, ONNX and Rust**. It's the default backbone for local RAG systems precisely because it needs no GPU and no API key.\n\n### The Whole Pipeline in Eight Lines\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\ndocs = [\"How to loop in Python\", \"Reading CSV files\", \"What is a for loop?\"]\ndoc_vecs = model.encode(docs, normalize_embeddings=True)\n\nq_vec = model.encode(\"iterate over a list\", normalize_embeddings=True)\nscores = doc_vecs @ q_vec          # cosine similarity, because unit vectors!\nprint(docs[scores.argmax()])        # -> \"What is a for loop?\"\n```\n\nNo keyword matches \"iterate\" to \"loop\" â€” the *meaning* does. That's semantic search.\n\n### The Trick: Normalize Once, Then It's Just a Dot Product\n\nCosine similarity is `dot(a, b) / (norm(a) * norm(b))`. Pass `normalize_embeddings=True` and every vector comes out with length **1.0** â€” so the division disappears and cosine similarity collapses to a plain dot product. That's why production vector databases store *normalized* embeddings: ranking a million documents becomes one matrix multiply.\n\nYour search engine is then three steps:\n\n1. **Embed** every document once, normalized. Store the vectors.\n2. **Embed** the query with the *same* model, normalized.\n3. **Dot product** query against all docs, sort, take the top-k.\n\nStep 3 is pure Python you already know â€” and it's exactly what you'll implement in the challenges below, on real unit vectors, no downloads required.\n\n> **Key Insight:** Semantic search isn't a product you buy â€” it's `encode`, `normalize`, `dot product`, `sort`. all-MiniLM-L6-v2 earns its crown not by being the smartest embedder, but by making those four steps cheap enough to run anywhere, from a Raspberry Pi to a Rust binary."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "tiny_model_big_search",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "pipeline",
+      "steps": [
+        {
+          "line": "from sentence_transformers import SentenceTransformer",
+          "highlight": "SentenceTransformer",
+          "explanation": {
+            "en": "One import â€” the sentence-transformers library wraps the whole embedding pipeline"
+          }
+        },
+        {
+          "line": "model = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")",
+          "highlight": "all-MiniLM-L6-v2",
+          "explanation": {
+            "en": "Downloads ~90 MB once, then runs fully offline on CPU â€” no API key"
+          }
+        },
+        {
+          "line": "docs = [\"How to loop in Python\", \"Reading CSV files\", \"What is a for loop?\"]",
+          "highlight": "docs",
+          "explanation": {
+            "en": "Your corpus: any list of sentences, paragraphs, or chunks"
+          }
+        },
+        {
+          "line": "doc_vecs = model.encode(docs, normalize_embeddings=True)",
+          "highlight": "normalize_embeddings=True",
+          "explanation": {
+            "en": "Each doc becomes a 384-dim UNIT vector â€” length exactly 1.0"
+          }
+        },
+        {
+          "line": "q_vec = model.encode(\"iterate over a list\", normalize_embeddings=True)",
+          "highlight": "\"iterate over a list\"",
+          "explanation": {
+            "en": "The query goes through the SAME model â€” same vector space, or scores are meaningless"
+          }
+        },
+        {
+          "line": "scores = doc_vecs @ q_vec",
+          "highlight": "@",
+          "explanation": {
+            "en": "Unit vectors make cosine similarity collapse to a plain dot product"
+          }
+        },
+        {
+          "line": "best = scores.argmax()",
+          "highlight": "argmax()",
+          "explanation": {
+            "en": "Highest score = closest meaning; sort for top-k instead of just the best"
+          }
+        },
+        {
+          "line": "print(docs[best])  # -> 'What is a for loop?'",
+          "highlight": "'What is a for loop?'",
+          "explanation": {
+            "en": "No shared keywords with the query â€” the MEANING matched. That's semantic search."
+          }
+        }
+      ],
+      "duration_ms": 6000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "search_hit",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Before any dot-product search works, vectors must be normalized to unit length â€” exactly what `normalize_embeddings=True` does inside all-MiniLM-L6-v2. Implement `normalize(v)` that divides every component of `v` by the vector's norm (`sum of squares ** 0.5`) and rounds each result to 4 decimals. Print `normalize([3, 4])`."
+      },
+      "starter_code": "def normalize(v: list) -> list:\n    \"\"\"Return v scaled to unit length, each component rounded to 4 dp.\"\"\"\n    # 1. norm = (sum of x*x for every x in v) ** 0.5\n    # 2. divide each component by the norm\n    # 3. round each to 4 decimals\n    pass\n\nprint(normalize([3, 4]))",
+      "expected_output": "[0.6, 0.8]",
+      "hints": {
+        "en": [
+          "norm = sum(x*x for x in v) ** 0.5  (** 0.5 is a square root)",
+          "Build the result with a list comprehension: [x / norm for x in v]",
+          "Wrap each division in round(..., 4)"
+        ]
+      },
+      "test_code": "assert normalize([3, 4]) == [0.6, 0.8], f\"normalize([3,4]) gave {normalize([3, 4])}\"\nassert normalize([1, 0, 0]) == [1.0, 0.0, 0.0], \"unit vectors must stay unchanged\"\nassert abs(sum(x*x for x in normalize([2, 5, 1])) - 1.0) < 0.001, \"result must have length 1.0\"\nprint(\"All tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Now build the retriever. The vectors below are already normalized (like MiniLM output with `normalize_embeddings=True`), so cosine similarity is just a dot product. Implement `top_k(query, docs, k)` that scores every doc against the query with a dot product and returns the indices of the `k` best docs, highest score first. Print `top_k([0.6, 0.8], [[1.0, 0.0], [0.8, 0.6], [0.0, 1.0]], 2)`."
+      },
+      "starter_code": "def dot(a: list, b: list) -> float:\n    return sum(x * y for x, y in zip(a, b))\n\ndef top_k(query: list, docs: list, k: int) -> list:\n    \"\"\"Return indices of the k docs most similar to query, best first.\"\"\"\n    # 1. score every doc: dot(query, doc)\n    # 2. pair each score with its index\n    # 3. sort by score descending, return the first k indices\n    pass\n\nprint(top_k([0.6, 0.8], [[1.0, 0.0], [0.8, 0.6], [0.0, 1.0]], 2))",
+      "expected_output": "[1, 2]",
+      "hints": {
+        "en": [
+          "scores = [dot(query, d) for d in docs] gives one score per doc",
+          "sorted(range(len(scores)), key=lambda i: scores[i], reverse=True) ranks the indices",
+          "Slice the ranked indices with [:k]"
+        ]
+      },
+      "test_code": "assert top_k([0.6, 0.8], [[1.0, 0.0], [0.8, 0.6], [0.0, 1.0]], 2) == [1, 2], \"doc 1 (0.96) beats doc 2 (0.8) beats doc 0 (0.6)\"\nassert top_k([1.0, 0.0], [[0.0, 1.0], [1.0, 0.0]], 1) == [1], \"identical direction must rank first\"\nassert top_k([0.0, 1.0], [[0.0, 1.0], [1.0, 0.0], [0.6, 0.8]], 3) == [0, 2, 1], \"full ranking, best first\"\nprint(\"All tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sentence_transformers",
+      "embeddings",
+      "semantic_search",
+      "vector_normalization",
+      "cosine_similarity"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "list_comprehensions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
