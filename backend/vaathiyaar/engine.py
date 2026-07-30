@@ -34,6 +34,15 @@ QUBRID_API_KEY = os.getenv("QUBRID_API_KEY", "")
 QUBRID_BASE_URL = os.getenv("QUBRID_BASE_URL", "https://platform.qubrid.com/v1")
 QUBRID_MODEL = os.getenv("QUBRID_MODEL", "zai-org/GLM-4.7-Flash")
 
+# Secondary Qubrid provider (separate key + model) — a fallback for when the
+# primary qubrid key is rate-limited (429). Activated by adding "qubrid2" to
+# VAATHIYAAR_PROVIDERS; auths via QUBRID2_API_KEY (env / Secret Manager, never
+# hard-coded). Uses a plain OpenAI-compatible payload (no GLM `enable_thinking`)
+# so non-GLM models like qwen3.x work unchanged.
+QUBRID2_API_KEY = os.getenv("QUBRID2_API_KEY", "")
+QUBRID2_BASE_URL = os.getenv("QUBRID2_BASE_URL", QUBRID_BASE_URL)
+QUBRID2_MODEL = os.getenv("QUBRID2_MODEL", "qwen3.6-plus")
+
 # Initialize Ollama client using the official SDK
 _ollama_client = None
 
@@ -259,9 +268,75 @@ def _qubrid_stream(messages: list, options: dict):
             yield token
 
 
+def _qubrid2_payload(messages: list, options: dict, stream: bool) -> dict:
+    # Minimal, portable OpenAI-compatible payload for the fallback model.
+    return {
+        "model": QUBRID2_MODEL,
+        "messages": messages,
+        "max_tokens": options.get("num_predict", 1500),
+        "temperature": options.get("temperature", 0.7),
+        "top_p": 1,
+        "stream": stream,
+    }
+
+
+def _qubrid2_headers() -> dict:
+    if not QUBRID2_API_KEY:
+        raise RuntimeError("QUBRID2_API_KEY not set")
+    return {"Authorization": f"Bearer {QUBRID2_API_KEY}", "Content-Type": "application/json"}
+
+
+def _qubrid2_complete(messages: list, options: dict) -> str:
+    """Non-streaming fallback Qubrid call → assistant content string."""
+    import requests
+
+    resp = requests.post(
+        f"{QUBRID2_BASE_URL}/chat/completions",
+        headers=_qubrid2_headers(),
+        json=_qubrid2_payload(messages, options, stream=False),
+        timeout=90,
+    )
+    resp.raise_for_status()
+    data = resp.json()
+    content = (data.get("choices") or [{}])[0].get("message", {}).get("content", "")
+    content = _strip_thinking(content)
+    if not content:
+        raise ValueError("qubrid2: empty completion content")
+    return content
+
+
+def _qubrid2_stream(messages: list, options: dict):
+    """Streaming fallback Qubrid call → yields assistant content tokens."""
+    import requests
+
+    resp = requests.post(
+        f"{QUBRID2_BASE_URL}/chat/completions",
+        headers=_qubrid2_headers(),
+        json=_qubrid2_payload(messages, options, stream=True),
+        timeout=90,
+        stream=True,
+    )
+    resp.raise_for_status()
+    for line in resp.iter_lines(decode_unicode=True):
+        if not line or not line.startswith("data:"):
+            continue
+        chunk = line[5:].strip()
+        if not chunk or chunk == "[DONE]":
+            continue
+        try:
+            delta = (json.loads(chunk).get("choices") or [{}])[0].get("delta", {})
+        except (ValueError, AttributeError):
+            continue
+        token = delta.get("content") or ""
+        if token:
+            yield token
+
+
 # Registries: provider name → callable. Extend to add fallback providers.
-_PROVIDER_COMPLETE = {"ollama": _ollama_complete, "gemini": _gemini_complete, "qubrid": _qubrid_complete}
-_PROVIDER_STREAM = {"ollama": _ollama_stream, "gemini": _gemini_stream, "qubrid": _qubrid_stream}
+_PROVIDER_COMPLETE = {"ollama": _ollama_complete, "gemini": _gemini_complete,
+                      "qubrid": _qubrid_complete, "qubrid2": _qubrid2_complete}
+_PROVIDER_STREAM = {"ollama": _ollama_stream, "gemini": _gemini_stream,
+                    "qubrid": _qubrid_stream, "qubrid2": _qubrid2_stream}
 
 
 def complete(messages: list, options: Optional[dict] = None) -> str:
