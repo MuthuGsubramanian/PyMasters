@@ -3,6 +3,7 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { Lightbulb, Clock, ArrowRight } from 'lucide-react';
 import ScrollyExplain from '../components/ScrollyExplain';
 import GradientDescentVisual from '../components/explains/GradientDescentVisual';
+import TrainTestSplitVisual from '../components/explains/TrainTestSplitVisual';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -170,7 +171,143 @@ const GRADIENT_DESCENT = {
     ),
 };
 
-export const ESSAYS = [GRADIENT_DESCENT];
+const TRAIN_TEST_SPLIT = {
+    slug: 'train-test-split',
+    title: 'Train / Test Split',
+    tagline: 'Why a "perfect" model can be worthless',
+    minutes: 5,
+    subtitle:
+        'A model that scores 100% might be brilliant — or it might have simply memorised its answers. The train/test split is the one discipline that tells the difference. Scroll to see how holding data back keeps machine learning honest.',
+    Visual: TrainTestSplitVisual,
+    steps: [
+        {
+            title: 'You have some data',
+            body: (
+                <>
+                    <p>
+                        Here's a dataset — ten examples a model could learn from. Say each is a house, and we want
+                        to predict its price.
+                    </p>
+                    <p>
+                        The obvious plan: let the model study all ten, then check how well it does. That plan has a
+                        trap in it.
+                    </p>
+                </>
+            ),
+        },
+        {
+            title: 'The memorisation trap',
+            body: (
+                <>
+                    <p>
+                        If the model learns from <em>all ten</em> and we then test it on <em>those same ten</em>, a
+                        good score proves nothing. It could have simply <strong>memorised</strong> each answer.
+                    </p>
+                    <p>
+                        That's like grading an exam with the exact questions from the study guide. Everyone gets an
+                        A; nobody learned anything transferable.
+                    </p>
+                </>
+            ),
+        },
+        {
+            title: 'Hold some back',
+            body: (
+                <>
+                    <p>
+                        The fix is simple and non-negotiable: before training, cut the data. Keep most of it for
+                        learning, and lock the rest away in a <Code>test set</Code> the model is never allowed to
+                        see during training.
+                    </p>
+                    <p>A common cut is <Code>80/20</Code> — eighty percent to learn from, twenty percent held back.</p>
+                </>
+            ),
+        },
+        {
+            title: 'Train and test',
+            body: (
+                <>
+                    <p>
+                        Now the two halves have jobs. The <span style={{ color: 'var(--accent-primary)' }}><strong>train</strong></span> set
+                        (left) is what the model studies. The <span style={{ color: 'var(--secondary)' }}><strong>test</strong></span> set
+                        (right) waits in the vault.
+                    </p>
+                    <p>
+                        In code this is one slice: <Code>train = data[:cut]</Code>, <Code>test = data[cut:]</Code>.
+                    </p>
+                </>
+            ),
+        },
+        {
+            title: 'The model learns — from train only',
+            body: (
+                <>
+                    <p>
+                        Training happens on the left set alone. The model fits itself to those examples, adjusting
+                        until its predictions on <em>them</em> are good.
+                    </p>
+                    <p>The test set is greyed out here on purpose: during training it does not exist to the model.</p>
+                </>
+            ),
+        },
+        {
+            title: 'The moment of truth',
+            body: (
+                <>
+                    <p>
+                        Now we score both sets. A <em>healthy</em> model does about as well on the unseen test data
+                        as on the data it trained on — the two bars are close.
+                    </p>
+                    <p>That small gap is the sound of a model that actually <strong>learned the pattern</strong>.</p>
+                </>
+            ),
+        },
+        {
+            title: 'When it goes wrong: overfitting',
+            body: (
+                <>
+                    <p>
+                        Here's the failure everyone hits. The model aces the training data — 99% — but stumbles on
+                        the unseen test set. A big gap between the bars is the signature of <Code>overfitting</Code>:
+                        the model memorised instead of generalising.
+                    </p>
+                    <p>
+                        Only the held-out test set could reveal this. Score on the training data alone and you'd
+                        have shipped a model that looks perfect and fails in production.
+                    </p>
+                </>
+            ),
+        },
+        {
+            title: 'The honest number',
+            body: (
+                <>
+                    <p>
+                        This is why every serious ML project splits first and guards the test set like treasure —
+                        touched once, at the very end. The <strong>test score is the only honest estimate</strong> of
+                        how the model will behave on data it has never seen: your real users.
+                    </p>
+                </>
+            ),
+        },
+    ],
+    takeaway: (
+        <>
+            <p>
+                Train/test split = <strong>learn on one part, judge on another the model never saw</strong>. The gap
+                between train and test performance is the single most important diagnostic in applied machine
+                learning: small gap = it generalised; large gap = it memorised (<Code>overfitting</Code>).
+            </p>
+            <p>
+                Want to build it? The <strong>Classroom</strong> lesson “Train/Test Split” has you implement the
+                split in code — and Vaathiyaar can extend it to a real <Code>scikit-learn</Code> example in the
+                Playground.
+            </p>
+        </>
+    ),
+};
+
+export const ESSAYS = [GRADIENT_DESCENT, TRAIN_TEST_SPLIT];
 
 // ── Index page ────────────────────────────────────────────────────────────────
 function ExplainsIndex() {
@@ -216,7 +353,7 @@ function ExplainsIndex() {
                 <div className="rounded-2xl border border-dashed border-border-strong p-5 flex flex-col items-start justify-center text-left opacity-70">
                     <h2 className="text-sm font-bold font-display text-text-primary">More on the way</h2>
                     <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                        Embeddings & semantic search · train/test splits · how Python's iterator protocol works.
+                        Embeddings & semantic search · how Python's iterator protocol works · attention, visually.
                         Tell Vaathiyaar which concept you'd like explained visually next.
                     </p>
                 </div>
