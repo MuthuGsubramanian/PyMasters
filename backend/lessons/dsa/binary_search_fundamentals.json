@@ -1,0 +1,132 @@
+{
+  "id": "binary_search_fundamentals",
+  "topic": "binary_search",
+  "track": "dsa",
+  "module": "sorting_searching",
+  "order": 15,
+  "title": {
+    "en": "Binary Search: Find Anything in a Sorted List, Fast"
+  },
+  "description": {
+    "en": "Linear search checks every item; binary search halves the haystack every step. Master the algorithm behind fast lookups — and the off-by-one traps that trip everyone."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Halving the Haystack\n\n\"Looking for a name in a phone book, you don't start at 'A' and read every entry,\" Vaathiyaar says. \"You flip to the middle, see if you've gone too far, and throw away half the book. Then repeat. That's **binary search** — and it turns a million-item search from a million steps into about **twenty**.\"\n\n### The One Requirement: Sorted\n\nBinary search only works on **sorted** data. Given that, you keep two pointers — `low` and `high` — bounding the region that could still contain the target.\n\n1. Look at the **middle** element.\n2. If it *is* the target, done.\n3. If the target is **smaller**, the answer is in the left half → move `high` down.\n4. If **larger**, it's in the right half → move `low` up.\n5. Repeat until the pointers cross (not found).\n\nEach step throws away half of what's left. That's **O(log n)** — the reason binary search underpins databases, `bisect`, and every \"find\" that feels instant.\n\n> **Vaathiyaar's warning:** the bugs are all off-by-one. `mid = (low + high) // 2`, and after checking mid you move to `mid + 1` or `mid - 1` — never leave `mid` in the range, or you loop forever.\n\nToday you implement `binary_search(arr, target)` — return the index of target, or -1 if absent."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "phone_book_halving",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Binary search",
+          "children": [
+            "requires SORTED data",
+            "check middle",
+            "discard half each step",
+            "O(log n)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "mid = (low + high) // 2",
+          "highlight": "// 2",
+          "explanation": {
+            "en": "The midpoint of the current search window"
+          }
+        },
+        {
+          "line": "if arr[mid] == target: return mid",
+          "highlight": "== target",
+          "explanation": {
+            "en": "Found it — return the index"
+          }
+        },
+        {
+          "line": "elif arr[mid] < target: low = mid + 1",
+          "highlight": "mid + 1",
+          "explanation": {
+            "en": "Target is bigger — discard the left half"
+          }
+        },
+        {
+          "line": "else: high = mid - 1",
+          "highlight": "mid - 1",
+          "explanation": {
+            "en": "Target is smaller — discard the right half"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "arr = [1, 3, 5, 7, 9, 11]  target = 7",
+        "mid=5 (<7) -> low=right",
+        "mid=9 (>7) -> high=left",
+        "mid=7 -> found at index 3"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "done",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `binary_search(arr, target)` on a **sorted ascending** list. Use `low`/`high` pointers, check the middle, and halve the range each step. Return the index of `target`, or `-1` if it's not present. Then print `binary_search([1, 3, 5, 7, 9, 11], 7)` (expected: `3`)."
+      },
+      "starter_code": "def binary_search(arr: list, target) -> int:\n    \"\"\"Return the index of target in the sorted list, or -1 if absent.\"\"\"\n    low, high = 0, len(arr) - 1\n    # while low <= high: mid=(low+high)//2; compare; move low/high\n    pass\n\nprint(binary_search([1, 3, 5, 7, 9, 11], 7))",
+      "hints": {
+        "en": [
+          "Loop while low <= high",
+          "mid = (low + high) // 2; if arr[mid] == target return mid",
+          "Too small? low = mid + 1. Too big? high = mid - 1. Never keep mid in range."
+        ]
+      },
+      "expected_output": "3"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "binary_search",
+      "logarithmic_time",
+      "two_pointers",
+      "sorted_search"
+    ],
+    "concepts_required": [
+      "lists",
+      "while_loops",
+      "integer_division"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "dsa",
+    "path_memberships": [
+      "dsa"
+    ]
+  },
+  "generated": false
+}

@@ -1,0 +1,131 @@
+{
+  "id": "sliding_window_pattern",
+  "topic": "sliding_window",
+  "track": "dsa",
+  "module": "algorithm_strategies",
+  "order": 21,
+  "title": {
+    "en": "The Sliding Window: Turn O(n²) Into O(n)"
+  },
+  "description": {
+    "en": "Recomputing a sum for every window is wasteful. Slide the window instead — add the new element, drop the old — and a quadratic loop becomes linear. The interview pattern you'll use forever."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Stop Recomputing What You Already Know\n\n\"You want the highest total of any 3 consecutive days of sales,\" Vaathiyaar says. \"The naive way re-adds three numbers for every position — O(n·k) work. But when the window slides one step right, you already know the old sum. Just **add the entering value and subtract the leaving one**. One addition, one subtraction, per step. That's the **sliding window**.\"\n\n### The Move\n\nKeep a running `window_sum`. To slide from position `i-k` to `i`:\n\n> window_sum += arr[i] − arr[i − k]\n\nThe element entering on the right is added; the one falling off the left is subtracted. The window's size stays fixed; only its edges move. Track the best sum as you go.\n\n```\n[2, 1, 5, 1, 3, 2]  window size 3\nfirst window 2+1+5 = 8\nslide: +1 -2 -> 7 ... +3 -1 -> 9 ... +2 -5 -> 6\nbest = 9\n```\n\nThis turns an O(n·k) scan into a single O(n) pass — the difference between instant and sluggish on large inputs. The same pattern powers \"longest substring\", \"max average\", rate limiters, and moving averages.\n\n> **Vaathiyaar's rule:** if you're recomputing an overlapping range, slide instead of restart. The overlap is free information — use it.\n\nToday you implement `max_window_sum(arr, k)` — the largest sum of any `k` consecutive elements."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "sliding_window",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Sliding window",
+          "children": [
+            "fixed-size window",
+            "add entering, drop leaving",
+            "one pass, O(n)",
+            "track the best"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "window = sum(arr[:k])",
+          "highlight": "sum(arr[:k])",
+          "explanation": {
+            "en": "Compute the first window's sum once"
+          }
+        },
+        {
+          "line": "best = window",
+          "highlight": "best",
+          "explanation": {
+            "en": "It's the best we've seen so far"
+          }
+        },
+        {
+          "line": "for i in range(k, len(arr)):",
+          "highlight": "range(k,",
+          "explanation": {
+            "en": "Slide the window one step at a time"
+          }
+        },
+        {
+          "line": "window += arr[i] - arr[i - k]",
+          "highlight": "arr[i] - arr[i - k]",
+          "explanation": {
+            "en": "Add the entering value, subtract the leaving value"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "[2,1,5,1,3,2] k=3",
+        "windows: 8, 7, 9, 6",
+        "best = 9"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "done",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `max_window_sum(arr, k)` — the largest sum of any `k` consecutive elements, using the sliding-window trick (compute the first window once, then slide by adding the entering element and subtracting the leaving one). Then print `max_window_sum([2, 1, 5, 1, 3, 2], 3)` (expected: `9`)."
+      },
+      "starter_code": "def max_window_sum(arr: list, k: int) -> int:\n    \"\"\"Largest sum of any k consecutive elements (sliding window).\"\"\"\n    window = sum(arr[:k])\n    best = window\n    # slide: for i in range(k, len(arr)): window += arr[i] - arr[i-k]; update best\n    pass\n\nprint(max_window_sum([2, 1, 5, 1, 3, 2], 3))",
+      "hints": {
+        "en": [
+          "Start with window = sum(arr[:k]) and best = window",
+          "Slide: for i in range(k, len(arr)): window += arr[i] - arr[i-k]",
+          "After each slide, update best if window is larger"
+        ]
+      },
+      "expected_output": "9"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sliding_window",
+      "linear_time",
+      "optimization",
+      "array_patterns"
+    ],
+    "concepts_required": [
+      "lists",
+      "loops",
+      "slicing"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "dsa",
+    "path_memberships": [
+      "dsa"
+    ]
+  },
+  "generated": false
+}

@@ -1,0 +1,131 @@
+{
+  "id": "decorators_call_counter",
+  "topic": "decorators",
+  "track": "python_intermediate",
+  "module": "decorators_and_closures",
+  "order": 26,
+  "title": {
+    "en": "Decorators: Wrap a Function to Give It Superpowers"
+  },
+  "description": {
+    "en": "Logging, timing, caching, auth — all added without touching the original function. A decorator is a function that wraps another. Build one that counts how many times a function is called."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Add Behavior Without Changing Code\n\n\"You want to log every call to a function — but you don't want to edit the function itself, and you certainly don't want to copy-paste logging into fifty functions,\" Vaathiyaar says. \"That's what a **decorator** does: it **wraps** a function in another function that runs *around* it, adding behavior before or after, while leaving the original untouched.\"\n\n### A Decorator Is a Function That Returns a Function\n\nThe pattern: take a function `fn`, define an inner `wrapper` that calls `fn` (adding your extra behavior), and return `wrapper` in its place.\n\n```\ndef counted(fn):\n    def wrapper(*args, **kwargs):\n        wrapper.calls += 1          # extra behavior\n        return fn(*args, **kwargs)  # do the real work\n    wrapper.calls = 0\n    return wrapper\n```\n\nApply it with `@counted` above a function, and every call now bumps a counter — the original code never changed. `*args, **kwargs` let the wrapper forward *any* arguments, so it works on any function. This exact shape powers `@lru_cache`, Flask's `@app.route`, timing decorators, and auth guards.\n\n> **Vaathiyaar's rule:** when the same cross-cutting concern (logging, caching, retries) shows up around many functions, reach for a decorator. Write the behavior once, apply it with one line.\n\nToday you build `counted` — a decorator that tracks how many times the wrapped function was called on a `.calls` attribute."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "function_wrapper",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Decorators",
+          "children": [
+            "wrap without editing",
+            "inner wrapper calls fn",
+            "*args/**kwargs forward all",
+            "return wrapper"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "def counted(fn):",
+          "highlight": "counted",
+          "explanation": {
+            "en": "A decorator takes the function to wrap"
+          }
+        },
+        {
+          "line": "def wrapper(*args, **kwargs):",
+          "highlight": "*args, **kwargs",
+          "explanation": {
+            "en": "The wrapper forwards any arguments"
+          }
+        },
+        {
+          "line": "wrapper.calls += 1",
+          "highlight": "wrapper.calls",
+          "explanation": {
+            "en": "The extra behavior: bump the call counter"
+          }
+        },
+        {
+          "line": "return fn(*args, **kwargs)",
+          "highlight": "fn(*args",
+          "explanation": {
+            "en": "Then run the original function and return its result"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "@counted def greet(): ...",
+        "greet(); greet(); greet()",
+        "greet.calls -> 3"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "done",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a decorator `counted(fn)` that returns a wrapper which (a) increments a `.calls` counter each time it runs, and (b) forwards all args to `fn` and returns its result. Initialize `wrapper.calls = 0`. The starter applies `@counted` to `greet` and calls it 3 times; print `greet.calls` (expected: `3`)."
+      },
+      "starter_code": "def counted(fn):\n    \"\"\"Wrap fn so wrapper.calls counts how many times it was called.\"\"\"\n    def wrapper(*args, **kwargs):\n        # bump wrapper.calls, then call fn and return its result\n        pass\n    wrapper.calls = 0\n    return wrapper\n\n@counted\ndef greet():\n    return \"hi\"\n\ngreet(); greet(); greet()\nprint(greet.calls)",
+      "hints": {
+        "en": [
+          "Inside wrapper: wrapper.calls += 1 first",
+          "Then return fn(*args, **kwargs) to run the real function",
+          "wrapper.calls = 0 is set once, after defining wrapper"
+        ]
+      },
+      "expected_output": "3"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "decorators",
+      "closures",
+      "higher_order_functions",
+      "args_kwargs"
+    ],
+    "concepts_required": [
+      "functions",
+      "closures",
+      "args_kwargs"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "python_intermediate",
+    "path_memberships": [
+      "python_intermediate"
+    ]
+  },
+  "generated": false
+}

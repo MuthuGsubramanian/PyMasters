@@ -1,0 +1,131 @@
+{
+  "id": "linreg_gradient_step",
+  "topic": "linear_regression_gd",
+  "track": "machine_learning",
+  "module": "supervised_learning",
+  "order": 20,
+  "title": {
+    "en": "Linear Regression by Hand: One Gradient-Descent Step"
+  },
+  "description": {
+    "en": "Fitting a line isn't magic — it's repeatedly nudging the slope in the direction that lowers error. Take one gradient-descent step by hand and machine learning stops being a black box."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Simplest Model, Learned From Scratch\n\n\"A straight line `y = w·x` is the 'hello world' of machine learning,\" Vaathiyaar says. \"The only thing the model learns is the slope `w`. And it learns it the same way giant neural nets do: **gradient descent** — measure the error, compute which way to nudge `w`, take a small step, repeat.\"\n\n### One Step of Learning\n\nFor each data point `(x, y)`, the model predicts `w·x`. The error is `w·x − y`. The gradient of the squared-error loss with respect to `w`, averaged over the data, is:\n\n> gradient = mean of `2 · x · (w·x − y)` over all points\n\nThen we step **against** the gradient by the learning rate `lr`:\n\n> w_new = w − lr · gradient\n\nThat's it. Repeat this update a few hundred times and `w` converges to the best-fit slope. A linear layer in a neural network does exactly this, just with more weights.\n\n```\ndata: (1,2), (2,4), (3,6)   perfect slope is 2\nstart w=0, lr=0.1\ngradient at w=0 = mean(2·x·(0-y)) = negative -> w increases toward 2\n```\n\n> **Vaathiyaar's rule:** every model that \"learns\" is doing this loop — predict, measure error, step down the gradient. Understand one step and you understand training.\n\nToday you implement `gd_step(xs, ys, w, lr)` — return `w` after a single gradient-descent update."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "line_fitting",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Linear regression",
+          "children": [
+            "predict w*x",
+            "error = w*x - y",
+            "gradient = mean(2x*error)",
+            "w -= lr*gradient"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "preds = [w * x for x in xs]",
+          "highlight": "w * x",
+          "explanation": {
+            "en": "The model predicts w times each input"
+          }
+        },
+        {
+          "line": "grads = [2 * x * (p - y) for x, y, p in zip(xs, ys, preds)]",
+          "highlight": "2 * x * (p - y)",
+          "explanation": {
+            "en": "Per-point gradient of the squared error"
+          }
+        },
+        {
+          "line": "gradient = sum(grads) / len(xs)",
+          "highlight": "/ len(xs)",
+          "explanation": {
+            "en": "Average the gradient over all data points"
+          }
+        },
+        {
+          "line": "return w - lr * gradient",
+          "highlight": "- lr * gradient",
+          "explanation": {
+            "en": "Step against the gradient by the learning rate"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "data (1,2)(2,4)(3,6) true w=2",
+        "start w=0 lr=0.1",
+        "after one step -> w=1.867"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "done",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `gd_step(xs, ys, w, lr)` — one gradient-descent step for `y = w·x`. Prediction is `w*x`; the averaged gradient is the mean of `2*x*(w*x - y)` over all points; return `w - lr*gradient`, rounded to 3 decimals. Then print `gd_step([1, 2, 3], [2, 4, 6], 0.0, 0.1)` (expected: `1.867`)."
+      },
+      "starter_code": "def gd_step(xs: list, ys: list, w: float, lr: float) -> float:\n    \"\"\"Return w after one gradient-descent step for y = w*x (round 3 dp).\"\"\"\n    # preds = w*x; per-point grad = 2*x*(pred - y); gradient = mean; w -= lr*gradient\n    pass\n\nprint(gd_step([1, 2, 3], [2, 4, 6], 0.0, 0.1))",
+      "hints": {
+        "en": [
+          "Per-point gradient: 2 * x * (w*x - y)",
+          "Average: sum(grads) / len(xs)",
+          "Step: w - lr * gradient, then round(_, 3)"
+        ]
+      },
+      "expected_output": "1.867"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "linear_regression",
+      "gradient_descent",
+      "supervised_learning",
+      "loss_optimization"
+    ],
+    "concepts_required": [
+      "lists",
+      "list_comprehensions",
+      "arithmetic"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "machine_learning",
+    "path_memberships": [
+      "machine_learning"
+    ]
+  },
+  "generated": false
+}

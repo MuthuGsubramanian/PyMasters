@@ -1,0 +1,117 @@
+{
+  "id": "sigmoid_activation",
+  "topic": "sigmoid",
+  "track": "machine_learning",
+  "module": "ml_foundations",
+  "order": 5,
+  "title": {
+    "en": "The Sigmoid: Squashing Any Number Into a Probability"
+  },
+  "description": {
+    "en": "Models output raw scores; humans want probabilities. The sigmoid turns any number into a 0–1 value — the function behind logistic regression and the classic neuron. Build it and read its shape."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From 'Any Number' to 'How Likely'\n\n\"A model might score an email as `+4.2` or `−1.7`,\" Vaathiyaar says. \"Those aren't probabilities. The **sigmoid** function fixes that — it takes *any* real number and squashes it into the range 0 to 1, so you can read it as 'how likely is spam?'\"\n\n### The Curve\n\nThe sigmoid is:\n\n> σ(z) = 1 / (1 + e^(−z))\n\n- Big positive `z` → close to **1** (\"very likely\").\n- Big negative `z` → close to **0** (\"very unlikely\").\n- `z = 0` → exactly **0.5** (perfectly undecided).\n\nIt's a smooth S-curve, and that smoothness is what lets gradient descent flow through it. Logistic regression *is* a linear model with a sigmoid on the end; the classic artificial neuron is a weighted sum followed by a sigmoid. To turn a probability into a decision, you threshold at 0.5.\n\n```\nsigmoid(0)  = 0.5\nsigmoid(2)  ≈ 0.88\nsigmoid(-2) ≈ 0.12\n```\n\n> **Vaathiyaar's note:** modern deep nets often prefer ReLU inside, but the sigmoid still rules the *output* of any binary classifier — because a probability must live in 0 to 1, and the sigmoid guarantees it.\n\nToday you implement `sigmoid(z)` using `math.exp`, rounded to 3 decimals."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "s_curve",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Sigmoid",
+          "children": [
+            "any number -> [0,1]",
+            "1/(1+e^-z)",
+            "0.5 at z=0",
+            "read as probability"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "import math",
+          "highlight": "math",
+          "explanation": {
+            "en": "We need e^x, from the math module"
+          }
+        },
+        {
+          "line": "return 1 / (1 + math.exp(-z))",
+          "highlight": "math.exp(-z)",
+          "explanation": {
+            "en": "The sigmoid formula: big z -> 1, small z -> 0"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "sigmoid(0)  -> 0.5",
+        "sigmoid(2)  -> 0.881",
+        "sigmoid(-2) -> 0.119"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "done",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `sigmoid(z)` = `1 / (1 + e^(-z))` using `math.exp`, rounded to 3 decimals. Then print `sigmoid(2)` (expected: `0.881`)."
+      },
+      "starter_code": "import math\n\ndef sigmoid(z: float) -> float:\n    \"\"\"Squash z into (0, 1): 1 / (1 + e^-z), rounded to 3 dp.\"\"\"\n    pass\n\nprint(sigmoid(2))",
+      "hints": {
+        "en": [
+          "math.exp(-z) computes e to the power -z",
+          "The formula is 1 / (1 + math.exp(-z))",
+          "Wrap it in round(_, 3)"
+        ]
+      },
+      "expected_output": "0.881"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "sigmoid",
+      "activation_function",
+      "logistic_regression",
+      "probability"
+    ],
+    "concepts_required": [
+      "functions",
+      "math_module",
+      "arithmetic"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "machine_learning",
+    "path_memberships": [
+      "machine_learning"
+    ]
+  },
+  "generated": false
+}
