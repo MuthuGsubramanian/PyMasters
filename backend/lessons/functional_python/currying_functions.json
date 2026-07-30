@@ -1,0 +1,122 @@
+{
+  "id": "currying_functions",
+  "topic": "currying",
+  "track": "functional_python",
+  "module": "tools",
+  "order": 4,
+  "title": {
+    "en": "Currying: One Argument at a Time"
+  },
+  "description": {
+    "en": "A curried function takes its arguments one call at a time, returning a new function until it has them all. It's the trick behind configurable, reusable function factories."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Functions That Return Functions\n\n\"**Currying** turns a function of many arguments into a chain of one-argument functions,\" Vaathiyaar says. \"Instead of `add(a, b, c)`, you call `add(a)(b)(c)`. Each call captures one argument and hands back a function waiting for the next. It sounds academic — but it's how you build **configurable functions** without repeating yourself.\"\n\n### Why It's Useful\n\nCurrying lets you fix some arguments now and the rest later:\n\n```\ndef add(a):\n    def with_b(b):\n        def with_c(c):\n            return a + b + c\n        return with_c\n    return with_b\n\nadd(1)(2)(3)  ->  6\nadd5 = add(5)      # a partial: 5 + ? + ?\n```\n\nEach inner function is a **closure** — it remembers the arguments from the outer calls. This is the foundation of `functools.partial`, decorator factories, and the composable pipelines in functional libraries.\n\n> **Vaathiyaar's note:** currying and partial application are cousins. Currying rigidly takes one arg per call; partial fixes any subset. Both let you specialize a general function into a ready-to-use one.\n\nToday you implement a curried `add(a)(b)(c)` that returns the sum of three arguments."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "nested_closures",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ov",
+      "nodes": [
+        {
+          "label": "Currying",
+          "children": [
+            "one arg per call",
+            "returns a function each time",
+            "closures remember args",
+            "-> configurable functions"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cs",
+      "steps": [
+        {
+          "line": "def add(a):",
+          "highlight": "add(a)",
+          "explanation": {
+            "en": "Take the first argument"
+          }
+        },
+        {
+          "line": "  def with_b(b):",
+          "highlight": "with_b(b)",
+          "explanation": {
+            "en": "Return a function waiting for the second"
+          }
+        },
+        {
+          "line": "    def with_c(c): return a + b + c",
+          "highlight": "a + b + c",
+          "explanation": {
+            "en": "The innermost closure sees all three args"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "t",
+      "lines": [
+        "add(1)(2)(3) -> 6",
+        "add(5) -> a function waiting for b, c"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement a **curried** `add` so that `add(a)(b)(c)` returns `a + b + c`. Each call takes one argument and returns the next function (a closure) until all three are supplied. Then print `add(1)(2)(3)` (expected: `6`)."
+      },
+      "starter_code": "def add(a):\n    \"\"\"Curried add: add(a)(b)(c) == a + b + c.\"\"\"\n    # return a function that takes b, which returns a function that takes c...\n    pass\n\nprint(add(1)(2)(3))",
+      "hints": {
+        "en": [
+          "add returns a function that takes b",
+          "that function returns a function that takes c",
+          "the innermost function returns a + b + c (it can see all three via closure)"
+        ]
+      },
+      "expected_output": "6"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "currying",
+      "closures",
+      "partial_application",
+      "higher_order_functions"
+    ],
+    "concepts_required": [
+      "functions",
+      "closures"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "functional_python",
+    "path_memberships": [
+      "functional_python"
+    ]
+  },
+  "generated": false
+}

@@ -1,0 +1,130 @@
+{
+  "id": "group_by_key",
+  "topic": "group_by",
+  "track": "working_with_data",
+  "module": "foundations",
+  "order": 3,
+  "title": {
+    "en": "Group By: Bucketing Records the Pandas-Free Way"
+  },
+  "description": {
+    "en": "Grouping rows by a shared key is the heart of every report and aggregation. Build group-by from scratch with a dict — the pattern behind SQL GROUP BY and pandas .groupby()."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## One Pattern Behind Every Report\n\n\"Sales by region, users by plan, errors by type — every summary starts by **grouping** records that share a key,\" Vaathiyaar says. \"SQL calls it `GROUP BY`; pandas calls it `.groupby()`. Underneath, it's a dict: walk the records once, and append each to the bucket named by its key.\"\n\n### The Bucket-Fill Pattern\n\n```\nbuckets = {}\nfor item in items:\n    key = key_of(item)\n    buckets.setdefault(key, []).append(item)\n```\n\n`dict.setdefault(key, [])` returns the existing list for `key`, or creates an empty one first — so every record lands in the right bucket in a single pass. The result is `{key: [items with that key]}`, ready to count, sum, or average.\n\n```\ngroup_by(['ant','bee','bear'], lambda s: s[0])\n->  {'a': ['ant'], 'b': ['bee', 'bear']}\n```\n\nThis one pass is O(n) and needs no library — and it's exactly what a database does before it aggregates.\n\n> **Vaathiyaar's rule:** whenever you hear \"per\" — sales *per* region, count *per* type — you need a group-by. Reach for a dict of lists.\n\nToday you implement `group_by(items, key_fn)` — return a dict mapping each key to the list of items with that key."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "buckets",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ov",
+      "nodes": [
+        {
+          "label": "Group by",
+          "children": [
+            "key each record",
+            "dict of lists (buckets)",
+            "setdefault(k, []).append",
+            "one O(n) pass"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cs",
+      "steps": [
+        {
+          "line": "buckets = {}",
+          "highlight": "{}",
+          "explanation": {
+            "en": "Start with no buckets"
+          }
+        },
+        {
+          "line": "for item in items:",
+          "highlight": "for item",
+          "explanation": {
+            "en": "One pass over the records"
+          }
+        },
+        {
+          "line": "k = key_fn(item)",
+          "highlight": "key_fn(item)",
+          "explanation": {
+            "en": "Compute this record's group key"
+          }
+        },
+        {
+          "line": "buckets.setdefault(k, []).append(item)",
+          "highlight": "setdefault",
+          "explanation": {
+            "en": "Get-or-create the bucket, then add the item"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "t",
+      "lines": [
+        "group_by(['ant','bee','bear'], first-letter)",
+        "-> {'a': ['ant'], 'b': ['bee','bear']}"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `group_by(items, key_fn)` — return a dict mapping each key (from `key_fn(item)`) to the list of items that produced it, preserving order. Use `dict.setdefault`. Then print `group_by(['ant', 'bee', 'bear'], lambda s: s[0])` (expected: `{'a': ['ant'], 'b': ['bee', 'bear']}`)."
+      },
+      "starter_code": "def group_by(items: list, key_fn) -> dict:\n    \"\"\"Bucket items into {key: [items]} using key_fn(item) as the key.\"\"\"\n    # buckets = {}; for item: buckets.setdefault(key_fn(item), []).append(item)\n    pass\n\nprint(group_by(['ant', 'bee', 'bear'], lambda s: s[0]))",
+      "hints": {
+        "en": [
+          "Start with buckets = {}",
+          "For each item, key = key_fn(item)",
+          "buckets.setdefault(key, []).append(item) get-or-creates the bucket"
+        ]
+      },
+      "expected_output": "{'a': ['ant'], 'b': ['bee', 'bear']}"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "group_by",
+      "aggregation",
+      "dictionaries",
+      "data_processing"
+    ],
+    "concepts_required": [
+      "dictionaries",
+      "lists",
+      "lambda"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "working_with_data",
+    "path_memberships": [
+      "working_with_data"
+    ]
+  },
+  "generated": false
+}

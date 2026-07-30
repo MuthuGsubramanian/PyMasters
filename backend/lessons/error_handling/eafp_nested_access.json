@@ -1,0 +1,129 @@
+{
+  "id": "eafp_nested_access",
+  "topic": "eafp",
+  "track": "error_handling",
+  "module": "foundations",
+  "order": 5,
+  "title": {
+    "en": "EAFP: Ask Forgiveness, Not Permission"
+  },
+  "description": {
+    "en": "Pythonic error handling flips the script: don't check first — try, and handle the failure. Learn EAFP and write cleaner, faster code that reads like intent."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Pythonic Way to Fail\n\n\"Many languages say *Look Before You Leap* (LBYL) — check every condition before acting,\" Vaathiyaar says. \"Python prefers **EAFP: Easier to Ask Forgiveness than Permission**. Just *try* the operation, and catch the exception if it fails. It's cleaner, and it avoids a subtle bug: between your check and your action, the world can change.\"\n\n### LBYL vs EAFP\n\n```\n# LBYL — brittle, races\nif key in d and isinstance(d[key], dict) and inner in d[key]:\n    value = d[key][inner]\n\n# EAFP — clean intent\ntry:\n    value = d[key][inner]\nexcept (KeyError, TypeError):\n    value = None\n```\n\nEAFP states the happy path plainly, then handles what can go wrong. It's especially natural for nested lookups, file access, and type coercion — anywhere a pre-check would be long, repetitive, or racy.\n\n> **Vaathiyaar's rule:** reach for `try/except` before a wall of `if` guards. Let the exception tell you what went wrong, and handle exactly that.\n\nToday you implement `get_nested(d, path)` the EAFP way — walk a list of keys and return `None` the moment any step fails."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "try_not_check",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ov",
+      "nodes": [
+        {
+          "label": "EAFP",
+          "children": [
+            "try the happy path",
+            "catch what fails",
+            "cleaner than LBYL",
+            "no check/act race"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cs",
+      "steps": [
+        {
+          "line": "cur = d",
+          "highlight": "cur = d",
+          "explanation": {
+            "en": "Start at the top of the structure"
+          }
+        },
+        {
+          "line": "for key in path:",
+          "highlight": "for key",
+          "explanation": {
+            "en": "Walk each key in turn"
+          }
+        },
+        {
+          "line": "cur = cur[key]",
+          "highlight": "cur[key]",
+          "explanation": {
+            "en": "Just index — don't pre-check it exists"
+          }
+        },
+        {
+          "line": "except (KeyError, TypeError): return None",
+          "highlight": "except",
+          "explanation": {
+            "en": "Any missing key or wrong type -> gracefully return None"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "t",
+      "lines": [
+        "get_nested({'a': {'b': 1}}, ['a','b']) -> 1",
+        "get_nested({'a': {}}, ['a','x']) -> None"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `get_nested(d, path)` using EAFP: walk the list of keys in `path` into the nested dict `d`, returning the value if it exists, or `None` if any key is missing or a step isn't indexable (catch `KeyError`/`TypeError`). Then print `get_nested({'a': {'b': 42}}, ['a', 'b'])` (expected: `42`)."
+      },
+      "starter_code": "def get_nested(d: dict, path: list):\n    \"\"\"Walk `path` into `d` the EAFP way; return None on any failure.\"\"\"\n    # try: walk each key; except (KeyError, TypeError): return None\n    pass\n\nprint(get_nested({'a': {'b': 42}}, ['a', 'b']))",
+      "hints": {
+        "en": [
+          "Wrap the whole walk in try/except",
+          "Loop: cur = cur[key] for each key in path",
+          "except (KeyError, TypeError): return None"
+        ]
+      },
+      "expected_output": "42"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "eafp",
+      "exception_handling",
+      "pythonic_idioms"
+    ],
+    "concepts_required": [
+      "dictionaries",
+      "exceptions",
+      "loops"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "error_handling",
+    "path_memberships": [
+      "error_handling"
+    ]
+  },
+  "generated": false
+}

@@ -1,0 +1,130 @@
+{
+  "id": "structural_pattern_matching",
+  "topic": "match_case",
+  "track": "python_modern",
+  "module": "python314_features",
+  "order": 5,
+  "title": {
+    "en": "match / case: Structural Pattern Matching"
+  },
+  "description": {
+    "en": "Python 3.10+ added match/case — not a switch, but structural matching that destructures dicts, tuples, and objects by shape. Write branching that reads like the data it handles."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Branch on Shape, Not Just Value\n\n\"A chain of `if/elif` checking types and keys gets ugly fast,\" Vaathiyaar says. \"Python 3.10's **`match`/`case`** matches on **structure**: it can see that a value is a dict with a `\"type\"` of `\"circle\"` and a `\"r\"` key, and bind that `r` in one line. It's not C's switch — it's pattern matching, and it makes shape-driven code read like the shapes themselves.\"\n\n### Matching by Shape\n\n```\nmatch shape:\n    case {\"type\": \"circle\", \"r\": r}:\n        area = 3.14 * r * r\n    case {\"type\": \"square\", \"side\": s}:\n        area = s * s\n    case _:\n        area = 0        # the wildcard: anything else\n```\n\nEach `case` is a **pattern**. A mapping pattern `{\"type\": \"circle\", \"r\": r}` matches any dict that has those keys and *binds* `r` to its value. `case _` is the catch-all. This beats nested `if item.get(...)==...` both in clarity and in safety (no typos in repeated lookups).\n\n> **Vaathiyaar's note:** patterns can nest and destructure tuples, lists, and even class instances. When you're branching on the *structure* of data, `match` is the modern, readable tool.\n\nToday you implement `area(shape)` with `match`/`case` for circle and square dicts, returning `0.0` for anything else."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "match_shapes",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ov",
+      "nodes": [
+        {
+          "label": "match / case",
+          "children": [
+            "match on STRUCTURE",
+            "patterns bind values",
+            "case _ = wildcard",
+            "beats if/elif chains"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cs",
+      "steps": [
+        {
+          "line": "match shape:",
+          "highlight": "match",
+          "explanation": {
+            "en": "Match the value against structural patterns"
+          }
+        },
+        {
+          "line": "case {'type': 'circle', 'r': r}:",
+          "highlight": "'r': r",
+          "explanation": {
+            "en": "Match a circle dict and bind its radius to r"
+          }
+        },
+        {
+          "line": "return round(3.14159 * r * r, 2)",
+          "highlight": "r * r",
+          "explanation": {
+            "en": "Use the bound r to compute the area"
+          }
+        },
+        {
+          "line": "case _: return 0.0",
+          "highlight": "case _",
+          "explanation": {
+            "en": "The wildcard catches everything else"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "t",
+      "lines": [
+        "area({'type':'circle','r':2}) -> 12.57",
+        "area({'type':'square','side':3}) -> 9.0",
+        "area({'type':'blob'}) -> 0.0"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `area(shape)` using `match`/`case`. For `{'type': 'circle', 'r': r}` return `round(3.14159 * r * r, 2)`; for `{'type': 'square', 'side': s}` return `round(s * s, 2)`; for anything else return `0.0`. Then print `area({'type': 'circle', 'r': 2})` (expected: `12.57`)."
+      },
+      "starter_code": "def area(shape: dict) -> float:\n    \"\"\"Return the area using match/case on the shape dict.\"\"\"\n    match shape:\n        # case {'type': 'circle', 'r': r}: ...\n        # case {'type': 'square', 'side': s}: ...\n        # case _: return 0.0\n        pass\n\nprint(area({'type': 'circle', 'r': 2}))",
+      "hints": {
+        "en": [
+          "case {'type': 'circle', 'r': r}: binds r from the dict",
+          "case {'type': 'square', 'side': s}: binds s",
+          "case _: return 0.0 handles everything else"
+        ]
+      },
+      "expected_output": "12.57"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "match_case",
+      "structural_pattern_matching",
+      "modern_python",
+      "destructuring"
+    ],
+    "concepts_required": [
+      "dictionaries",
+      "functions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "python_modern",
+    "path_memberships": [
+      "python_modern"
+    ]
+  },
+  "generated": false
+}

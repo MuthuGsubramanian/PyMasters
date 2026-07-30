@@ -1,0 +1,124 @@
+{
+  "id": "asyncio_gather_concurrent",
+  "topic": "asyncio_gather",
+  "track": "async_concurrency",
+  "module": "foundations",
+  "order": 6,
+  "title": {
+    "en": "Run Things at Once: asyncio.gather"
+  },
+  "description": {
+    "en": "Awaiting tasks one by one wastes time when they could overlap. asyncio.gather runs coroutines concurrently and collects their results in order — the core of fast async I/O."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Stop Waiting in Line\n\n\"Three network calls, two seconds each,\" Vaathiyaar says. \"Await them one after another and you wait six seconds. But they don't depend on each other — so **run them concurrently** and you wait about *two*. That's what **`asyncio.gather`** does: launch several coroutines at once, then collect their results together, in the order you passed them.\"\n\n### gather in One Line\n\n```\nresults = await asyncio.gather(task1(), task2(), task3())\n```\n\nEach `taskN()` is a coroutine. `gather` schedules them all on the event loop so their `await` points overlap (while one waits on I/O, another runs), then returns a list of results **in argument order** — not completion order. That ordering guarantee is what makes it safe to `results[0]`, `results[1]`, and so on.\n\n```\nasync def double(n):\n    return n * 2\n\nawait asyncio.gather(double(1), double(2), double(3))  ->  [2, 4, 6]\n```\n\n> **Vaathiyaar's rule:** whenever independent awaitables pile up — API calls, DB queries, file reads — gather them. Sequential `await` in a loop is the #1 cause of slow async code.\n\nToday you implement `run_all(nums)` — concurrently double each number with `asyncio.gather` and return the results list."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "concurrent_tasks",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ov",
+      "nodes": [
+        {
+          "label": "asyncio.gather",
+          "children": [
+            "launch coroutines at once",
+            "await points overlap",
+            "results in ARG order",
+            "not completion order"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cs",
+      "steps": [
+        {
+          "line": "import asyncio",
+          "highlight": "asyncio",
+          "explanation": {
+            "en": "The async concurrency library"
+          }
+        },
+        {
+          "line": "coros = [double(n) for n in nums]",
+          "highlight": "double(n)",
+          "explanation": {
+            "en": "Build a coroutine per input (not yet running)"
+          }
+        },
+        {
+          "line": "return await asyncio.gather(*coros)",
+          "highlight": "gather(*coros)",
+          "explanation": {
+            "en": "Run them concurrently; collect results in order"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "t",
+      "lines": [
+        "run_all([1,2,3])",
+        "double runs concurrently",
+        "-> [2, 4, 6]"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Complete `run_all(nums)` so it concurrently doubles each number using `asyncio.gather` and returns the list of results in input order. A `double` coroutine and the `asyncio.run(...)` call are provided. Fill in `run_all` to gather `double(n)` for each n. Then it prints the result for `[1, 2, 3]` (expected: `[2, 4, 6]`)."
+      },
+      "starter_code": "import asyncio\n\nasync def double(n):\n    return n * 2\n\nasync def run_all(nums):\n    \"\"\"Concurrently double each number; return results in order.\"\"\"\n    # coros = [double(n) for n in nums]; return await asyncio.gather(*coros)\n    pass\n\nprint(asyncio.run(run_all([1, 2, 3])))",
+      "hints": {
+        "en": [
+          "Build a coroutine per number: [double(n) for n in nums]",
+          "await asyncio.gather(*coros) runs them concurrently",
+          "gather returns results in the order you passed the coroutines"
+        ]
+      },
+      "expected_output": "[2, 4, 6]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "asyncio",
+      "gather",
+      "concurrency",
+      "coroutines"
+    ],
+    "concepts_required": [
+      "functions",
+      "async_await",
+      "lists"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "async_concurrency",
+    "path_memberships": [
+      "async_concurrency"
+    ]
+  },
+  "generated": false
+}

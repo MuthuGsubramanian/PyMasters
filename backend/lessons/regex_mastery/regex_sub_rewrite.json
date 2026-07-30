@@ -1,0 +1,115 @@
+{
+  "id": "regex_sub_rewrite",
+  "topic": "regex_sub",
+  "track": "regex_mastery",
+  "module": "patterns",
+  "order": 4,
+  "title": {
+    "en": "re.sub: Find and Rewrite Text"
+  },
+  "description": {
+    "en": "Matching is half the job — the other half is rewriting. re.sub finds every match and replaces it, powering redaction, formatting, and cleanup. Build a digit-masker and wield it."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Search-and-Replace, Supercharged\n\n\"`str.replace` swaps one fixed string,\" Vaathiyaar says. \"**`re.sub`** swaps everything matching a *pattern* — so you can redact every phone number, collapse whitespace, or reformat dates in one call. It's the workhorse of text cleanup.\"\n\n### The Shape of re.sub\n\n```\nre.sub(pattern, replacement, text)\n```\n\nIt scans `text`, and every place `pattern` matches, it substitutes `replacement`. Want to mask every run of digits with `#`? The pattern `\\d+` matches one-or-more digits; replace with `'#'`:\n\n```\nre.sub(r'\\d+', '#', 'Call 5551234')  ->  'Call #'\n```\n\n`\\d` is \"any digit\", `+` is \"one or more\", so `\\d+` grabs a whole number as one match — replaced by a single `#`. This is exactly how log scrubbers redact PII and how formatters normalize messy input.\n\n> **Vaathiyaar's note:** always use a raw string `r'...'` for patterns so backslashes mean regex, not Python escapes. `r'\\d+'` is the digit pattern; `'\\d+'` would confuse the two.\n\nToday you implement `mask_digits(text)` — replace every run of digits with a single `#`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "find_replace",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ov",
+      "nodes": [
+        {
+          "label": "re.sub",
+          "children": [
+            "pattern, replacement, text",
+            "replaces ALL matches",
+            "\\d+ = run of digits",
+            "use raw strings"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cs",
+      "steps": [
+        {
+          "line": "import re",
+          "highlight": "re",
+          "explanation": {
+            "en": "The regular-expression module"
+          }
+        },
+        {
+          "line": "return re.sub(r'\\d+', '#', text)",
+          "highlight": "re.sub",
+          "explanation": {
+            "en": "Replace every run of digits with a single #"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "t",
+      "lines": [
+        "mask_digits('Call 555-1234') -> 'Call #-#'",
+        "mask_digits('no digits') -> 'no digits'"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `mask_digits(text)` using `re.sub`: replace every run of one-or-more digits (`\\d+`) with a single `#`. Then print `mask_digits('Call 555-1234 now')` (expected: `Call #-# now`)."
+      },
+      "starter_code": "import re\n\ndef mask_digits(text: str) -> str:\n    \"\"\"Replace each run of digits with a single '#'.\"\"\"\n    # return re.sub(r'\\d+', '#', text)\n    pass\n\nprint(mask_digits('Call 555-1234 now'))",
+      "hints": {
+        "en": [
+          "re.sub takes (pattern, replacement, text)",
+          "The pattern for a run of digits is r'\\d+'",
+          "Replace with the string '#'"
+        ]
+      },
+      "expected_output": "Call #-# now"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "regex",
+      "re_sub",
+      "text_substitution",
+      "redaction"
+    ],
+    "concepts_required": [
+      "strings",
+      "regex_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "regex_mastery",
+    "path_memberships": [
+      "regex_mastery"
+    ]
+  },
+  "generated": false
+}
