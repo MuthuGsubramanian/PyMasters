@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import AnimationRenderer, { normalizeProps } from '../components/animations/AnimationRenderer';
 import ChatBar from '../components/ChatBar';
-import api, { getAuthHeaders, requestModule, getCompletions, recordSignal, sendVaathiyaarFeedback, getPodcastManifest } from '../api';
+import api, { getAuthHeaders, requestModule, getCompletions, recordSignal, sendVaathiyaarFeedback, getPodcastManifest, generateExplain } from '../api';
 import PodcastPlayer from '../components/PodcastPlayer';
 import { safeErrorMsg } from '../utils/errorUtils';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
@@ -16,7 +16,7 @@ import {
     BookOpen, ChevronRight, Play, RotateCcw,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
     Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones, Mic,
-    MessageCircle, X, Cloud, Building2, Network, GraduationCap, Lightbulb
+    MessageCircle, X, Cloud, Building2, Network, GraduationCap, Lightbulb, Loader2
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import useTTS from '../hooks/useTTS';
@@ -1924,6 +1924,25 @@ export default function Classroom() {
         if (routeLessonId) navigate('/dashboard/classroom'); // clear the lesson from the URL (F3)
     };
 
+    // "Explain this visually" — generate an on-demand Explains essay for the open
+    // lesson and jump to it. LLM-backed; degrades gracefully if unavailable.
+    const [explainBusy, setExplainBusy] = useState(false);
+    const [explainError, setExplainError] = useState('');
+    const handleExplainLesson = async () => {
+        if (!user?.id || !currentLesson?.id || explainBusy) return;
+        setExplainBusy(true);
+        setExplainError('');
+        try {
+            const r = await generateExplain(user.id, currentLesson.id);
+            if (r.data?.id) navigate(`/dashboard/explains/generated/${r.data.id}`);
+            else setExplainError('Could not generate an explanation right now.');
+        } catch (err) {
+            setExplainError(safeErrorMsg(err, 'Vaathiyaar could not generate an explanation right now.'));
+        } finally {
+            setExplainBusy(false);
+        }
+    };
+
     // Page transition variants
     const pageVariants = {
         initial: { opacity: 0, y: 16, scale: 0.99 },
@@ -1952,15 +1971,32 @@ export default function Classroom() {
                 )}
                 {/* Back button when in a lesson */}
                 {phase !== 'select' && (
-                    <motion.button
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        onClick={handleBackToSelect}
-                        className="flex items-center gap-2 text-sm text-text-muted hover:text-text-secondary transition-colors mb-6 group"
-                    >
-                        <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                        Back to lessons
-                    </motion.button>
+                    <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+                        <motion.button
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            onClick={handleBackToSelect}
+                            className="flex items-center gap-2 text-sm text-text-muted hover:text-text-secondary transition-colors group"
+                        >
+                            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                            Back to lessons
+                        </motion.button>
+                        {currentLesson && (
+                            <div className="flex items-center gap-2">
+                                {explainError && <span className="text-xs text-red-500 max-w-[40vw] truncate" title={explainError}>{explainError}</span>}
+                                <button
+                                    onClick={handleExplainLesson}
+                                    disabled={explainBusy}
+                                    title="Generate a visual, scroll-driven explanation of this lesson"
+                                    className="btn-neo btn-neo-ghost inline-flex items-center gap-1.5 text-sm py-2 px-3.5 disabled:opacity-60"
+                                >
+                                    {explainBusy
+                                        ? <><Loader2 size={15} className="animate-spin" aria-hidden="true" /> Explaining…</>
+                                        : <><Lightbulb size={15} aria-hidden="true" /> Explain this visually</>}
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 <AnimatePresence mode="wait">

@@ -60,6 +60,7 @@ const JoinOrg = lazyRetry(() => import('./pages/JoinOrg'), 'JoinOrg');
 const Challenges = lazyRetry(() => import('./pages/Challenges'), 'Challenges');
 const Reference = lazyRetry(() => import('./pages/Reference'), 'Reference');
 const Explains = lazyRetry(() => import('./pages/Explains'), 'Explains');
+const GeneratedExplain = lazyRetry(() => import('./pages/GeneratedExplain'), 'GeneratedExplain');
 const SuperAdmin = lazyRetry(() => import('./pages/SuperAdmin'), 'SuperAdmin');
 const ForgotPassword = lazyRetry(() => import('./pages/ForgotPassword'), 'ForgotPassword');
 const ResetPassword = lazyRetry(() => import('./pages/ResetPassword'), 'ResetPassword');
@@ -172,6 +173,7 @@ export default function App() {
                 <Route path="org-compete" element={<ErrorBoundary><OrgCompete /></ErrorBoundary>} />
                 <Route path="reference" element={<ErrorBoundary><Reference /></ErrorBoundary>} />
                 <Route path="explains" element={<ErrorBoundary><Explains /></ErrorBoundary>} />
+                <Route path="explains/generated/:id" element={<ErrorBoundary><GeneratedExplain /></ErrorBoundary>} />
                 <Route path="explains/:slug" element={<ErrorBoundary><Explains /></ErrorBoundary>} />
                 <Route path="live-tutor" element={<ErrorBoundary><LiveTutor /></ErrorBoundary>} />
                 <Route path="profile" element={<ErrorBoundary><Profile /></ErrorBoundary>} />

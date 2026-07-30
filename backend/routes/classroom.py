@@ -8,6 +8,7 @@ import json
 import os
 import sqlite3
 import threading
+import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -20,6 +21,7 @@ from auth import get_current_user_id
 from vaathiyaar.engine import (
     call_vaathiyaar, evaluate_code, get_ollama_client, OLLAMA_MODEL,
     stream as vaathiyaar_stream, VaathiyaarUnavailable, FRIENDLY_UNAVAILABLE,
+    complete as vaathiyaar_complete,
 )
 from vaathiyaar.modelfile import build_system_prompt
 from vaathiyaar.profiler import get_student_profile, record_signal, update_mastery
@@ -1137,6 +1139,125 @@ def vaathiyaar_feedback(request: FeedbackRequest):
     score = 1.0 if request.helpful else 0.0
     updated = set_training_quality(_get_db_path(), request.pair_id, score)
     return {"ok": updated, "quality_score": score}
+
+
+# ── On-demand "Explain this visually" generation (per-lesson Explain button) ──
+class ExplainRequest(BaseModel):
+    user_id: str
+    lesson_id: Optional[str] = None
+    focus: Optional[str] = None
+
+
+def _resolve_en(v) -> str:
+    if isinstance(v, dict):
+        return v.get("en") or next((str(x) for x in v.values() if x), "")
+    return str(v or "")
+
+
+def _extract_json_object(text: str) -> str:
+    """First balanced {...} block from a chatty LLM reply (brace-depth scan)."""
+    start = text.find("{")
+    if start < 0:
+        return ""
+    depth = 0
+    for i in range(start, len(text)):
+        c = text[i]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:i + 1]
+    return text[start:]
+
+
+def _sanitize_explain(data: dict, concept: str) -> dict:
+    """Coerce the LLM's JSON into a strict, render-safe shape — TEXT ONLY, length-capped,
+    so a malformed or hostile response can never inject anything (it is rendered as
+    markdown text by a generic visual, never executed)."""
+    def s(x, limit):
+        return str(x or "").strip()[:limit]
+    steps_in = data.get("steps") if isinstance(data.get("steps"), list) else []
+    steps = []
+    for st in steps_in[:8]:
+        if isinstance(st, dict):
+            title, body = s(st.get("title"), 120), s(st.get("body") or st.get("text"), 900)
+        else:
+            title, body = "", s(st, 900)
+        if body:
+            steps.append({"title": title, "body": body})
+    if not steps:
+        raise ValueError("no usable steps")
+    return {
+        "title": s(data.get("title"), 120) or f"Explaining {concept}",
+        "subtitle": s(data.get("subtitle"), 400),
+        "steps": steps,
+        "takeaway": s(data.get("takeaway"), 700),
+    }
+
+
+@router.post("/explain")
+def generate_explain(request: ExplainRequest, caller: str = Depends(get_current_user_id)):
+    """Generate a data-driven visual 'Explains' essay on demand for a lesson. The
+    LLM returns only TEXT (title/steps/takeaway); the frontend renders it with the
+    generic Explains visual. Never generates or runs code."""
+    _require_self(request.user_id, caller)
+    db_path = _get_db_path()
+    from access import assert_learning_access
+    assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
+
+    lesson = _load_lesson_from_dir(request.lesson_id) if request.lesson_id else None
+    concept = (request.focus or "").strip() or (_resolve_en(lesson.get("title")) if lesson else "this concept")
+    context = _resolve_en(lesson.get("story_variants"))[:1500] if lesson else ""
+
+    prompt = (
+        "You are Vaathiyaar, a patient teacher. Produce a short, vivid VISUAL EXPLAINER "
+        f"about: {concept}.\n"
+        + (f"\nLesson context:\n{context}\n" if context else "")
+        + "\nReturn ONLY a JSON object (no prose, no code fences) with this exact shape:\n"
+        '{"title": str, "subtitle": str (1-2 sentences), '
+        '"steps": [{"title": str, "body": str (2-4 sentences, plain language)}], '
+        '"takeaway": str (2-3 sentences)}\n'
+        "Give 5 to 7 steps that build intuition from scratch."
+    )
+    try:
+        raw = vaathiyaar_complete([{"role": "user", "content": prompt}], {"temperature": 0.5})
+    except VaathiyaarUnavailable as exc:
+        raise HTTPException(status_code=503, detail=getattr(exc, "friendly", FRIENDLY_UNAVAILABLE))
+    except Exception as exc:
+        print(f"[classroom.explain] LLM error: {str(exc)[:200]}")
+        raise HTTPException(status_code=503, detail=FRIENDLY_UNAVAILABLE)
+
+    try:
+        data = _sanitize_explain(json.loads(_extract_json_object(raw)), concept)
+    except Exception as exc:
+        print(f"[classroom.explain] parse error: {str(exc)[:200]}")
+        raise HTTPException(status_code=502, detail="That explanation came back malformed — please try again.")
+
+    explain_id = uuid.uuid4().hex[:12]
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            "INSERT INTO generated_explains (id, user_id, lesson_id, focus, title, data) VALUES (?,?,?,?,?,?)",
+            [explain_id, request.user_id, request.lesson_id, request.focus, data["title"], json.dumps(data)],
+        )
+        conn.commit()
+        conn.close()
+    except Exception as exc:
+        print(f"[classroom.explain] store error: {str(exc)[:200]}")  # non-fatal; still return the essay
+    return {"id": explain_id, **data}
+
+
+@router.get("/explain/{explain_id}")
+def get_explain(explain_id: str, caller: str = Depends(get_current_user_id)):
+    """Fetch a previously generated Explains essay by id."""
+    conn = sqlite3.connect(_get_db_path())
+    conn.row_factory = sqlite3.Row
+    row = conn.execute("SELECT data FROM generated_explains WHERE id = ?", [explain_id]).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Explanation not found")
+    return {"id": explain_id, **json.loads(row["data"])}
 
 
 EXPORT_TOKEN = os.getenv("EXPORT_TOKEN", "")

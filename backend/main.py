@@ -368,6 +368,22 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_jobs_status ON module_generation_jobs(status, priority)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_lessons_user ON generated_lessons(user_id)")
 
+        # ── On-demand generated "Explains" visual essays (per-lesson Explain button) ──
+        # Stores only DATA (title/steps/takeaway/animation) produced by the LLM —
+        # never code — rendered by the generic data-driven Explains renderer.
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS generated_explains (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                lesson_id TEXT,
+                focus TEXT,
+                title TEXT NOT NULL,
+                data TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_explains_user ON generated_explains(user_id, created_at)")
+
         # ── Playground conversation history ─────────────────────────────
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS playground_conversations (

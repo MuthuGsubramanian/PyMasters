@@ -210,6 +210,10 @@ export const getAdminUsage = (userId, days = 30) => api.get('/admin/usage', { pa
 export const getTrendingTopics = () => api.get('/admin/trending-topics');
 export const generateTrendingLessons = (topics) => api.post('/admin/generate-trending', { topics });
 export const getGenerationJobs = () => api.get('/admin/generation-jobs');
+// On-demand "Explain this visually" (per-lesson) — LLM generates a visual essay
+export const generateExplain = (userId, lessonId, focus = null) =>
+    api.post('/classroom/explain', { user_id: userId, lesson_id: lessonId, focus });
+export const getExplain = (explainId) => api.get(`/classroom/explain/${explainId}`);
 export const adminBlockUser = (targetId, userId, blocked) => api.post(`/admin/users/${targetId}/block`, { user_id: userId, blocked });
 export const adminSetPlan = (targetId, userId, plan, expiresAt = null) =>
     api.post(`/admin/users/${targetId}/plan`, { user_id: userId, plan, expires_at: expiresAt });
