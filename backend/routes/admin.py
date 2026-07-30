@@ -10,6 +10,7 @@ forged user_id cannot escalate.
 import json
 import os
 import sqlite3
+import threading
 import uuid
 from datetime import date, timedelta
 from typing import Optional
@@ -90,6 +91,97 @@ def _audit(conn, actor_id, action, target_type=None, target_id=None, detail=None
         [str(uuid.uuid4()), actor_id, _actor_name(conn, actor_id), action, target_type, target_id,
          json.dumps(detail or {})],
     )
+
+
+# ── Trend-driven lesson generation (super-admin) ────────────────────────────
+# A one-click way for platform admins to turn the latest AI/Python topics into
+# lessons. Generation runs through the SAME pipeline as "Learn Anything"
+# (modules.run_pipeline) into the REVIEW POOL (generated_lessons) — it is NOT
+# auto-published to the live static catalogue. That deliberate gate keeps
+# unreviewed LLM output from reaching learners (a real risk: a bad auto-shipped
+# lesson is worse than none). An admin reviews the pool and promotes what's good.
+
+# Suggested "latest topics" seed — editable in the UI before generating. Kept
+# current with the 2026 trends the platform teaches; the admin can replace these.
+DEFAULT_TRENDING_TOPICS = [
+    "Model Context Protocol (MCP) for tool-using agents",
+    "Structured output and JSON mode with local LLMs",
+    "Speculative decoding for faster inference",
+    "Vector databases: HNSW indexing explained",
+    "LoRA and QLoRA fine-tuning on a single GPU",
+    "Prompt caching to cut LLM cost and latency",
+    "Evaluating RAG systems: faithfulness and recall",
+    "Agentic workflows with human-in-the-loop checkpoints",
+]
+
+
+class GenerateTrendingRequest(BaseModel):
+    topics: Optional[list] = None   # explicit topics; falls back to the seed list
+    count: Optional[int] = 5        # how many to generate when auto-picking
+
+
+@router.get("/trending-topics")
+def suggested_trending_topics(caller: str = Depends(get_current_user_id)):
+    """The editable seed list an admin sees before generating."""
+    require_super_admin(caller)
+    return {"topics": DEFAULT_TRENDING_TOPICS}
+
+
+@router.post("/generate-trending")
+def generate_trending_lessons(req: GenerateTrendingRequest, caller: str = Depends(get_current_user_id)):
+    """Spawn lesson generation for the latest topics into the review pool.
+
+    Safe by construction: results land in `generated_lessons` (review pool),
+    never the live catalogue. Generation itself needs the Vaathiyaar LLM; if the
+    provider is unavailable each job simply ends 'failed' (graceful) — the
+    endpoint, jobs and UI still work.
+    """
+    require_super_admin(caller)
+    topics = [str(t).strip() for t in (req.topics or []) if str(t).strip()]
+    if not topics:
+        n = max(1, min(int(req.count or 5), len(DEFAULT_TRENDING_TOPICS)))
+        topics = DEFAULT_TRENDING_TOPICS[:n]
+    topics = topics[:10]  # hard cap per click to bound cost
+
+    conn = _conn()
+    jobs = []
+    for topic in topics:
+        job_id = str(uuid.uuid4())
+        conn.execute(
+            "INSERT INTO module_generation_jobs (id, user_id, topic, trigger, trigger_detail, status, priority) "
+            "VALUES (?, ?, ?, 'admin_trending', ?, 'queued', 2)",
+            [job_id, caller, topic, f"Admin trend-gen: {topic}"],
+        )
+        jobs.append({"job_id": job_id, "topic": topic})
+    _audit(conn, caller, "generate_trending_lessons", "content", None, {"topics": topics})
+    conn.commit()
+    conn.close()
+
+    # Fire generation in the background (same pipeline as Learn Anything).
+    try:
+        from modules.pipeline import run_pipeline
+        for j in jobs:
+            threading.Thread(target=run_pipeline, args=(j["job_id"], caller, j["topic"]),
+                             daemon=True).start()
+    except Exception as exc:  # never fail the request if the pipeline import/spawn hiccups
+        print(f"[admin.generate_trending] spawn error: {str(exc)[:200]}")
+
+    return {"generated": jobs, "count": len(jobs),
+            "note": "Generating into the review pool — publish approved lessons after review."}
+
+
+@router.get("/generation-jobs")
+def list_generation_jobs(caller: str = Depends(get_current_user_id)):
+    """Recent trend-generation jobs + status, for the review panel."""
+    require_super_admin(caller)
+    conn = _conn()
+    rows = conn.execute(
+        "SELECT id, topic, status, trigger, result_lesson_id, error_message, created_at "
+        "FROM module_generation_jobs WHERE trigger = 'admin_trending' "
+        "ORDER BY created_at DESC LIMIT 40"
+    ).fetchall()
+    conn.close()
+    return {"jobs": [dict(r) for r in rows]}
 
 
 class BlockRequest(BaseModel):

@@ -10,6 +10,7 @@ import { safeErrorMsg } from '../utils/errorUtils';
 import UserAdminDrawer from '../components/UserAdminDrawer';
 import OrgAdminDrawer from '../components/OrgAdminDrawer';
 import { SupportAdminTab, SettingsAdminTab } from '../components/SupportAdminTab';
+import ContentAdminTab from '../components/ContentAdminTab';
 import {
     Badge, Card, StatCard, Button, Tabs,
     Table, THead, TH, TBody, TR, TD,
@@ -447,7 +448,7 @@ export default function SuperAdmin() {
         );
     }
 
-    const TABS = [{ key: 'overview', label: 'Overview', icon: TrendingUp }, { key: 'users', label: 'Users', icon: Users }, { key: 'orgs', label: 'Organizations', icon: Building2 }, { key: 'support', label: 'Support', icon: LifeBuoy }, { key: 'social', label: 'Social Studio', icon: Clapperboard }, { key: 'admins', label: 'Admins', icon: Shield }, { key: 'audit', label: 'Audit', icon: Activity }, { key: 'settings', label: 'Settings', icon: Settings }];
+    const TABS = [{ key: 'overview', label: 'Overview', icon: TrendingUp }, { key: 'users', label: 'Users', icon: Users }, { key: 'orgs', label: 'Organizations', icon: Building2 }, { key: 'content', label: 'Content', icon: Sparkles }, { key: 'support', label: 'Support', icon: LifeBuoy }, { key: 'social', label: 'Social Studio', icon: Clapperboard }, { key: 'admins', label: 'Admins', icon: Shield }, { key: 'audit', label: 'Audit', icon: Activity }, { key: 'settings', label: 'Settings', icon: Settings }];
 
     return (
         <div className="space-y-5">
@@ -464,6 +465,7 @@ export default function SuperAdmin() {
             <Tabs tabs={TABS} active={tab} onChange={setTab} />
 
             {/* SOCIAL STUDIO */}
+            {tab === 'content' && <ContentAdminTab />}
             {tab === 'social' && <SocialStudioTab />}
 
             {/* SUPPORT INBOX (access requests · issues · tutor sessions) */}

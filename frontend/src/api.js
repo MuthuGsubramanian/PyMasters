@@ -206,6 +206,10 @@ export const getAdminOverview = (userId) => api.get('/admin/overview', { params:
 export const getAdminUsers = (userId, q = '', limit = 50, offset = 0) => api.get('/admin/users', { params: { user_id: userId, q, limit, offset } });
 export const getAdminOrgs = (userId) => api.get('/admin/orgs', { params: { user_id: userId } });
 export const getAdminUsage = (userId, days = 30) => api.get('/admin/usage', { params: { user_id: userId, days } });
+// Trend-driven lesson generation (super-admin; JWT-gated, no user_id param needed)
+export const getTrendingTopics = () => api.get('/admin/trending-topics');
+export const generateTrendingLessons = (topics) => api.post('/admin/generate-trending', { topics });
+export const getGenerationJobs = () => api.get('/admin/generation-jobs');
 export const adminBlockUser = (targetId, userId, blocked) => api.post(`/admin/users/${targetId}/block`, { user_id: userId, blocked });
 export const adminSetPlan = (targetId, userId, plan, expiresAt = null) =>
     api.post(`/admin/users/${targetId}/plan`, { user_id: userId, plan, expires_at: expiresAt });
