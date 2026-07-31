@@ -1,0 +1,161 @@
+{
+  "id": "minilm_production_embeddings",
+  "topic": "minilm_production_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "all-MiniLM-L6-v2 in Production: Chunking, Batching & the Embedding Cache"
+  },
+  "description": {
+    "en": "Take all-MiniLM-L6-v2 from demo to production: chunk long documents past the silent 256-token limit, batch-encode for CPU speed, and cache deterministic embeddings so you never pay for the same sentence twice."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Silent Bug in Every First RAG Pipeline\n\n\"Last lesson you built semantic search with **all-MiniLM-L6-v2** â€” encode, normalize, dot product, sort,\" Vaathiyaar says. \"Then someone feeds it a three-page document, the answers get mysteriously worse, and nothing â€” *nothing* â€” throws an error. Today we fix the three things that separate a weekend demo from a production embedding pipeline: the truncation trap, batching, and the cache. These are exactly the tricks a local RAG assistant needs to run all day on a plain CPU.\"\n\n### Trap #1: The 256-Token Ceiling\n\nall-MiniLM-L6-v2 reads at most **256 word-piece tokens** â€” roughly 180â€“200 English words. Everything after that is *silently dropped*:\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\nprint(model.max_seq_length)   # 256 â€” tokens past this never reach the model\n```\n\nEmbed a whole page and you have really embedded its first two paragraphs. The fix is **chunking**: split long text into overlapping windows *before* encoding, so every sentence lands inside some chunk â€” and the overlap keeps ideas that straddle a boundary from being cut in half.\n\n### Trap #2: Encoding One Sentence at a Time\n\n`model.encode()` happily accepts a whole list, and that is not just convenience â€” it is where the speed lives:\n\n| Strategy | 10,000 chunks on CPU | Why |\n|---|---|---|\n| `encode(doc)` in a Python loop | slowest | pays Python + model overhead 10,000 times |\n| `encode(docs, batch_size=64)` | ~5â€“10x faster | one call, vectorized batches |\n| batch once + cache forever | near-instant after first run | deterministic vectors never expire |\n\n### Trap #3: Paying Twice for the Same Sentence\n\nMiniLM is **deterministic**: the same text always produces the same 384-dim vector. So an embedding is a perfect thing to cache â€” a plain dict keyed by the text is enough to start:\n\n```python\ncache = {}\n\ndef embed_all(texts):\n    missing = [t for t in texts if t not in cache]\n    if missing:\n        vecs = model.encode(missing, batch_size=64, normalize_embeddings=True)\n        cache.update(zip(missing, vecs))\n    return [cache[t] for t in texts]\n```\n\nYour documents change rarely, but user queries repeat constantly â€” \"how do I loop in python\" arrives a hundred times a day. With the cache, the second time is a dict lookup: no model call, no milliseconds, no battery. Production vector databases are, at heart, this dict with persistence and smarter indexing bolted on.\n\nPut the three together and the pipeline becomes: **chunk** every document into overlapping windows, **batch-encode** the chunks you have never seen, **cache** the vectors, and search stays a dot product â€” the part you already built.\n\n> **Key Insight:** all-MiniLM-L6-v2 doesn't fail loudly â€” it truncates silently and lets you waste compute politely. Production embedding work is mostly plain Python discipline: chunk before you encode, batch what you encode, and never encode the same text twice."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "pipeline_hardening",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "chunk_batch_cache",
+      "steps": [
+        {
+          "line": "model = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")",
+          "highlight": "all-MiniLM-L6-v2",
+          "explanation": {
+            "en": "Same 90 MB CPU-friendly model from last lesson â€” now we use it properly"
+          }
+        },
+        {
+          "line": "print(model.max_seq_length)  # 256",
+          "highlight": "max_seq_length",
+          "explanation": {
+            "en": "The hard ceiling: tokens past 256 are silently dropped, never erroring"
+          }
+        },
+        {
+          "line": "words = long_doc.split()",
+          "highlight": "split()",
+          "explanation": {
+            "en": "Word-level splitting is a simple, dependency-free proxy for tokens"
+          }
+        },
+        {
+          "line": "chunks = make_chunks(words, size=180, overlap=30)",
+          "highlight": "overlap=30",
+          "explanation": {
+            "en": "180-word windows stay under 256 tokens; 30 shared words keep boundary ideas whole"
+          }
+        },
+        {
+          "line": "cache = {}",
+          "highlight": "cache",
+          "explanation": {
+            "en": "MiniLM is deterministic â€” same text, same vector â€” so a dict is a valid cache"
+          }
+        },
+        {
+          "line": "missing = [t for t in chunks if t not in cache]",
+          "highlight": "not in cache",
+          "explanation": {
+            "en": "Only pay the model for text it has never seen"
+          }
+        },
+        {
+          "line": "vecs = model.encode(missing, batch_size=64, normalize_embeddings=True)",
+          "highlight": "batch_size=64",
+          "explanation": {
+            "en": "One batched call instead of a Python loop â€” this is where 5â€“10x CPU speed comes from"
+          }
+        },
+        {
+          "line": "cache.update(zip(missing, vecs))",
+          "highlight": "update",
+          "explanation": {
+            "en": "Store each new textâ†’vector pair; next run these are free"
+          }
+        },
+        {
+          "line": "doc_vecs = [cache[t] for t in chunks]",
+          "highlight": "[cache[t] for t in chunks]",
+          "explanation": {
+            "en": "Rebuild in original order â€” cached and fresh vectors, ready for the dot-product search"
+          }
+        }
+      ],
+      "duration_ms": 6000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "cache_hit",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "all-MiniLM-L6-v2 silently drops everything past 256 tokens, so long text must be chunked BEFORE encoding. Implement `chunk_words(text, size, overlap)` that splits `text` into word-windows of `size` words, where consecutive chunks share `overlap` words. Advance by `size - overlap` words each step and stop once a chunk reaches the last word. Print `chunk_words(\"a b c d e f g\", 3, 1)`."
+      },
+      "starter_code": "def chunk_words(text: str, size: int, overlap: int) -> list:\n    \"\"\"Split text into overlapping chunks of `size` words, best for embedding.\"\"\"\n    words = text.split()\n    step = size - overlap\n    chunks = []\n    i = 0\n    # while i < len(words):\n    #   1. join words[i:i+size] into one chunk string\n    #   2. if i + size reaches the end, stop\n    #   3. otherwise advance i by step\n    pass\n    return chunks\n\nprint(chunk_words(\"a b c d e f g\", 3, 1))",
+      "expected_output": "['a b c', 'c d e', 'e f g']",
+      "hints": {
+        "en": [
+          "Each chunk is \" \".join(words[i:i+size])",
+          "After appending, check `if i + size >= len(words): break` so you don't emit a tiny leftover chunk",
+          "Advance with `i += step` where step = size - overlap"
+        ]
+      },
+      "test_code": "assert chunk_words(\"a b c d e f g\", 3, 1) == ['a b c', 'c d e', 'e f g'], f\"got {chunk_words('a b c d e f g', 3, 1)}\"\nassert chunk_words(\"one two three\", 5, 2) == ['one two three'], \"text shorter than size must be a single chunk\"\nchunks = chunk_words(\"w1 w2 w3 w4 w5 w6\", 4, 2)\nassert chunks == ['w1 w2 w3 w4', 'w3 w4 w5 w6'], f\"got {chunks}\"\nassert chunks[0].split()[-2:] == chunks[1].split()[:2], \"consecutive chunks must share `overlap` words\"\nprint(\"All tests passed!\")",
+      "test_cases": null
+    },
+    {
+      "instruction": {
+        "en": "MiniLM is deterministic â€” the same text always gives the same vector â€” so embeddings are perfect to cache. `fake_encode` below stands in for the model and records every (expensive) call. Implement `embed_all(texts)` so it only calls `fake_encode` for texts NOT already in `cache`, stores new results in `cache`, and returns the vectors in the same order as `texts` (duplicates included). Then print how many model calls were paid for."
+      },
+      "starter_code": "calls = []\ncache = {}\n\ndef fake_encode(text: str) -> list:\n    \"\"\"Stand-in for model.encode â€” every call here costs compute.\"\"\"\n    calls.append(text)\n    return [round(len(text) / 10, 2)]\n\ndef embed_all(texts: list) -> list:\n    \"\"\"Return one vector per text, hitting fake_encode only on cache misses.\"\"\"\n    # for each text: if it's not in cache, encode it and store it\n    # then return [cache[t] for t in texts]\n    pass\n\nvecs = embed_all([\"hot coffee\", \"cold brew\", \"hot coffee\"])\nprint(len(calls))",
+      "expected_output": "2",
+      "hints": {
+        "en": [
+          "Check `if text not in cache:` before calling fake_encode",
+          "On a miss: cache[text] = fake_encode(text)",
+          "Return [cache[t] for t in texts] so order and duplicates are preserved"
+        ]
+      },
+      "test_code": "assert len(calls) == 2, f\"'hot coffee' repeated must cost only 2 calls, got {len(calls)}\"\nassert vecs[0] == vecs[2], \"identical text must return the identical cached vector\"\nassert len(vecs) == 3, \"one vector per input text, duplicates included\"\nmore = embed_all([\"cold brew\", \"green tea\"])\nassert len(calls) == 3, \"'cold brew' was cached â€” only 'green tea' should cost a call\"\nassert more[0] == cache[\"cold brew\"], \"cached vector must be reused, not recomputed\"\nprint(\"All tests passed!\")",
+      "test_cases": null
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "text_chunking",
+      "embedding_caching",
+      "batch_encoding",
+      "token_truncation",
+      "rag_pipelines"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "dictionaries",
+      "list_comprehensions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
