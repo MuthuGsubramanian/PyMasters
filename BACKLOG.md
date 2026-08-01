@@ -1,7 +1,7 @@
 ## Innovation Backlog
 
 *Auto-maintained by the PyMasters AI Intelligence Pipeline.*
-*Last updated: 2026-07-26*
+*Last updated: 2026-08-01*
 
 ### Ready to Build (scored >= 8, validated)
 
@@ -21,6 +21,7 @@
 - **nanotron/ultrascale-playbook** (score: 8, source: huggingface, added: 2026-07-26) — Excellent source material for an advanced 'how LLMs are trained at scale' lesson series (parallelism, GPU efficiency) [link](https://huggingface.co/spaces/nanotron/ultrascale-playbook)
 - **Running a 28.9M parameter LLM on an $8 microcontroller** (score: 8, source: hackernews, added: 2026-07-26) — Great tutorial on extreme LLM quantization/tiny models; reinforces Homie's small-local-model story and edge-device ambitions [link](https://github.com/slvDev/esp32-ai)
 - **Claude Opus 5** (score: 8, source: hackernews, added: 2026-07-26) — Timely PyMasters coverage/tutorial on Claude Opus 5 capabilities and API usage; optionally add as a cloud-provider fallback option in Homie [link](https://www.anthropic.com/news/claude-opus-5)
+- **Just brute force your embeddings** (score: 8, source: hackernews, added: 2026-08-01) — Brute-force embeddings validates PyMasters' recent MiniLM semantic-search tutorial (follow-up post material) and Homie's simple local RAG design without a vector DB [link](https://softwaredoug.com/blog/2026/07/29/just-brute-force-embeddings)
 
 ### Prototyping (scored >= 7)
 
@@ -31,6 +32,7 @@
 - **Open-weight AI is having its Kubernetes moment** (score: 7, source: hackernews, added: 2026-07-26) — Open-weight ecosystem overview fits a PyMasters lesson and validates Homie's local-LLM positioning for marketing content [link](https://tobi.knaup.me/2026-07-25-open-weight-ai-is-having-its-kubernetes-moment/)
 - **Becoming a Research Engineer at a Big LLM Lab** (score: 7, source: hackernews, added: 2026-07-26) — Career-path content: adapt into a PyMasters guide on becoming an ML/research engineer [link](https://www.maxmynter.com/pages/blog/jobhunt)
 - **Bringing PyTorch Monarch to AMD GPUs** (score: 7, source: hackernews, added: 2026-07-26) — Tutorial on distributed PyTorch (Monarch) and the AMD GPU ecosystem for advanced learners [link](https://pytorch.org/blog/bringing-pytorch-monarch-to-amd-gpus-single-controller-distributed-training-on-rocm/)
+- **Show HN: How to build and self-host a code review agent** (score: 7, source: hackernews, added: 2026-08-01) — Self-hosted code-review agent is strong tutorial material and could become a Homie plugin for local code review [link](https://www.trytilde.ai/blog/how-to-build-code-review-agent)
 
 ### Evaluating (scored >= 6)
 
@@ -38,6 +40,10 @@
 - **open-llm-leaderboard/open_llm_leaderboard** (score: 6, source: huggingface, added: 2026-07-26) — Article/lesson on how to read LLM benchmarks and choose a model for your use case [link](https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard)
 - **black-forest-labs/FLUX.1-dev** (score: 6, source: huggingface, added: 2026-07-26) — Diffusion-model tutorial using FLUX.1-dev with the diffusers library [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev)
 - **black-forest-labs/FLUX.1-schnell** (score: 6, source: huggingface, added: 2026-07-26) — Fast 4-step image generation tutorial; borderline feasible as an optional Homie image-gen plugin on GPU machines [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-schnell)
+- **MixFrag: Fragility-Guided Mixed-Precision Post-Training Quantization for Vision Transformers** (score: 6, source: arxiv, added: 2026-08-01) — Mixed-precision quantization for edge devices: tutorial material for PyMasters and directly relevant to Homie's on-device model serving [link](http://arxiv.org/abs/2607.28589v1)
+- **Sample More, Reflect Less: Self-Refine and Reflexion Lose to Repeated Sampling at Equal Token Cost, from 1.5B to 7B** (score: 6, source: arxiv, added: 2026-08-01) — Repeated sampling beating reflection at 1.5B-7B scale is a great lesson topic and directly applicable to how Homie budgets tokens on small local models [link](http://arxiv.org/abs/2607.28576v1)
+- **Everyone is building LLM routers, we deprecated ours** (score: 6, source: hackernews, added: 2026-08-01) — Tutorial on when LLM routing helps vs. hurts; directly mirrors the multi-provider fallback chains both PyMasters' tutor and Homie use [link](https://manifest.build/blog/why-we-deprecated-our-llm-router/)
+- **13 Models and 4 Agents on SWE Tasks: Go, Java, Python, Rust, TS** (score: 6, source: hackernews, added: 2026-08-01) — Cross-model SWE comparison (including Python) is ready-made material for a model-selection lesson or blog post [link](https://swe-rebench.com)
 
 ### Discovered (new)
 
