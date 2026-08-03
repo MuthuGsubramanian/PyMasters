@@ -12,6 +12,12 @@ import EDA from '../components/explains/essays/edaEssay';
 import KMEANS from '../components/explains/essays/kmeansEssay';
 import FUZZY_LOGIC from '../components/explains/essays/fuzzyLogicEssay';
 import EMBEDDINGS from '../components/explains/essays/embeddingsEssay';
+import ATTENTION from '../components/explains/essays/attentionEssay';
+import PCA from '../components/explains/essays/pcaEssay';
+import CONFUSION_MATRIX from '../components/explains/essays/confusionMatrixEssay';
+import CROSS_VALIDATION from '../components/explains/essays/crossValidationEssay';
+import KNN from '../components/explains/essays/knnEssay';
+import NAIVE_BAYES from '../components/explains/essays/naiveBayesEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -322,6 +328,12 @@ export const ESSAYS = [
     KMEANS,
     FUZZY_LOGIC,
     EMBEDDINGS,
+    ATTENTION,
+    PCA,
+    CONFUSION_MATRIX,
+    CROSS_VALIDATION,
+    KNN,
+    NAIVE_BAYES,
 ];
 
 // ── Index page ────────────────────────────────────────────────────────────────
@@ -368,7 +380,7 @@ function ExplainsIndex() {
                 <div className="rounded-2xl border border-dashed border-border-strong p-5 flex flex-col items-start justify-center text-left opacity-70">
                     <h2 className="text-sm font-bold font-display text-text-primary">More on the way</h2>
                     <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                        Attention, visually · PCA · confusion matrices.
+                        A new essay lands most days — regularisation · SHAP values · DBSCAN are queued.
                         Tell Vaathiyaar which concept you'd like explained visually next.
                     </p>
                 </div>
