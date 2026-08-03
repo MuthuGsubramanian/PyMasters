@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Play, RotateCcw } from 'lucide-react';
+import useReducedMotion from '../../hooks/useReducedMotion';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // K-Means visual — three unlabelled blobs of points, k centroids that assign
@@ -83,10 +84,23 @@ const Centroid = ({ x, y, color, animate = true }) => {
     );
 };
 
+// Cluster membership is shown by shape as well as colour (colour-blind fallback):
+// cluster 0 = circle, 1 = square, 2 = triangle. Unassigned points are circles.
+const Point = ({ x, y, cluster, color }) => {
+    const common = {
+        fill: color, fillOpacity: cluster == null ? 0.4 : 0.8,
+        stroke: 'currentColor', strokeOpacity: 0.2, strokeWidth: 1,
+    };
+    if (cluster === 1) return <rect x={x - 5.5} y={y - 5.5} width="11" height="11" rx="2" {...common} />;
+    if (cluster === 2) return <polygon points={`${x},${y - 6.5} ${x + 6},${y + 5} ${x - 6},${y + 5}`} {...common} />;
+    return <circle cx={x} cy={y} r="6" {...common} />;
+};
+
 export default function KMeansVisual({ stepIndex = 0 }) {
     const idx = Math.max(0, Math.min(stepIndex, STEP_STATES.length - 1));
     const state = STEP_STATES[idx];
     const interactive = state.mode === 'interactive';
+    const reducedMotion = useReducedMotion();
 
     // Interactive: step through the real snapshots. Reset when leaving the step.
     const [snapIdx, setSnapIdx] = useState(-1); // -1 = seeds only
@@ -120,15 +134,14 @@ export default function KMeansVisual({ stepIndex = 0 }) {
 
                 {/* The points */}
                 {PTS.map((p, i) => (
-                    <circle key={i} cx={p[0]} cy={p[1]} r="6"
-                        fill={assign ? COLORS[assign[i]] : 'currentColor'}
-                        fillOpacity={assign ? 0.8 : 0.4}
-                        stroke="currentColor" strokeOpacity="0.2" strokeWidth="1" />
+                    <Point key={i} x={p[0]} y={p[1]}
+                        cluster={assign ? assign[i] : null}
+                        color={assign ? COLORS[assign[i]] : 'currentColor'} />
                 ))}
 
                 {/* The centroids */}
                 {cents && cents.map((c, i) => (
-                    <Centroid key={i} x={c[0]} y={c[1]} color={COLORS[i]} />
+                    <Centroid key={i} x={c[0]} y={c[1]} color={COLORS[i]} animate={!reducedMotion} />
                 ))}
 
                 {/* Captions */}
@@ -153,12 +166,12 @@ export default function KMeansVisual({ stepIndex = 0 }) {
             {interactive && (
                 <div className="flex-shrink-0 pt-2 flex items-center gap-2">
                     <button onClick={() => setSnapIdx((s) => Math.min(s + 1, SNAPS.length - 1))} disabled={done}
-                        className="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-primary rounded-lg px-3 py-1.5 hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 cursor-pointer">
+                        className="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-primary rounded-lg px-3 py-2 hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 cursor-pointer">
                         <Play size={12} />
                         {snapIdx < 0 ? 'Assign points' : SNAPS[snapIdx].phase === 'assign' ? 'Move centroids' : 'Re-assign'}
                     </button>
                     <button onClick={() => setSnapIdx(-1)}
-                        className="flex items-center gap-1.5 text-xs font-medium text-text-muted bg-bg-elevated border border-border-default rounded-lg px-3 py-1.5 hover:text-text-secondary transition-colors cursor-pointer">
+                        className="flex items-center gap-1.5 text-xs font-medium text-text-muted bg-bg-elevated border border-border-default rounded-lg px-3 py-2 hover:text-text-secondary transition-colors cursor-pointer">
                         <RotateCcw size={12} /> Reset
                     </button>
                     <span className="text-xs font-mono text-text-muted">

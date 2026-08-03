@@ -67,8 +67,14 @@ export default function DecisionTreeVisual({ stepIndex = 0 }) {
     const showRegions = mode === 'regions' || mode === 'overfit';
     const overfit = mode === 'overfit';
 
-    const dot = ([x, y], color, key) => (
-        <circle key={key} cx={x} cy={y} r="6" fill={color} fillOpacity="0.85" stroke={color} strokeWidth="1" strokeOpacity="0.5" />
+    // Apples are circles, lemons squares — class is never conveyed by colour alone.
+    const dot = ([x, y], color, key, square = false) => (
+        square ? (
+            <rect key={key} x={x - 5.5} y={y - 5.5} width="11" height="11" rx="2.5"
+                fill={color} fillOpacity="0.85" stroke={color} strokeWidth="1" strokeOpacity="0.5" />
+        ) : (
+            <circle key={key} cx={x} cy={y} r="6" fill={color} fillOpacity="0.85" stroke={color} strokeWidth="1" strokeOpacity="0.5" />
+        )
     );
 
     return (
@@ -121,10 +127,10 @@ export default function DecisionTreeVisual({ stepIndex = 0 }) {
                         )}
 
                         {/* The fruit */}
-                        {LEMONS.map((p, i) => dot(p, LEMON, `l${i}`))}
+                        {LEMONS.map((p, i) => dot(p, LEMON, `l${i}`, true))}
                         {APPLES.map((p, i) => dot(p, APPLE, `a${i}`))}
                         {dot(NOISE_APPLE, APPLE, 'na')}
-                        {dot(NOISE_LEMON, LEMON, 'nl')}
+                        {dot(NOISE_LEMON, LEMON, 'nl', true)}
 
                         {/* ── Flowchart panel ── */}
                         {mode === 'data' ? (

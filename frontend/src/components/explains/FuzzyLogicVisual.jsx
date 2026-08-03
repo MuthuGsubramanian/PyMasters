@@ -152,7 +152,7 @@ export default function FuzzyLogicVisual({ stepIndex = 0 }) {
                                     </text>
                                     <rect x={x0} y="251" width="92" height="7" rx="3.5" fill="currentColor" fillOpacity="0.08" />
                                     <rect x={x0} y="251" width={Math.max(1, mu * 92)} height="7" rx="3.5" fill={color} fillOpacity="0.85" />
-                                    <text x={x0 + 96} y="258" fontFamily="monospace" fill={color}>{Math.round(mu * 100)}%</text>
+                                    <text x={x0 + 96} y="258" fontFamily="monospace" fill="currentColor" fillOpacity="0.8">{Math.round(mu * 100)}%</text>
                                 </g>
                             );
                         })}

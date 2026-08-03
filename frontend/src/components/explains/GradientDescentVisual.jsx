@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Play, RotateCcw } from 'lucide-react';
+import useReducedMotion from '../../hooks/useReducedMotion';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Gradient Descent visual — one persistent SVG "loss valley" that evolves with
@@ -48,6 +49,7 @@ const STEP_STATES = [
 ];
 
 export default function GradientDescentVisual({ stepIndex }) {
+    const reducedMotion = useReducedMotion();
     const state = STEP_STATES[Math.min(stepIndex, STEP_STATES.length - 1)];
     const wiggly = state.mode === 'wiggly';
     const fn = wiggly ? yWiggly : yOf;
@@ -165,7 +167,7 @@ export default function GradientDescentVisual({ stepIndex }) {
                     r="9" fill="var(--accent-primary)" stroke="white" strokeWidth="1.5"
                     initial={false}
                     animate={{ cx: ballX, cy: ballY }}
-                    transition={{ type: 'spring', stiffness: 120, damping: 16 }}
+                    transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 16 }}
                 />
 
                 {/* Learning-rate caption */}
@@ -193,11 +195,11 @@ export default function GradientDescentVisual({ stepIndex }) {
                     </div>
                     <div className="flex items-center gap-2">
                         <button onClick={startRun} disabled={running}
-                            className="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-primary rounded-lg px-3 py-1.5 hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 cursor-pointer">
+                            className="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-primary rounded-lg px-3 py-2 hover:scale-[1.02] active:scale-[0.98] transition-transform disabled:opacity-50 cursor-pointer">
                             <Play size={12} /> {running ? 'Descending…' : 'Run descent'}
                         </button>
                         <button onClick={resetRun}
-                            className="flex items-center gap-1.5 text-xs font-medium text-text-muted bg-bg-elevated border border-border-default rounded-lg px-3 py-1.5 hover:text-text-secondary transition-colors cursor-pointer">
+                            className="flex items-center gap-1.5 text-xs font-medium text-text-muted bg-bg-elevated border border-border-default rounded-lg px-3 py-2 hover:text-text-secondary transition-colors cursor-pointer">
                             <RotateCcw size={12} /> Reset
                         </button>
                         {finalVerdict && <span className={`text-xs font-bold ${finalVerdict.cls}`}>{finalVerdict.text}</span>}

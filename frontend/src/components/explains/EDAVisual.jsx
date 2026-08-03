@@ -119,17 +119,23 @@ export default function EDAVisual({ stepIndex = 0 }) {
                                 <text x="372" y="40" textAnchor="end" fontSize="13" fontFamily="monospace" fill={NEW}>r = 0.86</text>
                             </g>
                         )}
+                        {/* Older houses are squares in multivariate mode — group ≠ colour alone */}
                         {HOUSES.map(([x, y, old], i) => (
-                            <circle key={i} cx={sx(x)} cy={sy(y)} r="6.5"
-                                fill={mode === 'multi' ? (old ? OLD : NEW) : 'currentColor'}
-                                fillOpacity={mode === 'multi' ? 0.85 : 0.45}
-                                stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+                            mode === 'multi' && old ? (
+                                <rect key={i} x={sx(x) - 6} y={sy(y) - 6} width="12" height="12" rx="2.5"
+                                    fill={OLD} fillOpacity="0.85" stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+                            ) : (
+                                <circle key={i} cx={sx(x)} cy={sy(y)} r="6.5"
+                                    fill={mode === 'multi' ? NEW : 'currentColor'}
+                                    fillOpacity={mode === 'multi' ? 0.85 : 0.45}
+                                    stroke="currentColor" strokeOpacity="0.25" strokeWidth="1" />
+                            )
                         ))}
                         {mode === 'multi' && (
                             <g fontSize="10">
                                 <circle cx="70" cy="42" r="5" fill={NEW} fillOpacity="0.85" />
                                 <text x="80" y="46" fill="currentColor" fillOpacity="0.7">built after 2000</text>
-                                <circle cx="190" cy="42" r="5" fill={OLD} fillOpacity="0.85" />
+                                <rect x="185" y="37" width="10" height="10" rx="2" fill={OLD} fillOpacity="0.85" />
                                 <text x="200" y="46" fill="currentColor" fillOpacity="0.7">built before 2000</text>
                             </g>
                         )}
@@ -174,7 +180,8 @@ export default function EDAVisual({ stepIndex = 0 }) {
                             <circle key={`d${i}`} cx={sx(x)} cy={sy(y)} r="6" fill={NEW} fillOpacity="0.85" />
                         ))}
                         {SUBURB.map(([x, y], i) => (
-                            <circle key={`s${i}`} cx={sx(x)} cy={sy(y)} r="6" fill={OLD} fillOpacity="0.85" />
+                            <rect key={`s${i}`} x={sx(x) - 5.5} y={sy(y) - 5.5} width="11" height="11" rx="2.5"
+                                fill={OLD} fillOpacity="0.85" />
                         ))}
                         <text x={sx(2.2)} y={sy(6.6)} textAnchor="middle" fontSize="10" fill={NEW}>downtown</text>
                         <text x={sx(7.6)} y={sy(1.6)} textAnchor="middle" fontSize="10" fill={OLD}>suburbs</text>
