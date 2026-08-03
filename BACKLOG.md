@@ -1,7 +1,7 @@
 ## Innovation Backlog
 
 *Auto-maintained by the PyMasters AI Intelligence Pipeline.*
-*Last updated: 2026-07-26*
+*Last updated: 2026-08-03*
 
 ### Ready to Build (scored >= 8, validated)
 
@@ -21,6 +21,8 @@
 - **nanotron/ultrascale-playbook** (score: 8, source: huggingface, added: 2026-07-26) — Excellent source material for an advanced 'how LLMs are trained at scale' lesson series (parallelism, GPU efficiency) [link](https://huggingface.co/spaces/nanotron/ultrascale-playbook)
 - **Running a 28.9M parameter LLM on an $8 microcontroller** (score: 8, source: hackernews, added: 2026-07-26) — Great tutorial on extreme LLM quantization/tiny models; reinforces Homie's small-local-model story and edge-device ambitions [link](https://github.com/slvDev/esp32-ai)
 - **Claude Opus 5** (score: 8, source: hackernews, added: 2026-07-26) — Timely PyMasters coverage/tutorial on Claude Opus 5 capabilities and API usage; optionally add as a cloud-provider fallback option in Homie [link](https://www.anthropic.com/news/claude-opus-5)
+- **nomic-ai/nomic-embed-text-v1.5** (score: 8, source: huggingface, added: 2026-08-03) — Tutorial on Matryoshka embeddings and resizable dimensions; long-context local embedder option for Homie's document RAG [link](https://huggingface.co/nomic-ai/nomic-embed-text-v1.5)
+- **Rethinking Inference-Time Scaling in Local Computer-Use Agents: Failure Modes and Compute Tradeoffs** (score: 8, source: arxiv, added: 2026-08-03) — Failure modes and compute tradeoffs of LOCAL computer-use agents map directly onto Homie's design space (what inference-time scaling is worth on consumer hardware); also a strong lesson on local-agent constraints [link](http://arxiv.org/abs/2607.28573v1)
 
 ### Prototyping (scored >= 7)
 
@@ -31,6 +33,8 @@
 - **Open-weight AI is having its Kubernetes moment** (score: 7, source: hackernews, added: 2026-07-26) — Open-weight ecosystem overview fits a PyMasters lesson and validates Homie's local-LLM positioning for marketing content [link](https://tobi.knaup.me/2026-07-25-open-weight-ai-is-having-its-kubernetes-moment/)
 - **Becoming a Research Engineer at a Big LLM Lab** (score: 7, source: hackernews, added: 2026-07-26) — Career-path content: adapt into a PyMasters guide on becoming an ML/research engineer [link](https://www.maxmynter.com/pages/blog/jobhunt)
 - **Bringing PyTorch Monarch to AMD GPUs** (score: 7, source: hackernews, added: 2026-07-26) — Tutorial on distributed PyTorch (Monarch) and the AMD GPU ecosystem for advanced learners [link](https://pytorch.org/blog/bringing-pytorch-monarch-to-amd-gpus-single-controller-distributed-training-on-rocm/)
+- **Sample More, Reflect Less: Self-Refine and Reflexion Lose to Repeated Sampling at Equal Token Cost, from 1.5B to 7B** (score: 7, source: arxiv, added: 2026-08-03) — Repeated sampling beating self-reflection at equal token cost on 1.5Bâ€“7B models is directly actionable: a PyMasters lesson on inference-strategy budgeting and a default strategy for Homie's local SLMs [link](http://arxiv.org/abs/2607.28576v1)
+- **Autoregressive Language Model on the 6502 Processor** (score: 7, source: hackernews, added: 2026-08-03) — An LM running on a 6502 is perfect 'how language models really work' teaching material â€” could become a from-scratch tiny-LM lesson or explainer video [link](https://mattbeton.com/blog/bitnet-6502.html)
 
 ### Evaluating (scored >= 6)
 
@@ -38,6 +42,11 @@
 - **open-llm-leaderboard/open_llm_leaderboard** (score: 6, source: huggingface, added: 2026-07-26) — Article/lesson on how to read LLM benchmarks and choose a model for your use case [link](https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard)
 - **black-forest-labs/FLUX.1-dev** (score: 6, source: huggingface, added: 2026-07-26) — Diffusion-model tutorial using FLUX.1-dev with the diffusers library [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev)
 - **black-forest-labs/FLUX.1-schnell** (score: 6, source: huggingface, added: 2026-07-26) — Fast 4-step image generation tutorial; borderline feasible as an optional Homie image-gen plugin on GPU machines [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-schnell)
+- **google/electra-base-discriminator** (score: 6, source: huggingface, added: 2026-08-03) — Lesson on ELECTRA's replaced-token-detection pretraining as an efficient alternative to masked LM [link](https://huggingface.co/google/electra-base-discriminator)
+- **FacebookAI/xlm-roberta-base** (score: 6, source: huggingface, added: 2026-08-03) — Cross-lingual NLP lesson: fine-tune XLM-R once, run in 100 languages [link](https://huggingface.co/FacebookAI/xlm-roberta-base)
+- **lmarena-ai/arena-leaderboard** (score: 6, source: huggingface, added: 2026-08-03) — Content on human-preference (arena) rankings vs static benchmarks when picking chat models [link](https://huggingface.co/spaces/lmarena-ai/arena-leaderboard)
+- **MixFrag: Fragility-Guided Mixed-Precision Post-Training Quantization for Vision Transformers** (score: 6, source: arxiv, added: 2026-08-03) — Mixed-precision PTQ for ViTs fits a PyMasters tutorial on quantizing vision models and directly informs how Homie squeezes vision models onto consumer devices [link](http://arxiv.org/abs/2607.28589v1)
+- **DualG-MRAG: Decoupling Macro-Reasoning and Micro-Matching for Multimodal Retrieval-Augmented Generation** (score: 6, source: arxiv, added: 2026-08-03) — Decoupled macro-reasoning/micro-matching is a pattern Homie's multimodal RAG over local docs could adopt, and a good advanced-RAG lesson topic [link](http://arxiv.org/abs/2607.28580v1)
 
 ### Discovered (new)
 
