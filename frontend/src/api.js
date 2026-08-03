@@ -210,6 +210,12 @@ export const getAdminUsage = (userId, days = 30) => api.get('/admin/usage', { pa
 export const getTrendingTopics = () => api.get('/admin/trending-topics');
 export const generateTrendingLessons = (topics) => api.post('/admin/generate-trending', { topics });
 export const getGenerationJobs = () => api.get('/admin/generation-jobs');
+// Claude content-request queue: topics the Claude content author ships directly
+// into the repo (Explains essays / Classroom lessons) — separate from the
+// Vaathiyaar generation pipeline above.
+export const getContentRequests = () => api.get('/admin/content-requests');
+export const createContentRequest = (topic, kind, notes) => api.post('/admin/content-requests', { topic, kind, notes });
+export const cancelContentRequest = (id) => api.delete(`/admin/content-requests/${id}`);
 // On-demand "Explain this visually" (per-lesson) — LLM generates a visual essay
 export const generateExplain = (userId, lessonId, focus = null) =>
     api.post('/classroom/explain', { user_id: userId, lesson_id: lessonId, focus });

@@ -56,6 +56,7 @@ from routes.support import router as support_router, ensure_support_tables
 from routes.tutor_sessions import router as tutor_sessions_router, ensure_tutor_session_tables
 from routes.playground_files import router as playground_files_router, ensure_playground_files_tables
 from routes.platform_settings import router as platform_settings_router, ensure_platform_settings_table
+from routes.content_requests import router as content_requests_router, ensure_content_request_tables
 from auth import create_access_token, get_current_user_id, _current_token_version
 
 
@@ -694,7 +695,7 @@ def init_db():
                         ensure_tutor_session_tables, ensure_platform_settings_table,
                         ensure_org_audit_table, ensure_org_requests_table,
                         ensure_org_curriculum_tables, ensure_org_entitlement_schema,
-                        ensure_playground_files_tables):
+                        ensure_playground_files_tables, ensure_content_request_tables):
             try:
                 _ensure(DB_PATH)
             except Exception as e:
@@ -882,6 +883,7 @@ app.include_router(github_oauth_router)
 app.include_router(discovery_router)
 app.include_router(payments_router)
 app.include_router(support_router)
+app.include_router(content_requests_router)
 app.include_router(tutor_sessions_router)
 app.include_router(platform_settings_router)
 app.include_router(org_requests_router)
