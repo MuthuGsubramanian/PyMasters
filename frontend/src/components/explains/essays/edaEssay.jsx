@@ -98,9 +98,9 @@ export default {
                 <>
                     <p>
                         <strong>Multi</strong> = many. Reality is never two columns. A third variable joins by
-                        borrowing a visual channel — here, colour encodes the house's age, and a new fact pops
-                        out: at the same size, older homes (orange) sit lower. Age matters <em>after accounting
-                        for</em> size.
+                        borrowing a visual channel — here, colour and shape encode the house's age, and a new
+                        fact pops out: at the same size, older homes (the squares) sit lower. Age matters{' '}
+                        <em>after accounting for</em> size.
                     </p>
                     <p>
                         Colour, marker size, small-multiple panels — each channel buys you roughly one more

@@ -32,7 +32,7 @@ export default {
                 <>
                     <p>
                         Here are fruits measured two ways: <Code>weight</Code> across, <Code>roundness</Code> up.
-                        Blue dots are apples, the others lemons. A new mystery fruit arrives — which is it?
+                        The circles are apples, the squares lemons. A new mystery fruit arrives — which is it?
                     </p>
                     <p>
                         Nobody hands us the flowchart this time. The tree has to <strong>discover the questions</strong>{' '}
