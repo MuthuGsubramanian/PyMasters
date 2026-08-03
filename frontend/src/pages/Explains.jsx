@@ -4,16 +4,20 @@ import { Lightbulb, Clock, ArrowRight } from 'lucide-react';
 import ScrollyExplain from '../components/ScrollyExplain';
 import GradientDescentVisual from '../components/explains/GradientDescentVisual';
 import TrainTestSplitVisual from '../components/explains/TrainTestSplitVisual';
+import Code from '../components/explains/Code';
+import LINEAR_REGRESSION from '../components/explains/essays/linearRegressionEssay';
+import DECISION_TREES from '../components/explains/essays/decisionTreeEssay';
+import XGBOOST from '../components/explains/essays/xgboostEssay';
+import EDA from '../components/explains/essays/edaEssay';
+import KMEANS from '../components/explains/essays/kmeansEssay';
+import FUZZY_LOGIC from '../components/explains/essays/fuzzyLogicEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
 // visual that evolves as you scroll, plain language, a moment of hands-on
-// interaction, and an honest takeaway. Register new essays in ESSAYS below.
+// interaction, and an honest takeaway. Register new essays in ESSAYS below;
+// larger essays live in components/explains/essays/ (one file per essay).
 // ──────────────────────────────────────────────────────────────────────────────
-
-const Code = ({ children }) => (
-    <span className="bg-accent-subtle text-accent-primary px-1 py-0.5 rounded text-[13px] font-mono">{children}</span>
-);
 
 const GRADIENT_DESCENT = {
     slug: 'gradient-descent',
@@ -307,7 +311,16 @@ const TRAIN_TEST_SPLIT = {
     ),
 };
 
-export const ESSAYS = [GRADIENT_DESCENT, TRAIN_TEST_SPLIT];
+export const ESSAYS = [
+    GRADIENT_DESCENT,
+    TRAIN_TEST_SPLIT,
+    LINEAR_REGRESSION,
+    DECISION_TREES,
+    XGBOOST,
+    EDA,
+    KMEANS,
+    FUZZY_LOGIC,
+];
 
 // ── Index page ────────────────────────────────────────────────────────────────
 function ExplainsIndex() {
@@ -353,7 +366,7 @@ function ExplainsIndex() {
                 <div className="rounded-2xl border border-dashed border-border-strong p-5 flex flex-col items-start justify-center text-left opacity-70">
                     <h2 className="text-sm font-bold font-display text-text-primary">More on the way</h2>
                     <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                        Embeddings & semantic search · how Python's iterator protocol works · attention, visually.
+                        Embeddings & semantic search · attention, visually · PCA · confusion matrices.
                         Tell Vaathiyaar which concept you'd like explained visually next.
                     </p>
                 </div>
