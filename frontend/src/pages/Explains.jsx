@@ -19,6 +19,7 @@ import CROSS_VALIDATION from '../components/explains/essays/crossValidationEssay
 import KNN from '../components/explains/essays/knnEssay';
 import NAIVE_BAYES from '../components/explains/essays/naiveBayesEssay';
 import DBSCAN from '../components/explains/essays/dbscanEssay';
+import SHAP_VALUES from '../components/explains/essays/shapEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -336,6 +337,7 @@ export const ESSAYS = [
     KNN,
     NAIVE_BAYES,
     DBSCAN,
+    SHAP_VALUES,
 ];
 
 // ── Index page ────────────────────────────────────────────────────────────────
