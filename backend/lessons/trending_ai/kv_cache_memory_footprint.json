@@ -1,0 +1,145 @@
+{
+  "id": "kv_cache_memory_footprint",
+  "topic": "kv_cache_memory_footprint",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 104,
+  "title": {
+    "en": "The KV Cache's Price Tag: How Much Memory Does It Actually Cost?"
+  },
+  "description": {
+    "en": "The KV cache trades compute for memory — but that memory bill is real, and it grows with every token of conversation. Compute exactly how many gigabytes a long context actually costs."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Free Speed Isn't Free\n\n\"Caching keys and values makes generation fast,\" Vaathiyaar says, \"but it isn't magic — that cache has to *live* somewhere, and 'somewhere' is your GPU's precious memory. The longer the conversation, the bigger the cache. Long-context models don't just need compute; they need **room**.\"\n\n### What's Actually Stored\n\nFor every layer, every attention head, and every token, the cache holds one **key** vector and one **value** vector, each `head_dim` numbers long. So the total size is:\n\n> **bytes = 2 x num_layers x num_heads x head_dim x seq_len x bytes_per_value**\n\nThe leading `2` is for storing *both* the key and the value. `bytes_per_value` is 2 for bf16, 1 for int8 — the same precision tradeoff as the model's weights.\n\n### A Real Example\n\nA 7B-class model shaped like Llama-2-7B (32 layers, 32 heads, head_dim 128) holding a 4096-token conversation in bf16:\n\n```\n2 x 32 x 32 x 128 x 4096 x 2 bytes = 2,147,483,648 bytes ~= 2.15 GB\n```\n\nJust the *cache* — on top of the model's own weights — costs over 2 GB at that context length. Double the context to 8192 tokens and the cache doubles too, because it scales **linearly with seq_len**. This is exactly the overhead `llm_memory_math` told you to reserve ~20% for; now you can compute the real number instead of guessing.\n\n> **Vaathiyaar's rule:** cache memory scales with context length, not with how much the model 'knows.' A model that supports 128K tokens needs a GPU that can hold 128K tokens of cache — that's the real limiter on long-context chat.\n\nToday you implement the exact formula that tells you how big that bill is."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "cache_memory_bill",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "KV cache memory",
+          "children": [
+            "2 (K and V) x layers x heads x head_dim",
+            "x seq_len tokens",
+            "x bytes_per_value (precision)",
+            "scales linearly with context length"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "per_token = 2 * num_layers * num_heads * head_dim",
+          "highlight": "2 * num_layers * num_heads * head_dim",
+          "explanation": {
+            "en": "One key + one value vector, per layer, per head, for a single token"
+          }
+        },
+        {
+          "line": "total_bytes = per_token * seq_len * bytes_per_value",
+          "highlight": "* seq_len * bytes_per_value",
+          "explanation": {
+            "en": "Multiply by every token stored, and by the byte-size of each number"
+          }
+        },
+        {
+          "line": "gb = round(total_bytes / 1e9, 2)",
+          "highlight": "/ 1e9",
+          "explanation": {
+            "en": "Bytes -> gigabytes, so it's comparable to your GPU's memory sticker"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "4096-token context",
+        "items": [
+          "32 layers x 32 heads x 128 dim",
+          "bf16 (2 bytes)",
+          "~2.15 GB cache"
+        ]
+      },
+      "right": {
+        "title": "8192-token context",
+        "items": [
+          "same model shape",
+          "bf16 (2 bytes)",
+          "~4.29 GB cache (2x)"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "layers=32 heads=32 head_dim=128 seq_len=4096 bf16",
+        "kv_cache_gb -> 2.15",
+        "context doubles -> cache doubles"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "memory_measured",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `kv_cache_gb(num_layers, num_heads, head_dim, seq_len, bytes_per_value)` — the real memory cost of a KV cache. Formula: `2 x num_layers x num_heads x head_dim x seq_len x bytes_per_value`, converted from bytes to gigabytes (`/ 1e9`) and rounded to 2 decimal places. Then print the cache size for a Llama-2-7B-shaped model (32 layers, 32 heads, head_dim 128) holding a 4096-token conversation in bf16 (2 bytes/value): `kv_cache_gb(32, 32, 128, 4096, 2)` (expected: `2.15`)."
+      },
+      "starter_code": "def kv_cache_gb(num_layers: int, num_heads: int, head_dim: int, seq_len: int, bytes_per_value: int) -> float:\n    \"\"\"KV cache size in GB: 2 x layers x heads x head_dim x seq_len x bytes_per_value.\"\"\"\n    # 1. total_bytes = 2 * num_layers * num_heads * head_dim * seq_len * bytes_per_value\n    # 2. convert to GB (/ 1e9) and round to 2 decimals\n    pass\n\nprint(kv_cache_gb(32, 32, 128, 4096, 2))",
+      "hints": {
+        "en": [
+          "The leading 2 accounts for storing both the key AND the value vector",
+          "total_bytes = 2 * num_layers * num_heads * head_dim * seq_len * bytes_per_value",
+          "return round(total_bytes / 1e9, 2)"
+        ]
+      },
+      "expected_output": "2.15"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "kv_cache",
+      "gpu_memory",
+      "long_context",
+      "model_memory_math"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

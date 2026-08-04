@@ -1,0 +1,140 @@
+{
+  "id": "kv_cache_sliding_window",
+  "topic": "kv_cache_sliding_window",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 105,
+  "title": {
+    "en": "Sliding-Window KV Cache: Capping Memory for Long Conversations"
+  },
+  "description": {
+    "en": "A KV cache that keeps every token forever eventually runs out of GPU memory. Production long-context models cap it instead — learn the sliding-window eviction trick that keeps memory flat no matter how long the chat runs."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Cache That Never Stops Growing\n\n\"You measured the KV cache's price tag,\" Vaathiyaar says, \"now imagine a conversation that runs for an hour. Or a day. If the cache keeps every token's key and value forever, memory grows without bound — eventually there's no GPU big enough.\"\n\n### The Fix: Only Remember Recently\n\nMany production systems don't try to remember the *entire* conversation. Instead they use a **sliding-window cache**: keep only the most recent `window` tokens' K/V pairs, and **evict** — permanently drop — anything older. Mistral's sliding-window attention and StreamingLLM-style setups both lean on this idea.\n\n```\ncache:  [tok1, tok2, tok3, tok4, tok5, tok6]\nwindow = 3\nevict -> keep only the last 3 -> [tok4, tok5, tok6]\n```\n\nOnce the window is full, adding a new token means dropping the oldest one — memory stays flat forever, no matter how long the conversation runs. The tradeoff is real: the model literally can't attend to anything older than `window` tokens, so very-long-range facts can fall out of the cache entirely. That's a deliberate choice, not a bug — it trades a little long-range recall for a hard memory ceiling.\n\n> **Vaathiyaar's rule:** unbounded cache growth is a production outage waiting to happen. A sliding window turns 'memory grows forever' into 'memory is a constant you chose.'\n\nToday you implement the eviction step itself — the one line of logic that keeps a long-running chat's memory bounded."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "sliding_window_evict",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Sliding-window cache",
+          "children": [
+            "unbounded cache -> memory grows forever",
+            "cap at `window` most recent tokens",
+            "new token in -> oldest token evicted",
+            "memory stays flat, long-range recall is traded away"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "if len(cache) <= window: return cache",
+          "highlight": "len(cache) <= window",
+          "explanation": {
+            "en": "If the cache hasn't filled the window yet, nothing needs evicting"
+          }
+        },
+        {
+          "line": "return cache[-window:]",
+          "highlight": "cache[-window:]",
+          "explanation": {
+            "en": "Otherwise keep only the most recent `window` entries, dropping the rest"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Unbounded cache",
+        "items": [
+          "keeps every token forever",
+          "memory grows with chat length",
+          "eventually runs out of GPU"
+        ]
+      },
+      "right": {
+        "title": "Sliding window",
+        "items": [
+          "keeps last `window` tokens",
+          "memory is a constant",
+          "trades away very old context"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "DataStructure",
+      "id": "evict",
+      "structure": "list",
+      "items": [
+        "before: [1, 2, 3, 4, 5, 6]",
+        "window = 3",
+        "after: [4, 5, 6]"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "memory_capped",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `evict_kv_cache(cache, window)` — the sliding-window eviction step used to keep long-running conversations from growing memory forever. `cache` is a list of cached token entries (oldest first); if it has more than `window` entries, keep only the most recent `window` (drop the oldest). If it already fits, return it unchanged. Then print `evict_kv_cache([1, 2, 3, 4, 5, 6], 3)` (expected: `[4, 5, 6]`)."
+      },
+      "starter_code": "def evict_kv_cache(cache: list, window: int) -> list:\n    \"\"\"Keep only the most recent `window` cache entries, evicting older ones.\"\"\"\n    # if the cache already fits within `window`, return it as-is\n    # otherwise, keep only the last `window` entries\n    pass\n\nprint(evict_kv_cache([1, 2, 3, 4, 5, 6], 3))",
+      "hints": {
+        "en": [
+          "if len(cache) <= window: return cache",
+          "Otherwise slice the last `window` entries: cache[-window:]",
+          "Negative slicing counts from the end of the list"
+        ]
+      },
+      "expected_output": "[4, 5, 6]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "kv_cache",
+      "sliding_window",
+      "long_context",
+      "memory_management"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "slicing"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 15,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

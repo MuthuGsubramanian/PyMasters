@@ -1,0 +1,160 @@
+{
+  "id": "kv_cache_savings",
+  "topic": "kv_cache_savings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 103,
+  "title": {
+    "en": "KV Cache: Why LLMs Don't Recompute Everything Every Token"
+  },
+  "description": {
+    "en": "Generating text one token at a time sounds like it should recompute everything from scratch, every step. It doesn't — the KV cache is why. See exactly how much redundant work caching removes."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Waste Nobody Notices\n\n\"An LLM generates one token, then another, then another,\" Vaathiyaar says. \"Naively, that means: to generate token 5, re-read tokens 1 through 4 and recompute their **key** and **value** projections from scratch. Then for token 6, redo tokens 1 through 5. Every. Single. Step.\"\n\n### The Fix: Compute Once, Reuse Forever\n\nA token's key (K) and value (V) projections never change once computed — they don't depend on what comes *after* the token, only on the token itself and everything before it. So instead of recomputing them, a **KV cache** stores each token's K/V the first time it's projected, and every later generation step just reuses that stored result and computes K/V for the *one new token*.\n\n```\nwithout cache: step 1 does 1 projection, step 2 redoes 2, step 3 redoes 3, ...\n               total for 5 tokens = 1+2+3+4+5 = 15\n\nwith cache:    step 1 does 1 (new), step 2 does 1 (new), step 3 does 1 (new), ...\n               total for 5 tokens = 5\n```\n\nThat gap between 15 and 5 only grows as the conversation gets longer — without a cache, total work scales roughly with the *square* of sequence length; with a cache, it scales linearly. This is the single biggest reason a 2026 chat model can hold a 32K-token conversation and still respond in under a second per token.\n\n> **Vaathiyaar's rule:** if it was computed before and can't change, cache it. The KV cache is that principle applied to the single most expensive repeated step in autoregressive generation.\n\nToday you implement both counts yourself and measure the savings directly."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "cache_vs_recompute",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "KV Cache",
+          "children": [
+            "no cache: redo K/V for every prior token, every step",
+            "with cache: K/V computed once per token, ever",
+            "no cache work grows ~quadratically",
+            "cached work grows linearly"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "total = 0",
+          "highlight": "total = 0",
+          "explanation": {
+            "en": "Start counting K/V projections from zero"
+          }
+        },
+        {
+          "line": "for step in range(1, seq_len + 1): total += step",
+          "highlight": "total += step",
+          "explanation": {
+            "en": "Without a cache, step N redoes K/V for all N tokens seen so far"
+          }
+        },
+        {
+          "line": "return seq_len   # with a cache",
+          "highlight": "return seq_len",
+          "explanation": {
+            "en": "With a cache, each token's K/V is ever computed exactly once"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "No cache (5 tokens)",
+        "items": [
+          "1 + 2 + 3 + 4 + 5",
+          "= 15 projections",
+          "grows ~quadratically"
+        ]
+      },
+      "right": {
+        "title": "With cache (5 tokens)",
+        "items": [
+          "1 + 1 + 1 + 1 + 1",
+          "= 5 projections",
+          "grows linearly"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "seq_len=5, no cache -> 15 K/V projections",
+        "seq_len=5, with cache -> 5 K/V projections",
+        "savings -> 66.7%"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "cache_hit",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `kv_projections_without_cache(seq_len)` — the total number of key/value projections computed to generate `seq_len` tokens if nothing is cached. At generation step `n` (1-indexed), the model must (re)project K/V for all `n` tokens seen so far. Sum that over every step. Then print `kv_projections_without_cache(5)` (expected: `15`, i.e. 1+2+3+4+5)."
+      },
+      "starter_code": "def kv_projections_without_cache(seq_len: int) -> int:\n    \"\"\"Total K/V projections if every step recomputes all prior tokens.\"\"\"\n    # sum 1 + 2 + ... + seq_len\n    pass\n\nprint(kv_projections_without_cache(5))",
+      "hints": {
+        "en": [
+          "total = 0, then loop step from 1 to seq_len (inclusive) adding step each time",
+          "for step in range(1, seq_len + 1): total += step",
+          "This is the classic 1+2+...+n sum"
+        ]
+      },
+      "expected_output": "15"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `kv_savings_percent(seq_len)` — how much work the cache saves, as a percentage. With a cache, only `seq_len` projections are ever computed (one per token, forever). Compute `(1 - with_cache / without_cache) * 100`, rounded to 1 decimal place, using your `kv_projections_without_cache` from above. Then print `kv_savings_percent(5)` (expected: `66.7`)."
+      },
+      "starter_code": "def kv_projections_without_cache(seq_len: int) -> int:\n    total = 0\n    for step in range(1, seq_len + 1):\n        total += step\n    return total\n\ndef kv_savings_percent(seq_len: int) -> float:\n    \"\"\"Percent of K/V projection work a cache removes, vs. no caching.\"\"\"\n    # with_cache = seq_len (one projection per token, ever)\n    # without_cache = kv_projections_without_cache(seq_len)\n    # return round((1 - with_cache / without_cache) * 100, 1)\n    pass\n\nprint(kv_savings_percent(5))",
+      "hints": {
+        "en": [
+          "with_cache = seq_len",
+          "without_cache = kv_projections_without_cache(seq_len)",
+          "round((1 - with_cache / without_cache) * 100, 1)"
+        ]
+      },
+      "expected_output": "66.7"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "kv_cache",
+      "llm_inference",
+      "attention",
+      "computational_complexity"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "loops",
+      "arithmetic"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
