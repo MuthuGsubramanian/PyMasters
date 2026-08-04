@@ -20,6 +20,7 @@ import KNN from '../components/explains/essays/knnEssay';
 import NAIVE_BAYES from '../components/explains/essays/naiveBayesEssay';
 import DBSCAN from '../components/explains/essays/dbscanEssay';
 import SHAP_VALUES from '../components/explains/essays/shapEssay';
+import REGULARIZATION from '../components/explains/essays/regularizationEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -338,6 +339,7 @@ export const ESSAYS = [
     NAIVE_BAYES,
     DBSCAN,
     SHAP_VALUES,
+    REGULARIZATION,
 ];
 
 // ── Index page ────────────────────────────────────────────────────────────────
@@ -384,7 +386,7 @@ function ExplainsIndex() {
                 <div className="rounded-2xl border border-dashed border-border-strong p-5 flex flex-col items-start justify-center text-left opacity-70">
                     <h2 className="text-sm font-bold font-display text-text-primary">More on the way</h2>
                     <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                        A new essay lands most days — regularisation · SHAP values · anomaly detection are queued.
+                        A new essay lands most days — anomaly detection · random forests · time-series forecasting are queued.
                         Tell Vaathiyaar which concept you'd like explained visually next.
                     </p>
                 </div>
