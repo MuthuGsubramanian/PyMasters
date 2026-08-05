@@ -1,7 +1,7 @@
 ## Innovation Backlog
 
 *Auto-maintained by the PyMasters AI Intelligence Pipeline.*
-*Last updated: 2026-07-26*
+*Last updated: 2026-08-05*
 
 ### Ready to Build (scored >= 8, validated)
 
@@ -21,6 +21,7 @@
 - **nanotron/ultrascale-playbook** (score: 8, source: huggingface, added: 2026-07-26) — Excellent source material for an advanced 'how LLMs are trained at scale' lesson series (parallelism, GPU efficiency) [link](https://huggingface.co/spaces/nanotron/ultrascale-playbook)
 - **Running a 28.9M parameter LLM on an $8 microcontroller** (score: 8, source: hackernews, added: 2026-07-26) — Great tutorial on extreme LLM quantization/tiny models; reinforces Homie's small-local-model story and edge-device ambitions [link](https://github.com/slvDev/esp32-ai)
 - **Claude Opus 5** (score: 8, source: hackernews, added: 2026-07-26) — Timely PyMasters coverage/tutorial on Claude Opus 5 capabilities and API usage; optionally add as a cloud-provider fallback option in Homie [link](https://www.anthropic.com/news/claude-opus-5)
+- **nomic-ai/nomic-embed-text-v1.5** (score: 8, source: huggingface, added: 2026-08-05) — Tutorial on Matryoshka embeddings (dimension truncation); nomic-embed is a strong long-context local embedder for Homie [link](https://huggingface.co/nomic-ai/nomic-embed-text-v1.5)
 
 ### Prototyping (scored >= 7)
 
