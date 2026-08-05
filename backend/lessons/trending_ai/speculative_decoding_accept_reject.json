@@ -1,0 +1,145 @@
+{
+  "id": "speculative_decoding_accept_reject",
+  "topic": "speculative_decoding_accept_reject",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 106,
+  "title": {
+    "en": "Speculative Decoding: The Accept/Reject Rule That Skips the Wait"
+  },
+  "description": {
+    "en": "A small draft model guesses tokens ahead; the big target model checks them all in one pass. The accept/reject rule decides which guesses survive — without ever changing what the model would have said anyway."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Why Wait For One Token At A Time?\n\n\"Every token an LLM generates costs one full forward pass through a giant network,\" Vaathiyaar says. \"That's true whether the token is 'the' or 'defenestration' — the model can't skip work just because a word is easy. **Speculative decoding** cheats around this: let a small, fast **draft model** guess a handful of tokens ahead, then have the big **target model** check all of them in a single forward pass.\"\n\n### Checking Isn't Just Rubber-Stamping\n\nThe target model can't simply accept whatever the draft proposed — that would make the draft model's weaknesses the final output. Instead it uses a mathematically exact **accept/reject rule** (from 'Fast Inference from Transformers via Speculative Decoding', 2023): for a token the draft proposed with probability `p_draft`, and the target model's own probability for that same token `p_target`:\n\n```\naccept_prob = min(1, p_target / p_draft)\naccept if u < accept_prob        # u is a fresh Uniform(0, 1) draw\n```\n\n- If the target agrees at least as strongly as the draft did (`p_target >= p_draft`), `accept_prob` is capped at 1: **always accept**, pure free speed.\n- If the target is less confident than the draft was, `accept_prob` shrinks proportionally: a **probabilistic** accept.\n- On reject, the draft's guess is discarded and the target contributes its own token instead — so the *distribution* of final text is provably identical to running the target model alone, token by token, every single time.\n\n### A Real Roll\n\nSay the draft model was fairly confident about a word (`p_draft = 0.6`), but the target model only gives that same word `p_target = 0.3`. Then `accept_prob = min(1, 0.3 / 0.6) = 0.5` — a coin flip. Draw `u = 0.42`: since `0.42 < 0.5`, this particular guess is **accepted**, even though the target was less sure than the draft. Half the time, the same setup would reject instead — and that's exactly the point: the math guarantees the *long-run* output distribution never drifts from the target model's own.\n\n> **Vaathiyaar's rule:** speculative decoding never changes WHAT the model says, only HOW FAST it says it. That losslessness is why every major inference stack — vLLM, TensorRT-LLM, and friends — ships it as free speed, not a quality tradeoff.\n\nToday you implement `speculative_accept(p_draft, p_target, u)` — the single-token core of the whole technique."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "draft_and_target",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Speculative decoding",
+          "children": [
+            "draft model proposes tokens fast",
+            "target model checks in one pass",
+            "accept_prob = min(1, p_target / p_draft)",
+            "accept if u < accept_prob, else resample"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "accept_prob = min(1.0, p_target / p_draft)",
+          "highlight": "min(1.0, p_target / p_draft)",
+          "explanation": {
+            "en": "Cap at 1.0 — you can never accept with more than 100% probability"
+          }
+        },
+        {
+          "line": "accepted = u < accept_prob",
+          "highlight": "u < accept_prob",
+          "explanation": {
+            "en": "Compare a fresh random draw to the threshold"
+          }
+        },
+        {
+          "line": "return accepted",
+          "highlight": "return accepted",
+          "explanation": {
+            "en": "True means keep the draft's guess; False means the target resamples instead"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Draft proposes",
+        "items": [
+          "confidence p_draft = 0.6",
+          "guesses the word instantly"
+        ]
+      },
+      "right": {
+        "title": "Target checks",
+        "items": [
+          "confidence p_target = 0.3",
+          "accept_prob = 0.3 / 0.6 = 0.5",
+          "u = 0.42 < 0.5 -> accepted"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "p_draft=0.6 p_target=0.3 u=0.42",
+        "accept_prob -> 0.5",
+        "speculative_accept -> True"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "token_accepted",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `speculative_accept(p_draft, p_target, u)` — the core accept/reject test behind speculative decoding. Compute `accept_prob = min(1.0, p_target / p_draft)`, then return whether `u < accept_prob`. Then print `speculative_accept(0.6, 0.3, 0.42)` (expected: `True`)."
+      },
+      "starter_code": "def speculative_accept(p_draft: float, p_target: float, u: float) -> bool:\n    \"\"\"Accept a drafted token if u < min(1, p_target / p_draft).\"\"\"\n    # 1. accept_prob = min(1.0, p_target / p_draft)\n    # 2. return u < accept_prob\n    pass\n\nprint(speculative_accept(0.6, 0.3, 0.42))",
+      "hints": {
+        "en": [
+          "accept_prob = min(1.0, p_target / p_draft)",
+          "Cap it at 1.0 — the target can never be 'more than certain'",
+          "return u < accept_prob"
+        ]
+      },
+      "expected_output": "True"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "speculative_decoding",
+      "accept_reject_sampling",
+      "draft_model",
+      "lossless_speedup"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic",
+      "max_min"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

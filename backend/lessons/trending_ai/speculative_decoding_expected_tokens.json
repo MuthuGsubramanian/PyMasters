@@ -1,0 +1,143 @@
+{
+  "id": "speculative_decoding_expected_tokens",
+  "topic": "speculative_decoding_expected_tokens",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 107,
+  "title": {
+    "en": "Speculative Decoding's Payoff: How Many Tokens You Actually Get"
+  },
+  "description": {
+    "en": "Accepting or rejecting one token is only half the story — the real win is how many tokens a single target-model pass produces on average. Compute the expected speedup from draft length and acceptance rate."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From One Coin Flip to a Whole Step\n\n\"You've seen how a single drafted token gets accepted or rejected,\" Vaathiyaar says. \"Now zoom out: a real speculative decoding round drafts `K` tokens in a row, and the target model checks them one after another until the first rejection. Everything before that rejection was free. Plus, the target model always contributes one guaranteed **bonus token** of its own right after the last accepted position, since it computed a full distribution there anyway.\"\n\n### The Expected Tokens Formula\n\nAssume, as a simplification, that every drafted token has the *same* acceptance probability `alpha`, and the draft proposes `K` tokens per round. Then the expected number of tokens one target-model pass produces is:\n\n```\nE[tokens] = (1 - alpha^(K+1)) / (1 - alpha)\n```\n\nThis is a geometric series: `alpha^0` for the guaranteed bonus token, `alpha^1` for surviving one acceptance, `alpha^2` for surviving two, and so on, up to `K` drafted tokens.\n\n- `alpha -> 0` (draft is basically always wrong): the formula collapses to `1` — just the bonus token, no speedup at all.\n- `alpha -> 1` (draft is basically always right): the formula approaches `K + 1` — every drafted token plus the bonus.\n- `alpha = 0.8`, `K = 4` (a fairly good draft model, 4 tokens proposed per round): `E[tokens] = (1 - 0.8^5) / (1 - 0.8) = 3.36` tokens per target-model pass, instead of 1.\n\nThat `3.36` is a **3.36x reduction in target-model forward passes** for the same output length — the entire economic case for speculative decoding, in one number.\n\n> **Vaathiyaar's rule:** cranking `K` up only helps if `alpha` stays high. A weak draft model with a long `K` just wastes drafts that get rejected early — tuning speculative decoding means matching how far you draft ahead to how good your draft model actually is.\n\nToday you implement `expected_tokens_per_step(alpha, k)` — the number that tells you whether your speculative setup is actually paying off."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "tokens_per_pass",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Expected tokens per step",
+          "children": [
+            "K drafted tokens, each accepted with prob alpha",
+            "+1 guaranteed bonus token from the target",
+            "E[tokens] = (1 - alpha^(K+1)) / (1 - alpha)",
+            "higher alpha or K -> more tokens per target pass"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "numerator = 1 - alpha ** (k + 1)",
+          "highlight": "alpha ** (k + 1)",
+          "explanation": {
+            "en": "One term of the geometric series for every drafted token, plus the bonus"
+          }
+        },
+        {
+          "line": "denominator = 1 - alpha",
+          "highlight": "1 - alpha",
+          "explanation": {
+            "en": "Normalizes the geometric series into a finite sum"
+          }
+        },
+        {
+          "line": "return round(numerator / denominator, 2)",
+          "highlight": "numerator / denominator",
+          "explanation": {
+            "en": "The expected token count produced by one target-model forward pass"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Weak draft (alpha=0.4, K=4)",
+        "items": [
+          "E[tokens] ~= 1.65",
+          "barely beats no speculation"
+        ]
+      },
+      "right": {
+        "title": "Strong draft (alpha=0.8, K=4)",
+        "items": [
+          "E[tokens] ~= 3.36",
+          "3x fewer target-model passes"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "alpha=0.8 k=4",
+        "expected_tokens_per_step -> 3.36",
+        "same alpha=0.4, k=4 -> only 1.65"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "speedup_measured",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `expected_tokens_per_step(alpha, k)` — the expected number of tokens one target-model pass produces in speculative decoding. Formula: `(1 - alpha^(k+1)) / (1 - alpha)`, rounded to 2 decimal places. Then print the payoff for a fairly good draft model (`alpha = 0.8`) proposing 4 tokens per round: `expected_tokens_per_step(0.8, 4)` (expected: `3.36`)."
+      },
+      "starter_code": "def expected_tokens_per_step(alpha: float, k: int) -> float:\n    \"\"\"Expected tokens per target-model pass: (1 - alpha^(k+1)) / (1 - alpha).\"\"\"\n    # 1. numerator = 1 - alpha ** (k + 1)\n    # 2. denominator = 1 - alpha\n    # 3. return round(numerator / denominator, 2)\n    pass\n\nprint(expected_tokens_per_step(0.8, 4))",
+      "hints": {
+        "en": [
+          "numerator = 1 - alpha ** (k + 1)",
+          "denominator = 1 - alpha",
+          "return round(numerator / denominator, 2)"
+        ]
+      },
+      "expected_output": "3.36"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "speculative_decoding",
+      "expected_value",
+      "geometric_series",
+      "inference_speedup"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
