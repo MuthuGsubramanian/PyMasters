@@ -22,6 +22,7 @@ import DBSCAN from '../components/explains/essays/dbscanEssay';
 import SHAP_VALUES from '../components/explains/essays/shapEssay';
 import REGULARIZATION from '../components/explains/essays/regularizationEssay';
 import RANDOM_FOREST from '../components/explains/essays/randomForestEssay';
+import ANOMALY_DETECTION from '../components/explains/essays/anomalyDetectionEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -342,6 +343,7 @@ export const ESSAYS = [
     SHAP_VALUES,
     REGULARIZATION,
     RANDOM_FOREST,
+    ANOMALY_DETECTION,
 ];
 
 // ── Index page ────────────────────────────────────────────────────────────────
@@ -388,7 +390,7 @@ function ExplainsIndex() {
                 <div className="rounded-2xl border border-dashed border-border-strong p-5 flex flex-col items-start justify-center text-left opacity-70">
                     <h2 className="text-sm font-bold font-display text-text-primary">More on the way</h2>
                     <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                        A new essay lands most days — anomaly detection · time-series forecasting · transformers are queued.
+                        A new essay lands most days — time-series forecasting · transformers · Bayesian inference are queued.
                         Tell Vaathiyaar which concept you'd like explained visually next.
                     </p>
                 </div>
