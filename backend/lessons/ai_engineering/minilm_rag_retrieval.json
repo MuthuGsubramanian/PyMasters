@@ -1,0 +1,160 @@
+{
+  "id": "minilm_rag_retrieval",
+  "topic": "minilm_rag_retrieval",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "The Front Half of RAG: all-MiniLM-L6-v2 as Your Retriever"
+  },
+  "description": {
+    "en": "Build the retrieval half of a RAG pipeline with the world's most-downloaded embedding model: split documents into overlapping chunks, embed them with all-MiniLM-L6-v2, and pull the top-k most relevant chunks for any question â€” before an LLM ever sees a token."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The LLM Never Reads Your Documents\n\n\"Here's the RAG secret nobody puts in the acronym,\" Vaathiyaar begins. \"The language model never searches anything. A tiny 22-million-parameter embedding model â€” **all-MiniLM-L6-v2** â€” reads your documents first, decides which handful of passages matter, and the LLM only ever sees those. Get retrieval wrong and the smartest LLM on earth confidently answers from the wrong page. Today you build that front half yourself.\"\n\n### Step 1: Chunk Before You Embed\n\nMiniLM truncates input at 256 word pieces, and one vector per *whole document* blurs every topic inside it together. So RAG pipelines split documents into **chunks** â€” and they overlap the chunks so a sentence sitting on a boundary isn't torn in half:\n\n| Chunking choice | What happens |\n|---|---|\n| Whole document, one vector | Truncated at 256 tokens; one blurry topic-average |\n| Small chunks, no overlap | Boundary sentences split mid-thought; answers fall in the gap |\n| Small chunks + overlap | Boundary content appears in two chunks â€” one of them keeps it intact |\n\nA sliding window does it: take `size` words, step forward by `size - overlap`, repeat until you reach the end.\n\n### Step 2: Embed and Retrieve\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\nchunk_vecs = model.encode(chunks, normalize_embeddings=True)\n\nquery = \"How do I reset my password?\"\nq_vec = model.encode(query, normalize_embeddings=True)\n\nscores = util.dot_score(q_vec, chunk_vecs)[0]   # cosine, because normalized\ntop = scores.topk(3)\ncontext = \"\\n\".join(chunks[i] for i in top.indices)\n```\n\nNotice `normalize_embeddings=True`: once every vector has length 1, the plain **dot product equals cosine similarity** â€” a cheaper operation, and the reason vector databases love normalized embeddings. The 384 dimensions MiniLM produces are small enough that scoring thousands of chunks takes milliseconds on a laptop CPU, which is exactly why local pipelines like Homie ship it as the default embedder.\n\n### Step 3: Don't Retrieve Garbage\n\nTop-k always returns *something* â€” even when nothing matches. A query about cooking will still get its 3 \"best\" chunks from your networking docs, and the LLM will dutifully hallucinate a connection. Production retrievers add a **score threshold**: if the best chunk scores below roughly 0.3â€“0.4 cosine, say \"no relevant context found\" instead of feeding noise downstream. An honest empty answer beats a confident wrong one.\n\n### Why This Model, Here?\n\nRetrieval runs on every single query, often over thousands of chunks â€” latency and cost live here, not in the LLM call. all-MiniLM-L6-v2 is 80MB, runs offline via PyTorch or ONNX, and sits at the sweet spot of the speed/quality curve: strong enough that upgrading the embedder is rarely the first fix, small enough to embed your whole knowledge base in seconds.\n\n> **Key Insight:** RAG quality is decided before the LLM sees a single token. Chunk with overlap so answers can't hide in the gaps, normalize so dot product becomes cosine, retrieve top-k, and refuse to answer when the best score is still bad. The retriever is four small functions â€” and it's where most RAG bugs actually live."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "chunks_to_vectors_to_topk",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "rag_retriever_pipeline",
+      "steps": [
+        {
+          "line": "from sentence_transformers import SentenceTransformer, util",
+          "highlight": "util",
+          "explanation": {
+            "en": "util brings the fast scoring helpers â€” dot_score does a whole batch at once"
+          }
+        },
+        {
+          "line": "model = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")",
+          "highlight": "all-MiniLM-L6-v2",
+          "explanation": {
+            "en": "80MB, 384-dim vectors, runs on CPU â€” the default retriever in local RAG stacks"
+          }
+        },
+        {
+          "line": "chunks = chunk_words(doc.split(), size=120, overlap=30)",
+          "highlight": "overlap=30",
+          "explanation": {
+            "en": "Overlapping windows: a sentence on a chunk boundary survives intact in the next chunk"
+          }
+        },
+        {
+          "line": "chunk_vecs = model.encode(chunks, normalize_embeddings=True)",
+          "highlight": "normalize_embeddings=True",
+          "explanation": {
+            "en": "Every vector scaled to length 1 â€” this is what makes the next step legal"
+          }
+        },
+        {
+          "line": "q_vec = model.encode(\"How do I reset my password?\", normalize_embeddings=True)",
+          "highlight": "q_vec",
+          "explanation": {
+            "en": "The question goes through the SAME model â€” query and chunks must share one vector space"
+          }
+        },
+        {
+          "line": "scores = util.dot_score(q_vec, chunk_vecs)[0]",
+          "highlight": "dot_score",
+          "explanation": {
+            "en": "On normalized vectors, dot product IS cosine similarity â€” one cheap multiply-add per dimension"
+          }
+        },
+        {
+          "line": "top = scores.topk(3)",
+          "highlight": "topk(3)",
+          "explanation": {
+            "en": "Keep only the 3 best-matching chunks â€” the LLM's entire view of your documents"
+          }
+        },
+        {
+          "line": "if top.values[0] < 0.35: return \"No relevant context found.\"",
+          "highlight": "< 0.35",
+          "explanation": {
+            "en": "The threshold guard: top-k always returns something, so check the score is actually good"
+          }
+        },
+        {
+          "line": "context = \"\\n\".join(chunks[i] for i in top.indices)",
+          "highlight": "join",
+          "explanation": {
+            "en": "Stitch the winners into the prompt context â€” retrieval done, generation can begin"
+          }
+        }
+      ],
+      "duration_ms": 6000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "chunks_converge",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement the scoring heart of the retriever. Write `top_k(query_vec, chunk_vecs, k)` where `query_vec` is a normalized vector and `chunk_vecs` is a list of normalized vectors. Score each chunk with the dot product (which equals cosine similarity here, since everything is normalized) and return the indices of the k highest-scoring chunks, best first. Print `top_k([1.0, 0.0], [[0.0, 1.0], [0.8, 0.6], [1.0, 0.0], [0.6, 0.8]], 2)` â€” chunk 2 points exactly where the query does, chunk 1 is the runner-up."
+      },
+      "starter_code": "def top_k(query_vec: list, chunk_vecs: list, k: int) -> list:\n    \"\"\"Return indices of the k chunks most similar to the query, best first.\"\"\"\n    # 1. dot product of query_vec with each chunk: sum(q * c for q, c in zip(...))\n    # 2. pair each score with its index\n    # 3. sort by score, highest first, and return the first k indices\n    pass\n\nprint(top_k([1.0, 0.0], [[0.0, 1.0], [0.8, 0.6], [1.0, 0.0], [0.6, 0.8]], 2))",
+      "expected_output": "[2, 1]",
+      "hints": {
+        "en": [
+          "Dot product of two vectors: sum(a * b for a, b in zip(vec1, vec2))",
+          "Build scored = [(dot(query_vec, c), i) for i, c in enumerate(chunk_vecs)]",
+          "sorted(scored, reverse=True) puts the highest score first â€” then take the index from each of the first k pairs"
+        ]
+      },
+      "test_code": "assert top_k([1.0, 0.0], [[0.0, 1.0], [0.8, 0.6], [1.0, 0.0], [0.6, 0.8]], 2) == [2, 1], f\"wrong ranking: {top_k([1.0, 0.0], [[0.0, 1.0], [0.8, 0.6], [1.0, 0.0], [0.6, 0.8]], 2)}\"\nassert top_k([0.0, 1.0], [[0.0, 1.0], [0.8, 0.6], [1.0, 0.0], [0.6, 0.8]], 3) == [0, 3, 1], \"ranking must follow dot-product scores, best first\"\nassert top_k([1.0, 0.0], [[0.5, 0.5]], 1) == [0], \"a single chunk is always the top result\"\nassert top_k([1.0, 0.0, 0.0], [[0.0, 1.0, 0.0], [0.9, 0.1, 0.0], [0.7, 0.3, 0.0]], 2) == [1, 2], \"must work for any vector dimension\"\nprint(\"All tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Now build the chunker that feeds the retriever. Write `chunk_words(words, size, overlap)` that slides a window of `size` words along the list, stepping forward `size - overlap` words each time, and returns each window joined into a string with spaces. Stop after the first window that reaches the end of the list. Print `chunk_words([\"RAG\", \"splits\", \"documents\", \"into\", \"overlapping\", \"chunks\", \"first\"], 4, 2)` â€” note how \"documents into\" and \"overlapping chunks\" each appear in two chunks: that's the overlap doing its job."
+      },
+      "starter_code": "def chunk_words(words: list, size: int, overlap: int) -> list:\n    \"\"\"Sliding-window chunking: windows of `size` words, stepping size - overlap.\"\"\"\n    # 1. start at 0; each window is words[start:start + size], joined with \" \"\n    # 2. if start + size >= len(words), this window reached the end -> stop\n    # 3. otherwise advance: start += size - overlap\n    pass\n\nprint(chunk_words([\"RAG\", \"splits\", \"documents\", \"into\", \"overlapping\", \"chunks\", \"first\"], 4, 2))",
+      "expected_output": "['RAG splits documents into', 'documents into overlapping chunks', 'overlapping chunks first']",
+      "hints": {
+        "en": [
+          "Use a while loop: chunks.append(\" \".join(words[start:start + size]))",
+          "The stop condition comes AFTER appending: if start + size >= len(words): break",
+          "The step is size - overlap â€” with size=4, overlap=2 the window advances 2 words each time"
+        ]
+      },
+      "test_code": "assert chunk_words([\"RAG\", \"splits\", \"documents\", \"into\", \"overlapping\", \"chunks\", \"first\"], 4, 2) == ['RAG splits documents into', 'documents into overlapping chunks', 'overlapping chunks first'], f\"wrong windows: {chunk_words(['RAG', 'splits', 'documents', 'into', 'overlapping', 'chunks', 'first'], 4, 2)}\"\nassert chunk_words([\"a\", \"b\", \"c\"], 5, 2) == ['a b c'], \"if size covers the whole list, return one chunk\"\nassert chunk_words([\"a\", \"b\", \"c\", \"d\"], 2, 0) == ['a b', 'c d'], \"overlap=0 means back-to-back windows\"\nassert chunk_words([\"a\", \"b\", \"c\", \"d\", \"e\"], 2, 1) == ['a b', 'b c', 'c d', 'd e'], \"overlap=1 repeats one word per boundary\"\nprint(\"All tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "rag_retrieval",
+      "text_chunking",
+      "top_k_search",
+      "cosine_similarity",
+      "normalized_embeddings",
+      "score_thresholds"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "sorting",
+      "string_methods"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
