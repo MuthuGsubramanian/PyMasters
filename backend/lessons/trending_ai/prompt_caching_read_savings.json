@@ -1,0 +1,160 @@
+{
+  "id": "prompt_caching_read_savings",
+  "topic": "prompt_caching_read_savings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 108,
+  "title": {
+    "en": "Prompt Caching: Why a Cache Hit Costs 90% Less"
+  },
+  "description": {
+    "en": "As context windows push past a million tokens in 2026, re-sending the same system prompt or document on every call gets expensive fast. Prompt caching fixes that — learn the one multiplier that makes a repeated prefix nearly free."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Paying For The Same Tokens Twice\n\n\"Say your app sends a 20,000-token system prompt with *every single call*,\" Vaathiyaar says. \"A customer-support bot, a codebase-aware assistant, a long house style guide — the prefix never changes, but a naive API call bills you full price for it, again and again, call after call.\"\n\n### The Fix: Let The Server Remember The Prefix\n\n**Prompt caching** stores the model's internal representation of a prefix the first time you send it. Every later call that starts with that *exact same* prefix gets a **cache hit**: the server skips re-processing those tokens and charges a fraction of the normal input price for them.\n\nOn Claude's API in 2026, a cache hit costs **0.1x** the standard input-token rate — a **90% discount** on every token the cache serves. Only the *new* part of the prompt (today's actual question) is billed at full price.\n\n```\nnormal call:    20,000 prefix tokens @ 1.0x + 50 new tokens @ 1.0x\ncached call:     20,000 prefix tokens @ 0.1x + 50 new tokens @ 1.0x\n```\n\n### Savings Compound With Prefix Size\n\nThe bigger the shared prefix relative to the new content, the more a cache hit saves — which is exactly why prompt caching matters *more*, not less, as context windows grow toward a million tokens. A tiny 200-token prompt barely benefits; a 20,000-token document pasted into every call benefits enormously.\n\n> **Vaathiyaar's rule:** if the same tokens are going out the door on every call, they shouldn't be billed at full price every time. Prompt caching is that principle turned into an API flag.\n\nToday you compute exactly how much a cache hit saves, in dollars and in percent."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "prompt_cache_hit",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Prompt caching",
+          "children": [
+            "same prefix sent every call",
+            "cache hit -> 0.1x price for cached tokens",
+            "new tokens still billed at 1.0x",
+            "bigger prefix -> bigger savings"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "no_cache_cost = (prefix_tokens + new_tokens) * rate",
+          "highlight": "* rate",
+          "explanation": {
+            "en": "Without caching every token, prefix and new alike, costs the full input rate"
+          }
+        },
+        {
+          "line": "cached_cost = prefix_tokens * rate * 0.1 + new_tokens * rate",
+          "highlight": "* 0.1",
+          "explanation": {
+            "en": "With a cache hit, prefix tokens cost only 10% of the normal rate"
+          }
+        },
+        {
+          "line": "savings_percent = (1 - cached_cost / no_cache_cost) * 100",
+          "highlight": "1 - cached_cost / no_cache_cost",
+          "explanation": {
+            "en": "The fraction of total cost the cache hit removed"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "No cache",
+        "items": [
+          "20,000 prefix @ 1.0x",
+          "50 new @ 1.0x",
+          "= 20,050 billed tokens"
+        ]
+      },
+      "right": {
+        "title": "Cache hit",
+        "items": [
+          "20,000 prefix @ 0.1x",
+          "50 new @ 1.0x",
+          "= 2,050 billed tokens"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "prefix=20000 new=50 rate=$3/1M tokens",
+        "no_cache_cost -> $0.06015",
+        "cached_cost -> $0.00615",
+        "savings -> 89.8%"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "cache_hit",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `cached_call_cost(prefix_tokens, new_tokens, rate_per_million)` — the dollar cost of one API call when the prefix is a cache hit. Cached prefix tokens cost `0.1x` the normal rate; new tokens cost the full rate. `rate_per_million` is the price per 1,000,000 input tokens at full price. Return the total cost in dollars, rounded to 5 decimal places: `(prefix_tokens * 0.1 + new_tokens) * rate_per_million / 1_000_000`. Then print `cached_call_cost(20000, 50, 3.0)` (expected: `0.00615`)."
+      },
+      "starter_code": "def cached_call_cost(prefix_tokens: int, new_tokens: int, rate_per_million: float) -> float:\n    \"\"\"Cost of one cached-prefix API call: prefix tokens at 0.1x, new tokens at full rate.\"\"\"\n    # billed_tokens = prefix_tokens * 0.1 + new_tokens\n    # cost = billed_tokens * rate_per_million / 1_000_000\n    pass\n\nprint(cached_call_cost(20000, 50, 3.0))",
+      "hints": {
+        "en": [
+          "billed_tokens = prefix_tokens * 0.1 + new_tokens",
+          "cost = billed_tokens * rate_per_million / 1_000_000",
+          "round(cost, 5)"
+        ]
+      },
+      "expected_output": "0.00615"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `cache_savings_percent(prefix_tokens, new_tokens, rate_per_million)` — how much a cache hit saves versus paying full price for every token. Compute the no-cache cost (`(prefix_tokens + new_tokens) * rate_per_million / 1_000_000`) and the cached cost (reuse the formula from `cached_call_cost`), then return `(1 - cached_cost / no_cache_cost) * 100` rounded to 1 decimal place. Then print `cache_savings_percent(20000, 50, 3.0)` (expected: `89.8`)."
+      },
+      "starter_code": "def cache_savings_percent(prefix_tokens: int, new_tokens: int, rate_per_million: float) -> float:\n    \"\"\"Percent saved on one call when the prefix is a cache hit vs. no caching at all.\"\"\"\n    no_cache_cost = (prefix_tokens + new_tokens) * rate_per_million / 1_000_000\n    cached_cost = (prefix_tokens * 0.1 + new_tokens) * rate_per_million / 1_000_000\n    # return round((1 - cached_cost / no_cache_cost) * 100, 1)\n    pass\n\nprint(cache_savings_percent(20000, 50, 3.0))",
+      "hints": {
+        "en": [
+          "no_cache_cost and cached_cost are both already computed for you",
+          "savings_fraction = 1 - cached_cost / no_cache_cost",
+          "round(savings_fraction * 100, 1)"
+        ]
+      },
+      "expected_output": "89.8"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "prompt_caching",
+      "llm_api_pricing",
+      "cost_optimization",
+      "cache_hit"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

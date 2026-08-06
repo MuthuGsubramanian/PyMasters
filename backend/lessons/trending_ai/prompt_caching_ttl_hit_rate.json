@@ -1,0 +1,166 @@
+{
+  "id": "prompt_caching_ttl_hit_rate",
+  "topic": "prompt_caching_ttl_hit_rate",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 110,
+  "title": {
+    "en": "Prompt Caching: Why Traffic Timing Decides Your Hit Rate"
+  },
+  "description": {
+    "en": "The 90% discount only applies if the cache is still warm when the next call arrives. Simulate real request timing against a cache TTL and see how a bursty vs. spread-out traffic pattern changes the savings completely."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Discount That Expires\n\n\"Every number you've computed so far assumed the cache was there when you needed it,\" Vaathiyaar says. \"It isn't, forever. A prompt cache has a **TTL** — time-to-live — typically 5 minutes. Let more time than that pass between calls with no hit, and the cache is gone. The *next* call isn't a discounted read anymore; it's a full-price write, same as if caching never happened.\"\n\n### A Cache That Refreshes On Use\n\nA realistic cache behaves like this: each time a call arrives, if it's within `ttl` seconds of the *last* time this prefix was touched (whether that touch was the original write or a later hit), it's a **hit** — and the clock resets. If more than `ttl` seconds have passed, the cache has expired: this call is a **miss**, and it pays the write price to rebuild the cache — the clock also resets from here.\n\n```\nttl = 300s\ncalls arrive at:  t=0    t=100   t=250   t=700   t=720\ngap since last:    --     100     150     450      20\nresult:          MISS    HIT     HIT     MISS     HIT\n```\n\nNotice the call at `t=700`: only four calls in, but the *gap* since the last touch (`450s`) blew past the 300-second TTL, so the cache had already expired — a second write is needed before hits resume.\n\n### Same Number Of Calls, Very Different Savings\n\nFive tightly-spaced calls (all gaps under the TTL) hit the cache almost every time. The same five calls spread across an hour, with long gaps, might miss constantly — each miss re-paying the write premium. **The traffic pattern, not just the call count, decides whether prompt caching actually saves money.**\n\n> **Vaathiyaar's rule:** a cache hit rate isn't a property of your code — it's a property of your traffic. Simulate your real call timing before trusting a caching cost estimate.\n\nToday you implement the TTL-aware hit/miss simulation itself, and measure the hit rate it produces."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "cache_ttl_expiry",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "TTL-aware caching",
+          "children": [
+            "gap <= ttl since last touch -> hit, clock resets",
+            "gap > ttl since last touch -> miss, cache rebuilt",
+            "hit rate depends on call spacing, not just call count",
+            "bursty traffic -> high hit rate, sparse traffic -> low hit rate"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "last_touch = None",
+          "highlight": "last_touch = None",
+          "explanation": {
+            "en": "No cache exists before the first call arrives"
+          }
+        },
+        {
+          "line": "gap = t - last_touch if last_touch is not None else None",
+          "highlight": "t - last_touch",
+          "explanation": {
+            "en": "How long since this prefix was last written or read"
+          }
+        },
+        {
+          "line": "hit = gap is not None and gap <= ttl",
+          "highlight": "gap <= ttl",
+          "explanation": {
+            "en": "Within the TTL is a hit; the first call or an expired gap is a miss"
+          }
+        },
+        {
+          "line": "last_touch = t",
+          "highlight": "last_touch = t",
+          "explanation": {
+            "en": "Every call, hit or miss, resets the TTL clock for the next one"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Bursty calls, ttl=300",
+        "items": [
+          "t = 0, 100, 250, 700, 720",
+          "MISS HIT HIT MISS HIT",
+          "hit rate = 60%"
+        ]
+      },
+      "right": {
+        "title": "Spread out, ttl=300",
+        "items": [
+          "t = 0, 400, 800, 1200, 1600",
+          "MISS MISS MISS MISS MISS",
+          "hit rate = 0%"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "arrivals=[0, 100, 250, 700, 720] ttl=300",
+        "simulate_cache_hits -> [False, True, True, False, True]",
+        "cache_hit_rate -> 0.6"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "hit_rate_measured",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `simulate_cache_hits(arrival_times, ttl)` — for a list of call arrival times (seconds, strictly increasing) sharing the same cached prefix, return a list of booleans, one per call: `True` if that call was a cache hit, `False` if it was a miss (including always the first call). A call is a hit if the gap since the *previous* call's arrival time is `<= ttl` — every call, hit or miss, resets the clock for the next one. Then print `simulate_cache_hits([0, 100, 250, 700, 720], 300)` (expected: `[False, True, True, False, True]`)."
+      },
+      "starter_code": "def simulate_cache_hits(arrival_times: list, ttl: int) -> list:\n    \"\"\"Hit/miss per call: hit if gap since the previous call is within ttl seconds.\"\"\"\n    results = []\n    last_touch = None\n    for t in arrival_times:\n        # hit = last_touch is not None and (t - last_touch) <= ttl\n        # results.append(hit)\n        # last_touch = t\n        pass\n    return results\n\nprint(simulate_cache_hits([0, 100, 250, 700, 720], 300))",
+      "hints": {
+        "en": [
+          "The first call always has last_touch = None, so it's always a miss",
+          "hit = last_touch is not None and (t - last_touch) <= ttl",
+          "Update last_touch = t on every call, whether it was a hit or a miss"
+        ]
+      },
+      "expected_output": "[False, True, True, False, True]"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `cache_hit_rate(arrival_times, ttl)` using `simulate_cache_hits` from above. Return the fraction of calls that were hits, rounded to 2 decimal places: `sum(hits) / len(hits)`. Then print `cache_hit_rate([0, 100, 250, 700, 720], 300)` (expected: `0.6`)."
+      },
+      "starter_code": "def simulate_cache_hits(arrival_times: list, ttl: int) -> list:\n    results = []\n    last_touch = None\n    for t in arrival_times:\n        hit = last_touch is not None and (t - last_touch) <= ttl\n        results.append(hit)\n        last_touch = t\n    return results\n\ndef cache_hit_rate(arrival_times: list, ttl: int) -> float:\n    \"\"\"Fraction of calls that were cache hits, given a TTL and call arrival times.\"\"\"\n    hits = simulate_cache_hits(arrival_times, ttl)\n    # return round(sum(hits) / len(hits), 2)\n    pass\n\nprint(cache_hit_rate([0, 100, 250, 700, 720], 300))",
+      "hints": {
+        "en": [
+          "sum(hits) counts True as 1 and False as 0",
+          "divide by len(hits) for the fraction, then round(..., 2)"
+        ]
+      },
+      "expected_output": "0.6"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "prompt_caching",
+      "cache_ttl",
+      "hit_rate",
+      "traffic_simulation"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "loops",
+      "lists"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
