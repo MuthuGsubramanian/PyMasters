@@ -1,0 +1,159 @@
+{
+  "id": "test_time_compute_budget",
+  "topic": "test_time_compute_budget",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 113,
+  "title": {
+    "en": "Compute-Matched: A Small Model, Sampled Many Times"
+  },
+  "description": {
+    "en": "A 2026 finding reshaped how teams size their models: at matched compute, a small model given many samples can beat one that's over an order of magnitude bigger. Compute the trade a fixed inference budget actually buys you."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Same Compute Budget, Very Different Spend\n\n\"Here's the number that changed how 2026 teams think about model size,\" Vaathiyaar says. \"Research on **compute-optimal test-time scaling** found that a small model, given enough extra inference-time samples, can match or beat a model **up to 14x larger** running just once — *for the same total compute*. Bigger isn't the only lever. How you *spend* inference compute is a lever too.\"\n\n### One Big Sample vs. Many Small Ones\n\nIf a large model costs 14x as much *per sample* as a small model, then the compute you'd spend on **one** large-model sample buys you **14** small-model samples — run through self-consistency voting or Best-of-N instead of a single shot.\n\n```\nbudget = 14.0 compute units\nlarge model: cost 14.0/sample -> 14.0 // 14.0 = 1 sample\nsmall model: cost  1.0/sample -> 14.0 //  1.0 = 14 samples\n```\n\nWhether that trade is *worth it* depends on the problem: easy questions don't need 14 votes, and self-consistency has diminishing returns past a point. But the option to buy width instead of size is now a real dial teams tune — some 2026 inference platforms auto-route: hard queries get many small-model samples or one big-model call, easy queries get a single cheap pass.\n\n> **Vaathiyaar's rule:** inference compute is a budget like any other. Before reaching for a bigger model, ask what a fixed budget buys you in *samples* of a smaller one — the answer is sometimes \"more accuracy, for the same bill.\"\n\nToday you compute exactly how many samples a fixed compute budget buys, at two different per-sample costs."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "compute_budget_split",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Compute-matched test-time scaling",
+          "children": [
+            "fixed inference compute budget",
+            "large model: few, expensive samples",
+            "small model: many, cheap samples",
+            "small + many samples can win at matched compute"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "samples = budget // cost_per_sample",
+          "highlight": "budget // cost_per_sample",
+          "explanation": {
+            "en": "Integer-divide the budget by one sample's cost to see how many samples fit"
+          }
+        },
+        {
+          "line": "small_samples = samples_within_budget(budget, small_cost)",
+          "highlight": "small_cost",
+          "explanation": {
+            "en": "The cheap model turns the same budget into many samples"
+          }
+        },
+        {
+          "line": "large_samples = samples_within_budget(budget, large_cost)",
+          "highlight": "large_cost",
+          "explanation": {
+            "en": "The expensive model turns the same budget into few samples"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Large model (cost 14.0)",
+        "items": [
+          "budget 14.0",
+          "14.0 // 14.0 = 1 sample",
+          "one shot, no voting"
+        ]
+      },
+      "right": {
+        "title": "Small model (cost 1.0)",
+        "items": [
+          "budget 14.0",
+          "14.0 // 1.0 = 14 samples",
+          "room to vote or Best-of-N"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "budget=14.0 small_cost=1.0 large_cost=14.0",
+        "samples_within_budget(14.0, 1.0) -> 14",
+        "compute_matched_samples -> (14, 1)"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "budget_spent",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `samples_within_budget(budget, cost_per_sample)` — how many full samples a fixed compute budget affords. Both arguments are floats; return an **int** (whole samples only, no fractional sample). Then print `samples_within_budget(14.0, 1.0)` (expected: `14`)."
+      },
+      "starter_code": "def samples_within_budget(budget: float, cost_per_sample: float) -> int:\n    \"\"\"How many whole samples the budget buys at the given per-sample cost.\"\"\"\n    # integer-divide budget by cost_per_sample, and return an int\n    pass\n\nprint(samples_within_budget(14.0, 1.0))",
+      "hints": {
+        "en": [
+          "Use // for integer (floor) division: budget // cost_per_sample",
+          "// on two floats returns a float like 14.0 — wrap the result in int(...)"
+        ]
+      },
+      "expected_output": "14"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `compute_matched_samples(budget, small_cost, large_cost)` — the compute-matched comparison itself. Return a tuple `(small_samples, large_samples)`: how many samples the same `budget` buys at `small_cost` per sample, and at `large_cost` per sample (reuse `samples_within_budget` for both). Then print `compute_matched_samples(14.0, 1.0, 14.0)` (expected: `(14, 1)`)."
+      },
+      "starter_code": "def samples_within_budget(budget: float, cost_per_sample: float) -> int:\n    return int(budget // cost_per_sample)\n\ndef compute_matched_samples(budget: float, small_cost: float, large_cost: float) -> tuple:\n    \"\"\"(samples the small model gets, samples the large model gets) for the same budget.\"\"\"\n    # small_samples = samples_within_budget(budget, small_cost)\n    # large_samples = samples_within_budget(budget, large_cost)\n    # return (small_samples, large_samples)\n    pass\n\nprint(compute_matched_samples(14.0, 1.0, 14.0))",
+      "hints": {
+        "en": [
+          "small_samples = samples_within_budget(budget, small_cost)",
+          "large_samples = samples_within_budget(budget, large_cost)",
+          "Return them as a tuple: (small_samples, large_samples)"
+        ]
+      },
+      "expected_output": "(14, 1)"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "test_time_compute",
+      "compute_optimal_scaling",
+      "inference_budget",
+      "model_size_tradeoffs"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic",
+      "tuples"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

@@ -1,0 +1,160 @@
+{
+  "id": "best_of_n_reward_scoring",
+  "topic": "best_of_n_reward_scoring",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 112,
+  "title": {
+    "en": "Best-of-N: Let a Verifier Pick the Winner"
+  },
+  "description": {
+    "en": "Voting works when many samples agree — but sometimes the right answer is rare and unusual, not popular. Best-of-N sampling fixes that: generate N candidates, score each with a verifier, and keep the highest-scoring one."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## When The Crowd Isn't Right, Grade Instead Of Counting\n\n\"Majority voting assumes the correct answer is the *popular* one,\" Vaathiyaar says. \"But for a hard coding problem, the correct fix might come from exactly one clever sample out of ten, while nine ordinary samples all share the same *wrong* answer. Counting votes would pick the wrong one.\"\n\n### Best-of-N Sampling\n\n**Best-of-N** takes a different approach to the same test-time-compute budget: generate N candidate completions, run each one through a **verifier** — a reward model, a unit test, a scoring function — and keep whichever candidate scores highest. No counting, no popularity contest: one number per candidate, take the max.\n\n```\ncandidate 1 -> reward 0.62\ncandidate 2 -> reward 0.91   <- best\ncandidate 3 -> reward 0.77\n\nbest_of_n -> candidate 2\n```\n\nThis is the same mechanism behind RLHF-style reward models picking the best response, and behind code-generation pipelines that run N candidate solutions against unit tests and ship whichever one passes with the highest score.\n\n### Best-of-N vs. Self-Consistency\n\nBoth spend the same kind of budget — N samples of the same prompt — but they pick a winner differently:\n\n- **Self-consistency** needs answers that are easy to *compare for equality* (so they can be counted), and wins when the right answer is the *popular* one.\n- **Best-of-N** needs a *scoring function*, and wins when the right answer is *identifiable* even if it's rare — as long as the verifier can tell good from bad.\n\n> **Vaathiyaar's rule:** if you can count matching answers, vote. If you can score quality, take the best. Both are test-time compute; the difference is what you do with the N samples once you have them.\n\nToday you implement the Best-of-N selection step, plus a metric for how much it gained over an average single sample."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "verifier_scoring",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Best-of-N sampling",
+          "children": [
+            "sample N candidates from the same prompt",
+            "verifier scores each candidate",
+            "keep the highest-scoring candidate",
+            "no popularity vote needed"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "best_idx = 0",
+          "highlight": "best_idx = 0",
+          "explanation": {
+            "en": "Start by assuming the first candidate is best"
+          }
+        },
+        {
+          "line": "for i in range(1, len(scores)):",
+          "highlight": "range(1, len(scores))",
+          "explanation": {
+            "en": "Compare every other candidate's score against the current best"
+          }
+        },
+        {
+          "line": "if scores[i] > scores[best_idx]: best_idx = i",
+          "highlight": "scores[i] > scores[best_idx]",
+          "explanation": {
+            "en": "Strictly greater wins, so the first candidate keeps ties"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Self-consistency",
+        "items": [
+          "compares answers by equality",
+          "wins if correct answer is popular",
+          "needs no scoring function"
+        ]
+      },
+      "right": {
+        "title": "Best-of-N",
+        "items": [
+          "compares candidates by score",
+          "wins even if correct answer is rare",
+          "needs a verifier / reward model"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "scores: [0.62, 0.91, 0.77]",
+        "best_of_n -> 'ans2' (score 0.91)",
+        "score_gain over average -> 0.14"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "verifier_picked",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `best_of_n(candidates, scores)` — the Best-of-N selection step. `candidates` and `scores` are parallel lists (same length): `scores[i]` is the verifier's reward for `candidates[i]`. Return the candidate with the highest score. If there's a tie, return whichever tied candidate comes **first** in `candidates`. Then print `best_of_n(['ans1', 'ans2', 'ans3'], [0.62, 0.91, 0.77])` (expected: `ans2`)."
+      },
+      "starter_code": "def best_of_n(candidates: list, scores: list) -> str:\n    \"\"\"Return the candidate with the highest score; ties keep the earliest candidate.\"\"\"\n    # best_idx = 0\n    # for i in range(1, len(scores)):\n    #     if scores[i] > scores[best_idx]:\n    #         best_idx = i\n    # return candidates[best_idx]\n    pass\n\nprint(best_of_n(['ans1', 'ans2', 'ans3'], [0.62, 0.91, 0.77]))",
+      "hints": {
+        "en": [
+          "Track best_idx starting at 0, then scan the rest of scores",
+          "Use strict > so an earlier equal-scoring candidate keeps the win",
+          "Return candidates[best_idx], not scores[best_idx]"
+        ]
+      },
+      "expected_output": "ans2"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `score_gain(scores)` — how much Best-of-N gained over picking a single sample at random. Return `max(scores) - average(scores)`, rounded to 2 decimal places. Then print `score_gain([0.62, 0.91, 0.77])` (expected: `0.14`)."
+      },
+      "starter_code": "def score_gain(scores: list) -> float:\n    \"\"\"Best score minus the average score, rounded to 2 decimals.\"\"\"\n    # best = max(scores)\n    # avg = sum(scores) / len(scores)\n    # return round(best - avg, 2)\n    pass\n\nprint(score_gain([0.62, 0.91, 0.77]))",
+      "hints": {
+        "en": [
+          "best = max(scores)",
+          "avg = sum(scores) / len(scores)",
+          "round(best - avg, 2)"
+        ]
+      },
+      "expected_output": "0.14"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "test_time_compute",
+      "best_of_n",
+      "reward_model_scoring",
+      "verifier"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "loops"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

@@ -1,0 +1,160 @@
+{
+  "id": "self_consistency_majority_vote",
+  "topic": "self_consistency_majority_vote",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 111,
+  "title": {
+    "en": "Self-Consistency: Vote Across Reasoning Paths"
+  },
+  "description": {
+    "en": "Reasoning models in 2026 don't just answer once — they sample the problem several times and let the answers vote. Self-consistency decoding is the simplest form of test-time compute: same question, many independent tries, majority wins."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## One Guess Is Risky. Five Guesses That Vote Isn't.\n\n\"Ask a reasoning model a hard question once, and one unlucky reasoning path can derail the whole answer,\" Vaathiyaar says. \"So instead of trusting a single greedy pass, 2026's reasoning models spend extra **test-time compute**: sample the same question several times, at some temperature, each run reasoning independently — then let the final answers **vote**.\"\n\n### Self-Consistency Decoding\n\nThis technique is called **self-consistency**: run the model N times on the same prompt, extract each run's final answer, and keep whichever answer appears most often. Wrong reasoning paths tend to scatter across different wrong answers; the *correct* path tends to get reached multiple independent ways, so it usually wins the vote even when no single sample is trustworthy alone.\n\n```\nsample 1 -> \"42\"\nsample 2 -> \"41\"\nsample 3 -> \"42\"\nsample 4 -> \"42\"\nsample 5 -> \"40\"\n\nmajority vote -> \"42\"   (3 out of 5 samples agree)\n```\n\n### Why This Counts As \"Test-Time Compute\"\n\nNothing about the model's weights changed. All the extra accuracy came from spending more **inference-time compute** — more sampled reasoning chains — on the same fixed model. This is the core idea behind the 2026 shift from \"bigger models\" to \"more thoughtful models\": inference compute, not just parameter count, has become a lever for accuracy.\n\n> **Vaathiyaar's rule:** if one sample might be wrong, ask again — several times — and count. Self-consistency turns raw sampling noise into a confidence signal.\n\nToday you implement the vote itself: which answer wins, and how confident was the crowd?"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "reasoning_paths_vote",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Self-consistency decoding",
+          "children": [
+            "sample the same prompt N times",
+            "each run reasons independently",
+            "extract each run's final answer",
+            "majority answer wins"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "counts = Counter(answers)",
+          "highlight": "Counter(answers)",
+          "explanation": {
+            "en": "Tally how many samples produced each distinct final answer"
+          }
+        },
+        {
+          "line": "max_count = max(counts.values())",
+          "highlight": "max(counts.values())",
+          "explanation": {
+            "en": "Find the size of the largest voting bloc"
+          }
+        },
+        {
+          "line": "return next(a for a in answers if counts[a] == max_count)",
+          "highlight": "counts[a] == max_count",
+          "explanation": {
+            "en": "Return the first answer (in sampling order) that reached the largest bloc"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Single sample",
+        "items": [
+          "1 reasoning path",
+          "no way to catch a fluke",
+          "fast, cheap"
+        ]
+      },
+      "right": {
+        "title": "Self-consistency (N=5)",
+        "items": [
+          "5 independent paths",
+          "wrong paths scatter, right path repeats",
+          "5x compute, higher accuracy"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "samples: ['42', '41', '42', '42', '40']",
+        "majority_vote -> '42'",
+        "vote_confidence -> 60.0%"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "votes_counted",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `majority_vote(answers)` — the core of self-consistency decoding. `answers` is a list of final answers from N independent samples of the same prompt (as strings). Return the answer that appears most often. If there's a tie, return whichever tied answer appears **first** in `answers`. Then print `majority_vote(['42', '41', '42', '42', '40'])` (expected: `42`)."
+      },
+      "starter_code": "from collections import Counter\n\ndef majority_vote(answers: list) -> str:\n    \"\"\"Return the most common answer; ties broken by first occurrence in answers.\"\"\"\n    # counts = Counter(answers)\n    # max_count = max(counts.values())\n    # walk answers in order, return the first one whose count equals max_count\n    pass\n\nprint(majority_vote(['42', '41', '42', '42', '40']))",
+      "hints": {
+        "en": [
+          "counts = Counter(answers) tallies how many times each answer occurs",
+          "max_count = max(counts.values()) is the size of the biggest voting bloc",
+          "Loop over answers (not counts) so the first tied answer you hit wins the tiebreak"
+        ]
+      },
+      "expected_output": "42"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `vote_confidence(answers)` — how strongly the crowd agreed. Find the majority answer (reuse `majority_vote`), then return the percentage of samples that matched it: `count_of_winner / len(answers) * 100`, rounded to 1 decimal place. Then print `vote_confidence(['42', '41', '42', '42', '40'])` (expected: `60.0`)."
+      },
+      "starter_code": "from collections import Counter\n\ndef majority_vote(answers: list) -> str:\n    counts = Counter(answers)\n    max_count = max(counts.values())\n    for a in answers:\n        if counts[a] == max_count:\n            return a\n\ndef vote_confidence(answers: list) -> float:\n    \"\"\"Percent of samples that agree with the majority answer.\"\"\"\n    # winner = majority_vote(answers)\n    # counts = Counter(answers)\n    # return round(counts[winner] / len(answers) * 100, 1)\n    pass\n\nprint(vote_confidence(['42', '41', '42', '42', '40']))",
+      "hints": {
+        "en": [
+          "winner = majority_vote(answers)",
+          "counts = Counter(answers); winner_count = counts[winner]",
+          "round(winner_count / len(answers) * 100, 1)"
+        ]
+      },
+      "expected_output": "60.0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "test_time_compute",
+      "self_consistency",
+      "majority_voting",
+      "reasoning_models"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "collections_counter",
+      "loops"
+    ],
+    "difficulty": "beginner",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
