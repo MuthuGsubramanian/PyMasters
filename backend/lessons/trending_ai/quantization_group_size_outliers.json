@@ -1,0 +1,166 @@
+{
+  "id": "quantization_group_size_outliers",
+  "topic": "quantization_group_size_outliers",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 116,
+  "title": {
+    "en": "Quantization: Why One Giant Weight Ruins The Whole Tensor"
+  },
+  "description": {
+    "en": "One outlier weight can wreck int8 precision for every normal weight sharing its scale. See exactly how much error a single outlier causes, and how splitting a tensor into small groups (what real quantizers like GPTQ and AWQ actually do) fixes it."
+  },
+  "xp_reward": 85,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Scale Is Only As Good As Its Widest Value\n\n\"Affine quantization has a weak spot,\" Vaathiyaar says. \"The scale you computed last lesson depends on the *widest* value in the range. Pack a hundred ordinary weights and one enormous outlier into the same scale, and that one outlier stretches the range so far that all hundred ordinary weights get crammed into a handful of buckets near zero. They lose almost all their precision -- not because they're hard to represent, but because they're sharing a ruler with something huge.\"\n\n### Outliers Are Real, Not Rare\n\nThis isn't a hypothetical. Real LLM weights and activations have exactly this shape: a handful of 'outlier features' with magnitudes 10-100x the rest, sitting right next to ordinary values (this is the whole reason tools like LLM.int8() and GPTQ exist). Quantize the whole tensor with one shared scale, and the outlier taxes every ordinary value's precision.\n\n### The Fix: Smaller Groups\n\nInstead of one scale for an entire weight tensor, compute a *separate* scale for each small group of values (real quantizers use group sizes like 32, 64, or 128):\n\n> for each group of `group_size` values: **scale_group = max(abs(group)) / 127**\n\nAn outlier still wrecks precision *inside its own group* -- that doesn't change. But every *other* group, the ones without an outlier, gets a scale sized to their own small values instead of borrowing the outlier's giant one. Averaged across the whole tensor, error drops sharply.\n\n### A Real Example\n\nTake 8 weights, 7 ordinary (~0.1) and 1 outlier (6.40): `[0.12, -0.08, 0.15, -0.11, 0.09, -0.13, 0.10, 6.40]`. Quantized as **one group of 8**, the shared scale is `6.40 / 127 ~= 0.0504`, and the *average* absolute error across all 8 values is `~0.0104` -- the ordinary weights are barely distinguishable from each other after rounding. Split into **two groups of 4**, and the first group (no outlier) gets its own tiny scale (`0.15 / 127 ~= 0.0012`) while only the second group still carries the outlier's error. Average error across all 8 values falls to `~0.0042` -- less than half.\n\n> **Vaathiyaar's rule:** an outlier doesn't just cost itself precision, it taxes everyone sharing its scale. Group-wise quantization is the fix: smaller groups mean fewer innocent values sitting next to any one outlier.\n\nToday you compute that error reduction yourself, and see why 'group size' is a real knob every modern quantizer (GPTQ, AWQ, bitsandbytes) exposes."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "outlier_stretches_the_ruler",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Group-wise quantization",
+          "children": [
+            "per-tensor: one scale for everything, one outlier taxes all",
+            "per-group: one scale per small chunk of values",
+            "scale_group = max(abs(group)) / 127",
+            "smaller groups -> fewer values share an outlier's scale"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "for start in range(0, len(values), group_size):",
+          "highlight": "range(0, len(values), group_size)",
+          "explanation": {
+            "en": "Walk the tensor in chunks of group_size values at a time"
+          }
+        },
+        {
+          "line": "scale = max(abs(v) for v in group) / 127",
+          "highlight": "max(abs(v) for v in group) / 127",
+          "explanation": {
+            "en": "Each group gets its own scale, sized to its own largest value"
+          }
+        },
+        {
+          "line": "errors.append(abs(round(v / scale) * scale - v))",
+          "highlight": "round(v / scale) * scale - v",
+          "explanation": {
+            "en": "Quantize and dequantize each value, then measure how far it moved"
+          }
+        },
+        {
+          "line": "return round(sum(errors) / len(errors), 4)",
+          "highlight": "sum(errors) / len(errors)",
+          "explanation": {
+            "en": "Average the error across every value in the tensor"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "1 group of 8 (per-tensor)",
+        "items": [
+          "shared scale = 6.40 / 127",
+          "outlier taxes all 7 ordinary weights",
+          "mean error ~= 0.0104"
+        ]
+      },
+      "right": {
+        "title": "2 groups of 4",
+        "items": [
+          "group without outlier: tiny scale, tiny error",
+          "only the outlier's own group still hurts",
+          "mean error ~= 0.0042 (< half)"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "group_quant_mean_error(weights, group_size=8) -> 0.0104",
+        "group_quant_mean_error(weights, group_size=4) -> 0.0042"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "outlier_contained",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `group_quant_mean_error(values, group_size)`. Split `values` into consecutive chunks of `group_size` (the last chunk may be shorter). For each chunk, compute `scale = max(abs(v) for v in chunk) / 127`, then for every value `v` in that chunk compute the round-trip error `abs(round(v / scale) * scale - v)`. Return the average of ALL those errors across the whole list, rounded to 4 decimals. Then print `group_quant_mean_error([0.12, -0.08, 0.15, -0.11, 0.09, -0.13, 0.10, 6.40], 8)` (expected: `0.0104`) -- one group covering the whole list."
+      },
+      "starter_code": "def group_quant_mean_error(values: list, group_size: int) -> float:\n    \"\"\"Mean abs round-trip error when values are quantized in chunks of group_size, each with its own scale.\"\"\"\n    errors = []\n    for start in range(0, len(values), group_size):\n        group = values[start:start + group_size]\n        scale = max(abs(v) for v in group) / 127\n        for v in group:\n            # 1. q = round(v / scale)\n            # 2. dq = q * scale\n            # 3. errors.append(abs(dq - v))\n            pass\n    return round(sum(errors) / len(errors), 4)\n\nweights = [0.12, -0.08, 0.15, -0.11, 0.09, -0.13, 0.10, 6.40]\nprint(group_quant_mean_error(weights, 8))",
+      "hints": {
+        "en": [
+          "q = round(v / scale); dq = q * scale",
+          "errors.append(abs(dq - v)) inside the inner loop, once per value",
+          "With group_size=8 and only 8 values, everything is one group -- this is the per-tensor case"
+        ]
+      },
+      "expected_output": "0.0104"
+    },
+    {
+      "instruction": {
+        "en": "Reuse `group_quant_mean_error` on the same 8 weights, but now with `group_size=4` (two groups of 4 -- the outlier's group and the clean group). Print the per-tensor result (`group_size=8`) first, then the grouped result (`group_size=4`), one per line, to see the error drop."
+      },
+      "starter_code": "def group_quant_mean_error(values: list, group_size: int) -> float:\n    errors = []\n    for start in range(0, len(values), group_size):\n        group = values[start:start + group_size]\n        scale = max(abs(v) for v in group) / 127\n        for v in group:\n            q = round(v / scale)\n            dq = q * scale\n            errors.append(abs(dq - v))\n    return round(sum(errors) / len(errors), 4)\n\nweights = [0.12, -0.08, 0.15, -0.11, 0.09, -0.13, 0.10, 6.40]\n# print the per-tensor error (group_size=8), then the grouped error (group_size=4)\nprint(group_quant_mean_error(weights, 8))\nprint(group_quant_mean_error(weights, 4))",
+      "hints": {
+        "en": [
+          "Call group_quant_mean_error twice: once with group_size=8, once with group_size=4",
+          "Print the group_size=8 result first",
+          "The second number should be well under half of the first"
+        ]
+      },
+      "expected_output": "0.0104\n0.0042"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "quantization",
+      "group_wise_quantization",
+      "outlier_features",
+      "quantization_error"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "loops",
+      "arithmetic"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

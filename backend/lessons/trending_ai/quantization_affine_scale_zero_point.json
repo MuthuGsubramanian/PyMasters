@@ -1,0 +1,166 @@
+{
+  "id": "quantization_affine_scale_zero_point",
+  "topic": "quantization_affine_scale_zero_point",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 115,
+  "title": {
+    "en": "Quantization: What Actually Happens To A Number When You Quantize It?"
+  },
+  "description": {
+    "en": "quantized_size_gb told you HOW MUCH SMALLER a quantized model gets. It didn't show you the trick that makes that possible: mapping a range of floats onto a small set of integers without losing the number entirely. Implement that mapping yourself."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Squeezing A Float Into A Byte\n\n\"int8 has only 256 possible values,\" Vaathiyaar says. \"Your weights are floats — millions of distinct decimals. So how does one of 256 integers stand in for a float without the model falling apart? The answer is: it doesn't store the float exactly. It stores *where that float sits* inside a known range, as precisely as one of 256 slots allows.\"\n\n### Scale and Zero-Point\n\nThe standard trick is **affine quantization**. You look at the real range your numbers live in, `[min_val, max_val]`, and map it onto the integer range `[0, 255]`:\n\n> **scale = (max_val - min_val) / 255**\n> **zero_point = round(0 - min_val / scale)**\n\n`scale` is 'how many real units does one integer step represent.' `zero_point` is 'which integer represents 0.0' — needed because your float range usually isn't centered on zero.\n\nTo **quantize** a float `x`: `q = round(x / scale + zero_point)`, clipped to `[0, 255]`. To **dequantize** it back: `x_approx = (q - zero_point) x scale`. The two are inverses of each other, but not perfect ones — `round()` throws away information, which is exactly where quantization error comes from.\n\n### A Real Example\n\nSay a layer's weights range from `-2.0` to `6.0`. Then `scale = 8.0 / 255 ~= 0.0314`, and `zero_point = round(2.0 / 0.0314) = 64` (the slot that stands in for `0.0`). Quantize `x = 1.0`: `q = round(1.0 / 0.031373 + 64) = 96`. Dequantize it back: `(96 - 64) x 0.031373 ~= 1.0039`. You asked for `1.0` and got `1.0039` back — off by `0.0039`. That gap is the price of squeezing a float into one of 256 buckets.\n\n> **Vaathiyaar's rule:** quantization error isn't a bug, it's the entire tradeoff — you're trading exactness for a model that's 4x smaller. The question that matters is whether `0.0039` of error, spread across billions of weights, changes what the model outputs. Usually it barely does; sometimes (as the next lesson shows) it does a lot, for a very specific reason.\n\nToday you implement the scale/zero-point formula and watch a real float survive the round trip with a small, honest amount of error."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "float_to_int_bucket",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Affine quantization",
+          "children": [
+            "scale = (max_val - min_val) / 255",
+            "zero_point = round(0 - min_val / scale)",
+            "quantize: q = round(x / scale + zero_point)",
+            "dequantize: (q - zero_point) x scale"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "scale = (max_val - min_val) / 255",
+          "highlight": "(max_val - min_val) / 255",
+          "explanation": {
+            "en": "How many real units fit in one integer step, across 256 buckets"
+          }
+        },
+        {
+          "line": "zero_point = round(0 - min_val / scale)",
+          "highlight": "0 - min_val / scale",
+          "explanation": {
+            "en": "Which integer bucket stands in for the real value 0.0"
+          }
+        },
+        {
+          "line": "q = round(x / scale + zero_point)",
+          "highlight": "x / scale + zero_point",
+          "explanation": {
+            "en": "Convert a real float into its nearest integer bucket"
+          }
+        },
+        {
+          "line": "x_approx = (q - zero_point) * scale",
+          "highlight": "(q - zero_point) * scale",
+          "explanation": {
+            "en": "Convert the bucket back to a float -- an approximation, not the original"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Original float",
+        "items": [
+          "x = 1.0",
+          "range [-2.0, 6.0]",
+          "infinite possible values"
+        ]
+      },
+      "right": {
+        "title": "After quantize + dequantize",
+        "items": [
+          "bucket q = 96 of 256",
+          "x_approx ~= 1.0039",
+          "error = 0.0039"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "affine_scale_zero_point(-2.0, 6.0) -> scale=0.0314, zero_point=64",
+        "quantize_dequantize(1.0, -2.0, 6.0) -> 1.0039"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "float_survived_the_round_trip",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `affine_scale_zero_point(min_val, max_val)` for 8-bit (0-255) affine quantization. Formula: `scale = (max_val - min_val) / 255`, then `zero_point = round(0 - min_val / scale)`. Return `(round(scale, 4), zero_point)`. Then print the scale, then the zero_point, for a weight range of `-2.0` to `6.0`, one per line: `affine_scale_zero_point(-2.0, 6.0)` (expected: `0.0314` then `64`)."
+      },
+      "starter_code": "def affine_scale_zero_point(min_val: float, max_val: float) -> tuple:\n    \"\"\"8-bit affine quantization params: scale and zero_point for range [min_val, max_val].\"\"\"\n    # 1. scale = (max_val - min_val) / 255\n    # 2. zero_point = round(0 - min_val / scale)\n    # 3. return (round(scale, 4), zero_point)\n    pass\n\nscale, zero_point = affine_scale_zero_point(-2.0, 6.0)\nprint(scale)\nprint(zero_point)",
+      "hints": {
+        "en": [
+          "scale = (max_val - min_val) / 255",
+          "zero_point = round(0 - min_val / scale)",
+          "Return round(scale, 4) so the printed value is readable"
+        ]
+      },
+      "expected_output": "0.0314\n64"
+    },
+    {
+      "instruction": {
+        "en": "Implement `quantize_dequantize(x, min_val, max_val)` — quantize a float to an 8-bit bucket and immediately dequantize it back, returning the approximation (rounded to 4 decimals). Reuse the scale/zero_point formula from the previous challenge (use the *unrounded* scale internally for accuracy): `q = round(x / scale + zero_point)`, clipped to `[0, 255]`, then `x_approx = (q - zero_point) * scale`. Then print `quantize_dequantize(1.0, -2.0, 6.0)` (expected: `1.0039`)."
+      },
+      "starter_code": "def quantize_dequantize(x: float, min_val: float, max_val: float) -> float:\n    qmin, qmax = 0, 255\n    scale = (max_val - min_val) / qmax\n    zero_point = round(qmin - min_val / scale)\n    q = round(x / scale + zero_point)\n    q = max(qmin, min(qmax, q))\n    return round((q - zero_point) * scale, 4)\n\nprint(quantize_dequantize(1.0, -2.0, 6.0))",
+      "hints": {
+        "en": [
+          "Use the full-precision scale (not the rounded one) inside this function",
+          "Clip q to [0, 255] before dequantizing -- values outside min_val/max_val would otherwise map out of range",
+          "The gap between x and the printed result is the quantization error"
+        ]
+      },
+      "expected_output": "1.0039"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "quantization",
+      "affine_quantization",
+      "scale_zero_point",
+      "quantization_error"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic",
+      "rounding"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

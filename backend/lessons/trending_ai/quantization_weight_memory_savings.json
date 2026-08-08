@@ -1,0 +1,151 @@
+{
+  "id": "quantization_weight_memory_savings",
+  "topic": "quantization_weight_memory_savings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 114,
+  "title": {
+    "en": "Quantization: How Do You Fit a Trillion-Parameter Model on a GPU?"
+  },
+  "description": {
+    "en": "This week's headline model ships at 2.4 trillion parameters. In bf16 that alone is a 4.8 TB download. Compute exactly how much smaller int8 and int4 weights make a model, and why quantization is what makes giant models servable at all."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Weights Have To Live Somewhere\n\n\"Every parameter in a model is a number, and every number needs bytes,\" Vaathiyaar says. \"A model isn't just an idea — it's a file, and that file has a size. The bigger the model, the more that size starts to matter more than the model's cleverness.\"\n\n### Bytes Per Parameter\n\nEach weight is stored at some **precision**, and precision decides how many bytes one parameter costs:\n\n> **model_bytes = num_params x bytes_per_param**\n\n| Precision | Bytes/param |\n|---|---|\n| fp32 | 4 |\n| bf16 / fp16 | 2 |\n| int8 | 1 |\n| int4 | 0.5 |\n\nGoing from bf16 to int8 doesn't shrink a model a little — it **halves** it. Going to int4 halves it again. That's not a rounding trick; it's storing each weight with fewer bits, which means less precision per number but far fewer total bytes.\n\n### A Real Example\n\nA 7B-parameter model in bf16 costs `7,000,000,000 x 2 / 1e9 = 14.0 GB` just for weights — before the KV cache you computed in `kv_cache_memory_footprint` even enters the picture. Quantize the same model to int8 and it drops to `7.0 GB`. Quantize to int4 and it's `3.5 GB` — a model that needed a datacenter GPU now fits on a laptop's.\n\n### Why This Is In The News This Week\n\nThis week's big release, Qwen3.8-Max, ships at 2.4 trillion parameters. In bf16 that's `2.4e12 x 2 / 1e9 = 4,800 GB` — 4.8 **terabytes**, more memory than exists on any single GPU or even most multi-GPU nodes. In int4, it's `1,200 GB` — still huge, but the difference between 'needs a datacenter' and 'needs a rack' is exactly the quantization math you're about to implement.\n\n> **Vaathiyaar's rule:** a model's parameter count tells you how smart it might be; its `bytes_per_param` tells you whether you can actually run it. Quantization is the lever that makes giant models deployable at all.\n\nToday you implement the formula that turns a parameter count into a real memory bill, at any precision."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "model_size_on_disk",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Model memory",
+          "children": [
+            "num_params x bytes_per_param",
+            "fp32 = 4 bytes, bf16 = 2 bytes",
+            "int8 = 1 byte, int4 = 0.5 bytes",
+            "halving bytes halves the whole model"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "total_bytes = num_params * bytes_per_param",
+          "highlight": "num_params * bytes_per_param",
+          "explanation": {
+            "en": "One entry in the table above, times every parameter in the model"
+          }
+        },
+        {
+          "line": "gb = round(total_bytes / 1e9, 2)",
+          "highlight": "/ 1e9",
+          "explanation": {
+            "en": "Bytes -> gigabytes, so it's comparable to what a GPU actually has"
+          }
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "7B model, bf16",
+        "items": [
+          "bytes_per_param = 2",
+          "14.0 GB weights",
+          "needs a real GPU"
+        ]
+      },
+      "right": {
+        "title": "7B model, int4",
+        "items": [
+          "bytes_per_param = 0.5",
+          "3.5 GB weights",
+          "fits on a laptop GPU"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "quantized_size_gb(7_000_000_000, bf16=2) -> 14.0",
+        "quantized_size_gb(7_000_000_000, int8=1) -> 7.0",
+        "quantized_size_gb(7_000_000_000, int4=0.5) -> 3.5"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "model_shrunk",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `quantized_size_gb(num_params, bytes_per_param)` — the memory a model's weights cost, in gigabytes. Formula: `num_params x bytes_per_param`, converted from bytes to gigabytes (`/ 1e9`) and rounded to 2 decimal places. Then print the size of a 7-billion-parameter model in bf16 (2 bytes/param): `quantized_size_gb(7_000_000_000, 2)` (expected: `14.0`)."
+      },
+      "starter_code": "def quantized_size_gb(num_params: int, bytes_per_param: float) -> float:\n    \"\"\"Model weight size in GB: num_params x bytes_per_param, converted to GB.\"\"\"\n    # 1. total_bytes = num_params * bytes_per_param\n    # 2. convert to GB (/ 1e9) and round to 2 decimals\n    pass\n\nprint(quantized_size_gb(7_000_000_000, 2))",
+      "hints": {
+        "en": [
+          "total_bytes = num_params * bytes_per_param",
+          "return round(total_bytes / 1e9, 2)"
+        ]
+      },
+      "expected_output": "14.0"
+    },
+    {
+      "instruction": {
+        "en": "Reuse `quantized_size_gb` to compare precisions for the same 7-billion-parameter model. Print its size in bf16 (`bytes_per_param=2`), then int8 (`bytes_per_param=1`), then int4 (`bytes_per_param=0.5`), one per line, in that order."
+      },
+      "starter_code": "def quantized_size_gb(num_params: int, bytes_per_param: float) -> float:\n    total_bytes = num_params * bytes_per_param\n    return round(total_bytes / 1e9, 2)\n\n# print the 7B model's size in bf16, then int8, then int4\nprint(quantized_size_gb(7_000_000_000, 2))\nprint(quantized_size_gb(7_000_000_000, 1))\nprint(quantized_size_gb(7_000_000_000, 0.5))",
+      "hints": {
+        "en": [
+          "Call quantized_size_gb three times, once per precision",
+          "bf16 -> 2 bytes, int8 -> 1 byte, int4 -> 0.5 bytes",
+          "Print each result on its own line, bf16 first"
+        ]
+      },
+      "expected_output": "14.0\n7.0\n3.5"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "quantization",
+      "model_memory_math",
+      "precision_bytes_per_param",
+      "gpu_deployment"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
