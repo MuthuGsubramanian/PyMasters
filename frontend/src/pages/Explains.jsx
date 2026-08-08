@@ -23,6 +23,7 @@ import SHAP_VALUES from '../components/explains/essays/shapEssay';
 import REGULARIZATION from '../components/explains/essays/regularizationEssay';
 import RANDOM_FOREST from '../components/explains/essays/randomForestEssay';
 import ANOMALY_DETECTION from '../components/explains/essays/anomalyDetectionEssay';
+import ROC_AUC from '../components/explains/essays/rocEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -344,6 +345,7 @@ export const ESSAYS = [
     REGULARIZATION,
     RANDOM_FOREST,
     ANOMALY_DETECTION,
+    ROC_AUC,
 ];
 
 // ── Index page ────────────────────────────────────────────────────────────────
