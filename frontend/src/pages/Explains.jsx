@@ -25,6 +25,7 @@ import RANDOM_FOREST from '../components/explains/essays/randomForestEssay';
 import ANOMALY_DETECTION from '../components/explains/essays/anomalyDetectionEssay';
 import ROC_AUC from '../components/explains/essays/rocEssay';
 import BAYESIAN_INFERENCE from '../components/explains/essays/bayesianInferenceEssay';
+import LOGISTIC_REGRESSION from '../components/explains/essays/logisticRegressionEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -348,6 +349,7 @@ export const ESSAYS = [
     ANOMALY_DETECTION,
     ROC_AUC,
     BAYESIAN_INFERENCE,
+    LOGISTIC_REGRESSION,
 ];
 
 // ── Index page ────────────────────────────────────────────────────────────────
