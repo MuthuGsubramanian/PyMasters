@@ -26,6 +26,7 @@ import ANOMALY_DETECTION from '../components/explains/essays/anomalyDetectionEss
 import ROC_AUC from '../components/explains/essays/rocEssay';
 import BAYESIAN_INFERENCE from '../components/explains/essays/bayesianInferenceEssay';
 import LOGISTIC_REGRESSION from '../components/explains/essays/logisticRegressionEssay';
+import SVM from '../components/explains/essays/svmEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -350,6 +351,7 @@ export const ESSAYS = [
     ROC_AUC,
     BAYESIAN_INFERENCE,
     LOGISTIC_REGRESSION,
+    SVM,
 ];
 
 // ── Index page ────────────────────────────────────────────────────────────────
