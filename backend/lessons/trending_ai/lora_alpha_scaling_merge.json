@@ -1,0 +1,160 @@
+{
+  "id": "lora_alpha_scaling_merge",
+  "topic": "lora_alpha_scaling_merge",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 118,
+  "title": {
+    "en": "LoRA: The Alpha Knob That Merges The Adapter Back In"
+  },
+  "description": {
+    "en": "lora_low_rank_decomposition showed WHY B and A are so much smaller than a full weight update. It didn't show how that update actually reaches the frozen weights. Implement the alpha/rank scaling and the merge itself."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## B @ A Isn't Added Raw\n\n\"You've got B and A,\" Vaathiyaar says, \"their product is the same shape as the frozen matrix W, so you'd think you just add it: `W + B @ A`. Almost -- but LoRA scales that product first by `alpha / r`, where `alpha` is a number you choose and `r` is the same rank from last lesson. Skip the scaling and changing the rank silently changes how strong the update is, even when you didn't mean to touch that.\"\n\n### The Merge Formula\n\nFor a single entry `W[i, j]` of the frozen matrix, the corresponding row of `B` (call it `b_row`, length `r`) and column of `A` (call it `a_row`, length `r`) combine like this:\n\n> **delta = (b_row . a_row) x (alpha / r)**\n> **W'[i, j] = W[i, j] + delta**\n\n`b_row . a_row` is the dot product -- multiply matching entries and sum them. That gives one entry of the raw `B @ A` product. Multiplying by `alpha / r` is the scaling step: it keeps the update's typical size roughly stable even as you experiment with different ranks `r`, because a bigger `r` makes the raw dot product bigger too. Divide by `r` and that growth cancels out; `alpha` alone then controls how strong the adapter's effect is.\n\n### A Real Merge\n\nSay `r = 3`, `alpha = 16`, one row of `B` is `[0.2, -0.1, 0.3]`, one column of `A` is `[0.4, 0.5, -0.2]`, and the frozen weight at that position is `W[i,j] = 0.5`. The dot product is `0.2*0.4 + (-0.1)*0.5 + 0.3*(-0.2) = 0.08 - 0.05 - 0.06 = -0.03`. Scaling: `alpha / r = 16 / 3 ~= 5.333`. `delta = -0.03 * 5.333 ~= -0.16`. Merged weight: `0.5 + (-0.16) = 0.34`.\n\n> **Vaathiyaar's rule:** this is also exactly what \"merging a LoRA adapter\" means at inference time -- compute `W + (alpha/r) * B @ A` once, save the result as a single ordinary matrix, and the adapter costs zero extra latency at serving time. No separate B and A to carry around; the frozen weight and the update became one matrix.\n\nToday you implement the scaled delta and the merge, one weight at a time."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "adapter_merges_into_frozen_weight",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Alpha-scaled merge",
+          "children": [
+            "dot = b_row . a_row",
+            "delta = dot * (alpha / r)",
+            "W' = W + delta",
+            "merge is a one-time op, zero extra inference cost"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "dot = sum(b * a for b, a in zip(b_row, a_row))",
+          "highlight": "sum(b * a for b, a in zip(b_row, a_row))",
+          "explanation": {
+            "en": "One entry of the raw B @ A product at this row/column"
+          }
+        },
+        {
+          "line": "delta = dot * (alpha / r)",
+          "highlight": "dot * (alpha / r)",
+          "explanation": {
+            "en": "Scale the raw product so update strength tracks alpha, not r"
+          }
+        },
+        {
+          "line": "merged = w + delta",
+          "highlight": "w + delta",
+          "explanation": {
+            "en": "Add the scaled update onto the frozen weight to get the merged weight"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Before merge",
+        "items": [
+          "W frozen at 0.5",
+          "B, A carried separately",
+          "extra matmul at inference"
+        ]
+      },
+      "right": {
+        "title": "After merge",
+        "items": [
+          "W' = 0.34",
+          "single ordinary matrix",
+          "zero extra inference cost"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "lora_delta_weight([0.2,-0.1,0.3], [0.4,0.5,-0.2], 16, 3) -> -0.16",
+        "lora_merge_weight(0.5, [0.2,-0.1,0.3], [0.4,0.5,-0.2], 16, 3) -> 0.34"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "adapter_merged",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `lora_delta_weight(b_row, a_row, alpha, r)` -- the alpha-scaled update to one weight entry. `b_row` and `a_row` are equal-length lists (a row of B and the matching column of A). Compute the dot product `sum(b * a for b, a in zip(b_row, a_row))`, then scale it by `alpha / r`, rounded to 4 decimals. Then print `lora_delta_weight([0.2, -0.1, 0.3], [0.4, 0.5, -0.2], 16, 3)` (expected: `-0.16`)."
+      },
+      "starter_code": "def lora_delta_weight(b_row: list, a_row: list, alpha: float, r: int) -> float:\n    \"\"\"Alpha-scaled LoRA update for one weight entry: (b_row . a_row) * (alpha / r).\"\"\"\n    # dot = sum(b * a for b, a in zip(b_row, a_row))\n    # return round(dot * (alpha / r), 4)\n    pass\n\nprint(lora_delta_weight([0.2, -0.1, 0.3], [0.4, 0.5, -0.2], 16, 3))",
+      "hints": {
+        "en": [
+          "dot = sum(b * a for b, a in zip(b_row, a_row))",
+          "scaling factor is alpha / r",
+          "round(dot * (alpha / r), 4)"
+        ]
+      },
+      "expected_output": "-0.16"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `lora_merge_weight(w, b_row, a_row, alpha, r)` -- merge the LoRA update into a frozen weight `w`, producing the single merged weight used at inference time. Reuse `lora_delta_weight`. Return `round(w + delta, 4)`. Then print `lora_merge_weight(0.5, [0.2, -0.1, 0.3], [0.4, 0.5, -0.2], 16, 3)` (expected: `0.34`)."
+      },
+      "starter_code": "def lora_delta_weight(b_row: list, a_row: list, alpha: float, r: int) -> float:\n    dot = sum(b * a for b, a in zip(b_row, a_row))\n    return round(dot * (alpha / r), 4)\n\ndef lora_merge_weight(w: float, b_row: list, a_row: list, alpha: float, r: int) -> float:\n    \"\"\"Merge a frozen weight with its alpha-scaled LoRA update.\"\"\"\n    # delta = lora_delta_weight(b_row, a_row, alpha, r)\n    # return round(w + delta, 4)\n    pass\n\nprint(lora_merge_weight(0.5, [0.2, -0.1, 0.3], [0.4, 0.5, -0.2], 16, 3))",
+      "hints": {
+        "en": [
+          "delta = lora_delta_weight(b_row, a_row, alpha, r)",
+          "merged = w + delta",
+          "round the final sum to 4 decimals"
+        ]
+      },
+      "expected_output": "0.34"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "lora",
+      "alpha_scaling",
+      "adapter_merging",
+      "dot_product"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic",
+      "zip",
+      "list_comprehensions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

@@ -1,0 +1,167 @@
+{
+  "id": "lora_trainable_parameter_budget",
+  "topic": "lora_trainable_parameter_budget",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 119,
+  "title": {
+    "en": "LoRA: What Fine-Tuning An Entire Model Actually Costs"
+  },
+  "description": {
+    "en": "One matrix, one merge -- now zoom out to a whole model. Stack LoRA across every layer's attention projections and compute what percentage of a full model you're actually training."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## One Matrix Was The Easy Part\n\n\"You've seen LoRA shrink one matrix's trainable footprint 256x,\" Vaathiyaar says. \"But a real model isn't one matrix -- it's dozens of transformer layers, each with several attention projections. Apply LoRA to all of them and the *whole-model* trainable percentage is the number that decides whether fine-tuning fits on your GPU.\"\n\n### Stacking The Savings\n\nA typical transformer layer has four square `d x d` attention projections -- query, key, value, and output (`Q`, `K`, `V`, `O`). Apply a rank-`r` LoRA adapter to all four, across `L` layers:\n\n> **lora_total = L x 4 x [r x (d + d)]**\n> **full_total = L x 4 x (d x d)**\n\nThe `4` is `matrices_per_layer` -- how many of the layer's matrices get an adapter (some setups adapt only `Q` and `V`, others all four; today we adapt all four to see the ceiling case).\n\n### A Realistic Model\n\nTake `L = 32` layers, `d = 4096` (both sizes typical of a mid-size 2026 open model), rank `r = 8`, and all `4` projections adapted. Per matrix, LoRA needs `8 * (4096 + 4096) = 65,536` params; across `32 * 4 = 128` matrices that's `8,388,608` trainable params total. Full fine-tuning of those same 128 matrices would need `32 * 4 * 4096 * 4096 = 2,147,483,648` params -- over 2 billion. LoRA trains **0.39%** of that.\n\n> **Vaathiyaar's rule:** that 0.39% isn't the whole model -- the embedding and MLP layers aren't counted here -- but it's the number that explains why LoRA fine-tuning runs on hardware that couldn't hold a full fine-tuning optimizer state for the same model. Freezing almost everything and training a sliver is the entire trick.\n\nToday you compute that whole-model budget: raw counts, then the percentage that decides if it fits."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "single_matrix_to_full_model",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Whole-model LoRA budget",
+          "children": [
+            "L layers x matrices_per_layer",
+            "lora_total = L * mpl * r * (d + d)",
+            "full_total = L * mpl * d * d",
+            "percentage = lora_total / full_total * 100"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "per_matrix = r * (d + d)",
+          "highlight": "r * (d + d)",
+          "explanation": {
+            "en": "LoRA params for one d x d matrix, from the low-rank decomposition lesson"
+          }
+        },
+        {
+          "line": "lora_total = num_layers * matrices_per_layer * per_matrix",
+          "highlight": "num_layers * matrices_per_layer * per_matrix",
+          "explanation": {
+            "en": "Multiply out across every adapted matrix in every layer"
+          }
+        },
+        {
+          "line": "full_total = num_layers * matrices_per_layer * d * d",
+          "highlight": "num_layers * matrices_per_layer * d * d",
+          "explanation": {
+            "en": "What full fine-tuning of those same matrices would cost"
+          }
+        },
+        {
+          "line": "percentage = lora_total / full_total * 100",
+          "highlight": "lora_total / full_total * 100",
+          "explanation": {
+            "en": "The share of full fine-tuning's parameter count LoRA actually trains"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Full fine-tuning",
+        "items": [
+          "32 layers x 4 matrices",
+          "2,147,483,648 params",
+          "needs optimizer state for all of it"
+        ]
+      },
+      "right": {
+        "title": "LoRA (r = 8, all 4 proj)",
+        "items": [
+          "same 32 layers x 4 matrices",
+          "8,388,608 params",
+          "0.39% of full fine-tuning"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "lora_total_trainable_params(32, 4096, 8, 4) -> 8388608",
+        "full_finetune_params(32, 4096, 4) -> 2147483648",
+        "lora_trainable_percentage(32, 4096, 8, 4) -> 0.3906"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "budget_computed",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `lora_total_trainable_params(num_layers, d, r, matrices_per_layer)` and `full_finetune_params(num_layers, d, matrices_per_layer)`, extending the single-matrix formulas from earlier lessons across a whole model. `lora_total_trainable_params` = `num_layers * matrices_per_layer * r * (d + d)`. `full_finetune_params` = `num_layers * matrices_per_layer * d * d`. Then print the LoRA total, then the full fine-tuning total, for `num_layers=32, d=4096, r=8, matrices_per_layer=4` (expected: `8388608` then `2147483648`)."
+      },
+      "starter_code": "def lora_total_trainable_params(num_layers: int, d: int, r: int, matrices_per_layer: int) -> int:\n    \"\"\"Total LoRA trainable params across every adapted matrix in every layer.\"\"\"\n    # per_matrix = r * (d + d)\n    # return num_layers * matrices_per_layer * per_matrix\n    pass\n\ndef full_finetune_params(num_layers: int, d: int, matrices_per_layer: int) -> int:\n    \"\"\"Params needed to fully fine-tune those same matrices.\"\"\"\n    # return num_layers * matrices_per_layer * d * d\n    pass\n\nprint(lora_total_trainable_params(32, 4096, 8, 4))\nprint(full_finetune_params(32, 4096, 4))",
+      "hints": {
+        "en": [
+          "per_matrix = r * (d + d) -- same formula as the single-matrix lesson",
+          "multiply by num_layers * matrices_per_layer to cover the whole model",
+          "full_finetune_params multiplies d * d instead of the LoRA formula"
+        ]
+      },
+      "expected_output": "8388608\n2147483648"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `lora_trainable_percentage(num_layers, d, r, matrices_per_layer)` -- what percent of the full fine-tuning parameter count LoRA actually trains. Reuse both functions above: `round(lora_total / full_total * 100, 4)`. Then print `lora_trainable_percentage(32, 4096, 8, 4)` (expected: `0.3906`)."
+      },
+      "starter_code": "def lora_total_trainable_params(num_layers: int, d: int, r: int, matrices_per_layer: int) -> int:\n    per_matrix = r * (d + d)\n    return num_layers * matrices_per_layer * per_matrix\n\ndef full_finetune_params(num_layers: int, d: int, matrices_per_layer: int) -> int:\n    return num_layers * matrices_per_layer * d * d\n\ndef lora_trainable_percentage(num_layers: int, d: int, r: int, matrices_per_layer: int) -> float:\n    \"\"\"Percent of full fine-tuning's parameter count that LoRA actually trains.\"\"\"\n    # lora_total = lora_total_trainable_params(num_layers, d, r, matrices_per_layer)\n    # full_total = full_finetune_params(num_layers, d, matrices_per_layer)\n    # return round(lora_total / full_total * 100, 4)\n    pass\n\nprint(lora_trainable_percentage(32, 4096, 8, 4))",
+      "hints": {
+        "en": [
+          "lora_total = lora_total_trainable_params(num_layers, d, r, matrices_per_layer)",
+          "full_total = full_finetune_params(num_layers, d, matrices_per_layer)",
+          "round(lora_total / full_total * 100, 4)"
+        ]
+      },
+      "expected_output": "0.3906"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "lora",
+      "parameter_efficient_fine_tuning",
+      "model_scale_math",
+      "trainable_parameter_budget"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic",
+      "function_composition"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

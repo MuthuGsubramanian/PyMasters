@@ -1,0 +1,159 @@
+{
+  "id": "lora_low_rank_decomposition",
+  "topic": "lora_low_rank_decomposition",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 117,
+  "title": {
+    "en": "LoRA: Why Training Two Skinny Matrices Beats Training One Fat One"
+  },
+  "description": {
+    "en": "Full fine-tuning means updating every weight in a matrix that can be millions of numbers wide. LoRA freezes that matrix and learns a much smaller low-rank update instead. Compute exactly how much smaller."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Matrix You Don't Have To Touch\n\n\"Fine-tuning a model the old way means updating every single weight,\" Vaathiyaar says. \"A `4096 x 4096` attention matrix alone is over 16 million numbers. Do that for every matrix in every layer and fine-tuning needs almost as much memory as pretraining did. **LoRA** — Low-Rank Adaptation — asks a sharper question: does the *update* to that matrix really need 16 million independent numbers, or can a much smaller set of numbers describe it well enough?\"\n\n### Freeze W, Learn B and A Instead\n\nLoRA leaves the original weight matrix `W` (shape `d x k`) completely frozen. Instead of learning a full update `ΔW` of the same shape, it learns two small matrices: `B` (shape `d x r`) and `A` (shape `r x k`), where `r` — the **rank** — is tiny, often 4 to 64. Their product `B @ A` has the same shape as `W`, so it can be added on top of it, but `B` and `A` together hold far fewer numbers than `ΔW` would.\n\n```\nfull update:   d x k matrix         ->  d * k parameters\nLoRA update:   B (d x r) @ A (r x k) -> r * (d + k) parameters\n```\n\n### A Real Comparison\n\nTake a `4096 x 4096` attention projection, the size found in many mid-size 2026 open models, with rank `r = 8`. A full update needs `4096 * 4096 = 16,777,216` trainable numbers. LoRA needs `8 * (4096 + 4096) = 65,536`. That's **256x** fewer trainable parameters for that one matrix — most of them frozen, only the two skinny matrices get gradients.\n\n> **Vaathiyaar's rule:** rank `r` is a bet that the *useful* update to a weight matrix lives in a small subspace, not the full space of every possible change. In practice that bet pays off remarkably often — which is the entire reason LoRA fine-tuning fits on a single consumer GPU where full fine-tuning wouldn't.\n\nToday you compute exactly how many parameters LoRA saves, for any matrix size and any rank."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "frozen_matrix_skinny_update",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "LoRA low-rank decomposition",
+          "children": [
+            "W (d x k) stays frozen",
+            "learn B (d x r) and A (r x k)",
+            "full params: d * k",
+            "LoRA params: r * (d + k)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "full_params = d * k",
+          "highlight": "d * k",
+          "explanation": {
+            "en": "Every entry of the full weight matrix would need its own trainable number"
+          }
+        },
+        {
+          "line": "lora_params = r * (d + k)",
+          "highlight": "r * (d + k)",
+          "explanation": {
+            "en": "B contributes d * r numbers, A contributes r * k -- together r * (d + k)"
+          }
+        },
+        {
+          "line": "reduction_factor = full_params / lora_params",
+          "highlight": "full_params / lora_params",
+          "explanation": {
+            "en": "How many times smaller the trainable footprint became"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Full fine-tuning",
+        "items": [
+          "update shape d x k",
+          "16,777,216 trainable params",
+          "one 4096x4096 matrix"
+        ]
+      },
+      "right": {
+        "title": "LoRA (r = 8)",
+        "items": [
+          "B (d x r) + A (r x k)",
+          "65,536 trainable params",
+          "256x fewer numbers"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "lora_parameter_count(4096, 4096, 8) -> full=16777216, lora=65536",
+        "reduction_factor -> 256.0"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "matrix_shrunk",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `lora_parameter_count(d, k, r)` for a weight matrix of shape `(d, k)` adapted with LoRA rank `r`. Return a tuple `(full_params, lora_params, reduction_factor)` where `full_params = d * k`, `lora_params = r * (d + k)`, and `reduction_factor = round(full_params / lora_params, 2)`. Then print `full_params`, then `lora_params`, then `reduction_factor`, one per line, for `lora_parameter_count(4096, 4096, 8)` (expected: `16777216`, `65536`, `256.0`)."
+      },
+      "starter_code": "def lora_parameter_count(d: int, k: int, r: int) -> tuple:\n    \"\"\"Trainable params for full fine-tuning vs a rank-r LoRA update of a (d, k) matrix.\"\"\"\n    # full_params = d * k\n    # lora_params = r * (d + k)\n    # reduction_factor = round(full_params / lora_params, 2)\n    pass\n\nfull_params, lora_params, reduction_factor = lora_parameter_count(4096, 4096, 8)\nprint(full_params)\nprint(lora_params)\nprint(reduction_factor)",
+      "hints": {
+        "en": [
+          "full_params = d * k -- every entry of the frozen matrix's would-be update",
+          "lora_params = r * (d + k) -- B contributes d*r, A contributes r*k",
+          "reduction_factor = round(full_params / lora_params, 2)"
+        ]
+      },
+      "expected_output": "16777216\n65536\n256.0"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `lora_savings_percent(d, k, r)` -- what percentage of the full fine-tuning parameter count LoRA *saves* (not what it uses). Reuse `lora_parameter_count`. Formula: `round((1 - lora_params / full_params) * 100, 4)`. Then print `lora_savings_percent(4096, 4096, 8)` (expected: `99.6094`)."
+      },
+      "starter_code": "def lora_parameter_count(d: int, k: int, r: int) -> tuple:\n    full_params = d * k\n    lora_params = r * (d + k)\n    reduction_factor = round(full_params / lora_params, 2)\n    return full_params, lora_params, reduction_factor\n\ndef lora_savings_percent(d: int, k: int, r: int) -> float:\n    \"\"\"Percent of full fine-tuning params LoRA avoids training.\"\"\"\n    # full_params, lora_params, _ = lora_parameter_count(d, k, r)\n    # return round((1 - lora_params / full_params) * 100, 4)\n    pass\n\nprint(lora_savings_percent(4096, 4096, 8))",
+      "hints": {
+        "en": [
+          "full_params, lora_params, _ = lora_parameter_count(d, k, r)",
+          "fraction trained = lora_params / full_params",
+          "savings = round((1 - fraction trained) * 100, 4)"
+        ]
+      },
+      "expected_output": "99.6094"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "lora",
+      "low_rank_adaptation",
+      "parameter_efficient_fine_tuning",
+      "matrix_decomposition"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic",
+      "tuples"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
