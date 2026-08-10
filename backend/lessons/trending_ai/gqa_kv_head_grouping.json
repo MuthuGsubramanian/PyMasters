@@ -1,0 +1,160 @@
+{
+  "id": "gqa_kv_head_grouping",
+  "topic": "gqa_kv_head_grouping",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 120,
+  "title": {
+    "en": "Grouped-Query Attention: Why Not Every Head Needs Its Own Cache"
+  },
+  "description": {
+    "en": "Standard attention gives every query head its own key/value head — and its own slice of KV cache. GQA lets several query heads share one KV head instead. Build the head-to-group mapping that makes it work."
+  },
+  "xp_reward": 80,
+  "next_unlock": "gqa_cache_memory_savings",
+  "story_variants": {
+    "en": "## One Cache Slot Per Head Gets Expensive\n\n\"In classic multi-head attention, every query head has its own matching key head and value head,\" Vaathiyaar says. \"32 query heads means 32 KV heads, and — as `kv_cache_savings` showed you — every one of those KV heads eats its own slice of cache, for every token, for as long as the conversation runs.\"\n\n### Three Ways to Split the Work\n\n- **Multi-Head Attention (MHA):** `num_kv_heads == num_query_heads`. Every query head gets a private key/value head. Best quality, biggest cache.\n- **Multi-Query Attention (MQA):** `num_kv_heads == 1`. Every query head shares *one* key/value head. Smallest possible cache, but quality can suffer — one shared K/V has to serve every query head's needs at once.\n- **Grouped-Query Attention (GQA):** `1 < num_kv_heads < num_query_heads`. Query heads are split into `num_kv_heads` equal-sized groups, and every query head in a group shares that group's single key/value head. This is the 2026 default — Llama, Qwen, and Mistral-family models all ship with GQA, not plain MHA.\n\n### The Grouping Rule\n\nQuery heads are assigned to groups **contiguously**: with 8 query heads and 2 KV heads, heads 0-3 form group 0 and heads 4-7 form group 1 — each group has `num_query_heads // num_kv_heads` heads in it.\n\n```\nnum_query_heads = 8, num_kv_heads = 2, group_size = 4\n\nquery head:  0  1  2  3  4  5  6  7\nKV group:    0  0  0  0  1  1  1  1\n```\n\nQuery head 5 belongs to group `5 // 4 = 1` — integer division by the group size is the entire rule.\n\n> **Vaathiyaar's rule:** GQA doesn't shrink attention *quality* by much (heads in the same group tend to attend similarly anyway), but it shrinks the KV cache by exactly the ratio `num_kv_heads / num_query_heads`. Next lesson turns that ratio into gigabytes.\n\nToday you implement the mapping itself: given a query head, which KV group does it belong to?"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "heads_sharing_groups",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Grouped-Query Attention",
+          "children": [
+            "MHA: 1 KV head per query head",
+            "MQA: 1 KV head total",
+            "GQA: query heads split into num_kv_heads groups",
+            "every head in a group shares its group's KV head"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "group_size = num_query_heads // num_kv_heads",
+          "highlight": "num_query_heads // num_kv_heads",
+          "explanation": {
+            "en": "How many query heads share each single KV head"
+          }
+        },
+        {
+          "line": "group = query_head_idx // group_size",
+          "highlight": "query_head_idx // group_size",
+          "explanation": {
+            "en": "Integer division places the head into its contiguous group"
+          }
+        },
+        {
+          "line": "return group",
+          "highlight": "return group",
+          "explanation": {
+            "en": "That's the KV group (and KV head) this query head reads from"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "MHA (8 query, 8 KV)",
+        "items": [
+          "group_size = 1",
+          "every head is its own group",
+          "8 KV heads to cache"
+        ]
+      },
+      "right": {
+        "title": "GQA (8 query, 2 KV)",
+        "items": [
+          "group_size = 4",
+          "heads 0-3 -> group 0, heads 4-7 -> group 1",
+          "only 2 KV heads to cache"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "num_query_heads=8, num_kv_heads=2",
+        "kv_group_for_query_head(5, 8, 2) -> 1",
+        "build_gqa_mapping(8, 2) -> [0, 0, 0, 0, 1, 1, 1, 1]"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "heads_grouped",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `kv_group_for_query_head(query_head_idx, num_query_heads, num_kv_heads)`. Query heads are split into `num_kv_heads` equal, contiguous groups of size `num_query_heads // num_kv_heads`; return the group index (0-based) that `query_head_idx` falls into. Then print `kv_group_for_query_head(5, 8, 2)` (expected: `1`)."
+      },
+      "starter_code": "def kv_group_for_query_head(query_head_idx: int, num_query_heads: int, num_kv_heads: int) -> int:\n    \"\"\"Which KV group (0-based) a query head shares, under grouped-query attention.\"\"\"\n    # group_size = num_query_heads // num_kv_heads\n    # return query_head_idx // group_size\n    pass\n\nprint(kv_group_for_query_head(5, 8, 2))",
+      "hints": {
+        "en": [
+          "group_size = num_query_heads // num_kv_heads is how many query heads share one KV head",
+          "The group a head falls into is query_head_idx // group_size",
+          "kv_group_for_query_head(5, 8, 2): group_size=4, 5 // 4 = 1"
+        ]
+      },
+      "expected_output": "1"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `build_gqa_mapping(num_query_heads, num_kv_heads)` — the full mapping from every query head to its KV group, reusing `kv_group_for_query_head`. Return a list where index `i` is the KV group for query head `i`. Then print `build_gqa_mapping(8, 2)` (expected: `[0, 0, 0, 0, 1, 1, 1, 1]`)."
+      },
+      "starter_code": "def kv_group_for_query_head(query_head_idx: int, num_query_heads: int, num_kv_heads: int) -> int:\n    group_size = num_query_heads // num_kv_heads\n    return query_head_idx // group_size\n\ndef build_gqa_mapping(num_query_heads: int, num_kv_heads: int) -> list:\n    \"\"\"KV group index for every query head, in order.\"\"\"\n    # return [kv_group_for_query_head(i, num_query_heads, num_kv_heads) for i in range(num_query_heads)]\n    pass\n\nprint(build_gqa_mapping(8, 2))",
+      "hints": {
+        "en": [
+          "Loop query head index i from 0 to num_query_heads - 1",
+          "For each i, call kv_group_for_query_head(i, num_query_heads, num_kv_heads)",
+          "return [kv_group_for_query_head(i, num_query_heads, num_kv_heads) for i in range(num_query_heads)]"
+        ]
+      },
+      "expected_output": "[0, 0, 0, 0, 1, 1, 1, 1]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "grouped_query_attention",
+      "multi_query_attention",
+      "attention_heads",
+      "kv_cache"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "integer_division",
+      "list_comprehensions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

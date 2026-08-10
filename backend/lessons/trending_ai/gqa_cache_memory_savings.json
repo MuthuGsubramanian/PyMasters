@@ -1,0 +1,159 @@
+{
+  "id": "gqa_cache_memory_savings",
+  "topic": "gqa_cache_memory_savings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 121,
+  "title": {
+    "en": "GQA's Real Payoff: Turning Fewer KV Heads Into Fewer Gigabytes"
+  },
+  "description": {
+    "en": "Grouping query heads is only useful because of what it does to the cache bill. Take the real Llama-3-8B-shaped config (32 query heads, 8 KV heads) and compute exactly how many gigabytes GQA saves over plain multi-head attention."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Cache Only Cares About KV Heads\n\n\"Here's the detail that makes GQA worth doing,\" Vaathiyaar says. \"`kv_cache_memory_footprint` taught you the cache formula: `2 x num_layers x num_heads x head_dim x seq_len x bytes_per_value`. In plain multi-head attention, `num_heads` there means *query* heads, because there's one KV head per query head anyway. Under GQA, that's no longer true — the cache only ever stores `num_kv_heads` worth of keys and values, no matter how many query heads read from them.\"\n\n### A Real Config: Llama-3-8B\n\nLlama-3-8B-shaped models use 32 query heads but only **8** KV heads — a 4:1 grouping ratio, `head_dim` 128, 32 layers. Plug `num_kv_heads` (not `num_query_heads`) into the cache formula:\n\n```\nplain MHA (32 KV heads):  2 x 32 x 32 x 128 x 4096 x 2 bytes = 2.15 GB\nGQA       (8 KV heads):   2 x 32 x  8 x 128 x 4096 x 2 bytes = 0.54 GB\n```\n\nSame model, same 4096-token context, same query expressiveness (still 32 query heads) — but the cache shrank to roughly a quarter of its MHA size, because the cache formula scales with `num_kv_heads`, and `num_kv_heads` dropped from 32 to 8.\n\n### The Savings Ratio Is Just the Head Ratio\n\nYou don't even need to recompute both cache sizes to know the savings — the ratio falls straight out of the formula, since every other factor (`layers`, `head_dim`, `seq_len`, `bytes_per_value`) cancels:\n\n```\nsavings = 1 - (num_kv_heads / num_query_heads) = 1 - 8/32 = 75%\n```\n\n> **Vaathiyaar's rule:** the query-head count buys you model quality; the KV-head count is what shows up on your GPU memory bill. GQA lets you tune those two knobs separately instead of being stuck paying for both at 1:1.\n\nToday you implement both: the cache size using only `num_kv_heads`, and the savings percentage GQA buys over standard MHA."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "shrinking_cache_bar",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "GQA cache savings",
+          "children": [
+            "cache formula uses num_kv_heads, not num_query_heads",
+            "Llama-3-8B: 32 query heads, 8 KV heads",
+            "savings = 1 - num_kv_heads / num_query_heads",
+            "quality knob (query heads) decoupled from memory knob (KV heads)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "total_bytes = 2 * num_layers * num_kv_heads * head_dim * seq_len * bytes_per_value",
+          "highlight": "num_kv_heads",
+          "explanation": {
+            "en": "Only KV heads are stored in the cache, so only num_kv_heads counts here"
+          }
+        },
+        {
+          "line": "gb = round(total_bytes / 1e9, 2)",
+          "highlight": "/ 1e9",
+          "explanation": {
+            "en": "Bytes to gigabytes, same conversion as the plain MHA formula"
+          }
+        },
+        {
+          "line": "savings = round((1 - num_kv_heads / num_query_heads) * 100, 1)",
+          "highlight": "1 - num_kv_heads / num_query_heads",
+          "explanation": {
+            "en": "The head-count ratio alone tells you the percentage saved vs. MHA"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Plain MHA (32 KV heads)",
+        "items": [
+          "32 layers x 32 KV heads x 128 dim",
+          "4096-token context, bf16",
+          "2.15 GB cache"
+        ]
+      },
+      "right": {
+        "title": "GQA (8 KV heads)",
+        "items": [
+          "same shape, 8 KV heads instead",
+          "same 4096-token context, bf16",
+          "0.54 GB cache (75% smaller)"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "layers=32 kv_heads=8 head_dim=128 seq_len=4096 bf16",
+        "gqa_kv_cache_gb -> 0.54",
+        "gqa_memory_savings_percent(32, 8) -> 75.0"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "cache_shrunk",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `gqa_kv_cache_gb(num_layers, num_kv_heads, head_dim, seq_len, bytes_per_value)` — the KV cache size under grouped-query attention. Same formula as plain MHA, but using `num_kv_heads` (not query heads): `2 x num_layers x num_kv_heads x head_dim x seq_len x bytes_per_value`, converted to gigabytes (`/ 1e9`) and rounded to 2 decimals. Then print the cache size for a Llama-3-8B-shaped model (32 layers, 8 KV heads, head_dim 128) holding a 4096-token conversation in bf16 (2 bytes/value): `gqa_kv_cache_gb(32, 8, 128, 4096, 2)` (expected: `0.54`)."
+      },
+      "starter_code": "def gqa_kv_cache_gb(num_layers: int, num_kv_heads: int, head_dim: int, seq_len: int, bytes_per_value: int) -> float:\n    \"\"\"KV cache size in GB under GQA: only num_kv_heads is stored, not num_query_heads.\"\"\"\n    # 1. total_bytes = 2 * num_layers * num_kv_heads * head_dim * seq_len * bytes_per_value\n    # 2. convert to GB (/ 1e9) and round to 2 decimals\n    pass\n\nprint(gqa_kv_cache_gb(32, 8, 128, 4096, 2))",
+      "hints": {
+        "en": [
+          "It's the same formula as plain MHA's kv_cache_gb, just fed num_kv_heads instead of num_query_heads",
+          "total_bytes = 2 * num_layers * num_kv_heads * head_dim * seq_len * bytes_per_value",
+          "return round(total_bytes / 1e9, 2)"
+        ]
+      },
+      "expected_output": "0.54"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `gqa_memory_savings_percent(num_query_heads, num_kv_heads)` — how much smaller the GQA cache is versus plain MHA (where `num_kv_heads` would equal `num_query_heads`). Compute `(1 - num_kv_heads / num_query_heads) * 100`, rounded to 1 decimal place. Then print `gqa_memory_savings_percent(32, 8)` (expected: `75.0`)."
+      },
+      "starter_code": "def gqa_memory_savings_percent(num_query_heads: int, num_kv_heads: int) -> float:\n    \"\"\"Percent smaller the GQA KV cache is vs. plain MHA (num_kv_heads == num_query_heads).\"\"\"\n    # return round((1 - num_kv_heads / num_query_heads) * 100, 1)\n    pass\n\nprint(gqa_memory_savings_percent(32, 8))",
+      "hints": {
+        "en": [
+          "Plain MHA is the special case num_kv_heads == num_query_heads (0% savings)",
+          "The fraction of heads removed is 1 - num_kv_heads / num_query_heads",
+          "round((1 - num_kv_heads / num_query_heads) * 100, 1)"
+        ]
+      },
+      "expected_output": "75.0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "grouped_query_attention",
+      "kv_cache",
+      "gpu_memory",
+      "model_memory_math"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
