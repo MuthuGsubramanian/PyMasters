@@ -28,6 +28,7 @@ import BAYESIAN_INFERENCE from '../components/explains/essays/bayesianInferenceE
 import LOGISTIC_REGRESSION from '../components/explains/essays/logisticRegressionEssay';
 import SVM from '../components/explains/essays/svmEssay';
 import BIAS_VARIANCE from '../components/explains/essays/biasVarianceEssay';
+import TIME_SERIES_FORECASTING from '../components/explains/essays/timeSeriesForecastingEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -354,6 +355,7 @@ export const ESSAYS = [
     LOGISTIC_REGRESSION,
     SVM,
     BIAS_VARIANCE,
+    TIME_SERIES_FORECASTING,
 ];
 
 // ── Index page ────────────────────────────────────────────────────────────────
