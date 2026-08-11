@@ -1,0 +1,160 @@
+{
+  "id": "distillation_temperature_softmax",
+  "topic": "distillation_temperature_softmax",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 125,
+  "title": {
+    "en": "Knowledge Distillation: Softening a Teacher's Confidence with Temperature"
+  },
+  "description": {
+    "en": "Frontier models keep getting bigger — but the model you actually deploy is often a small 'student' trained to imitate a huge 'teacher'. The trick starts here: turn the teacher's overconfident softmax into a softer distribution that reveals which wrong answers it still considers plausible."
+  },
+  "xp_reward": 80,
+  "next_unlock": "distillation_kl_divergence_loss",
+  "story_variants": {
+    "en": "## The Teacher Knows More Than Its Top Answer\n\n\"A giant teacher model doesn't just output 'cat',\" Vaathiyaar says. \"Underneath, it computes a score for *every* class, and ordinary softmax at temperature 1 crushes those scores into something like 99% cat, 1% everything else. That 1% is thrown away — but it's actually **useful**. It tells you the teacher thinks this photo looks a little bit like a fox too, and barely at all like a car. That relative ranking among the wrong answers is what people call 'dark knowledge', and it's the whole reason distillation works better than just training on hard labels.\"\n\n### Temperature Softens the Distribution\n\nOrdinary softmax over logits `x` is `exp(x_i) / sum(exp(x_j))`. Distillation divides every logit by a **temperature** `T` first:\n\n> **p_i = exp(x_i / T) / sum_j exp(x_j / T)**\n\nAt `T = 1` this is plain softmax. As `T` grows, every logit gets divided by a bigger number before the exponential, which shrinks the *differences* between logits — so the resulting distribution flattens out and the smaller probabilities become visible instead of vanishing to nearly zero.\n\n### A Real Teacher, Two Temperatures\n\nSay a teacher classifying an image into {cat, dog, fox} outputs logits `[4.0, 2.0, 0.5]`. At `T = 1`:\n\n```\ntemperature_softmax([4.0, 2.0, 0.5], 1) -> [0.858, 0.1161, 0.0259]\n```\n\nThe teacher looks nearly certain — 85.8% cat. Now raise the temperature to `T = 4`:\n\n```\ntemperature_softmax([4.0, 2.0, 0.5], 4) -> [0.4942, 0.2998, 0.206]\n```\n\nSame teacher, same image, but now the gap between cat, dog, and fox is much smaller, and fox — barely visible at `T=1` — now clearly stands out from dog. Nothing about the model changed; only how much of its internal ranking we let through.\n\n> **Vaathiyaar's rule:** temperature doesn't change *what* the teacher believes, only how much of that belief gets exposed. A high `T` is a magnifying glass for the probabilities the teacher almost hid.\n\nToday you implement `temperature_softmax` itself, then measure how much the temperature closes the gap between the top two classes."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "teacher_distribution_softens",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Temperature-scaled softmax",
+          "children": [
+            "p_i = exp(x_i / T) / sum_j exp(x_j / T)",
+            "T = 1 -> ordinary softmax",
+            "T > 1 -> flatter distribution, more 'dark knowledge' visible",
+            "used to expose the teacher's ranking of wrong answers"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "exps = [exp(x / T) for x in logits]",
+          "highlight": "exp(x / T)",
+          "explanation": {
+            "en": "Divide every logit by T before exponentiating — this is what shrinks the gaps"
+          }
+        },
+        {
+          "line": "s = sum(exps)",
+          "highlight": "sum(exps)",
+          "explanation": {
+            "en": "Total mass, needed to turn scores into a probability distribution"
+          }
+        },
+        {
+          "line": "probs = [round(e / s, 4) for e in exps]",
+          "highlight": "e / s",
+          "explanation": {
+            "en": "Normalize each exponentiated score by the total"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "T = 1 (ordinary softmax)",
+        "items": [
+          "[0.858, 0.1161, 0.0259]",
+          "top-two gap: 0.7419",
+          "looks nearly certain"
+        ]
+      },
+      "right": {
+        "title": "T = 4 (softened)",
+        "items": [
+          "[0.4942, 0.2998, 0.206]",
+          "top-two gap: 0.1944",
+          "wrong-answer ranking now visible"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "logits = [4.0, 2.0, 0.5]  # cat, dog, fox",
+        "temperature_softmax(logits, 1) -> [0.858, 0.1161, 0.0259]",
+        "temperature_softmax(logits, 4) -> [0.4942, 0.2998, 0.206]"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "distribution_softened",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `temperature_softmax(logits, T)` — softmax with temperature scaling. Formula: `p_i = exp(x_i / T) / sum_j exp(x_j / T)`. Divide each logit by `T` first, exponentiate, then normalize by the sum. Round each probability to 4 decimal places. Then print `temperature_softmax([4.0, 2.0, 0.5], 1)` (expected: `[0.858, 0.1161, 0.0259]`)."
+      },
+      "starter_code": "import math\n\ndef temperature_softmax(logits: list, T: float) -> list:\n    \"\"\"Softmax with temperature: exp(x_i / T) normalized over all i.\"\"\"\n    # 1. exps = [math.exp(x / T) for x in logits]\n    # 2. s = sum(exps)\n    # 3. return [round(e / s, 4) for e in exps]\n    pass\n\nprint(temperature_softmax([4.0, 2.0, 0.5], 1))",
+      "hints": {
+        "en": [
+          "exps = [math.exp(x / T) for x in logits]",
+          "s = sum(exps)",
+          "return [round(e / s, 4) for e in exps]"
+        ]
+      },
+      "expected_output": "[0.858, 0.1161, 0.0259]"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `confidence_gap(logits, T)` — the margin between the teacher's top two probabilities at a given temperature, which is exactly what shrinks as `T` rises. Reuse `temperature_softmax`, sort the resulting probabilities descending, and return `round(sorted_probs[0] - sorted_probs[1], 4)`. Then print `confidence_gap([4.0, 2.0, 0.5], 4)` (expected: `0.1944` — compare this to the `T=1` gap of `0.7419` from the story to see temperature at work)."
+      },
+      "starter_code": "import math\n\ndef temperature_softmax(logits: list, T: float) -> list:\n    exps = [math.exp(x / T) for x in logits]\n    s = sum(exps)\n    return [round(e / s, 4) for e in exps]\n\ndef confidence_gap(logits: list, T: float) -> float:\n    \"\"\"Margin between the top two softened probabilities.\"\"\"\n    # probs = temperature_softmax(logits, T)\n    # sorted_probs = sorted(probs, reverse=True)\n    # return round(sorted_probs[0] - sorted_probs[1], 4)\n    pass\n\nprint(confidence_gap([4.0, 2.0, 0.5], 4))",
+      "hints": {
+        "en": [
+          "probs = temperature_softmax(logits, T)",
+          "sorted_probs = sorted(probs, reverse=True)",
+          "return round(sorted_probs[0] - sorted_probs[1], 4)"
+        ]
+      },
+      "expected_output": "0.1944"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "knowledge_distillation",
+      "temperature_softmax",
+      "dark_knowledge",
+      "softmax"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "list_comprehensions",
+      "sorting"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

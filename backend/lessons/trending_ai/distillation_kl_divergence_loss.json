@@ -1,0 +1,161 @@
+{
+  "id": "distillation_kl_divergence_loss",
+  "topic": "distillation_kl_divergence_loss",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 126,
+  "title": {
+    "en": "Knowledge Distillation: Measuring the Gap with KL Divergence"
+  },
+  "description": {
+    "en": "distillation_temperature_softmax showed how to soften a teacher's distribution. Softening alone doesn't train anything — you need a number that says how far the student's softened guess is from the teacher's. That number is KL divergence, and it's the actual signal the student learns from."
+  },
+  "xp_reward": 80,
+  "next_unlock": "distillation_loss_blend",
+  "story_variants": {
+    "en": "## From 'Softer' to 'How Far Off'\n\n\"Softening the teacher's distribution was step one,\" Vaathiyaar says. \"Step two is: the student produces its *own* softened distribution, and you need a single number measuring how different it is from the teacher's. That number is what gradient descent actually pushes down during training. It's called **KL divergence**.\"\n\n### The Formula\n\nFor two probability distributions `p` (teacher) and `q` (student) over the same classes:\n\n> **KL(p || q) = sum_i p_i x log(p_i / q_i)**\n\nRead it term by term: for each class, take the teacher's probability `p_i`, multiply it by the log of the *ratio* between the teacher's and student's probability for that class. If `p` and `q` are identical, every ratio is 1, `log(1) = 0`, and the total is exactly 0 — no gap, no loss. The more the student's probability for a class the teacher favors *diverges* from the teacher's own probability, the bigger the sum grows. (Classes where `p_i = 0` contribute nothing — there's nothing to match if the teacher assigns no probability there.)\n\n### A Real Gap\n\nTake the teacher and a weaker student on the same cat/dog/fox image, both softened at `T = 4`:\n\n```\nteacher (T=4): [0.4942, 0.2998, 0.206]   # from distillation_temperature_softmax\nstudent (T=4): [0.4192, 0.3265, 0.2543]  # less confident, ranks fox higher\n\nkl_divergence(teacher, student) -> 0.0124\n```\n\nSmall, but not zero — the student agrees roughly with the teacher's top choice but hasn't yet matched its exact ranking of dog vs. fox.\n\n### Why Multiply by T-squared\n\nIn practice this KL is computed at the same high temperature used to soften both distributions, then scaled by `T^2`. That's because dividing logits by `T` also shrinks the *gradients* flowing back through the softmax by roughly a factor of `T^2` — multiplying the loss back up by `T^2` keeps the soft-target signal at a comparable scale to ordinary training, regardless of which `T` you picked.\n\n> **Vaathiyaar's rule:** KL divergence is not symmetric — `KL(p||q)` is 'how surprised is someone who believes q, when the true answer follows p'. In distillation, the teacher `p` is treated as ground truth and the student `q` is the one being corrected, so the order matters: teacher first, student second.\n\nToday you implement `kl_divergence`, then the full `soft_target_loss` that includes the `T^2` rescale."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "distributions_compared",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Soft-target loss",
+          "children": [
+            "KL(p || q) = sum_i p_i * log(p_i / q_i)",
+            "p = teacher's softened distribution",
+            "q = student's softened distribution",
+            "scaled by T^2 to match gradient magnitude"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "for pi, qi in zip(p, q):",
+          "highlight": "zip(p, q)",
+          "explanation": {
+            "en": "Walk matching probabilities from teacher and student, class by class"
+          }
+        },
+        {
+          "line": "if pi > 0: total += pi * log(pi / qi)",
+          "highlight": "pi * log(pi / qi)",
+          "explanation": {
+            "en": "Teacher-weighted log-ratio — zero only when the student matches exactly"
+          }
+        },
+        {
+          "line": "loss = kl * (T ** 2)",
+          "highlight": "T ** 2",
+          "explanation": {
+            "en": "Rescale so the soft-target signal doesn't shrink as T grows"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Matching distributions",
+        "items": [
+          "p == q, every class",
+          "every log(p_i/q_i) = 0",
+          "KL = 0.0"
+        ]
+      },
+      "right": {
+        "title": "This student",
+        "items": [
+          "close on top class",
+          "ranks fox vs dog differently",
+          "KL = 0.0124"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "teacher(T=4) = [0.4942, 0.2998, 0.206]",
+        "student(T=4) = [0.4192, 0.3265, 0.2543]",
+        "kl_divergence(teacher, student) -> 0.0124",
+        "soft_target_loss(..., T=4) -> 0.1984"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "gap_measured",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `kl_divergence(p, q)` — KL divergence from student `q` to teacher `p`. Formula: `sum_i p_i * log(p_i / q_i)` over matching entries, skipping any entry where `p_i` is 0. Round the total to 4 decimal places. Then print `kl_divergence([0.4942, 0.2998, 0.206], [0.4192, 0.3265, 0.2543])` (expected: `0.0124`)."
+      },
+      "starter_code": "import math\n\ndef kl_divergence(p: list, q: list) -> float:\n    \"\"\"KL(p || q) = sum_i p_i * log(p_i / q_i), skipping p_i == 0.\"\"\"\n    # total = 0.0\n    # for pi, qi in zip(p, q):\n    #     if pi > 0:\n    #         total += pi * math.log(pi / qi)\n    # return round(total, 4)\n    pass\n\nprint(kl_divergence([0.4942, 0.2998, 0.206], [0.4192, 0.3265, 0.2543]))",
+      "hints": {
+        "en": [
+          "Loop with zip(p, q) to walk matching class probabilities",
+          "Skip terms where pi == 0 — there's nothing to compare",
+          "total += pi * math.log(pi / qi), then round(total, 4)"
+        ]
+      },
+      "expected_output": "0.0124"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `soft_target_loss(teacher_logits, student_logits, T)` — the full soft-target distillation loss. Soften both logit lists with `temperature_softmax` at temperature `T`, take their `kl_divergence`, then rescale by `T ** 2` (rounded to 4 decimals) to compensate for the gradient-shrinking effect of dividing by `T`. Then print `soft_target_loss([4.0, 2.0, 0.5], [3.0, 2.0, 1.0], 4)` (expected: `0.1984`)."
+      },
+      "starter_code": "import math\n\ndef temperature_softmax(logits: list, T: float) -> list:\n    exps = [math.exp(x / T) for x in logits]\n    s = sum(exps)\n    return [round(e / s, 4) for e in exps]\n\ndef kl_divergence(p: list, q: list) -> float:\n    total = 0.0\n    for pi, qi in zip(p, q):\n        if pi > 0:\n            total += pi * math.log(pi / qi)\n    return round(total, 4)\n\ndef soft_target_loss(teacher_logits: list, student_logits: list, T: float) -> float:\n    \"\"\"KL divergence between softened teacher and student, rescaled by T^2.\"\"\"\n    # p = temperature_softmax(teacher_logits, T)\n    # q = temperature_softmax(student_logits, T)\n    # kl = kl_divergence(p, q)\n    # return round(kl * (T ** 2), 4)\n    pass\n\nprint(soft_target_loss([4.0, 2.0, 0.5], [3.0, 2.0, 1.0], 4))",
+      "hints": {
+        "en": [
+          "p = temperature_softmax(teacher_logits, T)",
+          "q = temperature_softmax(student_logits, T)",
+          "return round(kl_divergence(p, q) * (T ** 2), 4)"
+        ]
+      },
+      "expected_output": "0.1984"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "knowledge_distillation",
+      "kl_divergence",
+      "soft_target_loss",
+      "temperature_scaling"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "list_comprehensions",
+      "logarithms"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

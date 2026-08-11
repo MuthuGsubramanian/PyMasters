@@ -1,0 +1,159 @@
+{
+  "id": "distillation_loss_blend",
+  "topic": "distillation_loss_blend",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 127,
+  "title": {
+    "en": "Knowledge Distillation: Blending the Teacher's Hints with the Real Answer"
+  },
+  "description": {
+    "en": "distillation_kl_divergence_loss built the soft-target signal from the teacher. But the student still needs to know the actual correct label, not just imitate the teacher. Blend both signals into the one loss real distillation training runs use."
+  },
+  "xp_reward": 90,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Two Teachers, One Loss\n\n\"The soft-target loss teaches the student to imitate the *teacher*,\" Vaathiyaar says. \"But the teacher can be wrong, or the student could just learn to copy its mistakes. So real distillation training never uses the soft-target loss alone — it blends it with an ordinary **hard-label** loss against the actual ground-truth answer, so the student still learns from reality too.\"\n\n### The Hard-Label Half\n\nThe hard-label loss is plain cross-entropy against the true class, computed on the student's *ordinary* (`T=1`) softmax:\n\n> **CE = -log(q_1[true_index])**\n\nJust the negative log of the probability the student assigned to the correct class. If the student is confident and correct, `q_1[true_index]` is close to 1 and `CE` is close to 0. If it's confident and *wrong*, `CE` blows up.\n\n### The Blend\n\nHinton's original distillation paper (2015) combines both losses with a weight `alpha` between 0 and 1:\n\n> **total_loss = alpha x soft_target_loss + (1 - alpha) x CE**\n\n`alpha` close to 1 means 'mostly trust the teacher's hints'; close to 0 means 'mostly trust the ground-truth label'. In practice `alpha` around 0.5-0.9 is typical — the soft targets carry more information per example (a full distribution instead of one correct answer), so they're often weighted more heavily.\n\n### The Full Pipeline, For Real\n\nSame teacher and student as before, true label is class 0 (cat), `T = 4`, `alpha = 0.7`:\n\n```\nsoft_target_loss(...)               -> 0.1984   # from distillation_kl_divergence_loss\ncross_entropy(0, student_T1_probs)  -> 0.4077   # student's own confidence in 'cat'\ntotal = 0.7 * 0.1984 + 0.3 * 0.4077 -> 0.2612\n```\n\nThat single number, `0.2612`, is what gradient descent actually minimizes during one training step of the student. Every term you've built across this trilogy — the softened distribution, the KL gap, the `T^2` rescale, and now the hard-label anchor — feeds into it.\n\n> **Vaathiyaar's rule:** a distilled student is never trained to imitate the teacher alone. It's trained to balance two signals — 'what does the giant model believe' and 'what is actually true' — and `alpha` is the knob that sets how much it leans on each.\n\nToday you implement `cross_entropy` and then `total_distillation_loss`, the complete objective."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "two_losses_blend",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Total distillation loss",
+          "children": [
+            "soft_target_loss: imitate the teacher's distribution",
+            "cross_entropy: match the ground-truth label",
+            "total = alpha * soft + (1 - alpha) * hard",
+            "alpha tunes trust in teacher vs. ground truth"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "ce = -log(student_probs[true_index])",
+          "highlight": "-log(student_probs[true_index])",
+          "explanation": {
+            "en": "Hard-label loss: how surprised the student is by the true answer"
+          }
+        },
+        {
+          "line": "soft = soft_target_loss(teacher_logits, student_logits, T)",
+          "highlight": "soft_target_loss(...)",
+          "explanation": {
+            "en": "Soft-target loss: how far the student's softened guess is from the teacher's"
+          }
+        },
+        {
+          "line": "total = alpha * soft + (1 - alpha) * ce",
+          "highlight": "alpha * soft + (1 - alpha) * ce",
+          "explanation": {
+            "en": "Weighted blend — this single number is what training minimizes"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "alpha = 1.0",
+        "items": [
+          "pure soft-target loss",
+          "student only imitates teacher",
+          "ignores ground truth entirely"
+        ]
+      },
+      "right": {
+        "title": "alpha = 0.7 (this example)",
+        "items": [
+          "soft=0.1984, hard=0.4077",
+          "total = 0.2612",
+          "mostly teacher, some ground truth"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "cross_entropy(0, [0.6652, 0.2447, 0.09]) -> 0.4077",
+        "soft_target_loss(..., T=4) -> 0.1984",
+        "total_distillation_loss(..., alpha=0.7) -> 0.2612"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "student_trained",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `cross_entropy(true_index, probs)` — the hard-label loss against the real answer. Return `round(-log(probs[true_index]), 4)`. Then print `cross_entropy(0, [0.6652, 0.2447, 0.09])` (expected: `0.4077` — the student's own T=1 confidence in the correct class, 'cat')."
+      },
+      "starter_code": "import math\n\ndef cross_entropy(true_index: int, probs: list) -> float:\n    \"\"\"Hard-label loss: -log of the student's probability for the true class.\"\"\"\n    # return round(-math.log(probs[true_index]), 4)\n    pass\n\nprint(cross_entropy(0, [0.6652, 0.2447, 0.09]))",
+      "hints": {
+        "en": [
+          "The formula is just -log(probs[true_index])",
+          "return round(-math.log(probs[true_index]), 4)"
+        ]
+      },
+      "expected_output": "0.4077"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `total_distillation_loss(teacher_logits, student_logits, true_index, T, alpha)` — the complete Hinton-style objective. Compute `soft = soft_target_loss(teacher_logits, student_logits, T)` and `hard = cross_entropy(true_index, temperature_softmax(student_logits, 1))` (the student's ordinary T=1 softmax), then return `round(alpha * soft + (1 - alpha) * hard, 4)`. Then print `total_distillation_loss([4.0, 2.0, 0.5], [3.0, 2.0, 1.0], 0, 4, 0.7)` (expected: `0.2612`)."
+      },
+      "starter_code": "import math\n\ndef temperature_softmax(logits: list, T: float) -> list:\n    exps = [math.exp(x / T) for x in logits]\n    s = sum(exps)\n    return [round(e / s, 4) for e in exps]\n\ndef kl_divergence(p: list, q: list) -> float:\n    total = 0.0\n    for pi, qi in zip(p, q):\n        if pi > 0:\n            total += pi * math.log(pi / qi)\n    return round(total, 4)\n\ndef soft_target_loss(teacher_logits: list, student_logits: list, T: float) -> float:\n    p = temperature_softmax(teacher_logits, T)\n    q = temperature_softmax(student_logits, T)\n    return round(kl_divergence(p, q) * (T ** 2), 4)\n\ndef cross_entropy(true_index: int, probs: list) -> float:\n    return round(-math.log(probs[true_index]), 4)\n\ndef total_distillation_loss(teacher_logits: list, student_logits: list, true_index: int, T: float, alpha: float) -> float:\n    \"\"\"Blend soft-target loss and hard-label cross-entropy: alpha * soft + (1 - alpha) * hard.\"\"\"\n    # soft = soft_target_loss(teacher_logits, student_logits, T)\n    # hard = cross_entropy(true_index, temperature_softmax(student_logits, 1))\n    # return round(alpha * soft + (1 - alpha) * hard, 4)\n    pass\n\nprint(total_distillation_loss([4.0, 2.0, 0.5], [3.0, 2.0, 1.0], 0, 4, 0.7))",
+      "hints": {
+        "en": [
+          "soft = soft_target_loss(teacher_logits, student_logits, T)",
+          "hard = cross_entropy(true_index, temperature_softmax(student_logits, 1)) -- note T=1 here, ordinary softmax",
+          "return round(alpha * soft + (1 - alpha) * hard, 4)"
+        ]
+      },
+      "expected_output": "0.2612"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "knowledge_distillation",
+      "cross_entropy",
+      "loss_blending",
+      "hard_label_loss"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "logarithms",
+      "list_comprehensions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
