@@ -1,0 +1,161 @@
+{
+  "id": "rope_relative_position_invariance",
+  "topic": "rope_relative_position_invariance",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 123,
+  "title": {
+    "en": "RoPE's Payoff: Attention Scores That Only See Relative Distance"
+  },
+  "description": {
+    "en": "Rotating query and key vectors by their positions isn't just a clever trick -- it makes the dot product between them depend only on how far apart the two positions are, never on where they sit in the sequence. Prove it by rotating the same pair of vectors at two different absolute positions with the same gap and watching the scores match exactly."
+  },
+  "xp_reward": 80,
+  "next_unlock": "rope_context_extension_scaling",
+  "story_variants": {
+    "en": "## Why Rotate Instead of Add?\n\n\"`rope_frequency_bands` gave every dimension pair its own rotation speed,\" Vaathiyaar says. \"Here's the payoff that makes RoPE worth the extra machinery: attention scores computed from rotated vectors depend *only* on the distance between two positions, never on the positions themselves. A query at position 1000 attending to a key at position 998 produces exactly the same score contribution as a query at position 12 attending to a key at position 10 -- same gap, same rotated dot product.\"\n\n### One Pair, Two Rotations, One Dot Product\n\nFor a single dimension pair `(x1, x2)`, rotating by angle `a` is a standard 2D rotation:\n\n```\nrotate(x1, x2, a) = (x1*cos(a) - x2*sin(a), x1*sin(a) + x2*cos(a))\n```\n\nRoPE rotates the query pair by `pos_q * theta` and the key pair by `pos_k * theta`, then takes their dot product as usual. Because rotation matrices are orthogonal, that dot product collapses to a single rotation by the *difference* of the angles -- `(pos_k - pos_q) * theta` -- no matter what `pos_q` and `pos_k` individually were.\n\n### Proving It With Numbers\n\nTake a fixed query pair `(1.0, 0.0)`, a fixed key pair `(0.6, 0.8)`, and `theta = 0.5`. Rotate the query by position `3` and the key by position `1` (gap of `2`) and dot-product the results: `0.9974`. Now rotate the query by position `7` and the key by position `5` -- still a gap of `2`, but both absolute positions moved by `4`. The dot product: `0.9974` again, identical to six decimal places. The raw, unrotated dot product of `(1.0, 0.0)` and `(0.6, 0.8)` is just `0.6` -- rotation is doing real work, and what it produces depends on relative position alone.\n\n> **Vaathiyaar's rule:** this is the entire reason RoPE generalizes to sequence lengths it never saw in training -- the model never learns 'position 50,000 means X', it only ever learns 'a gap of N means X', and a gap of N looks identical everywhere in the sequence.\n\nToday you implement the rotation and confirm the invariance yourself."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "two_rotated_arrows_same_gap",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "RoPE relative-position invariance",
+          "children": [
+            "rotate(x1, x2, angle) is a standard 2D rotation",
+            "query rotated by pos_q * theta, key by pos_k * theta",
+            "dot product depends only on (pos_k - pos_q)",
+            "same gap, different absolute positions -> identical score"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "rx1, rx2 = x1*cos(angle) - x2*sin(angle), x1*sin(angle) + x2*cos(angle)",
+          "highlight": "cos(angle)",
+          "explanation": {
+            "en": "A standard 2D rotation matrix applied to the (x1, x2) pair"
+          }
+        },
+        {
+          "line": "rq1, rq2 = rotate_pair(q1, q2, pos_q * theta)",
+          "highlight": "pos_q * theta",
+          "explanation": {
+            "en": "The query pair is rotated by its own position times the pair's frequency"
+          }
+        },
+        {
+          "line": "score = rq1*rk1 + rq2*rk2",
+          "highlight": "rq1*rk1 + rq2*rk2",
+          "explanation": {
+            "en": "The dot product of the two rotated pairs -- this is what ends up depending only on the position gap"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "positions 3 and 1 (gap 2)",
+        "items": [
+          "pos_q=3, pos_k=1",
+          "rotate then dot product",
+          "score = 0.9974"
+        ]
+      },
+      "right": {
+        "title": "positions 7 and 5 (gap 2)",
+        "items": [
+          "pos_q=7, pos_k=5",
+          "rotate then dot product",
+          "score = 0.9974 (identical)"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "q=(1.0, 0.0) k=(0.6, 0.8) theta=0.5",
+        "rope_dot_product(..., pos_q=3, pos_k=1) -> 0.9974",
+        "rope_dot_product(..., pos_q=7, pos_k=5) -> 0.9974",
+        "raw dot product (no rotation) -> 0.6"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "gap_locked_in",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `rotate_pair(x1, x2, angle)` -- a standard 2D rotation of the pair `(x1, x2)` by `angle` radians. Formula: `(x1*cos(angle) - x2*sin(angle), x1*sin(angle) + x2*cos(angle))`, each value rounded to 6 decimals. Use `math.cos` and `math.sin`. Then print `rotate_pair(1.0, 0.0, 0.5)` (expected: `(0.877583, 0.479426)`)."
+      },
+      "starter_code": "import math\n\ndef rotate_pair(x1: float, x2: float, angle: float) -> tuple:\n    \"\"\"Standard 2D rotation of (x1, x2) by angle radians.\"\"\"\n    # c, s = math.cos(angle), math.sin(angle)\n    # return round(x1*c - x2*s, 6), round(x1*s + x2*c, 6)\n    pass\n\nprint(rotate_pair(1.0, 0.0, 0.5))",
+      "hints": {
+        "en": [
+          "Compute c = math.cos(angle) and s = math.sin(angle) first",
+          "new x1 is x1*c - x2*s, new x2 is x1*s + x2*c",
+          "return round(x1*c - x2*s, 6), round(x1*s + x2*c, 6)"
+        ]
+      },
+      "expected_output": "(0.877583, 0.479426)"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `rope_dot_product(q1, q2, k1, k2, pos_q, pos_k, theta)` -- rotate the query pair by `pos_q * theta`, rotate the key pair by `pos_k * theta` (reuse `rotate_pair`), and return the dot product of the two rotated pairs, rounded to 4 decimals. Then print it three times for `q=(1.0, 0.0)`, `k=(0.6, 0.8)`, `theta=0.5`: once for `(pos_q=3, pos_k=1)`, once for `(pos_q=7, pos_k=5)`, once for `(pos_q=10, pos_k=8)` -- one call per line (expected: `0.9974` all three times, since every pair has the same gap of 2)."
+      },
+      "starter_code": "import math\n\ndef rotate_pair(x1: float, x2: float, angle: float) -> tuple:\n    c, s = math.cos(angle), math.sin(angle)\n    return round(x1*c - x2*s, 6), round(x1*s + x2*c, 6)\n\ndef rope_dot_product(q1: float, q2: float, k1: float, k2: float, pos_q: int, pos_k: int, theta: float) -> float:\n    \"\"\"Dot product of the RoPE-rotated query and key pairs.\"\"\"\n    # rq1, rq2 = rotate_pair(q1, q2, pos_q * theta)\n    # rk1, rk2 = rotate_pair(k1, k2, pos_k * theta)\n    # return round(rq1*rk1 + rq2*rk2, 4)\n    pass\n\nprint(rope_dot_product(1.0, 0.0, 0.6, 0.8, 3, 1, 0.5))\nprint(rope_dot_product(1.0, 0.0, 0.6, 0.8, 7, 5, 0.5))\nprint(rope_dot_product(1.0, 0.0, 0.6, 0.8, 10, 8, 0.5))",
+      "hints": {
+        "en": [
+          "Rotate the query pair by pos_q * theta and the key pair by pos_k * theta",
+          "rq1, rq2 = rotate_pair(q1, q2, pos_q * theta) and rk1, rk2 = rotate_pair(k1, k2, pos_k * theta)",
+          "return round(rq1*rk1 + rq2*rk2, 4) -- all three calls share a gap of 2, so all three results match"
+        ]
+      },
+      "expected_output": "0.9974\n0.9974\n0.9974"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "rotary_position_embeddings",
+      "rope",
+      "relative_position",
+      "attention"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic",
+      "trigonometry"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

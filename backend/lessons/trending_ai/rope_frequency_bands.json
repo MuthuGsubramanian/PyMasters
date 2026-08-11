@@ -1,0 +1,160 @@
+{
+  "id": "rope_frequency_bands",
+  "topic": "rope_frequency_bands",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 122,
+  "title": {
+    "en": "RoPE Frequencies: Every Dimension Pair Gets Its Own Clock"
+  },
+  "description": {
+    "en": "Rotary Position Embeddings don't add a position vector to the token embedding -- they rotate it. Each pair of dimensions inside a head rotates at its own fixed frequency. Compute those frequencies and the resulting rotation angles for a real Llama-shaped head_dim=128 config."
+  },
+  "xp_reward": 80,
+  "next_unlock": "rope_relative_position_invariance",
+  "story_variants": {
+    "en": "## Position by Rotation, Not by Addition\n\n\"`positional_encoding` taught you the classic trick: add a sinusoidal vector to the token embedding before attention even starts,\" Vaathiyaar says. \"RoPE -- Rotary Position Embeddings -- does something different. It doesn't touch the embedding at all. Instead, right before the query and key vectors are dot-producted inside attention, RoPE *rotates* each one by an angle that depends on its position in the sequence. Llama, Qwen, Mistral -- every model in the `gqa_kv_head_grouping` lesson's list uses RoPE for exactly this.\"\n\n### Dimensions Come in Pairs\n\nA query or key vector has `head_dim` numbers in it -- 128 for a Llama-3-8B-shaped head. RoPE splits those 128 numbers into 64 **pairs**, and rotates every pair by its own angle, like 64 independent clock hands living inside one vector. Pair `i` (there are `head_dim / 2` of them, indexed `0` to `63`) gets a fixed frequency:\n\n```\ntheta_i = base ** (-(2 * i) / head_dim)\n```\n\nwith `base = 10000` by default (the same constant appears in Llama, Qwen, and Mistral configs as `rope_theta`).\n\n### Fast Pairs, Slow Pairs\n\nPair `0` gets `theta_0 = base ** 0 = 1.0` -- the fastest clock, rotating a full `1.0` radian for every single position step. Pair `32` -- the midpoint of 64 pairs -- gets `theta_32 = base ** -0.5 = 0.01`, a hundred times slower. Pair `63`, the slowest, barely moves at all per step. The **rotation angle** for pair `i` at sequence position `pos` is just `pos * theta_i`: how far that pair's clock hand has swung by the time you reach that position.\n\n> **Vaathiyaar's rule:** low-index pairs are fast clocks that tell attention about *nearby* positions precisely; high-index pairs are slow clocks that only start to distinguish *far apart* positions. Stacking 64 clocks running at 64 different speeds is what lets one rotation encode position at every distance scale at once.\n\nToday you compute both: the frequency `theta_i` for a given pair, and the rotation angle at a given position."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "clock_hands_per_dimension_pair",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "RoPE frequency bands",
+          "children": [
+            "head_dim numbers split into head_dim/2 pairs",
+            "theta_i = base ** (-(2*i)/head_dim)",
+            "pair 0 rotates fastest, pair head_dim/2-1 rotates slowest",
+            "rotation angle at position pos = pos * theta_i"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "theta_i = base ** (-(2 * i) / head_dim)",
+          "highlight": "-(2 * i) / head_dim",
+          "explanation": {
+            "en": "The exponent grows more negative as i increases, so theta_i shrinks -- higher pairs rotate slower"
+          }
+        },
+        {
+          "line": "theta_i = round(theta_i, 6)",
+          "highlight": "round(theta_i, 6)",
+          "explanation": {
+            "en": "Frequencies are fractions of a radian, so keep enough precision to tell pairs apart"
+          }
+        },
+        {
+          "line": "angle = round(pos * theta_i, 4)",
+          "highlight": "pos * theta_i",
+          "explanation": {
+            "en": "The angle a pair has rotated by is just how many steps taken times its fixed per-step frequency"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Pair 0 (fastest clock)",
+        "items": [
+          "theta_0 = 10000 ** 0 = 1.0",
+          "rotates 1.0 rad per position",
+          "distinguishes nearby positions"
+        ]
+      },
+      "right": {
+        "title": "Pair 32 (mid-speed clock)",
+        "items": [
+          "theta_32 = 10000 ** -0.5 = 0.01",
+          "rotates 0.01 rad per position",
+          "100x slower than pair 0"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "head_dim=128 base=10000",
+        "rope_theta(0, 128) -> 1.0",
+        "rope_theta(32, 128) -> 0.01",
+        "rope_angle(5, 32, 128) -> 0.05"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "clock_hands_ticking",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `rope_theta(i, head_dim, base=10000)` -- the fixed rotation frequency for dimension pair `i`. Formula: `base ** (-(2 * i) / head_dim)`, rounded to 6 decimals. Then print `rope_theta(32, 128)` (expected: `0.01`)."
+      },
+      "starter_code": "def rope_theta(i: int, head_dim: int, base: int = 10000) -> float:\n    \"\"\"Fixed rotation frequency for dimension pair i, out of head_dim/2 pairs.\"\"\"\n    # return round(base ** (-(2 * i) / head_dim), 6)\n    pass\n\nprint(rope_theta(32, 128))",
+      "hints": {
+        "en": [
+          "The exponent is -(2 * i) / head_dim -- it grows more negative as i grows",
+          "theta_i = base ** exponent",
+          "return round(base ** (-(2 * i) / head_dim), 6)"
+        ]
+      },
+      "expected_output": "0.01"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `rope_angle(pos, i, head_dim, base=10000)` -- the angle dimension pair `i` has rotated by at sequence position `pos`. Reuse `rope_theta`. Formula: `round(pos * rope_theta(i, head_dim, base), 4)`. Then print `rope_angle(5, 32, 128)` (expected: `0.05`)."
+      },
+      "starter_code": "def rope_theta(i: int, head_dim: int, base: int = 10000) -> float:\n    return round(base ** (-(2 * i) / head_dim), 6)\n\ndef rope_angle(pos: int, i: int, head_dim: int, base: int = 10000) -> float:\n    \"\"\"Angle dimension pair i has rotated by, by the time it reaches position pos.\"\"\"\n    # theta = rope_theta(i, head_dim, base)\n    # return round(pos * theta, 4)\n    pass\n\nprint(rope_angle(5, 32, 128))",
+      "hints": {
+        "en": [
+          "Get the pair's frequency first: theta = rope_theta(i, head_dim, base)",
+          "The angle at position pos is just pos * theta",
+          "return round(pos * theta, 4)"
+        ]
+      },
+      "expected_output": "0.05"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "rotary_position_embeddings",
+      "rope",
+      "attention",
+      "positional_encoding"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

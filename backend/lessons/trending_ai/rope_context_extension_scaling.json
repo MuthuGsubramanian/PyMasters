@@ -1,0 +1,162 @@
+{
+  "id": "rope_context_extension_scaling",
+  "topic": "rope_context_extension_scaling",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 124,
+  "title": {
+    "en": "Why Llama 3.1 Cranked rope_theta From 10000 to 500000"
+  },
+  "description": {
+    "en": "Every RoPE dimension pair's rotation eventually wraps back around to where it started -- and once it wraps within your context window, the model can no longer tell two positions apart. Compute the wraparound distance for the slowest dimension pair and see exactly why long-context models ship with a much bigger rope_theta base."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Every Clock Hand Eventually Comes Back Around\n\n\"`rope_relative_position_invariance` showed you that RoPE scores depend only on the gap between two positions,\" Vaathiyaar says. \"But a rotation is periodic -- it repeats every `2*pi` radians. If dimension pair `i` rotates `theta_i` radians per position, it takes `2*pi / theta_i` positions before that pair's clock hand returns to exactly where it started. That distance is the pair's **wavelength**. Beyond it, that dimension pair can no longer tell two positions apart -- they look identical to it.\"\n\n### The Slowest Pair Sets the Ceiling\n\nPair `0` always has `theta_0 = 1.0` no matter the `base`, so its wavelength is always `2*pi ~= 6.3` positions -- it wraps almost immediately, which is fine, because faster pairs are meant to resolve *nearby* positions anyway. The pair that matters for long-range distinctions is the **slowest** one, pair `head_dim/2 - 1` (pair `63` for `head_dim=128`). Its wavelength is:\n\n```\nwavelength_i = 2*pi / theta_i = 2*pi * base ** ((2*i) / head_dim)\n```\n\nWith the default `base=10000`, pair `63`'s wavelength is about `54,410` positions. That comfortably covers an 8K or 32K context window -- but not the 128K-token contexts Llama 3.1 and similar 2026-era models advertise.\n\n### Stretching the Wavelength\n\nRaising `base` to `500000` -- exactly what Llama 3.1 did -- stretches pair `63`'s wavelength to roughly `2,559,196` positions, comfortably past 128K. Pair `0`'s wavelength barely moves (it's still `~6.3`, since `theta_0` never depends on `base`), so nearby-position resolution is untouched; only the slow pairs that were at risk of wrapping get stretched.\n\n> **Vaathiyaar's rule:** `rope_theta` isn't a hyperparameter you tune for accuracy -- it's a wavelength budget. Pick a base whose slowest dimension pair's wavelength comfortably exceeds your longest intended context, or positions far apart in that context become indistinguishable to that pair.\n\nToday you compute the wavelength directly and check whether a given base can actually cover a target context length."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "clock_hand_wraparound",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "RoPE context extension",
+          "children": [
+            "wavelength_i = 2*pi / theta_i = 2*pi * base ** (2*i/head_dim)",
+            "pair 0's wavelength never depends on base",
+            "slowest pair's wavelength sets the max distinguishable context",
+            "bigger base stretches slow pairs' wavelengths, not fast pairs'"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "wavelength = 2 * pi * (base ** ((2 * i) / head_dim))",
+          "highlight": "base ** ((2 * i) / head_dim)",
+          "explanation": {
+            "en": "This is 1/theta_i rearranged -- the inverse of the rotation frequency, in positions per full turn"
+          }
+        },
+        {
+          "line": "wavelength = round(wavelength, 1)",
+          "highlight": "round(wavelength, 1)",
+          "explanation": {
+            "en": "Wavelengths are measured in positions (tokens), so keep one decimal for clarity"
+          }
+        },
+        {
+          "line": "covers_context = wavelength >= context_len",
+          "highlight": "wavelength >= context_len",
+          "explanation": {
+            "en": "If the wavelength is shorter than the context, positions past that point start wrapping and become confusable"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "base = 10000 (default)",
+        "items": [
+          "pair 63 wavelength = 54,410.1 positions",
+          "covers 8K-32K contexts",
+          "100K-token context: NOT covered"
+        ]
+      },
+      "right": {
+        "title": "base = 500000 (Llama 3.1)",
+        "items": [
+          "pair 63 wavelength = 2,559,195.5 positions",
+          "covers 128K+ contexts",
+          "100K-token context: covered"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "head_dim=128 i=63",
+        "rope_wavelength(63, 128, 10000) -> 54410.1",
+        "rope_wavelength(63, 128, 500000) -> 2559195.5",
+        "fits_context(63, 128, 10000, 100000) -> False",
+        "fits_context(63, 128, 500000, 100000) -> True"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "wavelength_stretched",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `rope_wavelength(i, head_dim, base)` -- the number of positions dimension pair `i` takes to complete one full rotation. Formula: `2 * math.pi * (base ** ((2 * i) / head_dim))`, rounded to 1 decimal. Then print `rope_wavelength(63, 128, 10000)` (expected: `54410.1`)."
+      },
+      "starter_code": "import math\n\ndef rope_wavelength(i: int, head_dim: int, base: int) -> float:\n    \"\"\"Positions needed for dimension pair i to complete one full 2*pi rotation.\"\"\"\n    # return round(2 * math.pi * (base ** ((2 * i) / head_dim)), 1)\n    pass\n\nprint(rope_wavelength(63, 128, 10000))",
+      "hints": {
+        "en": [
+          "This is the inverse of theta_i, scaled by 2*pi: wavelength = 2*pi / theta_i",
+          "Substituting theta_i's formula gives 2*pi * base ** ((2*i)/head_dim)",
+          "return round(2 * math.pi * (base ** ((2 * i) / head_dim)), 1)"
+        ]
+      },
+      "expected_output": "54410.1"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `fits_context(i, head_dim, base, context_len)` -- whether dimension pair `i`'s wavelength is long enough to avoid wrapping within a context of `context_len` positions. Reuse `rope_wavelength`. Return `True` if `rope_wavelength(i, head_dim, base) >= context_len`, else `False`. Then print, one per line: `fits_context(63, 128, 10000, 100000)` and `fits_context(63, 128, 500000, 100000)` (expected: `False` then `True`)."
+      },
+      "starter_code": "import math\n\ndef rope_wavelength(i: int, head_dim: int, base: int) -> float:\n    return round(2 * math.pi * (base ** ((2 * i) / head_dim)), 1)\n\ndef fits_context(i: int, head_dim: int, base: int, context_len: int) -> bool:\n    \"\"\"Whether dimension pair i's wavelength avoids wrapping within context_len positions.\"\"\"\n    # return rope_wavelength(i, head_dim, base) >= context_len\n    pass\n\nprint(fits_context(63, 128, 10000, 100000))\nprint(fits_context(63, 128, 500000, 100000))",
+      "hints": {
+        "en": [
+          "Get the wavelength first: rope_wavelength(i, head_dim, base)",
+          "Compare it against context_len -- the pair 'fits' if its wavelength is at least that long",
+          "return rope_wavelength(i, head_dim, base) >= context_len"
+        ]
+      },
+      "expected_output": "False\nTrue"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "rotary_position_embeddings",
+      "rope",
+      "context_length",
+      "rope_scaling"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic",
+      "booleans"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
