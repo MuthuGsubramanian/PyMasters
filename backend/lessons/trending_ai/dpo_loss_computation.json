@@ -1,0 +1,166 @@
+{
+  "id": "dpo_loss_computation",
+  "topic": "dpo_loss_computation",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 130,
+  "title": {
+    "en": "DPO: The Loss That Trains Without A Reward Model Or RL"
+  },
+  "description": {
+    "en": "preference_probability told you how confident the policy is that chosen beats rejected. Now turn 'how far from full confidence' into an actual loss, average it over a batch, and see the number an optimizer would actually push down during DPO training."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From Probability To The Number That Gets Minimized\n\n\"`preference_probability` gave you `0.6318` -- the policy's current confidence that chosen beats rejected,\" Vaathiyaar says. \"Perfect would be `1.0`. DPO's loss is just cross-entropy against that target: the negative log of how confident the policy already is. Get it right and the loss is near zero; get it backwards and the loss explodes.\"\n\n### The DPO Loss, Per Pair\n\n> **loss = -log(sigmoid(margin)) = -log(P(chosen > rejected))**\n\nWith `margin = 0.54` and `sigmoid(0.54) = 0.6318`: `loss = -log(0.6318) = 0.4592`. That's the penalty for one preference pair -- not zero, because the policy isn't fully confident yet, but modest, because it's already leaning the right way. If the margin had been negative -- policy preferring the *rejected* completion -- the probability would drop below `0.5` and the loss would climb sharply, since `-log` blows up as its input approaches `0`.\n\n### Batches, Not Single Pairs\n\nReal training never updates on one pair at a time -- it batches many preference pairs and minimizes the *average* loss across them:\n\n```\npairs = [(0.27, -0.27), (0.05, 0.4), (0.9, -0.2)]\nlosses  -> [0.4592, 0.8834, 0.2873]\navg loss -> 0.5433\n```\n\nThe second pair has the highest loss (`0.8834`) -- its margin is `0.05 - 0.4 = -0.35`, meaning the policy currently favors the *rejected* completion for that pair, which is exactly the mistake training needs to correct.\n\n> **Vaathiyaar's rule:** this batch average is the single number a DPO training step actually calls `.backward()` on. No reward model forward pass anywhere in this pipeline, no PPO rollout, no value function -- just log-probabilities from two models, a subtraction, a sigmoid, and a log. That's the whole reason DPO training loops are simpler to implement and cheaper to run than RLHF.\n\nToday you implement the per-pair loss, then the batch average that a real training step minimizes."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "loss_pulls_policy_toward_preferences",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "DPO loss",
+          "children": [
+            "loss = -log(sigmoid(margin))",
+            "confident + correct -> loss near 0",
+            "confident + wrong -> loss explodes",
+            "batch loss = average over many pairs"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "margin = r_chosen - r_rejected",
+          "highlight": "r_chosen - r_rejected",
+          "explanation": {
+            "en": "Same margin from the preceding lesson"
+          }
+        },
+        {
+          "line": "prob = 1 / (1 + exp(-margin))",
+          "highlight": "1 / (1 + exp(-margin))",
+          "explanation": {
+            "en": "Sigmoid confidence that chosen beats rejected"
+          }
+        },
+        {
+          "line": "loss = -log(prob)",
+          "highlight": "-log(prob)",
+          "explanation": {
+            "en": "Cross-entropy against a target confidence of 1.0"
+          }
+        },
+        {
+          "line": "batch_loss = sum(losses) / len(losses)",
+          "highlight": "sum(losses) / len(losses)",
+          "explanation": {
+            "en": "Average loss across the batch -- what the optimizer actually minimizes"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Pair 2: margin = -0.35",
+        "items": [
+          "r_chosen = 0.05, r_rejected = 0.4",
+          "policy favors the wrong completion",
+          "loss = 0.8834 (highest of the batch)"
+        ]
+      },
+      "right": {
+        "title": "Pair 3: margin = 1.1",
+        "items": [
+          "r_chosen = 0.9, r_rejected = -0.2",
+          "policy strongly favors chosen",
+          "loss = 0.2873 (lowest of the batch)"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "dpo_pair_loss(0.27, -0.27) -> 0.4592",
+        "dpo_batch_loss([(0.27,-0.27),(0.05,0.4),(0.9,-0.2)]) -> 0.5433"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "loss_minimized",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `dpo_pair_loss(r_chosen, r_rejected)` -- the DPO loss for a single preference pair: `-log(sigmoid(margin))` where `margin = r_chosen - r_rejected`. Round to 4 decimals. Then print `dpo_pair_loss(0.27, -0.27)` (expected: `0.4592`)."
+      },
+      "starter_code": "import math\n\ndef dpo_pair_loss(r_chosen: float, r_rejected: float) -> float:\n    \"\"\"DPO loss for one preference pair: -log(sigmoid(r_chosen - r_rejected)).\"\"\"\n    # margin = r_chosen - r_rejected\n    # prob = 1 / (1 + math.exp(-margin))\n    # return round(-math.log(prob), 4)\n    pass\n\nprint(dpo_pair_loss(0.27, -0.27))",
+      "hints": {
+        "en": [
+          "margin = r_chosen - r_rejected",
+          "prob = 1 / (1 + math.exp(-margin))",
+          "round(-math.log(prob), 4)"
+        ]
+      },
+      "expected_output": "0.4592"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `dpo_batch_loss(pairs)` -- the average DPO loss across a batch of `(r_chosen, r_rejected)` tuples, reusing `dpo_pair_loss`. Return `round(sum(losses) / len(losses), 4)`. Then print `dpo_batch_loss([(0.27, -0.27), (0.05, 0.4), (0.9, -0.2)])` (expected: `0.5433`)."
+      },
+      "starter_code": "import math\n\ndef dpo_pair_loss(r_chosen: float, r_rejected: float) -> float:\n    margin = r_chosen - r_rejected\n    prob = 1 / (1 + math.exp(-margin))\n    return round(-math.log(prob), 4)\n\ndef dpo_batch_loss(pairs: list) -> float:\n    \"\"\"Average DPO loss across a batch of (r_chosen, r_rejected) pairs.\"\"\"\n    # losses = [dpo_pair_loss(c, r) for c, r in pairs]\n    # return round(sum(losses) / len(losses), 4)\n    pass\n\nprint(dpo_batch_loss([(0.27, -0.27), (0.05, 0.4), (0.9, -0.2)]))",
+      "hints": {
+        "en": [
+          "losses = [dpo_pair_loss(c, r) for c, r in pairs]",
+          "average = sum(losses) / len(losses)",
+          "round(sum(losses) / len(losses), 4)"
+        ]
+      },
+      "expected_output": "0.5433"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "direct_preference_optimization",
+      "dpo_loss",
+      "cross_entropy",
+      "batch_training"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "list_comprehensions",
+      "sigmoid_function"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

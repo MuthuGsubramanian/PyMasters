@@ -1,0 +1,151 @@
+{
+  "id": "dpo_preference_margin",
+  "topic": "dpo_preference_margin",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 129,
+  "title": {
+    "en": "DPO: Turning Two Rewards Into A Confidence"
+  },
+  "description": {
+    "en": "dpo_implicit_reward gave you a reward for the chosen completion and one for the rejected completion. Neither number means much alone -- what matters is the gap between them, and how confidently that gap says 'chosen beats rejected'. Compute the margin and the preference probability behind it."
+  },
+  "xp_reward": 80,
+  "next_unlock": "dpo_loss_computation",
+  "story_variants": {
+    "en": "## One Reward Alone Doesn't Say Anything\n\n\"`r_chosen = 0.27` on its own tells you almost nothing,\" Vaathiyaar says. \"Is that a big shift or a tiny one? It only becomes meaningful next to `r_rejected`. DPO borrows an idea from the Bradley-Terry model of pairwise preferences: the *gap* between two rewards, run through a sigmoid, gives you the probability that a human would prefer the chosen completion over the rejected one.\"\n\n### The Margin\n\nThe margin is just the difference between the two implicit rewards from last lesson:\n\n> **margin = r_chosen - r_rejected**\n\nWith `r_chosen = 0.27` and `r_rejected = -0.27`: `margin = 0.27 - (-0.27) = 0.54`. A positive margin means the policy currently favors the chosen completion over the rejected one -- which is exactly what we want it to learn.\n\n### From Margin To Probability\n\nRun the margin through a sigmoid to turn it into a probability that the model \"agrees\" chosen beats rejected:\n\n> **P(chosen > rejected) = sigmoid(margin) = 1 / (1 + exp(-margin))**\n\n`sigmoid(0.54)` computes to `0.6318` -- the policy currently gives the chosen completion roughly a 63% edge over the rejected one. A margin of `0` would give exactly `50%` (no preference either way); a large positive margin pushes that probability toward `100%`.\n\n> **Vaathiyaar's rule:** this probability is the entire target DPO training pushes toward `1.0`. Every training step nudges the policy's log-probabilities so that this number creeps closer to full confidence that chosen beats rejected -- and next lesson turns \"how far from 1.0\" into the actual loss the optimizer minimizes.\n\nToday you implement the margin, then the preference probability built on top of it."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "two_rewards_become_one_confidence",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Preference margin and probability",
+          "children": [
+            "margin = r_chosen - r_rejected",
+            "P(chosen > rejected) = sigmoid(margin)",
+            "margin = 0 -> 50% preference",
+            "large positive margin -> confidence near 100%"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "margin = r_chosen - r_rejected",
+          "highlight": "r_chosen - r_rejected",
+          "explanation": {
+            "en": "How much more the policy favors the chosen completion than the rejected one"
+          }
+        },
+        {
+          "line": "prob = 1 / (1 + exp(-margin))",
+          "highlight": "1 / (1 + exp(-margin))",
+          "explanation": {
+            "en": "Sigmoid turns the margin into a 0-1 preference probability"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "margin = 0",
+        "items": [
+          "r_chosen == r_rejected",
+          "sigmoid(0) = 0.5",
+          "no preference either way"
+        ]
+      },
+      "right": {
+        "title": "margin = 0.54",
+        "items": [
+          "r_chosen = 0.27, r_rejected = -0.27",
+          "sigmoid(0.54) = 0.6318",
+          "policy leans toward chosen"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "preference_margin(0.27, -0.27) -> 0.54",
+        "preference_probability(0.27, -0.27) -> 0.6318"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "confidence_computed",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `preference_margin(r_chosen, r_rejected)` -- the gap between the two implicit rewards. Return `round(r_chosen - r_rejected, 4)`. Then print `preference_margin(0.27, -0.27)` (expected: `0.54`)."
+      },
+      "starter_code": "def preference_margin(r_chosen: float, r_rejected: float) -> float:\n    \"\"\"Gap between the chosen and rejected implicit rewards.\"\"\"\n    # return round(r_chosen - r_rejected, 4)\n    pass\n\nprint(preference_margin(0.27, -0.27))",
+      "hints": {
+        "en": [
+          "the margin is just a subtraction",
+          "round(r_chosen - r_rejected, 4)"
+        ]
+      },
+      "expected_output": "0.54"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `preference_probability(r_chosen, r_rejected)` -- the sigmoid of the margin, giving the probability the policy currently assigns to 'chosen beats rejected'. Reuse `preference_margin`, then compute `round(1 / (1 + math.exp(-margin)), 4)`. Then print `preference_probability(0.27, -0.27)` (expected: `0.6318`)."
+      },
+      "starter_code": "import math\n\ndef preference_margin(r_chosen: float, r_rejected: float) -> float:\n    return round(r_chosen - r_rejected, 4)\n\ndef preference_probability(r_chosen: float, r_rejected: float) -> float:\n    \"\"\"Sigmoid of the margin -- probability chosen beats rejected.\"\"\"\n    # margin = preference_margin(r_chosen, r_rejected)\n    # return round(1 / (1 + math.exp(-margin)), 4)\n    pass\n\nprint(preference_probability(0.27, -0.27))",
+      "hints": {
+        "en": [
+          "margin = preference_margin(r_chosen, r_rejected)",
+          "sigmoid(x) = 1 / (1 + math.exp(-x))",
+          "round(1 / (1 + math.exp(-margin)), 4)"
+        ]
+      },
+      "expected_output": "0.6318"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "direct_preference_optimization",
+      "bradley_terry_model",
+      "sigmoid",
+      "preference_probability"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic",
+      "sigmoid_function"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

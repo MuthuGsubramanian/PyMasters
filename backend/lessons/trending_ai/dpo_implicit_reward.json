@@ -1,0 +1,152 @@
+{
+  "id": "dpo_implicit_reward",
+  "topic": "dpo_implicit_reward",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 128,
+  "title": {
+    "en": "DPO: The Reward Model You Never Have To Train"
+  },
+  "description": {
+    "en": "Classic RLHF trains a separate reward model, then runs reinforcement learning against it. Direct Preference Optimization skips both steps -- the reward is hiding in how far the policy's log-probabilities have drifted from a frozen reference model. Compute that implicit reward directly."
+  },
+  "xp_reward": 80,
+  "next_unlock": "dpo_preference_margin",
+  "story_variants": {
+    "en": "## RLHF Needed Three Models. DPO Needs Two.\n\n\"Classic RLHF trains a policy in three stages,\" Vaathiyaar says. \"Collect human preferences, train a *separate* reward model to predict them, then run reinforcement learning to push the policy toward what that reward model likes. Direct Preference Optimization -- DPO -- throws the middle stage away entirely. There's no reward model. The reward is computed directly from two things you already have: the policy you're training, and a frozen copy of it you started from.\"\n\n### The Implicit Reward\n\nDPO's key result is that, for any completion `y` given prompt `x`, an implicit reward can be read straight off the two models' log-probabilities:\n\n> **r(x, y) = beta x (log(pi_policy(y|x)) - log(pi_ref(y|x)))**\n\n`pi_policy` is the model currently being trained; `pi_ref` is a frozen snapshot -- usually the same model before this round of training started. `beta` is a small positive constant (typically `0.1`-`0.5`) controlling how strongly the reward reacts to that drift. If the policy has raised its log-probability for `y` above where the reference model had it, the reward is positive -- the policy has moved *toward* preferring this completion. If it's lowered it, the reward is negative.\n\n### A Real Pair\n\nSuppose for prompt `x`, the **chosen** completion (the one a human preferred) has `log pi_policy = -12.4` and `log pi_ref = -15.1` -- the policy already assigns it noticeably higher probability than the reference did. With `beta = 0.1`:\n\n```\nr_chosen = 0.1 * (-12.4 - (-15.1)) = 0.1 * 2.7 = 0.27\n```\n\nThe **rejected** completion has `log pi_policy = -18.7` and `log pi_ref = -16.0` -- the policy has moved *away* from it:\n\n```\nr_rejected = 0.1 * (-18.7 - (-16.0)) = 0.1 * -2.7 = -0.27\n```\n\n> **Vaathiyaar's rule:** notice what never appeared anywhere in that computation -- no reward-model forward pass, no human-labeled score, no RL rollout. Just two log-probabilities and a subtraction. That's the entire trick that makes DPO cheaper to train than RLHF: the preference data gets baked directly into a loss function instead of into a model you have to train first.\n\nToday you implement the implicit reward itself, then compute it for a chosen/rejected pair at once."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "policy_drifts_from_reference",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "DPO implicit reward",
+          "children": [
+            "r(x,y) = beta * (log pi_policy(y|x) - log pi_ref(y|x))",
+            "no separate reward model",
+            "positive drift -> policy favors y more than reference did",
+            "negative drift -> policy favors y less than reference did"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "drift = logp_policy - logp_ref",
+          "highlight": "logp_policy - logp_ref",
+          "explanation": {
+            "en": "How much the policy's log-probability for this completion has moved since the frozen reference"
+          }
+        },
+        {
+          "line": "reward = beta * drift",
+          "highlight": "beta * drift",
+          "explanation": {
+            "en": "Scale the drift by beta to get the implicit reward -- no reward model involved"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Chosen completion",
+        "items": [
+          "logp_policy = -12.4, logp_ref = -15.1",
+          "drift = +2.7 (policy favors it more)",
+          "r_chosen = 0.27"
+        ]
+      },
+      "right": {
+        "title": "Rejected completion",
+        "items": [
+          "logp_policy = -18.7, logp_ref = -16.0",
+          "drift = -2.7 (policy favors it less)",
+          "r_rejected = -0.27"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "dpo_implicit_reward(-12.4, -15.1, 0.1) -> 0.27",
+        "dpo_implicit_reward(-18.7, -16.0, 0.1) -> -0.27",
+        "reward_pair(-12.4, -15.1, -18.7, -16.0, 0.1) -> [0.27, -0.27]"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "reward_computed",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `dpo_implicit_reward(logp_policy, logp_ref, beta)` -- DPO's reward computed directly from two log-probabilities, no separate reward model. Formula: `beta * (logp_policy - logp_ref)`, rounded to 4 decimals. Then print `dpo_implicit_reward(-12.4, -15.1, 0.1)` (expected: `0.27`)."
+      },
+      "starter_code": "def dpo_implicit_reward(logp_policy: float, logp_ref: float, beta: float) -> float:\n    \"\"\"DPO's implicit reward: beta * (logp_policy - logp_ref).\"\"\"\n    # drift = logp_policy - logp_ref\n    # return round(beta * drift, 4)\n    pass\n\nprint(dpo_implicit_reward(-12.4, -15.1, 0.1))",
+      "hints": {
+        "en": [
+          "drift = logp_policy - logp_ref",
+          "reward = beta * drift",
+          "round(beta * (logp_policy - logp_ref), 4)"
+        ]
+      },
+      "expected_output": "0.27"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `reward_pair(logp_policy_chosen, logp_ref_chosen, logp_policy_rejected, logp_ref_rejected, beta)` -- compute the implicit reward for both the chosen and rejected completion at once, reusing `dpo_implicit_reward`. Return `[r_chosen, r_rejected]`. Then print `reward_pair(-12.4, -15.1, -18.7, -16.0, 0.1)` (expected: `[0.27, -0.27]`)."
+      },
+      "starter_code": "def dpo_implicit_reward(logp_policy: float, logp_ref: float, beta: float) -> float:\n    drift = logp_policy - logp_ref\n    return round(beta * drift, 4)\n\ndef reward_pair(logp_policy_chosen: float, logp_ref_chosen: float, logp_policy_rejected: float, logp_ref_rejected: float, beta: float) -> list:\n    \"\"\"Implicit reward for both the chosen and rejected completion.\"\"\"\n    # r_chosen = dpo_implicit_reward(logp_policy_chosen, logp_ref_chosen, beta)\n    # r_rejected = dpo_implicit_reward(logp_policy_rejected, logp_ref_rejected, beta)\n    # return [r_chosen, r_rejected]\n    pass\n\nprint(reward_pair(-12.4, -15.1, -18.7, -16.0, 0.1))",
+      "hints": {
+        "en": [
+          "r_chosen = dpo_implicit_reward(logp_policy_chosen, logp_ref_chosen, beta)",
+          "r_rejected = dpo_implicit_reward(logp_policy_rejected, logp_ref_rejected, beta)",
+          "return [r_chosen, r_rejected]"
+        ]
+      },
+      "expected_output": "[0.27, -0.27]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "direct_preference_optimization",
+      "implicit_reward",
+      "reference_model",
+      "rlhf_alternatives"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
