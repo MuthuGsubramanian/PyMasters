@@ -19,6 +19,7 @@ import CROSS_VALIDATION from '../components/explains/essays/crossValidationEssay
 import KNN from '../components/explains/essays/knnEssay';
 import NAIVE_BAYES from '../components/explains/essays/naiveBayesEssay';
 import DBSCAN from '../components/explains/essays/dbscanEssay';
+import HIERARCHICAL_CLUSTERING from '../components/explains/essays/hierarchicalClusteringEssay';
 import SHAP_VALUES from '../components/explains/essays/shapEssay';
 import REGULARIZATION from '../components/explains/essays/regularizationEssay';
 import RANDOM_FOREST from '../components/explains/essays/randomForestEssay';
@@ -346,6 +347,7 @@ export const ESSAYS = [
     KNN,
     NAIVE_BAYES,
     DBSCAN,
+    HIERARCHICAL_CLUSTERING,
     SHAP_VALUES,
     REGULARIZATION,
     RANDOM_FOREST,
