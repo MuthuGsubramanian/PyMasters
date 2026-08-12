@@ -1,0 +1,166 @@
+{
+  "id": "minilm_production_embeddings",
+  "topic": "minilm_production_embeddings",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "all-MiniLM-L6-v2 in Production: Caching, Batching, and int8 Quantization"
+  },
+  "description": {
+    "en": "Your semantic search demo works — now make it production-grade. Cache embeddings so no sentence is ever paid for twice, batch-encode for throughput, and quantize 384-dim float vectors to int8 for a 4x smaller index."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From Demo to Production: Embeddings That Scale\n\n\"Your MiniLM search demo works beautifully,\" Vaathiyaar says, \"and that is exactly when engineers get into trouble. A demo embeds twenty sentences once. Production embeds a hundred thousand chunks, re-runs every night, and holds the whole index in memory. **all-MiniLM-L6-v2** stays the same tiny 80 MB model — what changes is everything you wrap around it. Today you learn the three wrappers every production embedding pipeline has: a cache, a batcher, and a quantizer.\"\n\n### The Three Taxes of Naive Embedding\n\n| Tax | Naive demo | Production fix |\n|---|---|---|\n| Compute | re-embeds unchanged text on every run | cache keyed by the text itself |\n| Latency | encodes one sentence at a time | batch encode, 64 texts per forward pass |\n| Memory | float32: 1536 bytes per vector | int8: 384 bytes plus one float scale |\n\n### Never Pay for the Same Sentence Twice\n\nDocuments barely change between indexing runs. If ninety-eight percent of your chunks are identical to yesterday's, embedding them again is pure waste — and on CPU, waste you can feel. The fix is a cache consulted *before* the model runs:\n\n```python\nimport numpy as np\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\ncache = {}\n\ndef embed_cached(texts):\n    missing = [t for t in texts if t not in cache]\n    if missing:\n        vecs = model.encode(missing, batch_size=64,\n                            normalize_embeddings=True)\n        cache.update(zip(missing, vecs))\n    return np.array([cache[t] for t in texts])\n```\n\nNotice the batching hiding inside: `model.encode` with `batch_size=64` pushes texts through the transformer in groups, so the matrix multiplies stay fat and the CPU stays busy. Encoding one sentence at a time can be several times slower for the exact same result.\n\n### Shrink the Index 4x with int8\n\nEach MiniLM vector is 384 float32 numbers — 1536 bytes. A million chunks is 1.5 GB before you store any text. Quantization stores each dimension as a signed byte instead: find the largest absolute value in the vector, divide by 127 to get a `scale`, then round every entry to `round(x / scale)`. Reconstruction is just `int * scale`.\n\nWhy does search survive this? Because cosine similarity cares about *direction*, and rounding each coordinate to one of 255 levels barely bends a 384-dimensional arrow. In practice retrieval quality drops by well under one percent while memory drops by seventy-five — which is why real vector databases ship exactly this trick under names like scalar quantization.\n\nToday you build the cache and the quantizer yourself in pure Python, so when a vector database brags about these features, you'll know they are a dictionary lookup and a division.\n\n> **Key Insight:** Production embedding work is rarely about a better model — it's about never doing the same work twice. A cache eliminates repeated compute, batching amortizes the compute you must do, and quantization shrinks what you keep. The model is 80 MB; the engineering is three small functions."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "assembly_line_vectors",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "production_pipeline",
+      "steps": [
+        {
+          "line": "import numpy as np",
+          "highlight": "numpy",
+          "explanation": {
+            "en": "The index lives as one numpy matrix — vectors stacked row by row"
+          }
+        },
+        {
+          "line": "from sentence_transformers import SentenceTransformer",
+          "highlight": "SentenceTransformer",
+          "explanation": {
+            "en": "Same library, same model as your search demo — the wrappers are what change"
+          }
+        },
+        {
+          "line": "model = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")",
+          "highlight": "all-MiniLM-L6-v2",
+          "explanation": {
+            "en": "80 MB, 384 dimensions, CPU-friendly — the default local embedder"
+          }
+        },
+        {
+          "line": "cache = {}",
+          "highlight": "cache",
+          "explanation": {
+            "en": "Text in, vector out — consulted BEFORE the model ever runs"
+          }
+        },
+        {
+          "line": "missing = [t for t in texts if t not in cache]",
+          "highlight": "not in cache",
+          "explanation": {
+            "en": "Only texts never seen before cost compute — unchanged docs are free"
+          }
+        },
+        {
+          "line": "vecs = model.encode(missing, batch_size=64, normalize_embeddings=True)",
+          "highlight": "batch_size=64",
+          "explanation": {
+            "en": "Batching keeps the matrix multiplies fat — several times faster than one-at-a-time"
+          }
+        },
+        {
+          "line": "cache.update(zip(missing, vecs))",
+          "highlight": "update",
+          "explanation": {
+            "en": "New vectors join the cache — tomorrow's run will skip them"
+          }
+        },
+        {
+          "line": "scale = max(abs(x) for x in vec) / 127.0",
+          "highlight": "127.0",
+          "explanation": {
+            "en": "One float maps the vector's range onto signed-byte territory"
+          }
+        },
+        {
+          "line": "q = [round(x / scale) for x in vec]",
+          "highlight": "round",
+          "explanation": {
+            "en": "384 floats become 384 small ints — the index shrinks 4x"
+          }
+        },
+        {
+          "line": "approx = [i * scale for i in q]",
+          "highlight": "i * scale",
+          "explanation": {
+            "en": "Reconstruction is one multiply — direction survives, so cosine search survives"
+          }
+        }
+      ],
+      "duration_ms": 6000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "compression_burst",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build the embedding cache that production pipelines rely on. Write `embed_with_cache(texts, cache, embed_fn)` where `texts` is a list of strings, `cache` is a dict mapping text to vector, and `embed_fn(text)` returns a vector for one text. Call `embed_fn` ONLY for texts not already in the cache, store the results in the cache, and return the vectors for all texts in the same order as the input. Print the length of the result and the number of times the fake embedder actually ran for `[\"hello\", \"world\", \"hello\", \"hi\", \"world\"]` — 5 texts, but only 3 real embeddings."
+      },
+      "starter_code": "def embed_with_cache(texts: list, cache: dict, embed_fn) -> list:\n    \"\"\"Return one vector per text, calling embed_fn only for cache misses.\n    New results must be stored in cache so later calls skip them too.\"\"\"\n    # 1. for each text, check the cache first\n    # 2. on a miss, call embed_fn(text) and store the result in cache\n    # 3. return [cache[t] for t in texts]  — order must match the input\n    pass\n\ncalls = []\ndef fake_embed(text):\n    calls.append(text)\n    return [float(len(text)), 1.0]\n\ndocs = [\"hello\", \"world\", \"hello\", \"hi\", \"world\"]\nvecs = embed_with_cache(docs, {}, fake_embed)\nprint(len(vecs), len(calls))",
+      "expected_output": "5 3",
+      "hints": {
+        "en": [
+          "Loop over texts: if text not in cache, then cache[text] = embed_fn(text)",
+          "Return values straight from the cache: [cache[t] for t in texts] — duplicates automatically reuse the same vector",
+          "Don't build the result inside the miss-check — a cached text still needs its vector in the output"
+        ]
+      },
+      "test_code": "calls = []\ndef fake_embed(text):\n    calls.append(text)\n    return [float(len(text)), 1.0]\n\ncache = {}\nvecs = embed_with_cache([\"a\", \"bb\", \"a\", \"ccc\"], cache, fake_embed)\nassert len(vecs) == 4, f\"one vector per input text, duplicates included: got {len(vecs)}\"\nassert calls == [\"a\", \"bb\", \"ccc\"], f\"embed_fn must run once per UNIQUE text, in first-seen order: {calls}\"\nassert vecs[0] == [1.0, 1.0] and vecs[2] == [1.0, 1.0], \"duplicate texts must reuse the cached vector\"\nassert vecs[3] == [3.0, 1.0], \"results must line up with the input order\"\nvecs2 = embed_with_cache([\"bb\", \"dddd\"], cache, fake_embed)\nassert calls == [\"a\", \"bb\", \"ccc\", \"dddd\"], f\"a warm cache must skip already-embedded texts: {calls}\"\nassert vecs2[0] == [2.0, 1.0], \"cached vector for 'bb' should be returned untouched\"\nprint(\"All tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Implement scalar int8 quantization — the trick vector databases use to cut embedding memory by 4x. Write `quantize(vec)` that computes `scale = max(abs(x)) / 127.0` and returns `(ints, scale)` where each entry of `ints` is `round(x / scale)`. Then write `dequantize(ints, scale)` that recovers approximate floats by multiplying each int by the scale. Print `quantize([0.5, -1.0, 0.25])[0]` — the compressed integer form of the vector."
+      },
+      "starter_code": "def quantize(vec: list) -> tuple:\n    \"\"\"Compress floats to signed-byte-range ints plus ONE float scale.\n    scale = max(abs(x)) / 127.0, each entry becomes round(x / scale).\"\"\"\n    # returns (list_of_ints, scale)\n    pass\n\ndef dequantize(ints: list, scale: float) -> list:\n    \"\"\"Recover approximate floats: each int times the scale.\"\"\"\n    pass\n\nprint(quantize([0.5, -1.0, 0.25])[0])",
+      "expected_output": "[64, -127, 32]",
+      "hints": {
+        "en": [
+          "Get the scale first: scale = max(abs(x) for x in vec) / 127.0",
+          "Python's round() returns an int here: [round(x / scale) for x in vec]",
+          "dequantize is one list comprehension: [i * scale for i in ints]"
+        ]
+      },
+      "test_code": "q, s = quantize([0.5, -1.0, 0.25])\nassert q == [64, -127, 32], f\"expected [64, -127, 32], got {q}\"\nassert abs(s - 1.0 / 127.0) < 1e-9, f\"scale must be max(abs) / 127.0: got {s}\"\nback = dequantize(q, s)\nfor orig, approx in zip([0.5, -1.0, 0.25], back):\n    assert abs(orig - approx) <= 0.005, f\"round-trip error too large: {orig} vs {approx}\"\nq2, s2 = quantize([0.02, -0.01])\nassert q2 == [127, -64], f\"scale must adapt to the vector's own max, not assume values near 1.0: got {q2}\"\nassert all(-127 <= i <= 127 for i in q2), \"every quantized entry must fit in a signed byte\"\nprint(\"All tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "embedding_cache",
+      "batch_inference",
+      "int8_quantization",
+      "scalar_quantization",
+      "memory_budgeting"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "dictionaries",
+      "embeddings_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
