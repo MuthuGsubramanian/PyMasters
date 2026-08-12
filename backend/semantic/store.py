@@ -61,14 +61,25 @@ def _corpus_text(d):
     story = sv.get("en") if isinstance(sv, dict) else ""
     if isinstance(story, dict):
         story = _txt(story)
+    # tags is a dict in every current lesson ({concepts_taught: [...], ...});
+    # legacy flat lists are still accepted.
     tags = d.get("tags") or []
+    if isinstance(tags, dict):
+        tag_words = [
+            str(t) for key in ("concepts_taught", "concepts_required", "path_memberships")
+            for t in (tags.get(key) or []) if isinstance(t, str)
+        ]
+    elif isinstance(tags, list):
+        tag_words = [str(t) for t in tags if isinstance(t, str)]
+    else:
+        tag_words = []
     parts = [
         _txt(d.get("title")),
         _txt(d.get("description")),
         str(d.get("topic") or "").replace("_", " "),
         str(d.get("track") or "").replace("_", " "),
         (story or "")[:600],
-        " ".join(tags) if isinstance(tags, list) else "",
+        " ".join(w.replace("_", " ") for w in tag_words),
     ]
     return "\n".join(p for p in parts if p)
 
