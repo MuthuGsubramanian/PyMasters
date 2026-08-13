@@ -1,0 +1,152 @@
+{
+  "id": "grpo_group_advantage",
+  "topic": "grpo_group_advantage",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 131,
+  "title": {
+    "en": "GRPO: The Reward Normalization That Replaced The Critic"
+  },
+  "description": {
+    "en": "Classic PPO trains a separate critic network just to estimate a baseline reward. Group Relative Policy Optimization -- the technique behind DeepSeek's reasoning models -- throws the critic away and gets its baseline for free by sampling several completions for the same prompt and normalizing against the group's own mean and std."
+  },
+  "xp_reward": 80,
+  "next_unlock": "grpo_clipped_surrogate",
+  "story_variants": {
+    "en": "## PPO Needed A Critic. GRPO Needs A Group.\n\n\"Classic PPO trains a policy AND a separate value network -- the critic -- whose only job is estimating how good a state is, so the policy update has a baseline to compare its reward against,\" Vaathiyaar says. \"Group Relative Policy Optimization -- GRPO, the technique behind DeepSeek's reasoning models -- throws the critic away entirely. Instead of training a network to estimate a baseline, it samples several completions for the *same* prompt and uses the group's own mean as the baseline.\"\n\n### The Group Advantage\n\nFor one prompt, sample `G` completions from the current policy and score each with a reward model (or a rule-based checker, for math and code tasks): `{r_1, r_2, ..., r_G}`. GRPO's advantage for the i-th completion is:\n\n> **A_i = (r_i - mean(r)) / std(r)**\n\nNo forward pass through a critic. No temporal-difference learning. Just each reward's position relative to its own group.\n\n### A Real Group\n\nFour completions sampled for one prompt score `[0.9, 0.6, 0.3, 0.1]` -- say `0.9` means fully correct and `0.1` means mostly wrong. The group mean is `0.475` and the group's std is `0.3031`:\n\n```\nA_1 = (0.9 - 0.475) / 0.3031 = 1.4017\nA_2 = (0.6 - 0.475) / 0.3031 = 0.4123\nA_3 = (0.3 - 0.475) / 0.3031 = -0.5772\nA_4 = (0.1 - 0.475) / 0.3031 = -1.2368\n```\n\nThe best completion in the group gets pushed up hardest, the worst gets pushed down hardest -- and where 'up' and 'down' even mean is decided entirely by its peers, not by an absolute score from a separately trained network.\n\n> **Vaathiyaar's rule:** the caveat is hiding in that division. Normalizing by std means a group where every completion scored similarly -- a hard prompt, small spread -- gets its advantages stretched to look just as confident as a group with wildly different scores. That's a real, documented bias: later variants such as Dr. GRPO drop the std term specifically to fix it. GRPO trades a learned critic for a much cheaper, but not perfectly unbiased, baseline.\n\nToday you implement the advantage for one reward against known group statistics, then compute the whole group's advantages at once."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "group_replaces_critic",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "GRPO group advantage",
+          "children": [
+            "A_i = (r_i - mean(r)) / std(r)",
+            "no critic network, no value function",
+            "baseline comes from G samples of the same prompt",
+            "std normalization can bias easy vs hard prompts"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "deviation = reward - mean_r",
+          "highlight": "reward - mean_r",
+          "explanation": {
+            "en": "How far this completion's reward sits from the group's average"
+          }
+        },
+        {
+          "line": "advantage = deviation / (std_r + eps)",
+          "highlight": "deviation / (std_r + eps)",
+          "explanation": {
+            "en": "Scale by the group's spread so the advantage is comparable across prompts of different difficulty"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Best completion (r = 0.9)",
+        "items": [
+          "deviation = 0.9 - 0.475 = 0.425",
+          "A = 0.425 / 0.3031 = 1.4017",
+          "pushed up hardest"
+        ]
+      },
+      "right": {
+        "title": "Worst completion (r = 0.1)",
+        "items": [
+          "deviation = 0.1 - 0.475 = -0.375",
+          "A = -0.375 / 0.3031 = -1.2368",
+          "pushed down hardest"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "group_advantage(0.9, 0.475, 0.3031) -> 1.4017",
+        "group_advantages([0.9, 0.6, 0.3, 0.1]) -> [1.4017, 0.4123, -0.5772, -1.2368]"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "advantage_computed",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `group_advantage(reward, mean_r, std_r, eps=1e-4)` -- normalize one reward against its group's mean and std, GRPO's replacement for a learned critic. Formula: `(reward - mean_r) / (std_r + eps)`, rounded to 4 decimals. Then print `group_advantage(0.9, 0.475, 0.3031)` (expected: `1.4017`)."
+      },
+      "starter_code": "def group_advantage(reward: float, mean_r: float, std_r: float, eps: float = 1e-4) -> float:\n    \"\"\"Normalize one reward against its group's mean and std.\"\"\"\n    # return round((reward - mean_r) / (std_r + eps), 4)\n    pass\n\nprint(group_advantage(0.9, 0.475, 0.3031))",
+      "hints": {
+        "en": [
+          "deviation = reward - mean_r",
+          "advantage = deviation / (std_r + eps)",
+          "round((reward - mean_r) / (std_r + eps), 4)"
+        ]
+      },
+      "expected_output": "1.4017"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `group_advantages(rewards, eps=1e-4)` -- compute the group's own mean and std, then reuse `group_advantage` to normalize every reward in the group at once. Return a list. Then print `group_advantages([0.9, 0.6, 0.3, 0.1])` (expected: `[1.4017, 0.4123, -0.5772, -1.2368]`)."
+      },
+      "starter_code": "def group_advantage(reward: float, mean_r: float, std_r: float, eps: float = 1e-4) -> float:\n    return round((reward - mean_r) / (std_r + eps), 4)\n\ndef group_advantages(rewards: list, eps: float = 1e-4) -> list:\n    \"\"\"Normalize every reward in the group against the group's own mean/std.\"\"\"\n    # n = len(rewards)\n    # mean_r = sum(rewards) / n\n    # var_r = sum((r - mean_r) ** 2 for r in rewards) / n\n    # std_r = var_r ** 0.5\n    # return [group_advantage(r, mean_r, std_r, eps) for r in rewards]\n    pass\n\nprint(group_advantages([0.9, 0.6, 0.3, 0.1]))",
+      "hints": {
+        "en": [
+          "mean_r = sum(rewards) / len(rewards)",
+          "var_r = sum((r - mean_r) ** 2 for r in rewards) / len(rewards); std_r = var_r ** 0.5",
+          "return [group_advantage(r, mean_r, std_r, eps) for r in rewards]"
+        ]
+      },
+      "expected_output": "[1.4017, 0.4123, -0.5772, -1.2368]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "group_relative_policy_optimization",
+      "group_advantage",
+      "critic_free_rl",
+      "reward_normalization"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic",
+      "lists"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

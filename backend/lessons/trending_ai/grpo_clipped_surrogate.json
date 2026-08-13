@@ -1,0 +1,158 @@
+{
+  "id": "grpo_clipped_surrogate",
+  "topic": "grpo_clipped_surrogate",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 132,
+  "title": {
+    "en": "GRPO: Clipping The Update So One Good Sample Can't Wreck It"
+  },
+  "description": {
+    "en": "grpo_group_advantage turned each sampled completion's reward into an advantage. On its own, a big advantage times a big probability ratio can push the policy too far in one step. GRPO borrows PPO's clipped surrogate objective to cap how much any single completion is allowed to move the policy."
+  },
+  "xp_reward": 80,
+  "next_unlock": "grpo_kl_penalty",
+  "story_variants": {
+    "en": "## An Advantage Alone Is Not Safe To Optimize\n\n\"`A = 1.4017` says the top completion from last lesson deserves a strong push,\" Vaathiyaar says. \"But if you multiply that advantage straight through by how much the policy's probability for that completion has already shifted, one lucky sample can drag the whole policy off a cliff in a single update. PPO's fix -- which GRPO reuses directly -- is to clip how far that push is allowed to go.\"\n\n### The Probability Ratio\n\nFirst, measure how much the *new* policy's probability for a completion has moved versus the policy that generated it:\n\n> **ratio = pi_new(y|x) / pi_old(y|x)**\n\n`ratio = 1` means nothing has changed yet. `ratio = 1.35` means the new policy is 35% more likely to produce this completion than the one that sampled it.\n\n### The Clipped Surrogate\n\nGRPO's per-completion objective takes the smaller of the raw push and a clipped version of it:\n\n> **surrogate = min(ratio x A, clip(ratio, 1-eps, 1+eps) x A)**\n\nWith `eps = 0.2`, `ratio` is clamped to `[0.8, 1.2]` before the second term is computed. Take the best completion from last lesson, `A = 1.4017`, with `ratio = 1.35`:\n\n```\nunclipped = 1.35 * 1.4017 = 1.8923\nclipped_ratio = min(1.2, max(0.8, 1.35)) = 1.2\nclipped = 1.2 * 1.4017 = 1.6820\nsurrogate = min(1.8923, 1.6820) = 1.6820\n```\n\nThe clip wins -- the update is capped at what a `20%` probability shift would have given, even though the ratio actually moved further than that.\n\n> **Vaathiyaar's rule:** when the advantage is positive, `min` picks whichever term is *smaller*, which caps runaway growth. When the advantage is negative, the same `min` call caps runaway shrinkage instead -- the clip protects against overreacting in both directions, not just one. That symmetry is why the same one-line formula covers 'this sample was great, don't overreact' and 'this sample was bad, don't overreact' with no special-casing.\n\nToday you implement the clipped surrogate for one completion, then average it across a whole group."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "clip_caps_the_push",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "GRPO clipped surrogate",
+          "children": [
+            "ratio = pi_new(y|x) / pi_old(y|x)",
+            "surrogate = min(ratio*A, clip(ratio, 1-eps, 1+eps)*A)",
+            "caps runaway updates in both directions",
+            "same trick PPO uses, applied per sampled completion"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "unclipped = ratio * advantage",
+          "highlight": "ratio * advantage",
+          "explanation": {
+            "en": "The raw push if the ratio were trusted at full strength"
+          }
+        },
+        {
+          "line": "clipped = clip(ratio, 1-eps, 1+eps) * advantage",
+          "highlight": "clip(ratio, 1-eps, 1+eps)",
+          "explanation": {
+            "en": "The same push, but with the ratio capped to a small band around 1"
+          }
+        },
+        {
+          "line": "surrogate = min(unclipped, clipped)",
+          "highlight": "min(unclipped, clipped)",
+          "explanation": {
+            "en": "Take whichever is more conservative -- the pessimistic bound PPO/GRPO actually optimizes"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "ratio = 1.35, A = 1.4017",
+        "items": [
+          "unclipped = 1.8923",
+          "clipped = 1.2 * 1.4017 = 1.6820",
+          "surrogate = 1.6820 (clip wins)"
+        ]
+      },
+      "right": {
+        "title": "Whole group averaged",
+        "items": [
+          "ratios [1.35, 1.1, 0.95, 0.6]",
+          "advantages [1.4017, 0.4123, -0.5772, -1.2368]",
+          "group_surrogate = 0.1494"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "clipped_surrogate(1.35, 1.4017) -> 1.682",
+        "group_surrogate([1.35, 1.1, 0.95, 0.6], [1.4017, 0.4123, -0.5772, -1.2368]) -> 0.1494"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "surrogate_computed",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `clipped_surrogate(ratio, advantage, eps=0.2)` -- GRPO/PPO's clipped objective for one sampled completion. Compute `unclipped = ratio * advantage` and `clipped = max(1-eps, min(1+eps, ratio)) * advantage`, then return `round(min(unclipped, clipped), 4)`. Then print `clipped_surrogate(1.35, 1.4017)` (expected: `1.682`)."
+      },
+      "starter_code": "def clipped_surrogate(ratio: float, advantage: float, eps: float = 0.2) -> float:\n    \"\"\"Clipped GRPO/PPO surrogate objective for one sampled completion.\"\"\"\n    # unclipped = ratio * advantage\n    # clipped_ratio = max(1 - eps, min(1 + eps, ratio))\n    # clipped = clipped_ratio * advantage\n    # return round(min(unclipped, clipped), 4)\n    pass\n\nprint(clipped_surrogate(1.35, 1.4017))",
+      "hints": {
+        "en": [
+          "unclipped = ratio * advantage",
+          "clipped_ratio = max(1 - eps, min(1 + eps, ratio))",
+          "return round(min(unclipped, clipped_ratio * advantage), 4)"
+        ]
+      },
+      "expected_output": "1.682"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `group_surrogate(ratios, advantages, eps=0.2)` -- reuse `clipped_surrogate` for each ratio/advantage pair in a group, then return the mean, rounded to 4 decimals. Then print `group_surrogate([1.35, 1.1, 0.95, 0.6], [1.4017, 0.4123, -0.5772, -1.2368])` (expected: `0.1494`)."
+      },
+      "starter_code": "def clipped_surrogate(ratio: float, advantage: float, eps: float = 0.2) -> float:\n    unclipped = ratio * advantage\n    clipped_ratio = max(1 - eps, min(1 + eps, ratio))\n    return round(min(unclipped, clipped_ratio * advantage), 4)\n\ndef group_surrogate(ratios: list, advantages: list, eps: float = 0.2) -> float:\n    \"\"\"Mean clipped surrogate across every sampled completion in the group.\"\"\"\n    # vals = [clipped_surrogate(r, a, eps) for r, a in zip(ratios, advantages)]\n    # return round(sum(vals) / len(vals), 4)\n    pass\n\nprint(group_surrogate([1.35, 1.1, 0.95, 0.6], [1.4017, 0.4123, -0.5772, -1.2368]))",
+      "hints": {
+        "en": [
+          "vals = [clipped_surrogate(r, a, eps) for r, a in zip(ratios, advantages)]",
+          "return round(sum(vals) / len(vals), 4)"
+        ]
+      },
+      "expected_output": "0.1494"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "group_relative_policy_optimization",
+      "clipped_surrogate_objective",
+      "probability_ratio",
+      "ppo_style_clipping"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic",
+      "lists"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

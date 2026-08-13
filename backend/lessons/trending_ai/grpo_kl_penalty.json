@@ -1,0 +1,153 @@
+{
+  "id": "grpo_kl_penalty",
+  "topic": "grpo_kl_penalty",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 133,
+  "title": {
+    "en": "GRPO: The Leash That Keeps The Policy Close To Home"
+  },
+  "description": {
+    "en": "The clipped surrogate from grpo_clipped_surrogate controls how fast the policy moves per step, but nothing so far stops it drifting arbitrarily far from where it started over many steps. GRPO adds a KL penalty against a frozen reference policy -- computed per-token, the same spirit as DPO's implicit reward but a different estimator -- and combines it with the surrogate into the final training objective."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Clipping Controls The Step. It Doesn't Control The Journey.\n\n\"The clip from last lesson stops any *single* update from overreacting,\" Vaathiyaar says. \"But run thousands of small, individually-safe steps in the same direction and the policy can still wander far from the reference model it started as -- fluent language degrading into reward-hacking gibberish that happens to score well. GRPO adds a second term, a KL penalty against a frozen reference policy, to keep that from happening.\"\n\n### An Unbiased KL Estimator\n\nComputing an exact KL divergence between two policies over every possible completion is intractable, so GRPO uses an estimator (from John Schulman's blog on KL estimators) that only needs the two policies' probabilities for the tokens actually sampled:\n\n> **ratio = pi_ref(y|x) / pi_theta(y|x)**\n> **KL_estimate = ratio - log(ratio) - 1**\n\nThis estimator is always `>= 0` -- it is exactly `0` only when `ratio = 1`, meaning the training policy and the reference agree perfectly on this token, and grows the further they disagree in *either* direction.\n\n### A Real Pair\n\nUsing log-probabilities so the ratio is computed as `exp(logp_ref - logp_theta)`: suppose the training policy has `logp_theta = -2.1` for a token and the frozen reference has `logp_ref = -2.4` -- the policy has drifted to favor this token more than the reference did.\n\n```\nratio = exp(-2.4 - (-2.1)) = exp(-0.3) = 0.7408\nKL_estimate = 0.7408 - log(0.7408) - 1 = 0.7408 - (-0.3) - 1 = 0.0408\n```\n\nIf the two policies agreed exactly (`logp_theta = logp_ref`), `ratio = 1`, `log(ratio) = 0`, and `KL_estimate = 1 - 0 - 1 = 0` -- no penalty at all.\n\n### The Final Objective\n\nGRPO's full per-step objective subtracts a weighted KL term from the clipped surrogate:\n\n> **objective = surrogate - beta x KL_estimate**\n\nWith the group surrogate from last lesson (`0.1494`), this KL (`0.0408`), and `beta = 0.04`: `objective = 0.1494 - 0.04 * 0.0408 = 0.1478`. The surrogate still dominates, but the KL term is quietly taxing any drift away from the reference on every single token.\n\n> **Vaathiyaar's rule:** compare this to DPO's `beta * (logp_policy - logp_ref)` from a few lessons back -- both use a frozen reference and a `beta` knob, but DPO folds the reference into the *reward itself* via one log-prob difference per sequence, while GRPO keeps its reward from group statistics and bolts the reference on as a *separate per-token penalty*. Same instinct -- don't drift too far from where you started -- two different places to put it in the math.\n\nToday you implement the KL estimate for one token, then combine it with a surrogate value into the final GRPO objective."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "leash_to_reference_policy",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "GRPO KL penalty",
+          "children": [
+            "ratio = pi_ref(y|x) / pi_theta(y|x)",
+            "KL_estimate = ratio - log(ratio) - 1",
+            "always >= 0, zero only when ratio = 1",
+            "objective = surrogate - beta * KL_estimate"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "ratio = math.exp(logp_ref - logp_theta)",
+          "highlight": "math.exp(logp_ref - logp_theta)",
+          "explanation": {
+            "en": "How much the reference's probability for this token compares to the training policy's"
+          }
+        },
+        {
+          "line": "kl = ratio - math.log(ratio) - 1",
+          "highlight": "ratio - math.log(ratio) - 1",
+          "explanation": {
+            "en": "Schulman's unbiased, always-nonnegative KL estimator built from that one ratio"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Policy has drifted",
+        "items": [
+          "logp_theta = -2.1, logp_ref = -2.4",
+          "ratio = 0.7408",
+          "KL_estimate = 0.0408 (penalized)"
+        ]
+      },
+      "right": {
+        "title": "Policy matches reference",
+        "items": [
+          "logp_theta = -2.1, logp_ref = -2.1",
+          "ratio = 1.0",
+          "KL_estimate = 0.0 (no penalty)"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "kl_penalty(-2.1, -2.4) -> 0.0408",
+        "kl_penalty(-2.1, -2.1) -> 0.0",
+        "grpo_objective(0.1494, 0.0408) -> 0.1478"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "objective_complete",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `kl_penalty(logp_theta, logp_ref)` -- Schulman's unbiased KL estimator between the training policy and a frozen reference for one token. Compute `ratio = math.exp(logp_ref - logp_theta)`, then return `round(ratio - math.log(ratio) - 1, 4)`. Then print `kl_penalty(-2.1, -2.4)` (expected: `0.0408`)."
+      },
+      "starter_code": "import math\n\ndef kl_penalty(logp_theta: float, logp_ref: float) -> float:\n    \"\"\"Unbiased per-token KL estimate between the policy and a frozen reference.\"\"\"\n    # ratio = math.exp(logp_ref - logp_theta)\n    # return round(ratio - math.log(ratio) - 1, 4)\n    pass\n\nprint(kl_penalty(-2.1, -2.4))",
+      "hints": {
+        "en": [
+          "ratio = math.exp(logp_ref - logp_theta)",
+          "kl = ratio - math.log(ratio) - 1",
+          "round(ratio - math.log(ratio) - 1, 4)"
+        ]
+      },
+      "expected_output": "0.0408"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `grpo_objective(surrogate, kl, beta=0.04)` -- GRPO's final per-step objective, subtracting the weighted KL penalty from the clipped surrogate. Return `round(surrogate - beta * kl, 4)`. Then print `grpo_objective(0.1494, 0.0408)` (expected: `0.1478`)."
+      },
+      "starter_code": "import math\n\ndef kl_penalty(logp_theta: float, logp_ref: float) -> float:\n    ratio = math.exp(logp_ref - logp_theta)\n    return round(ratio - math.log(ratio) - 1, 4)\n\ndef grpo_objective(surrogate: float, kl: float, beta: float = 0.04) -> float:\n    \"\"\"GRPO's final objective: clipped surrogate minus a weighted KL penalty.\"\"\"\n    # return round(surrogate - beta * kl, 4)\n    pass\n\nprint(grpo_objective(0.1494, 0.0408))",
+      "hints": {
+        "en": [
+          "the KL term is subtracted, not added",
+          "objective = surrogate - beta * kl",
+          "round(surrogate - beta * kl, 4)"
+        ]
+      },
+      "expected_output": "0.1478"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "group_relative_policy_optimization",
+      "kl_divergence_estimator",
+      "reference_model",
+      "reward_hacking_prevention"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "arithmetic",
+      "logarithms"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}
