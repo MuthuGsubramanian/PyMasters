@@ -1,7 +1,7 @@
 ## Innovation Backlog
 
 *Auto-maintained by the PyMasters AI Intelligence Pipeline.*
-*Last updated: 2026-07-26*
+*Last updated: 2026-07-29*
 
 ### Ready to Build (scored >= 8, validated)
 
@@ -31,6 +31,8 @@
 - **Open-weight AI is having its Kubernetes moment** (score: 7, source: hackernews, added: 2026-07-26) — Open-weight ecosystem overview fits a PyMasters lesson and validates Homie's local-LLM positioning for marketing content [link](https://tobi.knaup.me/2026-07-25-open-weight-ai-is-having-its-kubernetes-moment/)
 - **Becoming a Research Engineer at a Big LLM Lab** (score: 7, source: hackernews, added: 2026-07-26) — Career-path content: adapt into a PyMasters guide on becoming an ML/research engineer [link](https://www.maxmynter.com/pages/blog/jobhunt)
 - **Bringing PyTorch Monarch to AMD GPUs** (score: 7, source: hackernews, added: 2026-07-26) — Tutorial on distributed PyTorch (Monarch) and the AMD GPU ecosystem for advanced learners [link](https://pytorch.org/blog/bringing-pytorch-monarch-to-amd-gpus-single-controller-distributed-training-on-rocm/)
+- **Causal-TS: A Python Library for Causal Discovery in High-Dimensional and Nonstationary Time Series** (score: 7, source: arxiv, added: 2026-07-29) — Open-source Python library (Causal-TS) is a strong fit for a hands-on 'causal discovery in time series' tutorial [link](http://arxiv.org/abs/2607.24673v1)
+- **A corrective agentic hybrid RAG and an operations-grounded evaluation for a scientific facility** (score: 7, source: arxiv, added: 2026-07-29) — Corrective agentic hybrid RAG patterns fit Homie's RAG pipeline directly and would make a strong advanced-RAG lesson [link](http://arxiv.org/abs/2607.24663v1)
 
 ### Evaluating (scored >= 6)
 
