@@ -1,0 +1,152 @@
+{
+  "id": "minilm_mean_pooling",
+  "topic": "minilm_mean_pooling",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Inside all-MiniLM-L6-v2: Tokens, Masks, and Mean Pooling"
+  },
+  "description": {
+    "en": "Open the hood of the world's most-downloaded embedding model: see how a sentence becomes token vectors, and implement the mean-pooling step that fuses them into one 384-dim embedding â€” padding excluded."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The One Line That Makes 384 Numbers Mean Something\n\n\"You've called `model.encode()` and gotten a sentence vector back,\" Vaathiyaar says. \"But here's the secret: the transformer inside **all-MiniLM-L6-v2** never produces a sentence vector. It produces one vector *per token*. The step that fuses them into a single embedding is called **mean pooling** â€” it's four lines of code, it's right there on the model card, and today you'll implement it yourself. Once you can, no embedding model is a black box again.\"\n\n### From Sentence to Token Vectors\n\nBefore the model sees your text, a tokenizer splits it and pads every sentence in the batch to the same length:\n\n| Sentence | Tokens (simplified) | attention_mask |\n|---|---|---|\n| \"I love Python\" | `[CLS] i love python [SEP]` | `1 1 1 1 1` |\n| \"Hi\" | `[CLS] hi [SEP] [PAD] [PAD]` | `1 1 1 0 0` |\n\nThe `attention_mask` marks which positions are real (`1`) and which are padding (`0`). The model then outputs a 384-dim vector for **every** position â€” padding included.\n\n### Mean Pooling, Done Right\n\nTo get one vector per sentence, average the token vectors â€” but *only the real ones*. Averaging the padding too would drag short sentences toward the padding vectors, and \"Hi\" would embed differently depending on what it was batched with. That's why the mask is multiplied in before summing:\n\n```python\nfrom transformers import AutoTokenizer, AutoModel\nimport torch\n\ntok = AutoTokenizer.from_pretrained(\"sentence-transformers/all-MiniLM-L6-v2\")\nmodel = AutoModel.from_pretrained(\"sentence-transformers/all-MiniLM-L6-v2\")\n\nbatch = tok([\"I love Python\", \"Hi\"], padding=True, return_tensors=\"pt\")\nout = model(**batch).last_hidden_state      # shape: (2, seq_len, 384)\n\nmask = batch[\"attention_mask\"].unsqueeze(-1)  # (2, seq_len, 1)\nsummed = (out * mask).sum(dim=1)              # zero out pads, then sum\ncounts = mask.sum(dim=1)                      # how many REAL tokens\nsentence_vecs = summed / counts               # mean pooling!\n```\n\nThat `sentence_vecs` is exactly what `SentenceTransformer.encode()` returns (before normalization). No magic â€” a masked average.\n\n### Why Mean, Not Something Fancier?\n\n| Strategy | How it works | Trade-off |\n|---|---|---|\n| **Mean pooling** | Average all real token vectors | Robust, what MiniLM was *trained* with |\n| CLS token | Take position 0 only | Great for classifiers, weaker untrained similarity |\n| Max pooling | Element-wise max over tokens | Captures spikes, loses proportion |\n\nThe pooling strategy isn't a preference â€” it's part of the model's training contract. all-MiniLM-L6-v2 was contrastively trained on over a billion pairs *with mean pooling in the loop*, so swapping in CLS pooling at inference quietly wrecks your similarity scores while nothing errors out. When you run the model raw via ONNX (as Homie's local RAG embedder does), *you* own this step.\n\n> **Key Insight:** An embedding model is two contracts, not one: the transformer that produces token vectors, and the pooling that fuses them. Break the second â€” pool differently than training did, or forget the attention mask â€” and you get confident-looking 384-dim garbage. Respect it, and you can run MiniLM from PyTorch, ONNX, or Rust and get identical embeddings everywhere."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "token_vectors_fusing",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "mean_pooling_pipeline",
+      "steps": [
+        {
+          "line": "from transformers import AutoTokenizer, AutoModel",
+          "highlight": "AutoModel",
+          "explanation": {
+            "en": "Raw transformers, not sentence-transformers â€” we're rebuilding encode() ourselves"
+          }
+        },
+        {
+          "line": "tok = AutoTokenizer.from_pretrained(\"sentence-transformers/all-MiniLM-L6-v2\")",
+          "highlight": "AutoTokenizer",
+          "explanation": {
+            "en": "The tokenizer splits text into subword tokens and assigns each an id"
+          }
+        },
+        {
+          "line": "batch = tok([\"I love Python\", \"Hi\"], padding=True, return_tensors=\"pt\")",
+          "highlight": "padding=True",
+          "explanation": {
+            "en": "\"Hi\" gets padded to match the longer sentence â€” batches must be rectangular"
+          }
+        },
+        {
+          "line": "out = model(**batch).last_hidden_state  # (2, seq_len, 384)",
+          "highlight": "last_hidden_state",
+          "explanation": {
+            "en": "One 384-dim vector PER TOKEN â€” including the padding positions!"
+          }
+        },
+        {
+          "line": "mask = batch[\"attention_mask\"].unsqueeze(-1)",
+          "highlight": "attention_mask",
+          "explanation": {
+            "en": "1 for real tokens, 0 for padding â€” reshaped so it can multiply the vectors"
+          }
+        },
+        {
+          "line": "summed = (out * mask).sum(dim=1)",
+          "highlight": "out * mask",
+          "explanation": {
+            "en": "Multiplying by 0 erases every padding vector before the sum"
+          }
+        },
+        {
+          "line": "counts = mask.sum(dim=1)",
+          "highlight": "counts",
+          "explanation": {
+            "en": "Divide by the number of REAL tokens â€” not the padded length"
+          }
+        },
+        {
+          "line": "sentence_vecs = summed / counts",
+          "highlight": "summed / counts",
+          "explanation": {
+            "en": "Mean pooling: this masked average IS the sentence embedding"
+          }
+        }
+      ],
+      "duration_ms": 6000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "vectors_merge",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement mean pooling in pure Python â€” the exact operation inside all-MiniLM-L6-v2's `encode()`. Write `mean_pool(token_vecs, mask)` where `token_vecs` is a list of equal-length vectors (one per token) and `mask` is a list of 1s and 0s. Average ONLY the vectors whose mask is 1, component by component, rounding each result to 4 decimals. Print `mean_pool([[1.0, 2.0], [3.0, 4.0], [9.0, 9.0]], [1, 1, 0])` â€” the third vector is padding and must not count."
+      },
+      "starter_code": "def mean_pool(token_vecs: list, mask: list) -> list:\n    \"\"\"Masked average of token vectors -> one sentence vector.\"\"\"\n    # 1. count the real tokens: sum of the mask\n    # 2. for each dimension d, sum token_vecs[i][d] * mask[i] over all i\n    # 3. divide each dimension's sum by the real-token count, round to 4 dp\n    pass\n\nprint(mean_pool([[1.0, 2.0], [3.0, 4.0], [9.0, 9.0]], [1, 1, 0]))",
+      "expected_output": "[2.0, 3.0]",
+      "hints": {
+        "en": [
+          "count = sum(mask) gives the number of real tokens (here: 2)",
+          "For dimension d: total = sum(vec[d] * m for vec, m in zip(token_vecs, mask))",
+          "Loop dimensions with: [round(..., 4) for d in range(len(token_vecs[0]))]"
+        ]
+      },
+      "test_code": "assert mean_pool([[1.0, 2.0], [3.0, 4.0], [9.0, 9.0]], [1, 1, 0]) == [2.0, 3.0], f\"padding leaked into the average: {mean_pool([[1.0, 2.0], [3.0, 4.0], [9.0, 9.0]], [1, 1, 0])}\"\nassert mean_pool([[4.0, 8.0]], [1]) == [4.0, 8.0], \"a single real token is its own mean\"\nassert mean_pool([[2.0], [4.0], [6.0]], [1, 1, 1]) == [4.0], \"all-real mask is a plain average\"\nassert mean_pool([[1.0, 1.0], [5.0, 5.0], [7.0, 7.0], [100.0, 100.0]], [1, 1, 1, 0]) != [28.25, 28.25], \"masked positions must contribute nothing\"\nprint(\"All tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Now build the other half of the batch pipeline: padding. Write `pad_batch(sequences)` that takes a list of token-vector sequences of different lengths and returns a tuple `(padded, masks)`. Pad every sequence to the length of the longest one using zero vectors (`[0.0] * dim`), and build a parallel attention mask per sequence: 1 for real tokens, 0 for padding. Print `pad_batch([[[1.0, 2.0]], [[3.0, 4.0], [5.0, 6.0]]])`."
+      },
+      "starter_code": "def pad_batch(sequences: list) -> tuple:\n    \"\"\"Pad variable-length token-vector sequences into a rectangular batch.\n    Returns (padded_sequences, attention_masks).\"\"\"\n    # 1. max_len = length of the longest sequence\n    # 2. dim = length of any token vector, e.g. len(sequences[0][0])\n    # 3. for each seq: append [0.0] * dim until len == max_len\n    #    and build a mask of 1s (real) then 0s (padding)\n    pass\n\nprint(pad_batch([[[1.0, 2.0]], [[3.0, 4.0], [5.0, 6.0]]]))",
+      "expected_output": "([[[1.0, 2.0], [0.0, 0.0]], [[3.0, 4.0], [5.0, 6.0]]], [[1, 0], [1, 1]])",
+      "hints": {
+        "en": [
+          "max_len = max(len(s) for s in sequences)",
+          "For each seq: padded = seq + [[0.0] * dim] * (max_len - len(seq))",
+          "The mask mirrors it: [1] * len(seq) + [0] * (max_len - len(seq))"
+        ]
+      },
+      "test_code": "p, m = pad_batch([[[1.0, 2.0]], [[3.0, 4.0], [5.0, 6.0]]])\nassert p == [[[1.0, 2.0], [0.0, 0.0]], [[3.0, 4.0], [5.0, 6.0]]], f\"wrong padding: {p}\"\nassert m == [[1, 0], [1, 1]], f\"wrong masks: {m}\"\np2, m2 = pad_batch([[[1.0]], [[2.0], [3.0], [4.0]], [[5.0], [6.0]]])\nassert all(len(s) == 3 for s in p2), \"every sequence must be padded to the longest length\"\nassert m2 == [[1, 0, 0], [1, 1, 1], [1, 1, 0]], f\"masks must mark real=1 pad=0: {m2}\"\nassert p2[0][1] == [0.0] and p2[0][2] == [0.0], \"padding must be zero vectors\"\nprint(\"All tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "mean_pooling",
+      "attention_mask",
+      "tokenization",
+      "sentence_embeddings",
+      "batch_padding"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "list_comprehensions",
+      "nested_lists"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
