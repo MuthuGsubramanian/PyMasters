@@ -1,7 +1,7 @@
 ## Innovation Backlog
 
 *Auto-maintained by the PyMasters AI Intelligence Pipeline.*
-*Last updated: 2026-07-26*
+*Last updated: 2026-07-31*
 
 ### Ready to Build (scored >= 8, validated)
 
@@ -21,6 +21,7 @@
 - **nanotron/ultrascale-playbook** (score: 8, source: huggingface, added: 2026-07-26) — Excellent source material for an advanced 'how LLMs are trained at scale' lesson series (parallelism, GPU efficiency) [link](https://huggingface.co/spaces/nanotron/ultrascale-playbook)
 - **Running a 28.9M parameter LLM on an $8 microcontroller** (score: 8, source: hackernews, added: 2026-07-26) — Great tutorial on extreme LLM quantization/tiny models; reinforces Homie's small-local-model story and edge-device ambitions [link](https://github.com/slvDev/esp32-ai)
 - **Claude Opus 5** (score: 8, source: hackernews, added: 2026-07-26) — Timely PyMasters coverage/tutorial on Claude Opus 5 capabilities and API usage; optionally add as a cloud-provider fallback option in Homie [link](https://www.anthropic.com/news/claude-opus-5)
+- **DenseOn with the LateOn: Fully Open Dense and Late-Interaction Models for Multilingual, Long-Context, and Code Search** (score: 8, source: arxiv, added: 2026-07-31) — Open dense + late-interaction retrieval models: a PyMasters tutorial on modern retrieval, and candidate local embedding models for Homie's RAG [link](http://arxiv.org/abs/2607.27178v1)
 
 ### Prototyping (scored >= 7)
 
@@ -31,6 +32,7 @@
 - **Open-weight AI is having its Kubernetes moment** (score: 7, source: hackernews, added: 2026-07-26) — Open-weight ecosystem overview fits a PyMasters lesson and validates Homie's local-LLM positioning for marketing content [link](https://tobi.knaup.me/2026-07-25-open-weight-ai-is-having-its-kubernetes-moment/)
 - **Becoming a Research Engineer at a Big LLM Lab** (score: 7, source: hackernews, added: 2026-07-26) — Career-path content: adapt into a PyMasters guide on becoming an ML/research engineer [link](https://www.maxmynter.com/pages/blog/jobhunt)
 - **Bringing PyTorch Monarch to AMD GPUs** (score: 7, source: hackernews, added: 2026-07-26) — Tutorial on distributed PyTorch (Monarch) and the AMD GPU ecosystem for advanced learners [link](https://pytorch.org/blog/bringing-pytorch-monarch-to-amd-gpus-single-controller-distributed-training-on-rocm/)
+- **MindForge: Teaching Small Language Models Whole-Life-Cycle Software Engineering via Source-Free Program Synthesis** (score: 7, source: arxiv, added: 2026-07-31) — Small-model software engineering fits both: a PyMasters lesson on training small coding models and evidence for Homie shipping capable local SLMs [link](http://arxiv.org/abs/2607.27146v1)
 
 ### Evaluating (scored >= 6)
 
@@ -38,6 +40,13 @@
 - **open-llm-leaderboard/open_llm_leaderboard** (score: 6, source: huggingface, added: 2026-07-26) — Article/lesson on how to read LLM benchmarks and choose a model for your use case [link](https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard)
 - **black-forest-labs/FLUX.1-dev** (score: 6, source: huggingface, added: 2026-07-26) — Diffusion-model tutorial using FLUX.1-dev with the diffusers library [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev)
 - **black-forest-labs/FLUX.1-schnell** (score: 6, source: huggingface, added: 2026-07-26) — Fast 4-step image generation tutorial; borderline feasible as an optional Homie image-gen plugin on GPU machines [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-schnell)
+- **safaf45252/Annoy-PyEdu-Rs-Raw** (score: 6, source: huggingface, added: 2026-07-31) — A Python-education dataset paired with Annoy could anchor a hands-on tutorial on approximate nearest-neighbor search over educational content [link](https://huggingface.co/datasets/safaf45252/Annoy-PyEdu-Rs-Raw)
+- **Can AI agents conduct open-ended AI research? Early evidence from two case studies** (score: 6, source: arxiv, added: 2026-07-31) — Timely lesson or blog post on whether AI agents can do open-ended research, tied to the agentic-AI track [link](http://arxiv.org/abs/2607.27191v1)
+- **OmegaUse-OfficeVal: Benchmarking LLM Agents on Long-Horizon Office-Suite Tasks with Economic Grounding** (score: 6, source: arxiv, added: 2026-07-31) — Office-suite agent benchmark; informs Homie's roadmap for local document/office task automation and a PyMasters piece on agent cost-effectiveness [link](http://arxiv.org/abs/2607.27155v1)
+- **Cost-Sensitive Conformal Prediction and Human-in-the-Loop Abstention for Imbalanced High-Stakes Decision Support: A Multi-Domain Benchmark** (score: 6, source: arxiv, added: 2026-07-31) — Strong tutorial topic: conformal prediction and abstention for imbalanced, high-stakes classification with runnable Python examples [link](http://arxiv.org/abs/2607.27143v1)
+- **Advancing the price-performance frontier with GPT‑5.6** (score: 6, source: hackernews, added: 2026-07-31) — Lesson comparing frontier-model price-performance (GPT-5.6 vs peers) and how to choose models by cost per task [link](https://openai.com/index/advancing-the-price-performance-frontier-with-gpt-5-6/)
+- **Show HN: Distilling DeepSeek into GPT-OSS doesn't transfer censorship. Try it** (score: 6, source: hackernews, added: 2026-07-31) — Tutorial on model distillation and what transfers (capabilities vs alignment/censorship); the distilled open model is also a candidate for Homie's local LLM lineup [link](https://www.ctgt.ai/research/distillation-censorship-transfer)
+- **2x, not 10x: coding with LLMs in 2026** (score: 6, source: hackernews, added: 2026-07-31) — Practical article/lesson on realistic LLM coding productivity gains and workflows, matching the AI-assisted-development curriculum [link](https://obryant.dev/p/2x-not-10x/)
 
 ### Discovered (new)
 
