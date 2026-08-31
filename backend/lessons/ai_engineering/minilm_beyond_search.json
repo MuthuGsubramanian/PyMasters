@@ -1,0 +1,152 @@
+{
+  "id": "minilm_beyond_search",
+  "topic": "minilm_beyond_search",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "all-MiniLM-L6-v2 Beyond Search: Zero-Shot Labels and Semantic Dedup"
+  },
+  "description": {
+    "en": "You've used embeddings for search â€” now use the same 384-dim vectors to classify text with zero training examples and to collapse near-duplicate documents before they pollute a RAG index."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Same 384 Numbers, Four Different Jobs\n\n\"Last time you used **all-MiniLM-L6-v2** to build search,\" Vaathiyaar says. \"Today, a secret that saves teams from training entire models: once text lives in a good vector space, *search is just one of the things you can do there*. Classification with zero training examples. Duplicate detection with no rules. Clustering with no labels. Same model, same 80 MB, same laptop CPU â€” different geometry tricks.\"\n\n### One Space, Many Tricks\n\n| Job | What you compare | Training data needed |\n|---|---|---|\n| Semantic search | query vs. documents | none |\n| Zero-shot classification | text vs. *label descriptions* | none |\n| Deduplication | document vs. document | none |\n| Clustering | everything vs. everything | none |\n\nThe pattern never changes: encode with `normalize_embeddings=True`, then compare with a dot product. On normalized vectors, dot product *equals* cosine similarity â€” one multiply-add per dimension, 384 of them, microseconds on a CPU.\n\n### Classification Without a Dataset\n\nA classic ML classifier needs labeled examples. An embedding classifier needs only the *names* of your classes â€” because label text is text too:\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\nlabels = [\"billing question\", \"bug report\", \"feature request\"]\nlabel_vecs = model.encode(labels, normalize_embeddings=True)\n\nticket = \"The app crashes every time I upload a photo\"\nt_vec = model.encode(ticket, normalize_embeddings=True)\n\nscores = label_vecs @ t_vec        # one cosine score per label\nprint(labels[scores.argmax()])     # bug report\n```\n\nNo fine-tuning, no dataset, and adding a fourth category is one string. It won't beat a trained classifier on a hard domain, but for routing support tickets, tagging notes, or triaging feedback it is shockingly strong for zero effort.\n\n### Dedup: The Unsung Hero of Good RAG\n\nReal document collections are full of near-duplicates â€” the same paragraph pasted into three wiki pages, two versions of the same FAQ. Index them all and your retriever returns the same fact five times, wasting your precious context window on redundancy. The fix is greedy semantic dedup:\n\n1. Walk documents in order.\n2. Keep a document only if its similarity to **every already-kept** document is below a threshold (0.9 works well for MiniLM).\n3. Otherwise drop it â€” it says nothing new.\n\nThis is exactly what a local RAG assistant should do before indexing your notes: MiniLM embeds every chunk on CPU, near-twins get collapsed, and retrieval quality jumps for free. Both tricks â€” nearest-label and greedy dedup â€” are the two functions you'll implement today, in pure Python, so the geometry is never a black box.\n\n> **Key Insight:** An embedding model isn't a search engine â€” it's a coordinate system for meaning. Search, zero-shot classification, dedup, and clustering are all the *same* operation â€” nearest neighbors by cosine â€” pointed at different pairs of things. Master the geometry once, and every new \"AI feature\" becomes a for-loop over dot products."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "vector_space_constellations",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "zero_shot_classifier",
+      "steps": [
+        {
+          "line": "from sentence_transformers import SentenceTransformer",
+          "highlight": "SentenceTransformer",
+          "explanation": {
+            "en": "One import â€” the same library you used for semantic search"
+          }
+        },
+        {
+          "line": "model = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")",
+          "highlight": "all-MiniLM-L6-v2",
+          "explanation": {
+            "en": "80 MB, 384 dimensions, fast on any laptop CPU â€” no GPU needed"
+          }
+        },
+        {
+          "line": "labels = [\"billing question\", \"bug report\", \"feature request\"]",
+          "highlight": "labels",
+          "explanation": {
+            "en": "Your classifier's classes are just strings â€” label text is text too"
+          }
+        },
+        {
+          "line": "label_vecs = model.encode(labels, normalize_embeddings=True)",
+          "highlight": "normalize_embeddings=True",
+          "explanation": {
+            "en": "Normalizing makes dot product equal cosine similarity â€” cheap AND correct"
+          }
+        },
+        {
+          "line": "ticket = \"The app crashes every time I upload a photo\"",
+          "highlight": "ticket",
+          "explanation": {
+            "en": "A sentence the model has never seen â€” no training examples anywhere"
+          }
+        },
+        {
+          "line": "t_vec = model.encode(ticket, normalize_embeddings=True)",
+          "highlight": "t_vec",
+          "explanation": {
+            "en": "The ticket lands in the SAME 384-dim space as the labels"
+          }
+        },
+        {
+          "line": "scores = label_vecs @ t_vec",
+          "highlight": "@",
+          "explanation": {
+            "en": "One dot product per label â€” three cosine scores in microseconds"
+          }
+        },
+        {
+          "line": "print(labels[scores.argmax()])  # bug report",
+          "highlight": "argmax",
+          "explanation": {
+            "en": "Nearest label wins: zero-shot classification is just nearest-neighbor"
+          }
+        }
+      ],
+      "duration_ms": 6000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "constellation_cluster",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a zero-shot classifier with pure Python. Write `classify(vec, label_vecs)` where `vec` is a normalized embedding (list of floats) and `label_vecs` is a dict mapping label names to normalized embeddings. Return the name of the label whose dot product with `vec` is highest â€” that's the nearest label in the vector space. Print `classify([0.8, 0.6], {\"positive\": [1.0, 0.0], \"negative\": [-1.0, 0.0], \"neutral\": [0.0, 1.0]})`."
+      },
+      "starter_code": "def classify(vec: list, label_vecs: dict) -> str:\n    \"\"\"Return the label whose embedding is most similar to vec.\n    All vectors are normalized, so dot product == cosine similarity.\"\"\"\n    # 1. dot product of two vectors: sum(x * y for x, y in zip(u, v))\n    # 2. score every label in label_vecs against vec\n    # 3. return the label name with the highest score\n    pass\n\nlabels = {\"positive\": [1.0, 0.0], \"negative\": [-1.0, 0.0], \"neutral\": [0.0, 1.0]}\nprint(classify([0.8, 0.6], labels))",
+      "expected_output": "positive",
+      "hints": {
+        "en": [
+          "Write a helper first: def dot(u, v): return sum(x * y for x, y in zip(u, v))",
+          "max() with a key does the whole search: max(label_vecs, key=...) iterates over the label NAMES",
+          "max(label_vecs, key=lambda name: dot(vec, label_vecs[name])) returns the best name directly"
+        ]
+      },
+      "test_code": "labels = {\"positive\": [1.0, 0.0], \"negative\": [-1.0, 0.0], \"neutral\": [0.0, 1.0]}\nassert classify([0.8, 0.6], labels) == \"positive\", f\"[0.8, 0.6] points mostly along positive: got {classify([0.8, 0.6], labels)}\"\nassert classify([-0.6, 0.8], labels) == \"neutral\", f\"neutral (0.8) beats negative (0.6) here: got {classify([-0.6, 0.8], labels)}\"\nassert classify([-0.9, -0.1], labels) == \"negative\", f\"expected negative: got {classify([-0.9, -0.1], labels)}\"\nassert classify([0.6, 0.8], labels) == \"neutral\", \"the HIGHEST dot product must win, not the first positive one\"\nprint(\"All tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Implement greedy semantic dedup â€” the preprocessing step that keeps near-duplicate chunks out of a RAG index. Write `dedup(vecs, threshold)` where `vecs` is a list of normalized embeddings. Walk the vectors in order and keep index `i` only if the dot product between `vecs[i]` and EVERY already-kept vector is below `threshold`; otherwise drop it as a near-duplicate. Return the list of kept indices. Print `dedup([[1.0, 0.0], [0.96, 0.28], [0.0, 1.0], [0.28, 0.96]], 0.9)` â€” vectors 1 and 3 are near-twins of earlier ones and must be dropped."
+      },
+      "starter_code": "def dedup(vecs: list, threshold: float) -> list:\n    \"\"\"Greedy dedup: keep a vector only if it is not too similar\n    to anything already kept. Returns the kept indices.\"\"\"\n    # 1. kept = []  (indices of survivors)\n    # 2. for each index i, vector v in enumerate(vecs):\n    #      compare v against vecs[k] for every k in kept\n    #      if ALL similarities are below threshold, keep i\n    # 3. return kept\n    pass\n\nprint(dedup([[1.0, 0.0], [0.96, 0.28], [0.0, 1.0], [0.28, 0.96]], 0.9))",
+      "expected_output": "[0, 2]",
+      "hints": {
+        "en": [
+          "Reuse the dot helper: def dot(u, v): return sum(x * y for x, y in zip(u, v))",
+          "all(dot(v, vecs[k]) < threshold for k in kept) is True when v is far from every survivor â€” and True for the first vector, since kept is empty",
+          "Append the INDEX i to kept, not the vector itself"
+        ]
+      },
+      "test_code": "assert dedup([[1.0, 0.0], [0.96, 0.28], [0.0, 1.0], [0.28, 0.96]], 0.9) == [0, 2], f\"near-twins at 1 and 3 must be dropped: {dedup([[1.0, 0.0], [0.96, 0.28], [0.0, 1.0], [0.28, 0.96]], 0.9)}\"\nassert dedup([[1.0, 0.0], [0.96, 0.28], [0.0, 1.0], [0.28, 0.96]], 1.01) == [0, 1, 2, 3], \"a threshold above 1.0 keeps everything\"\nassert dedup([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]], 0.99) == [0], \"exact duplicates collapse to the first copy\"\nassert dedup([[0.6, 0.8]], 0.5) == [0], \"a single vector is always kept\"\nassert dedup([[0.0, 1.0], [1.0, 0.0], [0.28, 0.96]], 0.9) == [0, 1], \"compare against ALL kept vectors, not just the previous one\"\nprint(\"All tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "zero_shot_classification",
+      "semantic_deduplication",
+      "normalized_embeddings",
+      "dot_product",
+      "nearest_neighbor"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "dictionaries",
+      "cosine_similarity"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
