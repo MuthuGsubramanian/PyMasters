@@ -1,7 +1,7 @@
 ## Innovation Backlog
 
 *Auto-maintained by the PyMasters AI Intelligence Pipeline.*
-*Last updated: 2026-07-26*
+*Last updated: 2026-08-06*
 
 ### Ready to Build (scored >= 8, validated)
 
@@ -21,6 +21,7 @@
 - **nanotron/ultrascale-playbook** (score: 8, source: huggingface, added: 2026-07-26) — Excellent source material for an advanced 'how LLMs are trained at scale' lesson series (parallelism, GPU efficiency) [link](https://huggingface.co/spaces/nanotron/ultrascale-playbook)
 - **Running a 28.9M parameter LLM on an $8 microcontroller** (score: 8, source: hackernews, added: 2026-07-26) — Great tutorial on extreme LLM quantization/tiny models; reinforces Homie's small-local-model story and edge-device ambitions [link](https://github.com/slvDev/esp32-ai)
 - **Claude Opus 5** (score: 8, source: hackernews, added: 2026-07-26) — Timely PyMasters coverage/tutorial on Claude Opus 5 capabilities and API usage; optionally add as a cloud-provider fallback option in Homie [link](https://www.anthropic.com/news/claude-opus-5)
+- **nomic-ai/nomic-embed-text-v1.5** (score: 8, source: huggingface, added: 2026-08-06) — Matryoshka embeddings tutorial (resizable dimensions); lets Homie trade RAG accuracy for memory dynamically [link](https://huggingface.co/nomic-ai/nomic-embed-text-v1.5)
 
 ### Prototyping (scored >= 7)
 
@@ -38,6 +39,11 @@
 - **open-llm-leaderboard/open_llm_leaderboard** (score: 6, source: huggingface, added: 2026-07-26) — Article/lesson on how to read LLM benchmarks and choose a model for your use case [link](https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard)
 - **black-forest-labs/FLUX.1-dev** (score: 6, source: huggingface, added: 2026-07-26) — Diffusion-model tutorial using FLUX.1-dev with the diffusers library [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev)
 - **black-forest-labs/FLUX.1-schnell** (score: 6, source: huggingface, added: 2026-07-26) — Fast 4-step image generation tutorial; borderline feasible as an optional Homie image-gen plugin on GPU machines [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-schnell)
+- **google/electra-base-discriminator** (score: 6, source: huggingface, added: 2026-08-06) — Advanced lesson on ELECTRA's replaced-token-detection pretraining vs BERT's MLM [link](https://huggingface.co/google/electra-base-discriminator)
+- **FacebookAI/xlm-roberta-base** (score: 6, source: huggingface, added: 2026-08-06) — Multilingual NLP lesson on XLM-R cross-lingual transfer [link](https://huggingface.co/FacebookAI/xlm-roberta-base)
+- **facebook/opt-125m** (score: 6, source: huggingface, added: 2026-08-06) — Tiny GPT-style model for teaching sampling, logits, and generation internals cheaply [link](https://huggingface.co/facebook/opt-125m)
+- **lmarena-ai/arena-leaderboard** (score: 6, source: huggingface, added: 2026-08-06) — Blog post on human-preference arenas vs static benchmarks for model evaluation [link](https://huggingface.co/spaces/lmarena-ai/arena-leaderboard)
+- **TheDima/arxiv-cs-2022-2026** (score: 6, source: huggingface, added: 2026-08-06) — Build-a-paper-search-engine tutorial (embeddings + RAG over arXiv CS); Homie research-assistant plugin for local paper Q&A [link](https://huggingface.co/datasets/TheDima/arxiv-cs-2022-2026)
 
 ### Discovered (new)
 
