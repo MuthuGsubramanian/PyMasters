@@ -1,0 +1,159 @@
+{
+  "id": "mteb_leaderboard",
+  "topic": "mteb_leaderboard",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "The MTEB Leaderboard: How to Actually Pick an Embedding Model"
+  },
+  "description": {
+    "en": "You've built semantic search with MiniLM â€” but is MiniLM the right embedder for YOUR app? Learn to read the MTEB leaderboard like an engineer: what the scores measure, why rank #1 is usually the wrong pick, and how to shortlist by task, size, and dimensions."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Leaderboard Everyone Misreads\n\n\"You chose all-MiniLM-L6-v2 because I told you to,\" Vaathiyaar admits with a smile. \"Today you learn how to make that choice yourself. The **MTEB leaderboard** â€” the Massive Text Embedding Benchmark on Hugging Face â€” ranks hundreds of embedding models on real tasks. It is the single most useful page in embedding engineering, and most people read it wrong: they scroll to rank #1, copy the model name, and ship a 7-billion-parameter embedder to serve a chatbot. Let's do better.\"\n\n### What MTEB Actually Measures\n\nMTEB is not one test. It averages scores across task families, each answering a different question:\n\n| Task family | Question it answers | Matters for |\n|---|---|---|\n| Retrieval | Does the right document rank first for a query? | RAG, search |\n| STS | Do similar sentences get similar vectors? | Dedup, clustering prep |\n| Classification | Do the vectors separate labeled classes? | Routing, tagging |\n| Clustering | Do topics form clean groups? | Topic discovery |\n| Reranking | Can it reorder a candidate list well? | Two-stage search |\n\nThe headline \"overall\" score is the mean of per-family means. That hides everything you care about: a model can ace classification, limp at retrieval, and still rank high overall. **If you're building RAG, sort by the Retrieval column â€” nothing else.**\n\n### Rank #1 Is (Almost) Never Your Pick\n\nThe top of the leaderboard is crowded with LLM-sized embedders: thousands of embedding dimensions, tens of gigabytes, GPU-only. Fantastic scores â€” terrible fit for an app that embeds on CPU and stores a million vectors. Every extra dimension costs you at every chunk, forever. Engineering means reading three columns together â€” score, parameters, dimensions â€” and filtering before sorting:\n\n```python\nmodels = [\n    {\"name\": \"giant-7b-embed\",    \"retrieval\": 60.2, \"size_mb\": 14000, \"dim\": 4096},\n    {\"name\": \"bge-base-en-v1.5\",  \"retrieval\": 53.3, \"size_mb\": 440,   \"dim\": 768},\n    {\"name\": \"e5-large-v2\",       \"retrieval\": 50.6, \"size_mb\": 1340,  \"dim\": 1024},\n    {\"name\": \"all-MiniLM-L6-v2\",  \"retrieval\": 41.9, \"size_mb\": 80,    \"dim\": 384},\n]\n\n# constraint first, THEN best score\nfits = [m for m in models if m[\"size_mb\"] <= 500]\nbest = max(fits, key=lambda m: m[\"retrieval\"])\nprint(best[\"name\"])   # bge-base-en-v1.5\n```\n\nNotice what happened: the leaderboard's #1 never even entered the race, and MiniLM â€” our old friend â€” lost fairly to a model four times its scores-per-megabyte class. That is a *decision*, not a default.\n\n### The Shortlist Ritual\n\nEvery embedder selection is the same four steps: filter to your **language**, sort by the **task family** you actually run, cut everything over your **size and dimension budget**, then eval the top two or three on *your own* queries â€” public benchmarks leak into training data, so a point or two of MTEB difference means nothing. Your held-out twenty queries beat the leaderboard's million.\n\n> **Key Insight:** The MTEB leaderboard is a menu, not a verdict. Sort by the task you ship (Retrieval for RAG), filter by the memory and latency you can afford, and let your own queries break ties. Rank #1 overall answers a question nobody deployed."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "leaderboard_podium_filter",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "embedder_shortlist",
+      "steps": [
+        {
+          "line": "models = load_mteb_rows(task=\"retrieval\", language=\"en\")",
+          "highlight": "task=\"retrieval\"",
+          "explanation": {
+            "en": "Start from the column you ship â€” for RAG that's Retrieval, never the overall mean"
+          }
+        },
+        {
+          "line": "row = {\"name\": \"bge-base-en-v1.5\", \"retrieval\": 53.3, \"size_mb\": 440, \"dim\": 768}",
+          "highlight": "retrieval",
+          "explanation": {
+            "en": "Each leaderboard row is just a dict: score, disk size, and embedding dimensions"
+          }
+        },
+        {
+          "line": "MAX_SIZE_MB = 500",
+          "highlight": "MAX_SIZE_MB",
+          "explanation": {
+            "en": "Your constraint comes from YOUR hardware â€” CPU serving means small models"
+          }
+        },
+        {
+          "line": "MAX_DIM = 1024",
+          "highlight": "MAX_DIM",
+          "explanation": {
+            "en": "Dimensions are a forever-tax: every chunk you store pays dim x 4 bytes"
+          }
+        },
+        {
+          "line": "fits = [m for m in models if m[\"size_mb\"] <= MAX_SIZE_MB]",
+          "highlight": "size_mb",
+          "explanation": {
+            "en": "Filter BEFORE sorting â€” the giant #1 models never enter the race"
+          }
+        },
+        {
+          "line": "fits = [m for m in fits if m[\"dim\"] <= MAX_DIM]",
+          "highlight": "dim",
+          "explanation": {
+            "en": "Second constraint stacks on the first â€” the shortlist only shrinks"
+          }
+        },
+        {
+          "line": "fits.sort(key=lambda m: m[\"retrieval\"], reverse=True)",
+          "highlight": "reverse=True",
+          "explanation": {
+            "en": "NOW sort by score â€” best retrieval among models you can actually run"
+          }
+        },
+        {
+          "line": "shortlist = fits[:3]",
+          "highlight": "[:3]",
+          "explanation": {
+            "en": "Keep two or three â€” a point of MTEB difference is noise, not a verdict"
+          }
+        },
+        {
+          "line": "winner = eval_on_my_queries(shortlist)",
+          "highlight": "my_queries",
+          "explanation": {
+            "en": "Your own twenty held-out queries break the tie â€” benchmarks leak, yours don't"
+          }
+        }
+      ],
+      "duration_ms": 6000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "podium_confetti",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "MTEB's headline number is the mean of per-task-family means â€” NOT the mean of all task scores thrown in one pile. Write `mteb_overall(scores)` where `scores` is a dict mapping family name to a list of task scores. Compute the mean of each family first, then the mean of those family means, and return it rounded to 2 decimal places. Print the result for `{\"retrieval\": [50.0, 60.0], \"sts\": [80.0], \"classification\": [70.0, 75.0, 65.0]}` â€” the answer is 68.33, not the flat mean 66.67."
+      },
+      "starter_code": "def mteb_overall(scores: dict) -> float:\n    \"\"\"Mean of per-family means, rounded to 2 decimals.\n    scores maps family name -> list of task scores for that family.\"\"\"\n    # 1. for each family, compute sum(tasks) / len(tasks)\n    # 2. average those family means\n    # 3. round(overall, 2)\n    pass\n\nprint(mteb_overall({\n    \"retrieval\": [50.0, 60.0],\n    \"sts\": [80.0],\n    \"classification\": [70.0, 75.0, 65.0],\n}))",
+      "expected_output": "68.33",
+      "hints": {
+        "en": [
+          "Build the family means first: means = [sum(v) / len(v) for v in scores.values()]",
+          "The overall score averages the family means, so a family with one task counts as much as a family with ten",
+          "Round only at the end: round(sum(means) / len(means), 2)"
+        ]
+      },
+      "test_code": "r = mteb_overall({\"retrieval\": [50.0, 60.0], \"sts\": [80.0], \"classification\": [70.0, 75.0, 65.0]})\nassert r == 68.33, f\"expected 68.33 (mean of family means), got {r} â€” did you average all tasks in one flat pile?\"\nr2 = mteb_overall({\"retrieval\": [40.0], \"clustering\": [60.0]})\nassert r2 == 50.0, f\"two families, one task each: expected 50.0, got {r2}\"\nr3 = mteb_overall({\"retrieval\": [10.0, 20.0, 30.0, 40.0], \"sts\": [100.0]})\nassert r3 == 62.5, f\"retrieval mean 25.0 and sts mean 100.0 average to 62.5, got {r3} â€” each FAMILY counts once regardless of task count\"\nassert isinstance(r, float), \"return the rounded number, don't print inside the function\"\nprint(\"All tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Build the shortlist step every RAG engineer runs on the MTEB leaderboard: constraints first, then best score. Write `pick_embedder(models, max_size_mb)` where `models` is a list of dicts with keys `name`, `retrieval`, and `size_mb`. Discard every model larger than `max_size_mb`, return the `name` with the highest retrieval score among the survivors, and return `None` if nothing fits. Print the pick for the four models in the starter code with a 500 MB budget â€” the giant leaderboard #1 must lose to a model you can actually run."
+      },
+      "starter_code": "def pick_embedder(models: list, max_size_mb: int):\n    \"\"\"Best retrieval score AMONG models within the size budget.\n    Returns the winning model's name, or None if nothing fits.\"\"\"\n    # 1. keep only models with size_mb <= max_size_mb\n    # 2. if the list is empty, return None\n    # 3. return the name of the max-retrieval survivor\n    pass\n\nmodels = [\n    {\"name\": \"giant-7b-embed\",   \"retrieval\": 60.2, \"size_mb\": 14000},\n    {\"name\": \"all-MiniLM-L6-v2\", \"retrieval\": 41.9, \"size_mb\": 80},\n    {\"name\": \"bge-base-en-v1.5\", \"retrieval\": 53.3, \"size_mb\": 440},\n    {\"name\": \"e5-large-v2\",      \"retrieval\": 50.6, \"size_mb\": 1340},\n]\nprint(pick_embedder(models, 500))",
+      "expected_output": "bge-base-en-v1.5",
+      "hints": {
+        "en": [
+          "Filter first: fits = [m for m in models if m[\"size_mb\"] <= max_size_mb]",
+          "max() takes a key: max(fits, key=lambda m: m[\"retrieval\"]) â€” then return its [\"name\"]",
+          "Handle the empty shortlist before calling max(), or max() will crash on an empty list"
+        ]
+      },
+      "test_code": "models = [\n    {\"name\": \"giant-7b-embed\",   \"retrieval\": 60.2, \"size_mb\": 14000},\n    {\"name\": \"all-MiniLM-L6-v2\", \"retrieval\": 41.9, \"size_mb\": 80},\n    {\"name\": \"bge-base-en-v1.5\", \"retrieval\": 53.3, \"size_mb\": 440},\n    {\"name\": \"e5-large-v2\",      \"retrieval\": 50.6, \"size_mb\": 1340},\n]\nassert pick_embedder(models, 500) == \"bge-base-en-v1.5\", \"within 500 MB the best retrieval score is bge-base-en-v1.5 â€” the 14 GB #1 must be filtered OUT\"\nassert pick_embedder(models, 100) == \"all-MiniLM-L6-v2\", \"with a 100 MB budget only MiniLM fits\"\nassert pick_embedder(models, 99999) == \"giant-7b-embed\", \"with no real budget, the raw leaderboard #1 wins\"\nassert pick_embedder(models, 50) is None, \"nothing fits in 50 MB â€” must return None, not crash\"\nassert pick_embedder(models, 440) == \"bge-base-en-v1.5\", \"a model exactly at the budget still fits (<=, not <)\"\nprint(\"All tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "mteb_leaderboard",
+      "embedding_model_selection",
+      "benchmark_interpretation",
+      "retrieval_metrics",
+      "model_size_tradeoffs"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "dictionaries",
+      "embeddings_basics"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
