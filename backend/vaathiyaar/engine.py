@@ -18,13 +18,16 @@ from vaathiyaar.modelfile import build_system_prompt
 # ---------------------------------------------------------------------------
 
 OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "glm-5.3-flash")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gpt-oss:120b")
 # Ordered fallbacks used by the self-healing model resolver below when the
 # configured OLLAMA_MODEL is retired/unavailable on Ollama Cloud (qwen3.5:397b
 # was retired 2026-09-25 and silently killed the ollama provider for a month).
 OLLAMA_MODEL_CANDIDATES = os.getenv(
     "OLLAMA_MODEL_CANDIDATES",
-    "glm-5.3-flash,gpt-oss:120b,deepseek-v4.1-flash,gemma4:31b,kimi-k2.6",
+    # Benchmarked on prod 2026-10-26: gpt-oss:120b answers clean Markdown in
+    # 3-8 s; glm-5.3-flash ignores think=False and streams its chain-of-thought
+    # into the content (28 s, 6.5k chars) — keep it last.
+    "gpt-oss:120b,deepseek-v4.1-flash,gemma4:31b,kimi-k2.6,glm-5.3-flash",
 )
 OLLAMA_MODEL_REFRESH_SECONDS = int(os.getenv("OLLAMA_MODEL_REFRESH_SECONDS", str(6 * 3600)))
 

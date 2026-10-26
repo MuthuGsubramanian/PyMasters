@@ -533,7 +533,7 @@ def build_system_prompt(
     profile_block = f"""
 ## Current Student Profile
 
-- **Name**: {name}
+- **Name**: {name if name != 'the student' else 'not on file (greet warmly without a name; never invent one or call them "the student")'}
 - **User Type**: {profile.get("user_type", "")}
 - **Skill level**: {skill_level}
 - **Preferred language**: {lang_label}
