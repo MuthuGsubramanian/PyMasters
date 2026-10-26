@@ -351,11 +351,23 @@ def _outcome_pairs(db_path: str, days: int = 30, k: int = 15) -> tuple:
     conn = _conn(db_path)
     try:
         good = conn.execute(
-            "SELECT input_text, output_text FROM training_data WHERE quality_score >= 0.8 AND created_at > datetime('now', ?) "
+            "SELECT id, input_text, output_text FROM training_data WHERE quality_score >= 0.8 AND created_at > datetime('now', ?) "
             "ORDER BY created_at DESC LIMIT ?", [f"-{days} days", k]).fetchall()
         bad = conn.execute(
-            "SELECT input_text, output_text FROM training_data WHERE quality_score IS NOT NULL AND quality_score < 0.5 "
+            "SELECT id, input_text, output_text FROM training_data WHERE quality_score IS NOT NULL AND quality_score < 0.5 "
             "AND created_at > datetime('now', ?) ORDER BY created_at DESC LIMIT ?", [f"-{days} days", k]).fetchall()
+    finally:
+        conn.close()
+
+    # Learner-stated reasons behind 👎 (classroom /feedback), keyed by pair id.
+    conn = _conn(db_path)
+    try:
+        reasons = {}
+        for r in conn.execute("SELECT value FROM learning_signals WHERE signal_type = 'tutor_feedback' "
+                              "AND created_at > datetime('now', ?)", [f"-{days} days"]).fetchall():
+            v = _loads(r["value"], {})
+            if isinstance(v, dict) and v.get("pair_id") and v.get("reason"):
+                reasons[v["pair_id"]] = v["reason"]
     finally:
         conn.close()
 
@@ -364,7 +376,10 @@ def _outcome_pairs(db_path: str, days: int = 30, k: int = 15) -> tuple:
         for r in rows:
             o = _loads(r["output_text"], {})
             msg = o.get("message") if isinstance(o, dict) else str(r["output_text"])
-            out.append({"student": (r["input_text"] or "")[-400:], "tutor": str(msg or "")[:600]})
+            item = {"student": (r["input_text"] or "")[-400:], "tutor": str(msg or "")[:600]}
+            if r["id"] in reasons:
+                item["learner_said"] = reasons[r["id"]]
+            out.append(item)
         return out
     return shape(good), shape(bad)
 

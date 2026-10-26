@@ -16,7 +16,7 @@ from fastapi import APIRouter, HTTPException, Query, Header, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from auth import get_current_user_id
+from auth import get_current_user_id, optional_user_id
 
 from vaathiyaar.engine import (
     call_vaathiyaar, evaluate_code, get_ollama_client, OLLAMA_MODEL,
@@ -106,6 +106,10 @@ class DiagnosticRequest(BaseModel):
 class FeedbackRequest(BaseModel):
     pair_id: str
     helpful: bool  # 👍 = True, 👎 = False
+    # One-tap reason behind a 👎 (too_long | too_hard | wrong | off_topic | other).
+    # Stored as a learning signal so the nightly insights distiller can see WHY
+    # a turn failed, not just that it did.
+    reason: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------
@@ -1133,12 +1137,20 @@ def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id
 # ---------------------------------------------------------------------------
 
 @router.post("/feedback")
-def vaathiyaar_feedback(request: FeedbackRequest):
+def vaathiyaar_feedback(request: FeedbackRequest, caller: str | None = Depends(optional_user_id)):
     """Student rates a Vaathiyaar response (👍/👎). Sets the pair's quality score
     so good answers become high-quality fine-tuning data and bad ones are dropped."""
     score = 1.0 if request.helpful else 0.0
-    updated = set_training_quality(_get_db_path(), request.pair_id, score)
-    return {"ok": updated, "quality_score": score}
+    db_path = _get_db_path()
+    updated = set_training_quality(db_path, request.pair_id, score)
+    reason = (request.reason or "").strip().lower()[:40]
+    if reason and caller:
+        try:
+            record_signal(db_path, user_id=caller, signal_type="tutor_feedback", topic=reason,
+                          value={"pair_id": request.pair_id, "helpful": request.helpful, "reason": reason})
+        except Exception:
+            pass
+    return {"ok": updated, "quality_score": score, "reason_recorded": bool(reason and caller)}
 
 
 # ── On-demand "Explain this visually" generation (per-lesson Explain button) ──

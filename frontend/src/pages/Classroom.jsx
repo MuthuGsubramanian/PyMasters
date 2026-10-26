@@ -57,15 +57,43 @@ function ThinkingBubble() {
 
 // 👍/👎 on a Vaathiyaar answer — feeds the training-data quality score so the
 // tutor improves from real student interactions.
+const DOWN_REASONS = [
+    ['too_long', 'Too long'],
+    ['too_hard', 'Too hard'],
+    ['wrong', 'Wrong'],
+    ['off_topic', 'Not what I asked'],
+];
+
 function FeedbackButtons({ pairId }) {
-    const [rated, setRated] = useState(null);
+    const [rated, setRated] = useState(null);   // null | 'up' | 'down' | 'down+reason'
     if (!pairId) return null;
     const rate = (helpful) => {
         if (rated) return;
         setRated(helpful ? 'up' : 'down');
         sendVaathiyaarFeedback(pairId, helpful).catch(() => {});
     };
-    if (rated) return <div className="mt-1.5 text-[11px] text-text-muted">Thanks — that helps Vaathiyaar improve!</div>;
+    const why = (reason) => {
+        setRated('down+reason');
+        // Second call carries the reason; quality was already set by the first.
+        sendVaathiyaarFeedback(pairId, false, reason).catch(() => {});
+    };
+    if (rated === 'up' || rated === 'down+reason') {
+        return <div className="mt-1.5 text-[11px] text-text-muted">Thanks — that helps Vaathiyaar improve!</div>;
+    }
+    if (rated === 'down') {
+        return (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                <span className="text-[10px] text-text-muted mr-0.5">What went wrong?</span>
+                {DOWN_REASONS.map(([key, label]) => (
+                    <button key={key} onClick={() => why(key)}
+                        className="px-2 py-0.5 rounded-full border border-border text-[11px] text-text-muted hover:text-text-primary hover:border-text-muted transition-colors">
+                        {label}
+                    </button>
+                ))}
+                <button onClick={() => setRated('down+reason')} className="text-[10px] text-text-muted underline ml-1">skip</button>
+            </div>
+        );
+    }
     return (
         <div className="mt-1.5 flex items-center gap-1">
             <span className="text-[10px] text-text-muted mr-0.5">Helpful?</span>

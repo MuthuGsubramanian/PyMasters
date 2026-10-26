@@ -287,3 +287,27 @@ def test_admin_and_learner_endpoints(env):
     assert client.delete(f"/api/profile/{me}/learner-notes/n9", headers=h).status_code == 200
     assert client.get(f"/api/profile/{me}/learner-notes", headers=h).json()["notes"] == []
     assert client.get("/api/admin/vaathiyaar/adaptive").status_code in (401, 403)  # anonymous
+
+
+def test_feedback_reason_is_recorded_and_reaches_insight_material(env):
+    client, db, ad = env["client"], env["db"], env["adaptive"]
+    tok = client.post("/api/admin/service-login", json={"token": "ops-token-abc"}).json()["access_token"]
+    h = {"Authorization": f"Bearer {tok}"}
+    conn = sqlite3.connect(db)
+    conn.execute("INSERT INTO training_data (id, input_text, output_text, profile_json, context_json, quality_score) "
+                 "VALUES ('p1', 'help with loops', '{\"message\": \"Here is everything about loops...\"}', '{}', '{}', 0.4)")
+    conn.commit(); conn.close()
+    r = client.post("/api/classroom/feedback", json={"pair_id": "p1", "helpful": False, "reason": "too_long"}, headers=h)
+    assert r.status_code == 200 and r.json()["reason_recorded"] is True
+    _seed_outcomes(db, good=4, bad=3)
+    captured = {}
+
+    def llm(messages, options):
+        captured["prompt"] = messages[-1]["content"]
+        return "[]"
+    ad.distill_insights(db, llm)
+    assert '"learner_said": "too_long"' in captured["prompt"]
+    # anonymous feedback still updates quality but cannot attach a reason to a user
+    r = client.post("/api/classroom/feedback", json={"pair_id": "p1", "helpful": True, "reason": "x"})
+    assert r.status_code == 200 and r.json()["reason_recorded"] is False
+
