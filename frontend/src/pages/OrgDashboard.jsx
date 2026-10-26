@@ -9,6 +9,8 @@ import {
 import StudentDrawer from '../components/StudentDrawer';
 import OrgRequestsPanel from '../components/OrgRequestsPanel';
 import OrgCurriculumPanel from '../components/OrgCurriculumPanel';
+import OrgBrandingPanel from '../components/OrgBrandingPanel';
+import useOrgBranding from '../hooks/useOrgBranding';
 import { motion, AnimatePresence } from 'framer-motion';
 import { safeErrorMsg } from '../utils/errorUtils';
 import {
@@ -19,7 +21,7 @@ import {
   Building2, Users, Mail, Send, Copy, Shield, Crown,
   UserX, BarChart3, TrendingUp, Trophy, Zap, Search,
   Plus, ChevronDown, ExternalLink, Check, AlertTriangle,
-  Upload, Rocket, X, Loader2, GraduationCap, Activity, Inbox, BookOpen
+  Upload, Rocket, X, Loader2, GraduationCap, Activity, Inbox, BookOpen, Palette
 } from 'lucide-react';
 
 /* ------------------------------------------------------------------ */
@@ -33,7 +35,15 @@ const TABS = [
   { key: 'curriculum', label: 'Curriculum', icon: BookOpen },
   { key: 'analytics', label: 'Analytics', icon: BarChart3 },
   { key: 'requests', label: 'Requests', icon: Inbox },
+  { key: 'branding', label: 'Branding', icon: Palette },
 ];
+
+/* Naive English singular for a plural learner label ("Students" -> "Student").
+   Labels that do not end in "s" (e.g. "Faculty", "Staff") pass through. */
+function singular(label) {
+  const l = String(label || '').trim();
+  return l.length > 3 && /s$/i.test(l) && !/ss$/i.test(l) ? l.slice(0, -1) : l;
+}
 
 /* Relative time from a UTC-ish timestamp string (SQLite "YYYY-MM-DD HH:MM:SS" or ISO). */
 function relTime(ts) {
@@ -73,6 +83,7 @@ const ROLE_BADGES = {
 const TYPE_BADGES = {
   school: 'success',
   university: 'info',
+  training_center: 'info',
   enterprise: 'primary',
   other: 'neutral',
 };
@@ -425,6 +436,11 @@ export default function OrgDashboard() {
   const isAdmin = myRole === 'super_admin' || myRole === 'admin';
   const canViewProgress = isAdmin || myRole === 'manager';
 
+  // Org vocabulary (white-label lite): "Students" / "Trainees" / "Employees"
+  // etc. come from the org's type preset or its saved branding overrides.
+  const { branding } = useOrgBranding();
+  const learnerLabel = String(branding?.learner_label || 'Students');
+
   /* ---- Data loading ---- */
   const loadOrg = useCallback(async () => {
     const orgId = getOrgId(activeOrg);
@@ -735,7 +751,7 @@ export default function OrgDashboard() {
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-bold text-text-primary">{orgName}</h1>
               <Badge variant={TYPE_BADGES[orgType] || TYPE_BADGES.other} className="uppercase">
-                {orgType}
+                {orgType.replace(/_/g, ' ')}
               </Badge>
               {org?.plan && (
                 <Badge variant="warning" className="uppercase">
@@ -752,7 +768,7 @@ export default function OrgDashboard() {
       {/* Tabs */}
       <Tabs
         className="mb-4"
-        tabs={TABS.filter((t) => {
+        tabs={TABS.map((t) => (t.key === 'students' ? { ...t, label: learnerLabel } : t)).filter((t) => {
           // Analytics is read-only aggregate stats; backend org_analytics requires
           // manager+ and loadOrg() already fetches it for managers. Gate the tab on
           // canViewProgress (manager+) so managers actually see the data they're
@@ -764,6 +780,8 @@ export default function OrgDashboard() {
           if (t.key === 'curriculum' && !isAdmin) return false;
           // Product-level requests (plan/enterprise/seats) are the org owner's call.
           if (t.key === 'requests' && myRole !== 'super_admin') return false;
+          // Portal branding writes require admin+ (backend PUT /branding).
+          if (t.key === 'branding' && !isAdmin) return false;
           return true;
         })}
         active={tab}
@@ -830,7 +848,7 @@ export default function OrgDashboard() {
                     className="input-neo py-1.5 px-3 text-sm w-40"
                     placeholder="Group"
                   />
-                  <span className="text-xs text-text-muted">What a group is called for your org (e.g. Class, Batch, Team).</span>
+                  <span className="text-xs text-text-muted">What a group is called for your org (e.g. Class, Batch, Team). More vocabulary and colours live in the Branding tab.</span>
                 </Card>
               )}
 
@@ -1176,12 +1194,12 @@ export default function OrgDashboard() {
                 </div>
               ) : progress.length === 0 ? (
                 <div className="text-center py-12 text-text-muted text-sm">
-                  No students yet — invite learners and their progress will appear here.
+                  No {learnerLabel.toLowerCase()} yet — invite them and their progress will appear here.
                 </div>
               ) : (
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <StatCard icon={Users} label="Students" value={progress.length} />
+                    <StatCard icon={Users} label={learnerLabel} value={progress.length} />
                     <StatCard icon={Activity} label="Active (7d)" value={progress.filter((s) => (s.signals_7d || 0) > 0).length} />
                     <StatCard icon={Trophy} label="Lessons Done" value={progress.reduce((a, s) => a + (s.lessons_completed || 0), 0)} />
                     <StatCard icon={AlertTriangle} label="At Risk" value={progress.filter((s) => (s.struggle_count || 0) >= 3).length} />
@@ -1189,9 +1207,9 @@ export default function OrgDashboard() {
 
                   <Card className="overflow-hidden">
                     <Table>
-                      <caption className="sr-only">Per-student progress</caption>
+                      <caption className="sr-only">Per-{singular(learnerLabel).toLowerCase()} progress</caption>
                       <THead>
-                        <TH>Student</TH>
+                        <TH>{singular(learnerLabel)}</TH>
                         <TH>XP</TH>
                         <TH>Lessons</TH>
                         <TH>Last active</TH>
@@ -1322,6 +1340,15 @@ export default function OrgDashboard() {
 
           {tab === 'requests' && myRole === 'super_admin' && (
             <OrgRequestsPanel orgId={orgId} />
+          )}
+
+          {tab === 'branding' && isAdmin && (
+            <OrgBrandingPanel
+              orgId={orgId}
+              orgName={orgName}
+              userName={user?.name || user?.username || ''}
+              onSaved={(b) => { if (b?.group_label) setGroupLabel(b.group_label); loadGroups(); }}
+            />
           )}
         </motion.div>
       </AnimatePresence>

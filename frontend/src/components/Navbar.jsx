@@ -4,10 +4,18 @@ import { Trophy, LogOut } from 'lucide-react';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
 import { motion } from 'framer-motion';
 import NotificationBell from './NotificationBell';
+import useOrgBranding from '../hooks/useOrgBranding';
 
 export default function Navbar() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    // Org portal branding (white-label lite): custom wordmark / logo when the
+    // active org saved one; falls back to the PyMasters mark otherwise.
+    const { branding } = useOrgBranding();
+    const portalName = (branding?.portal_name || '').trim();
+    const logoUrl = (branding?.logo_url || '').trim();
+    const isCustomBrand = portalName.length > 0;
+    const showPoweredBy = isCustomBrand && branding?.show_powered_by !== false;
 
     if (!user) return null;
 
@@ -19,19 +27,33 @@ export default function Navbar() {
         >
             <div className="max-w-7xl mx-auto flex justify-between items-center">
                 <button type="button" aria-label="Go to dashboard" className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/dashboard')}>
-                    <div className="relative">
-                        <div className="absolute inset-0 bg-cyan-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity" aria-hidden="true"></div>
-                        <div className="bg-gradient-to-br from-cyan-400 to-blue-600 w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg relative z-10">
-                            <img src={PymastersGlyph} alt="" aria-hidden="true" className="w-7 h-7" />
+                    {logoUrl ? (
+                        <div className="w-10 h-10 rounded-xl bg-white/90 flex items-center justify-center overflow-hidden shadow-lg shrink-0">
+                            <img src={logoUrl} alt={portalName || 'Organization logo'} className="w-10 h-10 object-contain" />
                         </div>
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold tracking-widest font-mono text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 group-hover:to-cyan-200 transition-all">
-                            PYMASTERS
+                    ) : (
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-cyan-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity" aria-hidden="true"></div>
+                            <div className="bg-gradient-to-br from-cyan-400 to-blue-600 w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg relative z-10">
+                                <img src={PymastersGlyph} alt="" aria-hidden="true" className="w-7 h-7" />
+                            </div>
+                        </div>
+                    )}
+                    <div className="min-w-0 text-left">
+                        <h1 className={isCustomBrand
+                            ? "text-xl font-bold tracking-tight text-white truncate max-w-[16rem]"
+                            : "text-xl font-bold tracking-widest font-mono text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 group-hover:to-cyan-200 transition-all"}>
+                            {isCustomBrand ? portalName : 'PYMASTERS'}
                         </h1>
-                        <p className="text-[10px] text-cyan-400 tracking-[0.2em] uppercase font-bold">
-                            {user.points > 1000 ? 'Architect Class' : user.points > 500 ? 'Engineer Class' : 'Cadet Class'}
-                        </p>
+                        {showPoweredBy ? (
+                            <p className="text-[10px] text-gray-400 tracking-wide">
+                                Powered by <span className="font-mono font-bold text-cyan-400">PyMasters</span>
+                            </p>
+                        ) : (
+                            <p className="text-[10px] text-cyan-400 tracking-[0.2em] uppercase font-bold">
+                                {user.points > 1000 ? 'Architect Class' : user.points > 500 ? 'Engineer Class' : 'Cadet Class'}
+                            </p>
+                        )}
                     </div>
                 </button>
 
@@ -53,9 +75,11 @@ export default function Navbar() {
                             <div className="text-sm font-bold text-white leading-none">{user.username}</div>
                         </div>
                         <button
+                            type="button"
                             onClick={logout}
-                            className="p-2 hover:bg-red-500/10 text-gray-400 hover:text-red-400 rounded-lg transition-colors border border-transparent hover:border-red-500/20"
+                            className="p-2 hover:bg-red-500/10 text-gray-400 hover:text-red-400 rounded-lg transition-colors border border-transparent hover:border-red-500/20 cursor-pointer"
                             title="Disconnect"
+                            aria-label="Sign out"
                         >
                             <LogOut size={18} />
                         </button>

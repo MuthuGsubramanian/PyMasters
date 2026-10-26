@@ -11,7 +11,7 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { Button, Badge } from './ui';
 
 const PLANS = ['free', 'student', 'beginner', 'pro', 'enterprise'];
-const TYPES = ['school', 'university', 'enterprise', 'other'];
+const TYPES = ['school', 'university', 'training_center', 'enterprise', 'other'];
 const ORG_ROLES = ['super_admin', 'admin', 'manager', 'member'];
 
 // What each org role may do — single source of truth for the console, mirrors

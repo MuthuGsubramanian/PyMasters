@@ -4,6 +4,7 @@ Prefix: /api/org
 """
 
 import os
+import re
 import json
 import sqlite3
 import uuid
@@ -12,7 +13,7 @@ import threading
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 def _utcnow():
@@ -149,15 +150,105 @@ def require_org_role(db_path, org_id, user_id, min_role="member"):
         raise HTTPException(status_code=403, detail=f"Requires {min_role} role or higher")
     return {"role": row[0], "department": row[1]}
 
+# -- Organization kinds + per-kind vocabulary presets ----------------------
+# `type` is a free-text column historically; these are the values the product
+# knows how to present. Unknown values are rejected on create/update so the
+# preset lookup below never silently falls through for a typo.
+ORG_TYPES = ("school", "university", "training_center", "enterprise", "other")
+
+# Default vocabulary per org kind. `kind` tells the UI whether this client is an
+# educational or professional buyer; the three labels replace the hard-coded
+# "Students" / "Group" / "Teacher" words in the org console. An org admin can
+# override any label via PUT /{org_id}/branding (stored in settings.branding).
+ORG_TYPE_PRESETS = {
+    "school":          {"learner_label": "Students",  "group_label": "Class",  "instructor_label": "Teacher", "kind": "educational"},
+    "university":      {"learner_label": "Students",  "group_label": "Course", "instructor_label": "Faculty", "kind": "educational"},
+    "training_center": {"learner_label": "Trainees",  "group_label": "Batch",  "instructor_label": "Trainer", "kind": "professional"},
+    "enterprise":      {"learner_label": "Employees", "group_label": "Team",   "instructor_label": "Manager", "kind": "professional"},
+    "other":           {"learner_label": "Learners",  "group_label": "Group",  "instructor_label": "Mentor",  "kind": "professional"},
+}
+
+
+def _normalize_org_type(v):
+    """Lower-case + strip an incoming org type and reject anything not in ORG_TYPES.
+    None passes through (Optional fields); '' falls back to 'other' so the
+    legacy frontend default (empty selector) keeps working."""
+    if v is None:
+        return None
+    t = str(v).strip().lower().replace(" ", "_").replace("-", "_")
+    if not t:
+        return "other"
+    if t not in ORG_TYPES:
+        raise ValueError(f"Invalid organization type '{v}'. Expected one of: {', '.join(ORG_TYPES)}")
+    return t
+
+
+def org_preset(org_type: str) -> dict:
+    return dict(ORG_TYPE_PRESETS.get((org_type or "other").lower()) or ORG_TYPE_PRESETS["other"])
+
+
+# Branding ("white-label lite", 2026-10-26). Only these TYPED fields are ever
+# stored or rendered -- no free-form HTML/CSS, so an org admin cannot inject
+# markup or styles into other members' sessions. Colors are strict #rrggbb.
+_HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+_LOGO_URL_RE = re.compile(r"^https?://[^\s<>\"']+$")
+_BRANDING_LIMITS = {
+    "portal_name": 40, "tagline": 80, "logo_url": 500,
+    "learner_label": 30, "group_label": 30, "instructor_label": 30,
+    "welcome_message": 280,
+}
+
+
+def _load_settings(conn, org_id: str) -> dict:
+    row = conn.execute("SELECT settings FROM organizations WHERE id = ?", [org_id]).fetchone()
+    try:
+        data = json.loads(row[0]) if row and row[0] else {}
+    except Exception:
+        data = {}
+    return data if isinstance(data, dict) else {}
+
+
+def _effective_branding(org_type: str, settings: dict) -> dict:
+    """Preset defaults for the org kind, overlaid with whatever the org saved.
+    `group_label` honours the legacy top-level settings.group_label (set by the
+    older PUT /{org_id} path) when no branding-level value exists."""
+    preset = org_preset(org_type)
+    settings = settings if isinstance(settings, dict) else {}
+    saved = settings.get("branding")
+    saved = saved if isinstance(saved, dict) else {}
+    eff = {
+        "portal_name": "", "tagline": "", "logo_url": "",
+        "primary_color": "", "accent_color": "",
+        "learner_label": preset["learner_label"],
+        "group_label": settings.get("group_label") or preset["group_label"],
+        "instructor_label": preset["instructor_label"],
+        "welcome_message": "",
+        "show_powered_by": True,
+    }
+    for k in eff:
+        v = saved.get(k)
+        if k == "show_powered_by":
+            if isinstance(v, bool):
+                eff[k] = v
+        elif isinstance(v, str) and v.strip():
+            eff[k] = v.strip()
+    return eff
+
+
 # -- Pydantic models ------------------------------------------------------
 
 class CreateOrgRequest(BaseModel):
     name: str
-    type: str = "other"  # school, university, enterprise, other
+    type: str = "other"  # one of ORG_TYPES: school, university, training_center, enterprise, other
     domain: str = ""
     logo_url: str = ""
     description: str = ""
     user_id: str  # creator
+
+    @field_validator("type", mode="before")
+    @classmethod
+    def _check_type(cls, v):
+        return _normalize_org_type(v) or "other"
 
 class UpdateOrgRequest(BaseModel):
     name: Optional[str] = None
@@ -168,6 +259,73 @@ class UpdateOrgRequest(BaseModel):
     plan: Optional[str] = None
     group_label: Optional[str] = None
     user_id: str
+
+    @field_validator("type", mode="before")
+    @classmethod
+    def _check_type(cls, v):
+        return _normalize_org_type(v)
+
+
+class BrandingRequest(BaseModel):
+    """Partial update: fields left None are untouched. Empty string clears a
+    text field / colour / label override (reverting to the preset or platform
+    default). Validation errors surface as 422 via pydantic."""
+    portal_name: Optional[str] = None
+    tagline: Optional[str] = None
+    logo_url: Optional[str] = None
+    primary_color: Optional[str] = None
+    accent_color: Optional[str] = None
+    learner_label: Optional[str] = None
+    group_label: Optional[str] = None
+    instructor_label: Optional[str] = None
+    welcome_message: Optional[str] = None
+    show_powered_by: Optional[bool] = None
+
+    @field_validator("portal_name", "tagline", "learner_label", "group_label",
+                     "instructor_label", "welcome_message", mode="before")
+    @classmethod
+    def _strip_and_cap(cls, v, info):
+        if v is None:
+            return None
+        if not isinstance(v, str):
+            raise ValueError(f"{info.field_name} must be a string")
+        v = " ".join(v.split())  # collapse inner whitespace/newlines; strips ends
+        limit = _BRANDING_LIMITS[info.field_name]
+        if len(v) > limit:
+            raise ValueError(f"{info.field_name} must be at most {limit} characters")
+        if "<" in v or ">" in v:
+            raise ValueError(f"{info.field_name} may not contain angle brackets")
+        return v
+
+    @field_validator("logo_url", mode="before")
+    @classmethod
+    def _check_logo(cls, v):
+        if v is None:
+            return None
+        if not isinstance(v, str):
+            raise ValueError("logo_url must be a string")
+        v = v.strip()
+        if not v:
+            return ""
+        if len(v) > _BRANDING_LIMITS["logo_url"]:
+            raise ValueError("logo_url must be at most 500 characters")
+        if not _LOGO_URL_RE.match(v):
+            raise ValueError("logo_url must be an http(s) URL")
+        return v
+
+    @field_validator("primary_color", "accent_color", mode="before")
+    @classmethod
+    def _check_color(cls, v, info):
+        if v is None:
+            return None
+        if not isinstance(v, str):
+            raise ValueError(f"{info.field_name} must be a string")
+        v = v.strip()
+        if not v:
+            return ""
+        if not _HEX_COLOR_RE.match(v):
+            raise ValueError(f"{info.field_name} must be a #rrggbb hex colour")
+        return v.lower()
 
 class InviteRequest(BaseModel):
     email: str
@@ -307,13 +465,22 @@ def my_orgs(caller: str = Depends(get_current_user_id)):
     rows = conn.execute("""
         SELECT o.id, o.name, o.type, o.domain, o.logo_url, o.plan,
                om.role, om.department, om.joined_at,
-               (SELECT COUNT(*) FROM org_members WHERE org_id = o.id) as member_count
+               (SELECT COUNT(*) FROM org_members WHERE org_id = o.id) as member_count,
+               o.settings
         FROM org_members om
         JOIN organizations o ON o.id = om.org_id
         WHERE om.user_id = ?
         ORDER BY om.joined_at DESC
     """, [user_id]).fetchall()
     conn.close()
+
+    def _settings(raw):
+        try:
+            d = json.loads(raw) if raw else {}
+        except Exception:
+            d = {}
+        return d if isinstance(d, dict) else {}
+
     return {"organizations": [
         {
             "id": r[0], "org_id": r[0],  # dual keys for frontend compat
@@ -321,7 +488,10 @@ def my_orgs(caller: str = Depends(get_current_user_id)):
             "type": r[2], "org_type": r[2],
             "domain": r[3], "logo_url": r[4], "plan": r[5],
             "role": r[6], "department": r[7] or "",
-            "joined_at": r[8], "member_count": r[9]
+            "joined_at": r[8], "member_count": r[9],
+            # Effective branding so the shell can theme right after login
+            # without a second round-trip (see GET /{org_id}/branding).
+            "branding": _effective_branding(r[2], _settings(r[10])),
         } for r in rows
     ]}
 
@@ -447,6 +617,75 @@ def get_org(org_id: str, user_id: str = Query(None), caller: str = Depends(get_c
         "my_role": member_info["role"],
         "my_department": member_info["department"] or "",
         "pending_invites": pending_invites
+    }
+
+
+@router.get("/{org_id}/branding")
+def get_branding(org_id: str, caller: str = Depends(get_current_user_id)):
+    """Effective portal branding for an org (preset defaults overlaid with what
+    the org saved). Any member may read it -- it is what themes their shell."""
+    require_org_role(DB_PATH, org_id, caller, "member")
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        row = conn.execute("SELECT type, settings FROM organizations WHERE id = ?", [org_id]).fetchone()
+    finally:
+        conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    org_type = row[0] or "other"
+    try:
+        settings = json.loads(row[1]) if row[1] else {}
+    except Exception:
+        settings = {}
+    return {
+        "branding": _effective_branding(org_type, settings),
+        "preset": org_preset(org_type),
+        "type": org_type,
+    }
+
+
+@router.put("/{org_id}/branding")
+def update_branding(org_id: str, data: BrandingRequest, caller: str = Depends(get_current_user_id)):
+    """Merge a partial branding update into settings.branding. Requires admin+.
+    `group_label` is mirrored into the legacy top-level settings.group_label so
+    the older /groups + PUT /{org_id} paths stay consistent."""
+    require_org_role(DB_PATH, org_id, caller, "admin")
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        row = conn.execute("SELECT type FROM organizations WHERE id = ?", [org_id]).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Organization not found")
+        org_type = row[0] or "other"
+        settings = _load_settings(conn, org_id)
+        saved = settings.get("branding")
+        saved = dict(saved) if isinstance(saved, dict) else {}
+        changed = {}
+        for field, val in data.model_dump(exclude_none=True).items():
+            if isinstance(val, str) and not val:
+                # Explicit clear -> drop the override so the default returns.
+                saved.pop(field, None)
+            else:
+                saved[field] = val
+            changed[field] = val
+        settings["branding"] = saved
+        if "group_label" in changed:
+            if saved.get("group_label"):
+                settings["group_label"] = saved["group_label"]
+            else:
+                settings.pop("group_label", None)
+        conn.execute(
+            "UPDATE organizations SET settings = ?, updated_at = ? WHERE id = ?",
+            [json.dumps(settings), _utcnow().isoformat(), org_id],
+        )
+        _org_audit(conn, org_id, caller, "org.branding.update", "org", org_id, {"fields": changed})
+        conn.commit()
+    finally:
+        conn.close()
+    return {
+        "updated": True,
+        "branding": _effective_branding(org_type, settings),
+        "preset": org_preset(org_type),
+        "type": org_type,
     }
 
 

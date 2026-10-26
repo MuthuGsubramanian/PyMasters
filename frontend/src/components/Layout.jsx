@@ -31,10 +31,18 @@ import ReleaseNotes from './ReleaseNotes';
 import VaathiyaarPanel from './VaathiyaarPanel';
 import { getAdminCheck, getProfileStats, getAccessStatus } from '../api';
 import useI18n from '../hooks/useI18n';
+import useOrgBranding from '../hooks/useOrgBranding';
 
 export default function Layout() {
     const { user, logout, activeOrg } = useAuth();
     const { t } = useI18n();
+    // Org portal branding: this is the single instance that writes the theme
+    // tokens (--accent-primary / --primary / --secondary) for the active org
+    // and clears them when activeOrg goes away (logout / org switch).
+    const { branding } = useOrgBranding({ applyTheme: true });
+    const portalName = branding?.portal_name?.trim() || 'PYMASTERS';
+    const portalLogo = branding?.logo_url?.trim() || '';
+    const isCustomBrand = portalName !== 'PYMASTERS';
     const navigate = useNavigate();
     const location = useLocation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -163,7 +171,7 @@ export default function Layout() {
                 <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-bg-elevated transition-colors" aria-label="Open menu">
                     <Menu size={20} className="text-text-muted" />
                 </button>
-                <span className="font-display font-bold text-text-primary tracking-tight">PYMASTERS</span>
+                <span className="font-display font-bold text-text-primary tracking-tight truncate max-w-[60vw]">{portalName}</span>
                 <div className="w-9" /> {/* Spacer for centering */}
             </div>
 
@@ -185,11 +193,20 @@ export default function Layout() {
                     </button>
                     <button type="button" onClick={() => navigate('/')} aria-label="PyMasters home" className="relative group cursor-pointer">
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-cyan-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 scale-150" aria-hidden="true" />
-                        <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20 transition-transform duration-300 group-hover:scale-110 border border-white/10">
-                            <img src={PymastersGlyph} alt="" aria-hidden="true" className="w-[18px] h-[18px]" />
-                        </div>
+                        {portalLogo ? (
+                            <img src={portalLogo} alt={portalName} className="relative w-8 h-8 rounded-xl object-contain bg-bg-elevated border border-border-default" />
+                        ) : (
+                            <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-purple-500/20 transition-transform duration-300 group-hover:scale-110 border border-white/10">
+                                <img src={PymastersGlyph} alt="" aria-hidden="true" className="w-[18px] h-[18px]" />
+                            </div>
+                        )}
                     </button>
-                    <span className={clsx("font-display font-bold text-base text-text-primary tracking-tight", collapsed && "lg:hidden")}>PYMASTERS</span>
+                    <span className={clsx("flex flex-col leading-tight min-w-0", collapsed && "lg:hidden")}>
+                        <span className="font-display font-bold text-base text-text-primary tracking-tight truncate">{portalName}</span>
+                        {isCustomBrand && branding?.show_powered_by !== false && (
+                            <span className="text-[10px] text-text-muted tracking-wide">Powered by PyMasters</span>
+                        )}
+                    </span>
                 </div>
 
                 {/* Compact User Row */}

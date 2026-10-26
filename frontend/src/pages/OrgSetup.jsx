@@ -10,7 +10,16 @@ import {
   Globe, Sparkles
 } from 'lucide-react';
 
-const ORG_TYPES = ['School', 'University', 'Enterprise', 'Other'];
+// Explicit value mapping: the API expects snake_case ids ('training_center'),
+// not a lower-cased label, so never derive `type` from the label text.
+const ORG_TYPES = [
+  { label: 'School', value: 'school' },
+  { label: 'University', value: 'university' },
+  { label: 'Training Center', value: 'training_center' },
+  { label: 'Enterprise', value: 'enterprise' },
+  { label: 'Other', value: 'other' },
+];
+const orgTypeLabel = (value) => ORG_TYPES.find((t) => t.value === value)?.label || value;
 const ROLES = ['admin', 'manager', 'member'];
 
 const stepVariants = {
@@ -93,7 +102,7 @@ export default function OrgSetup() {
     try {
       const res = await createOrg({
         name: orgName.trim(),
-        type: orgType.toLowerCase(),
+        type: orgType,
         domain: domain.trim() || '',
         logo_url: logoUrl.trim() || '',
         description: description.trim() || '',
@@ -107,8 +116,8 @@ export default function OrgSetup() {
         org_id: raw.org_id || raw.id || '',
         name: raw.name || raw.org_name || orgName.trim(),
         org_name: raw.org_name || raw.name || orgName.trim(),
-        type: raw.type || raw.org_type || orgType.toLowerCase(),
-        org_type: raw.org_type || raw.type || orgType.toLowerCase(),
+        type: raw.type || raw.org_type || orgType,
+        org_type: raw.org_type || raw.type || orgType,
         role: raw.role || 'super_admin',
         department: raw.department || '',
       };
@@ -239,18 +248,20 @@ export default function OrgSetup() {
                   <label className="block text-sm font-semibold text-text-secondary mb-2">
                     Organization Type <span className="text-red-400">*</span>
                   </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                     {ORG_TYPES.map((type) => (
                       <button
-                        key={type}
-                        onClick={() => setOrgType(type)}
-                        className={`px-4 py-2.5 rounded-xl text-sm font-medium border transition-all duration-200 ${
-                          orgType === type
+                        key={type.value}
+                        type="button"
+                        aria-pressed={orgType === type.value}
+                        onClick={() => setOrgType(type.value)}
+                        className={`px-4 py-2.5 rounded-xl text-sm font-medium border transition-all duration-200 cursor-pointer ${
+                          orgType === type.value
                             ? 'bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-300 text-cyan-700 shadow-sm'
                             : 'border-border-default text-text-muted hover:bg-bg-elevated hover:border-border-default'
                         }`}
                       >
-                        {type}
+                        {type.label}
                       </button>
                     ))}
                   </div>
@@ -404,7 +415,7 @@ export default function OrgSetup() {
                   </div>
                   <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-bg-elevated border border-border-default">
                     <span className="text-sm text-text-muted">Type</span>
-                    <span className="text-sm font-semibold text-text-primary">{orgType}</span>
+                    <span className="text-sm font-semibold text-text-primary">{orgTypeLabel(orgType)}</span>
                   </div>
                   {domain && (
                     <div className="flex items-center justify-between px-4 py-3 rounded-xl bg-bg-elevated border border-border-default">

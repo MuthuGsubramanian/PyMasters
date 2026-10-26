@@ -358,6 +358,7 @@ export default function Login() {
                                                 { value: 'school', label: 'School', icon: School, color: 'cyan' },
                                                 { value: 'university', label: 'University', icon: GraduationCap, color: 'blue' },
                                                 { value: 'enterprise', label: 'Enterprise', icon: Briefcase, color: 'purple' },
+                                                { value: 'training_center', label: 'Training Center', icon: Briefcase, color: 'emerald' },
                                                 { value: 'other', label: 'Other', icon: Users, color: 'violet' },
                                             ].map(opt => (
                                                 <button

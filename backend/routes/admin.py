@@ -16,7 +16,7 @@ from datetime import date, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from auth import get_current_user_id, optional_user_id
 
@@ -215,6 +215,15 @@ class OrgPlanRequest(BaseModel):
 
 class OrgTypeRequest(BaseModel):
     type: str
+
+    @field_validator("type", mode="before")
+    @classmethod
+    def _check_type(cls, v):
+        # Same vocabulary as organizations.py (school, university, training_center,
+        # enterprise, other) so the platform console cannot write a type the
+        # branding presets do not know.
+        from routes.organizations import _normalize_org_type
+        return _normalize_org_type(v) or "other"
 
 
 @router.get("/check")

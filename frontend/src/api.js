@@ -199,6 +199,9 @@ export const setMemberGroups = (orgId, memberId, groups) =>
   api.put(`/org/${orgId}/members/${memberId}/groups`, { groups });
 export const getStudentDetail = (orgId, memberId, userId) =>
   api.get(`/org/${orgId}/students/${memberId}`, { params: { user_id: userId } });
+// Per-org portal branding (white-label lite). GET is member-readable; PUT is admin+.
+export const getOrgBranding = (orgId) => api.get(`/org/${orgId}/branding`);
+export const updateOrgBranding = (orgId, data) => api.put(`/org/${orgId}/branding`, data);
 
 // Platform super-admin
 export const getAdminCheck = (userId) => api.get('/admin/check', { params: { user_id: userId } });
