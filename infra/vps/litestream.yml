@@ -1,0 +1,21 @@
+# Litestream config for the VPS — continuous SQLite replication to an
+# S3-compatible bucket. Same retention/snapshot policy as the Cloud Run setup.
+#
+# Credentials come from the container env (LITESTREAM_ACCESS_KEY_ID /
+# LITESTREAM_SECRET_ACCESS_KEY, written to /opt/pymasters/.env by deploy.sh).
+# Endpoint options (pick one in /opt/pymasters/.env → REPLICA_ENDPOINT/REPLICA_BUCKET):
+#   - GCS with HMAC keys:      https://storage.googleapis.com   bucket pymasters-app-db (region auto)
+#   - Cloudflare R2:           https://<account>.r2.cloudflarestorage.com
+#   - Backblaze B2:            https://s3.<region>.backblazeb2.com
+dbs:
+  - path: /app/data/pymasters.db
+    replicas:
+      - type: s3
+        bucket: ${REPLICA_BUCKET}
+        path: vps/pymasters.db
+        endpoint: ${REPLICA_ENDPOINT}
+        region: ${REPLICA_REGION}
+        force-path-style: true
+        retention: 168h
+        snapshot-interval: 6h
+        sync-interval: 1s

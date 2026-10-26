@@ -16,7 +16,9 @@ Run from the repo root:
 import os
 import glob
 
-from pipeline.actors.linkedin_publisher import publish_linkedin, linkedin_enabled
+from pipeline.utils.secrets import load_secrets
+load_secrets()
+from pipeline.actors.linkedin_publisher import publish_linkedin, linkedin_enabled  # noqa: E402
 
 
 def main():

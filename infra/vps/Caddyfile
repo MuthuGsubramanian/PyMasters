@@ -1,0 +1,28 @@
+# Caddy reverse proxy for PyMasters on the VPS. Automatic HTTPS.
+{
+	email ops@pymasters.net
+}
+
+pymasters.net {
+	encode zstd gzip
+	reverse_proxy app:8080 {
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Real-IP {remote_host}
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+	log {
+		output file /data/access.log {
+			roll_size 20mb
+			roll_keep 5
+		}
+	}
+}
+
+www.pymasters.net {
+	redir https://pymasters.net{uri} permanent
+}

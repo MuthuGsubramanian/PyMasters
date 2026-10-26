@@ -28,6 +28,8 @@ os.environ.setdefault(
     os.path.join(os.path.expanduser("~"), ".pymasters", "youtube_client_secret.json"),
 )
 
+from pipeline.utils.secrets import load_secrets  # noqa: E402
+load_secrets()
 from google_auth_oauthlib.flow import InstalledAppFlow  # noqa: E402
 from pipeline.video import upload_youtube as uy  # noqa: E402
 

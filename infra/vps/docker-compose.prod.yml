@@ -1,0 +1,64 @@
+# PyMasters on a single VPS (Hetzner/any Linux box) — production compose.
+#
+#   app    : the same image Cloud Run runs (nginx + uvicorn + litestream inside),
+#            built on the host from this repo by infra/vps/deploy.sh.
+#   caddy  : TLS termination + HTTP→HTTPS for pymasters.net / www.pymasters.net
+#            (automatic Let's Encrypt certificates, no cron, no certbot).
+#
+# Secrets come from /opt/pymasters/.env (0600, written by deploy.sh from the
+# laptop vault) — never from this file.
+
+services:
+  app:
+    image: pymasters:latest
+    container_name: pymasters-app
+    restart: unless-stopped
+    env_file: /opt/pymasters/.env
+    environment:
+      DB_PATH: /app/data/pymasters.db
+      APP_BASE_URL: https://pymasters.net
+      FRONTEND_URL: https://pymasters.net
+      SEMANTIC_AUTOSTART: "1"
+      FROM_NAME: PyMasters
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: "587"
+      SMTP_BACKUP_HOST: smtp-relay.brevo.com
+      SMTP_BACKUP_PORT: "587"
+      GITHUB_REDIRECT_URI: https://pymasters.net/api/auth/github/callback
+      LINKEDIN_REDIRECT_URI: https://pymasters.net/api/auth/linkedin/callback
+    volumes:
+      - /opt/pymasters/data:/app/data            # SQLite + WAL (Litestream replicates it)
+      - /opt/pymasters/litestream.yml:/etc/litestream.yml:ro
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+    deploy:
+      resources:
+        limits: { memory: 3g }
+
+  caddy:
+    image: caddy:2.9.1
+    container_name: pymasters-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - /opt/pymasters/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  caddy_data:
+  caddy_config:

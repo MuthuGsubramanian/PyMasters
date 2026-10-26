@@ -6,6 +6,8 @@ import os
 # Ensure the project root is on the path so imports work when running directly
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from pipeline.utils.secrets import load_secrets
+load_secrets()  # vault (DPAPI) fills LINKEDIN_*/YOUTUBE_*/tokens when env is unset
 from pipeline.collectors import huggingface, arxiv, github, hackernews
 from pipeline.analyzers.relevance import analyze
 from pipeline.actors.github_issues import create_issues

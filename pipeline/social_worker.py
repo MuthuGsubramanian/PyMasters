@@ -23,6 +23,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import requests
 
 from pipeline.utils.logger import get_logger
+from pipeline.utils.secrets import load_secrets
+load_secrets()
 
 log = get_logger("pipeline.social_worker")
 
