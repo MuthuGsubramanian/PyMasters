@@ -18,7 +18,15 @@ from vaathiyaar.modelfile import build_system_prompt
 # ---------------------------------------------------------------------------
 
 OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY", "")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "glm-5.3-flash")
+# Ordered fallbacks used by the self-healing model resolver below when the
+# configured OLLAMA_MODEL is retired/unavailable on Ollama Cloud (qwen3.5:397b
+# was retired 2026-09-25 and silently killed the ollama provider for a month).
+OLLAMA_MODEL_CANDIDATES = os.getenv(
+    "OLLAMA_MODEL_CANDIDATES",
+    "glm-5.3-flash,gpt-oss:120b,deepseek-v4.1-flash,gemma4:31b,kimi-k2.6",
+)
+OLLAMA_MODEL_REFRESH_SECONDS = int(os.getenv("OLLAMA_MODEL_REFRESH_SECONDS", str(6 * 3600)))
 
 # Vertex AI Gemini fallback provider. Auths via the Cloud Run runtime service
 # account (ADC) — no API key. Activated by adding "gemini" to VAATHIYAAR_PROVIDERS.
@@ -58,6 +66,129 @@ def get_ollama_client():
 
 
 # ---------------------------------------------------------------------------
+# Self-healing Ollama model resolver
+#
+# Ollama Cloud retires hosted models without notice. Instead of hard-failing
+# until a human edits OLLAMA_MODEL, we (a) list the catalogue every few hours,
+# (b) pick the first of [OLLAMA_MODEL] + OLLAMA_MODEL_CANDIDATES that exists,
+# and (c) when a call fails with a "retired"/"not found" error we ban that
+# model for this process and re-resolve immediately, retrying the call once.
+# Provider health (last ok / last error per provider) is tracked for the admin
+# health endpoint so model drift is visible, not silent.
+# ---------------------------------------------------------------------------
+
+_model_state = {"model": None, "checked_at": 0.0, "available": None, "banned": set(),
+                "last_error": ""}
+_provider_health: dict = {}
+
+
+def _norm_model(name: str) -> str:
+    """Compare model names loosely: 'glm-5.3-flash:cloud' == 'glm-5.3-flash'."""
+    n = (name or "").strip().lower()
+    for suffix in (":cloud", ":latest"):
+        if n.endswith(suffix):
+            n = n[: -len(suffix)]
+    return n
+
+
+def _ollama_catalogue() -> set:
+    """Names of models currently served by Ollama Cloud (normalised)."""
+    resp = get_ollama_client().list()
+    models = resp.get("models", []) if isinstance(resp, dict) else getattr(resp, "models", [])
+    names = set()
+    for m in models:
+        if isinstance(m, dict):
+            name = m.get("model") or m.get("name")
+        else:
+            name = getattr(m, "model", None) or getattr(m, "name", None)
+        if name:
+            names.add(_norm_model(name))
+    return names
+
+
+def _model_preferences() -> list:
+    prefs = [OLLAMA_MODEL] + [c for c in re.split(r"[,\s]+", OLLAMA_MODEL_CANDIDATES) if c]
+    seen, out = set(), []
+    for m in prefs:
+        if _norm_model(m) not in seen:
+            seen.add(_norm_model(m))
+            out.append(m)
+    return out
+
+
+def resolve_ollama_model(force: bool = False) -> str:
+    """Return the Ollama model to call right now (cached for a few hours)."""
+    now = time.time()
+    st = _model_state
+    if not force and st["model"] and now - st["checked_at"] < OLLAMA_MODEL_REFRESH_SECONDS:
+        return st["model"]
+    prefs = [m for m in _model_preferences() if _norm_model(m) not in st["banned"]] or _model_preferences()
+    chosen = prefs[0]
+    try:
+        available = _ollama_catalogue()
+        st["available"] = sorted(available)
+        st["last_error"] = ""
+        for m in prefs:
+            if _norm_model(m) in available:
+                chosen = m
+                break
+        else:
+            print(f"[vaathiyaar] none of {prefs} found in Ollama catalogue; using '{chosen}' blind")
+    except Exception as exc:  # noqa: BLE001 - catalogue unreachable -> keep going blind
+        st["last_error"] = str(exc)[:200]
+        chosen = st["model"] or chosen
+    if chosen != st["model"]:
+        print(f"[vaathiyaar] ollama model resolved: {st['model']!r} -> {chosen!r}")
+    st["model"], st["checked_at"] = chosen, now
+    return chosen
+
+
+def _looks_like_retired_model(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    return any(k in msg for k in ("retired", "not found", "does not exist", "no such model",
+                                  "unknown model", "model is unavailable"))
+
+
+def _ban_model_and_reresolve(model: str) -> str:
+    _model_state["banned"].add(_norm_model(model))
+    return resolve_ollama_model(force=True)
+
+
+def _record_health(provider: str, ok: bool, detail: str = "", model: str = "") -> None:
+    h = _provider_health.setdefault(provider, {"last_ok_at": None, "last_error_at": None,
+                                               "last_error": "", "ok_count": 0, "error_count": 0})
+    if ok:
+        h["last_ok_at"] = time.time()
+        h["ok_count"] += 1
+    else:
+        h["last_error_at"] = time.time()
+        h["error_count"] += 1
+        h["last_error"] = detail[:300]
+    if model:
+        h["model"] = model
+
+
+def provider_health() -> dict:
+    """Operator-facing snapshot for the admin console / routines."""
+    st = _model_state
+    return {
+        "providers": _active_providers(),
+        "health": _provider_health,
+        "ollama": {
+            "configured_model": OLLAMA_MODEL,
+            "resolved_model": st["model"],
+            "candidates": _model_preferences(),
+            "banned": sorted(st["banned"]),
+            "catalogue": st["available"],
+            "catalogue_checked_at": st["checked_at"] or None,
+            "catalogue_error": st["last_error"],
+        },
+        "qubrid": {"model": QUBRID_MODEL, "key_set": bool(QUBRID_API_KEY)},
+        "qubrid2": {"model": QUBRID2_MODEL, "key_set": bool(QUBRID2_API_KEY)},
+    }
+
+
+# ---------------------------------------------------------------------------
 # Provider abstraction + graceful degradation
 #
 # Vaathiyaar talks to an ORDERED list of LLM providers (env VAATHIYAAR_PROVIDERS,
@@ -94,33 +225,74 @@ def _active_providers() -> list:
     return [p for p in re.split(r"[^A-Za-z0-9_]+", raw) if p]
 
 
-def _ollama_complete(messages: list, options: dict) -> str:
-    """Non-streaming Ollama Cloud call → raw assistant content string."""
+def _ollama_chat(model: str, messages: list, options: dict, stream: bool):
     client = get_ollama_client()
     try:
-        response = client.chat(
-            model=OLLAMA_MODEL, messages=messages, stream=False,
-            think=False, options=options,
-        )
+        return client.chat(model=model, messages=messages, stream=stream,
+                           think=False, options=options)
     except TypeError:
-        response = client.chat(
-            model=OLLAMA_MODEL, messages=messages, stream=False, options=options,
-        )
+        return client.chat(model=model, messages=messages, stream=stream, options=options)
+
+
+def _ollama_call_with_model_failover(messages: list, options: dict, stream: bool):
+    """Run one Ollama chat call against the resolved model. If the model has
+    been retired/removed vendor-side, ban it, re-resolve and retry ONCE with the
+    next available candidate, so a retirement costs one failed request instead
+    of a month of silent provider failure. Returns (result, model)."""
+    model = resolve_ollama_model()
+    try:
+        return _ollama_chat(model, messages, options, stream=stream), model
+    except Exception as exc:  # noqa: BLE001
+        if not _looks_like_retired_model(exc):
+            _record_health("ollama", False, str(exc), model)
+            raise
+        retry_model = _ban_model_and_reresolve(model)
+        if _norm_model(retry_model) == _norm_model(model):
+            _record_health("ollama", False, str(exc), model)
+            raise
+        print(f"[vaathiyaar] ollama model '{model}' unavailable ({str(exc)[:80]}); "
+              f"retrying with '{retry_model}'")
+        try:
+            return _ollama_chat(retry_model, messages, options, stream=stream), retry_model
+        except Exception as exc2:  # noqa: BLE001
+            _record_health("ollama", False, str(exc2), retry_model)
+            raise
+
+
+def _ollama_complete(messages: list, options: dict) -> str:
+    """Non-streaming Ollama Cloud call → raw assistant content string."""
+    response, model = _ollama_call_with_model_failover(messages, options, stream=False)
+    _record_health("ollama", True, model=model)
     return response["message"]["content"]
 
 
 def _ollama_stream(messages: list, options: dict):
-    """Streaming Ollama Cloud call → yields content tokens."""
-    client = get_ollama_client()
+    """Streaming Ollama Cloud call → yields content tokens. The retired-model
+    retry happens before the first token (the SDK raises on the first read of
+    a failed stream), so partial output is never mixed between models."""
+    stream_obj, model = _ollama_call_with_model_failover(messages, options, stream=True)
+    stream_iter = iter(stream_obj)
     try:
-        stream_iter = client.chat(
-            model=OLLAMA_MODEL, messages=messages, stream=True,
-            think=False, options=options,
-        )
-    except TypeError:
-        stream_iter = client.chat(
-            model=OLLAMA_MODEL, messages=messages, stream=True, options=options,
-        )
+        first = next(stream_iter, None)
+    except Exception as exc:  # noqa: BLE001
+        if _looks_like_retired_model(exc):
+            retry_model = _ban_model_and_reresolve(model)
+            if _norm_model(retry_model) != _norm_model(model):
+                print(f"[vaathiyaar] ollama stream model '{model}' unavailable; retrying with '{retry_model}'")
+                stream_iter = iter(_ollama_chat(retry_model, messages, options, stream=True))
+                first = next(stream_iter, None)
+                model = retry_model
+            else:
+                _record_health("ollama", False, str(exc), model)
+                raise
+        else:
+            _record_health("ollama", False, str(exc), model)
+            raise
+    _record_health("ollama", True, model=model)
+    for chunk in ([first] if first is not None else []):
+        token = chunk.get("message", {}).get("content", "")
+        if token:
+            yield token
     for chunk in stream_iter:
         token = chunk.get("message", {}).get("content", "")
         if token:
@@ -349,9 +521,14 @@ def complete(messages: list, options: Optional[dict] = None) -> str:
         if fn is None:
             continue  # unknown/unimplemented provider name → skip
         try:
-            return fn(messages, options)
+            out = fn(messages, options)
+            if name != "ollama":
+                _record_health(name, True)
+            return out
         except Exception as exc:  # noqa: BLE001 — any provider error → fail over
             errors.append(f"{name}: {exc}")
+            if name != "ollama":
+                _record_health(name, False, str(exc))
             print(f"[vaathiyaar] provider '{name}' failed: {str(exc)[:200]}")
     raise VaathiyaarUnavailable(detail="; ".join(errors) or "no providers configured")
 

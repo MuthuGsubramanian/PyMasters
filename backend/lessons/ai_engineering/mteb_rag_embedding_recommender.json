@@ -1,0 +1,171 @@
+{
+  "id": "mteb_rag_embedding_recommender",
+  "topic": "mteb_rag_embedding_recommender",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Auto-Pick Your RAG Embedding Model from MTEB Scores"
+  },
+  "description": {
+    "en": "Turn the MTEB leaderboard into code: filter embedding models by size, context length and vector dimensions, then rank them by Retrieval nDCG@10 to auto-recommend the best model for a RAG stack."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## From Leaderboard Tab to One Line of Code\n\nVaathiyaar here! Every RAG team hits the same question in week one: *which embedding model?* The honest answer is \"check MTEB\", and most people do exactly that: they open the leaderboard, stare at a table with 50 columns, and pick whatever is at the top. That is a mistake. The top of the overall leaderboard is usually a 7-billion-parameter model that needs a GPU, and your RAG stack probably runs on a CPU box with a 512-token chunker. In this lesson we read the leaderboard the way an engineer should: as **data with constraints**, and we write a recommender that picks for us.\n\n### What MTEB actually measures\n\nThe **Massive Text Embedding Benchmark** runs each model across task families. The overall mean blends all of them, but RAG cares about exactly one.\n\n| Task family | What it tests | Metric | Matters for RAG? |\n|---|---|---|---|\n| Retrieval | Find the passage that answers a query | nDCG@10 | Yes, this is RAG |\n| Reranking | Reorder a candidate list | MAP | Partly (stage two) |\n| STS | Sentence-pair similarity | Spearman | Weakly |\n| Classification | Label a sentence via a linear probe | Accuracy | No |\n| Clustering | Group related texts | V-measure | No |\n\n**nDCG@10** asks: of the top 10 passages you returned, were the relevant ones near the top? A model can have a great overall mean because it classifies and clusters well, yet retrieve poorly. Sort by the Retrieval column, not the mean.\n\n### The columns that decide if you can even run it\n\nNext to the scores the leaderboard lists three plain engineering facts:\n\n- **Parameters** decide latency and memory. A 22M model embeds thousands of sentences per second on CPU. A 7B model does not.\n- **Max tokens** must cover your chunk size. If your chunker produces 1,000-token chunks and the model truncates at 512, half of every chunk is silently thrown away.\n- **Embedding dimensions** decide vector storage. One million chunks at 384 dims is 1.5 GB of float32. At 4096 dims it is 16 GB.\n\nThese are hard filters. Apply them *first*, then rank what survives.\n\n### The recommender\n\n```python\nfrom dataclasses import dataclass\n\n@dataclass\nclass Model:\n    name: str\n    params_m: int      # millions of parameters\n    dims: int\n    max_tokens: int\n    retrieval: float   # MTEB Retrieval nDCG@10\n    mean: float        # MTEB overall mean\n\ndef recommend(models, max_params_m, min_tokens, max_dims):\n    ok = [m for m in models\n          if m.params_m <= max_params_m\n          and m.max_tokens >= min_tokens\n          and m.dims <= max_dims]\n    if not ok:\n        return None\n    return max(ok, key=lambda m: (m.retrieval, -m.params_m))\n```\n\nThe tie-breaker matters: when two models retrieve equally well, prefer the smaller one. Free speed.\n\n### A real decision table\n\nApproximate English retrieval scores from the leaderboard, rounded:\n\n| Model | Params | Dims | Max tokens | Retrieval |\n|---|---|---|---|---|\n| all-MiniLM-L6-v2 | 22M | 384 | 256 | ~42 |\n| bge-small-en-v1.5 | 33M | 384 | 512 | ~52 |\n| bge-base-en-v1.5 | 109M | 768 | 512 | ~53 |\n| nomic-embed-text-v1.5 | 137M | 768 | 8192 | ~53 |\n| e5-large-v2 | 335M | 1024 | 512 | ~50 |\n| Qwen3-Embedding-0.6B | 600M | 1024 | 32768 | ~60 |\n\nGive the recommender a CPU budget of 150M parameters and 512-token chunks and it returns bge-base. Bump the chunks to 2,000 tokens and only nomic survives. Allow 1B parameters and Qwen3 wins. Same data, three different right answers. This is exactly what Homie does when it configures its own RAG stack: it does not hardcode a model, it states its constraints and lets the scores decide.\n\n### Scores are a prior, not a verdict\n\nMTEB is built from public datasets. Your support tickets, legal contracts or Tamil medical notes are not in it. Use the leaderboard to shortlist two or three candidates, then run a 50-query retrieval test on **your** documents. The model that wins there is the one you ship.\n\n> **Key Insight:** The MTEB leaderboard is not a ranking to obey but a dataset to query. Filter by what you can run (parameters, max tokens, dimensions), rank by what RAG needs (Retrieval nDCG@10), break ties toward smaller, then verify on your own data."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "Hundreds of embedding models sit on Hugging Face. The MTEB leaderboard scores them all, but the top row is usually a 7B-parameter GPU model and your RAG box has a CPU and 512-token chunks. Reading the leaderboard well means filtering by what you can run, then ranking by the one column RAG cares about: Retrieval nDCG@10.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from dataclasses import dataclass\n\n@dataclass\nclass Model:\n    name: str\n    params_m: int\n    dims: int\n    max_tokens: int\n    retrieval: float\n    mean: float\n\nleaderboard = [\n    Model(\"all-MiniLM-L6-v2\", 22, 384, 256, 41.9, 56.3),\n    Model(\"bge-small-en-v1.5\", 33, 384, 512, 51.7, 62.2),\n    Model(\"bge-base-en-v1.5\", 109, 768, 512, 53.3, 63.6),\n    Model(\"nomic-embed-text-v1.5\", 137, 768, 8192, 53.0, 62.3),\n    Model(\"e5-large-v2\", 335, 1024, 512, 50.6, 62.3),\n    Model(\"Qwen3-Embedding-0.6B\", 600, 1024, 32768, 60.1, 70.7),\n]\n\ndef recommend(models, max_params_m, min_tokens, max_dims):\n    ok = [m for m in models\n          if m.params_m <= max_params_m\n          and m.max_tokens >= min_tokens\n          and m.dims <= max_dims]\n    if not ok:\n        return None\n    return max(ok, key=lambda m: (m.retrieval, -m.params_m))\n\ncpu_pick = recommend(leaderboard, max_params_m=150, min_tokens=512, max_dims=768)\nprint(\"CPU / 512-token chunks ->\", cpu_pick.name)\n\nlong_pick = recommend(leaderboard, max_params_m=150, min_tokens=2000, max_dims=768)\nprint(\"CPU / 2000-token chunks ->\", long_pick.name)\n\ngpu_pick = recommend(leaderboard, max_params_m=1000, min_tokens=512, max_dims=1024)\nprint(\"GPU / 512-token chunks ->\", gpu_pick.name)",
+      "steps": [
+        {
+          "line": 3,
+          "explanation": "A dataclass mirrors one leaderboard row. We keep only the columns that drive a RAG decision: size, dimensions, context length, and two scores."
+        },
+        {
+          "line": 9,
+          "explanation": "retrieval is MTEB's Retrieval nDCG@10. It measures whether the relevant passage lands near the top of the first 10 results, which is exactly the RAG retrieval job."
+        },
+        {
+          "line": 10,
+          "explanation": "mean is the overall MTEB average across all task families. It blends classification and clustering, so a high mean does not guarantee good retrieval."
+        },
+        {
+          "line": 12,
+          "explanation": "Six real models with approximate leaderboard values. Notice MiniLM truncates at 256 tokens and Qwen3 is 600M parameters: both facts matter before any score does."
+        },
+        {
+          "line": 21,
+          "explanation": "The recommender takes three hard constraints: a parameter budget (latency and RAM), a minimum context length (must cover your chunk size), and a dimension cap (vector store size)."
+        },
+        {
+          "line": 22,
+          "explanation": "Filter first. A model that truncates your chunks or will not fit in memory is not a candidate, no matter how high it scores."
+        },
+        {
+          "line": 26,
+          "explanation": "If nothing survives the filters, return None rather than silently relaxing a constraint. The caller should decide which constraint to loosen."
+        },
+        {
+          "line": 28,
+          "explanation": "Rank by retrieval score. The tuple key makes negative parameter count the tie-breaker, so equal retrievers resolve toward the smaller, faster model."
+        },
+        {
+          "line": 30,
+          "explanation": "CPU box, 512-token chunks, 768 dims max: bge-small, bge-base and nomic survive. bge-base wins on retrieval at 53.3."
+        },
+        {
+          "line": 33,
+          "explanation": "Raise the chunk size to 2,000 tokens and every 512-token model drops out. Only nomic-embed with its 8,192 context remains. Same scores, different answer."
+        },
+        {
+          "line": 36,
+          "explanation": "Allow 1B parameters and 1,024 dims and Qwen3-Embedding-0.6B wins at 60.1. This is how Homie configures its RAG stack: state constraints, let the scores decide."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "Picking by overall MTEB mean",
+      "right_label": "Picking by filtered Retrieval score",
+      "items": [
+        {
+          "left": "Top row is usually a 7B GPU-only model",
+          "right": "Parameter budget removes models you cannot run"
+        },
+        {
+          "left": "Mean blends classification and clustering",
+          "right": "Retrieval nDCG@10 is the actual RAG task"
+        },
+        {
+          "left": "Ignores max tokens; chunks get silently truncated",
+          "right": "min_tokens filter guarantees chunks fit"
+        },
+        {
+          "left": "Ignores dimensions; vector store balloons",
+          "right": "max_dims filter bounds storage cost"
+        },
+        {
+          "left": "One answer for every project",
+          "right": "Different constraints, different right answer"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You turned the MTEB leaderboard into a constraint-aware recommender that picks the right embedding model for any RAG stack!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `recommend(models, max_params_m, min_tokens, max_dims)`. It receives a list of dicts with keys `name`, `params_m`, `dims`, `max_tokens`, `retrieval`. Keep only models with `params_m <= max_params_m`, `max_tokens >= min_tokens` and `dims <= max_dims`. Return the `name` of the surviving model with the highest `retrieval`; on a tie prefer the smaller `params_m`. Return `None` if no model survives."
+      },
+      "starter_code": "leaderboard = [\n    {\"name\": \"all-MiniLM-L6-v2\", \"params_m\": 22, \"dims\": 384, \"max_tokens\": 256, \"retrieval\": 41.9},\n    {\"name\": \"bge-small-en-v1.5\", \"params_m\": 33, \"dims\": 384, \"max_tokens\": 512, \"retrieval\": 51.7},\n    {\"name\": \"bge-base-en-v1.5\", \"params_m\": 109, \"dims\": 768, \"max_tokens\": 512, \"retrieval\": 53.3},\n    {\"name\": \"nomic-embed-text-v1.5\", \"params_m\": 137, \"dims\": 768, \"max_tokens\": 8192, \"retrieval\": 53.0},\n    {\"name\": \"e5-large-v2\", \"params_m\": 335, \"dims\": 1024, \"max_tokens\": 512, \"retrieval\": 50.6},\n    {\"name\": \"Qwen3-Embedding-0.6B\", \"params_m\": 600, \"dims\": 1024, \"max_tokens\": 32768, \"retrieval\": 60.1},\n]\n\ndef recommend(models, max_params_m, min_tokens, max_dims):\n    # 1. Filter by the three hard constraints\n    # 2. Return None if nothing survives\n    # 3. Pick highest retrieval; tie-break toward smaller params_m\n    pass\n\nprint(recommend(leaderboard, 150, 512, 768))\nprint(recommend(leaderboard, 150, 2000, 768))\nprint(recommend(leaderboard, 1000, 512, 1024))\nprint(recommend(leaderboard, 10, 512, 768))",
+      "expected_output": "bge-base-en-v1.5\nnomic-embed-text-v1.5\nQwen3-Embedding-0.6B\nNone",
+      "hints": {
+        "en": [
+          "Build the filtered list with a comprehension that checks all three conditions with `and`.",
+          "Use `max(ok, key=lambda m: (m[\"retrieval\"], -m[\"params_m\"]))` so a higher retrieval wins and a smaller size breaks ties.",
+          "Check `if not ok: return None` before calling max, because max on an empty list raises an error."
+        ]
+      },
+      "test_code": "assert recommend(leaderboard, 150, 512, 768) == \"bge-base-en-v1.5\"\nassert recommend(leaderboard, 150, 2000, 768) == \"nomic-embed-text-v1.5\"\nassert recommend(leaderboard, 1000, 512, 1024) == \"Qwen3-Embedding-0.6B\"\nassert recommend(leaderboard, 10, 512, 768) is None\nassert recommend(leaderboard, 40, 512, 384) == \"bge-small-en-v1.5\"\ntie = [\n    {\"name\": \"big\", \"params_m\": 300, \"dims\": 768, \"max_tokens\": 512, \"retrieval\": 55.0},\n    {\"name\": \"small\", \"params_m\": 100, \"dims\": 768, \"max_tokens\": 512, \"retrieval\": 55.0},\n]\nassert recommend(tie, 500, 512, 768) == \"small\"\nprint(\"All tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Implement `storage_gb(num_chunks, dims)` returning the float32 vector-store size in gigabytes (4 bytes per dimension, 1 GB = 1024**3 bytes), rounded to 2 decimals. Then implement `fits_budget(models, num_chunks, budget_gb)` returning a list of model names whose vectors for `num_chunks` chunks fit within `budget_gb`, preserving the original order."
+      },
+      "starter_code": "models = [\n    {\"name\": \"bge-small-en-v1.5\", \"dims\": 384},\n    {\"name\": \"bge-base-en-v1.5\", \"dims\": 768},\n    {\"name\": \"e5-large-v2\", \"dims\": 1024},\n    {\"name\": \"big-4096\", \"dims\": 4096},\n]\n\ndef storage_gb(num_chunks, dims):\n    # float32 = 4 bytes per dimension; 1 GB = 1024 ** 3 bytes\n    pass\n\ndef fits_budget(models, num_chunks, budget_gb):\n    # Return names whose storage_gb(num_chunks, dims) <= budget_gb\n    pass\n\nprint(storage_gb(1_000_000, 384))\nprint(storage_gb(1_000_000, 4096))\nprint(fits_budget(models, 1_000_000, 4.0))",
+      "expected_output": "1.43\n15.26\n['bge-small-en-v1.5', 'bge-base-en-v1.5', 'e5-large-v2']",
+      "hints": {
+        "en": [
+          "Total bytes are `num_chunks * dims * 4`; divide by `1024 ** 3` and wrap in `round(..., 2)`.",
+          "A list comprehension over `models` keeps the original order automatically.",
+          "Compare with `<=` so a model exactly on the budget still fits."
+        ]
+      },
+      "test_code": "assert storage_gb(1_000_000, 384) == 1.43\nassert storage_gb(1_000_000, 4096) == 15.26\nassert storage_gb(0, 768) == 0.0\nassert fits_budget(models, 1_000_000, 4.0) == [\"bge-small-en-v1.5\", \"bge-base-en-v1.5\", \"e5-large-v2\"]\nassert fits_budget(models, 1_000_000, 2.0) == [\"bge-small-en-v1.5\"]\nassert fits_budget(models, 1_000_000, 20.0) == [\"bge-small-en-v1.5\", \"bge-base-en-v1.5\", \"e5-large-v2\", \"big-4096\"]\nprint(\"All tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "MTEB leaderboard",
+      "Retrieval nDCG@10",
+      "embedding model selection",
+      "constraint-based ranking",
+      "max tokens vs chunk size",
+      "embedding dimensions and storage",
+      "RAG stack configuration",
+      "dataclasses"
+    ],
+    "concepts_required": [
+      "python functions",
+      "list comprehensions",
+      "dictionaries",
+      "lambda and max with key",
+      "basic RAG concepts"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}

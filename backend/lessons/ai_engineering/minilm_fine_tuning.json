@@ -1,0 +1,160 @@
+{
+  "id": "minilm_fine_tuning",
+  "topic": "minilm_fine_tuning",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "Fine-Tuning all-MiniLM-L6-v2: Teach the Embedder Your Domain"
+  },
+  "description": {
+    "en": "Base MiniLM speaks generic internet â€” fine-tuning teaches it your product's vocabulary. Mine anchor-positive pairs from data you already have, train with in-batch negatives, and keep the exact same 80 MB, 384-dim footprint."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Teaching MiniLM Your Vocabulary: Fine-Tuning for Domain Search\n\n\"You have built search with **all-MiniLM-L6-v2**, cached it, batched it, quantized it,\" Vaathiyaar begins. \"But the model itself never changed â€” it still speaks *generic internet*. It learned from a billion sentence pairs scraped from the open web, so it knows 'car' sits near 'automobile'. It does not know that in your support system, 'my card keeps bouncing' belongs right next to 'payment declined troubleshooting'. Today we change the model itself. Fine-tuning is the highest-leverage upgrade in retrieval â€” and for a model this small, it runs on a laptop.\"\n\n### Generic Knowledge, Domain Blindness\n\n| | Base all-MiniLM-L6-v2 | After fine-tuning on your pairs |\n|---|---|---|\n| Trained on | ~1B generic web sentence pairs | your FAQs, tickets, docs |\n| 'card keeps bouncing' vs 'payment declined' | lukewarm similarity | near neighbors |\n| Model size and speed | 80 MB, 384-dim | unchanged |\n| Retrieval hit-rate on your data | baseline | often +10â€“30% |\n\nThe important row is the third one: fine-tuning does not grow the model. Same 22M parameters, same 384 dimensions, same latency â€” only the model's *opinions* about your text change.\n\n### The Fuel: Anchorâ€“Positive Pairs\n\nAn embedder is fine-tuned on pairs of texts that should land close together. You rarely need human labelling, because your product already generates pairs: an FAQ question and its reworded duplicates, two tickets resolved by the same help article, a search query and the document the user actually clicked. A few thousand such pairs is a real training set.\n\n### The Trick: In-Batch Negatives\n\nWhere do the *negatives* â€” texts to push apart â€” come from? From the batch itself. `MultipleNegativesRankingLoss` takes a batch of 32 (anchor, positive) pairs and treats each anchor's own positive as the right answer and the other 31 positives as wrong answers, free of charge. Training becomes a 32-way multiple-choice exam graded on the diagonal of the batch's similarity matrix: each anchor must score its own positive above all 31 impostors.\n\n```python\nfrom sentence_transformers import SentenceTransformer, InputExample, losses\nfrom torch.utils.data import DataLoader\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\npairs = [\n    InputExample(texts=[\"how do I reset my password\", \"forgot password help\"]),\n    InputExample(texts=[\"card keeps bouncing\", \"payment declined troubleshooting\"]),\n    # ... thousands more, mined from your own product\n]\n\nloader = DataLoader(pairs, shuffle=True, batch_size=32)\nloss = losses.MultipleNegativesRankingLoss(model)\n\nmodel.fit(train_objectives=[(loader, loss)], epochs=1, warmup_steps=100)\nmodel.save(\"minilm-support-v1\")\n```\n\n### Rules of Thumb\n\nOne epoch is usually enough â€” small embedders overfit fast, and an overfit embedder forgets the general English that made it useful in the first place. Larger batches quietly improve results, because every extra pair in the batch hands every anchor one more free negative: batch size 32 means 31 impostors per anchor, batch size 128 means 127. And always evaluate on held-out pairs before swapping the model into production â€” retrieval quality on *your* data is the only score that matters.\n\n> **Key Insight:** Fine-tuning an embedder is not about more parameters â€” it is about better opinions. Anchor-positive pairs you already own, plus in-batch negatives you get for free, reshape the same 384-dimensional space around *your* vocabulary. The model stays 80 MB; the retrieval gets 10â€“30% sharper."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "magnet_pairs_reshaping_space",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "finetune_pipeline",
+      "steps": [
+        {
+          "line": "from sentence_transformers import SentenceTransformer, InputExample, losses",
+          "highlight": "InputExample, losses",
+          "explanation": {
+            "en": "Same library as your search demo â€” plus the two pieces that make it trainable"
+          }
+        },
+        {
+          "line": "from torch.utils.data import DataLoader",
+          "highlight": "DataLoader",
+          "explanation": {
+            "en": "Shuffles pairs and serves them in batches â€” the batch IS the exam room"
+          }
+        },
+        {
+          "line": "model = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")",
+          "highlight": "all-MiniLM-L6-v2",
+          "explanation": {
+            "en": "Start from the pretrained 80 MB model â€” never from scratch"
+          }
+        },
+        {
+          "line": "pairs = [InputExample(texts=[\"how do I reset my password\", \"forgot password help\"]), ...]",
+          "highlight": "texts=[...]",
+          "explanation": {
+            "en": "Each example is one (anchor, positive) pair â€” texts that should land close together"
+          }
+        },
+        {
+          "line": "loader = DataLoader(pairs, shuffle=True, batch_size=32)",
+          "highlight": "batch_size=32",
+          "explanation": {
+            "en": "32 pairs per batch â€” every anchor will face the other 31 positives as impostors"
+          }
+        },
+        {
+          "line": "loss = losses.MultipleNegativesRankingLoss(model)",
+          "highlight": "MultipleNegativesRankingLoss",
+          "explanation": {
+            "en": "The in-batch negatives trick: no labelled negatives needed, the batch supplies them"
+          }
+        },
+        {
+          "line": "model.fit(train_objectives=[(loader, loss)], epochs=1, warmup_steps=100)",
+          "highlight": "epochs=1",
+          "explanation": {
+            "en": "One epoch is usually enough â€” small embedders overfit fast and forget general English"
+          }
+        },
+        {
+          "line": "model.save(\"minilm-support-v1\")",
+          "highlight": "save",
+          "explanation": {
+            "en": "Same architecture, same 384 dims â€” only the opinions changed"
+          }
+        },
+        {
+          "line": "tuned = SentenceTransformer(\"minilm-support-v1\")",
+          "highlight": "minilm-support-v1",
+          "explanation": {
+            "en": "Drop-in replacement: your cache, batching, and quantization code all still work"
+          }
+        }
+      ],
+      "duration_ms": 6000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "pair_attraction_burst",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Fine-tuning fuel is (anchor, positive) pairs, and you can mine them from paraphrase groups you already have. Write `mine_pairs(groups)` where `groups` is a list of lists â€” each inner list holds texts that all mean the same thing. Return a list of `(anchor, positive)` tuples: every ordered pair of two DIFFERENT texts from the same group. Never pair a text with itself, and never pair texts from different groups. Print the number of pairs mined from the sample â€” a group of 2 and a group of 3 yield 2 + 6 = 8."
+      },
+      "starter_code": "def mine_pairs(groups: list) -> list:\n    \"\"\"Return every ordered (anchor, positive) tuple of two DIFFERENT\n    texts drawn from the SAME group. A group of n texts yields n*(n-1) pairs.\"\"\"\n    # for each group: for each anchor, for each other text -> (anchor, positive)\n    pass\n\ngroups = [\n    [\"how do I reset my password\", \"forgot password help\"],\n    [\"cancel my subscription\", \"stop my plan\", \"end my membership\"],\n]\npairs = mine_pairs(groups)\nprint(len(pairs))",
+      "expected_output": "8",
+      "hints": {
+        "en": [
+          "Three nested loops: for group in groups, for anchor in group, for positive in group",
+          "Skip the self-pair: only append the tuple when anchor != positive",
+          "A group of n texts contributes n*(n-1) ordered pairs â€” the 2-text group gives 2, the 3-text group gives 6"
+        ]
+      },
+      "test_code": "pairs = mine_pairs([[\"a\", \"b\"], [\"x\", \"y\", \"z\"]])\nassert len(pairs) == 8, f\"2-text group gives 2 pairs, 3-text group gives 6: got {len(pairs)}\"\nassert (\"a\", \"b\") in pairs and (\"b\", \"a\") in pairs, \"both directions of a pair must appear\"\nassert (\"a\", \"a\") not in pairs and (\"x\", \"x\") not in pairs, \"a text must never be paired with itself\"\nassert (\"a\", \"x\") not in pairs and (\"x\", \"b\") not in pairs, \"texts from different groups must never be paired\"\nfor p in pairs:\n    assert isinstance(p, tuple) and len(p) == 2, \"each pair must be an (anchor, positive) tuple\"\nassert len(mine_pairs([[\"solo\"]])) == 0, \"a single-text group has nothing to pair\"\nassert len(mine_pairs([])) == 0, \"no groups, no pairs\"\nprint(\"All tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "MultipleNegativesRankingLoss grades a batch on the diagonal of its similarity matrix: row i holds anchor i's similarity to every positive in the batch, and entry [i][i] is its OWN positive. Write `in_batch_accuracy(sim)` that takes a square matrix (list of lists of floats) and returns the fraction of rows where the diagonal entry is STRICTLY greater than every other entry in that row â€” the anchors that would answer their multiple-choice exam correctly. Print `round(in_batch_accuracy(sim), 2)` for the sample 3x3 batch, where anchor 1 is fooled by an impostor."
+      },
+      "starter_code": "def in_batch_accuracy(sim: list) -> float:\n    \"\"\"Fraction of rows whose diagonal entry sim[i][i] is strictly\n    greater than every OTHER entry in row i.\"\"\"\n    # count rows where sim[i][i] > sim[i][j] for all j != i\n    pass\n\nsim = [\n    [0.9, 0.2, 0.1],   # anchor 0: own positive wins\n    [0.4, 0.3, 0.5],   # anchor 1: fooled by positive 2\n    [0.1, 0.2, 0.8],   # anchor 2: own positive wins\n]\nprint(round(in_batch_accuracy(sim), 2))",
+      "expected_output": "0.67",
+      "hints": {
+        "en": [
+          "For row i, the diagonal entry is sim[i][i]; compare it against sim[i][j] for every j != i",
+          "all(sim[i][i] > sim[i][j] for j in range(len(sim)) if j != i) decides one row",
+          "Return correct_rows / len(sim) as a float â€” a TIE on the diagonal does not count as correct"
+        ]
+      },
+      "test_code": "assert abs(in_batch_accuracy([[0.9, 0.2, 0.1], [0.4, 0.3, 0.5], [0.1, 0.2, 0.8]]) - 2/3) < 1e-9, \"anchors 0 and 2 win, anchor 1 is fooled: expected 2/3\"\nassert in_batch_accuracy([[1.0, 0.0], [0.0, 1.0]]) == 1.0, \"perfect batch: every anchor picks its own positive\"\nassert in_batch_accuracy([[0.5, 0.5], [0.1, 0.9]]) == 0.5, \"a TIE on the diagonal is not a win â€” strictly greater is required\"\nassert in_batch_accuracy([[0.1, 0.9], [0.9, 0.1]]) == 0.0, \"every anchor fooled by the other's positive\"\nassert in_batch_accuracy([[0.42]]) == 1.0, \"a 1x1 batch has no impostors â€” its one anchor is trivially correct\"\nprint(\"All tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "embedding_fine_tuning",
+      "contrastive_learning",
+      "in_batch_negatives",
+      "anchor_positive_pairs",
+      "multiple_negatives_ranking_loss"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "tuples",
+      "embeddings_basics",
+      "semantic_search_basics"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}

@@ -47,6 +47,7 @@ from routes.oauth import router as oauth_router, ensure_oauth_tables
 from routes.github_oauth import router as github_oauth_router
 from routes.discovery import router as discovery_router
 from routes.payments import router as payments_router, ensure_payments_table
+from routes.vaathiyaar_admin import router as vaathiyaar_admin_router
 from routes.telemetry import router as telemetry_router, ensure_telemetry_tables, record_login
 from routes.semantic import router as semantic_router
 from routes.organizations import ensure_org_audit_table, ensure_org_entitlement_schema
@@ -882,6 +883,7 @@ app.include_router(oauth_router)
 app.include_router(github_oauth_router)
 app.include_router(discovery_router)
 app.include_router(payments_router)
+app.include_router(vaathiyaar_admin_router)
 app.include_router(support_router)
 app.include_router(content_requests_router)
 app.include_router(tutor_sessions_router)

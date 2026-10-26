@@ -1,0 +1,287 @@
+{
+  "id": "all_minilm_l6_v2_rag_pipeline",
+  "topic": "all_minilm_l6_v2_rag_pipeline",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "From Search to Answers: Build a Local RAG Pipeline with all-MiniLM-L6-v2"
+  },
+  "description": {
+    "en": "Level up from semantic search to a full retrieval-augmented generation pipeline: chunk your documents, index them with all-MiniLM-L6-v2's 384-dim embeddings, retrieve the best evidence, and assemble a grounded prompt â€” all on a laptop CPU."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Open-Book Exam\n\nVaathiyaar slides a thick textbook across the desk. \"A language model answering from memory is a student in a *closed-book* exam â€” confident, sometimes wrong, and it can't cite a page. **RAG** â€” Retrieval-Augmented Generation â€” turns it into an *open-book* exam. Before answering, we fetch the exact paragraphs that matter and hand them to the model. The librarian doing that fetching? Our old friend `all-MiniLM-L6-v2`.\"\n\nYou already know how to encode sentences and rank them by cosine similarity. Today we assemble those pieces into the four-stage pipeline that powers real assistants â€” including Homie's fully local index.\n\n### The Four Stages of RAG\n\n| Stage | What happens | Tool |\n|---|---|---|\n| 1. Chunk | Split documents into retrieval-sized pieces | plain Python |\n| 2. Index | Encode every chunk once into 384-dim vectors | all-MiniLM-L6-v2 |\n| 3. Retrieve | Encode the query, rank chunks by cosine similarity | `util.semantic_search` |\n| 4. Augment | Paste top chunks into the prompt as evidence | f-string |\n\nOnly stage 2 costs real compute, and you pay it **once**. Every question afterwards is a cheap encode-and-compare.\n\n### Why Chunking Matters\n\nEmbedding a whole document blurs its meaning into one average vector â€” a page about both refunds and shipping matches neither query well. Chunks of roughly 2-5 sentences keep each vector *about one thing*, so retrieval stays sharp:\n\n```python\ndef chunk(text: str, size: int = 3) -> list[str]:\n    sentences = [s.strip() for s in text.split(\".\") if s.strip()]\n    return [\". \".join(sentences[i:i+size]) + \".\"\n            for i in range(0, len(sentences), size)]\n```\n\n### Retrieval: The Heart of the Pipeline\n\n```python\nfrom sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\nchunk_emb = model.encode(chunks, convert_to_tensor=True)  # index once\n\nhits = util.semantic_search(\n    model.encode(\"How do I get my money back?\", convert_to_tensor=True),\n    chunk_emb, top_k=3\n)[0]\nevidence = [chunks[h[\"corpus_id\"]] for h in hits]\n```\n\nNo keyword overlap needed â€” \"money back\" lands on the *refund policy* chunk because the vectors share meaning.\n\n### Augment: Ground the Model\n\n```python\nprompt = f\"\"\"Answer using ONLY the context below.\nIf the context is insufficient, say so.\n\nContext:\n{chr(10).join(evidence)}\n\nQuestion: {question}\"\"\"\n```\n\nFeed this to any LLM â€” a local Ollama model, Qwen3-0.6B, or an API â€” and the answer is grounded in *your* documents instead of the model's fuzzy memory. Swap the corpus and the same pipeline answers questions about legal contracts, lecture notes, or your codebase.\n\n### Why MiniLM Is the Right Retriever Here\n\nAt ~90 MB and 384 dimensions, `all-MiniLM-L6-v2` encodes hundreds of chunks per second on CPU. Your retrieval layer stays fast, private, and free â€” the expensive LLM only ever sees the handful of chunks that matter.\n\n> **Key Insight:** RAG is just semantic search with a purpose: **chunk once, index once, retrieve per question, augment the prompt.** The quality of the final answer is decided before the LLM even runs â€” by how well your chunks isolate single ideas and how well your retriever ranks them. Master retrieval and the generation step becomes the easy part."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "open_book_exam",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "rag_overview",
+      "nodes": [
+        {
+          "label": "RAG Pipeline",
+          "children": [
+            "Chunk (2-5 sentences)",
+            "Index: all-MiniLM-L6-v2 (384-dim)",
+            "Retrieve: cosine top-k",
+            "Augment: evidence in prompt",
+            "Generate: any LLM"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "rag_pipeline_demo",
+      "steps": [
+        {
+          "line": "from sentence_transformers import SentenceTransformer, util",
+          "highlight": "SentenceTransformer",
+          "explanation": {
+            "en": "Same imports as semantic search â€” RAG retrieval is built from the pieces you already know"
+          }
+        },
+        {
+          "line": "model = SentenceTransformer(\"all-MiniLM-L6-v2\")",
+          "highlight": "all-MiniLM-L6-v2",
+          "explanation": {
+            "en": "Load the ~90 MB retriever. CPU is plenty â€” it only encodes short chunks."
+          }
+        },
+        {
+          "line": "doc = (\n    \"Refunds are issued within 14 days of purchase. \"\n    \"Items must be unused and in original packaging. \"\n    \"Shipping is free for orders over 50 euros. \"\n    \"Delivery takes 3 to 5 business days. \"\n    \"Support is available on weekdays from 9 to 5.\"\n)",
+          "highlight": "doc",
+          "explanation": {
+            "en": "One raw document mixing three topics: refunds, shipping, and support hours"
+          }
+        },
+        {
+          "line": "sentences = [s.strip() + \".\" for s in doc.split(\".\") if s.strip()]\nchunks = [\" \".join(sentences[i:i+2]) for i in range(0, len(sentences), 2)]",
+          "highlight": "chunks",
+          "explanation": {
+            "en": "Stage 1 â€” Chunk: split into 2-sentence pieces so each vector stays about one topic"
+          }
+        },
+        {
+          "line": "chunk_emb = model.encode(chunks, convert_to_tensor=True)",
+          "highlight": "encode",
+          "explanation": {
+            "en": "Stage 2 â€” Index: encode every chunk once. This tensor IS your local vector database."
+          }
+        },
+        {
+          "line": "question = \"Can I get my money back?\"",
+          "highlight": "question",
+          "explanation": {
+            "en": "No word from the refund chunk appears here â€” 'money back' must match by meaning"
+          }
+        },
+        {
+          "line": "q_emb = model.encode(question, convert_to_tensor=True)\nhits = util.semantic_search(q_emb, chunk_emb, top_k=2)[0]",
+          "highlight": "semantic_search",
+          "explanation": {
+            "en": "Stage 3 â€” Retrieve: rank all chunks by cosine similarity, keep the top 2 as evidence"
+          }
+        },
+        {
+          "line": "evidence = \"\\n\".join(chunks[h[\"corpus_id\"]] for h in hits)",
+          "highlight": "evidence",
+          "explanation": {
+            "en": "The refund chunk wins the ranking â€” join the top chunks into an evidence block"
+          }
+        },
+        {
+          "line": "prompt = (\n    \"Answer using ONLY the context below.\\n\\n\"\n    f\"Context:\\n{evidence}\\n\\n\"\n    f\"Question: {question}\"\n)",
+          "highlight": "prompt",
+          "explanation": {
+            "en": "Stage 4 â€” Augment: the LLM now answers from YOUR document, not from fuzzy memory"
+          }
+        },
+        {
+          "line": "print(prompt)\n# Context:\n# Refunds are issued within 14 days of purchase. Items must be unused...",
+          "highlight": "print(prompt)",
+          "explanation": {
+            "en": "Send this to any LLM â€” Ollama, Qwen3-0.6B, or an API. The grounding work is done."
+          }
+        }
+      ]
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_chunks",
+      "variable": "len(chunks)",
+      "value": "3 (2-sentence chunks)",
+      "data_type": "int",
+      "color": "#7E57C2"
+    },
+    {
+      "type": "VariableBox",
+      "id": "box_topk",
+      "variable": "top_k",
+      "value": "2 (evidence chunks per question)",
+      "data_type": "int",
+      "color": "#26A69A"
+    },
+    {
+      "type": "Terminal",
+      "id": "output_display",
+      "output": [
+        "$ python rag_pipeline.py",
+        "Indexed 3 chunks -> torch.Size([3, 384])",
+        "Question: 'Can I get my money back?'",
+        "Top evidence (cosine ranked):",
+        "  0.62  Refunds are issued within 14 days of purchase. Items must be unused and in original packaging.",
+        "  0.21  Support is available on weekdays from 9 to 5.",
+        "Prompt assembled â€” ready for any LLM."
+      ]
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "fd_rag_pipeline",
+      "title": "Full RAG Pipeline",
+      "nodes": [
+        {
+          "id": "docs",
+          "label": "Documents",
+          "type": "start"
+        },
+        {
+          "id": "chunk",
+          "label": "Chunk\n(2-5 sentences)",
+          "type": "process"
+        },
+        {
+          "id": "index",
+          "label": "MiniLM Index\n(384-dim, once)",
+          "type": "process"
+        },
+        {
+          "id": "question",
+          "label": "User Question",
+          "type": "start"
+        },
+        {
+          "id": "retrieve",
+          "label": "Cosine\nTop-K",
+          "type": "decision"
+        },
+        {
+          "id": "augment",
+          "label": "Evidence\n+ Prompt",
+          "type": "process"
+        },
+        {
+          "id": "llm",
+          "label": "LLM Answer\n(grounded)",
+          "type": "end"
+        }
+      ],
+      "edges": [
+        {
+          "from": "docs",
+          "to": "chunk",
+          "label": "text"
+        },
+        {
+          "from": "chunk",
+          "to": "index",
+          "label": "encode"
+        },
+        {
+          "from": "question",
+          "to": "retrieve",
+          "label": "encode"
+        },
+        {
+          "from": "index",
+          "to": "retrieve",
+          "label": "vectors"
+        },
+        {
+          "from": "retrieve",
+          "to": "augment",
+          "label": "top chunks"
+        },
+        {
+          "from": "augment",
+          "to": "llm",
+          "label": "prompt"
+        }
+      ],
+      "animated": true
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_celebration",
+      "effect": "vector_burst",
+      "message": "Chunk. Index. Retrieve. Augment. You just built a RAG pipeline!",
+      "duration_ms": 3500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build the retrieval stage of a RAG pipeline. Complete `retrieve_top_k` so it encodes the chunks and the query with all-MiniLM-L6-v2 and returns the k most similar chunks, ordered from most to least similar."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef retrieve_top_k(query: str, chunks: list[str], k: int = 2) -> list[str]:\n    \"\"\"Return the k chunks most semantically similar to the query, best first.\"\"\"\n    # 1. Encode the chunks (convert_to_tensor=True) â€” this is your index\n    # 2. Encode the query into the same vector space\n    # 3. Use util.semantic_search(query_emb, chunk_emb, top_k=k)\n    # 4. Map each hit's 'corpus_id' back to its chunk text\n    pass\n\nchunks = [\n    \"Refunds are issued within 14 days of purchase.\",\n    \"Shipping is free for orders over 50 euros.\",\n    \"Support is available on weekdays from 9 to 5.\",\n]\nprint(retrieve_top_k(\"Can I get my money back?\", chunks, k=1))",
+      "expected_output": "['Refunds are issued within 14 days of purchase.']",
+      "hints": {
+        "en": [
+          "util.semantic_search returns a list per query â€” take [0] to get this query's hits",
+          "Each hit is a dict with 'corpus_id' (index into chunks) and 'score'",
+          "Hits are already sorted best-first, so just map them: [chunks[h['corpus_id']] for h in hits]"
+        ]
+      },
+      "test_code": "from sentence_transformers import SentenceTransformer, util\n\n_model = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef retrieve_top_k(query, chunks, k=2):\n    chunk_emb = _model.encode(chunks, convert_to_tensor=True)\n    q_emb = _model.encode(query, convert_to_tensor=True)\n    hits = util.semantic_search(q_emb, chunk_emb, top_k=k)[0]\n    return [chunks[h[\"corpus_id\"]] for h in hits]\n\nchunks = [\n    \"Refunds are issued within 14 days of purchase.\",\n    \"Shipping is free for orders over 50 euros.\",\n    \"Support is available on weekdays from 9 to 5.\",\n]\nassert retrieve_top_k(\"Can I get my money back?\", chunks, k=1) == [chunks[0]]\nassert retrieve_top_k(\"When can I call for help?\", chunks, k=1) == [chunks[2]]\ntop2 = retrieve_top_k(\"free delivery threshold\", chunks, k=2)\nassert len(top2) == 2 and top2[0] == chunks[1]\nprint(\"All retrieval tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Assemble the augmentation stage. Complete `build_prompt` so it retrieves the top-k chunks for a question and returns a grounded prompt string containing a 'Context:' section with the evidence and a 'Question:' line with the original question."
+      },
+      "starter_code": "from sentence_transformers import SentenceTransformer, util\n\nmodel = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef build_prompt(question: str, chunks: list[str], k: int = 2) -> str:\n    \"\"\"Retrieve top-k evidence chunks and assemble a grounded RAG prompt.\"\"\"\n    # 1. Retrieve the k best chunks (encode + util.semantic_search)\n    # 2. Join them with newlines into an evidence block\n    # 3. Return: 'Answer using ONLY the context below.\\n\\nContext:\\n<evidence>\\n\\nQuestion: <question>'\n    pass\n\nchunks = [\n    \"Refunds are issued within 14 days of purchase.\",\n    \"Shipping is free for orders over 50 euros.\",\n    \"Support is available on weekdays from 9 to 5.\",\n]\nprint(build_prompt(\"Can I get my money back?\", chunks, k=1))",
+      "expected_output": "A prompt containing 'Context:', the refund chunk, and 'Question: Can I get my money back?'",
+      "hints": {
+        "en": [
+          "Reuse the retrieval pattern: util.semantic_search(q_emb, chunk_emb, top_k=k)[0]",
+          "Build the evidence block with '\\n'.join(...) over the retrieved chunk texts",
+          "An f-string keeps the template readable: f'...Context:\\n{evidence}\\n\\nQuestion: {question}'"
+        ]
+      },
+      "test_code": "from sentence_transformers import SentenceTransformer, util\n\n_model = SentenceTransformer(\"all-MiniLM-L6-v2\")\n\ndef build_prompt(question, chunks, k=2):\n    chunk_emb = _model.encode(chunks, convert_to_tensor=True)\n    q_emb = _model.encode(question, convert_to_tensor=True)\n    hits = util.semantic_search(q_emb, chunk_emb, top_k=k)[0]\n    evidence = \"\\n\".join(chunks[h[\"corpus_id\"]] for h in hits)\n    return (\n        \"Answer using ONLY the context below.\\n\\n\"\n        f\"Context:\\n{evidence}\\n\\nQuestion: {question}\"\n    )\n\nchunks = [\n    \"Refunds are issued within 14 days of purchase.\",\n    \"Shipping is free for orders over 50 euros.\",\n    \"Support is available on weekdays from 9 to 5.\",\n]\nprompt = build_prompt(\"Can I get my money back?\", chunks, k=1)\nassert \"Context:\" in prompt, \"Prompt must contain a Context section\"\nassert chunks[0] in prompt, \"The refund chunk must be retrieved as evidence\"\nassert chunks[1] not in prompt, \"Unrelated shipping chunk must not appear with k=1\"\nassert \"Question: Can I get my money back?\" in prompt\nprint(\"All prompt assembly tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "rag_pipeline",
+      "document_chunking",
+      "vector_indexing",
+      "top_k_retrieval",
+      "prompt_augmentation"
+    ],
+    "concepts_required": [
+      "text_embeddings",
+      "cosine_similarity",
+      "python_functions",
+      "f_strings"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 35,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}

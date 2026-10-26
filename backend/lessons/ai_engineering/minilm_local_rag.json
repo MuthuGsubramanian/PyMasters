@@ -1,0 +1,166 @@
+{
+  "id": "minilm_local_rag",
+  "topic": "minilm_local_rag",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 99,
+  "title": {
+    "en": "all-MiniLM-L6-v2 as Your Local RAG Engine: Chunk, Embed, Retrieve, Prompt"
+  },
+  "description": {
+    "en": "Assemble a complete retrieval-augmented generation pipeline on your own CPU: split documents into overlapping chunks, embed them with all-MiniLM-L6-v2, retrieve the top-k most relevant pieces, and ground an LLM prompt in them â€” no API, no GPU, no data leaving your machine."
+  },
+  "xp_reward": 70,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The R in RAG Lives on Your Laptop\n\n\"You've made **all-MiniLM-L6-v2** search, classify, and deduplicate,\" Vaathiyaar says. \"Today the pieces click together into the architecture behind every 'chat with your documents' product: **Retrieval-Augmented Generation**. Everyone stares at the G â€” the big language model writing the answer. But the G can only be as good as what you feed it. The *R* â€” retrieval â€” decides the ceiling, and the R is entirely embedding work. Which means the R can run right here, on your CPU, for free.\"\n\n### Why a Local Embedder for RAG?\n\nA personal assistant that indexes your notes re-embeds text constantly â€” every file save, every new query. Send all that to a cloud embedding API and you pay per token *and* mail your private notes to someone else's server.\n\n| | Cloud embedding API | all-MiniLM-L6-v2 local |\n|---|---|---|\n| Where text goes | provider's servers | never leaves your machine |\n| Cost at scale | per-token, forever | free after one 80 MB download |\n| Latency | network round-trip | microseconds per chunk on CPU |\n| Offline | breaks | keeps working |\n\nThis is exactly why lightweight local assistants pick MiniLM as their default RAG embedder: 384 dimensions is plenty to rank *your own notes*, and privacy comes built in.\n\n### The Four-Step Pipeline\n\n**Chunk â†’ Embed â†’ Retrieve â†’ Prompt.** Here it is, whole and runnable:\n\n```python\nfrom sentence_transformers import SentenceTransformer\n\nmodel = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")\n\nwords = open(\"notes.txt\").read().split()\n# 64-word chunks that overlap by 16 words\nchunks = [\" \".join(words[i:i+64]) for i in range(0, len(words), 48)]\n\nchunk_vecs = model.encode(chunks, normalize_embeddings=True)\n\nquery = \"What did I decide about the database migration?\"\nq_vec = model.encode(query, normalize_embeddings=True)\n\nscores = chunk_vecs @ q_vec          # cosine score per chunk\ntop = scores.argsort()[-3:][::-1]    # indices of the 3 best\n\ncontext = \"\\n---\\n\".join(chunks[i] for i in top)\nprompt = f\"Answer using ONLY this context:\\n{context}\\n\\nQuestion: {query}\"\n```\n\nHand that prompt to any LLM â€” local or cloud â€” and it answers from *your* documents instead of hallucinating.\n\n### The Two Knobs That Matter\n\n**Chunk size** trades precision for context: tiny chunks rank precisely but arrive as fragments; huge chunks carry context but blur into vague vectors that match everything a little and nothing well.\n\n**Overlap** is the unsung fix for a silent bug: without it, a sentence sliced at a chunk boundary lives half in one vector and half in the next â€” and neither half ranks well for a query about that exact sentence. Overlapping by ~25% guarantees every sentence appears whole in at least one chunk.\n\nToday you implement the two pure-Python hearts of this pipeline â€” top-k retrieval and overlapping chunking â€” so the machinery is never a black box.\n\n> **Key Insight:** In RAG, the language model gets the applause but retrieval sets the ceiling â€” an LLM cannot cite a chunk your embedder failed to surface. Master chunking and top-k with an 80 MB local model and you control the half of RAG that actually decides quality, privately and for free."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "document_chunks_flowing_to_prompt",
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "local_rag_pipeline",
+      "steps": [
+        {
+          "line": "from sentence_transformers import SentenceTransformer",
+          "highlight": "SentenceTransformer",
+          "explanation": {
+            "en": "Same single import as always â€” the whole R in RAG needs nothing else"
+          }
+        },
+        {
+          "line": "model = SentenceTransformer(\"sentence-transformers/all-MiniLM-L6-v2\")",
+          "highlight": "all-MiniLM-L6-v2",
+          "explanation": {
+            "en": "80 MB, runs on CPU â€” your notes never leave your machine"
+          }
+        },
+        {
+          "line": "words = open(\"notes.txt\").read().split()",
+          "highlight": "split",
+          "explanation": {
+            "en": "Raw documents become a flat list of words, ready to slice"
+          }
+        },
+        {
+          "line": "chunks = [\" \".join(words[i:i+64]) for i in range(0, len(words), 48)]",
+          "highlight": "range(0, len(words), 48)",
+          "explanation": {
+            "en": "Step 48 with size 64 = 16 words of overlap, so no sentence is cut in half at a boundary"
+          }
+        },
+        {
+          "line": "chunk_vecs = model.encode(chunks, normalize_embeddings=True)",
+          "highlight": "normalize_embeddings=True",
+          "explanation": {
+            "en": "Normalized vectors make dot product equal cosine similarity â€” the index is built"
+          }
+        },
+        {
+          "line": "q_vec = model.encode(query, normalize_embeddings=True)",
+          "highlight": "q_vec",
+          "explanation": {
+            "en": "The question lands in the same 384-dim space as every chunk"
+          }
+        },
+        {
+          "line": "scores = chunk_vecs @ q_vec",
+          "highlight": "@",
+          "explanation": {
+            "en": "One dot product per chunk â€” the entire retrieval step is a matrix multiply"
+          }
+        },
+        {
+          "line": "top = scores.argsort()[-3:][::-1]",
+          "highlight": "argsort",
+          "explanation": {
+            "en": "argsort ranks ascending, so take the last 3 and reverse â€” best chunk first"
+          }
+        },
+        {
+          "line": "context = \"\\n---\\n\".join(chunks[i] for i in top)",
+          "highlight": "join",
+          "explanation": {
+            "en": "Stitch the winners into a context block with visible separators"
+          }
+        },
+        {
+          "line": "prompt = f\"Answer using ONLY this context:\\n{context}\\n\\nQuestion: {query}\"",
+          "highlight": "ONLY this context",
+          "explanation": {
+            "en": "Grounding instruction + retrieved facts + question: the LLM now cites your notes instead of guessing"
+          }
+        }
+      ],
+      "duration_ms": 7000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "chunks_assembling_into_answer",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement the retrieval step. Write `top_k(query_vec, chunk_vecs, k)` where `query_vec` is a normalized embedding (list of floats) and `chunk_vecs` is a list of normalized chunk embeddings. Return the indices of the `k` chunks with the highest dot-product similarity to the query, ordered best-first. Print `top_k([1.0, 0.0], [[0.9, 0.44], [0.0, 1.0], [0.7, 0.71], [1.0, 0.0]], 2)` â€” the chunk at index 3 is a perfect match and index 0 is next."
+      },
+      "starter_code": "def top_k(query_vec: list, chunk_vecs: list, k: int) -> list:\n    \"\"\"Return indices of the k most similar chunks, best first.\n    All vectors are normalized, so dot product == cosine similarity.\"\"\"\n    # 1. dot product helper: sum(x * y for x, y in zip(u, v))\n    # 2. rank ALL indices by their score, highest first\n    # 3. return the first k indices\n    pass\n\nvecs = [[0.9, 0.44], [0.0, 1.0], [0.7, 0.71], [1.0, 0.0]]\nprint(top_k([1.0, 0.0], vecs, 2))",
+      "expected_output": "[3, 0]",
+      "hints": {
+        "en": [
+          "Write a helper first: def dot(u, v): return sum(x * y for x, y in zip(u, v))",
+          "sorted(range(len(chunk_vecs)), key=..., reverse=True) ranks the INDICES, not the vectors",
+          "sorted(range(len(chunk_vecs)), key=lambda i: dot(query_vec, chunk_vecs[i]), reverse=True)[:k] is the whole function"
+        ]
+      },
+      "test_code": "vecs = [[0.9, 0.44], [0.0, 1.0], [0.7, 0.71], [1.0, 0.0]]\nassert top_k([1.0, 0.0], vecs, 2) == [3, 0], f\"index 3 is a perfect match, 0 is second: got {top_k([1.0, 0.0], vecs, 2)}\"\nassert top_k([0.0, 1.0], vecs, 2) == [1, 2], f\"for a vertical query, 1 then 2: got {top_k([0.0, 1.0], vecs, 2)}\"\nassert top_k([1.0, 0.0], vecs, 1) == [3], \"k=1 returns only the single best index\"\nassert top_k([1.0, 0.0], vecs, 4) == [3, 0, 2, 1], \"the FULL ranking must be ordered best-first, not just the top slice\"\nprint(\"All tests passed!\")"
+    },
+    {
+      "instruction": {
+        "en": "Implement overlapping chunking â€” the step that stops sentences being sliced in half at chunk boundaries. Write `chunk_words(words, size, overlap)` that splits a list of words into chunks of `size` words, where each chunk starts `size - overlap` words after the previous one (so consecutive chunks share `overlap` words). The final chunk may be shorter than `size`; stop once a chunk reaches the end of the list. Return the list of chunks (each a list of words). Print `chunk_words([\"the\", \"cat\", \"sat\", \"on\", \"the\", \"mat\", \"today\"], 3, 1)`."
+      },
+      "starter_code": "def chunk_words(words: list, size: int, overlap: int) -> list:\n    \"\"\"Split words into overlapping chunks for a RAG index.\n    Consecutive chunks share `overlap` words.\"\"\"\n    # 1. chunks = [], i = 0\n    # 2. while i < len(words): take words[i:i+size]\n    # 3. stop after the chunk that reaches the end of the list\n    # 4. otherwise advance i by (size - overlap)\n    pass\n\nprint(chunk_words([\"the\", \"cat\", \"sat\", \"on\", \"the\", \"mat\", \"today\"], 3, 1))",
+      "expected_output": "[['the', 'cat', 'sat'], ['sat', 'on', 'the'], ['the', 'mat', 'today']]",
+      "hints": {
+        "en": [
+          "The step between chunk starts is size - overlap â€” advancing by size would give zero overlap",
+          "words[i:i+size] slices safely even when fewer than size words remain at the end",
+          "Append the chunk FIRST, then break if i + size >= len(words) â€” otherwise you either drop the tail or emit a tiny duplicate chunk"
+        ]
+      },
+      "test_code": "assert chunk_words([\"the\", \"cat\", \"sat\", \"on\", \"the\", \"mat\", \"today\"], 3, 1) == [['the', 'cat', 'sat'], ['sat', 'on', 'the'], ['the', 'mat', 'today']], f\"got {chunk_words(['the', 'cat', 'sat', 'on', 'the', 'mat', 'today'], 3, 1)}\"\nassert chunk_words([\"w1\", \"w2\", \"w3\", \"w4\", \"w5\", \"w6\", \"w7\", \"w8\"], 3, 1) == [['w1', 'w2', 'w3'], ['w3', 'w4', 'w5'], ['w5', 'w6', 'w7'], ['w7', 'w8']], \"a leftover tail becomes a final shorter chunk\"\nassert chunk_words([\"a\", \"b\", \"c\", \"d\"], 2, 0) == [['a', 'b'], ['c', 'd']], \"overlap=0 means back-to-back chunks with no shared words\"\nassert chunk_words([\"a\"], 3, 1) == [['a']], \"fewer words than size still yields one chunk\"\nchunks = chunk_words([\"w1\", \"w2\", \"w3\", \"w4\", \"w5\", \"w6\", \"w7\"], 4, 2)\nassert all(chunks[i][-2:] == chunks[i+1][:2] for i in range(len(chunks) - 1)), \"every consecutive pair of chunks must share exactly the overlap words\"\nprint(\"All tests passed!\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "rag_retrieval",
+      "text_chunking",
+      "chunk_overlap",
+      "top_k_retrieval",
+      "prompt_grounding"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "list_slicing",
+      "cosine_similarity"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
