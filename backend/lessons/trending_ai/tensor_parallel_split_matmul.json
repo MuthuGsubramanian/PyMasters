@@ -1,0 +1,164 @@
+{
+  "id": "tensor_parallel_split_matmul",
+  "topic": "tensor_parallel_split_matmul",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 135,
+  "title": {
+    "en": "Tensor Parallelism: Splitting One Matmul Across Two GPUs"
+  },
+  "description": {
+    "en": "data_parallel_allreduce_math copied the whole model onto every worker. Tensor parallelism splits the weight matrix itself: a column split whose slices simply concatenate, and a row split whose partial products need an all-reduce. Both are verified equal to the unsplit matmul with pure-Python integer matrices, and you see why Megatron chains them so an MLP block needs only one all-reduce."
+  },
+  "xp_reward": 80,
+  "next_unlock": "pipeline_parallel_bubble",
+  "story_variants": {
+    "en": "## When One Weight Matrix Is Too Big For One GPU\n\n\"Data parallelism copies the whole model onto every worker -- which only works if the whole model *fits* on one worker,\" Vaathiyaar says. \"Tensor parallelism cuts the other way. Instead of splitting the batch, it splits the weight matrices themselves, so each worker holds and multiplies only a slice of `W`. The trick is that a matrix multiply `y = x @ W` can be split in two directions, and each direction needs a different kind of communication.\"\n\n### Column Split: Concatenate\n\nSplit `W` by *columns*. Worker 0 keeps the first half of the output columns, worker 1 the second half. Both workers need the full input `x`, each computes `x @ W_k`, and the result is simply the two slices placed side by side:\n\n> **x @ [W_0 | W_1] = [x @ W_0 | x @ W_1]**\n\n```python\ndef matmul(a, b):\n    \"\"\"Pure-Python matrix multiply: a is rows x inner, b is inner x cols.\"\"\"\n    rows, inner, cols = len(a), len(b), len(b[0])\n    return [[sum(a[i][k] * b[k][j] for k in range(inner)) for j in range(cols)] for i in range(rows)]\n\nx = [[1, 2, 3],\n     [4, 5, 6]]          # 2 tokens x 3 features\nW = [[1, 0, 2, 1],\n     [0, 1, 1, 3],\n     [2, 1, 0, 1]]       # 3 features x 4 outputs\n\ny_full = matmul(x, W)\nprint(\"unsplit y =\", y_full)\n\n# column split: worker 0 owns output columns 0-1, worker 1 owns columns 2-3\nW0 = [row[:2] for row in W]\nW1 = [row[2:] for row in W]\ny0 = matmul(x, W0)\ny1 = matmul(x, W1)\nprint(\"worker 0 slice =\", y0)\nprint(\"worker 1 slice =\", y1)\ny_cat = [r0 + r1 for r0, r1 in zip(y0, y1)]\nprint(\"concatenated =\", y_cat)\nprint(\"matches unsplit:\", y_cat == y_full)\n```\n\n```\nunsplit y = [[7, 5, 4, 10], [16, 11, 13, 25]]\nworker 0 slice = [[7, 5], [16, 11]]\nworker 1 slice = [[4, 10], [13, 25]]\nconcatenated = [[7, 5, 4, 10], [16, 11, 13, 25]]\nmatches unsplit: True\n```\n\nNo arithmetic crosses the worker boundary -- the communication is an *all-gather* that stitches the column slices back together.\n\n### Row Split: All-Reduce\n\nNow split `W` by *rows*. Worker 0 keeps rows 0-1, worker 1 keeps row 2. Each row of `W` multiplies one feature of `x`, so worker 0 only needs features 0-1 of `x` and worker 1 only needs feature 2. Each worker produces a *partial* `y` of the full output shape, and the two partials must be summed:\n\n> **x @ W = x_0 @ W_0 + x_1 @ W_1**\n\n```python\ndef matmul(a, b):\n    rows, inner, cols = len(a), len(b), len(b[0])\n    return [[sum(a[i][k] * b[k][j] for k in range(inner)) for j in range(cols)] for i in range(rows)]\n\nx = [[1, 2, 3],\n     [4, 5, 6]]\nW = [[1, 0, 2, 1],\n     [0, 1, 1, 3],\n     [2, 1, 0, 1]]\ny_full = matmul(x, W)\n\n# row split: worker 0 owns W rows 0-1 (and needs x columns 0-1), worker 1 owns W row 2\nW0 = W[:2]\nW1 = W[2:]\nx0 = [row[:2] for row in x]\nx1 = [row[2:] for row in x]\np0 = matmul(x0, W0)\np1 = matmul(x1, W1)\nprint(\"worker 0 partial =\", p0)\nprint(\"worker 1 partial =\", p1)\ny_sum = [[a + b for a, b in zip(r0, r1)] for r0, r1 in zip(p0, p1)]\nprint(\"all-reduce sum   =\", y_sum)\nprint(\"matches unsplit:\", y_sum == y_full)\n```\n\n```\nworker 0 partial = [[1, 2, 4, 7], [4, 5, 13, 19]]\nworker 1 partial = [[6, 3, 0, 3], [12, 6, 0, 6]]\nall-reduce sum   = [[7, 5, 4, 10], [16, 11, 13, 25]]\nmatches unsplit: True\n```\n\nRow-parallel output is incomplete on every worker until the *all-reduce* adds the partials -- the same operation data parallelism used for gradients, now used for activations in the forward pass.\n\n### Why Megatron Pairs Them\n\nLook at the shapes: a column-parallel layer leaves each worker holding a *column slice* of its output, and a row-parallel layer wants exactly that -- a column slice of its *input*. So a transformer MLP (up-projection, activation, down-projection) is split column-wise then row-wise, and the only communication for the whole block is one all-reduce at the end. The intermediate activation is never gathered at all.\n\n> **Vaathiyaar's rule:** tensor parallelism is communication-heavy -- that all-reduce happens *every layer, every forward and backward pass*, not once per step like data parallelism's gradient all-reduce. That is why in practice it stays inside a single node where GPUs share a fast interconnect, with 2, 4 or 8 workers, and other strategies take over across nodes. Also, the exact equality above holds for integer matrices; with floats the partial sums can differ in the last bits because addition order changes, which is a real source of non-bitwise-reproducible runs.\n\nToday you implement both splits with a pure-Python matmul and check them against the unsplit result."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "matrix_sliced_two_ways",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Tensor parallelism",
+          "children": [
+            "split W, not the batch",
+            "column split -> slices concatenate (all-gather)",
+            "row split -> partials summed (all-reduce)",
+            "column then row = one all-reduce per MLP block"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "W0 = [row[:2] for row in W]",
+          "highlight": "row[:2]",
+          "explanation": {
+            "en": "Column split: worker 0 keeps the first two output columns of every row of W"
+          }
+        },
+        {
+          "line": "y_cat = [r0 + r1 for r0, r1 in zip(y0, y1)]",
+          "highlight": "r0 + r1",
+          "explanation": {
+            "en": "List concatenation per row -- the all-gather that stitches the column slices back together"
+          }
+        },
+        {
+          "line": "p0 = matmul(x0, W0)",
+          "highlight": "matmul(x0, W0)",
+          "explanation": {
+            "en": "Row split: a partial output of full shape, built only from the features this worker owns"
+          }
+        },
+        {
+          "line": "y_sum = [[a + b for a, b in zip(r0, r1)] for r0, r1 in zip(p0, p1)]",
+          "highlight": "a + b",
+          "explanation": {
+            "en": "Element-wise sum of the partials -- the all-reduce that completes the row-parallel output"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Column-parallel",
+        "items": [
+          "each worker needs full x",
+          "slices [[7, 5], [16, 11]] and [[4, 10], [13, 25]]",
+          "concatenate -> all-gather"
+        ]
+      },
+      "right": {
+        "title": "Row-parallel",
+        "items": [
+          "each worker needs its slice of x",
+          "partials [[1, 2, 4, 7], ...] and [[6, 3, 0, 3], ...]",
+          "sum -> all-reduce"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "column_parallel(x, W, 2) -> [[7, 5, 4, 10], [16, 11, 13, 25]]",
+        "row_parallel(x, W, 2) -> [[7, 5, 4, 10], [16, 11, 13, 25]]",
+        "both == matmul(x, W) -> True"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "slices_reassembled",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `column_parallel(x, W, split)` -- give worker 0 the columns `[:split]` of `W` and worker 1 the columns `[split:]`, compute each worker's `matmul(x, W_k)` with the provided pure-Python `matmul`, then concatenate the two slices row by row. Then print `column_parallel(x, W, 2)` and `column_parallel(x, W, 2) == matmul(x, W)` for the given `x` and `W` (expected: `[[7, 5, 4, 10], [16, 11, 13, 25]]` then `True`)."
+      },
+      "starter_code": "def matmul(a: list, b: list) -> list:\n    rows, inner, cols = len(a), len(b), len(b[0])\n    return [[sum(a[i][k] * b[k][j] for k in range(inner)) for j in range(cols)] for i in range(rows)]\n\ndef column_parallel(x: list, W: list, split: int) -> list:\n    \"\"\"Give W columns [:split] to worker 0 and [split:] to worker 1, then concatenate the two output slices.\"\"\"\n    # W0 = [row[:split] for row in W]\n    # W1 = [row[split:] for row in W]\n    # y0 = matmul(x, W0)\n    # y1 = matmul(x, W1)\n    # return [r0 + r1 for r0, r1 in zip(y0, y1)]\n    pass\n\nx = [[1, 2, 3], [4, 5, 6]]\nW = [[1, 0, 2, 1], [0, 1, 1, 3], [2, 1, 0, 1]]\nprint(column_parallel(x, W, 2))\nprint(column_parallel(x, W, 2) == matmul(x, W))",
+      "hints": [
+        "W0 = [row[:split] for row in W]; W1 = [row[split:] for row in W]",
+        "both workers use the full x: y0 = matmul(x, W0), y1 = matmul(x, W1)",
+        "concatenating lists per row joins the column slices: [r0 + r1 for r0, r1 in zip(y0, y1)]"
+      ],
+      "expected_output": "[[7, 5, 4, 10], [16, 11, 13, 25]]\nTrue"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `row_parallel(x, W, split)` -- worker 0 gets rows `[:split]` of `W` together with columns `[:split]` of `x`, worker 1 gets the rest, each computes a partial product of full output shape, and the partials are summed element-wise (the all-reduce). Then print `row_parallel(x, W, 2)` and `row_parallel(x, W, 1) == matmul(x, W)` (expected: `[[7, 5, 4, 10], [16, 11, 13, 25]]` then `True`)."
+      },
+      "starter_code": "def matmul(a: list, b: list) -> list:\n    rows, inner, cols = len(a), len(b), len(b[0])\n    return [[sum(a[i][k] * b[k][j] for k in range(inner)) for j in range(cols)] for i in range(rows)]\n\ndef row_parallel(x: list, W: list, split: int) -> list:\n    \"\"\"Worker 0 gets W rows [:split] with x columns [:split]; worker 1 gets the rest. All-reduce (sum) the partials.\"\"\"\n    # p0 = matmul([row[:split] for row in x], W[:split])\n    # p1 = matmul([row[split:] for row in x], W[split:])\n    # return [[a + b for a, b in zip(r0, r1)] for r0, r1 in zip(p0, p1)]\n    pass\n\nx = [[1, 2, 3], [4, 5, 6]]\nW = [[1, 0, 2, 1], [0, 1, 1, 3], [2, 1, 0, 1]]\nprint(row_parallel(x, W, 2))\nprint(row_parallel(x, W, 1) == matmul(x, W))",
+      "hints": [
+        "the row split of W must be matched by the same column split of x: [row[:split] for row in x] with W[:split]",
+        "each partial already has the full output shape -- do not concatenate, add",
+        "[[a + b for a, b in zip(r0, r1)] for r0, r1 in zip(p0, p1)]"
+      ],
+      "expected_output": "[[7, 5, 4, 10], [16, 11, 13, 25]]\nTrue"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "tensor_parallelism",
+      "column_parallel_linear",
+      "row_parallel_linear",
+      "megatron_mlp_sharding"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "nested_lists",
+      "list_comprehensions",
+      "matrix_multiplication"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

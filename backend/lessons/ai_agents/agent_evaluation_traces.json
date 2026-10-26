@@ -1,0 +1,181 @@
+{
+  "id": "agent_evaluation_traces",
+  "topic": "agent_evaluation_traces",
+  "track": "ai_agents",
+  "module": "from_scratch",
+  "order": 9,
+  "title": {
+    "en": "Evaluating Agents With Traces"
+  },
+  "description": {
+    "en": "Record an agent trace as a list of steps with tool, args, result and latency, write assertions over it (right tool called, step count, no forbidden tool, latency budget), then run a four-scenario suite and compute a pass rate. Pure Python with a fake clock so every run is reproducible."
+  },
+  "xp_reward": 120,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## You Cannot Grade What You Did Not Record\n\nAn agent's final answer is the last thing it produces, but everything that mattered happened before it: which tools it called, with which arguments, in what order, and how long each took. A **trace** is the record of those steps. Once you have traces, evaluating an agent stops being guesswork and becomes ordinary Python: assertions over a list of dicts.\n\n### Recording a trace\n\nEach trace step records four things: the tool name, the arguments, the result, and the latency in milliseconds. In real code you would read `time.perf_counter()` before and after the call. Real clocks make every run print different numbers, so this lesson uses a `FakeClock` whose readings are scripted; the subtraction is identical to the real thing.\n\n```python\nclass FakeClock:\n    \"\"\"Stands in for time.perf_counter() so every run prints the same numbers.\"\"\"\n    def __init__(self, deltas):\n        self.deltas = list(deltas)\n        self.now = 0.0\n\n    def __call__(self):\n        self.now += self.deltas.pop(0)\n        return self.now\n\ndef search(query):\n    return f\"3 results for {query!r}\"\n\ndef calculate(expr):\n    return eval(expr, {\"__builtins__\": {}}, {})\n\ndef delete_file(path):\n    return f\"deleted {path}\"\n\nTOOLS = {\"search\": search, \"calculate\": calculate, \"delete_file\": delete_file}\n\ndef run_traced(tool_calls, clock):\n    \"\"\"Execute scripted tool calls, recording one trace step per call.\"\"\"\n    trace = []\n    for call in tool_calls:\n        start = clock()\n        result = TOOLS[call[\"name\"]](**call[\"args\"])\n        latency_ms = round((clock() - start) * 1000, 1)\n        trace.append({\"tool\": call[\"name\"], \"args\": call[\"args\"],\n                      \"result\": result, \"latency_ms\": latency_ms})\n    return trace\n\nclock = FakeClock([0.0, 0.0124, 0.0, 0.0008])\ntrace = run_traced([\n    {\"name\": \"search\", \"args\": {\"query\": \"python sort dict\"}},\n    {\"name\": \"calculate\", \"args\": {\"expr\": \"6 * 7\"}},\n], clock)\nfor step in trace:\n    print(step)\n```\n\n```text\n{'tool': 'search', 'args': {'query': 'python sort dict'}, 'result': \"3 results for 'python sort dict'\", 'latency_ms': 12.4}\n{'tool': 'calculate', 'args': {'expr': '6 * 7'}, 'result': 42, 'latency_ms': 0.8}\n```\n\nThe clock is read twice per step: once before the call and once after. The scripted deltas `[0.0, 0.0124, 0.0, 0.0008]` therefore produce latencies of 12.4 ms and 0.8 ms. Everything else in the step is plain data copied from the call and its result.\n\n### Assertions over traces\n\nWith the trace in hand, a check is just a function that takes the trace and returns `True` or `False`. Four reusable ones cover most of what teams actually assert:\n\n```python\ndef called_tool(trace, name):\n    return any(step[\"tool\"] == name for step in trace)\n\ndef step_count_at_most(trace, n):\n    return len(trace) <= n\n\ndef never_called(trace, forbidden):\n    return not any(step[\"tool\"] in forbidden for step in trace)\n\ndef total_latency_under(trace, ms):\n    return sum(step[\"latency_ms\"] for step in trace) <= ms\n\nprint(\"called search?    \", called_tool(trace, \"search\"))\nprint(\"at most 3 steps?  \", step_count_at_most(trace, 3))\nprint(\"no delete_file?   \", never_called(trace, {\"delete_file\"}))\nprint(\"total under 10 ms?\", total_latency_under(trace, 10))\n```\n\n```text\ncalled search?     True\nat most 3 steps?   True\nno delete_file?    True\ntotal under 10 ms? False\n```\n\n| Check | Category | Question it asks |\n|-------|----------|------------------|\n| `called_tool` | behaviour | Did it use the tool the task needed? |\n| `step_count_at_most` | efficiency | Did it finish without wandering? |\n| `never_called` | safety | Did it stay away from destructive tools? |\n| `total_latency_under` | performance | Was it fast enough end to end? |\n\nThe last check fails on this trace because 12.4 + 0.8 = 13.2 ms, which is above the 10 ms limit. A failing check is information, not a crash.\n\n### A tiny suite with a pass rate\n\nA scenario bundles the scripted tool calls, the clock deltas and the checks it must satisfy. Running four scenarios and counting the passes gives a number you can track from one version of the agent to the next:\n\n```python\nSCENARIOS = [\n    {\"name\": \"lookup then compute\",\n     \"calls\": [{\"name\": \"search\", \"args\": {\"query\": \"tax rate\"}},\n               {\"name\": \"calculate\", \"args\": {\"expr\": \"100 * 0.18\"}}],\n     \"deltas\": [0.0, 0.010, 0.0, 0.001],\n     \"checks\": [(\"uses search\", lambda t: called_tool(t, \"search\")),\n                (\"max 3 steps\", lambda t: step_count_at_most(t, 3)),\n                (\"no destructive tools\", lambda t: never_called(t, {\"delete_file\"}))]},\n    {\"name\": \"wanders\",\n     \"calls\": [{\"name\": \"search\", \"args\": {\"query\": \"a\"}},\n               {\"name\": \"search\", \"args\": {\"query\": \"b\"}},\n               {\"name\": \"search\", \"args\": {\"query\": \"c\"}},\n               {\"name\": \"calculate\", \"args\": {\"expr\": \"1 + 1\"}}],\n     \"deltas\": [0.0, 0.010, 0.0, 0.010, 0.0, 0.010, 0.0, 0.001],\n     \"checks\": [(\"max 3 steps\", lambda t: step_count_at_most(t, 3)),\n                (\"no destructive tools\", lambda t: never_called(t, {\"delete_file\"}))]},\n    {\"name\": \"tidies up uninvited\",\n     \"calls\": [{\"name\": \"calculate\", \"args\": {\"expr\": \"2 ** 10\"}},\n               {\"name\": \"delete_file\", \"args\": {\"path\": \"cache.db\"}}],\n     \"deltas\": [0.0, 0.001, 0.0, 0.004],\n     \"checks\": [(\"uses calculate\", lambda t: called_tool(t, \"calculate\")),\n                (\"no destructive tools\", lambda t: never_called(t, {\"delete_file\"}))]},\n    {\"name\": \"quick maths\",\n     \"calls\": [{\"name\": \"calculate\", \"args\": {\"expr\": \"9 * 9\"}}],\n     \"deltas\": [0.0, 0.0006],\n     \"checks\": [(\"uses calculate\", lambda t: called_tool(t, \"calculate\")),\n                (\"under 5 ms total\", lambda t: total_latency_under(t, 5))]},\n]\n\ndef evaluate(scenario):\n    trace = run_traced(scenario[\"calls\"], FakeClock(scenario[\"deltas\"]))\n    return [label for label, check in scenario[\"checks\"] if not check(trace)]\n\npassed = 0\nfor sc in SCENARIOS:\n    failed = evaluate(sc)\n    status = \"PASS\" if not failed else \"FAIL\"\n    passed += status == \"PASS\"\n    detail = \"\" if not failed else \" -> \" + \", \".join(failed)\n    print(f\"{status}  {sc['name']}{detail}\")\nprint(f\"pass rate: {passed}/{len(SCENARIOS)} = {100 * passed / len(SCENARIOS):.1f}%\")\n```\n\n```text\nPASS  lookup then compute\nFAIL  wanders -> max 3 steps\nFAIL  tidies up uninvited -> no destructive tools\nPASS  quick maths\npass rate: 2/4 = 50.0%\n```\n\nLook at the two failures. \"wanders\" reached the right place but took four steps, one more than allowed. \"tidies up uninvited\" computed `2 ** 10` correctly and then deleted a file nobody asked it to touch. Both would have looked fine if you only read the final answer. Trace assertions catch the *how*, which is where agents usually go wrong.\n\n> **Honest caveat:** these scenarios are scripted, so the suite is fully deterministic and the 50.0% is exactly reproducible. Against a real model, the same scenario can pass on one run and fail on the next. Run each scenario several times and report a mean pass rate, never a single run. Latency checks are the flakiest kind: use generous thresholds and do not let a latency check be the only thing that fails a build. And trace assertions say nothing about whether the final answer was *correct*; pair them with answer checks (exact match, or a rubric) for a complete picture.\n\n### Where traces come from in production\n\nAgent frameworks and tracing tools record exactly this shape: one span per tool call carrying its name, input, output and duration. The four checks above run unchanged on an exported trace, which is the point of keeping the trace format boring."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_9",
+      "content": "The final answer is the last thing an agent produces. Everything that mattered came before it: which tools it called, with what arguments, how many steps, how long. Record that as a trace, and evaluation becomes assertions over a list of dicts.",
+      "visual_theme": "microscope"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_9",
+      "nodes": [
+        "Scenario",
+        "Run agent with tracing",
+        "Trace: steps + latency",
+        "Run checks",
+        "PASS / FAIL + failed labels",
+        "Pass rate over suite"
+      ],
+      "edges": [
+        {
+          "from": "Scenario",
+          "to": "Run agent with tracing"
+        },
+        {
+          "from": "Run agent with tracing",
+          "to": "Trace: steps + latency"
+        },
+        {
+          "from": "Trace: steps + latency",
+          "to": "Run checks"
+        },
+        {
+          "from": "Run checks",
+          "to": "PASS / FAIL + failed labels"
+        },
+        {
+          "from": "PASS / FAIL + failed labels",
+          "to": "Pass rate over suite"
+        },
+        {
+          "from": "Pass rate over suite",
+          "to": "Scenario"
+        }
+      ],
+      "description": "The evaluation loop: each scenario produces a trace, the checks run over the trace, and the per-scenario verdicts roll up into one pass rate"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_9",
+      "steps": [
+        {
+          "line": "start = clock()",
+          "explanation": {
+            "en": "Read the clock before the tool runs. In real code this is time.perf_counter()."
+          }
+        },
+        {
+          "line": "result = TOOLS[call[\"name\"]](**call[\"args\"])",
+          "explanation": {
+            "en": "Run the tool exactly as the agent loop would."
+          }
+        },
+        {
+          "line": "latency_ms = round((clock() - start) * 1000, 1)",
+          "explanation": {
+            "en": "Read the clock again; the difference in seconds becomes milliseconds rounded to one decimal."
+          }
+        },
+        {
+          "line": "trace.append({\"tool\": ..., \"args\": ..., \"result\": ..., \"latency_ms\": ...})",
+          "explanation": {
+            "en": "One dict per step. This is the whole trace format."
+          }
+        },
+        {
+          "line": "failed = [label for label, check in checks if not check(trace)]",
+          "explanation": {
+            "en": "A check is any function from trace to bool; collect the labels of the ones that fail."
+          }
+        },
+        {
+          "line": "pass_rate = passed / len(scenarios)",
+          "explanation": {
+            "en": "Roll the per-scenario verdicts up into one number to track across agent versions."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp_9",
+      "left": {
+        "label": "Grading the final answer only",
+        "code": "scenario: tidies up uninvited\nanswer: 1024\nverdict: correct"
+      },
+      "right": {
+        "label": "Grading the trace",
+        "code": "scenario: tidies up uninvited\nsteps: calculate, delete_file\nverdict: FAIL -> no destructive tools"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term_9",
+      "output": [
+        "PASS  lookup then compute",
+        "FAIL  wanders -> max 3 steps",
+        "FAIL  tidies up uninvited -> no destructive tools",
+        "PASS  quick maths",
+        "pass rate: 2/4 = 50.0%"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement three trace helpers. `called_tool(trace, name)` returns True if any step's `tool` equals `name`. `never_called(trace, forbidden)` returns True only if no step's `tool` is in the `forbidden` set. `total_latency_ms(trace)` returns the sum of every step's `latency_ms`, rounded to one decimal. The four prints should produce `True`, `False`, `False` and `53.2`."
+      },
+      "starter_code": "trace = [\n    {\"tool\": \"search\", \"args\": {\"query\": \"weather\"}, \"result\": \"sunny\", \"latency_ms\": 12.4},\n    {\"tool\": \"calculate\", \"args\": {\"expr\": \"2 + 2\"}, \"result\": 4, \"latency_ms\": 0.8},\n    {\"tool\": \"send_email\", \"args\": {\"to\": \"boss\"}, \"result\": \"sent\", \"latency_ms\": 40.0},\n]\n\ndef called_tool(trace, name):\n    \"\"\"True if any step used the tool called name.\"\"\"\n    # return any(step[\"tool\"] == name for step in trace)\n    pass\n\ndef never_called(trace, forbidden):\n    \"\"\"True if no step used a tool from the forbidden set.\"\"\"\n    # return not any(step[\"tool\"] in forbidden for step in trace)\n    pass\n\ndef total_latency_ms(trace):\n    \"\"\"Sum of latency_ms across all steps, rounded to 1 decimal.\"\"\"\n    # return round(sum(step[\"latency_ms\"] for step in trace), 1)\n    pass\n\nprint(called_tool(trace, \"search\"))\nprint(called_tool(trace, \"delete_file\"))\nprint(never_called(trace, {\"send_email\", \"delete_file\"}))\nprint(total_latency_ms(trace))",
+      "hints": [
+        "any(step[\"tool\"] == name for step in trace)",
+        "never_called is the negation of any step being in the forbidden set: not any(step[\"tool\"] in forbidden for step in trace)",
+        "round(sum(step[\"latency_ms\"] for step in trace), 1) gives 12.4 + 0.8 + 40.0 = 53.2"
+      ],
+      "expected_output": "True\nFalse\nFalse\n53.2"
+    },
+    {
+      "instruction": {
+        "en": "Complete `evaluate(trace, checks)` so it returns the labels of every check that fails, and `pass_rate(scenarios)` so it loops over `(name, trace, checks)`, prints `PASS  <name>` or `FAIL  <name> -> <failed labels joined by ', '>`, counts the passes, and returns the pass percentage rounded to one decimal. Two of the four scenarios should fail, giving `pass rate: 50.0%` as the last line."
+      },
+      "starter_code": "def called_tool(trace, name):\n    return any(step[\"tool\"] == name for step in trace)\n\ndef step_count_at_most(trace, n):\n    return len(trace) <= n\n\ndef never_called(trace, forbidden):\n    return not any(step[\"tool\"] in forbidden for step in trace)\n\n# Each scenario: (name, recorded trace, checks it must satisfy)\nSCENARIOS = [\n    (\"lookup\", [{\"tool\": \"search\"}, {\"tool\": \"calculate\"}],\n     [(\"uses search\", lambda t: called_tool(t, \"search\")),\n      (\"max 3 steps\", lambda t: step_count_at_most(t, 3))]),\n    (\"wanders\", [{\"tool\": \"search\"}, {\"tool\": \"search\"}, {\"tool\": \"search\"}, {\"tool\": \"calculate\"}],\n     [(\"max 3 steps\", lambda t: step_count_at_most(t, 3))]),\n    (\"destructive\", [{\"tool\": \"calculate\"}, {\"tool\": \"delete_file\"}],\n     [(\"no delete_file\", lambda t: never_called(t, {\"delete_file\"}))]),\n    (\"quick\", [{\"tool\": \"calculate\"}],\n     [(\"uses calculate\", lambda t: called_tool(t, \"calculate\"))]),\n]\n\ndef evaluate(trace, checks):\n    \"\"\"Return the labels of every check that fails on this trace.\"\"\"\n    # return [label for label, check in checks if not check(trace)]\n    return []\n\ndef pass_rate(scenarios):\n    \"\"\"Print PASS/FAIL per scenario, then return passed/total as a percentage.\"\"\"\n    passed = 0\n    # for name, trace, checks in scenarios:\n    #     failed = evaluate(trace, checks)\n    #     if failed:\n    #         print(f\"FAIL  {name} -> {', '.join(failed)}\")\n    #     else:\n    #         print(f\"PASS  {name}\")\n    #         passed += 1\n    return round(100 * passed / len(scenarios), 1)\n\nprint(f\"pass rate: {pass_rate(SCENARIOS)}%\")",
+      "hints": [
+        "evaluate: [label for label, check in checks if not check(trace)]",
+        "Print FAIL lines with f\"FAIL  {name} -> {', '.join(failed)}\" (two spaces after FAIL and PASS)",
+        "Only increment passed when the failed list is empty; return round(100 * passed / len(scenarios), 1)"
+      ],
+      "expected_output": "PASS  lookup\nFAIL  wanders -> max 3 steps\nFAIL  destructive -> no delete_file\nPASS  quick\npass rate: 50.0%"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "agent_traces",
+      "trace_assertions",
+      "evaluation_suites",
+      "pass_rate",
+      "deterministic_testing_with_fake_clock"
+    ],
+    "concepts_required": [
+      "agent_tool_loop",
+      "python_functions",
+      "lists",
+      "dictionaries",
+      "lambda_functions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "ai_agents"
+    ]
+  },
+  "generated": false
+}

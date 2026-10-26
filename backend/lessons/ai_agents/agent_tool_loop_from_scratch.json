@@ -1,0 +1,180 @@
+{
+  "id": "agent_tool_loop_from_scratch",
+  "topic": "agent_tool_loop_from_scratch",
+  "track": "ai_agents",
+  "module": "from_scratch",
+  "order": 7,
+  "title": {
+    "en": "The Agent Tool Loop From Scratch"
+  },
+  "description": {
+    "en": "Build the ReAct-style agent loop in plain Python with no packages: a model stub returns structured tool calls, a dispatcher maps tool names to functions, results are appended to the message list, and the loop ends on a final answer or a step limit. Trace one full run message by message."
+  },
+  "xp_reward": 120,
+  "next_unlock": "agent_memory_short_and_long",
+  "story_variants": {
+    "en": "## The Agent Loop, With Nothing Hidden\n\nEvery framework in this track so far (PydanticAI, LangGraph, CrewAI) wraps the same small idea: a loop in which the model says what it wants to do, your code does it, and the result goes back to the model. This lesson builds that loop in plain Python with no network and no packages, so you can see every moving part and trace one run by hand.\n\n### Three roles, one list\n\n| Role | Who plays it | What it produces |\n|------|--------------|------------------|\n| Model | an LLM in production; a scripted stub here | a dict: either `{\"tool_call\": ...}` or `{\"final_answer\": ...}` |\n| Dispatcher | your code | looks up the tool name, calls the matching function with the args |\n| Message list | a plain Python `list` | the shared history that both sides read |\n\nThe message list *is* the agent's state. The model knows only what is in that list. When the dispatcher appends a tool result, the model sees it on its next turn. That is the entire trick behind \"the model used a tool\": the model never runs anything, it only asks, and your loop appends the answer.\n\n### The model stub\n\nA real model reads the messages and decides what to do next. A lesson has to run identically every time, so here the model is a stub that plays back scripted turns. Each turn has exactly the shape real tool-calling APIs return, just simplified: a tool name plus a dict of arguments, or a final answer. The loop does not care who produced the dict.\n\n### The full loop in under 60 lines\n\n```python\nimport json\n\n# --- 1. Tools are ordinary Python functions --------------------------\ndef add(a: float, b: float) -> float:\n    return a + b\n\ndef word_count(text: str) -> int:\n    return len(text.split())\n\nTOOLS = {\"add\": add, \"word_count\": word_count}\n\n# --- 2. A model stub that plays back scripted turns ------------------\nclass ScriptedModel:\n    def __init__(self, turns):\n        self.turns = list(turns)\n\n    def complete(self, messages):\n        return self.turns.pop(0)\n\n# --- 3. The dispatcher: tool name -> function ------------------------\ndef dispatch(call):\n    fn = TOOLS.get(call[\"name\"])\n    if fn is None:\n        return f\"error: unknown tool {call['name']}\"\n    return fn(**call[\"args\"])\n\n# --- 4. The loop ------------------------------------------------------\ndef run_agent(model, user_text, max_steps=5):\n    messages = [{\"role\": \"user\", \"content\": user_text}]\n    for step in range(1, max_steps + 1):\n        turn = model.complete(messages)\n        messages.append({\"role\": \"assistant\", **turn})\n        if \"final_answer\" in turn:\n            return turn[\"final_answer\"], messages\n        call = turn[\"tool_call\"]\n        result = dispatch(call)\n        print(f\"step {step}: {call['name']}({call['args']}) -> {result}\")\n        messages.append({\"role\": \"tool\", \"name\": call[\"name\"],\n                         \"content\": str(result)})\n    return \"stopped: step limit reached\", messages\n\n# --- 5. One traced run ------------------------------------------------\nmodel = ScriptedModel([\n    {\"tool_call\": {\"name\": \"word_count\",\n                   \"args\": {\"text\": \"agents call tools in a loop\"}}},\n    {\"tool_call\": {\"name\": \"add\", \"args\": {\"a\": 6, \"b\": 36}}},\n    {\"final_answer\": \"The sentence has 6 words; 6 + 36 = 42.\"},\n])\nanswer, history = run_agent(model, \"Count the words, then add 36.\")\nprint(\"answer:\", answer)\nprint(\"messages:\", len(history))\n```\n\nRunning it prints:\n\n```text\nstep 1: word_count({'text': 'agents call tools in a loop'}) -> 6\nstep 2: add({'a': 6, 'b': 36}) -> 42\nanswer: The sentence has 6 words; 6 + 36 = 42.\nmessages: 6\n```\n\nRead the loop body top to bottom:\n\n1. `model.complete(messages)` returns the next turn. The stub pops it from its script.\n2. The turn is appended as an `assistant` message so the history stays complete.\n3. If the turn carries `final_answer`, the loop returns. This is the only normal exit.\n4. Otherwise `dispatch` maps `call[\"name\"]` to a function through the `TOOLS` dict and calls it with `**call[\"args\"]`.\n5. The result is appended as a `tool` message. On the next iteration the model sees it.\n\n### Trace one run\n\nAfter the run, `history` holds six messages. Printing each role and payload shows the Reason / Act / Observe rhythm that the ReAct pattern is named for:\n\n```text\nuser      {\"content\": \"Count the words, then add 36.\"}\nassistant {\"tool_call\": {\"name\": \"word_count\", \"args\": {\"text\": \"agents call tools in a loop\"}}}\ntool      {\"name\": \"word_count\", \"content\": \"6\"}\nassistant {\"tool_call\": {\"name\": \"add\", \"args\": {\"a\": 6, \"b\": 36}}}\ntool      {\"name\": \"add\", \"content\": \"42\"}\nassistant {\"final_answer\": \"The sentence has 6 words; 6 + 36 = 42.\"}\n```\n\n`user` asks; `assistant` reasons and asks for `word_count`; the `tool` message observes `6`; `assistant` asks for `add(6, 36)`; the `tool` message observes `42`; `assistant` gives the final answer. Two tool round-trips, three model turns, one answer.\n\n### What happens when things go wrong\n\nTwo guards keep this loop from hanging or crashing. An unknown tool name returns an error *string* as the tool result instead of raising, so the model gets a chance to recover on its next turn. And `max_steps` ends the loop with a visible \"stopped\" answer if a final answer never arrives:\n\n```python\nlooping = ScriptedModel([\n    {\"tool_call\": {\"name\": \"add\", \"args\": {\"a\": 1, \"b\": 1}}},\n    {\"tool_call\": {\"name\": \"add\", \"args\": {\"a\": 1, \"b\": 1}}},\n    {\"tool_call\": {\"name\": \"delete_file\", \"args\": {\"path\": \"notes.txt\"}}},\n])\nanswer, history = run_agent(looping, \"Keep going forever.\", max_steps=3)\nprint(\"answer:\", answer)\n```\n\n```text\nstep 1: add({'a': 1, 'b': 1}) -> 2\nstep 2: add({'a': 1, 'b': 1}) -> 2\nstep 3: delete_file({'path': 'notes.txt'}) -> error: unknown tool delete_file\nanswer: stopped: step limit reached\n```\n\n> **Honest caveat:** the stub never decides anything, so this run proves the plumbing, not the intelligence. With a real model the loop is unchanged, but the model may pick a wrong tool, pass bad arguments, or never produce a final answer. That is exactly why `dispatch` returns errors instead of raising and why `max_steps` exists. Note also that `fn(**call[\"args\"])` trusts the arguments completely. In production, validate them before calling anything with side effects; typed tools in PydanticAI do that validation for you.\n\n### Where this sits in the track\n\nPydanticAI types the `tool_call` dict. LangGraph turns the `for` loop into a graph with named nodes and edges. MCP moves the `TOOLS` dict into another process behind a protocol. CrewAI runs several of these loops and passes results between them. Under every one of them is the loop you just read."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_7",
+      "content": "Every agent framework hides the same loop: the model asks for a tool, your code runs it, the result goes back into the message list, and the loop ends on a final answer. This lesson builds that loop in under 60 lines of plain Python.",
+      "visual_theme": "robot"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_7",
+      "nodes": [
+        "User message",
+        "Model turn",
+        "Final answer?",
+        "Dispatch tool",
+        "Append tool result",
+        "Return answer"
+      ],
+      "edges": [
+        {
+          "from": "User message",
+          "to": "Model turn"
+        },
+        {
+          "from": "Model turn",
+          "to": "Final answer?"
+        },
+        {
+          "from": "Final answer?",
+          "to": "Dispatch tool"
+        },
+        {
+          "from": "Dispatch tool",
+          "to": "Append tool result"
+        },
+        {
+          "from": "Append tool result",
+          "to": "Model turn"
+        },
+        {
+          "from": "Final answer?",
+          "to": "Return answer"
+        }
+      ],
+      "description": "The tool loop: each model turn either ends the run with a final answer or requests a tool; the tool result is appended to the message list and the model is called again"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_7",
+      "steps": [
+        {
+          "line": "turn = model.complete(messages)",
+          "explanation": {
+            "en": "Ask the model for its next turn. It sees the whole message list, including earlier tool results."
+          }
+        },
+        {
+          "line": "messages.append({\"role\": \"assistant\", **turn})",
+          "explanation": {
+            "en": "Record the turn in the history so the transcript stays complete."
+          }
+        },
+        {
+          "line": "if \"final_answer\" in turn:",
+          "explanation": {
+            "en": "A final answer is the only normal exit from the loop."
+          }
+        },
+        {
+          "line": "    return turn[\"final_answer\"], messages",
+          "explanation": {
+            "en": "Return the answer together with the full history for inspection."
+          }
+        },
+        {
+          "line": "result = dispatch(turn[\"tool_call\"])",
+          "explanation": {
+            "en": "Otherwise look the tool name up in the TOOLS dict and call it with the arguments."
+          }
+        },
+        {
+          "line": "messages.append({\"role\": \"tool\", \"content\": str(result)})",
+          "explanation": {
+            "en": "The result becomes a tool message. On the next iteration the model reads it."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp_7",
+      "left": {
+        "label": "Unknown tool: raise",
+        "code": "fn = TOOLS[call[\"name\"]]\n# KeyError: 'delete_file'\n# loop crashes, model never\n# learns the tool is missing"
+      },
+      "right": {
+        "label": "Unknown tool: return an error result",
+        "code": "fn = TOOLS.get(call[\"name\"])\nif fn is None:\n    return f\"error: unknown tool {call['name']}\"\n# error is appended as a tool message;\n# the model can choose another tool"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term_7",
+      "output": [
+        "step 1: word_count({'text': 'agents call tools in a loop'}) -> 6",
+        "step 2: add({'a': 6, 'b': 36}) -> 42",
+        "answer: The sentence has 6 words; 6 + 36 = 42.",
+        "messages: 6"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `dispatch(call, tools)`: look up `call[\"name\"]` in the `tools` dict and call the function with `**call[\"args\"]`. If the name is not in the dict, return the string `error: unknown tool <name>` instead of raising. The three print calls at the bottom should produce `9`, `TOOLS!` and `error: unknown tool delete_file`."
+      },
+      "starter_code": "def add(a, b):\n    return a + b\n\ndef shout(text):\n    return text.upper() + \"!\"\n\nTOOLS = {\"add\": add, \"shout\": shout}\n\ndef dispatch(call, tools):\n    \"\"\"Look up call['name'] in tools and call it with call['args'].\"\"\"\n    # fn = tools.get(call[\"name\"])\n    # if fn is None:\n    #     return f\"error: unknown tool {call['name']}\"\n    # return fn(**call[\"args\"])\n    pass\n\nprint(dispatch({\"name\": \"add\", \"args\": {\"a\": 4, \"b\": 5}}, TOOLS))\nprint(dispatch({\"name\": \"shout\", \"args\": {\"text\": \"tools\"}}, TOOLS))\nprint(dispatch({\"name\": \"delete_file\", \"args\": {\"path\": \"x\"}}, TOOLS))",
+      "hints": [
+        "tools.get(call[\"name\"]) returns None for a missing tool, unlike tools[...] which raises KeyError",
+        "Unpack the args dict into keyword arguments: fn(**call[\"args\"])",
+        "Build the error with an f-string: f\"error: unknown tool {call['name']}\""
+      ],
+      "expected_output": "9\nTOOLS!\nerror: unknown tool delete_file"
+    },
+    {
+      "instruction": {
+        "en": "Complete `run_agent(model, user_text, max_steps=5)`. Loop up to `max_steps` times: get `turn = model.complete(messages)`, append it as an assistant message, and if it contains `final_answer` return `(turn[\"final_answer\"], len(messages))`. Otherwise dispatch `turn[\"tool_call\"]` with `TOOLS` and append `{\"role\": \"tool\", \"content\": str(result)}`. The scripted model makes two tool calls then answers, so the output should be `FORTY-TWO!` followed by `6`."
+      },
+      "starter_code": "def add(a, b):\n    return a + b\n\ndef shout(text):\n    return text.upper() + \"!\"\n\nTOOLS = {\"add\": add, \"shout\": shout}\n\ndef dispatch(call, tools):\n    fn = tools.get(call[\"name\"])\n    if fn is None:\n        return f\"error: unknown tool {call['name']}\"\n    return fn(**call[\"args\"])\n\nclass ScriptedModel:\n    def __init__(self, turns):\n        self.turns = list(turns)\n    def complete(self, messages):\n        return self.turns.pop(0)\n\ndef run_agent(model, user_text, max_steps=5):\n    \"\"\"Loop: ask the model, dispatch tool calls, stop on final_answer.\"\"\"\n    messages = [{\"role\": \"user\", \"content\": user_text}]\n    # for step in range(1, max_steps + 1):\n    #     turn = model.complete(messages)\n    #     messages.append({\"role\": \"assistant\", **turn})\n    #     if \"final_answer\" in turn:\n    #         return turn[\"final_answer\"], len(messages)\n    #     result = dispatch(turn[\"tool_call\"], TOOLS)\n    #     messages.append({\"role\": \"tool\", \"content\": str(result)})\n    return \"stopped: step limit reached\", len(messages)\n\nmodel = ScriptedModel([\n    {\"tool_call\": {\"name\": \"add\", \"args\": {\"a\": 20, \"b\": 22}}},\n    {\"tool_call\": {\"name\": \"shout\", \"args\": {\"text\": \"forty-two\"}}},\n    {\"final_answer\": \"FORTY-TWO!\"},\n])\nanswer, n = run_agent(model, \"Add 20 and 22, then shout it.\")\nprint(answer)\nprint(n)",
+      "hints": [
+        "for step in range(1, max_steps + 1): turn = model.complete(messages)",
+        "messages.append({\"role\": \"assistant\", **turn}) merges the turn dict into the message",
+        "Check \"final_answer\" in turn before dispatching; six messages means user + 2 tool calls + 2 results + 1 answer"
+      ],
+      "expected_output": "FORTY-TWO!\n6"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "agent_tool_loop",
+      "tool_dispatch",
+      "message_history",
+      "react_pattern",
+      "step_limits"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "dictionaries",
+      "lists",
+      "python_classes",
+      "kwargs_unpacking"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "ai_agents"
+    ]
+  },
+  "generated": false
+}

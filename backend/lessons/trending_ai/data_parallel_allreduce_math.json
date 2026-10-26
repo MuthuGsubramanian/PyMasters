@@ -1,0 +1,158 @@
+{
+  "id": "data_parallel_allreduce_math",
+  "topic": "data_parallel_allreduce_math",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 134,
+  "title": {
+    "en": "Data Parallelism: Why Averaging Shard Gradients Is Exact"
+  },
+  "description": {
+    "en": "The first way to spread training across GPUs: give every worker a full model copy and a slice of the batch, then all-reduce the gradients. This lesson proves on a one-parameter model that the averaged shard gradient equals the full-batch gradient exactly, then computes what a ring all-reduce actually costs in communication."
+  },
+  "xp_reward": 80,
+  "next_unlock": "tensor_parallel_split_matmul",
+  "story_variants": {
+    "en": "## One Model, N Copies, One Averaged Gradient\n\n\"Data parallelism is the strategy every large training run starts with,\" Vaathiyaar says. \"Every worker holds a *full* copy of the model. The batch is cut into N shards, each worker runs forward and backward on its own shard, and then -- the only step that needs the network -- the workers *all-reduce* their gradients: add them up, divide by N, and every worker ends up holding the same averaged gradient. Each one then applies the identical optimizer step, so the copies never drift apart.\"\n\n### Why Averaging Is Not An Approximation\n\nThe loss is a *mean* over the samples in a batch. The gradient of a mean is the mean of the per-sample gradients. So if you split the batch evenly into N shards, take each shard's mean gradient, and average those N numbers, you get exactly the full-batch gradient -- not an estimate of it:\n\n> **g_full = (1/N) * (g_0 + g_1 + ... + g_(N-1))**\n\nHere is the whole thing on a one-parameter model, `y_hat = w * x`, with loss `mean((w*x - y)^2)`. Each \"GPU\" is just a slice of a Python list:\n\n```python\n# story snippet 1: data parallel on a 1-param linear model, loss = mean (w*x - y)^2\nw = 2.0\nxs = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]\nys = [3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0]\n\ndef grad(w, xs, ys):\n    # d/dw of mean((w*x - y)^2) = mean(2 * (w*x - y) * x)\n    return sum(2 * (w * x - y) * x for x, y in zip(xs, ys)) / len(xs)\n\nfull = grad(w, xs, ys)\nprint(\"full-batch gradient:\", round(full, 4))\n\nN = 4\nshard = len(xs) // N\nlocal = []\nfor k in range(N):\n    sx = xs[k * shard:(k + 1) * shard]\n    sy = ys[k * shard:(k + 1) * shard]\n    g = grad(w, sx, sy)\n    local.append(g)\n    print(f\"worker {k} shard x={sx} grad={round(g, 4)}\")\n\nallreduced = sum(local) / N\nprint(\"all-reduce (sum/N):\", round(allreduced, 4))\nprint(\"equal to full batch:\", round(allreduced, 4) == round(full, 4))\n```\n\n```\nfull-batch gradient: -9.0\nworker 0 shard x=[1.0, 2.0] grad=-3.0\nworker 1 shard x=[3.0, 4.0] grad=-7.0\nworker 2 shard x=[5.0, 6.0] grad=-11.0\nworker 3 shard x=[7.0, 8.0] grad=-15.0\nall-reduce (sum/N): -9.0\nequal to full batch: True\n```\n\nThe four shard gradients `-3, -7, -11, -15` average to `-9.0`, which is precisely what the full batch gives. Every worker now applies `w -= lr * -9.0` and the four copies stay in lockstep.\n\n### What The Network Has To Carry\n\nThe all-reduce is where the cost lives. The naive version -- every worker sends its whole gradient to every other worker -- moves `(N-1) * params` per worker. A *ring* all-reduce does better: it runs a reduce-scatter pass then an all-gather pass, each moving `(N-1)/N` of the gradient per worker:\n\n> **volume per worker = 2 * (N-1)/N * params**\n\n```python\ndef ring_allreduce_volume(params, n):\n    \"\"\"Bytes-per-worker sent in a ring all-reduce, in units of parameters.\"\"\"\n    return 2 * (n - 1) / n * params\n\nparams = 1_000_000\nfor n in [2, 4, 8, 64]:\n    vol = ring_allreduce_volume(params, n)\n    print(f\"N={n:>2}: each worker sends {vol:,.0f} params ({round(vol / params, 4)}x params)\")\n```\n\n```\nN= 2: each worker sends 1,000,000 params (1.0x params)\nN= 4: each worker sends 1,500,000 params (1.5x params)\nN= 8: each worker sends 1,750,000 params (1.75x params)\nN=64: each worker sends 1,968,750 params (1.9688x params)\n```\n\nNotice the ceiling: no matter how many workers you add, each one never sends more than `2x` its parameter count. That is why ring all-reduce is called *bandwidth-optimal* -- the per-worker traffic does not grow with N.\n\n> **Vaathiyaar's rule:** two honest caveats. First, the exact-equality proof relies on the loss being a plain mean over independent samples with equal shard sizes -- BatchNorm statistics, an uneven last shard, or a sum-reduced loss all break the exactness. Second, bandwidth-optimal is not latency-optimal: a ring takes `2 * (N-1)` sequential steps, so at N = 1024 the fixed per-step latency dominates and real systems switch to tree or hierarchical all-reduce. The formula tells you the bytes, not the seconds.\n\nToday you compute the per-worker shard gradients, all-reduce them, and compute the ring all-reduce communication volume."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "shards_to_one_gradient",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Data parallelism",
+          "children": [
+            "every worker holds a full model copy",
+            "batch split into N shards, one per worker",
+            "all-reduce = sum gradients, divide by N",
+            "ring all-reduce moves 2*(N-1)/N * params per worker"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "sx = xs[k * shard:(k + 1) * shard]",
+          "highlight": "xs[k * shard:(k + 1) * shard]",
+          "explanation": {
+            "en": "Worker k only ever sees its own slice of the batch"
+          }
+        },
+        {
+          "line": "g = sum(2 * (w * x - y) * x for x, y in zip(sx, sy)) / len(sx)",
+          "highlight": "/ len(sx)",
+          "explanation": {
+            "en": "Each worker computes the mean gradient over its shard -- a full forward and backward pass, locally"
+          }
+        },
+        {
+          "line": "allreduced = sum(local) / N",
+          "highlight": "sum(local) / N",
+          "explanation": {
+            "en": "The all-reduce: add every worker's gradient and divide by N -- the only step that touches the network"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Full batch on one worker",
+        "items": [
+          "8 samples, w = 2.0",
+          "gradient = -9.0",
+          "no communication"
+        ]
+      },
+      "right": {
+        "title": "4 workers, 2 samples each",
+        "items": [
+          "shard grads -3, -7, -11, -15",
+          "all-reduce mean = -9.0",
+          "identical, but 4x the compute throughput"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "shard_gradients(2.0, xs, ys, 4) -> [-3.0, -7.0, -11.0, -15.0]",
+        "all_reduce_mean([-3.0, -7.0, -11.0, -15.0]) -> -9.0",
+        "ring_allreduce_volume(1000000, 4) -> 1500000.0",
+        "ring_allreduce_volume(1000000, 64) -> 1968750.0"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "gradients_synchronized",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `shard_gradients(w, xs, ys, n_workers)` -- split the batch evenly into `n_workers` contiguous shards and return each worker's local mean gradient of the loss `(w*x - y)^2`, i.e. `mean(2 * (w*x - y) * x)` over its shard, each rounded to 4 decimals. Then print `shard_gradients(2.0, [1.0, ..., 8.0], [3.0, 5.0, ..., 17.0], 4)` (expected: `[-3.0, -7.0, -11.0, -15.0]`)."
+      },
+      "starter_code": "def shard_gradients(w: float, xs: list, ys: list, n_workers: int) -> list:\n    \"\"\"Split (xs, ys) evenly across n_workers; return each worker's local mean gradient of (w*x - y)^2.\"\"\"\n    # shard = len(xs) // n_workers\n    # grads = []\n    # for k in range(n_workers):\n    #     sx = xs[k * shard:(k + 1) * shard]\n    #     sy = ys[k * shard:(k + 1) * shard]\n    #     g = sum(2 * (w * x - y) * x for x, y in zip(sx, sy)) / len(sx)\n    #     grads.append(round(g, 4))\n    # return grads\n    pass\n\nprint(shard_gradients(2.0, [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0], [3.0, 5.0, 7.0, 9.0, 11.0, 13.0, 15.0, 17.0], 4))",
+      "hints": [
+        "shard = len(xs) // n_workers; worker k gets xs[k * shard:(k + 1) * shard]",
+        "per-sample gradient of (w*x - y)^2 with respect to w is 2 * (w*x - y) * x",
+        "divide the shard's sum by len(sx) -- it is a mean, not a sum"
+      ],
+      "expected_output": "[-3.0, -7.0, -11.0, -15.0]"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `all_reduce_mean(local_grads)` -- sum every worker's gradient and divide by the worker count, rounded to 4 decimals -- and `ring_allreduce_volume(params, n_workers)` -- the parameters each worker sends in a ring all-reduce, `2 * (N - 1) / N * params`, rounded to 1 decimal. Then print `all_reduce_mean([-3.0, -7.0, -11.0, -15.0])`, `ring_allreduce_volume(1000000, 4)` and `ring_allreduce_volume(1000000, 64)` (expected: `-9.0`, `1500000.0`, `1968750.0`)."
+      },
+      "starter_code": "def shard_gradients(w: float, xs: list, ys: list, n_workers: int) -> list:\n    shard = len(xs) // n_workers\n    grads = []\n    for k in range(n_workers):\n        sx = xs[k * shard:(k + 1) * shard]\n        sy = ys[k * shard:(k + 1) * shard]\n        grads.append(round(sum(2 * (w * x - y) * x for x, y in zip(sx, sy)) / len(sx), 4))\n    return grads\n\ndef all_reduce_mean(local_grads: list) -> float:\n    \"\"\"Simulate all-reduce: sum every worker's gradient, divide by worker count.\"\"\"\n    # return round(sum(local_grads) / len(local_grads), 4)\n    pass\n\ndef ring_allreduce_volume(params: int, n_workers: int) -> float:\n    \"\"\"Parameters each worker sends in a ring all-reduce: 2 * (N - 1) / N * params.\"\"\"\n    # return round(2 * (n_workers - 1) / n_workers * params, 1)\n    pass\n\nprint(all_reduce_mean([-3.0, -7.0, -11.0, -15.0]))\nprint(ring_allreduce_volume(1000000, 4))\nprint(ring_allreduce_volume(1000000, 64))",
+      "hints": [
+        "all_reduce_mean: round(sum(local_grads) / len(local_grads), 4)",
+        "ring all-reduce = reduce-scatter + all-gather, each moving (N-1)/N of the parameters",
+        "round(2 * (n_workers - 1) / n_workers * params, 1)"
+      ],
+      "expected_output": "-9.0\n1500000.0\n1968750.0"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "data_parallelism",
+      "all_reduce",
+      "ring_all_reduce_bandwidth",
+      "gradient_averaging"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "lists",
+      "list_slicing",
+      "arithmetic"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

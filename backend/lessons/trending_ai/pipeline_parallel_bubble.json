@@ -1,0 +1,165 @@
+{
+  "id": "pipeline_parallel_bubble",
+  "topic": "pipeline_parallel_bubble",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 136,
+  "title": {
+    "en": "Pipeline Parallelism: Micro-Batches Versus The Bubble"
+  },
+  "description": {
+    "en": "tensor_parallel_split_matmul paid an all-reduce on every layer. Pipeline parallelism puts consecutive layers on different workers and only passes activations at stage boundaries -- but stages wait on each other, leaving an idle bubble of (p-1)/(m+p-1). You compute that fraction, draw the stage-by-tick schedule as text, and watch more micro-batches shrink the bubble without ever removing it."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Layers On Different GPUs, And The Idle Time That Comes With It\n\n\"Tensor parallelism splits *within* a layer and pays for it with an all-reduce on every layer,\" Vaathiyaar says. \"Pipeline parallelism splits *between* layers: stage 0 holds the first few layers, stage 1 the next few, and so on, each on its own worker. Communication drops to passing one activation tensor forward at each stage boundary. The price is a different one -- time. Stage 3 cannot start until stage 2 has finished, and stage 2 cannot start until stage 1 has, so for the first few ticks most of the pipeline is sitting idle.\"\n\n### Micro-Batches Fill The Pipe\n\nThe fix is to cut the batch into `m` *micro-batches* and feed them in one after another. As soon as stage 0 finishes micro-batch 0 it starts micro-batch 1, while stage 1 picks up micro-batch 0. With `p` stages and `m` micro-batches, the last micro-batch leaves the last stage at tick `m + p - 1`. Out of `p * (m + p - 1)` stage-ticks available, only `p * m` do useful work, so the idle fraction -- the **bubble** -- is:\n\n> **bubble = (p - 1) / (m + p - 1)**\n\n```python\ndef bubble_fraction(stages, microbatches):\n    \"\"\"Idle fraction of a naive forward pipeline: (p - 1) / (m + p - 1).\"\"\"\n    return round((stages - 1) / (microbatches + stages - 1), 4)\n\np = 4\nfor m in [1, 4, 8, 16, 64]:\n    print(f\"p={p} m={m:>2}: bubble = {bubble_fraction(p, m)}\")\n```\n\n```\np=4 m= 1: bubble = 0.75\np=4 m= 4: bubble = 0.4286\np=4 m= 8: bubble = 0.2727\np=4 m=16: bubble = 0.1579\np=4 m=64: bubble = 0.0448\n```\n\nWith a single micro-batch a 4-stage pipeline is idle three quarters of the time. Sixteen micro-batches bring that under 16%; sixty-four bring it under 5%.\n\n### Watching The Schedule\n\nHere is the timeline drawn as text: one row per stage, one character per tick, a digit for the micro-batch that stage is processing and a dot for idle. Count the dots and you have counted the bubble:\n\n```python\ndef schedule(stages, microbatches):\n    \"\"\"Return one text row per stage; '.' is idle, a digit is the micro-batch being processed.\"\"\"\n    total_ticks = microbatches + stages - 1\n    rows = []\n    for s in range(stages):\n        row = \"\"\n        for t in range(total_ticks):\n            mb = t - s\n            row += str(mb) if 0 <= mb < microbatches else \".\"\n        rows.append(f\"stage {s}: {row}\")\n    return rows\n\nfor m in [2, 6]:\n    print(f\"--- p=4, m={m} ---\")\n    for row in schedule(4, m):\n        print(row)\n    total = 4 * (m + 4 - 1)\n    busy = 4 * m\n    print(f\"busy {busy}/{total} slots -> bubble = {round((total - busy) / total, 4)}\")\n```\n\n```\n--- p=4, m=2 ---\nstage 0: 01...\nstage 1: .01..\nstage 2: ..01.\nstage 3: ...01\nbusy 8/20 slots -> bubble = 0.6\n--- p=4, m=6 ---\nstage 0: 012345...\nstage 1: .012345..\nstage 2: ..012345.\nstage 3: ...012345\nbusy 24/36 slots -> bubble = 0.3333\n```\n\nSame four stages, same staircase shape at the start and end -- the staircase is the `p - 1` ticks of fill and drain. Going from 2 to 6 micro-batches did not shrink the staircase; it made the solid block in the middle wider, so the staircase matters less.\n\n> **Vaathiyaar's rule:** this is the GPipe-style forward-only picture, kept deliberately simple so the counting is exact. Real schedules run a backward pass too, which doubles the work per micro-batch but leaves the same `(p - 1) / (m + p - 1)` bubble; schedules such as 1F1B and interleaved stages reduce the *memory* held in flight, not this fraction. And the formula hides a trade-off: more micro-batches means each one is smaller, and tiny matmuls use a GPU badly -- below some size the kernels are slower per sample than the bubble you saved. `m` is tuned, not maximized.\n\nToday you compute the bubble fraction and draw the schedule timeline that it summarizes."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "staircase_fill_and_drain",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Pipeline parallelism",
+          "children": [
+            "consecutive layers grouped into p stages, one per worker",
+            "batch cut into m micro-batches fed in sequence",
+            "bubble = (p - 1) / (m + p - 1)",
+            "more micro-batches shrink the bubble, but shrink each kernel too"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "total_ticks = microbatches + stages - 1",
+          "highlight": "microbatches + stages - 1",
+          "explanation": {
+            "en": "The last micro-batch leaves the last stage p - 1 ticks after it entered stage 0"
+          }
+        },
+        {
+          "line": "mb = t - s",
+          "highlight": "t - s",
+          "explanation": {
+            "en": "Stage s is exactly s ticks behind stage 0, so at tick t it handles micro-batch t - s"
+          }
+        },
+        {
+          "line": "row += str(mb) if 0 <= mb < microbatches else '.'",
+          "highlight": "else '.'",
+          "explanation": {
+            "en": "Outside the valid micro-batch range the stage is idle -- that dot is the bubble"
+          }
+        },
+        {
+          "line": "bubble = (stages - 1) / (microbatches + stages - 1)",
+          "highlight": "(stages - 1)",
+          "explanation": {
+            "en": "Every stage has exactly p - 1 idle ticks out of m + p - 1 total"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "p = 4, m = 2",
+        "items": [
+          "stage 0: 01...",
+          "stage 3: ...01",
+          "busy 8/20 -> bubble 0.6"
+        ]
+      },
+      "right": {
+        "title": "p = 4, m = 6",
+        "items": [
+          "stage 0: 012345...",
+          "stage 3: ...012345",
+          "busy 24/36 -> bubble 0.3333"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "bubble_fraction(4, 4) -> 0.4286",
+        "bubble_fraction(4, 16) -> 0.1579",
+        "bubble_fraction(8, 32) -> 0.1795",
+        "schedule(3, 4) -> ['0123..', '.0123.', '..0123']"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "pipeline_filled",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `bubble_fraction(stages, microbatches)` -- the idle fraction of a naive forward pipeline with `p` stages and `m` micro-batches, `(p - 1) / (m + p - 1)`, rounded to 4 decimals. Then print `bubble_fraction(4, 4)`, `bubble_fraction(4, 16)` and `bubble_fraction(8, 32)` (expected: `0.4286`, `0.1579`, `0.1795`)."
+      },
+      "starter_code": "def bubble_fraction(stages: int, microbatches: int) -> float:\n    \"\"\"Idle fraction of a naive forward pipeline: (p - 1) / (m + p - 1), rounded to 4 decimals.\"\"\"\n    # return round((stages - 1) / (microbatches + stages - 1), 4)\n    pass\n\nprint(bubble_fraction(4, 4))\nprint(bubble_fraction(4, 16))\nprint(bubble_fraction(8, 32))",
+      "hints": [
+        "total ticks for the whole batch is m + p - 1",
+        "every stage idles for exactly p - 1 of those ticks",
+        "round((stages - 1) / (microbatches + stages - 1), 4)"
+      ],
+      "expected_output": "0.4286\n0.1579\n0.1795"
+    },
+    {
+      "instruction": {
+        "en": "Now implement `schedule(stages, microbatches)` -- return one string per stage with `m + p - 1` characters: the micro-batch index that stage is processing at each tick, or `'.'` when idle. Stage `s` processes micro-batch `t - s` at tick `t` whenever that index is in `range(microbatches)`. Then print each row of `schedule(3, 4)` and the total number of dots across all rows (expected: `0123..`, `.0123.`, `..0123`, then `6`)."
+      },
+      "starter_code": "def bubble_fraction(stages: int, microbatches: int) -> float:\n    return round((stages - 1) / (microbatches + stages - 1), 4)\n\ndef schedule(stages: int, microbatches: int) -> list:\n    \"\"\"One string per stage: the micro-batch index at each tick when busy, '.' when idle.\"\"\"\n    # total_ticks = microbatches + stages - 1\n    # rows = []\n    # for s in range(stages):\n    #     row = \"\".join(str(t - s) if 0 <= t - s < microbatches else \".\" for t in range(total_ticks))\n    #     rows.append(row)\n    # return rows\n    return []  # replace with the real schedule\n\nfor row in schedule(3, 4):\n    print(row)\nprint(\"\".join(schedule(3, 4)).count(\".\"))",
+      "hints": [
+        "total_ticks = microbatches + stages - 1",
+        "at tick t, stage s is working on micro-batch t - s -- valid only when 0 <= t - s < microbatches",
+        "''.join(str(t - s) if 0 <= t - s < microbatches else '.' for t in range(total_ticks))"
+      ],
+      "expected_output": "0123..\n.0123.\n..0123\n6"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "pipeline_parallelism",
+      "pipeline_bubble",
+      "micro_batching",
+      "gpipe_schedule"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "string_building",
+      "loops",
+      "arithmetic"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": false
+}

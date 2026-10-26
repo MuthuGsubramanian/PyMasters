@@ -1,0 +1,182 @@
+{
+  "id": "agent_memory_short_and_long",
+  "topic": "agent_memory_short_and_long",
+  "track": "ai_agents",
+  "module": "from_scratch",
+  "order": 8,
+  "title": {
+    "en": "Agent Memory: Short-Term Windows and Long-Term Stores"
+  },
+  "description": {
+    "en": "Separate the two things people call agent memory. Trim the message list to a token budget with a length-based estimate, build a tiny keyword-scored long-term store with no embeddings, retrieve facts before each turn, and measure why summaries beat raw transcripts."
+  },
+  "xp_reward": 120,
+  "next_unlock": "agent_evaluation_traces",
+  "story_variants": {
+    "en": "## Two Kinds of Memory\n\nAn agent's \"memory\" is nothing mystical. It is whatever you put in the message list before calling the model. The trouble is that the list grows every turn and the model's context window does not, so every agent needs two separate mechanisms:\n\n| Memory | Question it answers | Mechanism in this lesson |\n|--------|--------------------|--------------------------|\n| Short-term | Which recent turns do I send this time? | trim the message list to a token budget |\n| Long-term | What do I know that is not in the window? | a small keyword-scored store, searched before each turn |\n\nBoth are built here with the standard library only. No embeddings, no database.\n\n### Short-term: the context window is a budget\n\nTokens are what the model actually counts, and real tokenizers are model-specific. For budgeting, the rough rule `len(text) // 4` is good enough for English prose. The trimming rule is simple: always keep the system message, then walk the turns from newest to oldest and keep each one that still fits.\n\n```python\ndef estimate_tokens(text):\n    # Rough rule of thumb for English: about 4 characters per token.\n    return max(1, len(text) // 4)\n\ndef trim_to_budget(messages, budget):\n    \"\"\"Always keep the system message; then keep the newest turns that fit.\"\"\"\n    system, rest = messages[0], messages[1:]\n    used = estimate_tokens(system[\"content\"])\n    kept = []\n    for m in reversed(rest):            # newest first\n        cost = estimate_tokens(m[\"content\"])\n        if used + cost > budget:\n            break\n        kept.append(m)\n        used += cost\n    kept.reverse()                      # restore chronological order\n    return [system] + kept, used\n\ntranscript = [\n    {\"role\": \"system\", \"content\": \"You are a Python tutor.\"},\n    {\"role\": \"user\", \"content\": \"Hi, I am Priya from Chennai. I use Python 3.12.\"},\n    {\"role\": \"assistant\", \"content\": \"Nice to meet you, Priya. How can I help?\"},\n    {\"role\": \"user\", \"content\": \"My project deadline is Friday.\"},\n    {\"role\": \"assistant\", \"content\": \"Understood, let us plan around Friday.\"},\n    {\"role\": \"user\", \"content\": \"How do I sort a dict by value?\"},\n]\n\nfull = sum(estimate_tokens(m[\"content\"]) for m in transcript)\ntrimmed, used = trim_to_budget(transcript, budget=30)\nprint(\"full transcript:\", full, \"tokens\")\nprint(\"after trimming :\", used, \"tokens,\", len(trimmed), \"messages kept\")\nfor m in trimmed:\n    print(\" \", m[\"role\"].ljust(9), m[\"content\"])\n```\n\n```text\nfull transcript: 49 tokens\nafter trimming : 28 tokens, 4 messages kept\n  system    You are a Python tutor.\n  user      My project deadline is Friday.\n  assistant Understood, let us plan around Friday.\n  user      How do I sort a dict by value?\n```\n\nThe transcript needed 49 tokens; with a budget of 30 the loop kept the system message and the three newest turns. Look at what was dropped: the turn where Priya said her name and her Python version. If the next question is \"Which Python version am I on?\", the model has no way to answer. Trimming is lossy by design. That loss is the reason long-term memory exists.\n\n### Long-term: a store you search before each turn\n\nThe store below holds short notes and scores each one by keyword overlap with the query: lower-case the text, split into words, drop a small set of stopwords, and count how many words the note and the query share. Ties are broken alphabetically so the result is identical on every run.\n\n```python\nimport re\n\nSTOPWORDS = {\"the\", \"a\", \"an\", \"is\", \"are\", \"i\", \"my\", \"me\", \"do\", \"how\",\n             \"what\", \"to\", \"from\", \"by\", \"and\", \"it\", \"in\", \"on\", \"of\"}\n\ndef keywords(text):\n    words = re.findall(r\"[a-z0-9.]+\", text.lower())\n    return {w for w in words if w not in STOPWORDS}\n\nclass MemoryStore:\n    def __init__(self):\n        self.notes = []\n\n    def remember(self, note):\n        self.notes.append(note)\n\n    def recall(self, query, k=2):\n        q = keywords(query)\n        scored = []\n        for note in self.notes:\n            overlap = len(q & keywords(note))\n            if overlap > 0:\n                scored.append((overlap, note))\n        # highest overlap first; ties broken alphabetically so output is stable\n        scored.sort(key=lambda pair: (-pair[0], pair[1]))\n        return [note for _, note in scored[:k]]\n\nmemory = MemoryStore()\nmemory.remember(\"User name is Priya, based in Chennai.\")\nmemory.remember(\"User runs Python 3.12.\")\nmemory.remember(\"Project deadline is Friday.\")\nmemory.remember(\"User prefers short code examples.\")\n\nprint(memory.recall(\"What Python version does the user have?\"))\nprint(memory.recall(\"When is my deadline?\"))\nprint(memory.recall(\"Tell me a joke\"))\n```\n\n```text\n['User runs Python 3.12.', 'User name is Priya, based in Chennai.']\n['Project deadline is Friday.']\n[]\n```\n\nWalk through the first query. Its keywords are `python`, `version`, `does`, `user`, `have`. The note \"User runs Python 3.12.\" shares two of them (`user`, `python`); \"User name is Priya, based in Chennai.\" and \"User prefers short code examples.\" share one each (`user`). With `k=2` the top note wins outright, and the alphabetical tie-break picks \"User name is Priya...\" over \"User prefers short...\". The third query shares no keywords with any note and returns an empty list, which is the correct behaviour: a store should return nothing rather than something irrelevant.\n\n### Retrieval before each turn\n\nNow put the two together. Before calling the model: run `recall` with the new user message as the query, place the retrieved facts in a second system message that is protected from trimming, and only then trim the recent turns to the budget.\n\n```python\ndef build_prompt(system, memory, recent, user_text, budget):\n    \"\"\"Retrieve first, then trim: facts go in a second system message.\"\"\"\n    notes = memory.recall(user_text, k=2)\n    facts = \"Known facts: \" + \" \".join(notes) if notes else \"Known facts: none.\"\n    head = [system, {\"role\": \"system\", \"content\": facts}]\n    rest = recent + [{\"role\": \"user\", \"content\": user_text}]\n    used = sum(estimate_tokens(m[\"content\"]) for m in head)\n    kept = []\n    for m in reversed(rest):\n        cost = estimate_tokens(m[\"content\"])\n        if used + cost > budget:\n            break\n        kept.append(m)\n        used += cost\n    kept.reverse()\n    return head + kept, used\n\nsystem = {\"role\": \"system\", \"content\": \"You are a Python tutor.\"}\nrecent = transcript[1:]\nprompt, used = build_prompt(system, memory, recent,\n                            \"Which Python version am I on?\", budget=40)\nprint(\"tokens used:\", used)\nfor m in prompt:\n    print(\" \", m[\"role\"].ljust(9), m[\"content\"])\n```\n\n```text\ntokens used: 36\n  system    You are a Python tutor.\n  system    Known facts: User runs Python 3.12.\n  assistant Understood, let us plan around Friday.\n  user      How do I sort a dict by value?\n  user      Which Python version am I on?\n```\n\nThe turn that stated the Python version was trimmed away, yet the model still receives `Known facts: User runs Python 3.12.` because retrieval ran first. The order matters: retrieve, protect, trim.\n\n### Why summaries beat raw transcripts\n\nWhy store a note like \"User runs Python 3.12.\" rather than the raw turn it came from? Measure both:\n\n```python\nraw = \" \".join(m[\"content\"] for m in transcript[1:])\nsummary = \"Priya, Chennai, Python 3.12, deadline Friday, wants dict sorted by value.\"\nprint(\"raw transcript:\", estimate_tokens(raw), \"tokens,\", len(keywords(raw)), \"keywords\")\nprint(\"summary       :\", estimate_tokens(summary), \"tokens,\", len(keywords(summary)), \"keywords\")\n```\n\n```text\nraw transcript: 47 tokens, 24 keywords\nsummary       : 18 tokens, 10 keywords\n```\n\nTwo reasons fall out of those numbers. First, cost: 18 tokens versus 47, and the memory block is sent on every turn for the rest of the session. Second, precision: of the 24 raw keywords, most are conversational filler (`nice`, `meet`, `help`, `understood`, `plan`). Filler words match unrelated queries and crowd out real facts in a keyword store. A summary keeps only the facts you would ever want retrieved. In production the summary is itself written by a model call, triggered when trimming is about to drop something.\n\n> **Honest caveat:** keyword overlap cannot see synonyms. Ask \"What interpreter am I running?\" and nothing matches \"User runs Python 3.12.\" Embedding-based retrieval fixes that at the cost of a model call per note and per query. The `len // 4` estimate can be off by a third or more for code, numbers and non-English text, so keep a margin below the real limit. The budgets here (30 and 40 tokens) are toy-sized so the dropping is visible; real windows hold hundreds of thousands of tokens, but the arithmetic is the same."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_8",
+      "content": "Memory is whatever you put in the message list before calling the model. Short-term memory decides which recent turns fit the budget. Long-term memory stores facts outside the window and retrieves the relevant ones before each turn.",
+      "visual_theme": "brain"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_8",
+      "nodes": [
+        "New user message",
+        "Recall facts from store",
+        "Protect system + facts",
+        "Trim recent turns to budget",
+        "Call model",
+        "Remember new facts"
+      ],
+      "edges": [
+        {
+          "from": "New user message",
+          "to": "Recall facts from store"
+        },
+        {
+          "from": "Recall facts from store",
+          "to": "Protect system + facts"
+        },
+        {
+          "from": "Protect system + facts",
+          "to": "Trim recent turns to budget"
+        },
+        {
+          "from": "Trim recent turns to budget",
+          "to": "Call model"
+        },
+        {
+          "from": "Call model",
+          "to": "Remember new facts"
+        },
+        {
+          "from": "Remember new facts",
+          "to": "New user message"
+        }
+      ],
+      "description": "One agent turn with both memories: retrieve first, protect the facts block alongside the system prompt, then trim the recent turns, call the model, and store anything new"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_8",
+      "steps": [
+        {
+          "line": "used = estimate_tokens(system[\"content\"])",
+          "explanation": {
+            "en": "The system message is always kept, so its cost is charged first."
+          }
+        },
+        {
+          "line": "for m in reversed(rest):",
+          "explanation": {
+            "en": "Walk the turns newest to oldest: recent context is worth more than old context."
+          }
+        },
+        {
+          "line": "    cost = estimate_tokens(m[\"content\"])",
+          "explanation": {
+            "en": "Estimate each turn's cost with the length-based rule of about four characters per token."
+          }
+        },
+        {
+          "line": "    if used + cost > budget: break",
+          "explanation": {
+            "en": "Stop at the first turn that would overflow the budget; everything older is dropped."
+          }
+        },
+        {
+          "line": "    kept.append(m); used += cost",
+          "explanation": {
+            "en": "Keep the turn and charge its cost against the budget."
+          }
+        },
+        {
+          "line": "kept.reverse()",
+          "explanation": {
+            "en": "Restore chronological order before sending to the model."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp_8",
+      "left": {
+        "label": "Raw transcript as memory",
+        "code": "47 tokens, 24 keywords\nfiller words: nice, meet, help, plan\nmatches unrelated queries\nsent on every turn"
+      },
+      "right": {
+        "label": "Summary as memory",
+        "code": "18 tokens, 10 keywords\nonly facts: Priya, Chennai, 3.12, Friday\nmatches the queries that need them\nsent on every turn, cheaply"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term_8",
+      "output": [
+        "tokens used: 36",
+        "  system    You are a Python tutor.",
+        "  system    Known facts: User runs Python 3.12.",
+        "  assistant Understood, let us plan around Friday.",
+        "  user      How do I sort a dict by value?",
+        "  user      Which Python version am I on?"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Complete `trim_to_budget(messages, budget)`. Always keep `messages[0]` (the system message), then walk the remaining messages from newest to oldest, keeping each one whose estimated cost still fits in `budget`; stop at the first one that does not fit. Return the system message followed by the kept turns in their original order. With `budget=16` the output should be five lines starting with `system | Be brief.` and the message about Arun's name and city should be the one dropped."
+      },
+      "starter_code": "def estimate_tokens(text):\n    return max(1, len(text) // 4)\n\ndef trim_to_budget(messages, budget):\n    \"\"\"Keep messages[0] (system) plus the newest turns that fit in budget.\"\"\"\n    system, rest = messages[0], messages[1:]\n    used = estimate_tokens(system[\"content\"])\n    kept = []\n    # for m in reversed(rest):\n    #     cost = estimate_tokens(m[\"content\"])\n    #     if used + cost > budget:\n    #         break\n    #     kept.append(m)\n    #     used += cost\n    # kept.reverse()\n    return [system] + kept\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"Be brief.\"},\n    {\"role\": \"user\", \"content\": \"My name is Arun and I live in Madurai.\"},\n    {\"role\": \"assistant\", \"content\": \"Hello Arun.\"},\n    {\"role\": \"user\", \"content\": \"What is a tuple?\"},\n    {\"role\": \"assistant\", \"content\": \"An immutable sequence.\"},\n    {\"role\": \"user\", \"content\": \"And a list?\"},\n]\nfor m in trim_to_budget(messages, budget=16):\n    print(m[\"role\"], \"|\", m[\"content\"])",
+      "hints": [
+        "for m in reversed(rest): walks newest to oldest",
+        "cost = estimate_tokens(m[\"content\"]); if used + cost > budget: break",
+        "Append kept turns as you go, then kept.reverse() before returning [system] + kept"
+      ],
+      "expected_output": "system | Be brief.\nassistant | Hello Arun.\nuser | What is a tuple?\nassistant | An immutable sequence.\nuser | And a list?"
+    },
+    {
+      "instruction": {
+        "en": "Implement `recall(notes, query, k=2)`: compute `keywords(query)`, score every note by the number of keywords it shares with the query, drop notes with a score of zero, sort by score descending with alphabetical order as the tie-break, and return the text of the top `k` notes. The first query should return the editor note first and the Arun note second; the third query should return an empty list."
+      },
+      "starter_code": "import re\n\nSTOPWORDS = {\"the\", \"a\", \"an\", \"is\", \"are\", \"i\", \"my\", \"me\", \"do\", \"how\", \"what\", \"to\", \"in\", \"of\"}\n\ndef keywords(text):\n    return {w for w in re.findall(r\"[a-z0-9.]+\", text.lower()) if w not in STOPWORDS}\n\ndef recall(notes, query, k=2):\n    \"\"\"Return up to k notes with the most keyword overlap; ties alphabetical.\"\"\"\n    # q = keywords(query)\n    # scored = [(len(q & keywords(n)), n) for n in notes]\n    # scored = [pair for pair in scored if pair[0] > 0]\n    # scored.sort(key=lambda pair: (-pair[0], pair[1]))\n    # return [n for _, n in scored[:k]]\n    return []\n\nnotes = [\n    \"User name is Arun, based in Madurai.\",\n    \"User prefers tabs over spaces.\",\n    \"Favourite editor is VS Code.\",\n    \"Arun is learning about tuples and lists.\",\n]\nprint(recall(notes, \"What editor does the user prefer?\"))\nprint(recall(notes, \"Remind me what Arun is learning\"))\nprint(recall(notes, \"Hello there\"))",
+      "hints": [
+        "Set intersection gives the overlap: len(keywords(query) & keywords(note))",
+        "Keep only pairs with score > 0, then sort with key=lambda pair: (-pair[0], pair[1])",
+        "Return [note for _, note in scored[:k]]"
+      ],
+      "expected_output": "['Favourite editor is VS Code.', 'User name is Arun, based in Madurai.']\n['Arun is learning about tuples and lists.', 'User name is Arun, based in Madurai.']\n[]"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "context_window_trimming",
+      "token_budgeting",
+      "long_term_memory_store",
+      "keyword_retrieval",
+      "memory_summarization"
+    ],
+    "concepts_required": [
+      "agent_tool_loop",
+      "python_functions",
+      "lists",
+      "sets",
+      "sorting_with_keys"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "ai_agents"
+    ]
+  },
+  "generated": false
+}

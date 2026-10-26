@@ -133,6 +133,16 @@ const storyMarkdownComponents = {
     ),
 };
 
+// Lesson JSON stores challenge hints either as a plain list or as an i18n map
+// ({ en: [...], ta: [...] }) — 400+ lessons use the map form. Always hand the UI
+// a list so the hint button renders for both shapes (bug: hidden since 2026-08).
+function hintList(challenge, language = 'en') {
+    const h = challenge?.hints;
+    if (Array.isArray(h)) return h;
+    if (h && typeof h === 'object') return h[language] || h.en || Object.values(h).find(Array.isArray) || [];
+    return [];
+}
+
 function resolveText(obj, language = 'en') {
     if (!obj) return '';
     if (typeof obj === 'string') return obj;
@@ -1026,6 +1036,7 @@ function PracticePhase({
     onClearOutput,
 }) {
     const challenge = lesson?.practice_challenges?.[0] ?? null;
+    const hints = hintList(challenge, language);
     const instruction = challenge
         ? resolveText(challenge?.instruction, language)
         : resolveText(lesson?.challenge_instruction, language) ||
@@ -1122,7 +1133,7 @@ function PracticePhase({
             </div>
 
             {/* Hint button */}
-            {challenge?.hints?.length > 0 && (
+            {hints.length > 0 && (
                 <div className="flex justify-end">
                     <button
                         onClick={onHint}
@@ -1131,7 +1142,7 @@ function PracticePhase({
                         <Lightbulb size={16} aria-hidden="true" /> Need a hint?
                         {hintIndex > 0 && (
                             <span className="ml-1.5 text-xs text-text-muted">
-                                ({hintIndex}/{challenge.hints.length})
+                                ({hintIndex}/{hints.length})
                             </span>
                         )}
                     </button>
@@ -1746,7 +1757,7 @@ export default function Classroom() {
     };
 
     const handleHint = () => {
-        const hints = currentLesson?.practice_challenges?.[0]?.hints ?? [];
+        const hints = hintList(currentLesson?.practice_challenges?.[0], language);
         if (hints.length === 0) return;
         const idx = hintIndex % hints.length;
         const hintText = resolveText(hints[idx], language);
