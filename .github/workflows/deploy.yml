@@ -110,6 +110,7 @@ jobs:
         run: |
           docker build \
             --platform linux/amd64 \
+            --build-arg BUILD_SHA=${{ github.sha }} \
             -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/pymasters:${{ github.sha }} \
             -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/pymasters:latest \
             .
