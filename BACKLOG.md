@@ -1,7 +1,7 @@
 ## Innovation Backlog
 
 *Auto-maintained by the PyMasters AI Intelligence Pipeline.*
-*Last updated: 2026-07-26*
+*Last updated: 2026-10-25*
 
 ### Ready to Build (scored >= 8, validated)
 
@@ -21,6 +21,8 @@
 - **nanotron/ultrascale-playbook** (score: 8, source: huggingface, added: 2026-07-26) — Excellent source material for an advanced 'how LLMs are trained at scale' lesson series (parallelism, GPU efficiency) [link](https://huggingface.co/spaces/nanotron/ultrascale-playbook)
 - **Running a 28.9M parameter LLM on an $8 microcontroller** (score: 8, source: hackernews, added: 2026-07-26) — Great tutorial on extreme LLM quantization/tiny models; reinforces Homie's small-local-model story and edge-device ambitions [link](https://github.com/slvDev/esp32-ai)
 - **Claude Opus 5** (score: 8, source: hackernews, added: 2026-07-26) — Timely PyMasters coverage/tutorial on Claude Opus 5 capabilities and API usage; optionally add as a cloud-provider fallback option in Homie [link](https://www.anthropic.com/news/claude-opus-5)
+- **A Fix for Softmax and Cross-Entropy** (score: 8, source: arxiv, added: 2026-10-25) — Excellent Explains essay: the two numerical bugs in softmax and cross-entropy, with a runnable demo of the gradient collapse [link](http://arxiv.org/abs/2610.31642v1)
+- **A practical guide to AI image generation, from diffusion to agents** (score: 8, source: hackernews, added: 2026-10-25) — Course module tracing image generation from diffusion to agentic pipelines; Homie's flux_image_gen plugin could add agentic prompt refinement [link](https://danielball.com/notes/ai_image_generation.html)
 
 ### Prototyping (scored >= 7)
 
@@ -31,6 +33,11 @@
 - **Open-weight AI is having its Kubernetes moment** (score: 7, source: hackernews, added: 2026-07-26) — Open-weight ecosystem overview fits a PyMasters lesson and validates Homie's local-LLM positioning for marketing content [link](https://tobi.knaup.me/2026-07-25-open-weight-ai-is-having-its-kubernetes-moment/)
 - **Becoming a Research Engineer at a Big LLM Lab** (score: 7, source: hackernews, added: 2026-07-26) — Career-path content: adapt into a PyMasters guide on becoming an ML/research engineer [link](https://www.maxmynter.com/pages/blog/jobhunt)
 - **Bringing PyTorch Monarch to AMD GPUs** (score: 7, source: hackernews, added: 2026-07-26) — Tutorial on distributed PyTorch (Monarch) and the AMD GPU ecosystem for advanced learners [link](https://pytorch.org/blog/bringing-pytorch-monarch-to-amd-gpus-single-controller-distributed-training-on-rocm/)
+- **Low-Bit N-Gram Embeddings for Language Models** (score: 7, source: arxiv, added: 2026-10-25) — Low-bit n-gram embeddings shrink local model memory; Homie should track models adopting it, PyMasters can explain quantized embedding tables [link](http://arxiv.org/abs/2610.31646v1)
+- **Causal Chain of Thought: Mitigating Attention Leakage via Context Isolation** (score: 7, source: arxiv, added: 2026-10-25) — Tutorial on verifying CoT faithfulness: isolate reasoning steps with context masking and measure whether answers actually depend on them; Homie could use isolated-step prompting for more trustworthy local reasoning traces [link](http://arxiv.org/abs/2610.31639v1)
+- **BeNice! Closing Looping's Inference-Memory Gap via KV-Sharing** (score: 7, source: arxiv, added: 2026-10-25) — Explains essay on KV-cache growth in looped transformers; directly relevant to Homie's on-device memory budget when running small recurrent-depth models [link](http://arxiv.org/abs/2610.31633v1)
+- **How Ground Truth Shapes Retrieval Scores: Evidence-Aware Evaluation of a Retrieval-Augmented Generation System for Breast Lesions** (score: 7, source: arxiv, added: 2026-10-25) — Tutorial on evidence-aware RAG retrieval evaluation (annotation coverage bias); Homie's RAG plugin could adopt the same eval protocol for local document search quality [link](http://arxiv.org/abs/2610.31606v1)
+- **WorldTUI: I trained a 360M model to pretend to be a terminal** (score: 7, source: hackernews, added: 2026-10-25) — Fun small-model tutorial: train a 360M world model to emulate a terminal, a hands-on sequence-modelling project [link](https://simedw.com/2026/10/21/world-model-terminal/)
 
 ### Evaluating (scored >= 6)
 
@@ -38,6 +45,11 @@
 - **open-llm-leaderboard/open_llm_leaderboard** (score: 6, source: huggingface, added: 2026-07-26) — Article/lesson on how to read LLM benchmarks and choose a model for your use case [link](https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard)
 - **black-forest-labs/FLUX.1-dev** (score: 6, source: huggingface, added: 2026-07-26) — Diffusion-model tutorial using FLUX.1-dev with the diffusers library [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev)
 - **black-forest-labs/FLUX.1-schnell** (score: 6, source: huggingface, added: 2026-07-26) — Fast 4-step image generation tutorial; borderline feasible as an optional Homie image-gen plugin on GPU machines [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-schnell)
+- **facebook/MusicGen** (score: 6, source: huggingface, added: 2026-10-25) — Tutorial on audio generation with transformers; Homie plugin for offline background music or jingle generation [link](https://huggingface.co/spaces/facebook/MusicGen)
+- **lmarena-ai/arena-leaderboard** (score: 6, source: huggingface, added: 2026-10-25) — Explains essay on Elo-based human preference evaluation vs static benchmarks [link](https://huggingface.co/spaces/lmarena-ai/arena-leaderboard)
+- **zerogpu-aoti/wan2-2-fp8da-aoti-faster** (score: 6, source: huggingface, added: 2026-10-25) — Lesson on FP8 quantization and AoT Inductor compilation to speed up video diffusion inference [link](https://huggingface.co/spaces/zerogpu-aoti/wan2-2-fp8da-aoti-faster)
+- **Cost-Aware Abstention for LLM-Based IT Ticket Classification** (score: 6, source: arxiv, added: 2026-10-25) — Practical lesson on cost-aware abstention and calibration for LLM classifiers with a ticket-routing example [link](http://arxiv.org/abs/2610.31657v1)
+- **Can an Agent Debug a Web Corpus? Agentic Auditing of Slovak FineWeb2** (score: 6, source: arxiv, added: 2026-10-25) — Lesson on building a budgeted, read-only tool-using agent to audit a dataset (Tamil/Indic FineWeb2 angle fits the multilingual curriculum) [link](http://arxiv.org/abs/2610.31636v1)
 
 ### Discovered (new)
 
