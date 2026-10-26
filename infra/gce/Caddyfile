@@ -8,6 +8,10 @@ pymasters.net {
 	reverse_proxy app:8080 {
 		header_up X-Forwarded-For {remote_host}
 		header_up X-Real-IP {remote_host}
+		# While the app container is being replaced by a rollout (~20-50 s),
+		# hold requests and retry the upstream instead of returning 502.
+		lb_try_duration 60s
+		lb_try_interval 1s
 	}
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
