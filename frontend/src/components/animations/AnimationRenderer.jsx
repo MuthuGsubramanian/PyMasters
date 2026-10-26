@@ -200,6 +200,47 @@ export function normalizeProps(type, raw, language) {
 
   // ComparisonPanel: left/right → before/after
   if (type === 'ComparisonPanel' || type === 'comparison_panel') {
+    // Lesson JSON has drifted into several author-time shapes (2026-10-26
+    // audit: ~55 lessons rendered an EMPTY panel). Coerce each known shape
+    // into the component's before/after {label, code} contract.
+    const txt = (v) => (v == null ? '' : typeof v === 'string' ? v : String(v));
+    const joinLines = (arr) => (Array.isArray(arr) ? arr.map(txt).join('\n') : txt(arr));
+    // {left:{title,items[]}, right:{title,items[]}}  (GRPO / trending_ai trilogies)
+    if (p.left && Array.isArray(p.left.items) && !p.left.code) {
+      p.left = { label: p.left.title || p.left.label, code: joinLines(p.left.items) };
+    }
+    if (p.right && Array.isArray(p.right.items) && !p.right.code) {
+      p.right = { label: p.right.title || p.right.label, code: joinLines(p.right.items) };
+    }
+    // {left_label, right_label, left_content, right_content}  (ai_fundamentals / web_development)
+    if (!p.before && !p.left && (p.left_content != null || p.right_content != null)) {
+      p.before = { label: p.left_label || 'Before', code: txt(p.left_content) };
+      p.after = { label: p.right_label || 'After', code: txt(p.right_content) };
+    }
+    // {left_label, right_label, items:[{left,right}]}  (ai_engineering pipeline lessons)
+    if (!p.before && !p.left && Array.isArray(p.items) && p.items.length && p.items[0] && 'left' in p.items[0]) {
+      p.before = { label: p.left_label || 'Option A', code: p.items.map((i) => txt(i.left)).join('\n') };
+      p.after = { label: p.right_label || 'Option B', code: p.items.map((i) => txt(i.right)).join('\n') };
+    }
+    // {items:[{label,value,note}]}  (deep_learning) -> first option vs the rest
+    if (!p.before && !p.left && Array.isArray(p.items) && p.items.length && p.items[0] && 'label' in p.items[0]) {
+      const line = (i) => `${txt(i.value)}${i.note ? ` (${txt(i.note)})` : ''}`;
+      const [first, ...rest] = p.items;
+      p.before = { label: txt(first.label), code: line(first) };
+      p.after = { label: rest.map((i) => txt(i.label)).join(' / ') || 'Alternatives', code: rest.map((i) => `${txt(i.label)}: ${line(i)}`).join('\n') };
+    }
+    // {models:[{name,strengths,weaknesses}]}  (machine_learning)
+    if (!p.before && !p.left && Array.isArray(p.models) && p.models.length) {
+      p.before = { label: 'Strengths', code: p.models.map((m) => `${txt(m.name)}: ${txt(m.strengths)}`).join('\n') };
+      p.after = { label: 'Weaknesses', code: p.models.map((m) => `${txt(m.name)}: ${txt(m.weaknesses)}`).join('\n') };
+    }
+    // {comparisons:[{label,values[]}], x_labels[]}  (dsa growth tables)
+    if (!p.before && !p.left && Array.isArray(p.comparisons) && p.comparisons.length) {
+      const xs = Array.isArray(p.x_labels) ? p.x_labels.map(txt).join('  ') : '';
+      p.before = { label: 'Inputs', code: xs };
+      p.after = { label: 'Growth', code: p.comparisons.map((c) => `${txt(c.label)}: ${(c.values || []).map(txt).join('  ')}`).join('\n') };
+    }
+    for (const k of ['left_label', 'right_label', 'left_content', 'right_content', 'items', 'models', 'comparisons', 'x_labels']) delete p[k];
     if (p.left && !p.before) {
       p.before = {
         label: p.left.label || 'Before',
@@ -220,6 +261,11 @@ export function normalizeProps(type, raw, language) {
 
   // Terminal: ensure output is always an array
   if (type === 'Terminal' || type === 'TerminalOutput' || type === 'terminal_output') {
+    // Authors also write `lines` (200+ lessons) — map it to `output`.
+    if (p.output == null && p.lines != null) {
+      p.output = Array.isArray(p.lines) ? p.lines.map((l) => (typeof l === 'string' ? l : String(l))) : String(p.lines);
+      delete p.lines;
+    }
     if (typeof p.output === 'string') {
       p.output = p.output.split('\n').filter(Boolean);
     }
