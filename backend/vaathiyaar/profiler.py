@@ -386,5 +386,12 @@ def get_student_profile(db_path: str, user_id: str) -> dict:
         profile["rank"] = "ARCHITECT" if total_xp > 1000 else "ENGINEER" if total_xp > 500 else "CADET"
     finally:
         conn.close()
+    # What Vaathiyaar has LEARNED about this student (scaffolding level, distilled
+    # notes) plus the global teaching insights — rendered by build_system_prompt.
+    try:
+        from vaathiyaar.adaptive import adaptive_context
+        profile["adaptive"] = adaptive_context(db_path, user_id)
+    except Exception:
+        profile["adaptive"] = {}
 
     return profile

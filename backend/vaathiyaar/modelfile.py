@@ -643,6 +643,14 @@ def build_system_prompt(
             for sig in signals:
                 blocks.append(f"- {sig.get('signal_type', 'unknown')}: {sig.get('topic', '')} ({sig.get('created_at', '')})")
 
+    # ── Adaptive intelligence: pacing, learner notes, learned teaching insights ──
+    if student_profile and student_profile.get("adaptive"):
+        try:
+            from vaathiyaar.adaptive import prompt_blocks
+            blocks.extend(prompt_blocks(student_profile["adaptive"]))
+        except Exception:
+            pass
+
     # ── Enhanced Context: Generated Module ────────────────────────────
     if lesson_context and lesson_context.get("generated"):
         blocks.append("\n## This Is a Custom-Generated Lesson")

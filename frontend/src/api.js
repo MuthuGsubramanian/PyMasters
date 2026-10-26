@@ -152,6 +152,9 @@ export const getProfileStats = (userId) =>
     api.get(`/profile/${userId}/stats`);
 export const getProfileAchievements = (userId) =>
     api.get(`/profile/${userId}/achievements`);
+// Adaptive tutor transparency: what Vaathiyaar has learned about this learner.
+export const getLearnerNotes = (userId) => api.get(`/profile/${userId}/learner-notes`);
+export const deleteLearnerNote = (userId, noteId) => api.delete(`/profile/${userId}/learner-notes/${noteId}`);
 export const getDailyRecommendation = (userId) =>
     api.get(`/profile/${userId}/daily-recommendation`);
 

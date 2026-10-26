@@ -15,6 +15,7 @@ import api from '../api';
 import { isReducedMotion, setReduceMotionPref } from '../hooks/useReducedMotion';
 import clsx from 'clsx';
 import LanguageSelector from '../components/LanguageSelector';
+import VaathiyaarMemoryCard from '../components/VaathiyaarMemoryCard';
 import { Card, StatCard, Button, Badge, Avatar, FormField } from '../components/ui';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -1111,6 +1112,9 @@ export default function Profile() {
                         ))}
                     </div>
                 </GlassCard>
+
+                {/* 5b. Adaptive tutor memory — what Vaathiyaar has learned (2026-10-27) */}
+                <VaathiyaarMemoryCard userId={user.id} Card={GlassCard} Heading={SectionHeading} />
 
                 {/* ═══════════════════════════════════════════════════════════ */}
                 {/* 6. Achievements                                           */}

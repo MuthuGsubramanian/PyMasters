@@ -1339,3 +1339,26 @@ def get_daily_recommendation(user_id: str, caller: str = Depends(get_current_use
         }
     finally:
         conn.close()
+
+
+# ── Transparency for the adaptive tutor (2026-10-27) ─────────────────────────
+# Learners can see exactly what Vaathiyaar has learned about them and remove
+# any note; a removed note is never re-shown (it is deactivated, not deleted,
+# so the nightly distiller can see it was rejected).
+
+@router.get("/{user_id}/learner-notes")
+def get_learner_notes(user_id: str, caller: str = Depends(get_current_user_id)):
+    _require_self(user_id, caller)
+    from vaathiyaar.adaptive import learner_notes, scaffolding_for
+    db_path = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
+    return {"notes": learner_notes(db_path, user_id, 10), "scaffolding": scaffolding_for(db_path, user_id)}
+
+
+@router.delete("/{user_id}/learner-notes/{note_id}")
+def delete_learner_note_endpoint(user_id: str, note_id: str, caller: str = Depends(get_current_user_id)):
+    _require_self(user_id, caller)
+    from vaathiyaar.adaptive import delete_learner_note
+    if not delete_learner_note(os.getenv("DB_PATH", os.path.abspath("pymasters.db")), user_id, note_id):
+        raise HTTPException(status_code=404, detail="Note not found")
+    return {"ok": True}
+

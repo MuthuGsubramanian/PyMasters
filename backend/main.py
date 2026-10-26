@@ -804,6 +804,12 @@ def init_db():
         print(f"[FATAL] DB Init Error: {e}\n{traceback.format_exc()}")
     finally:
         conn.close()
+    # Adaptive-intelligence tables (learner_notes, tutor_insights, adaptive_runs).
+    try:
+        from vaathiyaar.adaptive import ensure_tables as _ensure_adaptive
+        _ensure_adaptive(DB_PATH)
+    except Exception as _exc:
+        print(f"[init_db] adaptive tables: {_exc}")
 
 # --- App Lifecycle ---
 @asynccontextmanager
