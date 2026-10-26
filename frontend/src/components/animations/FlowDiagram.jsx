@@ -174,13 +174,6 @@ export default function FlowDiagram({
 
   const progress = totalSteps > 0 ? Math.max(((activePathIndex + 1) / totalSteps) * 100, 0) : 0;
 
-  // Build node order from edges or just use the nodes array
-  const nodeMap = useMemo(() => {
-    const m = {};
-    stableNodes.forEach(n => { m[n.id] = n; });
-    return m;
-  }, [stableNodes]);
-
   return (
     <div ref={containerRef} className="rounded-2xl overflow-hidden opacity-0 max-w-2xl font-mono text-sm shadow-2xl shadow-black/20 border border-white/[0.06]">
       {/* Header */}

@@ -31,7 +31,6 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
   const valueRef = useRef(null);
   const oldValueRef = useRef(null);
   const glowRef = useRef(null);
-  const historyRef = useRef([]);
 
   const stableValues = useMemo(() => values, [JSON.stringify(values)]);
 

@@ -35,7 +35,7 @@ function colorizeLine(line) {
       parts.push(<span key={key++} className="text-cyan-300">{token}</span>);
     } else if (/^[=+\-*/<>!%&|^~]+$/.test(token)) {
       parts.push(<span key={key++} className="text-sky-300">{token}</span>);
-    } else if (/^[()\[\]{}:,.]$/.test(token)) {
+    } else if (/^[()[\]{}:,.]$/.test(token)) {
       parts.push(<span key={key++} className="text-slate-500">{token}</span>);
     } else if (/^\s+$/.test(token)) {
       parts.push(<span key={key++}>{token}</span>);

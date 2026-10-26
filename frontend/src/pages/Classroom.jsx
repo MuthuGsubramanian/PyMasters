@@ -691,7 +691,7 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
     return <div className="h-full overflow-y-auto dark-scrollbar pr-1">{inner}</div>;
 }
 
-function IntroPhase({ lesson, language, onComplete, username, headerMeta = null }) {
+function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
     const reducedMotion = useReducedMotion();
     const storyContent =
         lesson.active_story || resolveText(lesson.story_variants, language);

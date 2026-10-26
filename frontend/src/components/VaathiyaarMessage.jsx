@@ -31,7 +31,7 @@ export default function VaathiyaarMessage() {
                 user_id: user?.id,
                 action,
             });
-        } catch {}
+        } catch { /* ignore */ }
         setDismissed(true);
     };
 
@@ -41,7 +41,7 @@ export default function VaathiyaarMessage() {
             await api.post(`/messages/${message.id}/dismiss`, {
                 user_id: user?.id,
             });
-        } catch {}
+        } catch { /* ignore */ }
         setDismissed(true);
     };
 

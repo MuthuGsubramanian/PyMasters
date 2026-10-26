@@ -352,7 +352,7 @@ export default function AnimationRenderer({
 
         // Extract props — either from .props or from the primitive object directly
         const rawProps = primitive.props ?? (() => {
-          const { type, sync_with, ...rest } = primitive;
+          const { type: _type, sync_with: _syncWith, ...rest } = primitive;
           return rest;
         })();
 

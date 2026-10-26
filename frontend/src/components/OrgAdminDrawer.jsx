@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'; // eslint-disable-line no-unused-vars
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, ShieldCheck, ScrollText, Inbox } from 'lucide-react';
 import {
   getAdminOrgDetail, adminSetOrgPlan, adminSetOrgType, adminDeleteOrg,

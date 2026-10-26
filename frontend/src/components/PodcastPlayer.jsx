@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'; // eslint-disable-line no-unused-vars
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, Play, Pause, Rewind, FastForward, Download, Headphones } from 'lucide-react';
 import { SUPPORTED_LANGUAGES } from '../i18n/index.js';
 import { useEscapeKey } from '../hooks/useEscapeKey';

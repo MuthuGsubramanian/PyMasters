@@ -9,7 +9,6 @@ import {
 import clsx from 'clsx';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useAuth } from '../context/AuthContext';
 import { getQuickReference, getQuickReferenceTopics } from '../api';
 import { Card, Button } from '../components/ui';
 import RunnableCode from '../components/RunnableCode';
@@ -240,7 +239,6 @@ function TopicDetail({ topic, data, onBack, loading: detailLoading }) {
 // ─── Main component ─────────────────────────────────────────────────────────
 export default function Reference() {
   useEffect(() => { document.title = 'Reference — PyMasters'; }, []);
-  const { user } = useAuth();
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

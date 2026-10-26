@@ -36,10 +36,9 @@ const COLORS = {
   glowOutput: 'rgba(16, 185, 129, 0.4)',
 };
 
-function getNodePosition(layerIdx, nodeIdx, layerCount, totalLayers) {
+function getNodePosition(layerIdx, nodeIdx, layerCount) {
   const maxNodes = Math.max(layerCount, 1);
   const totalHeight = (maxNodes - 1) * NODE_GAP;
-  const startY = PADDING_Y + (totalHeight > 0 ? 0 : 0);
   const x = PADDING_X + layerIdx * LAYER_GAP;
   const layerHeight = (layerCount - 1) * NODE_GAP;
   const offsetY = (totalHeight - layerHeight) / 2;

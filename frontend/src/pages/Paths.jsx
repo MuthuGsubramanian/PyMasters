@@ -568,7 +568,6 @@ function PathDetail() {
                     {lessons.map((lesson, idx) => {
                         const isCompleted = completedIds.has(lesson.id);
                         const isNext = lesson.id === nextLessonId || (!nextLessonId && !isCompleted && idx === completedIds.size);
-                        const isLocked = !isCompleted && !isNext;
                         const isInserted = lesson.inserted || lesson.personalized;
 
                         return (

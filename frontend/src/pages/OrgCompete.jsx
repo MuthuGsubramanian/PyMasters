@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
     getChallengeCatalog, getOrgChallengeSets, createOrgChallengeSet,
-    archiveOrgChallengeSet, getChallengeSetLeaderboard, getOrgLeaderboard,
+    getChallengeSetLeaderboard, getOrgLeaderboard,
 } from '../api';
 import { useNavigate } from 'react-router-dom';
 import { Swords, Trophy, Crown, Medal, Plus, Loader2, X, ChevronLeft, Check } from 'lucide-react';

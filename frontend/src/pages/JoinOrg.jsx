@@ -52,7 +52,7 @@ export default function JoinOrg() {
             const lr = await loginUser(username.trim(), password);
             const userData = lr.data;
             // Persist token before the JWT-protected join call.
-            try { localStorage.setItem('pm_user', JSON.stringify(userData)); } catch {}
+            try { localStorage.setItem('pm_user', JSON.stringify(userData)); } catch { /* ignore */ }
             const org = await joinOrg(token, { user_id: userData.id });
             login({ ...userData, org: org.data });
             navigate('/onboarding');

@@ -120,7 +120,7 @@ export default function Login() {
             }
 
             // Persist the token now so JWT-protected calls below are signed.
-            try { localStorage.setItem('pm_user', JSON.stringify(data)); } catch {}
+            try { localStorage.setItem('pm_user', JSON.stringify(data)); } catch { /* ignore */ }
 
             // Success animation before navigating
             setSuccess(true);
@@ -512,7 +512,6 @@ export default function Login() {
                                             >
                                                 {(() => {
                                                     const hasUpper = /[A-Z]/.test(password);
-                                                    const hasLower = /[a-z]/.test(password);
                                                     const hasNum = /\d/.test(password);
                                                     const hasSpecial = /[^a-zA-Z0-9]/.test(password);
                                                     const checks = [password.length >= 4, password.length >= 6, hasUpper || hasSpecial, password.length >= 8 && (hasNum || hasSpecial)];

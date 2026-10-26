@@ -14,7 +14,7 @@ api.interceptors.request.use((config) => {
     if (userData?.token) {
       config.headers.Authorization = `Bearer ${userData.token}`;
     }
-  } catch {}
+  } catch { /* ignore */ }
   return config;
 });
 
@@ -254,7 +254,7 @@ export function getAuthHeaders() {
     if (userData?.token) {
       return { Authorization: `Bearer ${userData.token}` };
     }
-  } catch {}
+  } catch { /* ignore */ }
   return {};
 }
 

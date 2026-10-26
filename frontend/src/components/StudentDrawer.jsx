@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { X, Trophy, Zap, AlertTriangle, Activity, BookOpen, Loader2, Plus } from 'lucide-react';
 import { getStudentDetail, setMemberGroups } from '../api';

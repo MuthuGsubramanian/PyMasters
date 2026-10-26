@@ -49,7 +49,7 @@ function singular(label) {
 function relTime(ts) {
   if (!ts) return 'never';
   let iso = String(ts).replace(' ', 'T');
-  if (!/[zZ]|[+\-]\d\d:?\d\d$/.test(iso)) iso += 'Z';
+  if (!/[zZ]|[+-]\d\d:?\d\d$/.test(iso)) iso += 'Z';
   const then = new Date(iso).getTime();
   if (isNaN(then)) return '—';
   const days = Math.floor((Date.now() - then) / 86400000);
@@ -66,7 +66,7 @@ function studentStatus(s) {
   if ((s.signals_7d || 0) > 0) return { label: 'Active', variant: 'success' };
   if (s.last_active) {
     let iso = String(s.last_active).replace(' ', 'T');
-    if (!/[zZ]|[+\-]\d\d:?\d\d$/.test(iso)) iso += 'Z';
+    if (!/[zZ]|[+-]\d\d:?\d\d$/.test(iso)) iso += 'Z';
     const then = new Date(iso).getTime();
     if (!isNaN(then) && (Date.now() - then) < 30 * 86400000) return { label: 'Idle', variant: 'warning' };
   }
@@ -149,7 +149,7 @@ function RoleBadge({ role }) {
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = () => {
-    try { navigator.clipboard.writeText(String(text || '')); } catch {}
+    try { navigator.clipboard.writeText(String(text || '')); } catch { /* ignore */ }
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
@@ -223,7 +223,7 @@ function InvitePromptCard({ orgId, userId, onInviteSent }) {
 
   const handleDismiss = () => {
     setDismissed(true);
-    try { localStorage.setItem(`pm_invite_prompt_dismissed_${orgId}`, '1'); } catch {}
+    try { localStorage.setItem(`pm_invite_prompt_dismissed_${orgId}`, '1'); } catch { /* ignore */ }
   };
 
   return (

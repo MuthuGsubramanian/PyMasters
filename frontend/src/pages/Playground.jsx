@@ -53,7 +53,6 @@ export default function Playground() {
     // snippet storage is out of scope for this change.
     const [restoredSession, setRestoredSession] = useState(false);
     const hydratedRef = useRef(false);
-    const bufferKey = user?.id ? `pm_playground_code_${user.id}` : null;
     const readBuffer = (key) => { try { return key ? localStorage.getItem(key) : null; } catch { return null; } };
     const writeBuffer = (key, val) => {
         try { if (!key) return; if (val) localStorage.setItem(key, val); else localStorage.removeItem(key); } catch { /* storage unavailable */ }

@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../context/AuthContext';
-import { getModules, getModule, completeModule, getCompletions, getProfile, recordSignal } from '../api';
+import { getModules, getModule, completeModule, getCompletions, recordSignal } from '../api';
 import ReviewQueue from '../components/ReviewQueue';
 import { Badge, Card, Button } from '../components/ui';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -346,7 +346,7 @@ export function Overview() {
                         desc: t.desc ?? t.summary ?? '',
                     })));
                 }
-            } catch {}
+            } catch { /* ignore */ }
 
             setLoading(false);
         };
