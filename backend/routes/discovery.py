@@ -16,10 +16,11 @@ import sqlite3
 import threading
 from typing import Optional
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends, HTTPException
 from pydantic import BaseModel
 
 from routes.classroom import _list_all_lessons
+from auth import optional_user_id, get_current_user_id
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 router = APIRouter(prefix="/api", tags=["discovery"])
@@ -43,9 +44,15 @@ def _all_txt(v):
 
 @router.get("/classroom/search")
 def search_topics(q: str = Query(..., min_length=1, max_length=120),
-                  user_id: Optional[str] = None, lang: str = "en"):
+                  user_id: Optional[str] = None, lang: str = "en",
+                  caller: Optional[str] = Depends(optional_user_id)):
     """Search existing + generated lessons. `can_generate` is True when nothing
-    matched, signalling the client to offer Vaathiyaar generation."""
+    matched, signalling the client to offer Vaathiyaar generation.
+
+    Identity comes from the verified JWT (``caller``), never from the client
+    ``user_id`` query param — that param is accepted only for URL compatibility.
+    Fixes the IDOR regression flagged in the 2026-10-23 audit."""
+    user_id = caller
     ql = q.strip().lower()
     out = []
     try:
@@ -91,7 +98,10 @@ class GenerateRequest(BaseModel):
 
 
 @router.post("/classroom/generate")
-def generate_topic(req: GenerateRequest):
+def generate_topic(req: GenerateRequest, caller: str = Depends(get_current_user_id)):
+    if req.user_id and req.user_id != caller:
+        raise HTTPException(status_code=403, detail="Cannot generate for another user")
+    req.user_id = caller
     """Queue a Vaathiyaar-generated session for a topic, enriched with the
     details the learner provided. Returns a job_id to poll /api/modules/status."""
     topic = req.topic.strip()

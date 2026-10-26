@@ -65,8 +65,10 @@ COPY supervisord.conf /etc/supervisor/conf.d/pymasters.conf
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
-# Data directory for DuckDB
-RUN mkdir -p /app/data
+# Data directory (SQLite + Litestream). Root-only: learner code in the
+# Playground runs as the unprivileged `sandbox` user (see
+# backend/vaathiyaar/execution.py) and must not be able to read the DB.
+RUN mkdir -p /app/data && chmod 700 /app/data     && useradd --system --no-create-home --shell /usr/sbin/nologin sandbox
 
 EXPOSE 8080
 

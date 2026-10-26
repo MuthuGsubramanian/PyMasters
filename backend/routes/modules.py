@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 import sqlite3
 import uuid
 import json
@@ -6,6 +6,7 @@ import os
 import threading
 from modules.models import ModuleRequest, JobStatus
 from modules.pipeline import run_pipeline
+from auth import get_current_user_id
 
 router = APIRouter(prefix="/api/modules", tags=["modules"])
 
@@ -15,7 +16,13 @@ def _get_db_path():
 
 
 @router.post("/request")
-async def request_module(data: ModuleRequest):
+async def request_module(data: ModuleRequest, caller: str = Depends(get_current_user_id)):
+    # Generation is expensive (LLM pipeline) and was callable anonymously with
+    # any user_id (audit 2026-10-23 P0). Require a verified JWT and bind the job
+    # to the caller regardless of the body's user_id.
+    if data.user_id and data.user_id != caller:
+        raise HTTPException(status_code=403, detail="Cannot request modules for another user")
+    data.user_id = caller
     job_id = str(uuid.uuid4())
     conn = sqlite3.connect(_get_db_path())
     conn.execute(
@@ -71,7 +78,9 @@ async def get_job_status(job_id: str):
 
 
 @router.get("/generated/{user_id}")
-async def list_generated_modules(user_id: str):
+async def list_generated_modules(user_id: str, caller: str = Depends(get_current_user_id)):
+    if user_id != caller:
+        raise HTTPException(status_code=403, detail="Forbidden")
     conn = sqlite3.connect(_get_db_path())
     conn.row_factory = sqlite3.Row
     rows = conn.execute(

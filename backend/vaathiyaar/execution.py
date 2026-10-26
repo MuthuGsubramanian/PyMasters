@@ -301,11 +301,35 @@ def _minimal_env(python_cmd: str) -> dict:
     return env
 
 
-def _posix_limits(timeout: int):
-    """preexec_fn factory: cap CPU, memory, output size, processes; new session."""
+SANDBOX_USER = os.getenv("SANDBOX_USER", "sandbox")
+
+
+def _sandbox_ids():
+    """(uid, gid) of the unprivileged sandbox account, or None when we are not
+    root / the account does not exist (local dev, Windows, tests)."""
+    if os.name == "nt" or not hasattr(os, "geteuid") or os.geteuid() != 0:
+        return None
+    try:
+        import pwd
+        pw = pwd.getpwnam(SANDBOX_USER)
+        return pw.pw_uid, pw.pw_gid
+    except (ImportError, KeyError):
+        return None
+
+
+def _posix_limits(timeout: int, ids=None):
+    """preexec_fn factory: cap CPU, memory, output size, processes; new session;
+    and, when the server runs as root (Cloud Run image), drop to the
+    unprivileged `sandbox` uid so learner code cannot read the app DB, env of
+    PID 1, or anything else root-only (audit 2026-10-23 P0)."""
     def _apply():
         import resource
         os.setsid()  # own process group → timeout can kill the whole tree
+        if ids is not None:
+            uid, gid = ids
+            os.setgroups([])
+            os.setgid(gid)
+            os.setuid(uid)
         cpu = max(1, timeout) + 1
         resource.setrlimit(resource.RLIMIT_CPU, (cpu, cpu))
         mem = 512 * 1024 * 1024
@@ -356,7 +380,14 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
             text=True,
         )
         if os.name != "nt":
-            popen_kwargs["preexec_fn"] = _posix_limits(timeout)
+            ids = _sandbox_ids()
+            if ids is not None:
+                # The throwaway dir (mkdtemp → 0700 root) must be readable by
+                # the sandbox uid; hand it over wholesale (script + seed files).
+                os.chown(work_dir, ids[0], ids[1])
+                for _fn in os.listdir(work_dir):
+                    os.chown(os.path.join(work_dir, _fn), ids[0], ids[1])
+            popen_kwargs["preexec_fn"] = _posix_limits(timeout, ids)
 
         proc = subprocess.Popen(
             _build_child_command(python_cmd, script_path), **popen_kwargs

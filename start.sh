@@ -7,6 +7,7 @@ echo "DB_PATH=${DB}"
 echo "OLLAMA_API_KEY=${OLLAMA_API_KEY:+set (hidden)}"
 
 mkdir -p "$(dirname "$DB")"
+chmod 700 "$(dirname "$DB")" 2>/dev/null || true   # keep the DB out of reach of the sandbox uid
 cd /app/backend
 
 # --- Restore database from GCS replica, or seed from baked-in DB on first boot ---
