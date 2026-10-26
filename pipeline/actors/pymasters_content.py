@@ -142,6 +142,22 @@ def generate_lesson(item: dict) -> dict | None:
         return None
 
 
+
+def _next_order(track_dir: str) -> int:
+    """max(order) + 1 over the track's existing lessons (99 placeholders ignored)."""
+    highest = 0
+    for name in os.listdir(track_dir):
+        if not name.endswith(".json"):
+            continue
+        try:
+            with open(os.path.join(track_dir, name), encoding="utf-8") as f:
+                o = json.load(f).get("order")
+            if isinstance(o, int) and o != 99:
+                highest = max(highest, o)
+        except Exception:
+            continue
+    return highest + 1
+
 def save_and_create_pr(lesson: dict, source_item: dict) -> str | None:
     """Save lesson to file, create a git branch, commit, and open a PR.
 
@@ -163,6 +179,12 @@ def save_and_create_pr(lesson: dict, source_item: dict) -> str | None:
 
     lesson_path = os.path.join(track_dir, f"{lesson_id}.json")
     relative_path = os.path.relpath(lesson_path, repo_root)
+
+    # The model emits the placeholder order 99; give the lesson the next free
+    # slot in its track instead, so new lessons append to the curriculum rather
+    # than piling up at 99 (56 lessons had to be re-sequenced by hand on 2026-10-27).
+    if lesson.get("order") in (None, 99):
+        lesson["order"] = _next_order(track_dir)
 
     # Save lesson JSON
     with open(lesson_path, "w", encoding="utf-8") as f:
