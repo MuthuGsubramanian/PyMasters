@@ -41,7 +41,8 @@ done
 echo "== syncing config + secrets"
 "${SCP[@]}" "$tmp_env" "$SSH_USER@$HOST:/tmp/pm.env"
 "${SCP[@]}" "$HERE/docker-compose.yml" "$HERE/Caddyfile" "$HERE/litestream.yml" "$HERE/update.sh" \
-  "$HERE/pymasters-update.service" "$HERE/pymasters-update.timer" "$HERE/learn.sh" \n  "$HERE/pymasters-learn.service" "$HERE/pymasters-learn.timer" "$SSH_USER@$HOST:/tmp/"
+  "$HERE/pymasters-update.service" "$HERE/pymasters-update.timer" "$HERE/learn.sh" \
+  "$HERE/pymasters-learn.service" "$HERE/pymasters-learn.timer" "$SSH_USER@$HOST:/tmp/"
 "${SSH[@]}" 'set -e
   sudo install -m 600 -o "$USER" /tmp/pm.env /opt/pymasters/.env && rm -f /tmp/pm.env
   sudo install -m 644 /tmp/docker-compose.yml /tmp/Caddyfile /tmp/litestream.yml /opt/pymasters/
