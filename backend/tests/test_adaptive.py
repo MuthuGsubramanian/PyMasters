@@ -158,7 +158,10 @@ def test_distill_learner_stores_notes_and_replaces_old_ones(env):
     notes = ad.learner_notes(db, "u1")
     assert len(notes) == 1 and notes[0]["kind"] == "misconception"
 
-    second = ad.distill_learner(db, "u1", lambda m, o: json.dumps([{"kind": "strength", "note": "Reads tracebacks carefully now", "weight": 0.6}]))
+    second = ad.distill_learner(db, "u1", lambda m, o: json.dumps([
+        {"kind": "strength", "note": "Reads tracebacks carefully now", "evidence": "fixed the loop on the 2nd try", "weight": 0.6},
+        {"kind": "context", "note": "A note without evidence is dropped", "evidence": ""},
+    ]))
     assert second["notes"] == 1
     notes = ad.learner_notes(db, "u1")
     assert [n["kind"] for n in notes] == ["strength"]  # old note deactivated, not duplicated
@@ -310,4 +313,39 @@ def test_feedback_reason_is_recorded_and_reaches_insight_material(env):
     # anonymous feedback still updates quality but cannot attach a reason to a user
     r = client.post("/api/classroom/feedback", json={"pair_id": "p1", "helpful": True, "reason": "x"})
     assert r.status_code == 200 and r.json()["reason_recorded"] is False
+
+
+def test_contrast_prefers_next_attempt_labels_and_skips_junk(env):
+    """Feedback on a failed submission is GOOD when the learner's next attempt (same lesson, <3 h) passes."""
+    db, ad = env["db"], env["adaptive"]
+    conn = sqlite3.connect(db)
+    for i in range(5):
+        uid = f"h{i}"
+        # tutor reply to a failing attempt, then a passing attempt 10 minutes later
+        conn.execute("INSERT INTO training_data (id, input_text, output_text, profile_json, context_json, quality_score, created_at) "
+                     "VALUES (?, 'My code for loops fails', ?, ?, ?, 0.4, datetime('now','-2 days'))",
+                     [f"good{i}", json.dumps({"message": "Line 2: the loop never increments i. What should change?"}),
+                      json.dumps({"user_id": uid}), json.dumps({"lesson_id": "loops_1"})])
+        conn.execute("INSERT INTO learning_signals (id, user_id, signal_type, topic, value, created_at) VALUES (?, ?, 'code_evaluation', 'loops', ?, datetime('now','-2 days','+10 minutes'))",
+                     [f"sg{i}", uid, json.dumps({"success": True, "lesson_id": "loops_1"})])
+        uid = f"m{i}"
+        conn.execute("INSERT INTO training_data (id, input_text, output_text, profile_json, context_json, quality_score, created_at) "
+                     "VALUES (?, 'My code for loops fails', ?, ?, ?, 0.4, datetime('now','-2 days'))",
+                     [f"poor{i}", json.dumps({"message": "Here is the full corrected program: ..."}),
+                      json.dumps({"user_id": uid}), json.dumps({"lesson_id": "loops_1"})])
+        conn.execute("INSERT INTO learning_signals (id, user_id, signal_type, topic, value, created_at) VALUES (?, ?, 'code_evaluation', 'loops', ?, datetime('now','-2 days','+10 minutes'))",
+                     [f"sm{i}", uid, json.dumps({"success": False, "lesson_id": "loops_1"})])
+    # junk fallback scored 0.8 must never become an example; praise-after-pass is skipped too
+    conn.execute("INSERT INTO training_data (id, input_text, output_text, profile_json, context_json, quality_score, created_at) "
+                 "VALUES ('junk', 'x', ?, '{}', '{}', 0.8, datetime('now','-1 days'))",
+                 [json.dumps({"message": "I couldn't reach the AI server right now, but I noticed your code ran correctly!"})])
+    conn.commit(); conn.close()
+    good, poor, mode = ad._contrast_examples(db, days=30)
+    assert mode == "next_attempt"
+    assert len(good) == 5 and all("never increments" in g["tutor"] for g in good)
+    assert len(poor) == 5 and all("full corrected" in p["tutor"] for p in poor)
+    captured = {}
+    ad.distill_insights(db, lambda m, o: captured.setdefault("prompt", m[-1]["content"]) and "[]")
+    assert "NEXT attempt on the same lesson passed" in captured["prompt"]
+    assert "couldn't reach the AI" not in captured["prompt"]
 

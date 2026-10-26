@@ -133,6 +133,14 @@ def scaffolding_for(db_path: str, user_id: str) -> dict:
             "AND created_at > datetime('now', '-14 days') ORDER BY created_at DESC LIMIT 20",
             [user_id],
         ).fetchall()
+        older = False
+        if len(evals) < 2:  # quiet fortnight: use the learner's last attempts instead of guessing
+            evals = conn.execute(
+                "SELECT value FROM learning_signals WHERE user_id = ? AND signal_type = 'code_evaluation' "
+                "AND created_at > datetime('now', '-90 days') ORDER BY created_at DESC LIMIT 10",
+                [user_id],
+            ).fetchall()
+            older = len(evals) >= 2
         updates = conn.execute(
             "SELECT value FROM learning_signals WHERE user_id = ? AND signal_type IN ('profile_update', 'profile_updated') "
             "AND created_at > datetime('now', '-14 days') ORDER BY created_at DESC LIMIT 10",
@@ -159,14 +167,15 @@ def scaffolding_for(db_path: str, user_id: str) -> dict:
 
     reasons = []
     level = "medium"
+    when = " (earlier this term)" if older else ""
     if (fail_rate is not None and len(outcomes) >= 2 and fail_rate >= 0.5):
-        level = "high"; reasons.append(f"{fails} of the last {len(outcomes)} code attempts failed")
+        level = "high"; reasons.append(f"{fails} of the last {len(outcomes)} code attempts failed{when}")
     if negative >= 2 or struggles >= 2:
         level = "high"; reasons.append("recent turns showed confusion or frustration")
     if len(weak) >= 2 and not strong:
         level = "high"; reasons.append(f"low mastery in {', '.join(weak[:3])}")
     if level != "high" and fail_rate is not None and len(outcomes) >= 3 and fail_rate <= 0.2 and negative == 0 and not weak:
-        level = "low"; reasons.append(f"{len(outcomes) - fails} of the last {len(outcomes)} attempts passed")
+        level = "low"; reasons.append(f"{len(outcomes) - fails} of the last {len(outcomes)} attempts passed{when}")
         if positive:
             reasons.append("recent turns read confident")
     if not reasons:
@@ -246,55 +255,98 @@ def _learner_material(db_path: str, user_id: str, days: int = 7) -> dict:
     }
 
 
-_NOTES_PROMPT = """You are the memory of Vaathiyaar, a patient Python/AI tutor. From the material about ONE learner below, write at most {max_notes} short notes the tutor should remember next time. Each note must be:
-- specific and actionable for teaching (a recurring misconception, a preference in explanation style or analogies, a demonstrated strength, or relevant context such as goals or tools they use)
-- grounded in the material (cite the evidence briefly)
-- free of personal data beyond what is needed for teaching; never mention emails, phone numbers or payments
-- written in the second person about the learner ("Confuses list .append with list concatenation").
+_NOTES_PROMPT = """You are the memory of Vaathiyaar, a patient Python/AI tutor. From the material about ONE learner below, write at most {max_notes} short notes the tutor should remember next time.
 
-Return ONLY a JSON array like:
-[{{"kind": "misconception|preference|strength|context", "note": "...", "evidence": "...", "weight": 0.5-1.0}}]
-Return [] if nothing is worth remembering. Existing notes (refine or keep the ones still true, drop stale ones): {existing}
+Rules:
+- Only write what the material SHOWS: a recurring error or misconception visible in their code or messages, a reaction to a particular explanation style, a demonstrated strength, or context that changes how to teach them (tools, language of their comments, pace). If the material shows nothing of the kind, return [].
+- Do NOT restate profile fields the tutor already sees (skill level, goal, learning style, preferred language) unless you attach a concrete teaching implication observed in their work.
+- Evidence is mandatory and must point at something specific in the material (a lesson id, an error, a quoted fragment). A note without real evidence must be omitted. Never invent.
+- Third person, present tense, about the learner, no name (for example a note may read: writes string values without quotes, which raises NameError).
+- No personal data beyond what teaching needs; never mention emails, phone numbers or payments.
+
+Return ONLY a JSON array of objects with keys kind (one of misconception, preference, strength, context), note, evidence, weight (0.5-1.0 confidence).
+Existing notes (keep the ones still supported, refine or drop the rest): {existing}
 
 MATERIAL:
 {material}
 """
 
 
+_OBSERVED = re.compile(r"lesson|error|code|signal|attempt|evaluat|view|quiz|output|line|message|chat|playground|_intro|_basics", re.I)
+_PROFILE_ONLY = re.compile(r"profile\.|learning_style|known_languages|skill_level|skill level|time_commitment|prior_experience|goal", re.I)
+
+
+def _echoes_profile_only(evidence: str) -> bool:
+    """True when a note's only evidence is an onboarding field the tutor already sees."""
+    return bool(_PROFILE_ONLY.search(evidence)) and not _OBSERVED.search(evidence)
+
+
 def _parse_json_array(text: str) -> list:
     text = (text or "").strip()
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.S)
     start, end = text.find("["), text.rfind("]")
-    if start < 0 or end <= start:
-        return []
-    try:
-        data = json.loads(text[start:end + 1])
-    except Exception:
-        return []
-    return data if isinstance(data, list) else []
+    if start >= 0 and end > start:
+        try:
+            data = json.loads(text[start:end + 1])
+            if isinstance(data, list):
+                return data
+        except Exception:
+            pass
+    # Salvage: the reply was cut off (token cap) or wrapped in prose — keep every
+    # complete top-level {...} object in order and drop the broken tail.
+    items, depth, buf, in_str, esc = [], 0, "", False, False
+    for ch in text[start if start >= 0 else 0:]:
+        if depth:
+            buf += ch
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"' and depth:
+            in_str = True
+        elif ch == "{":
+            depth += 1
+            if depth == 1:
+                buf = "{"
+        elif ch == "}" and depth:
+            depth -= 1
+            if depth == 0:
+                try:
+                    items.append(json.loads(buf))
+                except Exception:
+                    pass
+                buf = ""
+    return items
 
 
-def distill_learner(db_path: str, user_id: str, llm: Callable[[list, dict], str]) -> dict:
-    material = _learner_material(db_path, user_id)
+def distill_learner(db_path: str, user_id: str, llm: Callable[[list, dict], str], days: int = 7) -> dict:
+    material = _learner_material(db_path, user_id, days=days)
     if len(material["turns"]) + len(material["signals"]) < 3:
         return {"user_id": user_id, "skipped": "too little material"}
     prompt = _NOTES_PROMPT.format(max_notes=MAX_NOTES_PER_LEARNER, existing=json.dumps(material["existing_notes"]),
                                   material=json.dumps({k: v for k, v in material.items() if k != "existing_notes"}, ensure_ascii=False)[:9000])
     raw = llm([{"role": "system", "content": "You write terse, factual tutoring memory notes as JSON."},
-               {"role": "user", "content": prompt}], {"temperature": 0.2, "num_predict": 700})
+               {"role": "user", "content": prompt}], {"temperature": 0.2, "num_predict": 1200})
     notes = []
     for item in _parse_json_array(raw)[:MAX_NOTES_PER_LEARNER]:
         if not isinstance(item, dict):
             continue
         note = str(item.get("note") or "").strip()[:280]
         kind = str(item.get("kind") or "context").strip().lower()
-        if len(note) < 8 or kind not in NOTE_KINDS:
+        evidence = str(item.get("evidence") or "").strip()
+        if len(note) < 8 or kind not in NOTE_KINDS or len(evidence) < 6:
             continue
+        if _echoes_profile_only(evidence):
+            continue  # the prompt already carries goal / learning style / skill level
         try:
             weight = max(0.1, min(1.0, float(item.get("weight", 0.7))))
         except Exception:
             weight = 0.7
-        notes.append({"kind": kind, "note": note, "evidence": str(item.get("evidence") or "")[:300], "weight": weight})
+        notes.append({"kind": kind, "note": note, "evidence": evidence[:300], "weight": weight})
     if not notes:
         return {"user_id": user_id, "skipped": "model produced no usable notes", "raw": (raw or "")[:200]}
     conn = _conn(db_path)
@@ -347,44 +399,102 @@ def invalidate_insights_cache() -> None:
     _INSIGHTS_CACHE["at"] = 0.0
 
 
-def _outcome_pairs(db_path: str, days: int = 30, k: int = 15) -> tuple:
+def _is_junk(text: str) -> bool:
+    try:
+        from vaathiyaar.exemplars import is_junk_output
+        return is_junk_output(text or "")
+    except Exception:
+        return "couldn't reach the AI" in (text or "")
+
+
+def _shape_pair(row, reasons: dict) -> dict:
+    o = _loads(row["output_text"], {})
+    msg = o.get("message") if isinstance(o, dict) else str(row["output_text"])
+    item = {"student": (row["input_text"] or "")[-400:], "tutor": str(msg or "")[:600]}
+    if row["id"] in reasons:
+        item["learner_said"] = reasons[row["id"]]
+    return item
+
+
+def _feedback_reasons(conn, days: int) -> dict:
+    reasons = {}
+    for r in conn.execute("SELECT value FROM learning_signals WHERE signal_type = 'tutor_feedback' "
+                          "AND created_at > datetime('now', ?)", [f"-{days} days"]).fetchall():
+        v = _loads(r["value"], {})
+        if isinstance(v, dict) and v.get("pair_id") and v.get("reason"):
+            reasons[v["pair_id"]] = v["reason"]
+    return reasons
+
+
+def _hours_between(conn, later: str, earlier: str) -> float:
+    row = conn.execute("SELECT (julianday(?) - julianday(?)) * 24", [later, earlier]).fetchone()
+    return float(row[0]) if row and row[0] is not None else 1e9
+
+
+def _contrast_examples(db_path: str, days: int = 30, k: int = 15) -> tuple:
+    """(good, poor, label_mode).
+
+    Preferred label ("next_attempt"): for every tutor reply to a FAILED submission, did the
+    learner's next attempt on the same lesson (within 3 h) pass? That measures whether the
+    feedback actually helped. Explicit 👍/👎 ratings join their side. Outage fallback text is
+    never an example. If that leaves too little contrast, fall back to "submission_outcome"
+    (the raw pass/fail score) so a young deployment still learns something, and say so.
+    """
     conn = _conn(db_path)
     try:
-        good = conn.execute(
-            "SELECT id, input_text, output_text FROM training_data WHERE quality_score >= 0.8 AND created_at > datetime('now', ?) "
-            "ORDER BY created_at DESC LIMIT ?", [f"-{days} days", k]).fetchall()
-        bad = conn.execute(
-            "SELECT id, input_text, output_text FROM training_data WHERE quality_score IS NOT NULL AND quality_score < 0.5 "
-            "AND created_at > datetime('now', ?) ORDER BY created_at DESC LIMIT ?", [f"-{days} days", k]).fetchall()
+        reasons = _feedback_reasons(conn, days)
+        pairs = conn.execute(
+            "SELECT id, input_text, output_text, quality_score, created_at, "
+            "json_extract(profile_json, '$.user_id') AS user_id, json_extract(context_json, '$.lesson_id') AS lesson_id "
+            "FROM training_data WHERE quality_score IS NOT NULL AND created_at > datetime('now', ?) "
+            "ORDER BY created_at DESC LIMIT 600", [f"-{days} days"]).fetchall()
+        evals = conn.execute(
+            "SELECT user_id, json_extract(value, '$.lesson_id') AS lesson_id, json_extract(value, '$.success') AS success, created_at "
+            "FROM learning_signals WHERE signal_type = 'code_evaluation' AND created_at > datetime('now', ?) "
+            "ORDER BY created_at", [f"-{days} days"]).fetchall()
+        pairs = [p for p in pairs if not _is_junk(p["output_text"])]
+        by_key = {}
+        for e in evals:
+            by_key.setdefault((e["user_id"], e["lesson_id"]), []).append((e["created_at"], e["success"] in (1, "1", True, "true")))
+        good, poor = [], []
+        for p in pairs:
+            q = p["quality_score"]
+            if q >= 1.0:                       # explicit thumbs-up
+                good.append(p)
+                continue
+            if q <= 0.0:                       # explicit thumbs-down
+                poor.append(p)
+                continue
+            if q >= 0.8:                       # praise after a pass: not informative about fixing
+                continue
+            later = [(t, ok) for t, ok in by_key.get((p["user_id"], p["lesson_id"]), []) if t > p["created_at"]]
+            if not later:
+                continue
+            t_next, ok_next = later[0]
+            if _hours_between(conn, t_next, p["created_at"]) > 3:   # a different sitting
+                continue
+            (good if ok_next else poor).append(p)
     finally:
         conn.close()
-
-    # Learner-stated reasons behind 👎 (classroom /feedback), keyed by pair id.
-    conn = _conn(db_path)
-    try:
-        reasons = {}
-        for r in conn.execute("SELECT value FROM learning_signals WHERE signal_type = 'tutor_feedback' "
-                              "AND created_at > datetime('now', ?)", [f"-{days} days"]).fetchall():
-            v = _loads(r["value"], {})
-            if isinstance(v, dict) and v.get("pair_id") and v.get("reason"):
-                reasons[v["pair_id"]] = v["reason"]
-    finally:
-        conn.close()
-
-    def shape(rows):
-        out = []
-        for r in rows:
-            o = _loads(r["output_text"], {})
-            msg = o.get("message") if isinstance(o, dict) else str(r["output_text"])
-            item = {"student": (r["input_text"] or "")[-400:], "tutor": str(msg or "")[:600]}
-            if r["id"] in reasons:
-                item["learner_said"] = reasons[r["id"]]
-            out.append(item)
-        return out
-    return shape(good), shape(bad)
+    if len(good) >= 4 and len(poor) >= 4:
+        return [_shape_pair(p, reasons) for p in good[:k]], [_shape_pair(p, reasons) for p in poor[:k]], "next_attempt"
+    good = [p for p in pairs if p["quality_score"] >= 0.8][:k]
+    poor = [p for p in pairs if p["quality_score"] < 0.5][:k]
+    return [_shape_pair(p, reasons) for p in good], [_shape_pair(p, reasons) for p in poor], "submission_outcome"
 
 
-_INSIGHTS_PROMPT = """You coach Vaathiyaar, PyMasters' Python/AI tutor. Below are recent tutor turns that led to a GOOD outcome (the learner's next code attempt passed) and turns that led to a POOR outcome (the next attempt failed or the learner stayed stuck).
+_LABEL_SEMANTICS = {
+    "next_attempt": ("GOOD = the tutor replied to a failing submission and the learner's NEXT attempt on the same lesson passed. "
+                     "POOR = the learner's next attempt still failed (or they rated the reply thumbs-down). "
+                     "So the question is: what about the GOOD replies helped the learner fix their code?"),
+    "submission_outcome": ("GOOD = replies given when the learner's submission passed; POOR = replies given when it failed. "
+                           "This is a weak proxy (the reply came AFTER the outcome), so only propose rules about HOW the tutor "
+                           "responds to failures and successes, never rules that merely restate that passing is good."),
+}
+
+
+_INSIGHTS_PROMPT = """You coach Vaathiyaar, PyMasters' Python/AI tutor. Below are recent tutor turns labelled GOOD or POOR.
+Label meaning: {semantics}
 
 Infer at most {max_rules} concrete, general teaching rules that distinguish the good turns from the poor ones for THIS audience. Rules must be:
 - actionable instructions for the tutor's next reply (length, structure, when to show code vs ask a question, how to handle errors, pacing, analogies)
@@ -401,14 +511,23 @@ POOR OUTCOME TURNS:
 """
 
 
-def distill_insights(db_path: str, llm: Callable[[list, dict], str], min_examples: int = 4) -> dict:
-    good, bad = _outcome_pairs(db_path)
+def distill_insights(db_path: str, llm: Callable[[list, dict], str], min_examples: int = 4,
+                     windows: tuple = (30, 90, 180)) -> dict:
+    """Try the most recent window first; widen when a quiet period leaves too little contrast,
+    so a new deployment still learns from its history instead of waiting weeks."""
+    days = windows[0]
+    good, bad, mode = [], [], "submission_outcome"
+    for days in windows:
+        good, bad, mode = _contrast_examples(db_path, days=days)
+        if len(good) >= min_examples and len(bad) >= min_examples:
+            break
     if len(good) < min_examples or len(bad) < min_examples:
-        return {"skipped": f"not enough contrast yet (good={len(good)}, poor={len(bad)}, need {min_examples} each)"}
-    prompt = _INSIGHTS_PROMPT.format(max_rules=MAX_INSIGHTS, good=json.dumps(good, ensure_ascii=False)[:9000],
+        return {"skipped": f"not enough contrast yet (good={len(good)}, poor={len(bad)} in {days}d, need {min_examples} each)"}
+    prompt = _INSIGHTS_PROMPT.format(max_rules=MAX_INSIGHTS, semantics=_LABEL_SEMANTICS[mode],
+                                     good=json.dumps(good, ensure_ascii=False)[:9000],
                                      bad=json.dumps(bad, ensure_ascii=False)[:9000])
     raw = llm([{"role": "system", "content": "You distil tutoring data into precise rules as JSON."},
-               {"role": "user", "content": prompt}], {"temperature": 0.2, "num_predict": 900})
+               {"role": "user", "content": prompt}], {"temperature": 0.2, "num_predict": 2000})
     rules = []
     for item in _parse_json_array(raw)[:MAX_INSIGHTS]:
         if isinstance(item, dict):
@@ -429,7 +548,7 @@ def distill_insights(db_path: str, llm: Callable[[list, dict], str], min_example
     finally:
         conn.close()
     invalidate_insights_cache()
-    return {"version": version, "rules": len(rules), "good_examples": len(good), "poor_examples": len(bad)}
+    return {"version": version, "rules": len(rules), "good_examples": len(good), "poor_examples": len(bad), "window_days": days, "label_mode": mode}
 
 
 def outcome_ratio(db_path: str, start: str, end: str) -> tuple:
@@ -576,12 +695,17 @@ def run_learning_cycle(db_path: str, llm: Optional[Callable] = None, dry_run: bo
             summary["insights"] = distill_insights(db_path, llm)
         except Exception as exc:  # noqa: BLE001
             summary["errors"].append(f"insights: {str(exc)[:160]}")
-    users = active_learners(db_path)
+    learner_days = 7
+    users = active_learners(db_path, days=learner_days)
+    if not users:
+        learner_days = 30
+        users = active_learners(db_path, days=learner_days)
     summary["active_learners"] = len(users)
+    summary["learner_window_days"] = learner_days
     if not dry_run:
         for uid in users:
             try:
-                summary["learners"].append(distill_learner(db_path, uid, llm))
+                summary["learners"].append(distill_learner(db_path, uid, llm, days=learner_days))
             except Exception as exc:  # noqa: BLE001
                 summary["errors"].append(f"learner {uid[:8]}: {str(exc)[:160]}")
     summary["seconds"] = round(time.time() - started, 1)
