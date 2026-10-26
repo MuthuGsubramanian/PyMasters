@@ -511,10 +511,25 @@ _PROVIDER_STREAM = {"ollama": _ollama_stream, "gemini": _gemini_stream,
                     "qubrid": _qubrid_stream, "qubrid2": _qubrid2_stream}
 
 
+def _db_path_for_exemplars() -> str:
+    return os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
+
+
+def _with_exemplars(messages: list) -> list:
+    """Golden-exemplar enrichment (vaathiyaar/exemplars.py): appends top-rated
+    past interactions to tutor-persona system prompts. Never raises."""
+    try:
+        from vaathiyaar.exemplars import enrich_messages
+        return enrich_messages(messages, _db_path_for_exemplars())
+    except Exception:  # noqa: BLE001 — enrichment is best-effort
+        return messages
+
+
 def complete(messages: list, options: Optional[dict] = None) -> str:
     """Try each active provider in order; return the first success. Raise
     VaathiyaarUnavailable if all fail (or none are configured)."""
     options = options or {}
+    messages = _with_exemplars(messages)
     errors = []
     for name in _active_providers():
         fn = _PROVIDER_COMPLETE.get(name)
@@ -539,6 +554,7 @@ def stream(messages: list, options: Optional[dict] = None):
     else its non-streaming completion yielded as one block). Raises
     VaathiyaarUnavailable if all fail."""
     options = options or {}
+    messages = _with_exemplars(messages)
     errors = []
     for name in _active_providers():
         sfn = _PROVIDER_STREAM.get(name)

@@ -46,6 +46,15 @@ def record_training_pair(
     """
     pair_id = str(uuid.uuid4())
     output_text = json.dumps(vaathiyaar_response, ensure_ascii=False)
+    # Outage fallbacks ("I couldn't reach the AI server…", "taking a quick
+    # breather") are not tutoring and must not become exemplars / fine-tune
+    # data, however the caller scored them (the code-passed path awards 0.85).
+    try:
+        from vaathiyaar.exemplars import is_junk_output
+        if is_junk_output(output_text):
+            return ""
+    except Exception:  # noqa: BLE001 — never block the request path
+        pass
     profile_json = json.dumps(student_profile or {}, ensure_ascii=False)
     context_json = json.dumps(lesson_context or {}, ensure_ascii=False)
 
