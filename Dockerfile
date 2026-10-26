@@ -72,6 +72,9 @@ RUN mkdir -p /app/data && chmod 700 /app/data     && useradd --system --no-creat
 
 EXPOSE 8080
 
+ARG BUILD_SHA=dev
+ENV BUILD_SHA=$BUILD_SHA
+
 HEALTHCHECK --interval=30s --timeout=5s \
     CMD curl -f http://localhost:8080/health || exit 1
 

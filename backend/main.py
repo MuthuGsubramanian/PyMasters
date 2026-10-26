@@ -1058,6 +1058,9 @@ def _health_payload() -> dict:
         "service": "pymasters",
         "db": db_state,
         "time": int(time.time()),
+        # Image build marker (git SHA baked in by CI) so the rollout check can
+        # confirm WHICH build is serving, not just that something is up.
+        "build": os.getenv("BUILD_SHA", "dev"),
     }
 
 

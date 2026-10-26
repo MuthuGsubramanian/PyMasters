@@ -1,4 +1,4 @@
-name: Deploy to Cloud Run
+name: Build + roll out to the production VM
 
 on:
   push:
@@ -80,7 +80,7 @@ jobs:
         run: npm run build
 
   deploy:
-    name: Build + Deploy to Cloud Run
+    name: Build image + wait for VM rollout
     needs: [test, frontend-test]
     runs-on: ubuntu-latest
     permissions:
@@ -119,48 +119,29 @@ jobs:
           docker push --all-tags \
             us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/pymasters
 
-      - name: Deploy to Cloud Run
+      - name: Wait for the VM rollout (pymasters-vm pulls :latest every 2 minutes)
+        # Production moved from Cloud Run to a Compute Engine e2-micro on
+        # 2026-10-27 (infra/gce/). Nothing deploys from here: the VM's systemd
+        # timer pulls the :latest image pushed above and restarts the app if the
+        # digest changed (rolling back on a failed health check). This step just
+        # confirms the new build is the one serving pymasters.net.
         run: |
-          gcloud run deploy pymasters \
-            --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/pymasters:${{ github.sha }} \
-            --region us-central1 \
-            --platform managed \
-            --port 8080 \
-            --allow-unauthenticated \
-            --service-account pymasters-runtime@pymasters-app.iam.gserviceaccount.com \
-            --set-env-vars "SEMANTIC_AUTOSTART=1,OLLAMA_MODEL=gpt-oss:120b,DB_PATH=/app/data/pymasters.db,FROM_NAME=PyMasters,APP_BASE_URL=https://pymasters.net,SMTP_HOST=smtp.gmail.com,SMTP_PORT=587,SMTP_BACKUP_HOST=smtp-relay.brevo.com,SMTP_BACKUP_PORT=587,VAATHIYAAR_PROVIDERS=ollama+qubrid+qubrid2,QUBRID2_MODEL=qwen3.6-plus,GOOGLE_CLOUD_PROJECT=pymasters-app,GOOGLE_CLOUD_LOCATION=us-central1,FRONTEND_URL=https://pymasters.net,GITHUB_REDIRECT_URI=https://pymasters.net/api/auth/github/callback,LINKEDIN_REDIRECT_URI=https://pymasters.net/api/auth/linkedin/callback,SOCIAL_WORKER_TOKEN=${{ secrets.SOCIAL_WORKER_TOKEN }}" \
-            --set-secrets "OLLAMA_API_KEY=ollama-api-key:latest,QUBRID_API_KEY=qubrid-api-key:latest,QUBRID2_API_KEY=qubrid2-api-key:latest,OPS_ADMIN_TOKEN=ops-admin-token:latest,SMTP_PASS=smtp-pass:latest,SMTP_USER=smtp-user:latest,FROM_EMAIL=smtp-user:latest,SMTP_BACKUP_USER=smtp-backup-user:latest,SMTP_BACKUP_PASS=smtp-backup-pass:latest,JWT_SECRET=jwt-secret:latest,EXPORT_TOKEN=export-token:latest,GITHUB_CLIENT_ID=GITHUB_CLIENT_ID:latest,GITHUB_CLIENT_SECRET=GITHUB_CLIENT_SECRET:latest,LINKEDIN_CLIENT_ID=LINKEDIN_CLIENT_ID:latest,LINKEDIN_CLIENT_SECRET=LINKEDIN_CLIENT_SECRET:latest" \
-            --memory 2Gi \
-            --cpu 1 \
-            --execution-environment gen2 \
-            --no-cpu-throttling \
-            --concurrency 80 \
-            --min-instances 1 \
-            --max-instances 1
-        # COST/DURABILITY POSTURE (intentional — reviewed 2026-07-02):
-        #   --min/max-instances 1 : SQLite lives inside the instance; >1 instance
-        #     would fork the database (split-brain). Do NOT raise max-instances
-        #     without first moving off single-file SQLite.
-        #   --no-cpu-throttling   : Litestream replicates the DB to GCS from a
-        #     background thread; throttled CPU would stall replication between
-        #     requests and widen the data-loss window on instance loss.
-        #   The always-on 1 vCPU instance is therefore the accepted baseline
-        #   cost; savings come from image cleanup + CI dedupe instead.
-
-      - name: Post-deploy health check (fail the run if the new revision is unhealthy)
-        # Verifies the just-deployed revision actually serves before the run is
-        # declared green. Does NOT auto-rollback (single-instance SQLite makes that
-        # non-trivial), but turns a bad deploy from "silently green" into a red run
-        # the owner is notified about. Retries to absorb cold-start.
-        run: |
-          URL=$(gcloud run services describe pymasters --region us-central1 --format 'value(status.url)')
-          echo "Probing $URL/health"
-          for i in $(seq 1 12); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "$URL/health" || echo 000)
-            if [ "$code" = "200" ]; then echo "healthy ($code)"; exit 0; fi
-            echo "attempt $i: $code — retrying"; sleep 10
+          # The VM exposes /health by IP over plain HTTP (Caddyfile) so this works
+          # regardless of where pymasters.net currently points.
+          VM=http://35.206.69.198/health
+          echo "waiting for build ${{ github.sha }} at $VM"
+          for i in $(seq 1 45); do
+            body=$(curl -s --max-time 15 "$VM" || true)
+            if echo "$body" | grep -q '"build":"${{ github.sha }}"'; then
+              echo "VM live: $body"
+              echo "pymasters.net: $(curl -s --max-time 15 https://pymasters.net/health || echo unreachable)"
+              exit 0
+            fi
+            sleep 20
           done
-          echo "New revision did not report healthy after ~2min"; exit 1
+          echo "build ${{ github.sha }} not live after 15 min — on the VM: journalctl -u pymasters-update -n 50"
+          echo "last health body: $body"
+          exit 1
 
       - name: Prune old images from Artifact Registry (keep newest 5)
         # Every deploy pushes a ~1GB image tagged with the commit SHA; with the
@@ -177,9 +158,3 @@ jobs:
             | while read -r digest; do
                 gcloud artifacts docker images delete "$REPO@$digest" --delete-tags --quiet || true
               done
-
-      - name: Show deployment URL
-        run: |
-          gcloud run services describe pymasters \
-            --region us-central1 \
-            --format 'value(status.url)'

@@ -1,0 +1,12 @@
+# Litestream on the GCE VM — continuous SQLite replication to the same GCS
+# bucket Cloud Run used, under a separate prefix so the two generations never
+# collide. Auth: VM service account via the metadata server (no keys).
+dbs:
+  - path: /app/data/pymasters.db
+    replicas:
+      - type: gcs
+        bucket: pymasters-app-db
+        path: vm/pymasters.db
+        retention: 168h
+        snapshot-interval: 6h
+        sync-interval: 1s

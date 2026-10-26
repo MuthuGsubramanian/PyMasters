@@ -1,5 +1,9 @@
 # Hosting cost options for pymasters.net (decision brief, 2026-10-26)
 
+> **Decision taken 2026-10-27: production moved to a Compute Engine `e2-micro` VM (`pymasters-vm`, us-central1-a, static IP 35.206.69.198) — see `infra/gce/`.**
+> Why this beat the OVH plan below: it needs **no new account, no card, no R2** (Litestream keeps writing to the existing GCS bucket through the VM's service account), the free tier covers the VM and its 30 GB disk, and the whole thing was built and verified the same night. Expected bill: **≈ $3–4/month** (the static IPv4 ≈ $3.6; compute $0 in the free tier; Artifact Registry ≈ $0.4) against ≈ $60 on Cloud Run. Measured before the move: the app uses ~500 MB RAM p99 and ~5 % of one vCPU, so 1 GB + 2 GB swap is enough; `gcloud compute instances set-machine-type pymasters-vm --machine-type e2-small` (+≈ $12/mo) is the one-command upgrade if memory pressure shows.
+> Deploys: CI only builds and pushes the image; the VM's `pymasters-update.timer` pulls `:latest` every 2 minutes and restarts the app if the digest changed (auto-rollback on failed health). Cut-over runbook: `infra/gce/cutover.sh` (freeze → Wix DNS A records → verify → finish).
+
 ## Where the money goes today
 
 | Item | Config | Est. monthly |

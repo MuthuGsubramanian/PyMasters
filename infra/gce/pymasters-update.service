@@ -1,0 +1,9 @@
+[Unit]
+Description=PyMasters: pull newest image from Artifact Registry and restart if changed
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/pymasters/update.sh
+WorkingDirectory=/opt/pymasters

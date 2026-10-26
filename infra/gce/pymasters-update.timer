@@ -1,0 +1,10 @@
+[Unit]
+Description=PyMasters: check Artifact Registry for a new image every 2 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,67 @@
+# PyMasters on a single Compute Engine VM (e2-micro, us-central1 free tier).
+#
+#   app   : the exact image CI pushes for Cloud Run (nginx + uvicorn + litestream),
+#           pulled from Artifact Registry with the VM service account — no host build.
+#   caddy : TLS termination + HTTP→HTTPS for pymasters.net / www.pymasters.net.
+#
+# Secrets come from /opt/pymasters/.env (0600, written by infra/gce/deploy.sh
+# from the laptop vault). Litestream authenticates to GCS through the VM's
+# service account (metadata server) — no keys anywhere.
+
+services:
+  app:
+    image: us-central1-docker.pkg.dev/pymasters-app/cloud-run-source-deploy/pymasters:latest
+    container_name: pymasters-app
+    restart: unless-stopped
+    env_file: /opt/pymasters/.env
+    environment:
+      DB_PATH: /app/data/pymasters.db
+      PORT: "8080"
+      APP_BASE_URL: https://pymasters.net
+      FRONTEND_URL: https://pymasters.net
+      SEMANTIC_AUTOSTART: "1"
+      FROM_NAME: PyMasters
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: "587"
+      SMTP_BACKUP_HOST: smtp-relay.brevo.com
+      SMTP_BACKUP_PORT: "587"
+      GITHUB_REDIRECT_URI: https://pymasters.net/api/auth/github/callback
+      LINKEDIN_REDIRECT_URI: https://pymasters.net/api/auth/linkedin/callback
+      GOOGLE_CLOUD_PROJECT: pymasters-app
+      GOOGLE_CLOUD_LOCATION: us-central1
+      OLLAMA_MODEL: gpt-oss:120b
+      VAATHIYAAR_PROVIDERS: ollama+qubrid+qubrid2
+      QUBRID2_MODEL: qwen3.6-plus
+    volumes:
+      - /opt/pymasters/data:/app/data
+      - /opt/pymasters/litestream.yml:/etc/litestream.yml:ro
+    ports:
+      - "127.0.0.1:8080:8080"      # local health checks only; Caddy reaches it on the compose network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  caddy:
+    image: caddy:2.9.1
+    container_name: pymasters-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - /opt/pymasters/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  caddy_data:
+  caddy_config:
