@@ -183,37 +183,51 @@ def arcade_catalog(user_id: str = Depends(get_current_user_id)):
         conn.close()
 
 
-PAIR_GAMES = {"loop_runner"}
+SUBSET_GAMES = {"loop_runner": 1, "big_o_grand_prix": 2}      # game -> number of distractors shown
 
 
-def _pair_variant(item: dict, d: int) -> Optional[dict]:
-    """Two-choice variant of a choice item: the truth plus distractor `d` (index into the original
-    choices, skipping the answer), shuffled deterministically. Ids carry the distractor so grading
-    can rebuild the same variant: `<base id>~p<d>`."""
+def _subset_variant(item: dict, ds: tuple) -> Optional[dict]:
+    """Variant of a choice item showing the truth plus the distractors in `ds` (indexes into the
+    original choices), shuffled deterministically. Ids carry the distractors so grading can
+    rebuild the same variant: `<base id>~v<d1>-<d2>`."""
     choices = item.get("choices") or []
     ans = item.get("answer")
-    if item.get("kind") != "choice" or not isinstance(ans, int) or d == ans or d >= len(choices):
+    if item.get("kind") != "choice" or not isinstance(ans, int) or ans >= len(choices):
         return None
-    truth, wrong = choices[ans], choices[d]
-    if truth == wrong:
+    ds = tuple(int(d) for d in ds)
+    if any(d == ans or d < 0 or d >= len(choices) for d in ds) or len(set(ds)) != len(ds):
         return None
-    flip = (hash(f"{item['id']}~p{d}") & 1) == 1
-    pair = [wrong, truth] if flip else [truth, wrong]
-    return {**item, "id": f"{item['id']}~p{d}", "choices": pair, "answer": pair.index(truth), "source_id": item["id"]}
-
-
-def _deal_pairs(topics: set, seed: int, n: int, exclude: set) -> list:
+    truth = choices[ans]
+    wrongs = [choices[d] for d in ds]
+    if truth in wrongs or len(set(wrongs)) != len(wrongs):
+        return None
+    vid = f"{item['id']}~v{'-'.join(str(d) for d in ds)}"
+    pool = [truth] + wrongs
     import random as _random
-    bases = pick(topics, seed, 10_000, set(), kinds={"choice"})
+    _random.Random(vid).shuffle(pool)
+    return {**item, "id": vid, "choices": pool, "answer": pool.index(truth), "source_id": item["id"]}
+
+
+def _deal_subsets(topics: set, seed: int, n: int, exclude: set, k: int, prefer_topics=None) -> list:
+    import itertools
+    import random as _random
+    bases = pick(topics, seed, 10_000, set(), kinds={"choice"}, prefer_topics=prefer_topics)
+    rng = _random.Random(seed)
     combos = []
     for it in bases:
-        for d in range(len(it.get("choices") or [])):
-            v = _pair_variant(it, d)
+        ans = it.get("answer")
+        others = [d for d in range(len(it.get("choices") or [])) if d != ans]
+        subsets = list(itertools.combinations(others, k))
+        rng.shuffle(subsets)
+        for ds in subsets[:4]:                          # a few variants per base keep the deck varied
+            v = _subset_variant(it, ds)
             if v and v["id"] not in exclude:
                 combos.append(v)
-    rng = _random.Random(seed)
     rng.shuffle(combos)
-    # spread the same base question apart so a repeat comes back later with another distractor
+    if prefer_topics:
+        pref = set(prefer_topics)
+        combos.sort(key=lambda i: 0 if i.get("topic") in pref else 1)
+    # spread the same base question apart so a repeat comes back later with other distractors
     seen, first, later = set(), [], []
     for v in combos:
         (later if v["source_id"] in seen else first).append(v)
@@ -225,8 +239,8 @@ def _deal_pairs(topics: set, seed: int, n: int, exclude: set) -> list:
 
 def _deal(conn, user_id: str, game_id: str, board: Optional[str], seed: int, n: int, exclude: set) -> list:
     topics = _topics_for(conn, user_id, game_id, board)
-    if game_id in PAIR_GAMES:
-        return _deal_pairs(topics, seed, n, exclude)
+    if game_id in SUBSET_GAMES:
+        return _deal_subsets(topics, seed, n, exclude, SUBSET_GAMES[game_id], GAME_META[game_id].get("topics_bias"))
     expressions_only = game_id == "code_slingshot" and unlocks.drill_backed_count(conn, user_id) < 10
     return pick(topics, seed, n, exclude, expressions_only=expressions_only, kinds=GAME_META[game_id]["kinds"],
                 prefer_topics=GAME_META[game_id].get("topics_bias"))
@@ -279,19 +293,18 @@ def _item_index(ids: list) -> dict:
     wanted = set(ids)
     bases = {}
     for vid in wanted:
-        if "~p" in vid:
-            bases[vid.rsplit("~p", 1)[0]] = vid
+        if "~v" in vid:
+            bases.setdefault(vid.rsplit("~v", 1)[0], []).append(vid)
     out = {}
     for i in _choice_items():
         if i["id"] in wanted:
             out[i["id"]] = i
-        if i["id"] in bases:
-            vid = bases[i["id"]]
+        for vid in bases.get(i["id"], []):
             try:
-                d = int(vid.rsplit("~p", 1)[1])
+                ds = tuple(int(x) for x in vid.rsplit("~v", 1)[1].split("-"))
             except ValueError:
                 continue
-            v = _pair_variant(i, d)
+            v = _subset_variant(i, ds)
             if v:
                 out[vid] = v
     return out

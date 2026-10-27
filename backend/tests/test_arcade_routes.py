@@ -309,16 +309,27 @@ def test_loop_runner_deals_two_choice_pair_variants(client):
     assert len(items) == 20
     for it in items:
         assert len(it["choices"]) == 2 and len(set(it["choices"])) == 2, it
-        assert "~p" in it["id"] and "answer" not in it
-        base = bank[it["id"].split("~p")[0]]
+        assert "~v" in it["id"] and "answer" not in it
+        base = bank[it["id"].split("~v")[0]]
         truth = base["choices"][base["answer"]]
         assert truth in it["choices"]
     # grading maps the variant's index back to the real answer
     it = items[0]
-    base = bank[it["id"].split("~p")[0]]
+    base = bank[it["id"].split("~v")[0]]
     truth_idx = it["choices"].index(base["choices"][base["answer"]])
     rev = client.post("/api/arcade/session/answer", json={"session_id": r.json()["session_id"], "item_id": it["id"], "response": truth_idx, "ms": 2000}, headers=_headers("a1")).json()
     assert rev["correct"] is True and rev["answer"] == truth_idx
     # the same base question may recur with a different distractor
     more = client.post("/api/arcade/session/questions", json={"session_id": r.json()["session_id"]}, headers=_headers("a1")).json()
-    assert all("~p" in i["id"] for i in more["items"])
+    assert all("~v" in i["id"] for i in more["items"])
+
+
+def test_grand_prix_deals_three_choice_variants(client):
+    _unlock_all(client)
+    bank = _bank_index()
+    r = _start(client, "a1", "big_o_grand_prix")
+    assert r.status_code == 200, r.text
+    for it in r.json()["items"]:
+        assert len(it["choices"]) == 3 and len(set(it["choices"])) == 3 and "~v" in it["id"]
+        base = bank[it["id"].split("~v")[0]]
+        assert base["choices"][base["answer"]] in it["choices"]
