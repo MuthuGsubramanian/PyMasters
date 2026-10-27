@@ -31,3 +31,25 @@ Browser sweep 14:41 IST as the ops learner (desktop, dark): Overview, Classroom 
 Final build 70851fd live 15:45 IST: headless sweep 50/50 clean, API smoke 17/17 green (semantic cold query now 1.3 s after the warm-up). CI caught a real finish race on Linux (two overlapping /finish calls both ran side effects) → atomic claim shipped.
 
 Next modules to sweep (as learner and as admin): Overview, Classroom (lesson + grade), Playground (execute + install), Paths, Knowledge Map, Challenges, Reference, Explains, Community, Live Tutor, Profile, Org console, Super Admin, Login/Signup/Forgot, Pricing/Upgrade.
+
+## Arcade (2026-10-28)
+
+Founder redirected wave 3 from puzzle games to real arcade genres with the question as a move,
+unlocked by Classroom progress. Seven games shipped across three deploys (49e037c, 6a233e3 fix pass,
+1b439db Loop Runner, 7f63b5d Bug Invaders + Dict Dash + Grand Prix).
+
+| # | Area | Finding | Fix |
+|---|------|---------|-----|
+| 14 | Snakes & Ladders | Game froze whenever Bugsy rolled a six (rival effect keyed on phase only) | effect keyed on the turn counter (6a233e3) |
+| 15 | Code Slingshot | One wrong pig made the question unwinnable (stored server grade re-returned) | later hits graded locally against the stored answer, no extra XP |
+| 16 | Linked Snake / Slingshot | Bug Hunt and Shape Sorter items dealt to canvas games were unanswerable | per-game `kinds` filter; catalog pool counts honest |
+| 17 | All arcade | Shell pause did not stop loops or the question timer | controlled pause; pause-aware timer |
+| 18 | Arcade XP | One answer earned full round XP; missing `ms` skipped the human floor | XP scaled by answered/n; missing timing = below floor; cap read + award in one transaction |
+| 19 | Unlocks | Board announced as unlocked while the learner's own pool was too thin | board unlock needs ≥ 12 items from the learner's completed topics |
+| 20 | Sessions | Concurrent answers overwrote each other; a failed finish left the session claimed forever | BEGIN IMMEDIATE on answer; claim released on error; score clamped |
+| 21 | Loop Runner / Grand Prix | Two- and three-lane games need the truth among few labels without leaking it | server deals subset variants (`<id>~v<d…>`), graded by rebuilding the variant |
+
+Live verification: `ops/e2e/arcade_smoke.py` 30/30 on 49e037c and 6a233e3; `ops/e2e/arcade_mobile.py`
+400 px clean for the gallery, Snakes & Ladders and Slingshot (Linked Snake's canvas appeared late in
+one run; re-check on 7f63b5d); PyMastersBrowser: Snakes & Ladders rival loop, Slingshot drag, Loop
+Runner gates confirmed on the live build. QA account seeded with 20 drill-backed completions.
