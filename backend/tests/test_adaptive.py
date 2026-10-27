@@ -349,3 +349,41 @@ def test_contrast_prefers_next_attempt_labels_and_skips_junk(env):
     assert "NEXT attempt on the same lesson passed" in captured["prompt"]
     assert "couldn't reach the AI" not in captured["prompt"]
 
+
+
+# ── game evidence (Learn While You Play) ─────────────────────────────────────
+
+def _game_round(db, user_id, items, when="+0 seconds", game="output_oracle", level=1):
+    _signal(db, user_id, "game_round", game,
+            {"level": level, "mode": "practice", "score": sum(1 for i in items if i[1]), "max_score": len(items),
+             "items": [{"id": f"i{n}", "topic": t, "correct": ok, "misconception": None if ok else mc, "ms": 3000}
+                       for n, (t, ok, mc) in enumerate(items)]}, when)
+
+
+def test_material_summarises_game_rounds(env):
+    db = env["db"]
+    _game_round(db, "g1", [("variables", False, "int_division"), ("lists", True, None), ("variables", False, "int_division")])
+    _game_round(db, "g1", [("for_loops", False, "off_by_one"), ("variables", True, None)])
+    mat = env["adaptive"]._learner_material(db, "g1")
+    assert mat["games"], mat
+    assert any("int_division" in line and "2 misses" in line and "Output Oracle" in line for line in mat["games"]), mat["games"]
+    assert all(s["type"] != "game_round" for s in mat["signals"])
+
+
+def test_scaffolding_game_accuracy_breaks_tie_only(env):
+    db = env["db"]
+    # medium by default; 2 of 8 game answers right → high
+    _game_round(db, "g2", [("variables", False, "a"), ("lists", False, "b"), ("lists", False, "b"), ("variables", True, None)])
+    _game_round(db, "g2", [("variables", False, "a"), ("lists", False, "b"), ("lists", False, "b"), ("variables", True, None)])
+    sc = env["adaptive"].scaffolding_for(db, "g2")
+    assert sc["level"] == "high" and any("game answers wrong" in r for r in sc["reasons"])
+    # a Classroom fail streak stays high even when games go perfectly
+    for _ in range(3):
+        _signal(db, "g3", "code_evaluation", "loops", {"success": False, "lesson_id": "loops_1"})
+    _game_round(db, "g3", [("variables", True, None)] * 8)
+    sc3 = env["adaptive"].scaffolding_for(db, "g3")
+    assert sc3["level"] == "high"
+    # medium + 8/8 right → low
+    _game_round(db, "g4", [("variables", True, None)] * 8)
+    sc4 = env["adaptive"].scaffolding_for(db, "g4")
+    assert sc4["level"] == "low" and any("game answers right" in r for r in sc4["reasons"])
