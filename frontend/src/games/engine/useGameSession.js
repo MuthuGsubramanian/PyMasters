@@ -20,9 +20,19 @@ export function sessionReducer(s, a) {
   switch (a.type) {
     case 'LOAD':
       return { ...initialSession, state: 'loading' };
-    case 'ROUND_LOADED':
-      return { ...s, state: 'playing', round: a.round, items: a.round.items || [], index: 0, shownAt: a.now,
-        responses: {}, itemMs: {}, reveals: {}, result: null, error: null };
+    case 'ROUND_LOADED': {
+      const items = a.round.items || [];
+      const answered = new Set(a.round.answered || []);
+      let index = items.findIndex((it) => !answered.has(it.id));
+      if (index < 0) index = items.length;            // resumed round with everything answered → finish
+      return { ...s, state: index >= items.length ? 'finishing' : 'playing', round: a.round, items, index, shownAt: a.now,
+        responses: Object.fromEntries([...answered].map((id) => [id, null])), itemMs: {}, reveals: {}, result: null, error: null };
+    }
+    case 'REFINISH': {
+      if (s.state !== 'error' || !s.round || !s.items.length) return s;
+      const allAnswered = s.items.every((it) => it.id in s.responses);
+      return allAnswered ? { ...s, state: 'finishing', error: null } : s;
+    }
     case 'ANSWER': {
       if (s.state !== 'playing') return s;
       const item = s.items[s.index];
@@ -104,9 +114,17 @@ export function useGameSession({ gameId, level, mode, getSimPayload }) {
     })();
   }, [s.state, s.round, s.responses, s.itemMs, getSimPayload]);
 
+  const retry = useCallback(() => {
+    // A finish that failed on the wire may have succeeded server-side: re-post it (the server
+    // returns the stored result) instead of dealing a fresh round.
+    const allAnswered = s.round && s.items.length > 0 && s.items.every((it) => it.id in s.responses);
+    if (s.state === 'error' && allAnswered) dispatch({ type: 'REFINISH' });
+    else load();
+  }, [s.state, s.round, s.items, s.responses, load]);
+
   return {
     state: s.state, round: s.round, items: s.items, index: s.index, item: s.items[s.index] || null,
     responses: s.responses, itemMs: s.itemMs, reveals: s.reveals, result: s.result, error: s.error,
-    answer, next, retry: load,
+    answer, next, retry, reload: load,
   };
 }

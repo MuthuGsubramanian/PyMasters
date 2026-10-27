@@ -63,3 +63,18 @@ describe('Play nav strings', () => {
     }
   });
 });
+
+describe('Play UI strings', () => {
+  it('every dictionary carries the play.* keys the Play pages read', () => {
+    const keys = ['play.title', 'play.tagline', 'play.review_title', 'play.review_subtitle', 'play.play', 'play.daily', 'play.coming_soon',
+      'play.best', 'play.level', 'play.rounds', 'play.xp_today', 'play.paused', 'play.retry', 'play.play_level',
+      'round.pause', 'round.resume', 'round.quit', 'round.paused', 'round.loading', 'round.checking', 'round.scoring', 'round.footer_daily', 'round.footer_practice',
+      'reveal.correct', 'reveal.wrong', 'reveal.recorded', 'reveal.you_said', 'reveal.answer', 'reveal.open_lesson', 'reveal.ask', 'reveal.next',
+      'results.complete', 'results.score', 'results.accuracy', 'results.xp', 'results.capped', 'results.strengthened', 'results.revisit',
+      'results.level_up', 'results.level_down', 'results.level_same', 'results.again', 'results.back'];
+    for (const [code, dict] of Object.entries(DICTS)) {
+      const missing = keys.filter((k) => !dict[k]);
+      expect(missing, `${code} missing ${missing.join(', ')}`).toEqual([]);
+    }
+  });
+});

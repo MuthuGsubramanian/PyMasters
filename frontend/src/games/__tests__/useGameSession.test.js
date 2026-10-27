@@ -59,3 +59,21 @@ describe('sessionReducer', () => {
     expect(err.round.round_id).toBe('r1')
   })
 })
+
+describe('REFINISH (retry after a failed finish)', () => {
+  it('goes back to finishing without starting a new round when every item was answered', () => {
+    let s = sessionReducer(sessionReducer(initialSession, { type: 'LOAD' }), { type: 'ROUND_LOADED', round, now: 0 })
+    s = sessionReducer(s, { type: 'ANSWER', itemId: 'a', response: 1, now: 1 })
+    s = sessionReducer(s, { type: 'REVEALED', itemId: 'a', reveal: null })
+    s = sessionReducer(s, { type: 'NEXT', now: 2 })
+    s = sessionReducer(s, { type: 'ANSWER', itemId: 'b', response: 'x', now: 3 })
+    s = sessionReducer(s, { type: 'REVEALED', itemId: 'b', reveal: null })
+    s = sessionReducer(s, { type: 'NEXT', now: 4 })
+    const failed = sessionReducer(s, { type: 'ERROR', error: 'timeout' })
+    const again = sessionReducer(failed, { type: 'REFINISH' })
+    expect(again.state).toBe('finishing')
+    expect(again.round.round_id).toBe('r1')
+    // not applicable when the round never loaded or items are unanswered
+    expect(sessionReducer({ ...initialSession, state: 'error' }, { type: 'REFINISH' }).state).toBe('error')
+  })
+})

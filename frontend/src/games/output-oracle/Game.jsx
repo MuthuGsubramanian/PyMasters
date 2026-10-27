@@ -22,20 +22,22 @@ function Countdown({ seconds, running, onExpire }) {
   // Remounted per item via `key`, so no reset effect is needed.
   const [left, setLeft] = useState(seconds);
   const expired = useRef(false);
+  const onExpireRef = useRef(onExpire);
+  useEffect(() => { onExpireRef.current = onExpire; });   // latest handler without restarting the interval
   useEffect(() => {
     if (!running) return undefined;
     const id = setInterval(() => {
       setLeft((v) => {
         if (v <= 1) {
           clearInterval(id);
-          if (!expired.current) { expired.current = true; onExpire(); }
+          if (!expired.current) { expired.current = true; onExpireRef.current?.(); }
           return 0;
         }
         return v - 1;
       });
     }, 1000);
     return () => clearInterval(id);
-  }, [running, onExpire]);
+  }, [running]);
   const mm = Math.floor(left / 60), ss = String(left % 60).padStart(2, '0');
   const pct = seconds ? Math.max(0, (left / seconds) * 100) : 0;
   return (

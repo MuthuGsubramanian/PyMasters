@@ -40,6 +40,19 @@ describe('Output Oracle interaction', () => {
     r.unmount()
   })
 
+  it('keeps counting when the parent re-renders with a new onExpire handler', () => {
+    vi.useFakeTimers()
+    const first = vi.fn(), second = vi.fn()
+    const r = render(<Game item={choiceItem} onAnswer={first} disabled={false} reducedMotion seconds={3} />)
+    r.act(() => { vi.advanceTimersByTime(1100) })
+    r.rerender(<Game item={choiceItem} onAnswer={second} disabled={false} reducedMotion seconds={3} />)
+    r.act(() => { vi.advanceTimersByTime(2100) })
+    expect(second).toHaveBeenCalledWith(null)
+    expect(r.container.querySelector('[role="timer"]').textContent).toMatch(/0:00/)
+    vi.useRealTimers()
+    r.unmount()
+  })
+
   it('shows a countdown timer and answers null when it expires', () => {
     vi.useFakeTimers()
     const onAnswer = vi.fn()

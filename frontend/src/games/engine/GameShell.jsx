@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pause, Play, X } from 'lucide-react';
 import { Button } from '../../components/ui';
+import { usePlayT } from './i18n';
 
 /**
  * Frame for one round: header (title, level, progress dots), body, footer.
@@ -9,12 +10,13 @@ import { Button } from '../../components/ui';
  */
 export function GameShell({ title, level, index, total, score, onQuit, children, footer }) {
   const [paused, setPaused] = useState(false);
+  const t = usePlayT();
   return (
     <div className="flex flex-col gap-4 max-w-3xl mx-auto w-full pb-24 sm:pb-0">{/* bottom padding clears the floating tutor launcher on phones */}
       <header className="flex items-center justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <h1 className="font-display text-xl sm:text-2xl font-bold text-text-primary truncate">{title}</h1>
-          <p className="text-xs text-text-muted">Level {level}</p>
+          <p className="text-xs text-text-muted">{t('play.level', 'Level')} {level}</p>
         </div>
         <div className="flex items-center gap-3">
           <ol className="flex items-center gap-1.5" aria-label={`item ${Math.min(index + 1, total)} of ${total}`}>
@@ -26,7 +28,7 @@ export function GameShell({ title, level, index, total, score, onQuit, children,
           {score !== null && score !== undefined && (
             <span className="text-sm font-semibold text-text-secondary tabular-nums" aria-live="polite" aria-label={`score ${score}`}>{score}</span>
           )}
-          <Button variant="ghost" size="icon" aria-label={paused ? 'Resume' : 'Pause'} onClick={() => setPaused((p) => !p)}
+          <Button variant="ghost" size="icon" aria-label={paused ? t('round.resume', 'Resume') : t('round.pause', 'Pause')} onClick={() => setPaused((p) => !p)}
             className="min-w-11 min-h-11">
             {paused ? <Play size={18} /> : <Pause size={18} />}
           </Button>
@@ -36,12 +38,12 @@ export function GameShell({ title, level, index, total, score, onQuit, children,
       <div className="relative min-h-[320px]">
         {typeof children === 'function' ? children({ paused }) : children}
         {paused && (
-          <div role="dialog" aria-modal="true" aria-label="Paused"
+          <div role="dialog" aria-modal="true" aria-label={t('round.paused', 'Paused')}
             className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-2xl bg-bg-surface/95 backdrop-blur-sm border border-border-default">
-            <p className="text-lg font-semibold text-text-primary">Paused</p>
+            <p className="text-lg font-semibold text-text-primary">{t('round.paused', 'Paused')}</p>
             <div className="flex gap-3">
-              <Button onClick={() => setPaused(false)} className="min-h-11"><Play size={16} /> Resume</Button>
-              <Button variant="outline" onClick={onQuit} className="min-h-11"><X size={16} /> Quit</Button>
+              <Button onClick={() => setPaused(false)} className="min-h-11"><Play size={16} /> {t('round.resume', 'Resume')}</Button>
+              <Button variant="outline" onClick={onQuit} className="min-h-11"><X size={16} /> {t('round.quit', 'Quit')}</Button>
             </div>
           </div>
         )}

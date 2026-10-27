@@ -3,6 +3,7 @@ import { isReducedMotion } from '../../hooks/useReducedMotion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, CheckCircle2, MessageCircleQuestion, XCircle } from 'lucide-react';
 import { Button } from '../../components/ui';
+import { usePlayT } from './i18n';
 
 function formatAnswer(item, answer) {
   if (answer === null || answer === undefined) return '—';
@@ -28,6 +29,7 @@ function formatAnswer(item, answer) {
  * missing we show only what the learner answered.
  */
 export function Reveal({ item, revealItem, learnerResponse, gameTitle, onNext }) {
+  const t = usePlayT();
   const correct = revealItem?.correct;
   const yourAnswer = formatAnswer(item, learnerResponse);
   const rootRef = useRef(null);
@@ -59,15 +61,15 @@ export function Reveal({ item, revealItem, learnerResponse, gameTitle, onNext })
         {correct === true && <CheckCircle2 className="text-emerald-600 dark:text-emerald-300" size={22} aria-hidden="true" />}
         {correct === false && <XCircle className="text-red-600 dark:text-red-300" size={22} aria-hidden="true" />}
         <p className="font-semibold text-text-primary">
-          {correct === true ? 'Correct' : correct === false ? 'Not quite' : 'Answer recorded'}
+          {correct === true ? t('reveal.correct', 'Correct') : correct === false ? t('reveal.wrong', 'Not quite') : t('reveal.recorded', 'Answer recorded')}
         </p>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-        <dt className="text-text-muted">You said</dt>
+        <dt className="text-text-muted">{t('reveal.you_said', 'You said')}</dt>
         <dd className="font-mono text-text-primary whitespace-pre-wrap break-words">{yourAnswer}</dd>
         {rightAnswer !== null && correct === false && (
           <>
-            <dt className="text-text-muted">Answer</dt>
+            <dt className="text-text-muted">{t('reveal.answer', 'Answer')}</dt>
             <dd className="font-mono text-text-primary whitespace-pre-wrap break-words">{rightAnswer}</dd>
           </>
         )}
@@ -76,14 +78,14 @@ export function Reveal({ item, revealItem, learnerResponse, gameTitle, onNext })
       <div className="flex flex-wrap items-center gap-2 pt-1">
         {revealItem?.lesson_id && (
           <Button as={Link} to={`/dashboard/classroom/${revealItem.lesson_id}`} variant="outline" size="sm" className="min-h-11">
-            <BookOpen size={14} /> Open lesson
+            <BookOpen size={14} /> {t('reveal.open_lesson', 'Open lesson')}
           </Button>
         )}
         <Button variant="outline" size="sm" onClick={ask} className="min-h-11">
-          <MessageCircleQuestion size={14} /> Ask Vaathiyaar
+          <MessageCircleQuestion size={14} /> {t('reveal.ask', 'Ask Vaathiyaar')}
         </Button>
         <Button onClick={onNext} size="sm" className="ml-auto min-h-11" autoFocus>
-          Next <ArrowRight size={14} />
+          {t('reveal.next', 'Next')} <ArrowRight size={14} />
         </Button>
       </div>
     </section>

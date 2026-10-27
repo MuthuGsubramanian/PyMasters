@@ -220,3 +220,29 @@ def test_finish_uses_server_stored_responses(client):
     f = client.post("/api/play/round/finish", json={"round_id": r["round_id"], "responses": {i: "wrong" for i in ids},
                                                   "item_ms": {i: 100 for i in ids}}, headers=_headers("p1")).json()
     assert f["correct"] == 3 and f["xp"] == 25
+
+
+# ── review fixes ─────────────────────────────────────────────────────────────
+
+def test_daily_round_resumes_until_finished(client):
+    """Answering items then abandoning must not hand out a fresh daily round with the keys."""
+    r = _start(client, mode="daily", level=1)
+    assert r["level"] == 2  # daily is the same fixed set for everyone: level is pinned
+    it = r["items"][0]
+    client.post("/api/play/round/answer", json={"round_id": r["round_id"], "item_id": it["id"], "response": "x", "ms": 1000}, headers=_headers("p1"))
+    again = client.post("/api/play/round/start", json={"game_id": "_fixture", "mode": "daily"}, headers=_headers("p1"))
+    assert again.status_code == 200
+    assert again.json()["round_id"] == r["round_id"]
+    assert [i["id"] for i in again.json()["items"]] == [i["id"] for i in r["items"]]
+    assert again.json()["answered"] == [it["id"]]
+
+
+def test_answer_rejects_sim_payload_for_another_item(client, monkeypatch):
+    from games import catalog
+    monkeypatch.setitem(catalog.GAMES, "gradient_golf", catalog.GAMES["gradient_golf"])
+    r = client.post("/api/play/round/start", json={"game_id": "gradient_golf", "level": 1}, headers=_headers("p1")).json()
+    a, b = r["items"][0], r["items"][1]
+    bad = client.post("/api/play/round/answer", json={"round_id": r["round_id"], "item_id": a["id"], "response": None, "ms": 1000,
+                                                    "sim_hole": {"hole_id": b["id"], "seed": b["seed"], "swings": [{"lr": 0.5, "steps": 10}]}},
+                      headers=_headers("p1"))
+    assert bad.status_code == 400

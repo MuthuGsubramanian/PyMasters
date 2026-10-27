@@ -4,10 +4,11 @@ import { CalendarCheck, Gamepad2, Lock, Sparkles, Target } from 'lucide-react';
 import { getPlayCatalog } from '../api';
 import { Badge, Button, GlassCard, SectionHeading } from '../components/ui';
 import { GAME_ICONS, hasComponent } from '../games';
+import { usePlayT } from '../games/engine/i18n';
 
 const topicLabel = (t) => String(t || '').replace(/_/g, ' ');
 
-function GameCard({ game, index }) {
+function GameCard({ game, index, t }) {
   const Icon = GAME_ICONS[game.id] || Gamepad2;
   const playable = hasComponent(game.id);
   return (
@@ -18,24 +19,24 @@ function GameCard({ game, index }) {
           <h3 className="font-semibold text-text-primary leading-tight">{game.title}</h3>
           <p className="text-xs text-text-muted mt-0.5">{game.blurb}</p>
         </div>
-        {game.daily_done && <Badge variant="success"><CalendarCheck size={10} /> daily done</Badge>}
+        {game.daily_done && <Badge variant="success"><CalendarCheck size={10} /> {t('play.daily', 'Daily')} ✓</Badge>}
       </div>
       <dl className="grid grid-cols-3 gap-2 text-center text-xs">
-        <div className="rounded-lg bg-bg-inset py-1.5"><dt className="text-text-muted">Best</dt><dd className="font-semibold text-text-primary tabular-nums">{game.best_score ?? '—'}</dd></div>
-        <div className="rounded-lg bg-bg-inset py-1.5"><dt className="text-text-muted">Level</dt><dd className="font-semibold text-text-primary tabular-nums">{game.best_level ?? game.suggested_level}</dd></div>
-        <div className="rounded-lg bg-bg-inset py-1.5"><dt className="text-text-muted">Rounds</dt><dd className="font-semibold text-text-primary tabular-nums">{game.rounds}</dd></div>
+        <div className="rounded-lg bg-bg-inset py-1.5"><dt className="text-text-muted">{t('play.best', 'Best')}</dt><dd className="font-semibold text-text-primary tabular-nums">{game.best_score ?? '—'}</dd></div>
+        <div className="rounded-lg bg-bg-inset py-1.5"><dt className="text-text-muted">{t('play.level', 'Level')}</dt><dd className="font-semibold text-text-primary tabular-nums">{game.best_level ?? game.suggested_level}</dd></div>
+        <div className="rounded-lg bg-bg-inset py-1.5"><dt className="text-text-muted">{t('play.rounds', 'Rounds')}</dt><dd className="font-semibold text-text-primary tabular-nums">{game.rounds}</dd></div>
       </dl>
       <div className="flex flex-wrap gap-2 mt-auto">
         {playable ? (
           <>
-            <Button as={Link} to={`/dashboard/play/${game.id}?level=${game.suggested_level}`} size="sm" className="min-h-11 flex-1">Play</Button>
+            <Button as={Link} to={`/dashboard/play/${game.id}?level=${game.suggested_level}`} size="sm" className="min-h-11 flex-1">{t('play.play', 'Play')}</Button>
             <Button as={Link} to={`/dashboard/play/${game.id}?mode=daily`} size="sm" variant="outline" className="min-h-11"
               aria-disabled={game.daily_done} onClick={(e) => { if (game.daily_done) e.preventDefault(); }}>
-              <CalendarCheck size={14} /> Daily
+              <CalendarCheck size={14} /> {t('play.daily', 'Daily')}
             </Button>
           </>
         ) : (
-          <Button size="sm" variant="outline" disabled className="min-h-11 flex-1"><Lock size={14} /> Coming soon</Button>
+          <Button size="sm" variant="outline" disabled className="min-h-11 flex-1"><Lock size={14} /> {t('play.coming_soon', 'Coming soon')}</Button>
         )}
       </div>
     </GlassCard>
@@ -46,6 +47,7 @@ export default function Play() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const t = usePlayT();
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
@@ -66,30 +68,30 @@ export default function Play() {
     <div className="flex flex-col gap-6 max-w-6xl mx-auto w-full">
       <header className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold text-text-primary flex items-center gap-2"><Gamepad2 className="text-accent-primary" /> Play</h1>
-          <p className="text-sm text-text-muted mt-1">Two to five minute games where the mechanic is the idea. Losing shows you exactly which idea you are missing.</p>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-text-primary flex items-center gap-2"><Gamepad2 className="text-accent-primary" /> {t('play.title', 'Play')}</h1>
+          <p className="text-sm text-text-muted mt-1">{t('play.tagline', 'Two to five minute games where the mechanic is the idea. Losing shows you exactly which idea you are missing.')}</p>
         </div>
         {data && (
           <p className="text-xs text-text-muted" aria-live="polite">
-            Game XP today <span className="font-semibold text-text-primary tabular-nums">{data.today_xp}</span> / {data.xp_cap}
+            {t('play.xp_today', 'Game XP today')} <span className="font-semibold text-text-primary tabular-nums">{data.today_xp}</span> / {data.xp_cap}
           </p>
         )}
       </header>
 
       {loading && <p className="text-sm text-text-muted" role="status">Loading games…</p>}
       {error === 'paused' && (
-        <GlassCard className="p-5"><p className="text-sm text-text-secondary">Play is taking a short break. Lessons and the Playground are open as usual.</p></GlassCard>
+        <GlassCard className="p-5"><p className="text-sm text-text-secondary">{t('play.paused', 'Play is taking a short break. Lessons and the Playground are open as usual.')}</p></GlassCard>
       )}
       {error && error !== 'paused' && (
         <GlassCard className="p-5 flex items-center justify-between gap-3 flex-wrap">
           <p className="text-sm text-text-secondary">{String(error)}</p>
-          <Button size="sm" variant="outline" onClick={load}>Retry</Button>
+          <Button size="sm" variant="outline" onClick={load}>{t('play.retry', 'Retry')}</Button>
         </GlassCard>
       )}
 
       {data?.recommendations?.length > 0 && (
         <GlassCard index={0} className="p-5">
-          <SectionHeading icon={Target} title="Play to review" subtitle="Picked from what Classroom and your review queue say you should revisit" />
+          <SectionHeading icon={Target} title={t('play.review_title', 'Play to review')} subtitle={t('play.review_subtitle', 'Picked from what Classroom and your review queue say you should revisit')} />
           <ul className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {data.recommendations.map((r) => {
               const g = gamesById[r.game_id];
@@ -99,9 +101,9 @@ export default function Play() {
                   <div className="flex items-center gap-2 text-sm font-semibold text-text-primary"><Icon size={16} className="text-accent-primary" /> {g?.title || r.game_id}</div>
                   <p className="text-xs text-text-muted"><span className="font-medium text-text-secondary">{topicLabel(r.topic)}</span> · {r.reason}</p>
                   {hasComponent(r.game_id) ? (
-                    <Button as={Link} to={`/dashboard/play/${r.game_id}?level=${r.level}`} size="sm" className="min-h-11 mt-auto">Play level {r.level}</Button>
+                    <Button as={Link} to={`/dashboard/play/${r.game_id}?level=${r.level}`} size="sm" className="min-h-11 mt-auto">{t('play.play_level', 'Play level {level}', { level: r.level })}</Button>
                   ) : (
-                    <Button size="sm" variant="outline" disabled className="min-h-11 mt-auto">Coming soon</Button>
+                    <Button size="sm" variant="outline" disabled className="min-h-11 mt-auto">{t('play.coming_soon', 'Coming soon')}</Button>
                   )}
                 </li>
               );
@@ -112,7 +114,7 @@ export default function Play() {
 
       {data && (
         <section aria-label="All games" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {data.games.map((g, i) => <GameCard key={g.id} game={g} index={i + 1} />)}
+          {data.games.map((g, i) => <GameCard key={g.id} game={g} index={i + 1} t={t} />)}
         </section>
       )}
 

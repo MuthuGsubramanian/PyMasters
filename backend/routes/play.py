@@ -29,6 +29,7 @@ MASTERY_PER_CORRECT = 0.03
 MASTERY_PER_WRONG = -0.02
 MASTERY_ROUND_BOUND = 0.10
 RECENT_ROUNDS_EXCLUDED = 3
+DAILY_LEVEL = 2
 MAX_RECOMMENDATIONS = 3
 
 
@@ -124,7 +125,17 @@ def start_round(body: StartBody, user_id: str = Depends(get_current_user_id)):
         if mode == "daily":
             if _daily_done(conn, user_id, game["id"]):
                 raise HTTPException(status_code=409, detail="Today's daily challenge is already done")
-            level = min(3, max(1, int(body.level or 2)))
+            # One daily round per day: an unfinished one is resumed, never re-dealt (its reveals
+            # would otherwise hand the learner the keys for a fresh attempt).
+            open_row = conn.execute(
+                "SELECT * FROM game_rounds WHERE user_id = ? AND game_id = ? AND mode = 'daily' AND finished_at IS NULL "
+                "AND date(created_at) = date('now') ORDER BY created_at DESC LIMIT 1", [user_id, game["id"]]).fetchone()
+            if open_row:
+                items = _load_items(game, json.loads(open_row["item_ids"]), open_row["level"], open_row["seed"])
+                return {"round_id": open_row["id"], "game_id": game["id"], "mode": "daily", "level": open_row["level"],
+                        "seed": open_row["seed"], "items": [engine.public_item(i) for i in items],
+                        "answered": sorted(json.loads(open_row["reveals_json"] or "{}"))}
+            level = DAILY_LEVEL                      # the same fixed set for everyone today
             seed = engine.daily_seed(game["id"], date.today())
             exclude = set()
         else:
@@ -149,7 +160,7 @@ def start_round(body: StartBody, user_id: str = Depends(get_current_user_id)):
     finally:
         conn.close()
     return {"round_id": round_id, "game_id": game["id"], "mode": mode, "level": level, "seed": seed,
-            "items": [engine.public_item(i) for i in items]}
+            "items": [engine.public_item(i) for i in items], "answered": []}
 
 
 def _load_items(game: dict, item_ids: list, level: int, seed: int) -> list:
@@ -194,6 +205,10 @@ def answer_item(body: AnswerBody, user_id: str = Depends(get_current_user_id)):
         if not items:
             raise HTTPException(status_code=404, detail="Item is not part of this round")
         item = items[0]
+        if game["kind"] == "sim" and body.sim_hole:
+            sim_id = body.sim_hole.get("hole_id") or body.sim_hole.get("dataset_id")
+            if sim_id != body.item_id:
+                raise HTTPException(status_code=400, detail="Simulation payload does not belong to this item")
         sim = {"holes": [body.sim_hole], "datasets": [body.sim_hole]} if (game["kind"] == "sim" and body.sim_hole) else None
         scored = engine.score_round([item], {body.item_id: body.response}, level=row["level"], sim=sim, game_id=game["id"])
         entry = _reveal_entry(item, scored["per_item"][0])
