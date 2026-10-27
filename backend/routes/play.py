@@ -8,6 +8,7 @@ the deduplicated `progress.award_xp` so a retried /finish never double-pays.
 import json
 import os
 import sqlite3
+import time
 import uuid
 from datetime import date, datetime, timezone
 from typing import Optional
@@ -252,8 +253,21 @@ def finish_round(body: FinishBody, user_id: str = Depends(get_current_user_id)):
             raise HTTPException(status_code=404, detail="Unknown round")
         if row["user_id"] != user_id:
             raise HTTPException(status_code=403, detail="Forbidden")
-        if row["finished_at"] and row["result_json"]:
+        if row["result_json"]:
             return json.loads(row["result_json"])
+        # Claim the round atomically so two overlapping /finish calls (double tap, retry
+        # racing a slow first call) cannot both run the side effects. The loser waits for
+        # the winner's stored result and returns it.
+        claimed = conn.execute(
+            "UPDATE game_rounds SET finished_at = CURRENT_TIMESTAMP WHERE id = ? AND finished_at IS NULL", [row["id"]])
+        conn.commit()
+        if claimed.rowcount == 0:
+            for _ in range(50):
+                time.sleep(0.1)
+                done = conn.execute("SELECT result_json FROM game_rounds WHERE id = ?", [row["id"]]).fetchone()
+                if done and done["result_json"]:
+                    return json.loads(done["result_json"])
+            raise HTTPException(status_code=409, detail="Round is still being scored, try again")
         game = _game_or_404(row["game_id"])
         items = _load_items(game, json.loads(row["item_ids"]), row["level"], row["seed"])
         # Stored (already revealed) responses take precedence over whatever the client sends now.
