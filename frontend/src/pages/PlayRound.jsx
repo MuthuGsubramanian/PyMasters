@@ -94,7 +94,8 @@ export default function PlayRound() {
           {session.state === 'loading' && <p className="text-sm text-text-muted" role="status">Setting up your round…</p>}
           {session.item && (session.state === 'playing' || session.state === 'answering' || session.state === 'revealing') && (
             <Suspense fallback={<p className="text-sm text-text-muted">Loading game…</p>}>
-              <Game key={session.item.id} item={session.item} onAnswer={onAnswer} disabled={paused || session.state !== 'playing'} reducedMotion={reducedMotion} />
+              <Game key={session.item.id} item={session.item} onAnswer={onAnswer} disabled={paused || session.state !== 'playing'} reducedMotion={reducedMotion}
+                reveal={session.reveals[session.item.id]} />
             </Suspense>
           )}
           {session.state === 'revealing' && session.item && (

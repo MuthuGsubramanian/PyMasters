@@ -23,7 +23,7 @@ LEVEL_UP_ACCURACY = 0.8
 LEVEL_DOWN_ACCURACY = 0.4
 MASTERY_LEVEL_2 = 0.3
 MASTERY_LEVEL_3 = 0.6
-PRIVATE_FIELDS = ("answer", "why", "misconception", "lesson_id")
+PRIVATE_FIELDS = ("answer", "why", "misconception", "lesson_id", "counts")
 
 
 @lru_cache(maxsize=None)

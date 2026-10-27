@@ -163,7 +163,7 @@ def _load_items(game: dict, item_ids: list, level: int, seed: int) -> list:
 def _reveal_entry(item: dict, scored: dict) -> dict:
     return {"id": item["id"], "topic": item["topic"], "correct": scored["correct"], "score": scored["score"], "max": scored["max"],
             "answer": item.get("answer"), "why": item.get("why", ""), "lesson_id": item.get("lesson_id", ""),
-            "misconception": scored.get("misconception")}
+            "misconception": scored.get("misconception"), **({"counts": item["counts"]} if item.get("counts") else {})}
 
 
 @router.post("/round/answer")
