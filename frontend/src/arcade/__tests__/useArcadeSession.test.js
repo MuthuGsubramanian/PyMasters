@@ -12,7 +12,7 @@ describe('arcade session reducer', () => {
     expect(s.sessionId).toBe('s1')
     expect(s.queue.length).toBe(3)
     s = sessionReducer(s, { type: 'TAKE' })
-    expect(s.current.id).toBe('q0')
+    expect(s.item.id).toBe('q0')
     expect(s.queue.length).toBe(2)
   })
 

@@ -11,7 +11,7 @@ export const initialArcadeSession = {
   board: null,
   queue: [],
   dealt: [],
-  current: null,
+  item: null,
   reveals: {},
   answered: 0,
   correct: 0,
@@ -30,9 +30,9 @@ export function sessionReducer(s, a) {
         queue: items, dealt: items.map((i) => i.id), current: null, reveals: {}, answered: 0, correct: 0, result: null, error: null };
     }
     case 'TAKE': {
-      if (!s.queue.length) return { ...s, current: null };
-      const [current, ...queue] = s.queue;
-      return { ...s, current, queue };
+      if (!s.queue.length) return { ...s, item: null };
+      const [item, ...queue] = s.queue;
+      return { ...s, item, queue };
     }
     case 'PREFETCHING':
       return { ...s, prefetching: true };
