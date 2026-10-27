@@ -1,0 +1,8 @@
+[
+  {"id": "fx1", "level": 1, "topic": "variables", "kind": "choice", "prompt": {"code": "print(7 // 2)"}, "choices": ["3", "3.5", "4", "2"], "answer": 0, "misconception": "int_division", "why": "// is floor division: 7 // 2 is 3.", "lesson_id": "variables_intro"},
+  {"id": "fx2", "level": 1, "topic": "lists", "kind": "text", "prompt": {"code": "print([1,2,3][-1])"}, "answer": "3", "misconception": "negative_index", "why": "-1 is the last element.", "lesson_id": "lists_intro"},
+  {"id": "fx3", "level": 1, "topic": "variables", "kind": "choice", "prompt": {"code": "print(1 + 1)"}, "choices": ["2", "11", "1", "3"], "answer": 0, "misconception": "str_concat", "why": "ints add.", "lesson_id": "variables_intro"},
+  {"id": "fx4", "level": 2, "topic": "for_loops", "kind": "text", "prompt": {"code": "for i in range(3): print(i)"}, "answer": "0\n1\n2", "misconception": "off_by_one", "why": "range stops before 3.", "lesson_id": "for_loops_intro"},
+  {"id": "fx5", "level": 2, "topic": "conditionals", "kind": "line_then_choice", "prompt": {"code": "def f(n):\n    if n = 0:\n        return 'zero'\n    return 'other'", "test": "assert f(0) == 'zero'"}, "choices": ["    if n == 0:", "    if n := 0:", "    if n is 0:"], "answer": [1, 0], "misconception": "assign_vs_compare", "why": "== compares; = assigns.", "lesson_id": "conditionals_intro"},
+  {"id": "fx6", "level": 3, "topic": "ds_sets", "kind": "bin", "prompt": {"text": "unique items, fast membership test"}, "choices": ["list", "tuple", "set", "dict"], "answer": "set", "misconception": "set_vs_list", "why": "sets hash their items.", "lesson_id": "ds_sets_intro"}
+]
