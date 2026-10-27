@@ -32,6 +32,9 @@ Stuck on a concept? **Vaathiyaar** (Tamil for *teacher*) is available throughout
 ### 🏆 Challenges that check your work
 Put your skills to the test with **auto-graded coding challenges**. Get instant feedback, track your streaks and progress, and revisit past challenges from the archive. Your work autosaves as you go.
 
+### 🎮 Learn while you play
+Six short games where the **mechanic is the idea**: predict what a snippet prints, hunt the bug and pick the fix, sort requirements into the right container, tag the complexity and watch real operation counts race, choose a learning rate to sink the ball in the loss minimum, fit a curve and then face the hidden test set. Every miss shows the answer, the one-line why, and a link to the lesson — and every round feeds Vaathiyaar's picture of what you know.
+
 ### 🌏 Learn in your language
 PyMasters speaks **8 languages** — including Tamil, Hindi, and more. Lessons translate on demand, and Vaathiyaar tutors you in whichever language you're most comfortable thinking in.
 

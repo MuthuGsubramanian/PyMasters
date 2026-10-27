@@ -8,6 +8,7 @@
 | Health | `https://pymasters.net/health` and, DNS-independent, `http://35.206.69.198/health` (reports `build` = git SHA) |
 | Deploy config/secrets | `infra/gce/deploy.sh` (laptop, OpenSSH with `~/.ssh/google_compute_engine`); `--bootstrap` on a fresh VM |
 | Cut-over / rollback | `infra/gce/cutover.sh freeze|verify|finish|rollback` |
+| Play (games) | Kill switch: `PLAY_ENABLED=0` in `.env` makes every `/api/play/*` route answer 503 (page shows "taking a short break"). Content banks ship in the image (`backend/games/banks/*.json`); rebuild locally with `python backend/games/build_banks.py <game>` and commit. Learner rounds live in `game_rounds`; XP in `xp_awards`. |
 | Backups | Litestream → `gs://pymasters-app-db/vm/pymasters.db` (7-day WAL history, 6 h snapshots); `infra/vps/pull_backup.sh` for a laptop copy |
 
 Useful commands
