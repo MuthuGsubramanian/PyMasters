@@ -33,6 +33,15 @@ GAME_META = {
                      "blurb": "Your snake is a linked list. Eat the right answer to append a node; the wrong one pops your tail."},
     "code_slingshot": {"title": "Code Slingshot", "n": 20, "kinds": {"choice"},
                        "blurb": "Pigs hold the answers. Pull back, aim, and knock out the one that matches the expression."},
+    "loop_runner": {"title": "Loop Runner", "n": 20, "kinds": {"choice"},
+                    "blurb": "Run the neon city. Jump or slide through the gate that holds the expression's real value."},
+    "bug_invaders": {"title": "Bug Invaders", "n": 12, "kinds": {"line_then_choice"},
+                     "blurb": "The program descends line by line. Shoot the guilty line, then the fix that makes the test pass."},
+    "dict_dash": {"title": "Dict Dash", "n": 20, "kinds": {"choice", "bin"},
+                  "blurb": "A maze of pellets, four power pellets with answers. Eat the right one and the error ghosts turn blue."},
+    "big_o_grand_prix": {"title": "Big-O Grand Prix", "n": 16, "kinds": {"choice"},
+                         "topics_bias": ["big_o_complexity", "sorting_basics", "searching", "hash_tables", "recursion_fundamentals"],
+                         "blurb": "Three laps against three karts. Pick the right lane at every fork for a boost; wrong lanes are oil."},
 }
 MIN_POOL = 12
 MASTERY_PER_CORRECT = 0.02
@@ -177,7 +186,8 @@ def arcade_catalog(user_id: str = Depends(get_current_user_id)):
 def _deal(conn, user_id: str, game_id: str, board: Optional[str], seed: int, n: int, exclude: set) -> list:
     topics = _topics_for(conn, user_id, game_id, board)
     expressions_only = game_id == "code_slingshot" and unlocks.drill_backed_count(conn, user_id) < 10
-    return pick(topics, seed, n, exclude, expressions_only=expressions_only, kinds=GAME_META[game_id]["kinds"])
+    return pick(topics, seed, n, exclude, expressions_only=expressions_only, kinds=GAME_META[game_id]["kinds"],
+                prefer_topics=GAME_META[game_id].get("topics_bias"))
 
 
 @router.post("/session/start")
