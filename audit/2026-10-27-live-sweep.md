@@ -53,3 +53,24 @@ Live verification: `ops/e2e/arcade_smoke.py` 30/30 on 49e037c and 6a233e3; `ops/
 400 px clean for the gallery, Snakes & Ladders and Slingshot (Linked Snake's canvas appeared late in
 one run; re-check on 7f63b5d); PyMastersBrowser: Snakes & Ladders rival loop, Slingshot drag, Loop
 Runner gates confirmed on the live build. QA account seeded with 20 drill-backed completions.
+
+### Batch 2 (Loop Runner, Bug Invaders, Dict Dash, Big-O Grand Prix) — 2026-10-28 04:35 IST
+
+Fresh whole-batch review found 4 critical + 9 important issues; all fixed in 653e4b9 (live as 77a900d):
+
+| # | Area | Finding | Fix |
+|---|------|---------|-----|
+| 22 | Dict Dash | `bin` items graded wrong (integer vs label); items with > 4 choices could omit the truth | server deals 4-choice variants of choice items only |
+| 23 | Dict Dash | No more questions after a level clear; player auto-ate a corner pellet on spawn | open question carries over; player stationary until the first steer |
+| 24 | Linked Snake (live) | Snake ran into the wall before any input | stationary until the first steer |
+| 25 | Grand Prix | AI karts got a free lap from the grid; laps counted by rocking over the start line | AI start at lap −1; laps need checkpoints in order |
+| 26 | Subset variants | Repeat variants of a revealed question earned free XP/mastery; pool counted variants | base excluded once dealt; repeats score 0; pool counts distinct bases |
+| 27 | Bug Invaders | Descent uncapped and continued during the fix phase; ships entered late and overlapped the top row | cap 28 px/s, frozen in fix phase, ships on screen, rows moved |
+| 28 | All canvas games | Labels truncated into identical strings; answers unreadable at 400 px; keyboard could not activate answer buttons | `maxWidth` text, visible answer button rows, input hook ignores focused buttons |
+| 29 | Dict Dash / Grand Prix | 43 % / 15 % of frames over 32 ms at 4× CPU (walls with shadows, road redrawn per frame) | offscreen maze and track layers; now 0 % |
+| 30 | All canvas games | Canvas unsized after "Play again"; Retry after a failed finish left the loop stopped; vibrate logged before any gesture | resize keyed on restart; Retry restarts; haptics gated on a gesture |
+
+Live on 77a900d: `arcade_smoke.py` 62/62; `arcade_mobile.py` game surface present for all seven at
+400 px; `arcade_perf.py` at 4× CPU: six games 0 % over 32 ms, Linked Snake one 67 ms hitch (0.9 %);
+PyMastersBrowser: Linked Snake and Dict Dash wait for input, Grand Prix forks and Bug Invaders waves
+render. QA token version bumped afterwards (injected session invalidated).
