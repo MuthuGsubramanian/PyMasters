@@ -6,6 +6,7 @@ import { Boxes, Flag, Mountain, ScatterChart, Terminal, Timer } from 'lucide-rea
 export const GAME_COMPONENTS = {
   output_oracle: lazy(() => import('./output-oracle/Game.jsx')),
   gradient_golf: lazy(() => import('./gradient-golf/Game.jsx')),
+  bug_hunt: lazy(() => import('./bug-hunt/Game.jsx')),
 };
 
 export const GAME_ICONS = {
