@@ -98,11 +98,13 @@ describe('Code Slingshot: a wrong pig does not doom the question', () => {
     await flush(r)
     await r.act(async () => { vi.advanceTimersByTime(60) })
     const api = await import('../../api')
+    api.answerArcadeItem.mockClear()
     r.click(r.container.querySelector('button[data-hit="1"]'))            // wrong
-    await flush(r); await flush(r)
+    for (let i = 0; i < 4; i++) { await flush(r); await r.act(async () => { vi.advanceTimersByTime(40) }) }
     expect(r.container.textContent).toContain('Combo ×0')
+    expect(r.container.querySelector('[data-stage-text]').textContent).toContain('(locked)')
     r.click(r.container.querySelector('button[data-hit="0"]'))            // right, graded locally from the stored answer
-    await flush(r); await flush(r)
+    for (let i = 0; i < 4; i++) { await flush(r); await r.act(async () => { vi.advanceTimersByTime(40) }) }
     expect(api.answerArcadeItem).toHaveBeenCalledTimes(1)
     expect(r.container.textContent).toContain('Combo ×1')
     r.unmount()
