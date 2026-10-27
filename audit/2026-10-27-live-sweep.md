@@ -28,4 +28,6 @@ Wave-2 games live-verified 14:38 IST on build 1250dd8 (Bug Hunt keyboard flow + 
 
 Browser sweep 14:41 IST as the ops learner (desktop, dark): Overview, Classroom lesson (inline Run + graded challenge → +50 XP), Playground (run 346 ms), Profile, Challenges (week 44 + leaderboard), Community (rank #10), Live Tutor form, Knowledge Map (277 concepts), Super Admin overview — all render, no console errors. Not exercised on purpose (side effects on production): Live Tutor booking submit, Support form, org/admin mutations, signup/forgot-password (email is down anyway).
 
+Final build 70851fd live 15:45 IST: headless sweep 50/50 clean, API smoke 17/17 green (semantic cold query now 1.3 s after the warm-up). CI caught a real finish race on Linux (two overlapping /finish calls both ran side effects) → atomic claim shipped.
+
 Next modules to sweep (as learner and as admin): Overview, Classroom (lesson + grade), Playground (execute + install), Paths, Knowledge Map, Challenges, Reference, Explains, Community, Live Tutor, Profile, Org console, Super Admin, Login/Signup/Forgot, Pricing/Upgrade.
