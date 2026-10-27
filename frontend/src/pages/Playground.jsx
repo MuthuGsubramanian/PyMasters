@@ -359,7 +359,7 @@ export default function Playground() {
                             />
                         </div>
                         <span className="text-[11px] font-mono text-text-muted tabular-nums">
-                            {remaining}/{total}
+                            {remaining}/{total} prompts
                         </span>
                     </div>
                 )}

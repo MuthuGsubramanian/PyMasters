@@ -367,3 +367,31 @@ def test_prompt_never_leaks_name_placeholder():
     assert "Muthu" in named
     anonymous = build_system_prompt(student_profile={})
     assert "{name}" not in anonymous
+
+
+class TestDoubleEscapedMessages:
+    """Live 2026-10-27: the model returned JSON whose message carried literal backslash-n
+    sequences, so the Classroom showed the reply as raw text with visible \\n markers."""
+
+    def test_literal_backslash_n_becomes_newline(self):
+        from vaathiyaar.engine import parse_vaathiyaar_response
+        # JSON text whose string value was escaped twice: the decoded message still holds "\\n".
+        raw = '{"message": "## Great\\\\n\\\\n> **Yes**\\\\n```\\\\n25\\\\n```", "phase": "feedback"}'
+        parsed = parse_vaathiyaar_response(raw)
+        assert "\\n" not in parsed["message"]
+        assert parsed["message"] == "## Great\n\n> **Yes**\n```\n25\n```"
+
+    def test_real_newlines_are_left_alone(self):
+        from vaathiyaar.engine import parse_vaathiyaar_response
+        raw = '{"message": "line one\\nline two", "phase": "feedback"}'
+        parsed = parse_vaathiyaar_response(raw)
+        assert parsed["message"] == "line one\nline two"
+
+    def test_prose_mentioning_the_sequence_is_untouched_when_real_newlines_exist(self):
+        from vaathiyaar.engine import _unescape_message
+        text = "Use \\n for a newline.\nSecond line."
+        assert _unescape_message(text) == text
+
+    def test_escaped_quotes_unwrapped(self):
+        from vaathiyaar.engine import _unescape_message
+        assert _unescape_message("printed [\\'a\\', \\'b\\']\\nok") == "printed ['a', 'b']\nok"

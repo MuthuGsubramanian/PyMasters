@@ -649,6 +649,30 @@ def call_vaathiyaar(
     return parse_vaathiyaar_response(raw_content)
 
 
+_DOUBLE_ESCAPES = (("\\n", "\n"), ("\\t", "\t"), ("\\'", "'"), ('\\"', '"'))
+
+
+def _unescape_message(text):
+    """Undo a double-escaped model message (literal backslash-n instead of newlines).
+
+    Some providers return JSON whose string values were escaped twice, so the parsed
+    message still carries two-character backslash-n sequences and renders as raw text
+    in the Classroom (live 2026-10-27). Only applied when the message has NO real
+    newlines, so a correctly escaped message that merely mentions the sequence in
+    prose is untouched.
+    """
+    if not isinstance(text, str) or "\\n" not in text or "\n" in text:
+        return text
+    for a, b in _DOUBLE_ESCAPES:
+        text = text.replace(a, b)
+    return text
+
+
+def _finish(parsed: dict) -> dict:
+    parsed["message"] = _unescape_message(parsed.get("message"))
+    return parsed
+
+
 def parse_vaathiyaar_response(raw: str) -> dict:
     """
     Parse the raw string returned by the AI model into a structured dict.
@@ -702,7 +726,7 @@ def parse_vaathiyaar_response(raw: str) -> dict:
                 parsed.setdefault(key, default_val)
             if "message" not in parsed:
                 parsed["message"] = _salvage_message(text) or raw
-            return parsed
+            return _finish(parsed)
     except json.JSONDecodeError:
         pass
 
@@ -710,7 +734,7 @@ def parse_vaathiyaar_response(raw: str) -> dict:
     # Salvage the human message rather than ever showing the student raw JSON.
     salvaged = _salvage_message(text)
     if salvaged is not None:
-        return {"message": salvaged, **_DEFAULTS}
+        return _finish({"message": salvaged, **_DEFAULTS})
 
     # Looks like JSON but no recoverable message → friendly fallback, no braces.
     if text.lstrip().startswith("{"):
@@ -720,7 +744,7 @@ def parse_vaathiyaar_response(raw: str) -> dict:
         }
 
     # Genuine plain text → use it directly.
-    return {"message": raw, **_DEFAULTS}
+    return _finish({"message": raw, **_DEFAULTS})
 
 
 # JSON string-escape sequences we decode when salvaging a partial message.
