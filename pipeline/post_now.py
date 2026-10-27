@@ -5,7 +5,7 @@ the latest pipeline/social/<date>/linkedin.txt + linkedin.png.
 
 Requires (see pipeline/LINKEDIN_SETUP.md):
   LINKEDIN_AUTOPOST=1
-  LINKEDIN_ORG_URN=urn:li:organization:<id>
+  LINKEDIN_AUTHOR_URN=urn:li:person:<id> (or LINKEDIN_ORG_URN)
   a token via LINKEDIN_ACCESS_TOKEN, or CLIENT_ID/SECRET/REFRESH_TOKEN (auto-refresh)
 
 Run from the repo root:
@@ -24,7 +24,7 @@ from pipeline.actors.linkedin_publisher import publish_linkedin, linkedin_enable
 def main():
     if not linkedin_enabled():
         print("LinkedIn is not configured/enabled.\n"
-              "Set LINKEDIN_AUTOPOST=1, LINKEDIN_ORG_URN, and a token "
+              "Set LINKEDIN_AUTOPOST=1, LINKEDIN_AUTHOR_URN (or LINKEDIN_ORG_URN), and a token "
               "(see pipeline/LINKEDIN_SETUP.md), then re-run.")
         return
 

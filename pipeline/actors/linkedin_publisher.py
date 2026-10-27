@@ -1,8 +1,9 @@
-"""Publish a post (with optional branded image) to the PyMasters LinkedIn page.
+"""Publish a post (with optional branded image) to LinkedIn as the configured author.
 
 SAFE BY DEFAULT: nothing is posted until you opt in via env.
   LINKEDIN_AUTOPOST=1                          master switch
-  LINKEDIN_ORG_URN=urn:li:organization:<id>    the company page
+  LINKEDIN_AUTHOR_URN=urn:li:person:<id>       the member profile (Share on LinkedIn, w_member_social)
+    or LINKEDIN_ORG_URN=urn:li:organization:<id>  the company page (needs Community Management API)
   + a usable access token, via either:
       LINKEDIN_ACCESS_TOKEN (raw, ~60-day), or
       LINKEDIN_CLIENT_ID + LINKEDIN_CLIENT_SECRET + LINKEDIN_REFRESH_TOKEN (auto-refresh)
@@ -27,10 +28,15 @@ REGISTER_ENDPOINT = "https://api.linkedin.com/v2/assets?action=registerUpload"
 _TRUTHY = {"1", "true", "yes", "on"}
 
 
+def author_urn() -> str | None:
+    """Member profile first (the app we keep has Share on LinkedIn), else the company page."""
+    return os.getenv("LINKEDIN_AUTHOR_URN") or os.getenv("LINKEDIN_ORG_URN") or None
+
+
 def linkedin_enabled() -> bool:
     return (
         os.getenv("LINKEDIN_AUTOPOST", "").strip().lower() in _TRUTHY
-        and bool(os.getenv("LINKEDIN_ORG_URN"))
+        and bool(author_urn())
         and bool(get_access_token())
     )
 
@@ -98,13 +104,13 @@ def _build_post(org_urn: str, text: str, asset_urn: str | None) -> dict:
 
 
 def publish_linkedin(text: str, image_bytes: bytes | None = None) -> dict:
-    """Post `text` (+ optional image) to the company page. Returns status; never raises."""
+    """Post `text` (+ optional image) as the configured author. Returns status; never raises."""
     if os.getenv("LINKEDIN_AUTOPOST", "").strip().lower() not in _TRUTHY:
         log.info("LinkedIn autopost disabled — draft saved, not posted.")
         return {"status": "disabled"}
-    org_urn = os.getenv("LINKEDIN_ORG_URN")
+    org_urn = author_urn()
     if not org_urn:
-        return {"status": "error", "detail": "LINKEDIN_ORG_URN not set"}
+        return {"status": "error", "detail": "LINKEDIN_AUTHOR_URN / LINKEDIN_ORG_URN not set"}
 
     token = get_access_token()
     if not token:
