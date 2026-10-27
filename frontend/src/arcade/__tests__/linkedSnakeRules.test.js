@@ -5,7 +5,7 @@ const item = { id: 'q1', kind: 'choice', prompt: { code: 'print(len([1, [2, 3]])
 const rng = (() => { let i = 0; return () => ((i += 0.37) % 1) })()
 
 function run(over = {}) {
-  return { ...newRun({ seed: 1 }), ...over }
+  return { ...newRun({ seed: 1 }), started: true, ...over }
 }
 
 describe('Linked Snake rules', () => {

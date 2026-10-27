@@ -10,7 +10,7 @@ import { useGameLoop } from '../engine/useGameLoop';
 import { createPool, burst, step as stepParticles } from '../engine/particles';
 import { fitCanvas } from '../engine/sprites';
 import { laneOffset } from '../engine/track.js';
-import { play as sfx } from '../engine/sfx';
+import { play as sfx, haptic } from '../engine/sfx';
 import { shortcutsBlocked } from '../../games/engine/keys';
 import { newRace, step, setFork, applyForkResult, STAGE, LAPS } from './rules.js';
 import { draw } from './render.js';
@@ -60,13 +60,14 @@ export default function Game({ reducedMotion = false, onQuit, laps = LAPS, rng =
     const ms = Date.now() - (s0.fork?.askedAtWall || Date.now());
     const result = await session.answer(evt.itemId, evt.choiceIndex, ms);
     grading.current = false;
-    const correct = result ? Boolean(result.correct) : true;   // no verdict → no penalty
+    const correct = result ? Boolean(result.correct) : null;   // no verdict → the fork passes without effect
     const r = applyForkResult(stateRef.current, 'you', correct);
+    if (correct === null) { stateRef.current = r.state; setHud(mirror(r.state)); if (session.queue.length || session.item) session.take(); return; }
     stateRef.current = r.state;
     const you = r.state.karts[0];
     const p = laneOffset(r.state.track, you.s, you.lane);
     if (correct) { sfx('boost'); if (!reducedMotion) burst(particles.current, p.x, p.y, { count: 18, color: ['#fbbf24', '#fff'], speed: 200 }); }
-    else { sfx('squeal'); if (!reducedMotion) burst(particles.current, p.x, p.y, { count: 14, color: '#111827', speed: 90, ttl: 900 }); try { navigator.vibrate?.(40); } catch { /* unsupported */ } }
+    else { sfx('squeal'); if (!reducedMotion) burst(particles.current, p.x, p.y, { count: 14, color: '#111827', speed: 90, ttl: 900 }); haptic(40); }
     if (result) { setReveal({ correct, why: result.why }); setTimeout(() => setReveal(null), 2600); }
     setHud(mirror(stateRef.current));
     if (session.queue.length || session.item) session.take();
@@ -109,7 +110,7 @@ export default function Game({ reducedMotion = false, onQuit, laps = LAPS, rng =
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
     ro?.observe(wrap);
     return () => ro?.disconnect();
-  }, []);
+  }, [done]);
 
   useEffect(() => {
     if (done || paused) return undefined;
@@ -153,7 +154,7 @@ export default function Game({ reducedMotion = false, onQuit, laps = LAPS, rng =
       <div className="max-w-xl mx-auto flex flex-col gap-4">
         <p className="text-text-secondary" role="alert">{session.error}</p>
         <div className="flex gap-3">
-          <Button onClick={session.start}>{t('play.retry', 'Retry')}</Button>
+          <Button onClick={restart}>{t('play.retry', 'Retry')}</Button>
           <Button as={Link} to="/dashboard/play#arcade" variant="outline"><ArrowLeft size={16} /> {t('arcade.back', 'Back to Arcade')}</Button>
         </div>
       </div>
@@ -196,11 +197,11 @@ export default function Game({ reducedMotion = false, onQuit, laps = LAPS, rng =
           </div>
           <p data-stage-text className="sr-only" aria-live="polite">{fork ? `Fork ahead. Lanes: ${fork.lanes.map((l) => l.label).join(', ')}.` : 'Driving.'} Lap {hud.lap} of {hud.laps}.</p>
           {fork && (
-            <div className="sr-only" role="group" aria-label={t('arcade.choices', 'Answers')}>
-              {fork.lanes.map((l) => <button key={l.choiceIndex} type="button" data-lane={l.lane} data-choice={l.choiceIndex} onClick={() => chooseLane(l.lane)}>{l.label}</button>)}
+            <div role="group" aria-label={t('arcade.choices', 'Answers')} className="flex flex-wrap gap-1.5">
+              {[...fork.lanes].sort((a, b) => a.lane - b.lane).map((l) => <button key={l.choiceIndex} type="button" data-lane={l.lane} data-choice={l.choiceIndex} onClick={() => chooseLane(l.lane)} className="min-h-10 rounded-lg border border-border-default bg-bg-surface px-2 py-1 font-mono text-xs text-text-primary hover:border-accent-primary">{l.lane < 0 ? '◀ ' : l.lane > 0 ? '▶ ' : '● '}{l.label}</button>)}
             </div>
           )}
-          {debugFinish && <button type="button" className="sr-only" data-debug-finish onClick={() => { const s = stateRef.current; stateRef.current = { ...s, karts: s.karts.map((k) => (k.id === 'you' ? { ...k, s: s.track.length - 4, speed: 300, lap: s.laps - 1 } : k)) }; keys.current.throttle = true; }}>debug finish</button>}
+          {debugFinish && <button type="button" className="sr-only" data-debug-finish onClick={() => { const s = stateRef.current; stateRef.current = { ...s, karts: s.karts.map((k) => (k.id === 'you' ? { ...k, s: s.track.length - 4, speed: 300, lap: s.laps - 1, nextCp: 0 } : k)) }; keys.current.throttle = true; }}>debug finish</button>}
           <div className="grid grid-cols-3 gap-1 w-44 mx-auto sm:hidden" aria-label="Drive">
             <span />
             <Button variant="outline" size="icon" className="min-h-12 min-w-12" aria-label="Throttle" onPointerDown={hold('throttle', true)} onPointerUp={hold('throttle', false)} onPointerLeave={hold('throttle', false)}><ArrowUp size={18} /></Button>

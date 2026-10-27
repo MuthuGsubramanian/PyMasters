@@ -35,7 +35,7 @@ function signpost(ctx, track, fork) {
     roundedRect(ctx, -40, -11, 80, 22, 6); ctx.fill();
     ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.5; roundedRect(ctx, -40, -11, 80, 22, 6); ctx.stroke();
     ctx.restore();
-    drawLabel(ctx, l.label.length > 11 ? l.label.slice(0, 10) + '…' : l.label, p.x, p.y, { font: '700 11px JetBrains Mono, monospace', color: '#fff' });
+    drawLabel(ctx, l.label, p.x, p.y, { font: '700 11px JetBrains Mono, monospace', color: '#fff', maxWidth: 74 });
   }
   // gate posts
   const a = laneOffset(track, cp.s, -1.7), b = laneOffset(track, cp.s, 1.7);
@@ -75,14 +75,29 @@ function minimap(ctx, state) {
   ctx.restore();
 }
 
+let _trackLayer = null;   // grass + road + start line never change: drawn once, blitted every frame
+function trackLayer(track, pal) {
+  if (_trackLayer && _trackLayer.track === track) return _trackLayer.canvas;
+  if (typeof document === 'undefined') return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = STAGE.w; canvas.height = STAGE.h;
+  const c = canvas.getContext('2d');
+  if (!c) return null;
+  c.fillStyle = pal.grass; c.fillRect(0, 0, STAGE.w, STAGE.h);
+  c.fillStyle = pal.grass2;
+  for (let y = 0; y < STAGE.h; y += 40) for (let x = (y / 40) % 2 ? 40 : 0; x < STAGE.w; x += 80) c.fillRect(x, y, 40, 40);
+  road(c, track, pal);
+  startLine(c, track);
+  _trackLayer = { track, canvas };
+  return canvas;
+}
+
 export function draw(ctx, { state, particles, reducedMotion = false, confetti = 0 }) {
   const pal = { grass: '#166534', grass2: '#15803d', asphalt: '#374151', kerb: '#dc2626' };
   ctx.save();
-  ctx.fillStyle = pal.grass; ctx.fillRect(0, 0, STAGE.w, STAGE.h);
-  ctx.fillStyle = pal.grass2;
-  for (let y = 0; y < STAGE.h; y += 40) for (let x = (y / 40) % 2 ? 40 : 0; x < STAGE.w; x += 80) ctx.fillRect(x, y, 40, 40);
-  road(ctx, state.track, pal);
-  startLine(ctx, state.track);
+  const layer = trackLayer(state.track, pal);
+  if (layer) ctx.drawImage(layer, 0, 0);
+  else { ctx.fillStyle = pal.grass; ctx.fillRect(0, 0, STAGE.w, STAGE.h); road(ctx, state.track, pal); startLine(ctx, state.track); }
   if (state.fork) signpost(ctx, state.track, state.fork);
   // tyre marks (persisting skid list)
   if (state.skids) { ctx.strokeStyle = 'rgba(17,24,39,0.5)'; ctx.lineWidth = 3; for (const sk of state.skids) { ctx.beginPath(); ctx.moveTo(sk.x1, sk.y1); ctx.lineTo(sk.x2, sk.y2); ctx.stroke(); } }

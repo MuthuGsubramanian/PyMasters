@@ -10,7 +10,7 @@ import { useGameLoop } from '../engine/useGameLoop';
 import { useInput } from '../engine/useInput';
 import { createPool, burst, step as stepParticles } from '../engine/particles';
 import { fitCanvas } from '../engine/sprites';
-import { play as sfx } from '../engine/sfx';
+import { play as sfx, haptic } from '../engine/sfx';
 import { newRun, spawnPair, addGate, step, gateEveryMs, STAGE, GROUND_Y, ROBOT_X, LANE } from './rules.js';
 import { draw } from './render.js';
 
@@ -56,11 +56,10 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
     const result = await session.answer(gateEvt.itemId, gateEvt.choiceIndex, ms);
     grading.current = false;
     const correct = Boolean(result?.correct);
-    if (result) setReveal({ correct, why: result.why }); else setReveal({ correct: false, why: t('arcade.retry_answer', 'Connection hiccup. Answer once more.') });
-    setTimeout(() => setReveal(null), 1800);
-    pendingInput.current.verdict = { gateId: gateEvt.gateId, correct: result ? correct : true };   // no verdict → no penalty
+    if (result) { setReveal({ correct, why: result.why }); setTimeout(() => setReveal(null), 1800); }
+    pendingInput.current.verdict = { gateId: gateEvt.gateId, correct: result ? correct : null };   // no verdict → neutral
     if (correct) { sfx('gate'); if (!reducedMotion) burst(particles.current, ROBOT_X, GROUND_Y - 40, { count: 16, color: ['#facc15', '#fff', '#22d3ee'], speed: 220 }); }
-    else { sfx('stumble'); try { navigator.vibrate?.(30); } catch { /* unsupported */ } }
+    else if (result) { sfx('stumble'); haptic(30); }
     itemRef.current = null;
     if (session.queue.length || session.item) session.take();
   }, [session, reducedMotion, t]);
@@ -117,13 +116,13 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
     ro?.observe(wrap);
     return () => ro?.disconnect();
-  }, []);
+  }, [done]);
 
   const act = useCallback((action) => {
     if (action === 'up' || action === 'jump' || action === 'tap') pendingInput.current.jump = true;
     else if (action === 'down') pendingInput.current.slide = true;
   }, []);
-  useInput({ onAction: act, enabled: !done && !paused });
+  useInput({ onAction: act, enabled: !done && !paused, target: wrapRef });
 
   // Accessible path: pick the gate directly.
   const pickGate = useCallback((which) => {
@@ -158,7 +157,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
       <div className="max-w-xl mx-auto flex flex-col gap-4">
         <p className="text-text-secondary" role="alert">{session.error}</p>
         <div className="flex gap-3">
-          <Button onClick={session.start}>{t('play.retry', 'Retry')}</Button>
+          <Button onClick={restart}>{t('play.retry', 'Retry')}</Button>
           <Button as={Link} to="/dashboard/play#arcade" variant="outline"><ArrowLeft size={16} /> {t('arcade.back', 'Back to Arcade')}</Button>
         </div>
       </div>
@@ -199,15 +198,9 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
           </div>
           <p data-stage-text className="sr-only" aria-live="polite">{gate ? `Upper gate ${gate.upper.label}, lower gate ${gate.lower.label}.` : 'Running. Waiting for the next gate.'} Lane {hud.lane}.</p>
           {gate && (
-            <div role="group" aria-label={t('arcade.choices', 'Answers')} className="grid grid-cols-2 gap-2 sm:hidden">
+            <div role="group" aria-label={t('arcade.choices', 'Answers')} className="grid grid-cols-2 gap-2">
               <Button variant="outline" data-gate="upper" data-choice={gate.upper.choiceIndex} className="min-h-12" onClick={() => pickGate('upper')}><ArrowUp size={16} /> {gate.upper.label}</Button>
               <Button variant="outline" data-gate="lower" data-choice={gate.lower.choiceIndex} className="min-h-12" onClick={() => pickGate('lower')}><ArrowDown size={16} /> {gate.lower.label}</Button>
-            </div>
-          )}
-          {gate && (
-            <div className="sr-only" role="group" aria-label={t('arcade.choices', 'Answers')}>
-              <button type="button" data-gate="upper" data-choice={gate.upper.choiceIndex} onClick={() => pickGate('upper')}>{gate.upper.label}</button>
-              <button type="button" data-gate="lower" data-choice={gate.lower.choiceIndex} onClick={() => pickGate('lower')}>{gate.lower.label}</button>
             </div>
           )}
         </div>

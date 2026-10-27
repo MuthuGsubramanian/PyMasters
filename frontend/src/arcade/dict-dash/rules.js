@@ -25,7 +25,7 @@ function freshGhosts(map, now = 0) {
 export function newGame({ lives = LIVES } = {}) {
   const map = parseMap(MAZE);
   return { lives, alive: true, score: 0, level: 1, map, pellets: new Set(map.pellets.map(key)), powers: [], prompt: null,
-    player: { x: map.player.x, y: map.player.y, dir: 'left', next: 'left', acc: 0, mouth: 0 },
+    player: { x: map.player.x, y: map.player.y, dir: 'left', next: null, acc: 0, mouth: 0, started: false },
     ghosts: freshGhosts(map), frightenedT: 0, hurriedT: 0, chain: 0, time: 0, correct: 0, wrong: 0, pelletsEaten: 0, deathT: 0 };
 }
 
@@ -50,7 +50,7 @@ export function applyPowerResult(state, correct) {
 
 function resetPositions(state) {
   const map = state.map;
-  return { ...state, player: { ...state.player, x: map.player.x, y: map.player.y, dir: 'left', next: 'left', acc: 0 }, ghosts: freshGhosts(map, state.time), frightenedT: 0, hurriedT: 0 };
+  return { ...state, player: { ...state.player, x: map.player.x, y: map.player.y, dir: 'left', next: null, acc: 0, started: false }, ghosts: freshGhosts(map, state.time), frightenedT: 0, hurriedT: 0 };
 }
 
 function ghostTarget(state, g, idx) {
@@ -94,11 +94,13 @@ export function step(state, dtMs, input = {}) {
   if (s.deathT > 0) { s = { ...s, deathT: Math.max(0, s.deathT - dtMs) }; return { state: s, events }; }
   // player
   let player = { ...s.player, acc: s.player.acc + dtMs, mouth: (s.player.mouth + dtMs / 90) % (Math.PI * 2) };
-  if (input.dir) player.next = input.dir;
+  if (input.dir) { player.next = input.dir; player.started = true; }
+  if (!player.started) player.acc = 0;                       // nobody moves until the learner steers
+  const prevPlayer = { x: s.player.x, y: s.player.y };
   let pellets = s.pellets, powers = s.powers, score = s.score, pelletsEaten = s.pelletsEaten;
-  while (player.acc >= PLAYER_STEP_MS) {
+  while (player.started && player.acc >= PLAYER_STEP_MS) {
     player.acc -= PLAYER_STEP_MS;
-    const turn = moveFrom(s.map, player.x, player.y, player.next);
+    const turn = player.next ? moveFrom(s.map, player.x, player.y, player.next) : null;
     let dest = turn;
     if (turn) player.dir = player.next; else dest = moveFrom(s.map, player.x, player.y, player.dir);
     if (!dest) break;
@@ -112,6 +114,7 @@ export function step(state, dtMs, input = {}) {
   // ghosts
   const mul = s.frightenedT > 0 ? 1.6 : s.hurriedT > 0 ? 0.6 : 1;
   const levelMul = Math.max(0.7, 1 - 0.05 * (s.level - 1));
+  const prevGhosts = s.ghosts.map((g) => ({ x: g.x, y: g.y }));
   const ghosts = s.ghosts.map((g, idx) => {
     if (s.time < g.releaseAt) return g;
     const stepMs = GHOST_STEP_MS * (g.mode === 'eaten' ? 0.5 : mul) * levelMul;
@@ -124,7 +127,9 @@ export function step(state, dtMs, input = {}) {
   // collisions
   for (let i = 0; i < s.ghosts.length; i++) {
     const g = s.ghosts[i];
-    if (g.x !== s.player.x || g.y !== s.player.y) continue;
+    const same = g.x === s.player.x && g.y === s.player.y;
+    const swapped = g.x === prevPlayer.x && g.y === prevPlayer.y && prevGhosts[i].x === s.player.x && prevGhosts[i].y === s.player.y;
+    if (!same && !swapped) continue;
     if (g.mode === 'eaten') continue;
     if (g.mode === 'frightened') {
       const chain = s.chain + 1;
@@ -143,7 +148,8 @@ export function step(state, dtMs, input = {}) {
   if (s.pellets.size === 0) {
     const level = s.level + 1;
     events.push({ type: 'level_clear', level });
-    s = { ...resetPositions(s), level, pellets: new Set(s.map.pellets.map(key)), score: s.score + 500, powers: [], prompt: null };
+    s = { ...resetPositions(s), level, pellets: new Set(s.map.pellets.map(key)), score: s.score + 500 };
+    if (s.prompt) s = setPrompt(s, s.prompt, rng);          // the open question carries over to the new maze
   }
   return { state: s, events };
 }

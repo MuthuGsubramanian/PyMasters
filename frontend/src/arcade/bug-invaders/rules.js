@@ -10,7 +10,8 @@ export const FIRE_COOLDOWN_MS = 350;
 export const COLS = 4;
 export const CELL_W = 210;
 export const ROW_H = 70;
-export const TOP_Y = 80;
+export const TOP_Y = 120;
+export const MAX_DESCENT = 28;
 export const SWAY = 60;
 
 export function newGame({ shields = SHIELDS } = {}) {
@@ -25,7 +26,7 @@ export function newWave(state, item, rng = Math.random) {
   const invaders = lines.map((text, i) => ({ id: `inv${i}`, lineIndex: i, text, col: i % cols, row: Math.floor(i / cols),
     baseX: baseX + (i % cols) * CELL_W, x: baseX + (i % cols) * CELL_W, y: TOP_Y + Math.floor(i / cols) * ROW_H, alive: true, wobble: rng() * Math.PI * 2 }));
   const boss = state.wave % 3 === 2;
-  const descentSpeed = (8 + 3 * state.wave) * (boss ? 1.6 : 1);
+  const descentSpeed = Math.min(MAX_DESCENT, (8 + 3 * state.wave) * (boss ? 1.6 : 1));
   return { ...state, item, invaders, ships: [], lasers: [], phase: 'line', lineHit: null, boss, descentSpeed, waveStart: state.time, explosions: [] };
 }
 
@@ -33,7 +34,7 @@ export function hitLine(state, lineIndex) {
   if (state.phase !== 'line') return { state, events: [] };
   const invaders = state.invaders.map((i) => (i.lineIndex === lineIndex ? { ...i, alive: false, hitAt: state.time } : i));
   const fixes = state.item?.choices || [];
-  const ships = fixes.map((label, k) => ({ id: `sh${k}`, fixIndex: k, label: String(label), x: -160 - k * 300, y: 56 + (k % 2) * 36, vx: 170 + 20 * k, alive: true }));
+  const ships = fixes.map((label, k) => ({ id: `sh${k}`, fixIndex: k, label: String(label), x: 120 + k * 300, y: 40 + (k % 2) * 34, vx: 150 + 20 * k, alive: true }));
   return { state: { ...state, invaders, phase: 'fix', lineHit: lineIndex, ships, explosions: [...state.explosions, { x: invaders[lineIndex]?.x || 0, y: invaders[lineIndex]?.y || 0, at: state.time }] },
     events: [{ type: 'line_hit', lineIndex }] };
 }
@@ -55,6 +56,9 @@ function failWave(state, events, reason, extra = {}) {
 
 export function applyVerdict(state, verdict) {
   const events = [];
+  if (verdict?.neutral) {                                    // no verdict (network): the wave simply ends
+    return { state: { ...state, phase: 'idle', invaders: [], ships: [], lasers: [], pendingAnswer: null }, events: [{ type: 'wave_neutral' }] };
+  }
   const score = Number(verdict?.score ?? 0), max = Number(verdict?.max ?? 3);
   const lineRight = score === 1 || score === 3;
   const fixRight = score === 2 || score === 3;
@@ -89,7 +93,8 @@ export function step(state, dtMs, input = {}) {
   }
   // formation sway + descent
   const sway = Math.sin((s.time - s.waveStart) / 480) * SWAY;
-  const invaders = s.invaders.map((i) => ({ ...i, x: i.baseX + sway, y: i.y + s.descentSpeed * dt }));
+  const falling = s.phase === 'line' ? s.descentSpeed : 0;      // the formation holds still while you pick the fix
+  const invaders = s.invaders.map((i) => ({ ...i, x: i.baseX + sway, y: i.y + falling * dt }));
   // ships cross the top and wrap
   const ships = s.ships.map((sh) => { const x = sh.x + sh.vx * dt; return { ...sh, x: x > STAGE.w + 200 ? -200 : x }; });
   // lasers

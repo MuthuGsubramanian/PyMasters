@@ -10,7 +10,7 @@ import { useGameLoop } from '../engine/useGameLoop';
 import { useInput } from '../engine/useInput';
 import { createPool, burst, step as stepParticles } from '../engine/particles';
 import { fitCanvas } from '../engine/sprites';
-import { play as sfx } from '../engine/sfx';
+import { play as sfx, haptic } from '../engine/sfx';
 import { newGame, setPrompt, step, applyPowerResult } from './rules.js';
 import { draw, CELL, fieldSize } from './render.js';
 
@@ -65,7 +65,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
     const r = applyPowerResult(stateRef.current, correct);
     stateRef.current = r.state;
     if (correct) { sfx('whoop'); flash.current = 0.6; if (!reducedMotion) burst(particles.current, evt.x * CELL + CELL / 2, evt.y * CELL + CELL / 2, { count: 22, color: ['#fbbf24', '#fff', '#60a5fa'], speed: 220 }); }
-    else { sfx('stumble'); try { navigator.vibrate?.(30); } catch { /* unsupported */ } }
+    else { sfx('stumble'); haptic(30); }
     setReveal({ correct, why: result.why });
     setTimeout(() => setReveal(null), 2600);
     setHud(mirror(stateRef.current));
@@ -86,7 +86,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
       if (e.type === 'pellet' && r.state.pelletsEaten % 3 === 0) sfx('waka');
       if (e.type === 'power') onPower({ ...e, x: s.player.x, y: s.player.y });
       if (e.type === 'ghost_eaten') { sfx('chime'); if (!reducedMotion) burst(particles.current, s.player.x * CELL + CELL / 2, s.player.y * CELL + CELL / 2, { count: 14, color: '#bfdbfe', speed: 160 }); }
-      if (e.type === 'death') { sfx('lose'); flash.current = 1; try { navigator.vibrate?.(60); } catch { /* unsupported */ } }
+      if (e.type === 'death') { sfx('lose'); flash.current = 1; haptic(60); }
       if (e.type === 'level_clear') sfx('win');
       if (e.type === 'game_over') setDone(true);
     }
@@ -114,12 +114,12 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
     ro?.observe(wrap);
     return () => ro?.disconnect();
-  }, []);
+  }, [done]);
 
   const steer = useCallback((action) => {
     if (['up', 'down', 'left', 'right'].includes(action)) pendingDir.current = action;
   }, []);
-  useInput({ onAction: steer, enabled: !done && !paused });
+  useInput({ onAction: steer, enabled: !done && !paused, target: wrapRef });
 
   // Accessible path: the power pellets as real buttons.
   const eatPower = useCallback((p) => {
@@ -152,7 +152,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
       <div className="max-w-xl mx-auto flex flex-col gap-4">
         <p className="text-text-secondary" role="alert">{session.error}</p>
         <div className="flex gap-3">
-          <Button onClick={session.start}>{t('play.retry', 'Retry')}</Button>
+          <Button onClick={restart}>{t('play.retry', 'Retry')}</Button>
           <Button as={Link} to="/dashboard/play#arcade" variant="outline"><ArrowLeft size={16} /> {t('arcade.back', 'Back to Arcade')}</Button>
         </div>
       </div>
@@ -193,8 +193,8 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
           </div>
           <p data-stage-text className="sr-only" aria-live="polite">{hud.powers.length ? `Power pellets: ${hud.powers.map((p) => p.label).join(', ')}.` : 'Waiting for the next question.'} Ghosts {hud.ghosts}. {hud.pellets} pellets left.</p>
           {hud.powers.length > 0 && (
-            <div className="sr-only" role="group" aria-label={t('arcade.choices', 'Answers')}>
-              {hud.powers.map((p) => <button key={p.choiceIndex} type="button" data-power={p.choiceIndex} onClick={() => eatPower(p)}>{p.label}</button>)}
+            <div role="group" aria-label={t('arcade.choices', 'Answers')} className="flex flex-wrap gap-1.5">
+              {hud.powers.map((p) => <button key={p.choiceIndex} type="button" data-power={p.choiceIndex} onClick={() => eatPower(p)} className="min-h-10 rounded-lg border border-border-default bg-bg-surface px-2 py-1 font-mono text-xs text-text-primary hover:border-accent-primary">{p.label}</button>)}
             </div>
           )}
           {debugDeath && <button type="button" className="sr-only" data-debug-death onClick={() => { const s = stateRef.current; stateRef.current = { ...s, ghosts: s.ghosts.map((g, i) => (i === 0 ? { ...g, x: s.player.x, y: s.player.y, mode: 'chase', releaseAt: 0 } : g)) }; }}>debug death</button>}

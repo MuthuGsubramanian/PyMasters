@@ -296,8 +296,8 @@ def test_grand_prix_prefers_big_o_topics_and_dict_dash_allows_bins(client):
     topics = [i["topic"] for i in r["items"]]
     assert sum(1 for t in topics if t in {"big_o_complexity", "sorting_basics", "searching", "hash_tables", "recursion_fundamentals"}) >= len(topics) * 0.8
     r2 = _start(client, "a1", "dict_dash").json()
-    kinds = {bank[i["id"]]["kind"] for i in r2["items"]}
-    assert kinds <= {"choice", "bin"} and "line_then_choice" not in kinds
+    kinds = {bank[i["id"].split("~v")[0]]["kind"] for i in r2["items"]}
+    assert kinds == {"choice"}
 
 
 def test_loop_runner_deals_two_choice_pair_variants(client):
@@ -333,3 +333,73 @@ def test_grand_prix_deals_three_choice_variants(client):
         assert len(it["choices"]) == 3 and len(set(it["choices"])) == 3 and "~v" in it["id"]
         base = bank[it["id"].split("~v")[0]]
         assert base["choices"][base["answer"]] in it["choices"]
+
+
+# ── batch 2 review fix pass ───────────────────────────────────────────────────
+
+def test_dict_dash_deals_four_choice_variants_only(client):
+    _unlock_all(client)
+    bank = _bank_index()
+    r = _start(client, "a1", "dict_dash")
+    assert r.status_code == 200, r.text
+    for it in r.json()["items"]:
+        assert len(it["choices"]) == 4 and len(set(it["choices"])) == 4 and "~v" in it["id"], it
+        base = bank[it["id"].split("~v")[0]]
+        assert base["kind"] == "choice" and base["choices"][base["answer"]] in it["choices"]
+
+
+def test_subset_games_do_not_repeat_a_base_until_the_pool_is_exhausted(client):
+    _unlock_all(client)
+    r = _start(client, "a1", "loop_runner").json()
+    bases = [i["id"].split("~v")[0] for i in r["items"]]
+    assert len(bases) == len(set(bases)), "a base question was dealt twice in one batch"
+    more = client.post("/api/arcade/session/questions", json={"session_id": r["session_id"]}, headers=_headers("a1")).json()
+    more_bases = [i["id"].split("~v")[0] for i in more["items"]]
+    assert not (set(more_bases) & set(bases)), "the second batch repeated a base from the first"
+
+
+def test_repeat_of_a_revealed_base_earns_nothing(client):
+    _unlock_all(client)
+    bank = _bank_index()
+    import routes.arcade as arcade
+    r = _start(client, "a1", "loop_runner").json()
+    sid = r["session_id"]
+    it = r["items"][0]
+    base = bank[it["id"].split("~v")[0]]
+    truth_idx = it["choices"].index(base["choices"][base["answer"]])
+    first = client.post("/api/arcade/session/answer", json={"session_id": sid, "item_id": it["id"], "response": truth_idx, "ms": 2000}, headers=_headers("a1")).json()
+    assert first["max"] == 1 and first["correct"] is True
+    # force a second variant of the same base into the session (as an exhausted pool would)
+    other_d = next(d for d in range(len(base["choices"])) if d != base["answer"] and f"~v{d}" not in it["id"])
+    variant = arcade._subset_variant(base, (other_d,))
+    conn = _db()
+    dealt = json.loads(conn.execute("SELECT questions_json FROM arcade_sessions WHERE id = ?", [sid]).fetchone()[0])
+    conn.execute("UPDATE arcade_sessions SET questions_json = ? WHERE id = ?", [json.dumps(dealt + [variant["id"]]), sid])
+    conn.commit(); conn.close()
+    t2 = variant["choices"].index(base["choices"][base["answer"]])
+    second = client.post("/api/arcade/session/answer", json={"session_id": sid, "item_id": variant["id"], "response": t2, "ms": 2000}, headers=_headers("a1")).json()
+    assert second["max"] == 0 and second["score"] == 0 and second["repeat"] is True
+
+
+def test_subset_pool_counts_distinct_bases(client):
+    """A learner whose pool has few base questions must get needs_content even though variants multiply."""
+    conn = _db()
+    for lid in ("while_loops", "fileio_reading", "recursion_fundamentals", "stacks", "queues", "ds_tuples", "ds_sets", "functions_basics"):
+        conn.execute("INSERT OR IGNORE INTO lesson_completions (user_id, lesson_id, xp_awarded) VALUES ('a2', ?, 10)", [lid])
+    conn.commit(); conn.close()
+    conn = _db()
+    conn.execute("INSERT OR IGNORE INTO lesson_completions (user_id, lesson_id, xp_awarded) VALUES ('a2', 'conditionals', 10)")
+    conn.commit(); conn.close()
+    cat = client.get("/api/arcade/catalog", headers=_headers("a2")).json()
+    g = next(x for x in cat["games"] if x["id"] == "loop_runner")
+    assert g["unlocked"]
+    from arcade.pools import pool_count
+    from arcade.unlocks import completed_topics
+    learned = completed_topics(_db(), "a2")
+    bases = pool_count(learned, kinds={"choice"})
+    assert g["pool"] == bases                      # the catalog counts base questions, not variants
+    assert g["needs_content"] == (bases < 12)
+    r = _start(client, "a2", "loop_runner")
+    assert r.status_code == (409 if bases < 12 else 200)
+    if r.status_code == 200:
+        assert len({i["id"].split("~v")[0] for i in r.json()["items"]}) >= 12

@@ -33,11 +33,11 @@ GAME_META = {
                      "blurb": "Your snake is a linked list. Eat the right answer to append a node; the wrong one pops your tail."},
     "code_slingshot": {"title": "Code Slingshot", "n": 20, "kinds": {"choice"},
                        "blurb": "Pigs hold the answers. Pull back, aim, and knock out the one that matches the expression."},
-    "loop_runner": {"title": "Loop Runner", "n": 20, "kinds": {"choice"},
+    "loop_runner": {"title": "Loop Runner", "n": 20, "kinds": {"choice"}, "prefer_prefix": "ex_",
                     "blurb": "Run the neon city. Jump or slide through the gate that holds the expression's real value."},
     "bug_invaders": {"title": "Bug Invaders", "n": 12, "kinds": {"line_then_choice"},
                      "blurb": "The program descends line by line. Shoot the guilty line, then the fix that makes the test pass."},
-    "dict_dash": {"title": "Dict Dash", "n": 20, "kinds": {"choice", "bin"},
+    "dict_dash": {"title": "Dict Dash", "n": 20, "kinds": {"choice"},
                   "blurb": "A maze of pellets, four power pellets with answers. Eat the right one and the error ghosts turn blue."},
     "big_o_grand_prix": {"title": "Big-O Grand Prix", "n": 16, "kinds": {"choice"},
                          "topics_bias": ["big_o_complexity", "sorting_basics", "searching", "hash_tables", "recursion_fundamentals"],
@@ -183,7 +183,7 @@ def arcade_catalog(user_id: str = Depends(get_current_user_id)):
         conn.close()
 
 
-SUBSET_GAMES = {"loop_runner": 1, "big_o_grand_prix": 2}      # game -> number of distractors shown
+SUBSET_GAMES = {"loop_runner": 1, "big_o_grand_prix": 2, "dict_dash": 3}      # game -> number of distractors shown
 
 
 def _subset_variant(item: dict, ds: tuple) -> Optional[dict]:
@@ -208,31 +208,39 @@ def _subset_variant(item: dict, ds: tuple) -> Optional[dict]:
     return {**item, "id": vid, "choices": pool, "answer": pool.index(truth), "source_id": item["id"]}
 
 
-def _deal_subsets(topics: set, seed: int, n: int, exclude: set, k: int, prefer_topics=None) -> list:
+def _base_of(item_id: str) -> str:
+    return item_id.rsplit("~v", 1)[0] if "~v" in item_id else item_id
+
+
+def _deal_subsets(topics: set, seed: int, n: int, exclude: set, k: int, prefer_topics=None, prefer_prefix=None) -> list:
+    """Deal variants of base questions not yet dealt in this session; a base repeats (with other
+    distractors) only once the fresh bases are exhausted, and such repeats earn nothing (see answer)."""
     import itertools
     import random as _random
+    dealt_bases = {_base_of(i) for i in exclude}
     bases = pick(topics, seed, 10_000, set(), kinds={"choice"}, prefer_topics=prefer_topics)
     rng = _random.Random(seed)
-    combos = []
+    fresh, repeats = [], []
     for it in bases:
         ans = it.get("answer")
         others = [d for d in range(len(it.get("choices") or [])) if d != ans]
         subsets = list(itertools.combinations(others, k))
+        if not subsets:
+            continue
         rng.shuffle(subsets)
-        for ds in subsets[:4]:                          # a few variants per base keep the deck varied
-            v = _subset_variant(it, ds)
-            if v and v["id"] not in exclude:
-                combos.append(v)
-    rng.shuffle(combos)
-    if prefer_topics:
-        pref = set(prefer_topics)
-        combos.sort(key=lambda i: 0 if i.get("topic") in pref else 1)
-    # spread the same base question apart so a repeat comes back later with other distractors
-    seen, first, later = set(), [], []
-    for v in combos:
-        (later if v["source_id"] in seen else first).append(v)
-        seen.add(v["source_id"])
-    out = (first + later)[:n]
+        v = next((_subset_variant(it, ds) for ds in subsets if _subset_variant(it, ds) and _subset_variant(it, ds)["id"] not in exclude), None)
+        if not v:
+            continue
+        (repeats if it["id"] in dealt_bases else fresh).append(v)
+    rng.shuffle(fresh)
+    rng.shuffle(repeats)
+    def rank(i):
+        return (0 if (prefer_prefix and i["id"].startswith(prefer_prefix)) else 1,
+                0 if (prefer_topics and i.get("topic") in set(prefer_topics)) else 1)
+    fresh.sort(key=rank)
+    out = fresh[:n]
+    if len(out) < n:
+        out += repeats[: n - len(out)]
     out.sort(key=lambda i: (int(i.get("level") or 1), rng.random()))
     return out
 
@@ -240,7 +248,8 @@ def _deal_subsets(topics: set, seed: int, n: int, exclude: set, k: int, prefer_t
 def _deal(conn, user_id: str, game_id: str, board: Optional[str], seed: int, n: int, exclude: set) -> list:
     topics = _topics_for(conn, user_id, game_id, board)
     if game_id in SUBSET_GAMES:
-        return _deal_subsets(topics, seed, n, exclude, SUBSET_GAMES[game_id], GAME_META[game_id].get("topics_bias"))
+        return _deal_subsets(topics, seed, n, exclude, SUBSET_GAMES[game_id], GAME_META[game_id].get("topics_bias"),
+                             GAME_META[game_id].get("prefer_prefix"))
     expressions_only = game_id == "code_slingshot" and unlocks.drill_backed_count(conn, user_id) < 10
     return pick(topics, seed, n, exclude, expressions_only=expressions_only, kinds=GAME_META[game_id]["kinds"],
                 prefer_topics=GAME_META[game_id].get("topics_bias"))
@@ -266,6 +275,10 @@ def start_session(body: StartBody, user_id: str = Depends(get_current_user_id)):
         n = GAME_META[body.game_id]["n"]
         seed = int(time.time() * 1000) & 0xFFFFFFFF
         items = _deal(conn, user_id, body.game_id, board, seed, n, set())
+        if body.game_id in SUBSET_GAMES:
+            distinct = len({i["source_id"] for i in items})
+            if distinct < MIN_POOL:
+                items = []
         if len(items) < MIN_POOL:
             raise HTTPException(status_code=409, detail={"code": "needs_content", "message": "Not enough questions for what you have learned yet.",
                                                          "next_lesson": _next_lesson(conn, user_id)})
@@ -349,9 +362,13 @@ def answer_item(body: AnswerBody, user_id: str = Depends(get_current_user_id)):
         if not item:
             raise HTTPException(status_code=404, detail="Item is not part of this session")
         score, max_score = engine.score_item(item, body.response)
-        entry = {"id": item["id"], "topic": item["topic"], "correct": score == max_score, "score": score, "max": max_score,
+        base = _base_of(item["id"])
+        repeat = item.get("source_id") is not None and any(_base_of(k) == base for k in reveals)
+        if repeat:
+            score, max_score = 0, 0          # the answer was already revealed once this session
+        entry = {"id": item["id"], "topic": item["topic"], "correct": max_score > 0 and score == max_score, "score": score, "max": max_score,
                  "answer": item.get("answer"), "why": item.get("why", ""), "lesson_id": item.get("lesson_id", ""),
-                 "misconception": None if score == max_score else item.get("misconception")}
+                 "misconception": None if score == max_score else item.get("misconception"), "repeat": repeat}
         responses = json.loads(row["responses_json"] or "{}")
         item_ms = json.loads(row["item_ms_json"] or "{}")
         responses[body.item_id] = body.response
@@ -385,7 +402,7 @@ def finish_session(body: FinishBody, user_id: str = Depends(get_current_user_id)
         try:
             reveals = json.loads(row["reveals_json"] or "{}")
             item_ms = json.loads(row["item_ms_json"] or "{}")
-            answered = len(reveals)
+            answered = sum(1 for r in reveals.values() if r.get("max", 1) > 0)
             correct = sum(1 for r in reveals.values() if r["correct"])
             points = sum(r["score"] for r in reveals.values())
             max_points = sum(r["max"] for r in reveals.values())

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { newGame, newWave, step, SHIELDS, STAGE, CANNON_Y } from '../bug-invaders/rules.js'
+import { newGame, newWave, step, hitLine, SHIELDS, STAGE, CANNON_Y } from '../bug-invaders/rules.js'
 
 const item = { id: 'b1', kind: 'line_then_choice', prompt: { code: 'total = 0\nfor n in [1, 2, 3]:\n    total == n\nprint(total)', test: 'assert total == 6' }, choices: ['total += n', 'total = n', 'print(n)'] }
 
@@ -37,12 +37,14 @@ describe('Bug Invaders rules', () => {
     let s = newWave(newGame(), item, () => 0.3)
     const target = s.invaders[2]
     s = { ...s, cannonX: target.x }
-    const r = run(s, 1500, { fire: true })
+    const r = run(s, 700, { fire: true })
     expect(r.events.map((e) => e.type)).toContain('line_hit')
     expect(r.state.lineHit).toBe(2)
-    expect(r.state.phase).toBe('fix')
-    expect(r.state.ships.length).toBe(3)
-    expect(r.state.ships.map((sh) => sh.fixIndex).sort()).toEqual([0, 1, 2])
+    const h = hitLine(newWave(newGame(), item, () => 0.3), 2).state
+    expect(h.phase).toBe('fix')
+    expect(h.ships.length).toBe(3)
+    expect(h.ships.map((sh) => sh.fixIndex).sort()).toEqual([0, 1, 2])
+    expect(h.ships.every((sh) => sh.x > -200)).toBe(true)
   })
 
   it('shooting a fix ship submits [line, fix]; a full-score verdict clears the wave, less costs a shield', () => {
