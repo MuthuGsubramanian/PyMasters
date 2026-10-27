@@ -35,6 +35,8 @@ export default function Game({ board = 'variables', reducedMotion = false, onQui
   const [reveal, setReveal] = useState(null);
   const [tally, setTally] = useState({ correct: 0, wrong: 0 });
   const [message, setMessage] = useState('');
+  const [paused, setPaused] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const timers = useRef([]);
   const askedAt = useRef(0);
   const theme = BOARD_THEMES[board] || BOARD_THEMES.variables;
@@ -72,13 +74,20 @@ export default function Game({ board = 'variables', reducedMotion = false, onQui
     setPhase(next.players[next.turn].id === RIVAL ? 'rival' : 'idle');
   }, [session, t]);
 
-  // The question card shows whatever item the session handed us.
+  // The question card shows whatever item the session handed us; with the deck empty the ladder or snake is a free pass.
   useEffect(() => {
-    if (phase === 'question' && session.item && (!question || question.item.id !== session.item.id)) {
+    if (phase !== 'question') return;
+    if (session.item && (!question || question.item.id !== session.item.id)) {
       setQuestion({ item: session.item, kind: game.pending?.type, square: game.pending?.square });
       askedAt.current = Date.now();
+    } else if (!session.item && !session.queue.length && session.exhausted && game.pending) {
+      setMessage(t('arcade.free_pass', 'No questions left in this deck: free pass!'));
+      const { state, events } = resolveQuestion(game, true);
+      setPhase('moving');
+      const moveEvt = events.find((e) => e.type === 'climb');
+      later(() => { if (moveEvt) setShown((s) => ({ ...s, [YOU]: moveEvt.to })); later(() => settle(state, events), 400); }, 200);
     }
-  }, [phase, session.item, question, game.pending]);
+  }, [phase, session.item, session.queue.length, session.exhausted, question, game, later, settle, t]);
 
   const roll = useCallback(() => {
     if (phase !== 'idle' || game.winner) return;
@@ -100,8 +109,13 @@ export default function Game({ board = 'variables', reducedMotion = false, onQui
     if (!question) return;
     const ms = Date.now() - askedAt.current;
     const result = await session.answer(question.item.id, response, ms);
-    const correct = Boolean(result?.correct);
-    setReveal(result ? { ...result, correct } : { correct: false, why: '' });
+    if (!result) {
+      setMessage(t('arcade.retry_answer', 'Connection hiccup. Answer once more.'));
+      setAttempt((a) => a + 1);
+      return;
+    }
+    const correct = Boolean(result.correct);
+    setReveal({ ...result, correct });
     setTally((x) => ({ correct: x.correct + (correct ? 1 : 0), wrong: x.wrong + (correct ? 0 : 1) }));
     const { state, events } = resolveQuestion(game, correct);
     const kind = question.kind;
@@ -134,7 +148,7 @@ export default function Game({ board = 'variables', reducedMotion = false, onQui
     }, RIVAL_DELAY_MS);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+  }, [phase, game.turns]);
 
   // Game over: report the score once.
   const finished = useRef(false);
@@ -145,10 +159,13 @@ export default function Game({ board = 'variables', reducedMotion = false, onQui
   }, [phase, session, game, tally, board]);
 
   useEffect(() => {
-    const onKey = (e) => { if ((e.key === 'Enter' || e.key === ' ') && phase === 'idle' && !question) { e.preventDefault(); roll(); } };
+    const onKey = (e) => {
+      if (paused || e.target?.tagName === 'BUTTON') return;
+      if ((e.key === 'Enter' || e.key === ' ') && phase === 'idle' && !question) { e.preventDefault(); roll(); }
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [phase, question, roll]);
+  }, [phase, question, roll, paused]);
 
   const restart = () => {
     timers.current.forEach(clearTimeout);
@@ -208,10 +225,10 @@ export default function Game({ board = 'variables', reducedMotion = false, onQui
   const yourTurn = phase === 'idle' && game.players[game.turn]?.id === YOU && session.state === 'ready';
   const shownPlayers = game.players.map((p) => ({ ...p, pos: shown[p.id] ?? p.pos }));
   return (
-    <ArcadeShell title={`Snakes & Ladders · ${theme.title}`} subtitle={theme.subtitle} score={tally.correct * 100} onQuit={onQuit}
+    <ArcadeShell title={`Snakes & Ladders · ${theme.title}`} subtitle={theme.subtitle} score={tally.correct * 100} onQuit={onQuit} paused={paused} onPauseChange={setPaused}
       footer={t('round.footer_practice', 'Practice round. Items you have seen recently are skipped.')}>
-      {({ paused }) => (
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 items-start">
+      {() => (
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-4 items-start" data-turn={game.players[game.turn]?.id} data-paused={paused ? '1' : '0'}>
           <Board boardKey={board} layout={game.layout} players={shownPlayers} turned={game.turned} highlight={question?.square} reducedMotion={reducedMotion} />
           <aside className="flex flex-col gap-3">
             <div className="rounded-2xl border border-border-default bg-bg-elevated p-4 flex items-center gap-4">
@@ -230,7 +247,7 @@ export default function Game({ board = 'variables', reducedMotion = false, onQui
           </aside>
           {phase === 'question' && question && (
             <div className="lg:col-span-2">
-              <QuestionCard item={question.item} onAnswer={onAnswer} disabled={paused} timerMs={20000}
+              <QuestionCard key={`${question.item.id}:${attempt}`} item={question.item} onAnswer={onAnswer} disabled={paused} paused={paused} timerMs={20000}
                 title={question.kind === 'ladder' ? t('arcade.ladder', 'A ladder! Answer to climb.') : t('arcade.snake', 'A snake! Answer to escape.')} />
             </div>
           )}

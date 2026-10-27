@@ -5,7 +5,7 @@ import { usePlayT } from '../games/engine/i18n';
 import { ARCADE_ICONS, ARCADE_TITLES } from './index';
 
 function firstUnlockedBoard(game) {
-  return (game.boards || []).find((b) => b.unlocked && b.pool >= 12) || (game.boards || []).find((b) => b.unlocked) || null;
+  return (game.boards || []).find((b) => b.unlocked && b.pool >= 12) || null;
 }
 
 function playHref(game) {

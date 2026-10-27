@@ -33,7 +33,7 @@ export default function ArcadeGame() {
   }
   return (
     <Suspense fallback={<p className="text-sm text-text-muted" role="status">Loading {ARCADE_TITLES[gameId] || 'game'}…</p>}>
-      <Game key={`${gameId}:${board || ''}`} gameId={gameId} board={board} reducedMotion={reducedMotion}
+      <Game key={`${gameId}:${board || ''}`} gameId={gameId} board={board || undefined} reducedMotion={reducedMotion}
         onQuit={() => navigate('/dashboard/play#arcade')} />
     </Suspense>
   );

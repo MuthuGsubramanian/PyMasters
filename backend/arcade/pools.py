@@ -20,7 +20,7 @@ def _choice_items() -> tuple:
     return tuple(out)
 
 
-def candidate_items(topics, exclude_ids=frozenset(), expressions_only: bool = False) -> list:
+def candidate_items(topics, exclude_ids=frozenset(), expressions_only: bool = False, kinds=None) -> list:
     topics = set(topics)
     out = []
     for it in _choice_items():
@@ -28,17 +28,19 @@ def candidate_items(topics, exclude_ids=frozenset(), expressions_only: bool = Fa
             continue
         if expressions_only and not it["id"].startswith("ex_"):
             continue
+        if kinds and it.get("kind") not in kinds:
+            continue
         out.append(it)
     return out
 
 
-def pool_count(topics, expressions_only: bool = False) -> int:
-    return len(candidate_items(topics, expressions_only=expressions_only))
+def pool_count(topics, expressions_only: bool = False, kinds=None) -> int:
+    return len(candidate_items(topics, expressions_only=expressions_only, kinds=kinds))
 
 
-def pick(topics, seed: int, n: int, exclude_ids=frozenset(), expressions_only: bool = False) -> list:
+def pick(topics, seed: int, n: int, exclude_ids=frozenset(), expressions_only: bool = False, kinds=None) -> list:
     """Seeded sample across levels (easier items first in the deal order so games ramp up)."""
-    cands = candidate_items(topics, exclude_ids, expressions_only)
+    cands = candidate_items(topics, exclude_ids, expressions_only, kinds)
     rng = random.Random(seed)
     rng.shuffle(cands)
     chosen = cands[:n]

@@ -13,7 +13,7 @@ import uuid
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from access import assert_learning_access
 from arcade import unlocks
@@ -27,11 +27,11 @@ from vaathiyaar.profiler import nudge_mastery, record_signal
 router = APIRouter(prefix="/api/arcade", tags=["arcade"])
 
 GAME_META = {
-    "snakes_ladders": {"title": "Snakes & Ladders: Python Quest", "n": 12,
+    "snakes_ladders": {"title": "Snakes & Ladders: Python Quest", "n": 12, "kinds": None,
                        "blurb": "Race Bugsy to square 100. Ladders ask a question: right climbs, wrong turns the ladder into a snake."},
-    "linked_snake": {"title": "Linked Snake", "n": 20,
+    "linked_snake": {"title": "Linked Snake", "n": 20, "kinds": {"choice"},
                      "blurb": "Your snake is a linked list. Eat the right answer to append a node; the wrong one pops your tail."},
-    "code_slingshot": {"title": "Code Slingshot", "n": 20,
+    "code_slingshot": {"title": "Code Slingshot", "n": 20, "kinds": {"choice"},
                        "blurb": "Pigs hold the answers. Pull back, aim, and knock out the one that matches the expression."},
 }
 MIN_POOL = 12
@@ -58,7 +58,7 @@ class AnswerBody(BaseModel):
 
 class FinishBody(BaseModel):
     session_id: str
-    score: int = 0
+    score: int = Field(0, ge=0, le=10_000_000)
     stats: Optional[dict] = None
 
 
@@ -153,7 +153,7 @@ def arcade_catalog(user_id: str = Depends(get_current_user_id)):
             need = unlocks.LADDER[gid]
             is_unlocked = f"game:{gid}" in have
             expressions_only = gid == "code_slingshot" and completed < 10
-            pool = pool_count(learned, expressions_only=expressions_only) if is_unlocked else 0
+            pool = pool_count(learned, expressions_only=expressions_only, kinds=meta["kinds"]) if is_unlocked else 0
             entry = {"id": gid, "title": meta["title"], "blurb": meta["blurb"], "unlocked": is_unlocked,
                      "milestone": ("Unlocked" if is_unlocked else
                                    f"Complete {need - completed} more lesson{'s' if need - completed != 1 else ''} to unlock"),
@@ -177,7 +177,7 @@ def arcade_catalog(user_id: str = Depends(get_current_user_id)):
 def _deal(conn, user_id: str, game_id: str, board: Optional[str], seed: int, n: int, exclude: set) -> list:
     topics = _topics_for(conn, user_id, game_id, board)
     expressions_only = game_id == "code_slingshot" and unlocks.drill_backed_count(conn, user_id) < 10
-    return pick(topics, seed, n, exclude, expressions_only=expressions_only)
+    return pick(topics, seed, n, exclude, expressions_only=expressions_only, kinds=GAME_META[game_id]["kinds"])
 
 
 @router.post("/session/start")
@@ -257,8 +257,11 @@ def answer_item(body: AnswerBody, user_id: str = Depends(get_current_user_id)):
         dealt = json.loads(row["questions_json"])
         if body.item_id not in dealt:
             raise HTTPException(status_code=404, detail="Item is not part of this session")
+        conn.execute("BEGIN IMMEDIATE")      # serialize the read-modify-write of the session's JSON columns
+        row = conn.execute("SELECT * FROM arcade_sessions WHERE id = ?", [row["id"]]).fetchone()
         reveals = json.loads(row["reveals_json"] or "{}")
         if body.item_id in reveals:
+            conn.commit()
             return reveals[body.item_id]
         item = _item_index([body.item_id]).get(body.item_id)
         if not item:
@@ -270,8 +273,7 @@ def answer_item(body: AnswerBody, user_id: str = Depends(get_current_user_id)):
         responses = json.loads(row["responses_json"] or "{}")
         item_ms = json.loads(row["item_ms_json"] or "{}")
         responses[body.item_id] = body.response
-        if body.ms is not None:
-            item_ms[body.item_id] = float(body.ms)
+        item_ms[body.item_id] = float(body.ms) if body.ms is not None else 0.0   # no timing → below the human floor
         reveals[body.item_id] = entry
         conn.execute("UPDATE arcade_sessions SET responses_json = ?, item_ms_json = ?, reveals_json = ? WHERE id = ?",
                      [json.dumps(responses), json.dumps(item_ms), json.dumps(reveals), row["id"]])
@@ -298,35 +300,51 @@ def finish_session(body: FinishBody, user_id: str = Depends(get_current_user_id)
                 if done and done["result_json"]:
                     return json.loads(done["result_json"])
             raise HTTPException(status_code=409, detail="Session is still being scored, try again")
-        reveals = json.loads(row["reveals_json"] or "{}")
-        item_ms = json.loads(row["item_ms_json"] or "{}")
-        answered = len(reveals)
-        correct = sum(1 for r in reveals.values() if r["correct"])
-        points = sum(r["score"] for r in reveals.values())
-        max_points = sum(r["max"] for r in reveals.values())
-        accuracy = (points / max_points) if max_points else 0.0
-        prior_cap = today_xp(conn, user_id, "game")
-        xp = engine.xp_for(points, max_points, engine.median_ms(item_ms), prior_cap) if answered else 0
-        xp_capped = bool(answered and accuracy >= engine.XP_MIN_ACCURACY and xp == 0 and prior_cap >= engine.XP_DAILY_CAP)
-        prev_best = conn.execute("SELECT MAX(score) FROM arcade_sessions WHERE user_id = ? AND game_id = ? AND finished_at IS NOT NULL AND id != ?",
-                                 [user_id, row["game_id"], row["id"]]).fetchone()[0] or 0
-        score = max(0, int(body.score or 0))
-        by_topic = {}
-        for r in reveals.values():
-            by_topic[r["topic"]] = by_topic.get(r["topic"], 0.0) + (MASTERY_PER_CORRECT if r["correct"] else MASTERY_PER_WRONG)
-        result = {"session_id": row["id"], "game_id": row["game_id"], "board": row["board"], "score": score,
-                  "answered": answered, "correct": correct, "accuracy": round(accuracy, 3),
-                  "xp": 0, "xp_capped": xp_capped, "best": score > prev_best and answered > 0,
-                  "reveal": [reveals[k] for k in json.loads(row["questions_json"]) if k in reveals],
-                  "topics": {"strengthened": sorted(t for t, d in by_topic.items() if d > 0),
-                             "revisit": sorted(t for t, d in by_topic.items() if d <= 0)}}
-        awarded = award_xp(conn, user_id, xp, "game", row["id"]) if xp else 0
-        result["xp"] = awarded
-        if answered and accuracy >= engine.XP_MIN_ACCURACY:
-            touch_streak(conn, user_id)
-        conn.execute("UPDATE arcade_sessions SET score = ?, correct = ?, answered = ?, xp = ?, result_json = ?, finished_at = CURRENT_TIMESTAMP WHERE id = ?",
-                     [score, correct, answered, awarded, json.dumps(result), row["id"]])
-        conn.commit()
+        try:
+            reveals = json.loads(row["reveals_json"] or "{}")
+            item_ms = json.loads(row["item_ms_json"] or "{}")
+            answered = len(reveals)
+            correct = sum(1 for r in reveals.values() if r["correct"])
+            points = sum(r["score"] for r in reveals.values())
+            max_points = sum(r["max"] for r in reveals.values())
+            accuracy = (points / max_points) if max_points else 0.0
+            conn.execute("BEGIN IMMEDIATE")    # cap read + award in one transaction
+            prior_cap = today_xp(conn, user_id, "game")
+            dealt = GAME_META[row["game_id"]]["n"]
+            raw = engine.xp_for(points, max_points, engine.median_ms(item_ms), prior_cap) if answered else 0
+            # XP scales with how much of a session was really played: one lucky answer is a sliver, not 25 XP.
+            xp = int(round(raw * min(1.0, answered / dealt))) if raw else 0
+            if raw and xp == 0:
+                xp = 1
+            xp_capped = bool(answered and accuracy >= engine.XP_MIN_ACCURACY and prior_cap + xp >= engine.XP_DAILY_CAP)
+            prev_best = conn.execute("SELECT MAX(score) FROM arcade_sessions WHERE user_id = ? AND game_id = ? AND finished_at IS NOT NULL AND id != ?",
+                                     [user_id, row["game_id"], row["id"]]).fetchone()[0] or 0
+            score = max(0, int(body.score or 0))
+            by_topic = {}
+            for r in reveals.values():
+                by_topic[r["topic"]] = by_topic.get(r["topic"], 0.0) + (MASTERY_PER_CORRECT if r["correct"] else MASTERY_PER_WRONG)
+            result = {"session_id": row["id"], "game_id": row["game_id"], "board": row["board"], "score": score,
+                      "answered": answered, "correct": correct, "accuracy": round(accuracy, 3),
+                      "xp": 0, "xp_capped": xp_capped, "best": score > prev_best and answered > 0,
+                      "reveal": [reveals[k] for k in json.loads(row["questions_json"]) if k in reveals],
+                      "topics": {"strengthened": sorted(t for t, d in by_topic.items() if d > 0),
+                                 "revisit": sorted(t for t, d in by_topic.items() if d <= 0)}}
+            awarded = award_xp(conn, user_id, xp, "game", row["id"]) if xp else 0
+            result["xp"] = awarded
+            if answered and accuracy >= engine.XP_MIN_ACCURACY:
+                touch_streak(conn, user_id)
+            conn.execute("UPDATE arcade_sessions SET score = ?, correct = ?, answered = ?, xp = ?, result_json = ?, finished_at = CURRENT_TIMESTAMP WHERE id = ?",
+                         [score, correct, answered, awarded, json.dumps(result), row["id"]])
+            conn.commit()
+        except Exception:
+            # release the claim so a retry can finish the session instead of waiting on a result that never comes
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            conn.execute("UPDATE arcade_sessions SET finished_at = NULL WHERE id = ? AND result_json IS NULL", [row["id"]])
+            conn.commit()
+            raise
     finally:
         conn.close()
     try:

@@ -17,7 +17,7 @@ import { draw, SLING, MAX_PULL } from './render.js';
 
 const CHARGE_MS = 1200;
 const mirror = (s) => ({ lives: s.lives, birdsLeft: s.birdsLeft, score: s.score, combo: s.combo, question: s.question, alive: s.alive,
-  pigs: s.world.pigs.filter((p) => p.alive).map((p) => ({ id: p.id, label: p.label, locked: p.locked })), scene: s.scene, correct: s.correct, wrong: s.wrong });
+  pigs: s.world.pigs.filter((p) => p.alive).map((p) => ({ id: p.id, label: p.label, locked: p.locked, choiceIndex: p.choiceIndex })), scene: s.scene, correct: s.correct, wrong: s.wrong });
 
 /**
  * Code Slingshot: pigs hold the answers; pull back, aim and knock out the one that matches the
@@ -42,6 +42,8 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
   const askedAt = useRef(0);
   const finished = useRef(false);
   const [done, setDone] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const hitPending = useRef(false);
 
   // New question → towers with pigs.
   useEffect(() => {
@@ -53,8 +55,10 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
       setHud(mirror(stateRef.current));
     } else if (!session.item && session.queue.length) {
       session.take();
+    } else if (!session.item && !session.queue.length && session.exhausted && s.lastQuestionId) {
+      setDone(true);                       // deck empty: end the run with what was scored
     }
-  }, [session.state, session.item, session.queue.length, session, rng, hud.question]);
+  }, [session.state, session.item, session.queue.length, session.exhausted, session, rng, hud.question]);
 
   const fire = useCallback((pull) => {
     const s = stateRef.current;
@@ -68,23 +72,49 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
 
   const onPigHit = useCallback(async (evt) => {
     const s0 = stateRef.current;
-    if (!s0.question || evt.locked) { if (evt.locked) sfx('raspberry'); return; }
+    if (!s0.question || evt.locked) { if (evt.locked) sfx('raspberry'); hitPending.current = false; return; }
     const ms = Date.now() - askedAt.current;
-    const result = await session.answer(s0.question.id, evt.choiceIndex, ms);
-    const correct = Boolean(result?.correct);
+    // The server grades the first hit of a question; later hits on the same question are judged
+    // locally against the stored answer (no extra XP), so one wrong pig never dooms the question.
+    const known = s0.knownAnswer && s0.knownAnswer.id === s0.question.id ? s0.knownAnswer : null;
+    let result;
+    if (known) {
+      result = { ...known.reveal, correct: Number(evt.choiceIndex) === Number(known.reveal.answer) };
+    } else {
+      result = await session.answer(s0.question.id, evt.choiceIndex, ms);
+      if (result && result.answer !== undefined && result.answer !== null) {
+        stateRef.current = { ...stateRef.current, knownAnswer: { id: s0.question.id, reveal: result } };
+      }
+    }
+    if (!result) {                       // no verdict (network): the pig shrugs it off
+      const pig = stateRef.current.world.pigs.find((p) => p.id === evt.id);
+      if (pig) pig.hit = false;
+      hitPending.current = false;
+      return;
+    }
+    const correct = Boolean(result.correct);
     const r = applyHitResult(stateRef.current, evt.id, correct);
     stateRef.current = r.state;
     const pig = r.state.world.pigs.find((p) => p.id === evt.id);
     if (correct) {
       sfx('pop'); shake.current = 1;
-      if (pig) burst(particles.current, pig.x, pig.y, { count: 26, color: ['#a3e635', '#fef08a', '#fff'], speed: 260 });
+      if (pig && !reducedMotion) burst(particles.current, pig.x, pig.y, { count: 26, color: ['#a3e635', '#fef08a', '#fff'], speed: 260 });
       if (r.events.some((e) => e.type === 'scene_change')) sfx('win');
     } else { sfx('raspberry'); flash.current = 0.6; }
-    setReveal(result ? { correct, why: result.why } : { correct, why: '' });
+    setReveal({ correct, why: result.why });
     setTimeout(() => setReveal(null), 2400);
     setHud(mirror(stateRef.current));
+    hitPending.current = false;
     if (correct && (session.queue.length || session.item)) session.take();
-  }, [session]);
+  }, [session, reducedMotion]);
+
+  // Accessible path: each live pig as a real button.
+  const hitChoice = useCallback((p) => {
+    const s = stateRef.current;
+    if (!s.alive || !s.question || hitPending.current) return;
+    hitPending.current = true;
+    onPigHit({ id: p.id, choiceIndex: p.choiceIndex, label: p.label, locked: p.locked });
+  }, [onPigHit]);
 
   const birdDone = useCallback((poppedThisFlight) => {
     flyingRef.current = false;
@@ -108,16 +138,16 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
     const events = stepWorld(s.world, dt);
     let popped = false;
     for (const e of events) {
-      if (e.type === 'crate') { sfx('thud'); shake.current = Math.max(shake.current, 0.5); burst(particles.current, s.world.bird?.x || 0, s.world.bird?.y || 0, { count: 8, color: '#d6a15a', speed: 140, ttl: 400 }); }
-      if (e.type === 'pig') { onPigHit(e); popped = !e.locked; }
+      if (e.type === 'crate') { sfx('thud'); shake.current = Math.max(shake.current, 0.5); if (!reducedMotion) burst(particles.current, s.world.bird?.x || 0, s.world.bird?.y || 0, { count: 8, color: '#d6a15a', speed: 140, ttl: 400 }); }
+      if (e.type === 'pig') { if (!e.locked) hitPending.current = true; onPigHit(e); popped = !e.locked; }
     }
     const b = s.world.bird;
     if (b && !b.flying) {
       // settle a moment so the player sees where it landed
       if (!b.settleAt) b.settleAt = performance.now() + 500;
-      else if (performance.now() >= b.settleAt) birdDone(popped || Boolean(b.hitPig && !s.world.pigs.find((p) => p.id === b.hitPig)?.alive));
+      else if (performance.now() >= b.settleAt && !hitPending.current) birdDone(popped || Boolean(b.hitPig && !s.world.pigs.find((p) => p.id === b.hitPig)?.alive));
     }
-  }, [onPigHit, birdDone]);
+  }, [onPigHit, birdDone, reducedMotion]);
 
   const render = useCallback(() => {
     const canvas = canvasRef.current;
@@ -129,7 +159,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
     draw(ctx, { state: stateRef.current, aim: flyingRef.current ? null : liveAim, particles: particles.current, shake: shake.current, reducedMotion, flash: flash.current });
   }, [aim, reducedMotion]);
 
-  useGameLoop({ update, draw: render, running: !done && hud.alive });
+  useGameLoop({ update, draw: render, running: !done && hud.alive && !paused });
 
   useEffect(() => {
     const canvas = canvasRef.current, wrap = wrapRef.current;
@@ -148,7 +178,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
 
   // Keyboard: arrows aim, hold space to charge, release to fire.
   useEffect(() => {
-    if (done) return undefined;
+    if (done || paused) return undefined;
     const onDown = (e) => {
       if (shortcutsBlocked(e)) return;
       if (e.key === 'ArrowUp') { e.preventDefault(); setAim((a) => ({ ...a, angle: Math.min(80, a.angle + 3) })); }
@@ -165,7 +195,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
     window.addEventListener('keydown', onDown);
     window.addEventListener('keyup', onUp);
     return () => { window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); };
-  }, [aim, done, fire]);
+  }, [aim, done, fire, paused]);
 
   // Pointer: drag the bird back, release to fire.
   const toStage = (e) => {
@@ -175,7 +205,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
     return { x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale };
   };
   const onPointerDown = (e) => {
-    if (done || flyingRef.current) return;
+    if (done || paused || flyingRef.current) return;
     const p = toStage(e);
     if (Math.hypot(p.x - SLING.x, p.y - SLING.y) > 70) return;
     e.currentTarget.setPointerCapture?.(e.pointerId);
@@ -250,9 +280,9 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
 
   const pigsText = hud.pigs.map((p) => `${p.label}${p.locked ? ' (locked)' : ''}`).join(', ');
   return (
-    <ArcadeShell title="Code Slingshot" subtitle={`${t('arcade.birds', '{n} birds left', { n: hud.birdsLeft })} · ${t('arcade.combo', 'Combo ×{n}', { n: hud.combo })}`} score={hud.score} lives={hud.lives} onQuit={onQuit}
+    <ArcadeShell title="Code Slingshot" subtitle={`${t('arcade.birds', '{n} birds left', { n: hud.birdsLeft })} · ${t('arcade.combo', 'Combo ×{n}', { n: hud.combo })}`} score={hud.score} lives={hud.lives} onQuit={onQuit} paused={paused} onPauseChange={setPaused}
       footer={t('arcade.aim', 'Drag the bird back and release. Arrow keys aim, hold Space for power.')}>
-      {({ paused }) => (
+      {() => (
         <div className="flex flex-col gap-3" data-birds={hud.birdsLeft} data-angle={aim.angle} data-flying={flying ? '1' : '0'} data-paused={paused ? '1' : '0'}>
           <Hud item={hud.question} reveal={reveal} />
           <div ref={wrapRef} className="w-full flex justify-center">
@@ -261,6 +291,11 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
               onPointerDown={paused ? undefined : onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} />
           </div>
           <p data-stage-text className="sr-only" aria-live="polite">{pigsText ? `Pigs: ${pigsText}.` : 'Waiting for the next question.'} Angle {aim.angle} degrees.</p>
+          {hud.pigs.length > 0 && (
+            <div className="sr-only" role="group" aria-label={t('arcade.choices', 'Answers')}>
+              {hud.pigs.map((p) => <button key={p.id} type="button" data-hit={p.choiceIndex} onClick={() => hitChoice(p)}>{p.label}</button>)}
+            </div>
+          )}
         </div>
       )}
     </ArcadeShell>

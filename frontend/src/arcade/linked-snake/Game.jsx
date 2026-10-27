@@ -36,6 +36,7 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
   const answering = useRef(false);
   const finished = useRef(false);
   const [done, setDone] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   // Hand the snake a new prompt whenever the session has one and the field is empty.
   useEffect(() => {
@@ -47,8 +48,10 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
       setHud(mirror(stateRef.current));
     } else if (!session.item && session.queue.length) {
       session.take();
+    } else if (!session.item && !session.queue.length && session.exhausted && s.lastPromptId) {
+      setDone(true);                       // the deck is empty: the run ends with what was scored
     }
-  }, [session.state, session.item, session.queue.length, session, rng, hud.prompt, hud.length]);
+  }, [session.state, session.item, session.queue.length, session.exhausted, session, rng, hud.prompt, hud.length]);
 
   const onEat = useCallback(async (evt) => {
     const s0 = stateRef.current;
@@ -56,19 +59,36 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
     answering.current = true;
     const ms = Date.now() - askedAt.current;
     const result = await session.answer(s0.prompt.id, evt.choiceIndex, ms);
-    const correct = Boolean(result?.correct);
+    if (!result) {                       // no verdict (network): neither grow nor shrink, move on
+      stateRef.current = { ...stateRef.current, pendingEat: null, prompt: null };
+      answering.current = false;
+      setHud(mirror(stateRef.current));
+      if (session.queue.length || session.item) session.take();
+      return;
+    }
+    const correct = Boolean(result.correct);
     const r = applyEatResult(stateRef.current, correct, evt.label);
     stateRef.current = r.state;
     answering.current = false;
     const head = r.state.snake[0];
-    if (correct) { sfx('crunch'); burst(particles.current, head.x * CELL + CELL / 2, head.y * CELL + CELL / 2, { count: 18, color: ['#5eead4', '#f59e0b', '#fff'], speed: 220 }); }
+    if (correct) { sfx('crunch'); if (!reducedMotion) burst(particles.current, head.x * CELL + CELL / 2, head.y * CELL + CELL / 2, { count: 18, color: ['#5eead4', '#f59e0b', '#fff'], speed: 220 }); }
     else { sfx(r.events.some((e) => e.type === 'crash') ? 'thud' : 'fizz'); flash.current = 1; }
+    if (r.events.some((e) => e.type === 'crash')) setDone(true);
     if (r.events.some((e) => e.type === 'level_up')) sfx('win');
-    setReveal(result ? { correct, why: result.why } : { correct, why: '' });
+    setReveal({ correct, why: result.why });
     setTimeout(() => setReveal(null), 2200);
     setHud(mirror(stateRef.current));
     if (session.queue.length || session.item) session.take();
-  }, [session]);
+  }, [session, reducedMotion]);
+
+  // Accessible path: the foods as real buttons (also handy on tiny screens).
+  const eatChoice = useCallback((food) => {
+    const s = stateRef.current;
+    if (!s.alive || !s.prompt || answering.current) return;
+    stateRef.current = { ...s, foods: [], pendingEat: food };
+    setHud(mirror(stateRef.current));
+    onEat({ choiceIndex: food.choiceIndex, label: food.label });
+  }, [onEat]);
 
   const update = useCallback((dt) => {
     const s = stateRef.current;
@@ -97,7 +117,7 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
     draw(ctx, s, { progress: Math.min(1, acc.current / speedFor(s.level)), particles: particles.current, flash: flash.current, reducedMotion });
   }, [reducedMotion]);
 
-  useGameLoop({ update, draw: render, running: !done && hud.alive });
+  useGameLoop({ update, draw: render, running: !done && hud.alive && !paused });
 
   // Canvas sizing: the field is 20×14 cells; scale to the container width, keep the aspect.
   useEffect(() => {
@@ -118,7 +138,7 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
   const steer = useCallback((action) => {
     if (['up', 'down', 'left', 'right'].includes(action)) { stateRef.current = turn(stateRef.current, action); setHud(mirror(stateRef.current)); }
   }, []);
-  useInput({ onAction: steer, enabled: !done });
+  useInput({ onAction: steer, enabled: !done && !paused });
 
   // Game over → report once.
   useEffect(() => {
@@ -173,9 +193,9 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
 
   const foodsText = hud.foods.map((f) => `${f.label} at column ${f.x + 1}, row ${f.y + 1}`).join('; ');
   return (
-    <ArcadeShell title="Linked Snake" subtitle={`Level ${hud.level} · len(snake) == ${hud.length}`} score={hud.score} onQuit={onQuit}
+    <ArcadeShell title="Linked Snake" subtitle={`Level ${hud.level} · len(snake) == ${hud.length}`} score={hud.score} onQuit={onQuit} paused={paused} onPauseChange={setPaused}
       footer={t('arcade.steer', 'Arrow keys or swipe to steer. Eat the right answer.')}>
-      {({ paused }) => (
+      {() => (
         <div className="flex flex-col gap-3" data-dir={hud.dir} data-paused={paused ? '1' : '0'}>
           <Hud item={hud.prompt} reveal={reveal}>
             <code className="text-xs text-text-muted font-mono">{hud.lastOp}</code>
@@ -185,6 +205,11 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
               className="rounded-2xl border border-border-strong shadow-lg max-w-full touch-none" />
           </div>
           <p data-field-text className="sr-only" aria-live="polite">{foodsText ? `Foods: ${foodsText}.` : 'Waiting for the next question.'} Snake length {hud.length}, heading {hud.dir}.</p>
+          {hud.foods.length > 0 && (
+            <div className="sr-only" role="group" aria-label={t('arcade.choices', 'Answers')}>
+              {hud.foods.map((f) => <button key={f.choiceIndex} type="button" data-eat={f.choiceIndex} onClick={() => eatChoice(f)}>{f.label}</button>)}
+            </div>
+          )}
             <div className="grid grid-cols-3 gap-1 w-40 mx-auto sm:hidden" aria-label="Steer">
               <span />
               <Button variant="outline" size="icon" className="min-h-12 min-w-12" aria-label="Up" onClick={() => steer('up')}><ArrowUp size={18} /></Button>
