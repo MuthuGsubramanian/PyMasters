@@ -22,9 +22,10 @@ Quizzes already exist on 310 lessons and stay where they are.
 
 1. Six games at launch covering the two most-used tracks: Python fundamentals/DSA and ML/DL
    concepts. Each round under five minutes, playable with one thumb on a 400 px screen.
-2. Every round produces learning evidence: a `learning_signals` row per item with the concept
-   (`topic`) and the specific misconception when wrong, plus a bounded mastery nudge. The
-   adaptive tutor (nightly learner notes, scaffolding) sees game evidence with no further work.
+2. Every round produces learning evidence: one `game_round` learning signal per round whose
+   value carries the per-item breakdown (topic, correct, misconception tag, ms), plus a bounded
+   mastery nudge per topic. The adaptive tutor is taught to read it (see Adaptive integration);
+   learner notes and scaffolding then cite game evidence.
 3. Play is recommended, not just listed: the Play page opens with "Play to review" items drawn
    from weak mastery topics and spaced-repetition due topics.
 4. Cheap to run: zero LLM calls inside the play loop; all level content is deterministic data
@@ -72,8 +73,9 @@ Each game lists: mechanic → concept → `topic` keys it feeds (mastery/review 
 
 ### 1. Output Oracle — *predict the output*
 - Mechanic: a 3–10 line snippet appears. Player types the exact stdout (or picks among 4 options
-  at levels 1–2; typing from level 3). A reveal animates the actual run line by line (reusing
-  `CodeStepper`/`TerminalOutput` with `controlledStep`).
+  at levels 1–2; typing from level 3). The reveal highlights the snippet top to bottom and shows
+  the real stdout (reusing `CodeStepper`/`TerminalOutput` with `controlledStep`); a true per-line
+  execution trace (a `sys.settrace` field in the bank) is a later enhancement, not launch scope.
 - Concepts: integer vs true division, string slicing and negative indices, mutability/aliasing,
   truthiness, scope and `global`, f-string formatting, `range` bounds, dict ordering, `is` vs `==`,
   short-circuit evaluation, exceptions, comprehensions, generators/laziness, decorators (higher
@@ -127,7 +129,8 @@ Each game lists: mechanic → concept → `topic` keys it feeds (mastery/review 
 - Topics: `gradient_descent` (deep_learning), `linear_regression_gd`, `linear_regression`,
   `neural_networks_intro` (machine_learning).
 - Content: pure client simulation; hole definitions are functions + start points, seeded.
-  Reuses the drawing approach of `components/explains/GradientDescentVisual.jsx`.
+  Hand-written canvas; `components/explains/GradientDescentVisual.jsx` (SVG) is the visual
+  reference for the curve/ball treatment, not shared code.
 
 ### 6. Overfit Detective — *fit, then face the test set*
 - Mechanic: a scatter of points (seeded). Player drags a model-complexity slider (polynomial
@@ -152,6 +155,9 @@ Python-compatible subset), Tensor Shapes (matmul/broadcast compatibility puzzle)
     current track; each card says *why* ("you missed scope twice in Classroom").
   - Grid of six game cards: name, one-line "you'll get better at…", best score, level reached,
     streak of days played. Daily challenge badge on the game of the day.
+  - **Daily challenge** is a distinct mode, not just a seed: a fixed item set for everyone
+    (seed = date ^ game), one scored attempt per user per day, no seen-item avoidance, stored
+    with `mode = 'daily'` so stats and best-score queries can separate it from practice.
   - Personal stats row: rounds today, game XP today / daily cap, accuracy by concept (small bars).
 - **Round screen** (`GameShell`): header with game name, level, progress dots, pause; body is the
   game's interaction component; footer shows score and a soft timer (never blocks input; expiry
@@ -206,9 +212,10 @@ pages/PlayRound.jsx      # route /dashboard/play/:gameId
   change required; a structured `detail.context` can come later.
 
 ### Backend (`backend/games/` + `backend/routes/play.py`)
-- Table `game_rounds(id, user_id, game_id, level, seed, items INTEGER, correct INTEGER,
-  score INTEGER, max_score INTEGER, duration_s REAL, concepts_json TEXT, created_at)`, indexed on
-  `(user_id, game_id, created_at)` and `(user_id, created_at)` for the daily cap.
+- Table `game_rounds(id, user_id, game_id, mode TEXT 'practice'|'daily', level, seed,
+  items INTEGER, correct INTEGER, score INTEGER, max_score INTEGER, xp INTEGER, duration_s REAL,
+  concepts_json TEXT, created_at)`, indexed on `(user_id, game_id, created_at)` and
+  `(user_id, created_at)` for the daily cap; one daily attempt per user/game/day enforced in code.
 - `backend/games/banks/*.json` loaded once at startup (a few hundred KB total). `backend/games/
   engine.py` : `pick_items(game_id, level, seed, user_id, n)` (seeded, avoids items seen in the
   last 3 rounds), `score_round(game_id, level, items, responses)` (recomputes against the bank
@@ -219,33 +226,44 @@ pages/PlayRound.jsx      # route /dashboard/play/:gameId
   - `POST /api/play/round/start {game_id, level?}` → `{round_id, seed, level, items[]}` (items
     without answer keys); creates the row with `score NULL`.
   - `POST /api/play/round/finish {round_id, responses[]}` → scores server-side, writes the row,
-    `record_signal('game_item', topic, {game_id, item_id, correct, misconception, ms})` per item
-    and `record_signal('game_round', game_id, {...})`, nudges `update_mastery` (+0.03 per
-    correct, −0.02 per wrong, per topic, bounded per round to ±0.1), adds XP to `users.points`,
-    `touch_streak`, returns the reveal payload (correct answers + why) and totals.
+    `record_signal('game_round', game_id, {level, mode, score, max_score, items: [{topic,
+    correct, misconception, ms}]})` once per round (one row, so a casual player does not flood
+    the 30-signal window the learner-notes distiller reads, and `active_learners` counts a round
+    as one event), nudges mastery per topic via a new `profiler.nudge_mastery(db, user, topic,
+    delta, source)` that read-modify-writes `mastery_level` only (+0.03 per correct, −0.02 per
+    wrong, bounded to ±0.1 per topic per round) **without** touching `attempts` or
+    `struggle_count`, so `review.py`'s half-life model and the "attempts ≥ 2" recommendation
+    filter keep meaning "graded Classroom attempts"; adds XP through `award_xp`; `touch_streak`;
+    returns the reveal payload (correct answers + why) and totals.
   - `GET /api/play/stats` → accuracy by topic (30 d), rounds, streak of play days.
 - Factor the existing inline XP/streak code in `classroom.py` only as far as the game needs:
   a small `backend/progress.py::award_xp(conn, user_id, amount, source, ref)` with a dedupe key
   (`(user_id, source, ref)` unique) used by the game; Classroom keeps its current path (migrating
   it is a separate cleanup).
-- Adaptive tutor integration is automatic: `adaptive._learner_material` already reads all
-  signal types for a learner; add `game_item` wrong answers' `misconception` field to the
-  material formatter so notes can cite "confuses `//` with `/` (Output Oracle, 3 misses)".
+- Adaptive integration (small, explicit changes in `adaptive.py`): `_learner_material` gets a
+  game summariser that folds `game_round` values into "misconception → count, game, last seen"
+  lines instead of the generic 160-char truncation, so notes can cite "confuses `//` with `/`
+  (Output Oracle, 3 misses this week)"; `scaffolding_for` adds game accuracy over 14 days as a
+  secondary signal (never overriding a Classroom fail streak, only breaking ties toward
+  medium/high); `active_learners` is unchanged.
 - Bank build script `backend/games/build_banks.py` (dev-time, not shipped in the container's
   startup path): instantiates templates, runs code via `run_code_subprocess`, writes banks,
   fails loudly on any unverifiable item. A pytest asserts every shipped item re-verifies, so a
   stale bank cannot land.
 
 ### Anti-cheat and fairness
-- Correct keys never leave the server for bank games; simulation games are re-simulated.
+- Correct keys never leave the server for bank games; simulation games are re-simulated in
+  Python with a tolerance (relative 1e-9 on positions, exact on step/stroke counts); JS and
+  Python share a golden file of fixed-seed runs. Until a simulation's re-simulator passes the
+  golden test, that game is **score-only** (no XP), which also covers Rollout step 1.
 - Duration below a human floor (e.g. < 1.5 s per item median) scores but earns no XP.
 - Daily XP cap; XP per round shown before and after. Rounds abandoned are recorded with
   `score NULL` and ignored by stats.
 
 ## Quality bar
 
-- Backend: pytest for engine (seeded picking, scoring, xp cap, mastery bounds, re-simulation
-  equality with the JS implementation on fixed seeds via a golden file), routes (full-app
+- Backend: pytest for engine (seeded picking, scoring, xp cap, mastery bounds, daily one-attempt
+  rule, re-simulation within tolerance against the shared golden file), routes (full-app
   TestClient pattern), and bank verification. Target ≥ 25 tests.
 - Frontend: vitest for `scoring.js`, `rng.js`, each simulation's `levels.js` (golden outputs shared
   with the Python side), and the item normaliser. ESLint gate stays green (react-hooks rules).
@@ -272,8 +290,22 @@ Each step ships through the existing CI → VM timer path and is live-verified b
    per-game daily board (needs display-name consent, moderation, and more UI)?
 2. **Plan gating**: games follow `assert_learning_access` like Playground (trial/paid/student),
    my default; or free for every logged-in account as a growth hook?
-3. **XP economy**: 5–25 XP per round, 150/day cap, versus 50 for a lesson (my default). Change?
+3. **XP economy**: 5–25 XP per round, 150/day cap (about two lessons; lessons pay 65–90 XP,
+   the grading fallback 25). My default keeps play worth less than study per minute. Change?
 4. **Tamil `why` texts** in v1 (adds authoring time, roughly +30 %) or English-only first?
+
+## Calls made after the builder check (not founder decisions)
+
+- One `game_round` signal per round, per-item detail inside its value (protects the adaptive
+  distiller's budget and the VM's nightly LLM cost).
+- Mastery nudges touch `mastery_level` only, once per topic per round; Classroom attempts stay the
+  only "attempts".
+- Daily challenge is a distinct mode with one scored attempt per day.
+- Output Oracle reveal: top-to-bottom highlight + real stdout at launch; execution trace later.
+- Simulation verification uses a tolerance; simulation games are score-only until their Python
+  re-simulator passes the golden test.
+- Lesson link from a topic with several lessons: the lowest `order` lesson whose
+  `tags.concepts_taught` intersects the item's misconception tag, else the lowest order.
 
 ## Left to the builder
 
