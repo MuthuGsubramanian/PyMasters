@@ -21,9 +21,19 @@ api.interceptors.request.use((config) => {
 // Handle 401 responses — clear stale session
 // Also normalize ALL non-string values in error.response.data to prevent
 // React "Objects are not valid as a React child" crashes
+const GATEWAY_STATUSES = new Set([502, 503, 504]);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    // The VM swaps the app container in place on every deploy (~20 s of 502s).
+    // Idempotent GETs get one quiet retry so page loads survive a rollout.
+    const cfg = error.config;
+    if (cfg && !cfg.__retried && (cfg.method || 'get').toLowerCase() === 'get' && GATEWAY_STATUSES.has(error.response?.status)) {
+      await sleep(cfg.__retryDelayMs ?? 1500);
+      return api.request({ ...cfg, __retried: true });
+    }
     if (error.response?.status === 401) {
       localStorage.removeItem('pm_user');
       if (window.location.pathname !== '/login' && window.location.pathname !== '/') {

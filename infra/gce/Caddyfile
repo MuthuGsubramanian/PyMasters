@@ -12,6 +12,13 @@ pymasters.net {
 		# hold requests and retry the upstream instead of returning 502.
 		lb_try_duration 60s
 		lb_try_interval 1s
+		# When the old container is already gone and the new one is not listening yet,
+		# the dial succeeds (Docker proxies the port) but the request fails: retry
+		# idempotent requests a few times instead of surfacing a 502.
+		lb_retries 4
+		lb_retry_match {
+			method GET HEAD
+		}
 	}
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"

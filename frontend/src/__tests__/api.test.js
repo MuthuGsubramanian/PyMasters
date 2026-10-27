@@ -128,3 +128,33 @@ describe('play API helpers', () => {
     expect(JSON.parse(sink.config.data).sim_hole.hole_id).toBe('h')
   })
 })
+
+describe('rollout resilience', () => {
+  it('retries an idempotent GET once after a 502/503/504 (the VM swaps containers on deploy)', async () => {
+    let calls = 0
+    api.defaults.adapter = async (config) => {
+      calls += 1
+      if (calls === 1) {
+        const err = new Error('HTTP 502'); err.config = config
+        err.response = { status: 502, data: 'Bad Gateway', headers: {}, config }
+        throw err
+      }
+      return { data: { ok: true }, status: 200, statusText: 'OK', headers: {}, config, request: {} }
+    }
+    const res = await api.get('/play/catalog', { __retryDelayMs: 0 })
+    expect(res.data.ok).toBe(true)
+    expect(calls).toBe(2)
+  })
+
+  it('does not retry a POST on 502', async () => {
+    let calls = 0
+    api.defaults.adapter = async (config) => {
+      calls += 1
+      const err = new Error('HTTP 502'); err.config = config
+      err.response = { status: 502, data: 'Bad Gateway', headers: {}, config }
+      throw err
+    }
+    await expect(api.post('/play/round/answer', {})).rejects.toBeTruthy()
+    expect(calls).toBe(1)
+  })
+})
