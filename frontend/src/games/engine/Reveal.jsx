@@ -8,6 +8,9 @@ import { shortcutsBlocked } from './keys';
 
 function formatAnswer(item, answer) {
   if (answer === null || answer === undefined) return '—';
+  if (answer && typeof answer === 'object' && answer.dataset_id) {
+    return `degree ${answer.degree}, λ ${answer.lam ?? 0}`;
+  }
   if (answer && typeof answer === 'object' && Array.isArray(answer.swings)) {
     const n = answer.swings.length;
     const last = answer.swings[n - 1] || {};

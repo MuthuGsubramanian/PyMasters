@@ -11,6 +11,15 @@ describe('Reveal', () => {
     expect(r.container.textContent).toContain('1 swing, last at rate 0.50 × 10 steps')
     r.unmount()
   })
+  it('describes an Overfit Detective answer as degree and lambda', () => {
+    const item = { id: 'gentle_cubic', kind: 'sim', prompt: {} }
+    const response = { dataset_id: 'gentle_cubic', seed: 7, degree: 4, lam: 0.01 }
+    const r = render(<Reveal item={item} revealItem={{ correct: true, answer: 'x', why: 'why why why' }} learnerResponse={response} gameTitle="Overfit Detective" onNext={() => {}} />)
+    expect(r.container.textContent).not.toContain('[object Object]')
+    expect(r.container.textContent).toContain('degree 4, λ 0.01')
+    r.unmount()
+  })
+
   it('shows the right answer only when the learner was wrong', () => {
     const item = { id: 'c1', kind: 'choice', choices: ['3', '4'], prompt: { code: 'print(1)' } }
     const wrong = render(<Reveal item={item} revealItem={{ correct: false, answer: 0, why: 'because so' }} learnerResponse={1} gameTitle="Output Oracle" onNext={() => {}} />)
