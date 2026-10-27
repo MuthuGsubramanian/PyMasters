@@ -6,7 +6,8 @@ GAMES = {
         "blurb": "Predict exactly what the snippet prints before the interpreter does.",
         "kind": "bank", "levels": 6, "bank": "output_oracle", "items_per_round": 6,
         "topics": ["variables", "lists", "ds_dicts", "ds_tuples", "conditionals", "for_loops",
-                   "functions_scope", "comprehensions", "adv_generators", "adv_decorators", "errors_handling"],
+                   "functions_scope", "comprehensions", "adv_generators", "adv_decorators", "errors_handling",
+                   "functions_args", "oop_classes", "oop_magic_methods"],
     },
     "bug_hunt": {
         "id": "bug_hunt", "title": "Bug Hunt",

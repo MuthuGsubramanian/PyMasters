@@ -1,0 +1,146 @@
+"""Build verified content banks: every answer key comes from really running the code.
+
+Usage (from the repo root):  python backend/games/build_banks.py output_oracle [--seed 2026] [--per-level 30]
+
+Items whose code fails, or whose distractors collide with the real answer, are rejected
+and counted. The resulting JSON is what `games.engine.load_bank` serves; the matching
+pytest re-verifies every shipped item so a stale bank cannot land.
+"""
+import argparse
+import glob
+import hashlib
+import json
+import os
+import random
+import sys
+from pathlib import Path
+
+BACKEND = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BACKEND))
+
+from vaathiyaar.execution import run_code_subprocess  # noqa: E402
+
+BANKS_DIR = BACKEND / "games" / "banks"
+LESSONS_DIR = BACKEND / "lessons"
+GENERIC_DISTRACTORS = ["None", "Error", "0", "[]", "True", "False", ""]
+
+
+def verify_output(code: str) -> str:
+    run = run_code_subprocess(code, timeout=5)
+    if run.get("exit_code") != 0:
+        raise ValueError(run.get("error") or "non-zero exit")
+    return (run.get("output") or "").replace("\r\n", "\n").rstrip("\n")
+
+
+def _lesson_index() -> dict:
+    """topic -> lowest-order lesson id (first by order, then by id for stability)."""
+    best = {}
+    for path in glob.glob(str(LESSONS_DIR / "*" / "*.json")):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                d = json.load(fh)
+        except Exception:
+            continue
+        topic, order, lid = d.get("topic"), d.get("order") or 999, d.get("id")
+        if not topic or not lid:
+            continue
+        if topic not in best or (order, lid) < best[topic]:
+            best[topic] = (order, lid)
+    return {t: v[1] for t, v in best.items()}
+
+
+def _item_id(prefix: str, level: int, code: str) -> str:
+    return f"{prefix}_{level}_{hashlib.sha1(code.encode('utf-8')).hexdigest()[:8]}"
+
+
+def _finish_choice(item: dict, answer: str, rng: random.Random, rejects: dict) -> dict | None:
+    distractors = []
+    for alt in item.get("distractor_codes") or []:
+        try:
+            out = verify_output(alt)
+        except ValueError:
+            continue
+        if out and out != answer and out not in distractors:
+            distractors.append(out)
+    for lit in list(item.get("extra_distractors") or []) + GENERIC_DISTRACTORS:
+        if len(distractors) >= 3:
+            break
+        if lit != answer and lit not in distractors:
+            distractors.append(lit)
+    if len(distractors) < 3:
+        rejects["too_few_distractors"] = rejects.get("too_few_distractors", 0) + 1
+        return None
+    choices = distractors[:3] + [answer]
+    rng.shuffle(choices)
+    item["choices"] = choices
+    item["answer"] = choices.index(answer)
+    return item
+
+
+def build(game_id: str, seed: int = 2026, per_level: int = 30) -> list:
+    if game_id == "output_oracle":
+        from games.templates.output_oracle import TEMPLATES
+        prefix = "oo"
+    else:
+        raise SystemExit(f"no templates for {game_id}")
+    rng = random.Random(seed)
+    lessons = _lesson_index()
+    by_level = {}
+    for t in TEMPLATES:
+        by_level.setdefault(t(random.Random(0))["level"], []).append(t)
+    items, seen_code, rejects = [], set(), {}
+    for level in sorted(by_level):
+        made, tries = 0, 0
+        while made < per_level and tries < per_level * 12:
+            tries += 1
+            cand = rng.choice(by_level[level])(rng)
+            code = cand["code"]
+            if code in seen_code:
+                continue
+            try:
+                answer = verify_output(code)
+            except ValueError as exc:
+                rejects["run_failed"] = rejects.get("run_failed", 0) + 1
+                print(f"  reject (run failed) {code[:40]!r}: {str(exc)[:60]}")
+                continue
+            if not answer:
+                rejects["empty_output"] = rejects.get("empty_output", 0) + 1
+                continue
+            item = {"id": _item_id(prefix, level, code), "level": level, "topic": cand["topic"], "kind": cand["kind"],
+                    "prompt": {"code": code}, "misconception": cand["misconception"], "why": cand["why"],
+                    "lesson_id": lessons.get(cand["topic"], "")}
+            if cand["kind"] == "choice":
+                done = _finish_choice(dict(cand), answer, rng, rejects)
+                if done is None:
+                    continue
+                item["choices"], item["answer"] = done["choices"], done["answer"]
+            else:
+                item["answer"] = answer
+            if not item["lesson_id"]:
+                rejects["no_lesson"] = rejects.get("no_lesson", 0) + 1
+                continue
+            seen_code.add(code)
+            items.append(item)
+            made += 1
+        print(f"level {level}: {made} items ({tries} tries)")
+    items.sort(key=lambda i: (i["level"], i["id"]))
+    print(f"total {len(items)} items; rejects {rejects}")
+    return items
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("game_id")
+    ap.add_argument("--seed", type=int, default=2026)
+    ap.add_argument("--per-level", type=int, default=30)
+    args = ap.parse_args()
+    items = build(args.game_id, args.seed, args.per_level)
+    BANKS_DIR.mkdir(parents=True, exist_ok=True)
+    out = BANKS_DIR / f"{args.game_id}.json"
+    with open(out, "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(items, fh, ensure_ascii=False, indent=1)
+    print(f"wrote {out} ({os.path.getsize(out)} bytes)")
+
+
+if __name__ == "__main__":
+    main()
