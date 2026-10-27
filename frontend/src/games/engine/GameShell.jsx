@@ -10,7 +10,7 @@ import { Button } from '../../components/ui';
 export function GameShell({ title, level, index, total, score, onQuit, children, footer }) {
   const [paused, setPaused] = useState(false);
   return (
-    <div className="flex flex-col gap-4 max-w-3xl mx-auto w-full">
+    <div className="flex flex-col gap-4 max-w-3xl mx-auto w-full pb-24 sm:pb-0">{/* bottom padding clears the floating tutor launcher on phones */}
       <header className="flex items-center justify-between gap-3 flex-wrap">
         <div className="min-w-0">
           <h1 className="font-display text-xl sm:text-2xl font-bold text-text-primary truncate">{title}</h1>

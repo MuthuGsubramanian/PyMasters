@@ -13,7 +13,7 @@ export function Results({ result, gameTitle, onAgain, onBack }) {
   const levelUp = result.next_level > result.level;
   const levelDown = result.next_level < result.level;
   return (
-    <section aria-live="polite" className="rounded-2xl border border-border-default bg-bg-surface p-5 sm:p-6 flex flex-col gap-5 max-w-xl mx-auto w-full">
+    <section aria-live="polite" className="rounded-2xl border border-border-default bg-bg-surface p-5 sm:p-6 flex flex-col gap-5 max-w-xl mx-auto w-full mb-24 sm:mb-0">
       <header className="flex items-center gap-3">
         <div className="w-11 h-11 rounded-xl bg-gradient-primary text-white flex items-center justify-center"><Trophy size={22} /></div>
         <div>
