@@ -1,10 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { isReducedMotion } from '../../hooks/useReducedMotion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, CheckCircle2, MessageCircleQuestion, XCircle } from 'lucide-react';
 import { Button } from '../../components/ui';
 
 function formatAnswer(item, answer) {
   if (answer === null || answer === undefined) return '—';
+  if (answer && typeof answer === 'object' && Array.isArray(answer.swings)) {
+    const n = answer.swings.length;
+    const last = answer.swings[n - 1] || {};
+    return `${n} swing${n === 1 ? '' : 's'}, last at rate ${Number(last.lr ?? 0).toFixed(2)} × ${last.steps ?? 0} steps`;
+  }
   if (item?.kind === 'choice' && Array.isArray(item.choices) && typeof answer === 'number') return item.choices[answer];
   if (item?.kind === 'line_then_choice' && Array.isArray(answer)) {
     const [line, choice] = answer;
@@ -24,6 +30,12 @@ function formatAnswer(item, answer) {
 export function Reveal({ item, revealItem, learnerResponse, gameTitle, onNext }) {
   const correct = revealItem?.correct;
   const yourAnswer = formatAnswer(item, learnerResponse);
+  const rootRef = useRef(null);
+
+  // Bring the verdict into view (games like Gradient Golf push it below the fold).
+  useEffect(() => {
+    rootRef.current?.scrollIntoView?.({ block: 'nearest', behavior: isReducedMotion() ? 'auto' : 'smooth' });
+  }, []);
   const rightAnswer = revealItem ? formatAnswer(item, revealItem.answer) : null;
 
   useEffect(() => {
@@ -42,7 +54,7 @@ export function Reveal({ item, revealItem, learnerResponse, gameTitle, onNext })
   };
 
   return (
-    <section aria-live="polite" className="rounded-2xl border border-border-default bg-bg-elevated p-4 sm:p-5 flex flex-col gap-3">
+    <section ref={rootRef} aria-live="polite" className="rounded-2xl border border-border-default bg-bg-elevated p-4 sm:p-5 flex flex-col gap-3">
       <div className="flex items-center gap-2">
         {correct === true && <CheckCircle2 className="text-emerald-600 dark:text-emerald-300" size={22} aria-hidden="true" />}
         {correct === false && <XCircle className="text-red-600 dark:text-red-300" size={22} aria-hidden="true" />}
