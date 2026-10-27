@@ -9,7 +9,7 @@ import { useArcadeSession } from '../engine/useArcadeSession';
 import { useGameLoop } from '../engine/useGameLoop';
 import { createPool, burst, step as stepParticles } from '../engine/particles';
 import { fitCanvas } from '../engine/sprites';
-import { play as sfx } from '../engine/sfx';
+import { play as sfx, haptic } from '../engine/sfx';
 import { shortcutsBlocked } from '../../games/engine/keys';
 import { newGame, newWave, step, hitLine, hitFix, STAGE, CANNON_Y } from './rules.js';
 import { draw } from './render.js';
@@ -54,12 +54,12 @@ export default function Game({ reducedMotion = false, onQuit, shields, rng = Mat
     const ms = Date.now() - askedAt.current;
     const result = await session.answer(itemId, answer, ms);
     grading.current = false;
-    if (!result) { pending.current.verdict = { score: 3, max: 3 }; return; }   // no verdict → no penalty
+    if (!result) { pending.current.verdict = { neutral: true }; return; }   // no verdict → the wave ends without penalty
     pending.current.verdict = { score: result.score ?? (result.correct ? 3 : 0), max: result.max ?? 3 };
     const lineRight = result.score === 1 || result.score === 3;
     setReveal({ correct: Boolean(result.correct), why: result.correct ? result.why : `${lineRight ? 'Right line, wrong fix.' : 'Wrong line.'} ${result.why || ''}` });
     setTimeout(() => setReveal(null), 3000);
-    if (result.correct) sfx('win'); else { sfx('lose'); try { navigator.vibrate?.(40); } catch { /* unsupported */ } }
+    if (result.correct) sfx('win'); else { sfx('lose'); haptic(40); }
     if (session.queue.length || session.item) session.take();
   }, [session]);
 
@@ -113,7 +113,7 @@ export default function Game({ reducedMotion = false, onQuit, shields, rng = Mat
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
     ro?.observe(wrap);
     return () => ro?.disconnect();
-  }, []);
+  }, [done]);
 
   // keyboard: ← → move, Space fires
   useEffect(() => {
@@ -180,7 +180,7 @@ export default function Game({ reducedMotion = false, onQuit, shields, rng = Mat
       <div className="max-w-xl mx-auto flex flex-col gap-4">
         <p className="text-text-secondary" role="alert">{session.error}</p>
         <div className="flex gap-3">
-          <Button onClick={session.start}>{t('play.retry', 'Retry')}</Button>
+          <Button onClick={restart}>{t('play.retry', 'Retry')}</Button>
           <Button as={Link} to="/dashboard/play#arcade" variant="outline"><ArrowLeft size={16} /> {t('arcade.back', 'Back to Arcade')}</Button>
         </div>
       </div>
@@ -224,19 +224,19 @@ export default function Game({ reducedMotion = false, onQuit, shields, rng = Mat
             {hud.phase === 'line' ? `Lines: ${hud.lines.map((l) => `${l.lineIndex + 1}: ${l.text}`).join('; ')}.` : hud.phase === 'fix' ? `Fixes: ${hud.fixes.map((f) => f.label).join('; ')}.` : 'Between waves.'}
           </p>
           {hud.phase === 'line' && (
-            <div className="sr-only" role="group" aria-label={t('arcade.lines', 'Program lines')}>
-              {hud.lines.map((l) => <button key={l.lineIndex} type="button" data-line={l.lineIndex} onClick={() => chooseLine(l.lineIndex)}>{l.lineIndex + 1}: {l.text}</button>)}
+            <div role="group" aria-label={t('arcade.lines', 'Program lines')} className="flex flex-wrap gap-1.5">
+              {hud.lines.map((l) => <button key={l.lineIndex} type="button" data-line={l.lineIndex} onClick={() => chooseLine(l.lineIndex)} className="min-h-10 rounded-lg border border-border-default bg-bg-surface px-2 py-1 font-mono text-xs text-text-primary hover:border-accent-primary"><span className="text-text-muted">{l.lineIndex + 1}</span> {l.text.trim()}</button>)}
             </div>
           )}
           {hud.phase === 'fix' && (
-            <div className="sr-only" role="group" aria-label={t('arcade.choices', 'Answers')}>
-              {hud.fixes.map((f) => <button key={f.fixIndex} type="button" data-fix={f.fixIndex} onClick={() => chooseFix(f.fixIndex)}>{f.label}</button>)}
+            <div role="group" aria-label={t('arcade.choices', 'Answers')} className="flex flex-wrap gap-1.5">
+              {hud.fixes.map((f) => <button key={f.fixIndex} type="button" data-fix={f.fixIndex} onClick={() => chooseFix(f.fixIndex)} className="min-h-10 rounded-lg border border-accent-primary/60 bg-accent-subtle px-2 py-1 font-mono text-xs text-text-primary hover:border-accent-primary">{f.label.trim()}</button>)}
             </div>
           )}
           <div className="grid grid-cols-3 gap-1 w-56 mx-auto sm:hidden" aria-label="Controls">
-            <Button variant="outline" size="icon" className="min-h-12 min-w-12" aria-label="Left" onPointerDown={() => { keys.current.left = true; }} onPointerUp={() => { keys.current.left = false; }}><ArrowLeft size={18} /></Button>
+            <Button variant="outline" size="icon" className="min-h-12 min-w-12" aria-label="Left" onPointerDown={() => { keys.current.left = true; }} onPointerUp={() => { keys.current.left = false; }} onPointerCancel={() => { keys.current.left = false; }} onPointerLeave={() => { keys.current.left = false; }}><ArrowLeft size={18} /></Button>
             <Button variant="outline" size="icon" className="min-h-12 min-w-12" aria-label="Fire" onClick={() => { keys.current.fire = true; }}><Crosshair size={18} /></Button>
-            <Button variant="outline" size="icon" className="min-h-12 min-w-12" aria-label="Right" onPointerDown={() => { keys.current.right = true; }} onPointerUp={() => { keys.current.right = false; }}><ArrowRight size={18} /></Button>
+            <Button variant="outline" size="icon" className="min-h-12 min-w-12" aria-label="Right" onPointerDown={() => { keys.current.right = true; }} onPointerUp={() => { keys.current.right = false; }} onPointerCancel={() => { keys.current.right = false; }} onPointerLeave={() => { keys.current.right = false; }}><ArrowRight size={18} /></Button>
           </div>
         </div>
       )}

@@ -133,12 +133,12 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
     ro?.observe(wrap);
     return () => ro?.disconnect();
-  }, []);
+  }, [done]);
 
   const steer = useCallback((action) => {
     if (['up', 'down', 'left', 'right'].includes(action)) { stateRef.current = turn(stateRef.current, action); setHud(mirror(stateRef.current)); }
   }, []);
-  useInput({ onAction: steer, enabled: !done && !paused });
+  useInput({ onAction: steer, enabled: !done && !paused, target: wrapRef });
 
   // Game over → report once.
   useEffect(() => {
@@ -163,7 +163,7 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
       <div className="max-w-xl mx-auto flex flex-col gap-4">
         <p className="text-text-secondary" role="alert">{session.error}</p>
         <div className="flex gap-3">
-          <Button onClick={session.start}>{t('play.retry', 'Retry')}</Button>
+          <Button onClick={restart}>{t('play.retry', 'Retry')}</Button>
           <Button as={Link} to="/dashboard/play#arcade" variant="outline"><ArrowLeft size={16} /> {t('arcade.back', 'Back to Arcade')}</Button>
         </div>
       </div>

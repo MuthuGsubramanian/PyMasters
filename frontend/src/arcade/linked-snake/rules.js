@@ -17,13 +17,13 @@ export function newRun({ seed = 1 } = {}) {
     snake: [{ x: cx, y: cy, value: HEAD }, { x: cx - 1, y: cy, value: '·' }, { x: cx - 2, y: cy, value: '·' }],
     dir: 'right', nextDir: 'right',
     foods: [], prompt: null, pendingEat: null,
-    score: 0, level: 1, eaten: 0, correct: 0, wrong: 0, alive: true, ticks: 0, lastOp: 'snake = deque([▶, ·, ·])',
+    score: 0, level: 1, eaten: 0, correct: 0, wrong: 0, alive: true, ticks: 0, lastOp: 'snake = deque([▶, ·, ·])', started: false,
   };
 }
 
 export function turn(state, dir) {
   if (!DELTA[dir] || dir === OPPOSITE[state.dir]) return state;
-  return { ...state, nextDir: dir };
+  return { ...state, nextDir: dir, started: true };
 }
 
 function occupied(snake, x, y, skipTail) {
@@ -33,7 +33,7 @@ function occupied(snake, x, y, skipTail) {
 }
 
 export function step(state) {
-  if (!state.alive) return { state, events: [] };
+  if (!state.alive || state.started === false) return { state, events: [] };
   const events = [];
   const dir = state.nextDir;
   const [dx, dy] = DELTA[dir];

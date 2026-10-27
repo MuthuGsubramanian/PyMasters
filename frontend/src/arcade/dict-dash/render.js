@@ -32,26 +32,37 @@ function ghost(ctx, g, cx, cy, look, t, reducedMotion) {
   if (!eaten) drawLabel(ctx, g.name, cx, cy + r + 8, { font: '600 9px JetBrains Mono, monospace', color: frightened ? '#bfdbfe' : '#fff', outline: 'rgba(0,0,0,0.6)' });
 }
 
+const _mazeCache = new Map();   // static walls per palette: drawn once, blitted every frame
+function mazeLayer(map, pal, w, h) {
+  const key = `${pal.wall}:${w}x${h}`;
+  let layer = _mazeCache.get(key);
+  if (layer) return layer;
+  if (typeof document === 'undefined') return null;
+  layer = document.createElement('canvas');
+  layer.width = w; layer.height = h;
+  const c = layer.getContext('2d');
+  if (!c) return null;
+  c.fillStyle = pal.bg; c.fillRect(0, 0, w, h);
+  for (let y = 0; y < map.rows; y++) {
+    for (let x = 0; x < map.cols; x++) {
+      if (!map.walls[y][x]) continue;
+      c.save(); c.shadowColor = pal.glow; c.shadowBlur = 8; c.fillStyle = pal.wall;
+      roundedRect(c, x * CELL + 3, y * CELL + 3, CELL - 6, CELL - 6, 6); c.fill(); c.restore();
+      c.strokeStyle = pal.glow; c.lineWidth = 1; c.globalAlpha = 0.6;
+      roundedRect(c, x * CELL + 7, y * CELL + 7, CELL - 14, CELL - 14, 4); c.stroke(); c.globalAlpha = 1;
+    }
+  }
+  _mazeCache.set(key, layer);
+  return layer;
+}
+
 export function draw(ctx, { state, particles, reducedMotion = false, flash = 0 }) {
   const pal = LEVEL_PALETTES[(state.level - 1) % LEVEL_PALETTES.length];
   const { w, h } = fieldSize(state);
   const map = state.map;
   ctx.save();
-  ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, w, h);
-  // walls
-  for (let y = 0; y < map.rows; y++) {
-    for (let x = 0; x < map.cols; x++) {
-      if (!map.walls[y][x]) continue;
-      ctx.save();
-      if (!reducedMotion) { ctx.shadowColor = pal.glow; ctx.shadowBlur = 8; }
-      ctx.fillStyle = pal.wall;
-      roundedRect(ctx, x * CELL + 3, y * CELL + 3, CELL - 6, CELL - 6, 6); ctx.fill();
-      ctx.restore();
-      ctx.strokeStyle = pal.glow; ctx.lineWidth = 1; ctx.globalAlpha = 0.6;
-      roundedRect(ctx, x * CELL + 7, y * CELL + 7, CELL - 14, CELL - 14, 4); ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-  }
+  const layer = mazeLayer(map, pal, w, h);
+  if (layer) ctx.drawImage(layer, 0, 0); else { ctx.fillStyle = pal.bg; ctx.fillRect(0, 0, w, h); }
   // pellets
   ctx.fillStyle = pal.pellet;
   for (const k of state.pellets) {
@@ -71,7 +82,7 @@ export function draw(ctx, { state, particles, reducedMotion = false, flash = 0 }
     ctx.beginPath(); ctx.arc(cx, cy, 11 + pulse, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
     const lx = p.x < map.cols / 2 ? cx + 18 : cx - 18;
-    drawLabel(ctx, p.label.length > 9 ? p.label.slice(0, 8) + '…' : p.label, lx, cy, { font: '700 12px JetBrains Mono, monospace', color: '#fff7ed', outline: 'rgba(0,0,0,0.75)', align: p.x < map.cols / 2 ? 'left' : 'right' });
+    drawLabel(ctx, p.label, lx, cy, { font: '700 12px JetBrains Mono, monospace', color: '#fff7ed', outline: 'rgba(0,0,0,0.75)', align: p.x < map.cols / 2 ? 'left' : 'right', maxWidth: 150 });
   }
   // player
   const px = state.player.x * CELL + CELL / 2, py = state.player.y * CELL + CELL / 2;
@@ -85,8 +96,8 @@ export function draw(ctx, { state, particles, reducedMotion = false, flash = 0 }
   // ghosts
   for (const g of state.ghosts) ghost(ctx, g, g.x * CELL + CELL / 2, g.y * CELL + CELL / 2, { x: px, y: py }, state.time, reducedMotion);
   if (particles) drawParticles(particles, ctx);
-  if (state.hurriedT > 0) { ctx.fillStyle = `rgba(239,68,68,${0.12 + 0.05 * Math.sin(state.time / 100)})`; ctx.fillRect(0, 0, w, h); }
-  if (flash > 0) { ctx.fillStyle = `rgba(255,255,255,${0.4 * flash})`; ctx.fillRect(0, 0, w, h); }
+  if (state.hurriedT > 0) { ctx.fillStyle = `rgba(239,68,68,${reducedMotion ? 0.12 : 0.12 + 0.05 * Math.sin(state.time / 100)})`; ctx.fillRect(0, 0, w, h); }
+  if (flash > 0 && !reducedMotion) { ctx.fillStyle = `rgba(255,255,255,${0.4 * flash})`; ctx.fillRect(0, 0, w, h); }
   drawLabel(ctx, `L${state.level}`, w - 14, 16, { font: '700 12px JetBrains Mono, monospace', align: 'right', color: pal.glow });
   ctx.restore();
 }

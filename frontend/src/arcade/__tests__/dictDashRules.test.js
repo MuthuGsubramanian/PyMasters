@@ -35,23 +35,23 @@ describe('Dict Dash rules', () => {
     expect(s.player.x).toBeLessThan(x0)
     s = { ...s, player: { ...s.player, dir: 'left', next: 'left' } }
     const before = s.player
-    const blocked = run({ ...s, player: { ...before, x: 1, y: 1, dir: 'up', next: 'up' } }, PLAYER_STEP_MS * 3).state
+    const blocked = run({ ...s, player: { ...before, x: 1, y: 1, dir: 'up', next: 'up', started: true } }, PLAYER_STEP_MS * 3).state
     expect(blocked.player.x).toBe(1)
     expect(blocked.player.y).toBe(1)
-    const queued = run({ ...s, player: { ...before, x: 1, y: 1, dir: 'up', next: 'right' } }, PLAYER_STEP_MS * 2 + 5).state
+    const queued = run({ ...s, player: { ...before, x: 1, y: 1, dir: 'up', next: 'right', started: true } }, PLAYER_STEP_MS * 2 + 5).state
     expect(queued.player.x).toBeGreaterThan(1)
   })
 
   it('eating a pellet scores; eating a power pellet reports the choice and clears the others', () => {
     let s = setPrompt(newGame(), item)
     const target = s.powers[0]
-    s = { ...s, player: { ...s.player, x: target.x + 1, y: target.y, dir: 'left', next: 'left' } }
+    s = { ...s, player: { ...s.player, x: target.x + 1, y: target.y, dir: 'left', next: 'left', started: true } }
     const r = run(s, PLAYER_STEP_MS + 5)
     const ev = r.events.find((e) => e.type === 'power')
     expect(ev).toBeTruthy()
     expect(ev.choiceIndex).toBe(target.choiceIndex)
     expect(r.state.powers.length).toBe(0)
-    const pel = run({ ...newGame(), player: { ...newGame().player, dir: 'left', next: 'left' } }, PLAYER_STEP_MS * 3)
+    const pel = run({ ...newGame(), player: { ...newGame().player, dir: 'left', next: 'left', started: true } }, PLAYER_STEP_MS * 3)
     expect(pel.state.score).toBeGreaterThan(0)
     expect(pel.events.some((e) => e.type === 'pellet')).toBe(true)
   })
@@ -93,7 +93,7 @@ describe('Dict Dash rules', () => {
       left = left || s.ghosts.some((g) => g.y < s.map.ghost.y - 1 || g.x !== s.map.ghost.x)
     }
     expect(left).toBe(true)
-    const cleared = step({ ...newGame(), pellets: new Set(['8,3']), player: { ...newGame().player, x: 9, y: 3, dir: 'left', next: 'left' } }, PLAYER_STEP_MS + 5, {})
+    const cleared = step({ ...newGame(), pellets: new Set(['8,3']), player: { ...newGame().player, x: 9, y: 3, dir: 'left', next: 'left', started: true } }, PLAYER_STEP_MS + 5, {})
     const r = run(cleared.state, PLAYER_STEP_MS + 5)
     const all = [...cleared.events, ...r.events]
     expect(all.map((e) => e.type)).toContain('level_clear')

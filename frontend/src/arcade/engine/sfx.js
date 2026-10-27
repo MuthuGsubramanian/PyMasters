@@ -51,6 +51,19 @@ const VOICES = {
   boost: [{ type: 'sine', from: 200, to: 900, dur: 0.3, gain: 0.08 }],
 };
 
+let gestured = false;
+if (typeof window !== 'undefined') {
+  const mark = () => { gestured = true; };
+  window.addEventListener('pointerdown', mark, { passive: true });
+  window.addEventListener('keydown', mark);
+}
+
+/** Vibrate only after the learner has interacted (browsers block and log it otherwise). */
+export function haptic(ms = 30) {
+  if (!gestured) return;
+  try { navigator.vibrate?.(ms); } catch { /* unsupported */ }
+}
+
 let ctx = null;
 function audio() {
   const Ctor = typeof window !== 'undefined' ? (window.AudioContext || window.webkitAudioContext) : (globalThis.AudioContext || globalThis.webkitAudioContext);

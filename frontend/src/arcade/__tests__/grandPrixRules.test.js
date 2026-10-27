@@ -17,7 +17,8 @@ describe('Big-O Grand Prix rules', () => {
     expect(s.karts[0].id).toBe('you')
     expect(s.laps).toBe(LAPS)
     expect(s.track.checkpoints.length).toBe(FORKS_PER_LAP)
-    expect(s.karts.every((k) => k.lap === 0 && k.speed === 0)).toBe(true)
+    expect(s.karts[0].lap).toBe(0)
+    expect(s.karts.every((k) => k.lap <= 0 && k.speed === 0)).toBe(true)
   })
 
   it('throttle accelerates, brake slows, steering changes the lane position', () => {
@@ -68,14 +69,14 @@ describe('Big-O Grand Prix rules', () => {
 
   it('laps count only forward across the start line and the race ends after three laps with positions', () => {
     let s = newRace({ seed: 1 })
-    s = { ...s, karts: s.karts.map((k) => (k.id === 'you' ? { ...k, s: s.track.length - 5, speed: 300, lap: 0 } : k)) }
+    s = { ...s, karts: s.karts.map((k) => (k.id === 'you' ? { ...k, s: s.track.length - 5, speed: 300, lap: 0, nextCp: 0 } : k)) }
     s = run(s, 200, { throttle: true }).state
     expect(s.karts[0].lap).toBe(1)
     s = { ...s, karts: s.karts.map((k) => (k.id === 'you' ? { ...k, s: 10, speed: -200, lap: 1 } : k)) }
     s = run(s, 120, {}).state
     expect(s.karts[0].lap).toBe(1)
     let f = newRace({ seed: 1 })
-    f = { ...f, karts: f.karts.map((k) => (k.id === 'you' ? { ...k, s: f.track.length - 5, speed: 300, lap: LAPS - 1 } : k)) }
+    f = { ...f, karts: f.karts.map((k) => (k.id === 'you' ? { ...k, s: f.track.length - 5, speed: 300, lap: LAPS - 1, nextCp: 0 } : k)) }
     const r = run(f, 300, { throttle: true })
     expect(r.events.map((e) => e.type)).toContain('finish')
     expect(r.state.finished).toBe(true)

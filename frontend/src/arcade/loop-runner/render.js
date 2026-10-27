@@ -103,8 +103,8 @@ function gate(ctx, g, neon) {
   roundedRect(ctx, x - 44, top + 10, 88, 34, 8); ctx.fill();
   roundedRect(ctx, x - 44, mid + 12, 88, 34, 8); ctx.fill();
   ctx.restore();
-  drawLabel(ctx, g.upper.label.length > 9 ? g.upper.label.slice(0, 8) + '…' : g.upper.label, x, top + 27, { font: '700 14px JetBrains Mono, monospace', color: '#fff' });
-  drawLabel(ctx, g.lower.label.length > 9 ? g.lower.label.slice(0, 8) + '…' : g.lower.label, x, mid + 29, { font: '700 14px JetBrains Mono, monospace', color: '#fff' });
+  drawLabel(ctx, g.upper.label, x, top + 27, { font: '700 14px JetBrains Mono, monospace', color: '#fff', maxWidth: 80 });
+  drawLabel(ctx, g.lower.label, x, mid + 29, { font: '700 14px JetBrains Mono, monospace', color: '#fff', maxWidth: 80 });
   drawLabel(ctx, '▲ jump', x, top - 4, { font: '600 10px Inter, sans-serif', color: 'rgba(255,255,255,0.7)', outline: 'rgba(0,0,0,0.4)' });
   drawLabel(ctx, '▼ slide', x, GROUND_Y - 10, { font: '600 10px Inter, sans-serif', color: 'rgba(255,255,255,0.7)', outline: 'rgba(0,0,0,0.4)' });
 }

@@ -20,7 +20,7 @@ function invader(ctx, inv, t, boss, reducedMotion) {
   ctx.fillRect(-w / 2 + 10, -h / 2 - 8, 6, 8); ctx.fillRect(w / 2 - 16, -h / 2 - 8, 6, 8);
   ctx.fillRect(-w / 2 + 6, h / 2 - 2, 8, 6); ctx.fillRect(w / 2 - 14, h / 2 - 2, 8, 6);
   ctx.restore();
-  drawLabel(ctx, inv.text.length > 24 ? inv.text.slice(0, 23) + '…' : inv.text, inv.x, inv.y + wob, { font: '600 12px JetBrains Mono, monospace', color: C.text, outline: 'rgba(0,0,0,0.5)' });
+  drawLabel(ctx, inv.text.trim(), inv.x, inv.y + wob, { font: '600 12px JetBrains Mono, monospace', color: C.text, outline: 'rgba(0,0,0,0.5)', maxWidth: 170 });
   drawLabel(ctx, String(inv.lineIndex + 1), inv.x - 82, inv.y + wob - 12, { font: '700 10px JetBrains Mono, monospace', color: boss ? C.red : C.green, outline: 'rgba(0,0,0,0.5)' });
 }
 
@@ -32,7 +32,7 @@ function ship(ctx, sh) {
   ctx.strokeStyle = C.cyan; ctx.lineWidth = 2; ctx.stroke();
   ctx.fillStyle = C.cyan; ctx.fillRect(-86, -3, 8, 6);
   ctx.restore();
-  drawLabel(ctx, sh.label.length > 20 ? sh.label.slice(0, 19) + '…' : sh.label, sh.x, sh.y, { font: '600 12px JetBrains Mono, monospace', color: '#fff', outline: 'rgba(0,0,0,0.6)' });
+  drawLabel(ctx, sh.label.trim(), sh.x, sh.y, { font: '600 12px JetBrains Mono, monospace', color: '#fff', outline: 'rgba(0,0,0,0.6)', maxWidth: 150 });
 }
 
 function cannon(ctx, x) {

@@ -24,7 +24,7 @@ const AI = [
 export function newRace({ seed = 1, laps = LAPS } = {}) {
   const track = buildTrack(CONTROL, { checkpoints: FORKS_PER_LAP });
   const karts = [{ id: 'you', name: 'You', color: '#facc15', target: 0 }, ...AI].map((k, i) => ({
-    ...k, s: ((track.length - 26 * i) % track.length), lane: ((i % 3) - 1) * 0.8, speed: 0, lap: 0, boostT: 0, spinT: 0,
+    ...k, s: ((track.length - 26 * i) % track.length), lane: ((i % 3) - 1) * 0.8, speed: 0, lap: i === 0 ? 0 : -1, nextCp: i === 0 ? 1 : 0, boostT: 0, spinT: 0,
     forksDone: 0, finished: false, finishTime: null, answered: {}, skid: 0,
   }));
   return { seed, laps, track, karts, fork: null, nextCheckpoint: 1, score: 0, time: 0, finished: false, positions: [], correct: 0, wrong: 0, bestLap: null, lapStart: 0 };
@@ -41,6 +41,10 @@ export function setFork(state, item, rng = Math.random) {
 
 export function applyForkResult(state, kartId, correct) {
   const events = [];
+  if (correct === null || correct === undefined) {        // no verdict (network): the fork just passes
+    const next = { ...state, fork: null, nextCheckpoint: (state.fork ? state.fork.checkpoint + 1 : state.nextCheckpoint + 1) % FORKS_PER_LAP };
+    return { state: next, events };
+  }
   const karts = state.karts.map((k) => {
     if (k.id !== kartId) return k;
     if (correct) return { ...k, boostT: BOOST_MS, spinT: 0, speed: Math.max(k.speed, MAX_SPEED * 0.8) };
@@ -100,14 +104,18 @@ export function step(state, dtMs, input = {}) {
     const prev = pos;
     pos = ((pos + speed * dt) % s.track.length + s.track.length) % s.track.length;
     const cp = whichCheckpoint(s.track, prev, pos);
-    if (cp === 0 && speed > 0) {
-      lap += 1;
-      const lapTime = s.time - (k.lapStart || 0);
-      if (isYou) { events.push({ type: 'lap', lap, lapTime }); s = { ...s, bestLap: s.bestLap === null ? lapTime : Math.min(s.bestLap, lapTime), lapStart: s.time }; }
-      if (lap >= s.laps) {
-        const fin = { ...k, speed, lane, boostT, spinT, lap, s: pos, finished: true, finishTime: s.time };
-        if (isYou) events.push({ type: 'finish' });
-        return fin;
+    let nextCp = k.nextCp ?? 1;
+    if (cp >= 0 && speed > 0 && cp === nextCp) {
+      nextCp = (cp + 1) % s.track.checkpoints.length;
+      if (cp === 0) {
+        lap += 1;
+        const lapTime = s.time - (s.lapStart || 0);
+        if (isYou) { events.push({ type: 'lap', lap, lapTime }); s = { ...s, bestLap: lap >= 1 && s.bestLap === null ? lapTime : (s.bestLap === null ? null : Math.min(s.bestLap, lapTime)), lapStart: s.time }; }
+        if (lap >= s.laps) {
+          const fin = { ...k, speed, lane, boostT, spinT, lap, nextCp, s: pos, finished: true, finishTime: s.time };
+          if (isYou) events.push({ type: 'finish' });
+          return fin;
+        }
       }
     }
     if (cp >= 0 && fork && cp === fork.checkpoint && !k.answered[fork.itemId]) {
@@ -116,15 +124,15 @@ export function step(state, dtMs, input = {}) {
         const chosen = laneFor(fork, lane);
         events.push({ type: 'fork', itemId: fork.itemId, choiceIndex: chosen.choiceIndex, lane: chosen.lane });
         fork = { ...fork, answered: true };
-        return { ...k, speed, lane, boostT, spinT, lap, s: pos, answered };
+        return { ...k, speed, lane, boostT, spinT, lap, nextCp, s: pos, answered };
       }
       const p = 0.65 + 0.25 * Math.min(1, (lap * FORKS_PER_LAP + fork.checkpoint) / (FORKS_PER_LAP * LAPS));
       const correct = rng() < p;
       events.push({ type: 'ai_fork', kartId: k.id, correct });
-      return correct ? { ...k, speed: Math.max(speed, MAX_SPEED * 0.8), lane, boostT: BOOST_MS, spinT: 0, lap, s: pos, answered }
-        : { ...k, speed: 0, lane, boostT: 0, spinT: SPIN_MS, lap, s: pos, answered };
+      return correct ? { ...k, speed: Math.max(speed, MAX_SPEED * 0.8), lane, boostT: BOOST_MS, spinT: 0, lap, nextCp, s: pos, answered }
+        : { ...k, speed: 0, lane, boostT: 0, spinT: SPIN_MS, lap, nextCp, s: pos, answered };
     }
-    return { ...k, speed, lane, boostT, spinT, lap, s: pos, lapStart: k.lapStart };
+    return { ...k, speed, lane, boostT, spinT, lap, nextCp, s: pos };
   });
   s = { ...s, karts, fork };
   const you = karts.find((k) => k.id === 'you');

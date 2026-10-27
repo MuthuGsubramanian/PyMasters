@@ -38,7 +38,8 @@ export function addGate(state, pair) {
 }
 
 function applyVerdict(state, gateId, correct, events) {
-  const gates = state.gates.map((g) => (g.id === gateId ? { ...g, resolved: true, outcome: correct ? 'pass' : 'stumble' } : g));
+  const gates = state.gates.map((g) => (g.id === gateId ? { ...g, resolved: true, outcome: correct === null ? 'neutral' : correct ? 'pass' : 'stumble' } : g));
+  if (correct === null || correct === undefined) return { ...state, gates };   // no verdict: no pass, no stumble
   if (correct) {
     const combo = state.combo + 1;
     const passes = state.passes + 1;

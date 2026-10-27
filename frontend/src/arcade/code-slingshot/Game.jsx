@@ -9,7 +9,7 @@ import { useArcadeSession } from '../engine/useArcadeSession';
 import { useGameLoop } from '../engine/useGameLoop';
 import { createPool, burst, step as stepParticles } from '../engine/particles';
 import { fitCanvas } from '../engine/sprites';
-import { play as sfx } from '../engine/sfx';
+import { play as sfx, haptic } from '../engine/sfx';
 import { shortcutsBlocked } from '../../games/engine/keys';
 import { launch, stepWorld, STAGE } from './physics.js';
 import { newRound, newQuestion, applyHitResult, onBirdSpent, noteShot } from './rules.js';
@@ -100,7 +100,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
       sfx('pop'); shake.current = 1;
       if (pig && !reducedMotion) burst(particles.current, pig.x, pig.y, { count: 26, color: ['#a3e635', '#fef08a', '#fff'], speed: 260 });
       if (r.events.some((e) => e.type === 'scene_change')) sfx('win');
-    } else { sfx('raspberry'); flash.current = 0.6; }
+    } else { sfx('raspberry'); flash.current = 0.6; haptic(30); }
     setReveal({ correct, why: result.why });
     setTimeout(() => setReveal(null), 2400);
     setHud(mirror(stateRef.current));
@@ -174,7 +174,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null;
     ro?.observe(wrap);
     return () => ro?.disconnect();
-  }, []);
+  }, [done]);
 
   // Keyboard: arrows aim, hold space to charge, release to fire.
   useEffect(() => {
@@ -251,7 +251,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
       <div className="max-w-xl mx-auto flex flex-col gap-4">
         <p className="text-text-secondary" role="alert">{session.error}</p>
         <div className="flex gap-3">
-          <Button onClick={session.start}>{t('play.retry', 'Retry')}</Button>
+          <Button onClick={restart}>{t('play.retry', 'Retry')}</Button>
           <Button as={Link} to="/dashboard/play#arcade" variant="outline"><ArrowLeft size={16} /> {t('arcade.back', 'Back to Arcade')}</Button>
         </div>
       </div>

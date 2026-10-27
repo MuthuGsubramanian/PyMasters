@@ -34,6 +34,7 @@ export function useInput({ onAction, enabled = true, target } = {}) {
     if (!enabled) return undefined;
     const onKey = (e) => {
       if (shortcutsBlocked(e)) return;
+      if (e.target?.closest?.('button, a, [role="button"]')) return;   // let focused buttons activate normally
       const action = keyToAction(e.key);
       if (!action) return;
       e.preventDefault();

@@ -77,7 +77,7 @@ describe('Snakes & Ladders with the rival', () => {
 
 describe('Linked Snake end conditions and accessible choices', () => {
   it('a wrong answer on a one-node snake ends the run with the end screen', async () => {
-    const initial = { snake: [{ x: 5, y: 5, value: '▶' }], dir: 'right', nextDir: 'right' }
+    const initial = { snake: [{ x: 5, y: 5, value: '▶' }], dir: 'right', nextDir: 'right', started: true }
     const r = render(<MemoryRouter><SnakeGame reducedMotion initial={initial} onQuit={() => {}} /></MemoryRouter>)
     await flush(r)
     await r.act(async () => { vi.advanceTimersByTime(60) })
