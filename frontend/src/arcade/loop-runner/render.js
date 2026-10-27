@@ -11,6 +11,20 @@ const SCENES = [
   { sky: ['#020617', '#0f172a', '#334155'], far: '#0f172a', mid: '#1e293b', near: '#334155', neon: '#facc15', ground: '#020617' },
 ];
 
+const _skyCache = new Map();
+function skyGradient(ctx, scene, h) {
+  let byCtx = _skyCache.get(ctx);
+  if (!byCtx) { byCtx = new Map(); _skyCache.set(ctx, byCtx); }
+  const key = `${scene.sky.join('|')}:${h}`;
+  let g = byCtx.get(key);
+  if (!g) {
+    g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, scene.sky[0]); g.addColorStop(0.6, scene.sky[1]); g.addColorStop(1, scene.sky[2]);
+    byCtx.set(key, g);
+  }
+  return g;
+}
+
 function skyline(ctx, color, offset, baseY, heightScale, w, seed) {
   ctx.fillStyle = color;
   let x = -((offset) % 160) - 160;
@@ -100,9 +114,7 @@ export function draw(ctx, { state, particles, reducedMotion = false }) {
   const scene = SCENES[state.scene % SCENES.length];
   ctx.save();
   if (state.stumbleT > 0 && !reducedMotion) ctx.translate((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6);
-  const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, scene.sky[0]); g.addColorStop(0.6, scene.sky[1]); g.addColorStop(1, scene.sky[2]);
-  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = skyGradient(ctx, scene, h); ctx.fillRect(0, 0, w, h);
   skyline(ctx, scene.far, state.distance * 0.15, GROUND_Y - 40, 0.6, w, 3);
   skyline(ctx, scene.mid, state.distance * 0.35, GROUND_Y - 10, 0.9, w, 11);
   windows(ctx, scene.neon, state.distance * 0.35, GROUND_Y - 10, w);

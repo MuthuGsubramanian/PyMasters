@@ -14,10 +14,18 @@ const SCENES = [
   { top: '#7f1d1d', mid: '#f97316', bottom: '#fde68a', hill: '#78350f', grass: '#a16207', name: 'Ember' },
 ];
 
+const _skyCache = new Map();   // one gradient per scene per context: building one every frame costs a frame on phones
 function sky(ctx, w, h, scene) {
   const s = SCENES[scene % SCENES.length];
-  const g = ctx.createLinearGradient(0, 0, 0, h);
-  g.addColorStop(0, s.top); g.addColorStop(0.55, s.mid); g.addColorStop(1, s.bottom);
+  const key = `${scene % SCENES.length}:${h}`;
+  let byCtx = _skyCache.get(ctx);
+  if (!byCtx) { byCtx = new Map(); _skyCache.set(ctx, byCtx); }
+  let g = byCtx.get(key);
+  if (!g) {
+    g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, s.top); g.addColorStop(0.55, s.mid); g.addColorStop(1, s.bottom);
+    byCtx.set(key, g);
+  }
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
   return s;
