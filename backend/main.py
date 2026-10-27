@@ -810,6 +810,12 @@ def init_db():
         _ensure_adaptive(DB_PATH)
     except Exception as _exc:
         print(f"[init_db] adaptive tables: {_exc}")
+    # Shared XP ledger (xp_awards) used by Play.
+    try:
+        from progress import ensure_tables as _ensure_progress
+        _ensure_progress(DB_PATH)
+    except Exception as _exc:
+        print(f"[init_db] progress tables: {_exc}")
 
 # --- App Lifecycle ---
 @asynccontextmanager
