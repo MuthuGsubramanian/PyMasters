@@ -58,6 +58,22 @@ def ensure_tables(db_path: str) -> None:
         conn.commit()
     finally:
         conn.close()
+    try:
+        purge_abandoned_rounds(db_path)
+    except Exception:
+        pass
+
+
+def purge_abandoned_rounds(db_path: str, older_than_days: int = 2) -> int:
+    """Delete rounds that were started but never finished (orphans from reloads/retries)."""
+    conn = sqlite3.connect(db_path)
+    try:
+        cur = conn.execute("DELETE FROM game_rounds WHERE finished_at IS NULL AND created_at < datetime('now', ?)",
+                           [f"-{int(older_than_days)} days"])
+        conn.commit()
+        return cur.rowcount
+    finally:
+        conn.close()
 
 
 def _guard(user_id: str) -> str:
@@ -383,7 +399,7 @@ def play_stats(user_id: str = Depends(get_current_user_id)):
             a = acc.setdefault(p["topic"], {"correct": 0, "total": 0})
             a["total"] += 1
             a["correct"] += 1 if p["correct"] else 0
-    streak, d = 0, date.today()
+    streak, d = 0, datetime.now(timezone.utc).date()      # created_at is UTC
     while d.isoformat() in days:
         streak += 1
         d = date.fromordinal(d.toordinal() - 1)

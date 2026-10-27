@@ -246,3 +246,33 @@ def test_answer_rejects_sim_payload_for_another_item(client, monkeypatch):
                                                     "sim_hole": {"hole_id": b["id"], "seed": b["seed"], "swings": [{"lr": 0.5, "steps": 10}]}},
                       headers=_headers("p1"))
     assert bad.status_code == 400
+
+
+def test_abandoned_rounds_are_purged_after_two_days(client):
+    r = _start(client, level=1)
+    conn = _db()
+    conn.execute("UPDATE game_rounds SET created_at = datetime('now', '-3 days') WHERE id = ?", [r["round_id"]])
+    conn.commit(); conn.close()
+    from routes.play import purge_abandoned_rounds
+    assert purge_abandoned_rounds(os.environ["DB_PATH"]) == 1
+    conn = _db()
+    assert conn.execute("SELECT COUNT(*) FROM game_rounds WHERE id = ?", [r["round_id"]]).fetchone()[0] == 0
+    conn.close()
+
+
+def test_play_days_streak_uses_utc_dates(client, monkeypatch):
+    """A round finished late in the UTC day must still count for today's streak when the
+    server's local date has already rolled over (IST is UTC+5:30)."""
+    r = _start(client, level=1)
+    ids = [i["id"] for i in r["items"]]
+    client.post("/api/play/round/finish", json={"round_id": r["round_id"], "responses": _answers_for(r["items"], set(ids)),
+                                              "item_ms": {i: 3000 for i in ids}}, headers=_headers("p1"))
+    import routes.play as play_mod
+    from datetime import date as _date
+    class _FakeDate(_date):
+        @classmethod
+        def today(cls):
+            return _date.fromordinal(_date.today().toordinal() + 1)   # local clock already on tomorrow
+    monkeypatch.setattr(play_mod, "date", _FakeDate)
+    s = client.get("/api/play/stats", headers=_headers("p1")).json()
+    assert s["play_days_streak"] == 1
