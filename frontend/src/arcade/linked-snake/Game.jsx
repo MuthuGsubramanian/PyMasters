@@ -25,7 +25,7 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
   const t = usePlayT();
   const session = useArcadeSession({ gameId: 'linked_snake' });
   const stateRef = useRef({ ...newRun({ seed: 1 }), ...(initial || {}) });
-  const [hud, setHud] = useState(() => mirror(stateRef.current));
+  const [hud, setHud] = useState(() => mirror({ ...newRun({ seed: 1 }), ...(initial || {}) }));
   const [reveal, setReveal] = useState(null);
   const canvasRef = useRef(null);
   const wrapRef = useRef(null);

@@ -18,7 +18,7 @@ async function flush(r) { await r.act(async () => { await Promise.resolve(); awa
 
 beforeEach(() => {
   vi.useFakeTimers({ shouldAdvanceTime: true })
-  HTMLCanvasElement.prototype.getContext = () => new Proxy({}, { get: (t, k) => (k === 'measureText' ? () => ({ width: 10 }) : () => {}), set: () => true })
+  HTMLCanvasElement.prototype.getContext = () => new Proxy({}, { get: (t, k) => (k === 'measureText' ? () => ({ width: 10 }) : /Gradient$/.test(k) ? () => ({ addColorStop: () => {} }) : () => {}), set: () => true })
   globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 16)
   globalThis.cancelAnimationFrame = (id) => clearTimeout(id)
 })
