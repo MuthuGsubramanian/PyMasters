@@ -401,3 +401,10 @@ export const finishPlayRound = (roundId, responses, itemMs, sim) =>
 export const getPlayStats = () => api.get('/play/stats');
 export const answerPlayItem = (roundId, itemId, response, ms, simHole) =>
   api.post('/play/round/answer', { round_id: roundId, item_id: itemId, response, ms, ...(simHole ? { sim_hole: simHole } : {}) });
+
+// Arcade (real games unlocked by learning progress)
+export const getArcadeCatalog = () => api.get('/arcade/catalog');
+export const startArcadeSession = (gameId, board) => api.post('/arcade/session/start', { game_id: gameId, ...(board ? { board } : {}) });
+export const moreArcadeQuestions = (sessionId) => api.post('/arcade/session/questions', { session_id: sessionId });
+export const answerArcadeItem = (sessionId, itemId, response, ms) => api.post('/arcade/session/answer', { session_id: sessionId, item_id: itemId, response, ms });
+export const finishArcadeSession = (sessionId, score, stats) => api.post('/arcade/session/finish', { session_id: sessionId, score, ...(stats ? { stats } : {}) });
