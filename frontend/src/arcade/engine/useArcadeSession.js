@@ -16,6 +16,7 @@ export const initialArcadeSession = {
   answered: 0,
   correct: 0,
   prefetching: false,
+  exhausted: false,
   result: null,
   error: null,
 };
@@ -39,7 +40,7 @@ export function sessionReducer(s, a) {
     case 'MORE': {
       const seen = new Set(s.dealt);
       const fresh = (a.items || []).filter((i) => !seen.has(i.id));
-      return { ...s, prefetching: false, queue: [...s.queue, ...fresh], dealt: [...s.dealt, ...fresh.map((i) => i.id)] };
+      return { ...s, prefetching: false, exhausted: fresh.length === 0, queue: [...s.queue, ...fresh], dealt: [...s.dealt, ...fresh.map((i) => i.id)] };
     }
     case 'REVEALED': {
       if (s.reveals[a.itemId]) return s;
@@ -58,7 +59,7 @@ export function sessionReducer(s, a) {
 }
 
 export function shouldPrefetch(s) {
-  return s.state === 'ready' && !s.prefetching && s.queue.length <= PREFETCH_AT;
+  return s.state === 'ready' && !s.prefetching && !s.exhausted && s.queue.length <= PREFETCH_AT;
 }
 
 function errorMessage(err) {

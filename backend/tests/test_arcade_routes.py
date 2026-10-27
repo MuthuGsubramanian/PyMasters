@@ -85,7 +85,12 @@ def test_session_start_rejects_thin_pool_with_next_lesson(client):
     g = next(x for x in cat["games"] if x["id"] == "snakes_ladders")
     assert g["unlocked"] and g["needs_content"] and g["next_lesson"]
     assert _start(client, "a2", "snakes_ladders").status_code == 400          # a board is required
-    r = _start(client, "a2", "snakes_ladders", board="loops")                 # unlocked board, but only while_loops learned
+    assert _start(client, "a2", "snakes_ladders", board="loops").status_code == 403   # board stays locked: 3 while_loops items
+    conn = _db()
+    for lid in ("fileio_reading", "recursion_fundamentals"):                  # 3 drill-backed lessons, ~9 items in all
+        conn.execute("INSERT INTO lesson_completions (user_id, lesson_id, xp_awarded) VALUES ('a2', ?, 10)", [lid])
+    conn.commit(); conn.close()
+    r = _start(client, "a2", "linked_snake")
     assert r.status_code == 409 and r.json()["detail"]["code"] == "needs_content" and r.json()["detail"]["next_lesson"]
 
 
@@ -177,3 +182,81 @@ def test_other_users_session_is_forbidden(client):
 def test_arcade_disabled_flag(client, monkeypatch):
     monkeypatch.setenv("ARCADE_ENABLED", "0")
     assert client.get("/api/arcade/catalog", headers=_headers("a1")).status_code == 503
+
+
+# ── review fix pass (2026-10-28) ──────────────────────────────────────────────
+
+def test_canvas_games_only_deal_choice_items(client):
+    bank = _bank_index()
+    for gid in ("linked_snake", "code_slingshot"):
+        # code_slingshot stays locked for a1 (3 lessons); unlock it by completing more lessons
+        conn = _db()
+        for lid in ("for_loops", "conditionals", "functions_basics", "while_loops", "ds_sets", "ds_tuples", "big_o_complexity"):
+            conn.execute("INSERT OR IGNORE INTO lesson_completions (user_id, lesson_id, xp_awarded) VALUES ('a1', ?, 10)", [lid])
+        conn.commit(); conn.close()
+        r = _start(client, "a1", gid)
+        assert r.status_code == 200, r.text
+        kinds = {bank[i["id"]]["kind"] for i in r.json()["items"]}
+        assert kinds == {"choice"}, (gid, kinds)
+
+
+def test_xp_scales_with_questions_answered_and_needs_timing(client):
+    body = _start(client, "a1", "snakes_ladders", board="lists").json()
+    bank = _bank_index()
+    sid = body["session_id"]
+    it = body["items"][0]
+    client.post("/api/arcade/session/answer", json={"session_id": sid, "item_id": it["id"], "response": bank[it["id"]]["answer"], "ms": 2500}, headers=_headers("a1"))
+    r = client.post("/api/arcade/session/finish", json={"session_id": sid, "score": 1}, headers=_headers("a1")).json()
+    assert 0 < r["xp"] <= 4, r          # one of twelve answered: a sliver, not the full 25
+    # answers without timing never earn XP
+    body2 = _start(client, "a1", "snakes_ladders", board="lists").json()
+    for it2 in body2["items"][:6]:
+        client.post("/api/arcade/session/answer", json={"session_id": body2["session_id"], "item_id": it2["id"], "response": bank[it2["id"]]["answer"]}, headers=_headers("a1"))
+    r2 = client.post("/api/arcade/session/finish", json={"session_id": body2["session_id"], "score": 1}, headers=_headers("a1")).json()
+    assert r2["xp"] == 0 and r2["answered"] == 6
+
+
+def test_finish_rejects_absurd_scores_and_releases_claim_on_error(client, monkeypatch):
+    body = _start(client, "a1", "linked_snake").json()
+    r = client.post("/api/arcade/session/finish", json={"session_id": body["session_id"], "score": 10**20}, headers=_headers("a1"))
+    assert r.status_code == 422
+    import routes.arcade as arcade
+    original = arcade.award_xp
+    arcade.award_xp = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom"))
+    bank = _bank_index()
+    it = body["items"][0]
+    client.post("/api/arcade/session/answer", json={"session_id": body["session_id"], "item_id": it["id"], "response": bank[it["id"]]["answer"], "ms": 2000}, headers=_headers("a1"))
+    try:
+        r = client.post("/api/arcade/session/finish", json={"session_id": body["session_id"], "score": 5}, headers=_headers("a1"))
+        assert r.status_code == 500
+    except RuntimeError:
+        pass                                   # TestClient re-raises server exceptions
+    finally:
+        arcade.award_xp = original
+    r = client.post("/api/arcade/session/finish", json={"session_id": body["session_id"], "score": 5}, headers=_headers("a1"))
+    assert r.status_code == 200 and r.json()["answered"] == 1      # the claim was released, the retry succeeds
+
+
+def test_concurrent_answers_both_persist(client):
+    import threading
+    body = _start(client, "a1", "linked_snake").json()
+    sid = body["session_id"]
+    items = body["items"][:4]
+    def go(it):
+        client.post("/api/arcade/session/answer", json={"session_id": sid, "item_id": it["id"], "response": 0, "ms": 2000}, headers=_headers("a1"))
+    threads = [threading.Thread(target=go, args=(it,)) for it in items]
+    [t.start() for t in threads]; [t.join() for t in threads]
+    r = client.post("/api/arcade/session/finish", json={"session_id": sid, "score": 1}, headers=_headers("a1")).json()
+    assert r["answered"] == 4
+
+
+def test_xp_capped_flag_on_partial_cap(client):
+    conn = _db()
+    conn.execute("INSERT INTO xp_awards (user_id, source, ref, amount) VALUES ('a1', 'game', 'earlier', 145)")
+    conn.commit(); conn.close()
+    body = _start(client, "a1", "snakes_ladders", board="lists").json()
+    bank = _bank_index()
+    for it in body["items"]:
+        client.post("/api/arcade/session/answer", json={"session_id": body["session_id"], "item_id": it["id"], "response": bank[it["id"]]["answer"], "ms": 2500}, headers=_headers("a1"))
+    r = client.post("/api/arcade/session/finish", json={"session_id": body["session_id"], "score": 5}, headers=_headers("a1")).json()
+    assert r["xp"] == 5 and r["xp_capped"] is True

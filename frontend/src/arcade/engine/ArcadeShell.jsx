@@ -8,8 +8,10 @@ import { useSoundPref } from './sfx';
  * Frame for one arcade run: title, score / lives / extra HUD slots, pause (overlay dialog),
  * mute toggle, quit. Children get `{ paused }` so the game loop can stop.
  */
-export function ArcadeShell({ title, subtitle, score, lives, hud, onQuit, children, footer }) {
-  const [paused, setPaused] = useState(false);
+export function ArcadeShell({ title, subtitle, score, lives, hud, onQuit, children, footer, paused: pausedProp, onPauseChange }) {
+  const [pausedState, setPausedState] = useState(false);
+  const paused = pausedProp ?? pausedState;
+  const setPaused = (next) => { const v = typeof next === 'function' ? next(paused) : next; setPausedState(v); onPauseChange?.(v); };
   const [soundOn, toggleSound] = useSoundPref();
   const t = usePlayT();
   return (

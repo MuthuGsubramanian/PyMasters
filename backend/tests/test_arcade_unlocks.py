@@ -124,3 +124,29 @@ def test_classroom_evaluate_returns_unlocked(db, monkeypatch):
     # second completion of the same lesson: nothing new
     r2 = client.post("/api/classroom/evaluate", json=body, headers=headers)
     assert r2.json()["unlocked"] == []
+
+
+def test_board_unlock_needs_a_playable_pool_for_this_learner(db):
+    """functions_basics alone gives too few choice items for a session: no board notification yet."""
+    from arcade.unlocks import evaluate
+    complete(db, "u2", ["functions_basics"])
+    keys = evaluate(conn(db), "u2")
+    assert "game:snakes_ladders" in keys and "board:functions" not in keys
+    complete(db, "u2", ["functions_args"])
+    assert "board:functions" in evaluate(conn(db), "u2")
+
+
+def test_concurrent_evaluate_notifies_once(db):
+    import threading
+    from arcade.unlocks import evaluate
+    complete(db, "u5", ["lists", "ds_dicts", "variables_intro"])
+    def go():
+        c = conn(db)
+        try:
+            evaluate(c, "u5")
+        finally:
+            c.close()
+    ts = [threading.Thread(target=go) for _ in range(4)]
+    [t.start() for t in ts]; [t.join() for t in ts]
+    n = conn(db).execute("SELECT COUNT(*) FROM notifications WHERE user_id = 'u5'").fetchone()[0]
+    assert n == 1, n

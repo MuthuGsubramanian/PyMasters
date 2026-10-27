@@ -6,25 +6,33 @@ import { usePlayT } from '../../games/engine/i18n';
  * The question as a move: choice (4 buttons, keys 1–4), bin (labels), line_then_choice
  * (pick the line, then the fix). A soft timer bar; expiry answers null. Answers once.
  */
-export function QuestionCard({ item, onAnswer, timerMs = 20000, disabled = false, title }) {
+export function QuestionCard({ item, onAnswer, timerMs = 20000, disabled = false, title, paused = false }) {
   const t = usePlayT();
   const [line, setLine] = useState(null);
   const [left, setLeft] = useState(timerMs);
   const answered = useRef(false);
+  const disabledRef = useRef(disabled);
+  const pausedRef = useRef(paused);
+  useEffect(() => { disabledRef.current = disabled; pausedRef.current = paused; }, [disabled, paused]);
 
   useEffect(() => { answered.current = false; setLine(null); setLeft(timerMs); }, [item?.id, timerMs]);
 
   const submit = (value) => {
-    if (disabled || answered.current) return;
+    if (disabledRef.current || answered.current) return;
     answered.current = true;
     onAnswer?.(value);
   };
 
   useEffect(() => {
     if (!timerMs) return undefined;
-    const started = Date.now();
+    // Count only unpaused time: a learner who pauses on a ladder must not lose the climb to the clock.
+    let elapsed = 0;
+    let last = Date.now();
     const id = setInterval(() => {
-      const remaining = Math.max(0, timerMs - (Date.now() - started));
+      const now = Date.now();
+      if (!pausedRef.current) elapsed += now - last;
+      last = now;
+      const remaining = Math.max(0, timerMs - elapsed);
       setLeft(remaining);
       if (remaining <= 0) { clearInterval(id); submit(null); }
     }, 100);

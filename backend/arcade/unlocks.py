@@ -20,6 +20,7 @@ GAMES = ["snakes_ladders", "linked_snake", "code_slingshot"]
 GAME_TITLES = {"snakes_ladders": "Snakes & Ladders", "linked_snake": "Linked Snake", "code_slingshot": "Code Slingshot"}
 LADDER = {"snakes_ladders": 1, "linked_snake": 3, "code_slingshot": 6}
 BOARD_MIN_POOL = 24
+SESSION_MIN_POOL = 12
 CHOICE_KINDS = {"choice", "line_then_choice", "bin"}
 NOTIFICATION_TYPE = "game_unlocked"
 ARCADE_LINK = "/dashboard/play#arcade"
@@ -85,6 +86,14 @@ def pool_size(board_key: str) -> int:
     return sum(1 for i in _bank_items() if i.get("topic") in topics and i.get("kind") in CHOICE_KINDS)
 
 
+def learner_pool(topics) -> int:
+    """Choice-style items a learner can be dealt for `topics` (twins replace their free-text originals)."""
+    topics = set(topics)
+    items = _bank_items()
+    twinned = {i["source_id"] for i in items if i.get("source_id")}
+    return sum(1 for i in items if i.get("topic") in topics and i.get("kind") in CHOICE_KINDS and i["id"] not in twinned)
+
+
 def completed_lessons(conn, user_id: str) -> set:
     rows = conn.execute("SELECT lesson_id FROM lesson_completions WHERE user_id = ?", [str(user_id)]).fetchall()
     return {r[0] for r in rows}
@@ -115,8 +124,11 @@ def due_keys(conn, user_id: str) -> list:
     n = drill_backed_count(conn, user_id)
     keys = [f"game:{g}" for g in GAMES if n >= LADDER[g]]
     done = completed_lessons(conn, user_id)
+    topics = lesson_topics()
+    learned = {topics[lid] for lid in done if lid in topics}
     for key, board in BOARDS.items():
-        if done.intersection(board["lessons"]) and pool_size(key) >= BOARD_MIN_POOL:
+        if (done.intersection(board["lessons"]) and pool_size(key) >= BOARD_MIN_POOL
+                and learner_pool(learned.intersection(board["topics"])) >= SESSION_MIN_POOL):
             keys.append(f"board:{key}")
     return keys
 
@@ -136,8 +148,18 @@ def evaluate(conn, user_id: str, *, notify: bool = True) -> list:
     new = [k for k in due_keys(conn, user_id) if k not in have]
     if not new:
         return []
-    conn.executemany("INSERT OR IGNORE INTO arcade_unlocks (user_id, key) VALUES (?, ?)", [(user_id, k) for k in new])
+    won = []
+    for k in new:                       # one insert per key: whoever lands the row sends the notification
+        try:
+            cur = conn.execute("INSERT OR IGNORE INTO arcade_unlocks (user_id, key) VALUES (?, ?)", [user_id, k])
+            if cur.rowcount == 1:
+                won.append(k)
+        except Exception:
+            pass
     conn.commit()
+    new = won
+    if not new:
+        return []
     if notify:
         try:
             _notify(conn, user_id, new, first_batch=not have)
