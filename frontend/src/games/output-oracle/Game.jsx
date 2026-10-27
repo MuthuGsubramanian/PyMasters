@@ -19,9 +19,9 @@ function CodeBlock({ code }) {
 }
 
 function Countdown({ seconds, running, onExpire }) {
+  // Remounted per item via `key`, so no reset effect is needed.
   const [left, setLeft] = useState(seconds);
   const expired = useRef(false);
-  useEffect(() => { setLeft(seconds); expired.current = false; }, [seconds]);
   useEffect(() => {
     if (!running) return undefined;
     const id = setInterval(() => {
@@ -85,7 +85,7 @@ export default function Game({ item, onAnswer, disabled, seconds = DEFAULT_SECON
     <div className="flex flex-col gap-4">
       <p className="text-sm text-text-secondary">What does this print?</p>
       <CodeBlock code={item.prompt?.code} />
-      <Countdown seconds={seconds} running={!disabled} onExpire={() => submit(null)} />
+      <Countdown key={item.id} seconds={seconds} running={!disabled} onExpire={() => submit(null)} />
 
       {item.kind === 'choice' ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" role="group" aria-label="Possible outputs">
