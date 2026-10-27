@@ -135,6 +135,11 @@ def _build_bug_hunt(seed: int, per_level: int) -> list:
 
 
 def build(game_id: str, seed: int = 2026, per_level: int = 30) -> list:
+    if game_id == "shape_sorter":
+        from games.templates.shape_sorter import build_items
+        items = build_items()
+        print(f"total {len(items)} hand-authored cards")
+        return items
     if game_id == "bug_hunt":
         return _build_bug_hunt(seed, min(per_level, 20))
     if game_id == "output_oracle":
