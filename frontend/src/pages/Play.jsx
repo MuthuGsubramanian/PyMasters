@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CalendarCheck, Gamepad2, Lock, Sparkles, Target } from 'lucide-react';
-import { getPlayCatalog } from '../api';
+import { getArcadeCatalog, getPlayCatalog } from '../api';
 import { Badge, Button, GlassCard, SectionHeading } from '../components/ui';
 import { GAME_ICONS, hasComponent } from '../games';
 import { usePlayT } from '../games/engine/i18n';
+import { ArcadeGallery } from '../arcade/ArcadeGallery';
+import { UNLOCK_EVENT } from '../arcade/unlocks';
 
 const topicLabel = (t) => String(t || '').replace(/_/g, ' ');
 
@@ -45,9 +47,18 @@ function GameCard({ game, index, t }) {
 
 export default function Play() {
   const [data, setData] = useState(null);
+  const [arcade, setArcade] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const t = usePlayT();
+
+  // Arcade catalog: evaluates unlocks server-side; newly earned keys get the toast.
+  useEffect(() => {
+    getArcadeCatalog().then((r) => {
+      setArcade(r.data);
+      if (r.data?.newly_unlocked?.length) window.dispatchEvent(new CustomEvent(UNLOCK_EVENT, { detail: r.data.newly_unlocked }));
+    }).catch(() => setArcade(null));
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
@@ -87,6 +98,15 @@ export default function Play() {
           <p className="text-sm text-text-secondary">{String(error)}</p>
           <Button size="sm" variant="outline" onClick={load}>{t('play.retry', 'Retry')}</Button>
         </GlassCard>
+      )}
+
+      {arcade && <ArcadeGallery catalog={arcade} />}
+
+      {data && (
+        <div className="pt-2">
+          <h2 className="font-display text-xl font-bold text-text-primary">{t('arcade.quick_drills', 'Quick drills')}</h2>
+          <p className="text-sm text-text-muted">{t('arcade.quick_drills_sub', 'Two-minute rounds that sharpen one idea at a time')}</p>
+        </div>
       )}
 
       {data?.recommendations?.length > 0 && (

@@ -72,6 +72,7 @@ const Upgrade = lazyRetry(() => import('./pages/Upgrade'), 'Upgrade');
 const LiveTutor = lazyRetry(() => import('./pages/LiveTutor'), 'LiveTutor');
 const Play = lazyRetry(() => import('./pages/Play'), 'Play');
 const PlayRound = lazyRetry(() => import('./pages/PlayRound'), 'PlayRound');
+const ArcadeGame = lazyRetry(() => import('./pages/ArcadeGame'), 'ArcadeGame');
 
 function PageLoader() {
   return (
@@ -170,6 +171,7 @@ export default function App() {
                 <Route path="classroom/:lessonId" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
                 <Route path="playground" element={<ErrorBoundary><Playground /></ErrorBoundary>} />
                 <Route path="play" element={<ErrorBoundary><Play /></ErrorBoundary>} />
+                <Route path="play/arcade/:gameId" element={<ErrorBoundary><ArcadeGame /></ErrorBoundary>} />
                 <Route path="play/:gameId" element={<ErrorBoundary><PlayRound /></ErrorBoundary>} />
                 <Route path="trending" element={<ErrorBoundary><Trending /></ErrorBoundary>} />
                 <Route path="challenges" element={<ErrorBoundary><Challenges /></ErrorBoundary>} />
