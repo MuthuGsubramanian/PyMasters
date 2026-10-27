@@ -17,11 +17,13 @@ deployed through CI → VM; each row says where it stands.
 | 10 | Semantic search | First search after a restart takes ~6.5 s (embedder lazy-loads on the first query); warm queries 0.8 s | P3 | open — pre-warm the query embedder after the index build |
 | 11 | Classroom grading | Vaathiyaar feedback rendered as raw text with literal backslash-n and markdown symbols (model double-escaped its JSON) — every graded challenge affected | P1 | fixed: parser unescapes double-escaped messages (`engine._unescape_message`) |
 | 12 | Playground header | Prompt-credit meter shows a bare `11799/11800` beside the XP badge; reads like XP | P3 | fixed: label "prompts" |
-| 13 | Console noise | `[PyMasters API] Module loaded` logged on every page load in user consoles | P3 | open |
+| 13 | Console noise | `[PyMasters API] Module loaded` logged on every page load in user consoles | P3 | fixed: logs removed |
 | 7 | API latency | Play endpoints ≈0.85 s round trip from the laptop (TLS + 2× RTT to us-central1); page feels "Checking…" for ~1 s per item | P3 | monitor; consider keep-alive / edge later |
 
 Headless sweep 14:05 IST (`ops/e2e/module_sweep.py`, 25 routes × desktop-light + mobile-dark): 50/50 clean after the rollout window — no console/page errors, no horizontal overflow, no failed API calls, slowest page Overview 2.9 s.
 
 Live API smoke 14:20 IST (`ops/e2e/api_smoke.py`, 16 calls incl. a real sandbox grade + playground execute): all 200, grade 4.9 s, everything else ≤1.6 s.
+
+Wave-2 games live-verified 14:38 IST on build 1250dd8 (Bug Hunt keyboard flow + reveal, Shape Sorter arrows/Enter, Big-O with the measured count race, Overfit Detective fit/commit): all working, no console errors.
 
 Next modules to sweep (as learner and as admin): Overview, Classroom (lesson + grade), Playground (execute + install), Paths, Knowledge Map, Challenges, Reference, Explains, Community, Live Tutor, Profile, Org console, Super Admin, Login/Signup/Forgot, Pricing/Upgrade.

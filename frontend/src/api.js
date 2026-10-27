@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-console.log('[PyMasters API] Module loaded — error interceptor v2 active');
 const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api';
 
 const api = axios.create({
@@ -46,7 +45,6 @@ api.interceptors.response.use(
     if (error.response?.status === 402 && window.location.pathname !== '/dashboard/upgrade') {
       window.location.href = '/dashboard/upgrade';
     }
-    console.log('[PyMasters API] Error interceptor caught:', error?.response?.status, typeof error?.response?.data?.detail, error?.response?.data?.detail);
     // CRITICAL SAFETY: Normalize ALL non-string error data
     // Pydantic 422 returns detail as [{type, loc, msg, input}] which crashes React
     try {
