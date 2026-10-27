@@ -31,6 +31,8 @@ import SVM from '../components/explains/essays/svmEssay';
 import BIAS_VARIANCE from '../components/explains/essays/biasVarianceEssay';
 import TIME_SERIES_FORECASTING from '../components/explains/essays/timeSeriesForecastingEssay';
 
+import GAUSSIAN_MIXTURE from '../components/explains/essays/gmmEssay';
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
 // visual that evolves as you scroll, plain language, a moment of hands-on
@@ -358,6 +360,7 @@ export const ESSAYS = [
     SVM,
     BIAS_VARIANCE,
     TIME_SERIES_FORECASTING,
+    GAUSSIAN_MIXTURE,
 ];
 
 // ── Index page ────────────────────────────────────────────────────────────────
