@@ -1,16 +1,17 @@
 // One round of any game: load items → answer each (timing them) → reveal → finish.
 // The reducer is pure and exported for tests; the hook wires it to the API.
 import { useCallback, useEffect, useReducer, useRef } from 'react';
-import { startPlayRound, finishPlayRound } from '../../api';
+import { startPlayRound, finishPlayRound, answerPlayItem } from '../../api';
 
 export const initialSession = {
-  state: 'idle', // idle | loading | playing | revealing | finishing | done | error
+  state: 'idle', // idle | loading | playing | answering | revealing | finishing | done | error
   round: null,
   items: [],
   index: 0,
   shownAt: 0,
   responses: {},
   itemMs: {},
+  reveals: {},
   result: null,
   error: null,
 };
@@ -21,14 +22,19 @@ export function sessionReducer(s, a) {
       return { ...initialSession, state: 'loading' };
     case 'ROUND_LOADED':
       return { ...s, state: 'playing', round: a.round, items: a.round.items || [], index: 0, shownAt: a.now,
-        responses: {}, itemMs: {}, result: null, error: null };
+        responses: {}, itemMs: {}, reveals: {}, result: null, error: null };
     case 'ANSWER': {
       if (s.state !== 'playing') return s;
       const item = s.items[s.index];
       if (!item || item.id !== a.itemId) return s;
-      return { ...s, state: 'revealing',
+      return { ...s, state: 'answering',
         responses: { ...s.responses, [a.itemId]: a.response },
         itemMs: { ...s.itemMs, [a.itemId]: Math.max(0, a.now - s.shownAt) } };
+    }
+    case 'REVEALED': {
+      if (s.state !== 'answering') return s;
+      const reveals = a.reveal ? { ...s.reveals, [a.itemId]: a.reveal } : s.reveals;
+      return { ...s, state: 'revealing', reveals };
     }
     case 'NEXT': {
       if (s.state !== 'revealing') return s;
@@ -70,7 +76,16 @@ export function useGameSession({ gameId, level, mode, getSimPayload }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const answer = useCallback((itemId, response) => dispatch({ type: 'ANSWER', itemId, response, now: Date.now() }), []);
+  const answer = useCallback((itemId, response) => {
+    const now = Date.now();
+    dispatch({ type: 'ANSWER', itemId, response, now });
+    const roundId = s.round?.round_id;
+    const ms = Math.max(0, now - s.shownAt);
+    const isSim = response && typeof response === 'object' && response.hole_id;
+    answerPlayItem(roundId, itemId, isSim ? null : response, ms, isSim ? response : undefined)
+      .then(({ data }) => dispatch({ type: 'REVEALED', itemId, reveal: data }))
+      .catch(() => dispatch({ type: 'REVEALED', itemId, reveal: null }));
+  }, [s.round, s.shownAt]);
   const next = useCallback(() => dispatch({ type: 'NEXT', now: Date.now() }), []);
 
   useEffect(() => {
@@ -91,7 +106,7 @@ export function useGameSession({ gameId, level, mode, getSimPayload }) {
 
   return {
     state: s.state, round: s.round, items: s.items, index: s.index, item: s.items[s.index] || null,
-    responses: s.responses, itemMs: s.itemMs, result: s.result, error: s.error,
+    responses: s.responses, itemMs: s.itemMs, reveals: s.reveals, result: s.result, error: s.error,
     answer, next, retry: load,
   };
 }

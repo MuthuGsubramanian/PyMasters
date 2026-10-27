@@ -14,6 +14,7 @@ import { parseSSELine, extractMessageFromJSON } from '../utils/streaming';
 // answers can reference what the learner is currently looking at.
 const PAGE_LABELS = [
     ['/dashboard/playground', 'Playground — a live Python code terminal. You can DEMONSTRATE concepts here: include short, runnable Python code blocks in your answers and the student can run them in the terminal with one click'],
+    ['/dashboard/play', 'Play — short concept games (Output Oracle: predict what a snippet prints; Gradient Golf: choose a learning rate to sink the ball in the loss minimum). The student may be asking about an item they just got wrong — explain the underlying rule, not just the answer'],
     ['/dashboard/paths', 'Evolution — the AI-personalised learning path'],
     ['/dashboard/knowledge', 'Knowledge Map — a live map of topics the student has mastered'],
     ['/dashboard/classroom', 'Classroom — AI-guided interactive Python lessons'],

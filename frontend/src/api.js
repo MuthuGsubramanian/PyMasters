@@ -391,3 +391,5 @@ export const startPlayRound = (gameId, level, mode) =>
 export const finishPlayRound = (roundId, responses, itemMs, sim) =>
   api.post('/play/round/finish', { round_id: roundId, responses, item_ms: itemMs, ...(sim ? { sim } : {}) });
 export const getPlayStats = () => api.get('/play/stats');
+export const answerPlayItem = (roundId, itemId, response, ms, simHole) =>
+  api.post('/play/round/answer', { round_id: roundId, item_id: itemId, response, ms, ...(simHole ? { sim_hole: simHole } : {}) });

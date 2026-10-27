@@ -23,7 +23,9 @@ export function GameShell({ title, level, index, total, score, onQuit, children,
                 className={`h-2 rounded-full transition-all ${i < index ? 'w-2 bg-accent-primary' : i === index ? 'w-5 bg-accent-primary' : 'w-2 bg-border-strong'}`} />
             ))}
           </ol>
-          <span className="text-sm font-semibold text-text-secondary tabular-nums" aria-live="polite">{score}</span>
+          {score !== null && score !== undefined && (
+            <span className="text-sm font-semibold text-text-secondary tabular-nums" aria-live="polite" aria-label={`score ${score}`}>{score}</span>
+          )}
           <Button variant="ghost" size="icon" aria-label={paused ? 'Resume' : 'Pause'} onClick={() => setPaused((p) => !p)}
             className="min-w-11 min-h-11">
             {paused ? <Play size={18} /> : <Pause size={18} />}

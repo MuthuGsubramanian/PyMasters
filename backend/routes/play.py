@@ -47,6 +47,11 @@ def ensure_tables(db_path: str) -> None:
             " concepts_json TEXT, result_json TEXT,"
             " created_at TEXT DEFAULT CURRENT_TIMESTAMP, finished_at TEXT)"
         )
+        for col in ("responses_json TEXT", "item_ms_json TEXT", "reveals_json TEXT"):
+            try:
+                conn.execute(f"ALTER TABLE game_rounds ADD COLUMN {col}")
+            except sqlite3.OperationalError:
+                pass  # already there
         conn.execute("CREATE INDEX IF NOT EXISTS idx_game_rounds_user_game ON game_rounds(user_id, game_id, created_at)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_game_rounds_user_day ON game_rounds(user_id, created_at)")
         conn.commit()
@@ -101,6 +106,14 @@ class FinishBody(BaseModel):
     sim: Optional[dict] = None
 
 
+class AnswerBody(BaseModel):
+    round_id: str
+    item_id: str
+    response: object = None
+    ms: Optional[float] = None
+    sim_hole: Optional[dict] = None   # {hole_id, swings, seed} for simulation games
+
+
 @router.post("/round/start")
 def start_round(body: StartBody, user_id: str = Depends(get_current_user_id)):
     db = _guard(user_id)
@@ -147,6 +160,57 @@ def _load_items(game: dict, item_ids: list, level: int, seed: int) -> list:
     return [bank[i] for i in item_ids if i in bank]
 
 
+def _reveal_entry(item: dict, scored: dict) -> dict:
+    return {"id": item["id"], "topic": item["topic"], "correct": scored["correct"], "score": scored["score"], "max": scored["max"],
+            "answer": item.get("answer"), "why": item.get("why", ""), "lesson_id": item.get("lesson_id", ""),
+            "misconception": scored.get("misconception")}
+
+
+@router.post("/round/answer")
+def answer_item(body: AnswerBody, user_id: str = Depends(get_current_user_id)):
+    """Grade one item immediately so the learner sees the answer and the why right away.
+
+    The response is stored server-side; /finish uses the stored responses, so a reveal
+    can never be followed by a changed answer.
+    """
+    db = _guard(user_id)
+    conn = _conn(db)
+    try:
+        row = conn.execute("SELECT * FROM game_rounds WHERE id = ?", [body.round_id]).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Unknown round")
+        if row["user_id"] != user_id:
+            raise HTTPException(status_code=403, detail="Forbidden")
+        if row["finished_at"]:
+            raise HTTPException(status_code=409, detail="Round already finished")
+        item_ids = json.loads(row["item_ids"])
+        if body.item_id not in item_ids:
+            raise HTTPException(status_code=404, detail="Item is not part of this round")
+        reveals = json.loads(row["reveals_json"] or "{}")
+        if body.item_id in reveals:
+            return reveals[body.item_id]
+        game = _game_or_404(row["game_id"])
+        items = _load_items(game, [body.item_id], row["level"], row["seed"])
+        if not items:
+            raise HTTPException(status_code=404, detail="Item is not part of this round")
+        item = items[0]
+        sim = {"holes": [body.sim_hole]} if (game["kind"] == "sim" and body.sim_hole) else None
+        scored = engine.score_round([item], {body.item_id: body.response}, level=row["level"], sim=sim, game_id=game["id"])
+        entry = _reveal_entry(item, scored["per_item"][0])
+        responses = json.loads(row["responses_json"] or "{}")
+        item_ms = json.loads(row["item_ms_json"] or "{}")
+        responses[body.item_id] = body.sim_hole if sim else body.response
+        if body.ms is not None:
+            item_ms[body.item_id] = float(body.ms)
+        reveals[body.item_id] = entry
+        conn.execute("UPDATE game_rounds SET responses_json = ?, item_ms_json = ?, reveals_json = ? WHERE id = ?",
+                     [json.dumps(responses), json.dumps(item_ms), json.dumps(reveals), row["id"]])
+        conn.commit()
+        return entry
+    finally:
+        conn.close()
+
+
 @router.post("/round/finish")
 def finish_round(body: FinishBody, user_id: str = Depends(get_current_user_id)):
     db = _guard(user_id)
@@ -161,10 +225,22 @@ def finish_round(body: FinishBody, user_id: str = Depends(get_current_user_id)):
             return json.loads(row["result_json"])
         game = _game_or_404(row["game_id"])
         items = _load_items(game, json.loads(row["item_ids"]), row["level"], row["seed"])
-        scored = engine.score_round(items, body.responses, level=row["level"], sim=body.sim, game_id=game["id"])
+        # Stored (already revealed) responses take precedence over whatever the client sends now.
+        stored = json.loads(row["responses_json"] or "{}")
+        stored_ms = json.loads(row["item_ms_json"] or "{}")
+        if game["kind"] == "sim":
+            holes = {h.get("hole_id"): h for h in ((body.sim or {}).get("holes") or []) if isinstance(h, dict)}
+            holes.update({k: v for k, v in stored.items() if isinstance(v, dict)})
+            sim_payload = {"holes": list(holes.values())}
+            responses = {}
+        else:
+            sim_payload = None
+            responses = {**(body.responses or {}), **stored}
+        item_ms = {**(body.item_ms or {}), **stored_ms}
+        scored = engine.score_round(items, responses, level=row["level"], sim=sim_payload, game_id=game["id"])
         accuracy = (scored["score"] / scored["max_score"]) if scored["max_score"] else 0.0
-        med = engine.median_ms(body.item_ms)
-        duration_s = sum(float(v) for v in (body.item_ms or {}).values() if isinstance(v, (int, float))) / 1000.0
+        med = engine.median_ms(item_ms)
+        duration_s = sum(float(v) for v in item_ms.values() if isinstance(v, (int, float))) / 1000.0
         xp = 0 if game.get("score_only") else engine.xp_for(scored["score"], scored["max_score"], med, today_xp(conn, user_id, "game"))
         xp_capped = (not game.get("score_only")) and accuracy >= engine.XP_MIN_ACCURACY and (med is None or med >= engine.HUMAN_FLOOR_MS) \
             and xp < round(5 + 20 * accuracy)
@@ -203,7 +279,7 @@ def finish_round(body: FinishBody, user_id: str = Depends(get_current_user_id)):
         record_signal(db, user_id=user_id, signal_type="game_round", topic=game["id"],
                       value={"level": row["level"], "mode": row["mode"], "score": scored["score"], "max_score": scored["max_score"],
                              "items": [{"id": p["id"], "topic": p["topic"], "correct": p["correct"], "misconception": p["misconception"],
-                                        "ms": (body.item_ms or {}).get(p["id"])} for p in scored["per_item"]]})
+                                        "ms": item_ms.get(p["id"])} for p in scored["per_item"]]})
         for topic, delta in by_topic.items():
             nudge_mastery(db, user_id, topic, max(-MASTERY_ROUND_BOUND, min(MASTERY_ROUND_BOUND, delta)))
     except Exception as exc:  # never fail the learner's result over bookkeeping

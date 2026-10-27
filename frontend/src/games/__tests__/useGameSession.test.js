@@ -15,25 +15,35 @@ describe('sessionReducer', () => {
     expect(s.shownAt).toBe(1000)
   })
 
-  it('records the response and elapsed ms, then reveals', () => {
+  it('records the response and elapsed ms, waits for the server reveal, then reveals', () => {
     let s = sessionReducer(sessionReducer(initialSession, { type: 'LOAD' }), { type: 'ROUND_LOADED', round, now: 1000 })
     s = sessionReducer(s, { type: 'ANSWER', itemId: 'a', response: 2, now: 4200 })
-    expect(s.state).toBe('revealing')
+    expect(s.state).toBe('answering')
     expect(s.responses).toEqual({ a: 2 })
     expect(s.itemMs).toEqual({ a: 3200 })
-    // a second answer for the same item while revealing is ignored
+    // a second answer for the same item while waiting is ignored
     const again = sessionReducer(s, { type: 'ANSWER', itemId: 'a', response: 3, now: 5000 })
     expect(again.responses).toEqual({ a: 2 })
+    s = sessionReducer(s, { type: 'REVEALED', itemId: 'a', reveal: { id: 'a', correct: true, answer: 2, why: 'because' } })
+    expect(s.state).toBe('revealing')
+    expect(s.reveals.a.why).toBe('because')
+    // a failed reveal still lets the learner move on
+    const failed = sessionReducer(sessionReducer(s, { type: 'NEXT', now: 1 }), { type: 'ANSWER', itemId: 'b', response: 'x', now: 2 })
+    const noReveal = sessionReducer(failed, { type: 'REVEALED', itemId: 'b', reveal: null })
+    expect(noReveal.state).toBe('revealing')
+    expect(noReveal.reveals.b).toBeUndefined()
   })
 
   it('NEXT advances until the last item, then moves to finishing', () => {
     let s = sessionReducer(sessionReducer(initialSession, { type: 'LOAD' }), { type: 'ROUND_LOADED', round, now: 0 })
     s = sessionReducer(s, { type: 'ANSWER', itemId: 'a', response: 1, now: 10 })
+    s = sessionReducer(s, { type: 'REVEALED', itemId: 'a', reveal: { correct: true } })
     s = sessionReducer(s, { type: 'NEXT', now: 20 })
     expect(s.state).toBe('playing')
     expect(s.index).toBe(1)
     expect(s.shownAt).toBe(20)
     s = sessionReducer(s, { type: 'ANSWER', itemId: 'b', response: '3', now: 30 })
+    s = sessionReducer(s, { type: 'REVEALED', itemId: 'b', reveal: { correct: false } })
     s = sessionReducer(s, { type: 'NEXT', now: 40 })
     expect(s.state).toBe('finishing')
   })

@@ -187,3 +187,36 @@ def test_stats_after_round(client):
     assert sum(v["total"] for v in s["accuracy_by_topic"].values()) == 3
     assert sum(v["correct"] for v in s["accuracy_by_topic"].values()) == 1
     assert "_fixture" in s["best"]
+
+
+# ── per-item answer with immediate reveal ────────────────────────────────────
+
+def test_answer_reveals_and_persists(client):
+    r = _start(client, level=1)
+    it = r["items"][0]
+    key = _answers_for([it], {it["id"]})[it["id"]]
+    a = client.post("/api/play/round/answer", json={"round_id": r["round_id"], "item_id": it["id"], "response": key, "ms": 2500},
+                    headers=_headers("p1"))
+    assert a.status_code == 200, a.text
+    body = a.json()
+    assert body["correct"] is True and body["answer"] == key and len(body["why"]) > 5 and body["lesson_id"]
+    assert body["score"] == body["max"] and body["id"] == it["id"]
+    # answering the same item again returns the stored reveal and does not change the response
+    again = client.post("/api/play/round/answer", json={"round_id": r["round_id"], "item_id": it["id"], "response": "changed", "ms": 10},
+                        headers=_headers("p1"))
+    assert again.status_code == 200 and again.json()["correct"] is True
+    # an item that is not part of the round is rejected
+    bad = client.post("/api/play/round/answer", json={"round_id": r["round_id"], "item_id": "fx999", "response": 0, "ms": 10}, headers=_headers("p1"))
+    assert bad.status_code == 404
+
+
+def test_finish_uses_server_stored_responses(client):
+    r = _start(client, level=1)
+    ids = [i["id"] for i in r["items"]]
+    keys = _answers_for(r["items"], set(ids))
+    for i in ids:
+        client.post("/api/play/round/answer", json={"round_id": r["round_id"], "item_id": i, "response": keys[i], "ms": 3000}, headers=_headers("p1"))
+    # the client now claims different (wrong) responses and tiny timings: stored ones win
+    f = client.post("/api/play/round/finish", json={"round_id": r["round_id"], "responses": {i: "wrong" for i in ids},
+                                                  "item_ms": {i: 100 for i in ids}}, headers=_headers("p1")).json()
+    assert f["correct"] == 3 and f["xp"] == 25
