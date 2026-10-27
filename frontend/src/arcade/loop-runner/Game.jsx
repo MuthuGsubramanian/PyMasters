@@ -216,4 +216,3 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
   );
 }
 
-export { LANE };

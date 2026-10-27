@@ -43,6 +43,12 @@ const VOICES = {
   raspberry: [{ type: 'sawtooth', from: 160, to: 110, dur: 0.35, gain: 0.06 }],
   win: [{ type: 'sine', from: 523, to: 784, dur: 0.4, gain: 0.08 }, { type: 'triangle', from: 659, to: 1046, dur: 0.5, gain: 0.05 }],
   lose: [{ type: 'triangle', from: 392, to: 196, dur: 0.5, gain: 0.07 }],
+  pew: [{ type: 'square', from: 900, to: 300, dur: 0.08, gain: 0.05 }],
+  boom: [{ type: 'sawtooth', from: 160, to: 40, dur: 0.35, gain: 0.1 }, { type: 'square', from: 80, to: 30, dur: 0.3, gain: 0.05 }],
+  waka: [{ type: 'square', from: 300, to: 500, dur: 0.06, gain: 0.04 }],
+  whoop: [{ type: 'sine', from: 300, to: 1200, dur: 0.35, gain: 0.07 }],
+  squeal: [{ type: 'sawtooth', from: 700, to: 500, dur: 0.25, gain: 0.04 }],
+  boost: [{ type: 'sine', from: 200, to: 900, dur: 0.3, gain: 0.08 }],
 };
 
 let ctx = null;
