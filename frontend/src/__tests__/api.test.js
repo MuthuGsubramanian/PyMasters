@@ -100,3 +100,25 @@ describe('response interceptor', () => {
     expect(caught.response.data.detail).toBe('This identifier is reserved.')
   })
 })
+
+describe('play API helpers', () => {
+  it('hit the /play routes with the documented payload shapes', async () => {
+    const { getPlayCatalog, startPlayRound, finishPlayRound, getPlayStats } = await import('../api.js')
+    const sink = {}
+    api.defaults.adapter = captureAdapter(sink)
+    await getPlayCatalog()
+    expect(sink.config.url).toBe('/play/catalog')
+    await startPlayRound('output_oracle', 2, 'daily')
+    expect(sink.config.url).toBe('/play/round/start')
+    expect(JSON.parse(sink.config.data)).toEqual({ game_id: 'output_oracle', level: 2, mode: 'daily' })
+    await startPlayRound('output_oracle')
+    expect(JSON.parse(sink.config.data)).toEqual({ game_id: 'output_oracle' })
+    await finishPlayRound('r1', { a: 1 }, { a: 2000 })
+    expect(sink.config.url).toBe('/play/round/finish')
+    expect(JSON.parse(sink.config.data)).toEqual({ round_id: 'r1', responses: { a: 1 }, item_ms: { a: 2000 } })
+    await finishPlayRound('r2', {}, {}, { holes: [] })
+    expect(JSON.parse(sink.config.data).sim).toEqual({ holes: [] })
+    await getPlayStats()
+    expect(sink.config.url).toBe('/play/stats')
+  })
+})

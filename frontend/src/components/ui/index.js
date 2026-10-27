@@ -9,3 +9,4 @@ export { Tabs } from './Tabs';
 export { Table, THead, TH, TBody, TR, TD } from './Table';
 export { Drawer } from './Drawer';
 export { Modal } from './Modal';
+export { GlassCard, SectionHeading } from './GlassCard';
