@@ -50,6 +50,11 @@ class _Handler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):  # noqa: N802
         q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        if "code" not in q and "error" not in q:
+            # Browsers also fetch /favicon.ico; never let that overwrite the stored code.
+            self.send_response(404)
+            self.end_headers()
+            return
         _Handler.code = (q.get("code") or [None])[0]
         _Handler.state = (q.get("state") or [None])[0]
         err = (q.get("error_description") or q.get("error") or [None])[0]
@@ -106,7 +111,15 @@ def main() -> int:
     deadline = time.time() + 600
     while _Handler.code is None and time.time() < deadline:
         time.sleep(1)
-    srv.shutdown()
+    # shutdown() can block when the browser keeps the socket open; give it a bounded wait.
+    stopper = threading.Thread(target=srv.shutdown, daemon=True)
+    stopper.start()
+    stopper.join(5)
+    try:
+        srv.server_close()
+    except OSError:
+        pass
+    print("callback received, exchanging code", flush=True)
     if not _Handler.code:
         print("no authorisation code received (timeout or denied)")
         return 2
@@ -117,7 +130,7 @@ def main() -> int:
                                  "redirect_uri": redirect, "client_id": cid, "client_secret": sec})
     access, refresh = tok.get("access_token"), tok.get("refresh_token")
     if not access:
-        print("token exchange failed:", tok)
+        print("token exchange failed:", {k: tok.get(k) for k in ("error", "error_description")}, flush=True)
         return 4
     now = int(time.time())
     store = {"access_token": access, "refresh_token": refresh,
