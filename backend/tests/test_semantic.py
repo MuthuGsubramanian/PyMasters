@@ -85,3 +85,15 @@ def test_query_validation():
     client = TestClient(app)
     assert client.get("/api/semantic/search", params={"q": "x"}).status_code == 422
     assert client.get("/api/semantic/search").status_code == 422
+
+
+def test_query_embedder_is_warm_after_build(tmp_path, monkeypatch):
+    """A cached index must not leave the query embedder cold: the first learner search
+    after a restart took ~6.5 s live (2026-10-27) because the model loaded lazily."""
+    from semantic import store as store_mod
+    monkeypatch.setattr(store_mod, "_DEFAULT_CACHE", str(tmp_path))
+    first = store_mod.SemanticIndex()
+    first._build()                      # writes the cache
+    second = store_mod.SemanticIndex()
+    second._build()                     # loads the cache → embedder would stay None
+    assert second._embedder is not None

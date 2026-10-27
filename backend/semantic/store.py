@@ -217,6 +217,11 @@ class SemanticIndex:
         cached = self._load_cache(corpus_key, len(texts))
         if cached is not None:
             self.matrix = cached
+            # Warm the query embedder now (still on the background build thread) so the
+            # first learner search after a restart does not pay the ~6 s model load.
+            if self._embedder is None:
+                self._embedder = _FakeEmbedder() if _fake_embed() else _FastEmbedder()
+                self._embedder.embed(["warm up"])
         else:
             self._embedder = _FakeEmbedder() if _fake_embed() else _FastEmbedder()
             self.matrix = _normalize(self._embedder.embed(texts))
