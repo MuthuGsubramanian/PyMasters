@@ -28,6 +28,7 @@ from routes.profile import router as profile_router
 from routes.classroom import router as classroom_router
 from routes.playground import router as playground_router
 from routes.play import router as play_router
+from routes.arcade import router as arcade_router
 from routes.notifications import router as notifications_router
 from routes.modules import router as modules_router
 from routes.graph import router as graph_router
@@ -823,6 +824,11 @@ def init_db():
         _ensure_play(DB_PATH)
     except Exception as _exc:
         print(f"[init_db] play tables: {_exc}")
+    try:
+        from routes.arcade import ensure_tables as _ensure_arcade
+        _ensure_arcade(DB_PATH)
+    except Exception as _exc:
+        print(f"[init_db] arcade tables: {_exc}")
 
 # --- App Lifecycle ---
 @asynccontextmanager
@@ -881,6 +887,7 @@ app.include_router(profile_router)
 app.include_router(classroom_router)
 app.include_router(playground_router)
 app.include_router(play_router)
+app.include_router(arcade_router)
 app.include_router(playground_files_router)
 app.include_router(notifications_router)
 app.include_router(modules_router)
@@ -1493,6 +1500,12 @@ def complete_module(sub: QuizSubmission, caller: str = Depends(get_current_user_
                 "UPDATE users SET points = ? WHERE id = ?",
                 [current_points, sub.user_id],
             )
+            conn.commit()
+            try:
+                from arcade.unlocks import evaluate as _arcade_evaluate
+                _arcade_evaluate(conn, sub.user_id)
+            except Exception as _exc:  # noqa: BLE001
+                print(f"[arcade] unlock evaluation failed: {_exc}")
 
         # Unlock next module regardless of XP (retake should still unlock)
         updates = []

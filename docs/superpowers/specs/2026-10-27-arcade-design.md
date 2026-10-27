@@ -23,8 +23,8 @@ headline.
 ## Goals
 
 1. Three real games at launch, each a known genre with a Python/DSA twist that *is* the mechanic, not
-   a quiz bolted on: a board game (Snakes & Ladders), an arcade action game (Snake), and a runner
-   (gates). Each playable with one thumb on a 400 px phone and with a keyboard on desktop.
+   a quiz bolted on: a board game (Snakes & Ladders), an arcade action game (Snake), and a physics puzzle
+   (slingshot, the founder's Angry Birds example). Each playable with one thumb on a 400 px phone and with a keyboard on desktop.
 2. High-quality presentation: 60 fps canvas/SVG animation with squash-and-stretch, particles, screen
    shake, parallax, a consistent art direction per game, sound effects (mutable), reduced-motion path.
 3. Unlock ladder: games and boards unlock on learning milestones (lesson completions). Unlocks create
@@ -66,7 +66,7 @@ Stages are counted in **completed lessons** (`lesson_completions`) across all tr
 | 1 | 1 lesson completed | **Snakes & Ladders: Python Quest** with the *Variables* board | "New game unlocked: Snakes & Ladders" |
 | — | each topic lesson completed | a new themed **board** in Snakes & Ladders (Lists, Dicts, Loops, Conditionals, Functions, Scope, Errors, Comprehensions, Sets & Tuples, Big-O & Sorting) | "New board unlocked: Lists" |
 | 2 | 3 lessons completed | **Linked Snake** | "New game unlocked: Linked Snake" |
-| 3 | 6 lessons completed | **Loop Runner** | "New game unlocked: Loop Runner" |
+| 3 | 6 lessons completed | **Code Slingshot** | "New game unlocked: Code Slingshot" |
 | 4+ | reserved | future games (10, 15, 20 lessons…) | |
 
 Unlocks are evaluated server-side (a) whenever a lesson completion is recorded and (b) on first load
@@ -123,24 +123,34 @@ Locked cards show the milestone ("Complete 2 more lessons") and a preview still.
   look toward the chosen food, trail glow; shrink animation is a tail node detaching and dissolving.
   Sounds: crunch (grow), fizz (shrink), low thud (crash).
 
-### 3. Loop Runner (side-scrolling runner, real time)
+### 3. Code Slingshot (physics puzzle, real time) — founder's example, 2026-10-28 00:09
 
-- **World**: a courier robot runs through a parallax neon city (three background layers, lamp
-  flicker, rain option). The runner auto-runs; the player **jumps** (tap / space / up) to take the
-  upper gate or **slides** (swipe down / down arrow) for the lower gate. A **gate pair** arrives every
-  2.4 s (speeding up), each gate labelled with a value; the HUD shows the current expression:
-  `x = 7 → x % 3 == 1`, `"cat"[-1]`, `len([1, [2, 3]])`, `bool("")`, `3 * "ab"`, `[1,2,3][1:]`.
-  Pass the gate whose label equals the expression's real value: correct → speed burst + coins; wrong →
-  the gate flashes red, the robot stumbles, one life lost (of 3), the correct value and a one-line why
-  show on the HUD strip for 1.5 s. Checkpoints every 10 gates (a *for loop* counter ticks up:
-  `for gate in range(10)`), with a "chapter" change of scenery.
-- **Questions**: a new **expressions bank** (`expressions.json`), generated from templates and
-  verified by the interpreter in `build_banks.py` like Output Oracle: comparison operators, `%`,
-  `//`, `in`, slicing, indexing, `len`, truthiness, string repetition, `and/or` short-circuit,
-  comprehension length, `max/min/sum`. Difficulty tiers by the learner's completed lessons.
-- **Score**: distance (gates passed) and coins; XP from correct gates.
-- **Art direction**: cyan/magenta skyline, robot with wheel spin, squash on landing, dust puffs,
-  speed lines, camera shake on a stumble. Sounds: jump whoosh, gate chime, stumble buzz.
+*"picture angry birds game where the pigs will be options for the question and hitting the right
+option is the game."*
+
+- **Scene**: a side-view canvas stage. Left: a slingshot on a wooden stand. Right: three or four
+  **crates on stilts and towers**, each crate carrying a **pig** with a label (one candidate answer
+  each). The HUD shows the expression or snippet (`x = 7 → x % 3 == 1`, `"cat"[-1]`, or a short
+  Output Oracle program) and the bird queue (three birds per question).
+- **Shot**: drag the bird back (mouse / touch; keyboard: arrows aim, hold space for power), release;
+  the bird flies on a real parabola with gravity and a little drag; a dotted trajectory preview
+  shows the first third of the arc (fades at higher levels). Structures are rigid blocks with simple
+  2-D physics (gravity, stacking, toppling on impact), so a near-miss can still topple a tower onto
+  the right pig.
+- **Rules**: hitting the pig with the **correct** label pops it (feathers, score, next question);
+  hitting a **wrong** pig makes it blow a raspberry and the tower *locks* (reinforced) for one shot,
+  with the why text on the HUD; running out of birds on a question costs a life (3 lives per run).
+  Combo bonus for first-shot hits; every five questions the scenery and difficulty change (taller
+  towers, moving platform, wind indicator).
+- **Questions**: the **expressions bank** (verified) at lower levels; Output Oracle choice items and
+  choice twins at higher levels; topics only from completed lessons.
+- **Score**: pops × combo; personal best; XP from correct pops (server-graded as the pig is hit).
+- **Art direction**: painterly dusk sky, grassy stage, wooden crates with grain, pigs drawn in code
+  (round, two-tone, expressive eyes that track the bird), bird squash on launch and stretch in
+  flight, dust and splinter particles, camera shake on big impacts. Sounds: stretch creak, launch
+  whoosh, crate thud, pig pop, raspberry.
+
+Loop Runner (the earlier third game) moves to the backlog for a later batch.
 
 ## Shared arcade engine (`frontend/src/arcade/engine/`)
 
@@ -176,7 +186,7 @@ Locked cards show the milestone ("Complete 2 more lessons") and a preview still.
   lesson id), `evaluate(conn, user_id) -> list[newly_unlocked]`, creates notifications through
   `notifications.dispatcher.create_notification`. Called from the Classroom completion path and the
   catalog.
-- `backend/games/templates/expressions.py` + `build_banks.py expressions`: ≥ 150 verified items,
+- `backend/games/templates/expressions.py` + `build_banks.py expressions` (gates/pigs): ≥ 150 verified items,
   `kind: "choice"` with `prompt.expr` and `prompt.context` (variable bindings), four choices.
 - Flag: `ARCADE_ENABLED` env (default on), same guard style as Play.
 
@@ -198,7 +208,7 @@ Locked cards show the milestone ("Complete 2 more lessons") and a preview still.
 1. Backend: unlock ladder + notifications + catalog + session routes + expressions bank. Play page
    gets the Arcade section with locked/unlocked cards (no game yet). Deploy, verify notifications.
 2. Snakes & Ladders (Variables + Lists + Dicts + Functions boards first; other boards follow).
-3. Linked Snake. 4. Loop Runner. Each live-verified before the next; founder review after all three.
+3. Linked Snake. 4. Code Slingshot. Each live-verified before the next; founder review after all three.
 
 ## Calls made after the builder check (not founder decisions)
 

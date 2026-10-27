@@ -15,24 +15,32 @@ def create_notification(
     message: str,
     link: str = None,
     metadata: dict = None,
+    channels: list = None,
 ) -> int:
-    """Create an in-app notification and queue external deliveries."""
+    """Create an in-app notification and queue external deliveries.
+
+    `channels=["in_app"]` records the notification without queueing email/WhatsApp
+    (used for arcade unlocks, which would otherwise spam a learner's inbox)."""
     conn = sqlite3.connect(_get_db_path())
     try:
-        return _create_notification(conn, user_id, notif_type, title, message, link, metadata)
+        return _create_notification(conn, user_id, notif_type, title, message, link, metadata, channels=channels)
     finally:
         # Always release the connection: an exception mid-way otherwise leaks
         # an open write transaction that locks the DB for every other writer.
         conn.close()
 
 
-def _create_notification(conn, user_id, notif_type, title, message, link, metadata) -> int:
+def _create_notification(conn, user_id, notif_type, title, message, link, metadata, channels=None) -> int:
     cursor = conn.execute(
         """INSERT INTO notifications (user_id, type, title, message, link, metadata)
            VALUES (?, ?, ?, ?, ?, ?)""",
         [user_id, notif_type, title, message, link, json.dumps(metadata) if metadata else None],
     )
     notif_id = cursor.lastrowid
+
+    if channels is not None and set(channels) <= {"in_app"}:
+        conn.commit()
+        return notif_id
 
     # Check user's contact info and preferences for external channels
     user = conn.execute(

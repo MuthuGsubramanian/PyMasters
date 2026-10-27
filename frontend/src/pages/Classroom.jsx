@@ -1769,6 +1769,10 @@ export default function Classroom() {
             if (result?.xp_earned > 0) {
                 window.dispatchEvent(new CustomEvent('pm:xp-earned', { detail: { xp: result.xp_earned } }));
             }
+            // Arcade: a completion can unlock games/boards — show the toast right away.
+            if (Array.isArray(result?.unlocked) && result.unlocked.length > 0) {
+                window.dispatchEvent(new CustomEvent('pm:arcade-unlocked', { detail: result.unlocked }));
+            }
             // Show output in the terminal
             const out = result?.output || '';
             const err = result?.error || '';

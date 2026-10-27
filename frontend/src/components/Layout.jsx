@@ -30,6 +30,7 @@ import GlobalSearch from './GlobalSearch';
 import DarkModeToggle from './DarkModeToggle';
 import ReleaseNotes from './ReleaseNotes';
 import VaathiyaarPanel from './VaathiyaarPanel';
+import UnlockToast from '../arcade/UnlockToast';
 import { getAdminCheck, getProfileStats, getAccessStatus } from '../api';
 import useI18n from '../hooks/useI18n';
 import useOrgBranding from '../hooks/useOrgBranding';
@@ -336,6 +337,7 @@ export default function Layout() {
 
             <GlobalSearch />
             <ReleaseNotes />
+            <UnlockToast />
             {!vaathiyaarHidden && <VaathiyaarPanel />}
         </div>
     );
