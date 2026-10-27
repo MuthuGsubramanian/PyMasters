@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, CheckCircle2, MessageCircleQuestion, XCircle } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { usePlayT } from './i18n';
+import { shortcutsBlocked } from './keys';
 
 function formatAnswer(item, answer) {
   if (answer === null || answer === undefined) return '—';
@@ -42,6 +43,7 @@ export function Reveal({ item, revealItem, learnerResponse, gameTitle, onNext })
 
   useEffect(() => {
     const onKey = (e) => {
+      if (shortcutsBlocked(e)) return;
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNext?.(); }
     };
     window.addEventListener('keydown', onKey);

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Boxes } from 'lucide-react';
+import { shortcutsBlocked } from '../engine/keys';
 
 /**
  * Shape Sorter: a requirement card is dealt; drop it into the right bin. Tap a bin, use
@@ -22,7 +23,7 @@ export default function Game({ item, onAnswer, disabled, reducedMotion }) {
   useEffect(() => {
     const onKey = (e) => {
       if (disabled || answered.current) return;
-      if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+      if (shortcutsBlocked(e)) return;
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); setCursor((c) => (c + 1) % bins.length); }
       else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); setCursor((c) => (c - 1 + bins.length) % bins.length); }
       else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); drop(bins[cursor]); }

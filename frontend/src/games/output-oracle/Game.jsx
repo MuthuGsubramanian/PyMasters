@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Send, TimerIcon } from 'lucide-react';
 import { Button } from '../../components/ui';
+import { shortcutsBlocked } from '../engine/keys';
 
 const DEFAULT_SECONDS = 45;
 
@@ -72,7 +73,7 @@ export default function Game({ item, onAnswer, disabled, seconds = DEFAULT_SECON
   useEffect(() => {
     if (item?.kind !== 'choice') return undefined;
     const onKey = (e) => {
-      if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+      if (shortcutsBlocked(e)) return;
       const n = Number(e.key);
       if (n >= 1 && n <= (item.choices?.length || 0)) { e.preventDefault(); submit(n - 1); }
     };

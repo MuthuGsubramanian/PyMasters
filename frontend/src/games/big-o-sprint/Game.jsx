@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Timer } from 'lucide-react';
+import { shortcutsBlocked } from '../engine/keys';
 
 const KEYS = ['1', '2', '3', '4', '5', '6'];
 
@@ -55,7 +56,7 @@ export default function Game({ item, onAnswer, disabled, reveal }) {
 
   useEffect(() => {
     const onKey = (e) => {
-      if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+      if (shortcutsBlocked(e)) return;
       const idx = KEYS.indexOf(e.key);
       if (idx >= 0 && idx < (item?.choices?.length || 0)) { e.preventDefault(); pick(idx); }
     };

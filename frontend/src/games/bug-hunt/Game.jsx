@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Bug, Wrench } from 'lucide-react';
+import { shortcutsBlocked } from '../engine/keys';
 
 /**
  * Bug Hunt: step 1 pick the guilty line (click, or arrows + Enter); step 2 pick the fix
@@ -22,7 +23,7 @@ export default function Game({ item, onAnswer, disabled }) {
   useEffect(() => {
     const onKey = (e) => {
       if (disabled || answered.current) return;
-      if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+      if (shortcutsBlocked(e)) return;
       if (line === null) {
         if (e.key === 'ArrowDown') { e.preventDefault(); setCursor((c) => Math.min(lines.length - 1, c + 1)); }
         else if (e.key === 'ArrowUp') { e.preventDefault(); setCursor((c) => Math.max(0, c - 1)); }

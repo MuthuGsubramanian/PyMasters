@@ -64,3 +64,19 @@ describe('Output Oracle interaction', () => {
     r.unmount()
   })
 })
+
+describe('keyboard shortcuts behind a modal', () => {
+  it('ignores digit shortcuts while an aria-modal dialog is open', () => {
+    const onAnswer = vi.fn()
+    const dlg = document.createElement('div')
+    dlg.setAttribute('role', 'dialog'); dlg.setAttribute('aria-modal', 'true')
+    document.body.appendChild(dlg)
+    const r = render(<Game item={choiceItem} onAnswer={onAnswer} disabled={false} reducedMotion />)
+    r.key('2')
+    expect(onAnswer).not.toHaveBeenCalled()
+    dlg.remove()
+    r.key('2')
+    expect(onAnswer).toHaveBeenCalledWith(1)
+    r.unmount()
+  })
+})
