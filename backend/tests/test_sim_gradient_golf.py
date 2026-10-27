@@ -91,3 +91,11 @@ def test_score_round_dispatches_sim():
     r2 = engine.score_round(items, {}, level=1, sim={"holes": [{"hole_id": "noisy", "swings": [{"lr": 0.5, "steps": 10}]}]},
                             game_id="gradient_golf")
     assert r2["score"] == 0 and len(r2["per_item"]) == 3
+
+
+def test_unplayed_hole_is_not_attempted_not_a_misconception():
+    items = gg.items_by_id(["quad_a1", "quad_a2"], level=1, seed=5)
+    r = engine.score_round(items, {}, level=1, sim={"holes": [{"hole_id": "quad_a1", "swings": [{"lr": 0.5, "steps": 10}]}]},
+                           game_id="gradient_golf")
+    per = {p["id"]: p for p in r["per_item"]}
+    assert per["quad_a2"]["misconception"] == "not_attempted" and per["quad_a2"]["score"] == 0

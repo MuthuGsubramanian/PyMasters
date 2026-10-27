@@ -387,3 +387,24 @@ def test_scaffolding_game_accuracy_breaks_tie_only(env):
     _game_round(db, "g4", [("variables", True, None)] * 8)
     sc4 = env["adaptive"].scaffolding_for(db, "g4")
     assert sc4["level"] == "low" and any("game answers right" in r for r in sc4["reasons"])
+
+
+def test_game_only_mastery_rows_are_not_weak_topics(env):
+    """A learner who merely touched topics in a game (attempts = 0, tiny level) must not be
+    flagged 'low mastery' and pushed to high scaffolding."""
+    db = env["db"]
+    conn = sqlite3.connect(db)
+    for t in ("lists", "gradient_descent", "conditionals"):
+        conn.execute("INSERT INTO user_mastery (user_id, topic, mastery_level, attempts, struggle_count) VALUES ('g5', ?, 0.06, 0, 0)", [t])
+    conn.commit(); conn.close()
+    sc = env["adaptive"].scaffolding_for(db, "g5")
+    assert sc["level"] == "medium", sc
+    assert "lists" not in sc["weak_topics"]
+
+
+def test_game_summary_skips_unattempted_items(env):
+    db = env["db"]
+    _game_round(db, "g6", [("gradient_descent", False, "not_attempted"), ("gradient_descent", False, "lr_too_high")], game="gradient_golf")
+    mat = env["adaptive"]._learner_material(db, "g6")
+    assert any("lr_too_high" in line for line in mat["games"])
+    assert not any("not_attempted" in line for line in mat["games"])

@@ -159,7 +159,9 @@ def scaffolding_for(db_path: str, user_id: str) -> dict:
     game_right = sum(1 for it in game_items if it.get("correct"))
     game_acc = (game_right / len(game_items)) if len(game_items) >= GAME_MIN_ITEMS else None
 
-    weak = [r["topic"] for r in mastery if (r["mastery_level"] or 0) < 0.4]
+    # Rows with attempts = 0 come only from Play nudges (a topic merely touched in a game);
+    # they are never evidence of weakness, only graded Classroom attempts are.
+    weak = [r["topic"] for r in mastery if (r["mastery_level"] or 0) < 0.4 and (r["attempts"] or 0) > 0]
     strong = [r["topic"] for r in mastery if (r["mastery_level"] or 0) >= 0.7]
     outcomes = [bool(_loads(r["value"], {}).get("success")) for r in evals]
     fails = outcomes.count(False)
@@ -284,6 +286,8 @@ def _game_summary(signals: list, limit: int = 8) -> list:
         day = str(s.get("created_at") or "")[:10]
         for it in v.get("items") or []:
             if not isinstance(it, dict) or it.get("correct") or not it.get("misconception"):
+                continue
+            if it.get("misconception") == "not_attempted":   # skipped item, not a misconception
                 continue
             key = (str(it["misconception"]), game)
             cur = agg.setdefault(key, {"count": 0, "last": day, "topic": it.get("topic")})

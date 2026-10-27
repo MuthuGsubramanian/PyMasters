@@ -163,7 +163,7 @@ def _load_items(game: dict, item_ids: list, level: int, seed: int) -> list:
 def _reveal_entry(item: dict, scored: dict) -> dict:
     return {"id": item["id"], "topic": item["topic"], "correct": scored["correct"], "score": scored["score"], "max": scored["max"],
             "answer": item.get("answer"), "why": item.get("why", ""), "lesson_id": item.get("lesson_id", ""),
-            "misconception": scored.get("misconception")}
+            "misconception": scored.get("misconception"), **({"counts": item["counts"]} if item.get("counts") else {})}
 
 
 @router.post("/round/answer")
@@ -194,7 +194,7 @@ def answer_item(body: AnswerBody, user_id: str = Depends(get_current_user_id)):
         if not items:
             raise HTTPException(status_code=404, detail="Item is not part of this round")
         item = items[0]
-        sim = {"holes": [body.sim_hole]} if (game["kind"] == "sim" and body.sim_hole) else None
+        sim = {"holes": [body.sim_hole], "datasets": [body.sim_hole]} if (game["kind"] == "sim" and body.sim_hole) else None
         scored = engine.score_round([item], {body.item_id: body.response}, level=row["level"], sim=sim, game_id=game["id"])
         entry = _reveal_entry(item, scored["per_item"][0])
         responses = json.loads(row["responses_json"] or "{}")
@@ -229,9 +229,13 @@ def finish_round(body: FinishBody, user_id: str = Depends(get_current_user_id)):
         stored = json.loads(row["responses_json"] or "{}")
         stored_ms = json.loads(row["item_ms_json"] or "{}")
         if game["kind"] == "sim":
-            holes = {h.get("hole_id"): h for h in ((body.sim or {}).get("holes") or []) if isinstance(h, dict)}
-            holes.update({k: v for k, v in stored.items() if isinstance(v, dict)})
-            sim_payload = {"holes": list(holes.values())}
+            moves = {}
+            for key in ("holes", "datasets"):
+                for h in ((body.sim or {}).get(key) or []):
+                    if isinstance(h, dict):
+                        moves[h.get("hole_id") or h.get("dataset_id")] = h
+            moves.update({k: v for k, v in stored.items() if isinstance(v, dict)})
+            sim_payload = {"holes": list(moves.values()), "datasets": list(moves.values())}
             responses = {}
         else:
             sim_payload = None

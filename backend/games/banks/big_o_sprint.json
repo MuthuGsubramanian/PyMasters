@@ -1,0 +1,2342 @@
+[
+ {
+  "id": "bo_1_08cc7d8f",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def total(data):\n    s = 0\n    for x in data:\n        s += x\n    return s\n\ntotal(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 23,
+   "100": 203,
+   "1000": 2003
+  },
+  "misconception": "single_loop_linear",
+  "why": "One pass over n items does n additions: linear.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_0a0e6313",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def biggest(nums):\n    best = nums[0]\n    for x in nums:\n        if x > best:\n            best = x\n    return best\n\nbiggest(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 32,
+   "100": 302,
+   "1000": 3002
+  },
+  "misconception": "single_loop_linear",
+  "why": "Every element is inspected once; the comparison inside is constant work.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_0e98ccad",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def biggest(data):\n    best = data[0]\n    for x in data:\n        if x > best:\n            best = x\n    return best\n\nbiggest(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 32,
+   "100": 302,
+   "1000": 3002
+  },
+  "misconception": "single_loop_linear",
+  "why": "Every element is inspected once; the comparison inside is constant work.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_180bb2ff",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def pairs(values):\n    count = 0\n    for a in values:\n        for b in values:\n            count += 1\n    return count\n\npairs(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 223,
+   "100": 20203,
+   "1000": 2002003
+  },
+  "misconception": "nested_loops_quadratic",
+  "why": "The inner loop runs n times for each of the n outer iterations: n × n.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_420ec26a",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def total(values):\n    s = 0\n    for x in values:\n        s += x\n    return s\n\ntotal(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 23,
+   "100": 203,
+   "1000": 2003
+  },
+  "misconception": "single_loop_linear",
+  "why": "One pass over n items does n additions: linear.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_42979cf6",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def third(nums):\n    return nums[2]\n\nthird(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 0,
+  "counts": {
+   "10": 1,
+   "100": 1,
+   "1000": 1
+  },
+  "misconception": "index_is_constant",
+  "why": "Indexing a list jumps straight to the slot; the size of the list does not matter.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_549a934a",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def pairs(data):\n    count = 0\n    for a in data:\n        for b in data:\n            count += 1\n    return count\n\npairs(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 223,
+   "100": 20203,
+   "1000": 2002003
+  },
+  "misconception": "nested_loops_quadratic",
+  "why": "The inner loop runs n times for each of the n outer iterations: n × n.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_58c51ce1",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def third(items):\n    return items[2]\n\nthird(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 0,
+  "counts": {
+   "10": 1,
+   "100": 1,
+   "1000": 1
+  },
+  "misconception": "index_is_constant",
+  "why": "Indexing a list jumps straight to the slot; the size of the list does not matter.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_84150f5f",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def biggest(items):\n    best = items[0]\n    for x in items:\n        if x > best:\n            best = x\n    return best\n\nbiggest(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 32,
+   "100": 302,
+   "1000": 3002
+  },
+  "misconception": "single_loop_linear",
+  "why": "Every element is inspected once; the comparison inside is constant work.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_aa4f8527",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def pairs(items):\n    count = 0\n    for a in items:\n        for b in items:\n            count += 1\n    return count\n\npairs(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 223,
+   "100": 20203,
+   "1000": 2002003
+  },
+  "misconception": "nested_loops_quadratic",
+  "why": "The inner loop runs n times for each of the n outer iterations: n × n.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_c35fd111",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def third(data):\n    return data[2]\n\nthird(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 0,
+  "counts": {
+   "10": 1,
+   "100": 1,
+   "1000": 1
+  },
+  "misconception": "index_is_constant",
+  "why": "Indexing a list jumps straight to the slot; the size of the list does not matter.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_c5ffb46d",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def third(values):\n    return values[2]\n\nthird(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 0,
+  "counts": {
+   "10": 1,
+   "100": 1,
+   "1000": 1
+  },
+  "misconception": "index_is_constant",
+  "why": "Indexing a list jumps straight to the slot; the size of the list does not matter.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_d5adf01a",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def total(items):\n    s = 0\n    for x in items:\n        s += x\n    return s\n\ntotal(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 23,
+   "100": 203,
+   "1000": 2003
+  },
+  "misconception": "single_loop_linear",
+  "why": "One pass over n items does n additions: linear.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_f4d9778e",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def total(nums):\n    s = 0\n    for x in nums:\n        s += x\n    return s\n\ntotal(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 23,
+   "100": 203,
+   "1000": 2003
+  },
+  "misconception": "single_loop_linear",
+  "why": "One pass over n items does n additions: linear.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_f973014c",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def pairs(nums):\n    count = 0\n    for a in nums:\n        for b in nums:\n            count += 1\n    return count\n\npairs(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 223,
+   "100": 20203,
+   "1000": 2002003
+  },
+  "misconception": "nested_loops_quadratic",
+  "why": "The inner loop runs n times for each of the n outer iterations: n × n.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_1_ff87830e",
+  "level": 1,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def biggest(values):\n    best = values[0]\n    for x in values:\n        if x > best:\n            best = x\n    return best\n\nbiggest(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 32,
+   "100": 302,
+   "1000": 3002
+  },
+  "misconception": "single_loop_linear",
+  "why": "Every element is inspected once; the comparison inside is constant work.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_2_11226eb2",
+  "level": 2,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def push_pop(data):\n    data.append(1)\n    data.append(2)\n    return data.pop()\n\npush_pop(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 0,
+  "counts": {
+   "10": 3,
+   "100": 3,
+   "1000": 3
+  },
+  "misconception": "index_is_constant",
+  "why": "append and pop at the end of a list are constant-time no matter how long the list is.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_2_1b011d8b",
+  "level": 2,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def bubble(data):\n    for i in range(len(data)):\n        for j in range(len(data) - 1):\n            if data[j] > data[j + 1]:\n                data[j], data[j + 1] = data[j + 1], data[j]\n    return data\n\nbubble(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 247,
+   "100": 24952,
+   "1000": 2499502
+  },
+  "misconception": "nested_loops_quadratic",
+  "why": "Two nested passes over the list: roughly n² comparisons regardless of input order.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_2_1d1ccfc3",
+  "level": 2,
+  "topic": "searching",
+  "kind": "choice",
+  "prompt": {
+   "code": "def bsearch(nums, target):\n    lo, hi = 0, len(nums) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if nums[mid] == target:\n            return mid\n        if nums[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n\nbsearch(list(range(n)), -1)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 1,
+  "counts": {
+   "10": 18,
+   "100": 33,
+   "1000": 48
+  },
+  "misconception": "halving_is_log",
+  "why": "Each step halves the remaining range, so about log₂ n steps are needed.",
+  "lesson_id": "searching"
+ },
+ {
+  "id": "bo_2_21f5272d",
+  "level": 2,
+  "topic": "searching",
+  "kind": "choice",
+  "prompt": {
+   "code": "def find(nums, target):\n    for i, x in enumerate(nums):\n        if x == target:\n            return i\n    return -1\n\nfind(list(range(n)), -1)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 22,
+   "100": 202,
+   "1000": 2002
+  },
+  "misconception": "single_loop_linear",
+  "why": "In the worst case (target absent) every element is checked once.",
+  "lesson_id": "searching"
+ },
+ {
+  "id": "bo_2_2de6f2c2",
+  "level": 2,
+  "topic": "searching",
+  "kind": "choice",
+  "prompt": {
+   "code": "def bsearch(values, target):\n    lo, hi = 0, len(values) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if values[mid] == target:\n            return mid\n        if values[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n\nbsearch(list(range(n)), -1)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 1,
+  "counts": {
+   "10": 18,
+   "100": 33,
+   "1000": 48
+  },
+  "misconception": "halving_is_log",
+  "why": "Each step halves the remaining range, so about log₂ n steps are needed.",
+  "lesson_id": "searching"
+ },
+ {
+  "id": "bo_2_39415c00",
+  "level": 2,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def push_pop(items):\n    items.append(1)\n    items.append(2)\n    return items.pop()\n\npush_pop(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 0,
+  "counts": {
+   "10": 3,
+   "100": 3,
+   "1000": 3
+  },
+  "misconception": "index_is_constant",
+  "why": "append and pop at the end of a list are constant-time no matter how long the list is.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_2_4873c4f8",
+  "level": 2,
+  "topic": "searching",
+  "kind": "choice",
+  "prompt": {
+   "code": "def find(values, target):\n    for i, x in enumerate(values):\n        if x == target:\n            return i\n    return -1\n\nfind(list(range(n)), -1)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 22,
+   "100": 202,
+   "1000": 2002
+  },
+  "misconception": "single_loop_linear",
+  "why": "In the worst case (target absent) every element is checked once.",
+  "lesson_id": "searching"
+ },
+ {
+  "id": "bo_2_6407a6df",
+  "level": 2,
+  "topic": "searching",
+  "kind": "choice",
+  "prompt": {
+   "code": "def bsearch(data, target):\n    lo, hi = 0, len(data) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if data[mid] == target:\n            return mid\n        if data[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n\nbsearch(list(range(n)), -1)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 1,
+  "counts": {
+   "10": 18,
+   "100": 33,
+   "1000": 48
+  },
+  "misconception": "halving_is_log",
+  "why": "Each step halves the remaining range, so about log₂ n steps are needed.",
+  "lesson_id": "searching"
+ },
+ {
+  "id": "bo_2_7ac562e0",
+  "level": 2,
+  "topic": "searching",
+  "kind": "choice",
+  "prompt": {
+   "code": "def bsearch(items, target):\n    lo, hi = 0, len(items) - 1\n    while lo <= hi:\n        mid = (lo + hi) // 2\n        if items[mid] == target:\n            return mid\n        if items[mid] < target:\n            lo = mid + 1\n        else:\n            hi = mid - 1\n    return -1\n\nbsearch(list(range(n)), -1)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 1,
+  "counts": {
+   "10": 18,
+   "100": 33,
+   "1000": 48
+  },
+  "misconception": "halving_is_log",
+  "why": "Each step halves the remaining range, so about log₂ n steps are needed.",
+  "lesson_id": "searching"
+ },
+ {
+  "id": "bo_2_80d0d482",
+  "level": 2,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def push_pop(nums):\n    nums.append(1)\n    nums.append(2)\n    return nums.pop()\n\npush_pop(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 0,
+  "counts": {
+   "10": 3,
+   "100": 3,
+   "1000": 3
+  },
+  "misconception": "index_is_constant",
+  "why": "append and pop at the end of a list are constant-time no matter how long the list is.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_2_9c0bebcb",
+  "level": 2,
+  "topic": "searching",
+  "kind": "choice",
+  "prompt": {
+   "code": "def find(data, target):\n    for i, x in enumerate(data):\n        if x == target:\n            return i\n    return -1\n\nfind(list(range(n)), -1)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 22,
+   "100": 202,
+   "1000": 2002
+  },
+  "misconception": "single_loop_linear",
+  "why": "In the worst case (target absent) every element is checked once.",
+  "lesson_id": "searching"
+ },
+ {
+  "id": "bo_2_a25fc0c1",
+  "level": 2,
+  "topic": "searching",
+  "kind": "choice",
+  "prompt": {
+   "code": "def find(items, target):\n    for i, x in enumerate(items):\n        if x == target:\n            return i\n    return -1\n\nfind(list(range(n)), -1)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 22,
+   "100": 202,
+   "1000": 2002
+  },
+  "misconception": "single_loop_linear",
+  "why": "In the worst case (target absent) every element is checked once.",
+  "lesson_id": "searching"
+ },
+ {
+  "id": "bo_2_b189187a",
+  "level": 2,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def bubble(values):\n    for i in range(len(values)):\n        for j in range(len(values) - 1):\n            if values[j] > values[j + 1]:\n                values[j], values[j + 1] = values[j + 1], values[j]\n    return values\n\nbubble(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 247,
+   "100": 24952,
+   "1000": 2499502
+  },
+  "misconception": "nested_loops_quadratic",
+  "why": "Two nested passes over the list: roughly n² comparisons regardless of input order.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_2_ce52257e",
+  "level": 2,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def bubble(items):\n    for i in range(len(items)):\n        for j in range(len(items) - 1):\n            if items[j] > items[j + 1]:\n                items[j], items[j + 1] = items[j + 1], items[j]\n    return items\n\nbubble(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 247,
+   "100": 24952,
+   "1000": 2499502
+  },
+  "misconception": "nested_loops_quadratic",
+  "why": "Two nested passes over the list: roughly n² comparisons regardless of input order.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_2_dd8b42a5",
+  "level": 2,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def bubble(nums):\n    for i in range(len(nums)):\n        for j in range(len(nums) - 1):\n            if nums[j] > nums[j + 1]:\n                nums[j], nums[j + 1] = nums[j + 1], nums[j]\n    return nums\n\nbubble(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 247,
+   "100": 24952,
+   "1000": 2499502
+  },
+  "misconception": "nested_loops_quadratic",
+  "why": "Two nested passes over the list: roughly n² comparisons regardless of input order.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_2_ff79f478",
+  "level": 2,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def push_pop(values):\n    values.append(1)\n    values.append(2)\n    return values.pop()\n\npush_pop(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 0,
+  "counts": {
+   "10": 3,
+   "100": 3,
+   "1000": 3
+  },
+  "misconception": "index_is_constant",
+  "why": "append and pop at the end of a list are constant-time no matter how long the list is.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_3_1bcb0286",
+  "level": 3,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def has_pair(nums, target):\n    lo, hi = 0, len(nums) - 1\n    while lo < hi:\n        s = nums[lo] + nums[hi]\n        if s == target:\n            return True\n        if s < target:\n            lo += 1\n        else:\n            hi -= 1\n    return False\n\nhas_pair(list(range(n)), -5)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 48,
+   "100": 498,
+   "1000": 4998
+  },
+  "misconception": "two_pointers_linear",
+  "why": "The two pointers move toward each other and meet after at most n steps.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_3_506f2feb",
+  "level": 3,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def dup_pairs(data):\n    c = 0\n    for i in range(len(data)):\n        for j in range(i + 1, len(data)):\n            if data[i] == data[j]:\n                c += 1\n    return c\n\ndup_pairs(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 113,
+   "100": 10103,
+   "1000": 1001003
+  },
+  "misconception": "triangle_still_quadratic",
+  "why": "Starting j at i + 1 halves the work (n²/2) but halving a square is still quadratic.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_3_5890d5f5",
+  "level": 3,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def dup_pairs(nums):\n    c = 0\n    for i in range(len(nums)):\n        for j in range(i + 1, len(nums)):\n            if nums[i] == nums[j]:\n                c += 1\n    return c\n\ndup_pairs(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 113,
+   "100": 10103,
+   "1000": 1001003
+  },
+  "misconception": "triangle_still_quadratic",
+  "why": "Starting j at i + 1 halves the work (n²/2) but halving a square is still quadratic.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_3_6aaaed71",
+  "level": 3,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def msort(data):\n    if len(data) <= 1:\n        return data\n    mid = len(data) // 2\n    left = msort(data[:mid])\n    right = msort(data[mid:])\n    out = []\n    i = j = 0\n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            out.append(left[i]); i += 1\n        else:\n            out.append(right[j]); j += 1\n    return out + left[i:] + right[j:]\n\nmsort(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 3,
+  "counts": {
+   "10": 149,
+   "100": 2060,
+   "1000": 25124
+  },
+  "misconception": "divide_and_conquer",
+  "why": "log₂ n levels of splitting, and each level merges all n items: n log n.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_3_725ebc5a",
+  "level": 3,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def has_pair(values, target):\n    lo, hi = 0, len(values) - 1\n    while lo < hi:\n        s = values[lo] + values[hi]\n        if s == target:\n            return True\n        if s < target:\n            lo += 1\n        else:\n            hi -= 1\n    return False\n\nhas_pair(list(range(n)), -5)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 48,
+   "100": 498,
+   "1000": 4998
+  },
+  "misconception": "two_pointers_linear",
+  "why": "The two pointers move toward each other and meet after at most n steps.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_3_7a939b29",
+  "level": 3,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def msort(items):\n    if len(items) <= 1:\n        return items\n    mid = len(items) // 2\n    left = msort(items[:mid])\n    right = msort(items[mid:])\n    out = []\n    i = j = 0\n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            out.append(left[i]); i += 1\n        else:\n            out.append(right[j]); j += 1\n    return out + left[i:] + right[j:]\n\nmsort(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 3,
+  "counts": {
+   "10": 149,
+   "100": 2060,
+   "1000": 25124
+  },
+  "misconception": "divide_and_conquer",
+  "why": "log₂ n levels of splitting, and each level merges all n items: n log n.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_3_80855686",
+  "level": 3,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def has_pair(items, target):\n    lo, hi = 0, len(items) - 1\n    while lo < hi:\n        s = items[lo] + items[hi]\n        if s == target:\n            return True\n        if s < target:\n            lo += 1\n        else:\n            hi -= 1\n    return False\n\nhas_pair(list(range(n)), -5)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 48,
+   "100": 498,
+   "1000": 4998
+  },
+  "misconception": "two_pointers_linear",
+  "why": "The two pointers move toward each other and meet after at most n steps.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_3_a83ffac3",
+  "level": 3,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def has_pair(data, target):\n    lo, hi = 0, len(data) - 1\n    while lo < hi:\n        s = data[lo] + data[hi]\n        if s == target:\n            return True\n        if s < target:\n            lo += 1\n        else:\n            hi -= 1\n    return False\n\nhas_pair(list(range(n)), -5)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 48,
+   "100": 498,
+   "1000": 4998
+  },
+  "misconception": "two_pointers_linear",
+  "why": "The two pointers move toward each other and meet after at most n steps.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_3_c4851026",
+  "level": 3,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def dup_pairs(values):\n    c = 0\n    for i in range(len(values)):\n        for j in range(i + 1, len(values)):\n            if values[i] == values[j]:\n                c += 1\n    return c\n\ndup_pairs(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 113,
+   "100": 10103,
+   "1000": 1001003
+  },
+  "misconception": "triangle_still_quadratic",
+  "why": "Starting j at i + 1 halves the work (n²/2) but halving a square is still quadratic.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_3_d5eaa1ec",
+  "level": 3,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def msort(nums):\n    if len(nums) <= 1:\n        return nums\n    mid = len(nums) // 2\n    left = msort(nums[:mid])\n    right = msort(nums[mid:])\n    out = []\n    i = j = 0\n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            out.append(left[i]); i += 1\n        else:\n            out.append(right[j]); j += 1\n    return out + left[i:] + right[j:]\n\nmsort(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 3,
+  "counts": {
+   "10": 149,
+   "100": 2060,
+   "1000": 25124
+  },
+  "misconception": "divide_and_conquer",
+  "why": "log₂ n levels of splitting, and each level merges all n items: n log n.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_3_d93ae36e",
+  "level": 3,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def dup_pairs(items):\n    c = 0\n    for i in range(len(items)):\n        for j in range(i + 1, len(items)):\n            if items[i] == items[j]:\n                c += 1\n    return c\n\ndup_pairs(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 113,
+   "100": 10103,
+   "1000": 1001003
+  },
+  "misconception": "triangle_still_quadratic",
+  "why": "Starting j at i + 1 halves the work (n²/2) but halving a square is still quadratic.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_3_de76262c",
+  "level": 3,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def halvings(n):\n    steps = 0\n    while n > 1:\n        n //= 2\n        steps += 1\n    return steps\n\nhalvings(n)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 1,
+  "counts": {
+   "10": 12,
+   "100": 21,
+   "1000": 30
+  },
+  "misconception": "halving_is_log",
+  "why": "Dividing by two each time reaches 1 after about log₂ n iterations.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_3_e33e41de",
+  "level": 3,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def msort(values):\n    if len(values) <= 1:\n        return values\n    mid = len(values) // 2\n    left = msort(values[:mid])\n    right = msort(values[mid:])\n    out = []\n    i = j = 0\n    while i < len(left) and j < len(right):\n        if left[i] <= right[j]:\n            out.append(left[i]); i += 1\n        else:\n            out.append(right[j]); j += 1\n    return out + left[i:] + right[j:]\n\nmsort(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 3,
+  "counts": {
+   "10": 149,
+   "100": 2060,
+   "1000": 25124
+  },
+  "misconception": "divide_and_conquer",
+  "why": "log₂ n levels of splitting, and each level merges all n items: n log n.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_4_1293043f",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def two_passes(nums):\n    s = 0\n    for x in nums:\n        s += x\n    m = 0\n    for x in nums:\n        m = max(m, x)\n    return s, m\n\ntwo_passes(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 45,
+   "100": 405,
+   "1000": 4005
+  },
+  "misconception": "sequential_loops_add",
+  "why": "Loops one after another add their costs (2n), they do not multiply; still linear.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_2553d153",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def scan(values):\n    c = 0\n    for x in values:\n        for k in range(5):\n            c += x * k\n    return c\n\nscan(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 123,
+   "100": 1203,
+   "1000": 12003
+  },
+  "misconception": "constant_inner_loop",
+  "why": "The inner loop always runs 5 times: that is a constant factor, not another n.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_2fc1bb40",
+  "level": 4,
+  "topic": "recursion_fundamentals",
+  "kind": "choice",
+  "prompt": {
+   "code": "def fib(n):\n    if n < 2:\n        return n\n    return fib(n - 1) + fib(n - 2)\n\nfib(n)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 5,
+  "counts": {
+   "10": 354,
+   "100": 6386,
+   "1000": -1
+  },
+  "misconception": "recursion_branching_exponential",
+  "why": "Each call spawns two more calls, so the call tree roughly doubles with every extra n.",
+  "lesson_id": "recursion_fundamentals"
+ },
+ {
+  "id": "bo_4_42bd7a60",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def prefix(values):\n    out = []\n    for i in range(len(values)):\n        s = 0\n        for j in range(i + 1):\n            s += values[j]\n        out.append(s)\n    return out\n\nprefix(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 153,
+   "100": 10503,
+   "1000": 1005003
+  },
+  "misconception": "triangle_still_quadratic",
+  "why": "Recomputing each prefix from scratch sums 1 + 2 + … + n ≈ n²/2 elements.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_475eb691",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def two_passes(data):\n    s = 0\n    for x in data:\n        s += x\n    m = 0\n    for x in data:\n        m = max(m, x)\n    return s, m\n\ntwo_passes(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 45,
+   "100": 405,
+   "1000": 4005
+  },
+  "misconception": "sequential_loops_add",
+  "why": "Loops one after another add their costs (2n), they do not multiply; still linear.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_4cc9babe",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def prefix(items):\n    out = []\n    for i in range(len(items)):\n        s = 0\n        for j in range(i + 1):\n            s += items[j]\n        out.append(s)\n    return out\n\nprefix(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 153,
+   "100": 10503,
+   "1000": 1005003
+  },
+  "misconception": "triangle_still_quadratic",
+  "why": "Recomputing each prefix from scratch sums 1 + 2 + … + n ≈ n²/2 elements.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_784f85de",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def prefix(nums):\n    out = []\n    for i in range(len(nums)):\n        s = 0\n        for j in range(i + 1):\n            s += nums[j]\n        out.append(s)\n    return out\n\nprefix(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 153,
+   "100": 10503,
+   "1000": 1005003
+  },
+  "misconception": "triangle_still_quadratic",
+  "why": "Recomputing each prefix from scratch sums 1 + 2 + … + n ≈ n²/2 elements.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_9430304a",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def two_passes(values):\n    s = 0\n    for x in values:\n        s += x\n    m = 0\n    for x in values:\n        m = max(m, x)\n    return s, m\n\ntwo_passes(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 45,
+   "100": 405,
+   "1000": 4005
+  },
+  "misconception": "sequential_loops_add",
+  "why": "Loops one after another add their costs (2n), they do not multiply; still linear.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_979f2bc8",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def prefix(data):\n    out = []\n    for i in range(len(data)):\n        s = 0\n        for j in range(i + 1):\n            s += data[j]\n        out.append(s)\n    return out\n\nprefix(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 153,
+   "100": 10503,
+   "1000": 1005003
+  },
+  "misconception": "triangle_still_quadratic",
+  "why": "Recomputing each prefix from scratch sums 1 + 2 + … + n ≈ n²/2 elements.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_a005adee",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def scan(nums):\n    c = 0\n    for x in nums:\n        for k in range(3):\n            c += x * k\n    return c\n\nscan(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 83,
+   "100": 803,
+   "1000": 8003
+  },
+  "misconception": "constant_inner_loop",
+  "why": "The inner loop always runs 3 times: that is a constant factor, not another n.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_ac6c182a",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def two_passes(items):\n    s = 0\n    for x in items:\n        s += x\n    m = 0\n    for x in items:\n        m = max(m, x)\n    return s, m\n\ntwo_passes(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 45,
+   "100": 405,
+   "1000": 4005
+  },
+  "misconception": "sequential_loops_add",
+  "why": "Loops one after another add their costs (2n), they do not multiply; still linear.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_d2a5b1b2",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def scan(items):\n    c = 0\n    for x in items:\n        for k in range(5):\n            c += x * k\n    return c\n\nscan(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 123,
+   "100": 1203,
+   "1000": 12003
+  },
+  "misconception": "constant_inner_loop",
+  "why": "The inner loop always runs 5 times: that is a constant factor, not another n.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_e765f9e5",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def scan(data):\n    c = 0\n    for x in data:\n        for k in range(3):\n            c += x * k\n    return c\n\nscan(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 83,
+   "100": 803,
+   "1000": 8003
+  },
+  "misconception": "constant_inner_loop",
+  "why": "The inner loop always runs 3 times: that is a constant factor, not another n.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_ed86355a",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def scan(values):\n    c = 0\n    for x in values:\n        for k in range(3):\n            c += x * k\n    return c\n\nscan(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 83,
+   "100": 803,
+   "1000": 8003
+  },
+  "misconception": "constant_inner_loop",
+  "why": "The inner loop always runs 3 times: that is a constant factor, not another n.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_f10788b0",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def scan(items):\n    c = 0\n    for x in items:\n        for k in range(3):\n            c += x * k\n    return c\n\nscan(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 83,
+   "100": 803,
+   "1000": 8003
+  },
+  "misconception": "constant_inner_loop",
+  "why": "The inner loop always runs 3 times: that is a constant factor, not another n.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_4_fc5f79be",
+  "level": 4,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def scan(data):\n    c = 0\n    for x in data:\n        for k in range(5):\n            c += x * k\n    return c\n\nscan(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 123,
+   "100": 1203,
+   "1000": 12003
+  },
+  "misconception": "constant_inner_loop",
+  "why": "The inner loop always runs 5 times: that is a constant factor, not another n.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_5_10870f09",
+  "level": 5,
+  "topic": "hash_tables",
+  "kind": "choice",
+  "prompt": {
+   "code": "def first_dup(data):\n    seen = []\n    for x in data:\n        for y in seen:\n            if x == y:\n                return x\n        seen.append(x)\n    return None\n\nfirst_dup(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 123,
+   "100": 10203,
+   "1000": 1002003
+  },
+  "misconception": "list_membership_linear",
+  "why": "Checking membership in a list scans it, and the list grows to n: n × n/2 comparisons.",
+  "lesson_id": "hash_tables"
+ },
+ {
+  "id": "bo_5_1b669cac",
+  "level": 5,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def msort(items):\n    if len(items) <= 1:\n        return items\n    mid = len(items) // 2\n    a, b = msort(items[:mid]), msort(items[mid:])\n    out, i, j = [], 0, 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1\n    return out + a[i:] + b[j:]\n\ndef closest_gap(items):\n    s = msort(items)\n    best = None\n    for i in range(1, len(s)):\n        gap = s[i] - s[i - 1]\n        if best is None or gap < best:\n            best = gap\n    return best\n\nclosest_gap(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 3,
+  "counts": {
+   "10": 163,
+   "100": 2164,
+   "1000": 26128
+  },
+  "misconception": "divide_and_conquer",
+  "why": "The sort costs n log n and the scan afterwards only n; the larger term wins.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_5_1cab0f2f",
+  "level": 5,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def msort(nums):\n    if len(nums) <= 1:\n        return nums\n    mid = len(nums) // 2\n    a, b = msort(nums[:mid]), msort(nums[mid:])\n    out, i, j = [], 0, 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1\n    return out + a[i:] + b[j:]\n\ndef closest_gap(nums):\n    s = msort(nums)\n    best = None\n    for i in range(1, len(s)):\n        gap = s[i] - s[i - 1]\n        if best is None or gap < best:\n            best = gap\n    return best\n\nclosest_gap(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 3,
+  "counts": {
+   "10": 163,
+   "100": 2164,
+   "1000": 26128
+  },
+  "misconception": "divide_and_conquer",
+  "why": "The sort costs n log n and the scan afterwards only n; the larger term wins.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_5_5accb989",
+  "level": 5,
+  "topic": "hash_tables",
+  "kind": "choice",
+  "prompt": {
+   "code": "def first_dup(data):\n    seen = set()\n    for x in data:\n        if x in seen:\n            return x\n        seen.add(x)\n    return None\n\nfirst_dup(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 33,
+   "100": 303,
+   "1000": 3003
+  },
+  "misconception": "hash_lookup_constant",
+  "why": "Set membership and insertion are O(1) on average, so the single loop stays linear.",
+  "lesson_id": "hash_tables"
+ },
+ {
+  "id": "bo_5_60227f84",
+  "level": 5,
+  "topic": "hash_tables",
+  "kind": "choice",
+  "prompt": {
+   "code": "def first_dup(items):\n    seen = set()\n    for x in items:\n        if x in seen:\n            return x\n        seen.add(x)\n    return None\n\nfirst_dup(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 33,
+   "100": 303,
+   "1000": 3003
+  },
+  "misconception": "hash_lookup_constant",
+  "why": "Set membership and insertion are O(1) on average, so the single loop stays linear.",
+  "lesson_id": "hash_tables"
+ },
+ {
+  "id": "bo_5_62e36eaa",
+  "level": 5,
+  "topic": "recursion_fundamentals",
+  "kind": "choice",
+  "prompt": {
+   "code": "def power(b, e):\n    result = 1\n    while e > 0:\n        if e % 2 == 1:\n            result *= b\n        b *= b\n        e //= 2\n    return result\n\npower(3, n)"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 1,
+  "counts": {
+   "10": 21,
+   "100": 34,
+   "1000": 49
+  },
+  "misconception": "halving_is_log",
+  "why": "The exponent halves on every iteration, so the loop runs about log₂ n times.",
+  "lesson_id": "recursion_fundamentals"
+ },
+ {
+  "id": "bo_5_7d754d2a",
+  "level": 5,
+  "topic": "hash_tables",
+  "kind": "choice",
+  "prompt": {
+   "code": "def first_dup(nums):\n    seen = set()\n    for x in nums:\n        if x in seen:\n            return x\n        seen.add(x)\n    return None\n\nfirst_dup(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 33,
+   "100": 303,
+   "1000": 3003
+  },
+  "misconception": "hash_lookup_constant",
+  "why": "Set membership and insertion are O(1) on average, so the single loop stays linear.",
+  "lesson_id": "hash_tables"
+ },
+ {
+  "id": "bo_5_7e229c8e",
+  "level": 5,
+  "topic": "hash_tables",
+  "kind": "choice",
+  "prompt": {
+   "code": "def first_dup(values):\n    seen = set()\n    for x in values:\n        if x in seen:\n            return x\n        seen.add(x)\n    return None\n\nfirst_dup(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 33,
+   "100": 303,
+   "1000": 3003
+  },
+  "misconception": "hash_lookup_constant",
+  "why": "Set membership and insertion are O(1) on average, so the single loop stays linear.",
+  "lesson_id": "hash_tables"
+ },
+ {
+  "id": "bo_5_9cc94850",
+  "level": 5,
+  "topic": "hash_tables",
+  "kind": "choice",
+  "prompt": {
+   "code": "def first_dup(items):\n    seen = []\n    for x in items:\n        for y in seen:\n            if x == y:\n                return x\n        seen.append(x)\n    return None\n\nfirst_dup(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 123,
+   "100": 10203,
+   "1000": 1002003
+  },
+  "misconception": "list_membership_linear",
+  "why": "Checking membership in a list scans it, and the list grows to n: n × n/2 comparisons.",
+  "lesson_id": "hash_tables"
+ },
+ {
+  "id": "bo_5_b2819a02",
+  "level": 5,
+  "topic": "hash_tables",
+  "kind": "choice",
+  "prompt": {
+   "code": "def first_dup(values):\n    seen = []\n    for x in values:\n        for y in seen:\n            if x == y:\n                return x\n        seen.append(x)\n    return None\n\nfirst_dup(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 123,
+   "100": 10203,
+   "1000": 1002003
+  },
+  "misconception": "list_membership_linear",
+  "why": "Checking membership in a list scans it, and the list grows to n: n × n/2 comparisons.",
+  "lesson_id": "hash_tables"
+ },
+ {
+  "id": "bo_5_ebffab23",
+  "level": 5,
+  "topic": "hash_tables",
+  "kind": "choice",
+  "prompt": {
+   "code": "def first_dup(nums):\n    seen = []\n    for x in nums:\n        for y in seen:\n            if x == y:\n                return x\n        seen.append(x)\n    return None\n\nfirst_dup(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 4,
+  "counts": {
+   "10": 123,
+   "100": 10203,
+   "1000": 1002003
+  },
+  "misconception": "list_membership_linear",
+  "why": "Checking membership in a list scans it, and the list grows to n: n × n/2 comparisons.",
+  "lesson_id": "hash_tables"
+ },
+ {
+  "id": "bo_5_f0359cc6",
+  "level": 5,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def msort(values):\n    if len(values) <= 1:\n        return values\n    mid = len(values) // 2\n    a, b = msort(values[:mid]), msort(values[mid:])\n    out, i, j = [], 0, 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1\n    return out + a[i:] + b[j:]\n\ndef closest_gap(values):\n    s = msort(values)\n    best = None\n    for i in range(1, len(s)):\n        gap = s[i] - s[i - 1]\n        if best is None or gap < best:\n            best = gap\n    return best\n\nclosest_gap(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 3,
+  "counts": {
+   "10": 163,
+   "100": 2164,
+   "1000": 26128
+  },
+  "misconception": "divide_and_conquer",
+  "why": "The sort costs n log n and the scan afterwards only n; the larger term wins.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_5_fab1d8c2",
+  "level": 5,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def msort(data):\n    if len(data) <= 1:\n        return data\n    mid = len(data) // 2\n    a, b = msort(data[:mid]), msort(data[mid:])\n    out, i, j = [], 0, 0\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1\n    return out + a[i:] + b[j:]\n\ndef closest_gap(data):\n    s = msort(data)\n    best = None\n    for i in range(1, len(s)):\n        gap = s[i] - s[i - 1]\n        if best is None or gap < best:\n            best = gap\n    return best\n\nclosest_gap(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 3,
+  "counts": {
+   "10": 163,
+   "100": 2164,
+   "1000": 26128
+  },
+  "misconception": "divide_and_conquer",
+  "why": "The sort costs n log n and the scan afterwards only n; the larger term wins.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_6_02d0803b",
+  "level": 6,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def inversions(nums):\n    if len(nums) <= 1:\n        return nums, 0\n    mid = len(nums) // 2\n    a, ca = inversions(nums[:mid])\n    b, cb = inversions(nums[mid:])\n    out, i, j, c = [], 0, 0, ca + cb\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1; c += len(a) - i\n    return out + a[i:] + b[j:], c\n\ninversions(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 3,
+  "counts": {
+   "10": 140,
+   "100": 1961,
+   "1000": 24125
+  },
+  "misconception": "divide_and_conquer",
+  "why": "Counting inversions during a merge sort keeps the n log n cost of the sort.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_6_08484e47",
+  "level": 6,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def best_window(data):\n    k = 3\n    cur = sum(data[:k])\n    best = cur\n    for i in range(k, len(data)):\n        cur += data[i] - data[i - k]\n        best = max(best, cur)\n    return best\n\nbest_window(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 26,
+   "100": 296,
+   "1000": 2996
+  },
+  "misconception": "sliding_window_linear",
+  "why": "Each step adds one element and drops one, so the window slides across n items in linear time.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_6_11789c23",
+  "level": 6,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def best_window(values):\n    k = 4\n    cur = sum(values[:k])\n    best = cur\n    for i in range(k, len(values)):\n        cur += values[i] - values[i - k]\n        best = max(best, cur)\n    return best\n\nbest_window(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 23,
+   "100": 293,
+   "1000": 2993
+  },
+  "misconception": "sliding_window_linear",
+  "why": "Each step adds one element and drops one, so the window slides across n items in linear time.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_6_2c871cbd",
+  "level": 6,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def inversions(items):\n    if len(items) <= 1:\n        return items, 0\n    mid = len(items) // 2\n    a, ca = inversions(items[:mid])\n    b, cb = inversions(items[mid:])\n    out, i, j, c = [], 0, 0, ca + cb\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1; c += len(a) - i\n    return out + a[i:] + b[j:], c\n\ninversions(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 3,
+  "counts": {
+   "10": 140,
+   "100": 1961,
+   "1000": 24125
+  },
+  "misconception": "divide_and_conquer",
+  "why": "Counting inversions during a merge sort keeps the n log n cost of the sort.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_6_2d9f9bc8",
+  "level": 6,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def best_window(items):\n    k = 3\n    cur = sum(items[:k])\n    best = cur\n    for i in range(k, len(items)):\n        cur += items[i] - items[i - k]\n        best = max(best, cur)\n    return best\n\nbest_window(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 26,
+   "100": 296,
+   "1000": 2996
+  },
+  "misconception": "sliding_window_linear",
+  "why": "Each step adds one element and drops one, so the window slides across n items in linear time.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_6_317557fe",
+  "level": 6,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def inversions(data):\n    if len(data) <= 1:\n        return data, 0\n    mid = len(data) // 2\n    a, ca = inversions(data[:mid])\n    b, cb = inversions(data[mid:])\n    out, i, j, c = [], 0, 0, ca + cb\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1; c += len(a) - i\n    return out + a[i:] + b[j:], c\n\ninversions(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 3,
+  "counts": {
+   "10": 140,
+   "100": 1961,
+   "1000": 24125
+  },
+  "misconception": "divide_and_conquer",
+  "why": "Counting inversions during a merge sort keeps the n log n cost of the sort.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_6_43e9e7fc",
+  "level": 6,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def best_window(items):\n    k = 4\n    cur = sum(items[:k])\n    best = cur\n    for i in range(k, len(items)):\n        cur += items[i] - items[i - k]\n        best = max(best, cur)\n    return best\n\nbest_window(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 23,
+   "100": 293,
+   "1000": 2993
+  },
+  "misconception": "sliding_window_linear",
+  "why": "Each step adds one element and drops one, so the window slides across n items in linear time.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_6_638a850d",
+  "level": 6,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def grid(items):\n    c = 0\n    for row in range(8):\n        for col in range(8):\n            c += items[(row * 8 + col) % len(items)]\n    return c\n\ngrid(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 0,
+  "counts": {
+   "10": 147,
+   "100": 147,
+   "1000": 147
+  },
+  "misconception": "constant_inner_loop",
+  "why": "Both loops have fixed bounds (8 × 8 = 64 iterations) whatever n is: constant time.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_6_7971afd6",
+  "level": 6,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def grid(data):\n    c = 0\n    for row in range(8):\n        for col in range(8):\n            c += data[(row * 8 + col) % len(data)]\n    return c\n\ngrid(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 0,
+  "counts": {
+   "10": 147,
+   "100": 147,
+   "1000": 147
+  },
+  "misconception": "constant_inner_loop",
+  "why": "Both loops have fixed bounds (8 × 8 = 64 iterations) whatever n is: constant time.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_6_94301746",
+  "level": 6,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def grid(nums):\n    c = 0\n    for row in range(8):\n        for col in range(8):\n            c += nums[(row * 8 + col) % len(nums)]\n    return c\n\ngrid(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 0,
+  "counts": {
+   "10": 147,
+   "100": 147,
+   "1000": 147
+  },
+  "misconception": "constant_inner_loop",
+  "why": "Both loops have fixed bounds (8 × 8 = 64 iterations) whatever n is: constant time.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_6_ae0a6b53",
+  "level": 6,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def best_window(nums):\n    k = 3\n    cur = sum(nums[:k])\n    best = cur\n    for i in range(k, len(nums)):\n        cur += nums[i] - nums[i - k]\n        best = max(best, cur)\n    return best\n\nbest_window(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 26,
+   "100": 296,
+   "1000": 2996
+  },
+  "misconception": "sliding_window_linear",
+  "why": "Each step adds one element and drops one, so the window slides across n items in linear time.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_6_b379c18b",
+  "level": 6,
+  "topic": "sorting_basics",
+  "kind": "choice",
+  "prompt": {
+   "code": "def inversions(values):\n    if len(values) <= 1:\n        return values, 0\n    mid = len(values) // 2\n    a, ca = inversions(values[:mid])\n    b, cb = inversions(values[mid:])\n    out, i, j, c = [], 0, 0, ca + cb\n    while i < len(a) and j < len(b):\n        if a[i] <= b[j]:\n            out.append(a[i]); i += 1\n        else:\n            out.append(b[j]); j += 1; c += len(a) - i\n    return out + a[i:] + b[j:], c\n\ninversions(list(range(n, 0, -1)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 3,
+  "counts": {
+   "10": 140,
+   "100": 1961,
+   "1000": 24125
+  },
+  "misconception": "divide_and_conquer",
+  "why": "Counting inversions during a merge sort keeps the n log n cost of the sort.",
+  "lesson_id": "sorting_basics"
+ },
+ {
+  "id": "bo_6_b7288af4",
+  "level": 6,
+  "topic": "recursion_fundamentals",
+  "kind": "choice",
+  "prompt": {
+   "code": "def subsets(items):\n    if not items:\n        return [[]]\n    rest = subsets(items[1:])\n    return rest + [[items[0]] + r for r in rest]\n\nsubsets(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 5,
+  "counts": {
+   "10": 1065,
+   "100": 65601,
+   "1000": -1
+  },
+  "misconception": "recursion_branching_exponential",
+  "why": "A set of n items has 2ⁿ subsets, and the function builds every one of them.",
+  "lesson_id": "recursion_fundamentals"
+ },
+ {
+  "id": "bo_6_ca0e6695",
+  "level": 6,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def best_window(values):\n    k = 3\n    cur = sum(values[:k])\n    best = cur\n    for i in range(k, len(values)):\n        cur += values[i] - values[i - k]\n        best = max(best, cur)\n    return best\n\nbest_window(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 26,
+   "100": 296,
+   "1000": 2996
+  },
+  "misconception": "sliding_window_linear",
+  "why": "Each step adds one element and drops one, so the window slides across n items in linear time.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_6_d93d40da",
+  "level": 6,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def best_window(nums):\n    k = 4\n    cur = sum(nums[:k])\n    best = cur\n    for i in range(k, len(nums)):\n        cur += nums[i] - nums[i - k]\n        best = max(best, cur)\n    return best\n\nbest_window(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 2,
+  "counts": {
+   "10": 23,
+   "100": 293,
+   "1000": 2993
+  },
+  "misconception": "sliding_window_linear",
+  "why": "Each step adds one element and drops one, so the window slides across n items in linear time.",
+  "lesson_id": "big_o_complexity"
+ },
+ {
+  "id": "bo_6_dd9d96ad",
+  "level": 6,
+  "topic": "big_o_complexity",
+  "kind": "choice",
+  "prompt": {
+   "code": "def grid(values):\n    c = 0\n    for row in range(8):\n        for col in range(8):\n            c += values[(row * 8 + col) % len(values)]\n    return c\n\ngrid(list(range(n)))"
+  },
+  "choices": [
+   "O(1)",
+   "O(log n)",
+   "O(n)",
+   "O(n log n)",
+   "O(n²)",
+   "O(2ⁿ)"
+  ],
+  "answer": 0,
+  "counts": {
+   "10": 147,
+   "100": 147,
+   "1000": 147
+  },
+  "misconception": "constant_inner_loop",
+  "why": "Both loops have fixed bounds (8 × 8 = 64 iterations) whatever n is: constant time.",
+  "lesson_id": "big_o_complexity"
+ }
+]

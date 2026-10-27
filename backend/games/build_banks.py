@@ -32,6 +32,89 @@ def verify_output(code: str) -> str:
     return (run.get("output") or "").replace("\r\n", "\n").rstrip("\n")
 
 
+def runs_clean(code: str, test: str) -> bool:
+    """True when `code` followed by `test` exits 0 (test assertions hold)."""
+    run = run_code_subprocess(code + "\n\n" + test, timeout=5)
+    return run.get("exit_code") == 0
+
+
+def apply_fix(code: str, line_index: int, fix_line: str) -> str:
+    lines = code.split("\n")
+    lines[line_index] = fix_line
+    return "\n".join(lines)
+
+
+_TRACE_HARNESS = """import sys
+__count = [0]
+def __tr(frame, event, arg):
+    if event == 'line':
+        __count[0] += 1
+    return __tr
+n = %d
+sys.settrace(__tr)
+%s
+sys.settrace(None)
+print(__count[0])
+"""
+
+
+def count_ops(code: str, n: int, timeout: int = 60) -> int:
+    """Lines executed inside the snippet's functions for input size n (module level is free).
+
+    Build-time instrumentation for Big-O Sprint; runs our own templates with the real
+    interpreter in isolated mode. Returns -1 on timeout or error.
+    """
+    import subprocess
+    try:
+        run = subprocess.run([sys.executable, "-I", "-c", _TRACE_HARNESS % (n, code)], capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return -1
+    if run.returncode != 0:
+        return -1
+    try:
+        return int(run.stdout.strip().splitlines()[-1])
+    except (ValueError, IndexError):
+        return -1
+
+
+def _build_big_o(seed: int, per_level: int) -> list:
+    from games.templates.big_o_sprint import LABELS, TEMPLATES
+    rng = random.Random(seed)
+    lessons = _lesson_index()
+    by_level = {}
+    for t in TEMPLATES:
+        by_level.setdefault(t(random.Random(0))["level"], []).append(t)
+    items, seen, rejects = [], set(), {}
+    for level in sorted(by_level):
+        made, tries = 0, 0
+        while made < per_level and tries < per_level * 10:
+            tries += 1
+            cand = rng.choice(by_level[level])(rng)
+            if cand["code"] in seen:
+                continue
+            seen.add(cand["code"])
+            if cand.get("exponential"):
+                counts = {"10": count_ops(cand["code"], 10), "100": count_ops(cand["code"], 16), "1000": -1}
+            else:
+                counts = {k: count_ops(cand["code"], int(k)) for k in ("10", "100", "1000")}
+            if any(v == -1 for k, v in counts.items() if not (cand.get("exponential") and k == "1000")):
+                rejects["count_failed"] = rejects.get("count_failed", 0) + 1
+                print(f"  reject (count failed {counts}) {cand['code'][:40]!r}")
+                continue
+            lesson_id = lessons.get(cand["topic"], "")
+            if not lesson_id:
+                rejects["no_lesson"] = rejects.get("no_lesson", 0) + 1
+                continue
+            items.append({"id": _item_id("bo", level, cand["code"]), "level": level, "topic": cand["topic"], "kind": "choice",
+                          "prompt": {"code": cand["code"]}, "choices": list(LABELS), "answer": cand["answer"], "counts": counts,
+                          "misconception": cand["misconception"], "why": cand["why"], "lesson_id": lesson_id})
+            made += 1
+        print(f"level {level}: {made} items ({tries} tries)")
+    items.sort(key=lambda i: (i["level"], i["id"]))
+    print(f"total {len(items)} items; rejects {rejects}")
+    return items
+
+
 def _lesson_index() -> dict:
     """topic -> lowest-order lesson id (first by order, then by id for stability)."""
     best = {}
@@ -77,7 +160,61 @@ def _finish_choice(item: dict, answer: str, rng: random.Random, rejects: dict) -
     return item
 
 
+def _build_bug_hunt(seed: int, per_level: int) -> list:
+    from games.templates.bug_hunt import TEMPLATES
+    rng = random.Random(seed)
+    lessons = _lesson_index()
+    by_level = {}
+    for t in TEMPLATES:
+        by_level.setdefault(t(random.Random(0))["level"], []).append(t)
+    items, seen, rejects = [], set(), {}
+    for level in sorted(by_level):
+        made, tries = 0, 0
+        while made < per_level and tries < per_level * 12:
+            tries += 1
+            cand = rng.choice(by_level[level])(rng)
+            key = (cand["code"], cand["test"])
+            if key in seen:
+                continue
+            seen.add(key)
+            code, test, line = cand["code"], cand["test"], cand["bug_line"]
+            if runs_clean(code, test):
+                rejects["buggy_passes"] = rejects.get("buggy_passes", 0) + 1
+                print(f"  reject (buggy code passes) {code[:40]!r}")
+                continue
+            ok = [runs_clean(apply_fix(code, line, fx), test) for fx in cand["fixes"]]
+            if not ok[cand["fix_index"]] or sum(ok) != 1:
+                rejects["fix_set_invalid"] = rejects.get("fix_set_invalid", 0) + 1
+                print(f"  reject (fix set invalid {ok}) {code[:40]!r}")
+                continue
+            order = list(range(3))
+            rng.shuffle(order)
+            choices = [cand["fixes"][i] for i in order]
+            answer = [line, order.index(cand["fix_index"])]
+            lesson_id = lessons.get(cand["topic"], "")
+            if not lesson_id:
+                rejects["no_lesson"] = rejects.get("no_lesson", 0) + 1
+                continue
+            items.append({"id": _item_id("bh", level, code + test), "level": level, "topic": cand["topic"], "kind": "line_then_choice",
+                          "prompt": {"code": code, "test": test}, "choices": choices, "answer": answer,
+                          "misconception": cand["misconception"], "why": cand["why"], "lesson_id": lesson_id})
+            made += 1
+        print(f"level {level}: {made} items ({tries} tries)")
+    items.sort(key=lambda i: (i["level"], i["id"]))
+    print(f"total {len(items)} items; rejects {rejects}")
+    return items
+
+
 def build(game_id: str, seed: int = 2026, per_level: int = 30) -> list:
+    if game_id == "shape_sorter":
+        from games.templates.shape_sorter import build_items
+        items = build_items()
+        print(f"total {len(items)} hand-authored cards")
+        return items
+    if game_id == "big_o_sprint":
+        return _build_big_o(seed, min(per_level, 16))
+    if game_id == "bug_hunt":
+        return _build_bug_hunt(seed, min(per_level, 20))
     if game_id == "output_oracle":
         from games.templates.output_oracle import TEMPLATES
         prefix = "oo"

@@ -152,7 +152,9 @@ def score(payload: dict, level: int, items: list) -> list:
         sc = max(0, max_score + 1 - used)
         mc = None
         if not out["converged"]:
-            if out["diverged"]:
+            if not swings:
+                mc = "not_attempted"
+            elif out["diverged"]:
                 mc = "lr_too_high"
             elif "local" in hole["params"] and _dist(out["final"], hole["params"]["local"]) <= 0.15:
                 mc = "local_minimum"
