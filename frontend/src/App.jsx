@@ -70,6 +70,8 @@ const KnowledgeMap = lazyRetry(() => import('./pages/KnowledgeMap'), 'KnowledgeM
 const Pricing = lazyRetry(() => import('./pages/Pricing'), 'Pricing');
 const Upgrade = lazyRetry(() => import('./pages/Upgrade'), 'Upgrade');
 const LiveTutor = lazyRetry(() => import('./pages/LiveTutor'), 'LiveTutor');
+const Play = lazyRetry(() => import('./pages/Play'), 'Play');
+const PlayRound = lazyRetry(() => import('./pages/PlayRound'), 'PlayRound');
 
 function PageLoader() {
   return (
@@ -167,6 +169,8 @@ export default function App() {
                     bookmarkable / refreshable (F3). Same component; it reads :lessonId. */}
                 <Route path="classroom/:lessonId" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
                 <Route path="playground" element={<ErrorBoundary><Playground /></ErrorBoundary>} />
+                <Route path="play" element={<ErrorBoundary><Play /></ErrorBoundary>} />
+                <Route path="play/:gameId" element={<ErrorBoundary><PlayRound /></ErrorBoundary>} />
                 <Route path="trending" element={<ErrorBoundary><Trending /></ErrorBoundary>} />
                 <Route path="challenges" element={<ErrorBoundary><Challenges /></ErrorBoundary>} />
                 <Route path="community" element={<ErrorBoundary><Community /></ErrorBoundary>} />

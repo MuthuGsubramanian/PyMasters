@@ -54,3 +54,12 @@ describe('i18n dictionaries', () => {
     expect(t('nonexistent.key', 'Inline default')).toBe('Inline default');
   });
 });
+
+describe('Play nav strings', () => {
+  it('every dictionary has the Play nav label and description', () => {
+    for (const [code, dict] of Object.entries(DICTS)) {
+      expect(dict['nav.play'], `nav.play missing in ${code}`).toBeTruthy();
+      expect(dict['nav.play.desc'], `nav.play.desc missing in ${code}`).toBeTruthy();
+    }
+  });
+});

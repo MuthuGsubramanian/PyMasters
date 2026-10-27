@@ -118,6 +118,8 @@ def _loads(text, default):
         return default
 
 
+GAME_MIN_ITEMS = 6
+
 # ───────────────────────────── loop 1: scaffolding ─────────────────────────
 
 def scaffolding_for(db_path: str, user_id: str) -> dict:
@@ -146,8 +148,16 @@ def scaffolding_for(db_path: str, user_id: str) -> dict:
             "AND created_at > datetime('now', '-14 days') ORDER BY created_at DESC LIMIT 10",
             [user_id],
         ).fetchall()
+        game_rows = conn.execute(
+            "SELECT value FROM learning_signals WHERE user_id = ? AND signal_type = 'game_round' "
+            "AND created_at > datetime('now', '-14 days') ORDER BY created_at DESC LIMIT 20",
+            [user_id],
+        ).fetchall()
     finally:
         conn.close()
+    game_items = [it for r in game_rows for it in (_loads(r["value"], {}).get("items") or []) if isinstance(it, dict)]
+    game_right = sum(1 for it in game_items if it.get("correct"))
+    game_acc = (game_right / len(game_items)) if len(game_items) >= GAME_MIN_ITEMS else None
 
     weak = [r["topic"] for r in mastery if (r["mastery_level"] or 0) < 0.4]
     strong = [r["topic"] for r in mastery if (r["mastery_level"] or 0) >= 0.7]
@@ -178,6 +188,10 @@ def scaffolding_for(db_path: str, user_id: str) -> dict:
         level = "low"; reasons.append(f"{len(outcomes) - fails} of the last {len(outcomes)} attempts passed{when}")
         if positive:
             reasons.append("recent turns read confident")
+    if level == "medium" and game_acc is not None and game_acc < 0.5:
+        level = "high"; reasons.append(f"{len(game_items) - game_right} of {len(game_items)} game answers wrong this fortnight")
+    elif level == "medium" and game_acc is not None and game_acc >= 0.85 and negative == 0:
+        level = "low"; reasons.append(f"{game_right} of {len(game_items)} game answers right this fortnight")
     if not reasons:
         reasons.append("not enough recent signal — default pacing")
     return {
@@ -246,13 +260,38 @@ def _learner_material(db_path: str, user_id: str, days: int = 7) -> dict:
         msg = out.get("message") if isinstance(out, dict) else str(p["output_text"])
         turns.append({"student": (p["input_text"] or "")[-500:], "tutor": (str(msg) or "")[:500],
                       "outcome": p["quality_score"], "at": p["created_at"]})
+    plain = [s for s in signals if s["signal_type"] != "game_round"]
     return {
         "profile": dict(prof) if prof else {},
         "mastery": [dict(m) for m in mastery],
-        "signals": [{"type": s["signal_type"], "topic": s["topic"], "value": (s["value"] or "")[:160], "at": s["created_at"]} for s in signals],
+        "signals": [{"type": s["signal_type"], "topic": s["topic"], "value": (s["value"] or "")[:160], "at": s["created_at"]} for s in plain],
+        "games": _game_summary([dict(s) for s in signals if s["signal_type"] == "game_round"]),
         "turns": turns,
         "existing_notes": [n["note"] for n in learner_notes(db_path, user_id)],
     }
+
+
+def _game_summary(signals: list, limit: int = 8) -> list:
+    """Fold game_round signals into 'misconception: N misses in <game> (last <date>)' lines."""
+    try:
+        from games.catalog import GAMES
+    except Exception:
+        GAMES = {}
+    agg = {}
+    for s in signals:
+        v = _loads(s.get("value"), {})
+        game = (GAMES.get(s.get("topic") or "") or {}).get("title") or (s.get("topic") or "a game")
+        day = str(s.get("created_at") or "")[:10]
+        for it in v.get("items") or []:
+            if not isinstance(it, dict) or it.get("correct") or not it.get("misconception"):
+                continue
+            key = (str(it["misconception"]), game)
+            cur = agg.setdefault(key, {"count": 0, "last": day, "topic": it.get("topic")})
+            cur["count"] += 1
+            cur["last"] = max(cur["last"], day)
+    lines = [f"{mc}: {d['count']} misses in {game} on {d['topic']} (last {d['last']})"
+             for (mc, game), d in sorted(agg.items(), key=lambda kv: -kv[1]["count"])]
+    return lines[:limit]
 
 
 _NOTES_PROMPT = """You are the memory of Vaathiyaar, a patient Python/AI tutor. From the material about ONE learner below, write at most {max_notes} short notes the tutor should remember next time.
@@ -325,7 +364,7 @@ def _parse_json_array(text: str) -> list:
 
 def distill_learner(db_path: str, user_id: str, llm: Callable[[list, dict], str], days: int = 7) -> dict:
     material = _learner_material(db_path, user_id, days=days)
-    if len(material["turns"]) + len(material["signals"]) < 3:
+    if len(material["turns"]) + len(material["signals"]) + len(material.get("games") or []) < 3:
         return {"user_id": user_id, "skipped": "too little material"}
     prompt = _NOTES_PROMPT.format(max_notes=MAX_NOTES_PER_LEARNER, existing=json.dumps(material["existing_notes"]),
                                   material=json.dumps({k: v for k, v in material.items() if k != "existing_notes"}, ensure_ascii=False)[:9000])

@@ -251,6 +251,36 @@ def update_mastery(
         conn.close()
 
 
+def nudge_mastery(db_path: str, user_id: str, topic: str, delta: float) -> float:
+    """Shift mastery_level by `delta` (clamped to [0, 1]) without counting an attempt.
+
+    Used by low-stakes practice (Play rounds): the review half-life model and the
+    "attempts >= 2" recommendation filter keep meaning graded Classroom attempts.
+    Inserts a row with attempts=0, struggle_count=0 when the topic is new.
+    Returns the new level.
+    """
+    conn = sqlite3.connect(db_path)
+    try:
+        row = conn.execute(
+            "SELECT mastery_level FROM user_mastery WHERE user_id = ? AND topic = ?", [user_id, topic]
+        ).fetchone()
+        current = float(row[0] or 0.0) if row else 0.0
+        new_level = max(0.0, min(1.0, current + float(delta)))
+        if row:
+            conn.execute(
+                "UPDATE user_mastery SET mastery_level = ?, last_practiced = CURRENT_TIMESTAMP "
+                "WHERE user_id = ? AND topic = ?", [new_level, user_id, topic])
+        else:
+            conn.execute(
+                "INSERT INTO user_mastery (user_id, topic, mastery_level, attempts, avg_time_seconds, "
+                "last_practiced, struggle_count) VALUES (?, ?, ?, 0, NULL, CURRENT_TIMESTAMP, 0)",
+                [user_id, topic, new_level])
+        conn.commit()
+        return new_level
+    finally:
+        conn.close()
+
+
 def get_mastery_map(db_path: str, user_id: str) -> dict:
     """
     Return {topic: mastery_level} dict for the given user from user_mastery.

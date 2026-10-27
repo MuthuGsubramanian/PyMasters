@@ -16,7 +16,7 @@ import { isReducedMotion, setReduceMotionPref } from '../hooks/useReducedMotion'
 import clsx from 'clsx';
 import LanguageSelector from '../components/LanguageSelector';
 import VaathiyaarMemoryCard from '../components/VaathiyaarMemoryCard';
-import { Card, StatCard, Button, Badge, Avatar, FormField } from '../components/ui';
+import { Card, StatCard, Button, Badge, Avatar, FormField, GlassCard, SectionHeading } from '../components/ui';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -133,52 +133,12 @@ function formatDuration(minutes) {
 
 // ─── Animation Variants ───────────────────────────────────────────────────────
 
-const sectionVariant = {
-    hidden: { opacity: 0, y: 24 },
-    visible: (i) => ({
-        opacity: 1,
-        y: 0,
-        transition: { delay: i * 0.08, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
-    }),
-};
-
 const cardHover = {
     rest: { scale: 1 },
     hover: { scale: 1.02, transition: { duration: 0.2 } },
 };
 
 // ─── Reusable Sub-components ──────────────────────────────────────────────────
-
-const MotionCard = motion(Card);
-
-function GlassCard({ children, className = '', index = 0, ...rest }) {
-    return (
-        <MotionCard
-            custom={index}
-            variants={sectionVariant}
-            initial="hidden"
-            animate="visible"
-            className={clsx('shadow-sm p-6', className)}
-            {...rest}
-        >
-            {children}
-        </MotionCard>
-    );
-}
-
-function SectionHeading({ icon: Icon, title, subtitle }) {
-    return (
-        <div className="flex items-center gap-3 mb-5">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-primary text-white">
-                <Icon size={18} />
-            </div>
-            <div>
-                <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
-                {subtitle && <p className="text-xs text-text-muted">{subtitle}</p>}
-            </div>
-        </div>
-    );
-}
 
 function InputField({ label, value, onChange, type = 'text', placeholder, icon: Icon, disabled }) {
     return (
