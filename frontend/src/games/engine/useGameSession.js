@@ -81,7 +81,7 @@ export function useGameSession({ gameId, level, mode, getSimPayload }) {
     dispatch({ type: 'ANSWER', itemId, response, now });
     const roundId = s.round?.round_id;
     const ms = Math.max(0, now - s.shownAt);
-    const isSim = response && typeof response === 'object' && response.hole_id;
+    const isSim = response && typeof response === 'object' && (response.hole_id || response.dataset_id);
     answerPlayItem(roundId, itemId, isSim ? null : response, ms, isSim ? response : undefined)
       .then(({ data }) => dispatch({ type: 'REVEALED', itemId, reveal: data }))
       .catch(() => dispatch({ type: 'REVEALED', itemId, reveal: null }));

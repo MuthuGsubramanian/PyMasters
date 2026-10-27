@@ -9,6 +9,7 @@ export const GAME_COMPONENTS = {
   bug_hunt: lazy(() => import('./bug-hunt/Game.jsx')),
   shape_sorter: lazy(() => import('./shape-sorter/Game.jsx')),
   big_o_sprint: lazy(() => import('./big-o-sprint/Game.jsx')),
+  overfit_detective: lazy(() => import('./overfit-detective/Game.jsx')),
 };
 
 export const GAME_ICONS = {

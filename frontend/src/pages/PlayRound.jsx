@@ -24,10 +24,10 @@ export default function PlayRound() {
   const [level, setLevel] = useState(() => Number(params.get('level')) || undefined);
   const mode = params.get('mode') === 'daily' ? 'daily' : 'practice';
   const [title, setTitle] = useState(TITLES[gameId] || gameId);
-  const simPayload = useRef({ holes: [] });
+  const simPayload = useRef({ holes: [], datasets: [] });
 
   const Game = GAME_COMPONENTS[gameId];
-  const getSimPayload = useCallback(() => (simPayload.current.holes.length ? simPayload.current : undefined), []);
+  const getSimPayload = useCallback(() => ((simPayload.current.holes.length || simPayload.current.datasets.length) ? simPayload.current : undefined), []);
   const session = useGameSession({ gameId, level, mode, getSimPayload });
 
   useEffect(() => { setVaathiyaarHidden?.(false); }, [setVaathiyaarHidden]);
@@ -41,14 +41,16 @@ export default function PlayRound() {
 
   // Reset per-round client state when a new round loads.
   useEffect(() => {
-    if (session.state === 'loading') simPayload.current = { holes: [] };
+    if (session.state === 'loading') simPayload.current = { holes: [], datasets: [] };
   }, [session.state]);
 
   const onAnswer = useCallback((response) => {
     const item = session.item;
     if (!item) return;
     if (item.kind === 'sim' && response && typeof response === 'object') {
-      simPayload.current = { holes: [...simPayload.current.holes.filter((h) => h.hole_id !== response.hole_id), response] };
+      const key = response.dataset_id ? 'datasets' : 'holes';
+      const idKey = response.dataset_id ? 'dataset_id' : 'hole_id';
+      simPayload.current = { ...simPayload.current, [key]: [...simPayload.current[key].filter((h) => h[idKey] !== response[idKey]), response] };
     }
     session.answer(item.id, response);
   }, [session]);
