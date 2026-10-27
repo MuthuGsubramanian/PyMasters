@@ -71,3 +71,10 @@ def test_golden_matches():
         for key in ("train_mse", "test_mse"):
             assert ev[key] == pytest.approx(case[key], rel=1e-9, abs=1e-12), (case["dataset_id"], key)
         assert ev["best_degree"] == case["best_degree"] and ev["rank"] == case["rank"]
+
+
+def test_non_numeric_payload_scores_zero_instead_of_crashing():
+    items = od.items_by_id(["gentle_cubic"], level=1, seed=5)
+    r = engine.score_round(items, {}, level=1, sim={"datasets": [{"dataset_id": "gentle_cubic", "degree": "three", "lam": None}]},
+                           game_id="overfit_detective")
+    assert r["score"] == 0 and r["per_item"][0]["misconception"] == "not_attempted"

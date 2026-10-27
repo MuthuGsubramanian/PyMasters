@@ -276,3 +276,20 @@ def test_play_days_streak_uses_utc_dates(client, monkeypatch):
     monkeypatch.setattr(play_mod, "date", _FakeDate)
     s = client.get("/api/play/stats", headers=_headers("p1")).json()
     assert s["play_days_streak"] == 1
+
+
+def test_concurrent_finish_records_side_effects_once(client, monkeypatch):
+    """Two overlapping /finish calls: only one may write the signal and nudge mastery."""
+    import threading
+    r = _start(client, level=1)
+    ids = [i["id"] for i in r["items"]]
+    payload = {"round_id": r["round_id"], "responses": _answers_for(r["items"], set(ids)), "item_ms": {i: 3000 for i in ids}}
+    results = []
+    def go():
+        results.append(client.post("/api/play/round/finish", json=payload, headers=_headers("p1")).json())
+    ts = [threading.Thread(target=go) for _ in range(2)]
+    [t.start() for t in ts]; [t.join() for t in ts]
+    assert all(res["xp"] == results[0]["xp"] for res in results)
+    conn = _db()
+    assert conn.execute("SELECT COUNT(*) FROM learning_signals WHERE signal_type='game_round'").fetchone()[0] == 1
+    conn.close()

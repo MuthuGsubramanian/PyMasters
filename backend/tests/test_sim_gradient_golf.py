@@ -99,3 +99,10 @@ def test_unplayed_hole_is_not_attempted_not_a_misconception():
                            game_id="gradient_golf")
     per = {p["id"]: p for p in r["per_item"]}
     assert per["quad_a2"]["misconception"] == "not_attempted" and per["quad_a2"]["score"] == 0
+
+
+def test_non_numeric_payload_scores_zero_instead_of_crashing():
+    items = gg.items_by_id(["quad_a1"], level=1, seed=5)
+    sim = {"holes": [{"hole_id": "quad_a1", "swings": [{"lr": "fast", "steps": "many"}]}]}
+    r = engine.score_round(items, {}, level=1, sim=sim, game_id="gradient_golf")
+    assert r["score"] == 0 and r["per_item"][0]["misconception"] == "not_attempted"

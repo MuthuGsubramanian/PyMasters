@@ -146,7 +146,12 @@ def score(payload: dict, level: int, items: list) -> list:
         hole = it["hole"]
         swings = (played.get(it["id"]) or {}).get("swings") or []
         swings = [s for s in swings if isinstance(s, dict)]
-        out = simulate(hole, swings, it["seed"]) if swings else {"converged": False, "diverged": False, "swings_to_converge": None, "final": list(hole["start"])}
+        try:
+            out = simulate(hole, swings, it["seed"]) if swings else None
+        except (TypeError, ValueError):      # tampered / non-numeric payload: score as unplayed
+            swings, out = [], None
+        if out is None:
+            out = {"converged": False, "diverged": False, "swings_to_converge": None, "final": list(hole["start"])}
         max_score = hole["max_swings"]
         used = out["swings_to_converge"] if out["converged"] else max_score + 1
         sc = max(0, max_score + 1 - used)

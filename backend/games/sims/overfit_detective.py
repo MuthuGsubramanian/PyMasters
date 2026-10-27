@@ -196,9 +196,13 @@ def score(payload: dict, level: int, items: list) -> list:
         if not move or "degree" not in move:
             per.append({"id": it["id"], "topic": it["topic"], "correct": False, "score": 0, "max": 5, "misconception": "not_attempted"})
             continue
-        ev = evaluate(ds, it["seed"], move.get("degree", 1), move.get("lam", 0.0))
+        try:
+            deg = max(1, min(MAX_DEGREE, int(move.get("degree", 1))))
+            ev = evaluate(ds, it["seed"], deg, move.get("lam") or 0.0)
+        except (TypeError, ValueError):      # tampered / non-numeric payload: score as unplayed
+            per.append({"id": it["id"], "topic": it["topic"], "correct": False, "score": 0, "max": 5, "misconception": "not_attempted"})
+            continue
         sc = score_from_ratio(ev["test_mse"], ev["best_test_mse"])
-        deg = max(1, min(MAX_DEGREE, int(move.get("degree", 1))))
         mc = None
         if sc < 4:
             if deg > ev["best_degree"] + 2:
