@@ -1493,6 +1493,12 @@ def complete_module(sub: QuizSubmission, caller: str = Depends(get_current_user_
                 "UPDATE users SET points = ? WHERE id = ?",
                 [current_points, sub.user_id],
             )
+            conn.commit()
+            try:
+                from arcade.unlocks import evaluate as _arcade_evaluate
+                _arcade_evaluate(conn, sub.user_id)
+            except Exception as _exc:  # noqa: BLE001
+                print(f"[arcade] unlock evaluation failed: {_exc}")
 
         # Unlock next module regardless of XP (retake should still unlock)
         updates = []

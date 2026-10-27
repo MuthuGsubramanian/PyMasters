@@ -1061,6 +1061,7 @@ def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id
         pass
 
     # Award XP when student completes a challenge successfully
+    unlocked = []
     if result["success"] and request.topic:
         lesson = lesson_obj  # already loaded above (avoids a second disk read)
         xp_reward = lesson.get("xp_reward", 25) if lesson else 25
@@ -1093,11 +1094,19 @@ def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id
             touch_streak(conn, request.user_id)
 
             conn.commit()
+            # Arcade unlocks (games/boards earned by this completion); bookkeeping only.
+            if not existing:
+                try:
+                    from arcade.unlocks import evaluate as _arcade_evaluate
+                    unlocked = _arcade_evaluate(conn, request.user_id)
+                except Exception as _exc:  # noqa: BLE001
+                    print(f"[arcade] unlock evaluation failed: {_exc}")
             conn.close()
         except Exception:
             xp_earned = 0
 
         result["xp_earned"] = xp_earned
+    result["unlocked"] = unlocked
 
     # Update mastery based on success
     mastery_delta = 0.1 if result["success"] else -0.05
