@@ -150,3 +150,10 @@ def test_concurrent_evaluate_notifies_once(db):
     [t.start() for t in ts]; [t.join() for t in ts]
     n = conn(db).execute("SELECT COUNT(*) FROM notifications WHERE user_id = 'u5'").fetchone()[0]
     assert n == 1, n
+
+
+def test_batch2_ladder(db):
+    from arcade.unlocks import LADDER, GAMES, GAME_TITLES
+    assert LADDER["loop_runner"] == 8 and LADDER["bug_invaders"] == 10 and LADDER["dict_dash"] == 13 and LADDER["big_o_grand_prix"] == 16
+    assert GAMES == ["snakes_ladders", "linked_snake", "code_slingshot", "loop_runner", "bug_invaders", "dict_dash", "big_o_grand_prix"]
+    assert GAME_TITLES["big_o_grand_prix"] == "Big-O Grand Prix"

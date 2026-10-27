@@ -16,9 +16,10 @@ BACKEND = Path(__file__).resolve().parent.parent
 LESSONS_DIR = BACKEND / "lessons"
 BANKS_DIR = BACKEND / "games" / "banks"
 
-GAMES = ["snakes_ladders", "linked_snake", "code_slingshot"]
-GAME_TITLES = {"snakes_ladders": "Snakes & Ladders", "linked_snake": "Linked Snake", "code_slingshot": "Code Slingshot"}
-LADDER = {"snakes_ladders": 1, "linked_snake": 3, "code_slingshot": 6}
+GAMES = ["snakes_ladders", "linked_snake", "code_slingshot", "loop_runner", "bug_invaders", "dict_dash", "big_o_grand_prix"]
+GAME_TITLES = {"snakes_ladders": "Snakes & Ladders", "linked_snake": "Linked Snake", "code_slingshot": "Code Slingshot",
+               "loop_runner": "Loop Runner", "bug_invaders": "Bug Invaders", "dict_dash": "Dict Dash", "big_o_grand_prix": "Big-O Grand Prix"}
+LADDER = {"snakes_ladders": 1, "linked_snake": 3, "code_slingshot": 6, "loop_runner": 8, "bug_invaders": 10, "dict_dash": 13, "big_o_grand_prix": 16}
 BOARD_MIN_POOL = 24
 SESSION_MIN_POOL = 12
 CHOICE_KINDS = {"choice", "line_then_choice", "bin"}

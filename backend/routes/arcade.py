@@ -33,6 +33,15 @@ GAME_META = {
                      "blurb": "Your snake is a linked list. Eat the right answer to append a node; the wrong one pops your tail."},
     "code_slingshot": {"title": "Code Slingshot", "n": 20, "kinds": {"choice"},
                        "blurb": "Pigs hold the answers. Pull back, aim, and knock out the one that matches the expression."},
+    "loop_runner": {"title": "Loop Runner", "n": 20, "kinds": {"choice"},
+                    "blurb": "Run the neon city. Jump or slide through the gate that holds the expression's real value."},
+    "bug_invaders": {"title": "Bug Invaders", "n": 12, "kinds": {"line_then_choice"},
+                     "blurb": "The program descends line by line. Shoot the guilty line, then the fix that makes the test pass."},
+    "dict_dash": {"title": "Dict Dash", "n": 20, "kinds": {"choice", "bin"},
+                  "blurb": "A maze of pellets, four power pellets with answers. Eat the right one and the error ghosts turn blue."},
+    "big_o_grand_prix": {"title": "Big-O Grand Prix", "n": 16, "kinds": {"choice"},
+                         "topics_bias": ["big_o_complexity", "sorting_basics", "searching", "hash_tables", "recursion_fundamentals"],
+                         "blurb": "Three laps against three karts. Pick the right lane at every fork for a boost; wrong lanes are oil."},
 }
 MIN_POOL = 12
 MASTERY_PER_CORRECT = 0.02
@@ -174,10 +183,53 @@ def arcade_catalog(user_id: str = Depends(get_current_user_id)):
         conn.close()
 
 
+PAIR_GAMES = {"loop_runner"}
+
+
+def _pair_variant(item: dict, d: int) -> Optional[dict]:
+    """Two-choice variant of a choice item: the truth plus distractor `d` (index into the original
+    choices, skipping the answer), shuffled deterministically. Ids carry the distractor so grading
+    can rebuild the same variant: `<base id>~p<d>`."""
+    choices = item.get("choices") or []
+    ans = item.get("answer")
+    if item.get("kind") != "choice" or not isinstance(ans, int) or d == ans or d >= len(choices):
+        return None
+    truth, wrong = choices[ans], choices[d]
+    if truth == wrong:
+        return None
+    flip = (hash(f"{item['id']}~p{d}") & 1) == 1
+    pair = [wrong, truth] if flip else [truth, wrong]
+    return {**item, "id": f"{item['id']}~p{d}", "choices": pair, "answer": pair.index(truth), "source_id": item["id"]}
+
+
+def _deal_pairs(topics: set, seed: int, n: int, exclude: set) -> list:
+    import random as _random
+    bases = pick(topics, seed, 10_000, set(), kinds={"choice"})
+    combos = []
+    for it in bases:
+        for d in range(len(it.get("choices") or [])):
+            v = _pair_variant(it, d)
+            if v and v["id"] not in exclude:
+                combos.append(v)
+    rng = _random.Random(seed)
+    rng.shuffle(combos)
+    # spread the same base question apart so a repeat comes back later with another distractor
+    seen, first, later = set(), [], []
+    for v in combos:
+        (later if v["source_id"] in seen else first).append(v)
+        seen.add(v["source_id"])
+    out = (first + later)[:n]
+    out.sort(key=lambda i: (int(i.get("level") or 1), rng.random()))
+    return out
+
+
 def _deal(conn, user_id: str, game_id: str, board: Optional[str], seed: int, n: int, exclude: set) -> list:
     topics = _topics_for(conn, user_id, game_id, board)
+    if game_id in PAIR_GAMES:
+        return _deal_pairs(topics, seed, n, exclude)
     expressions_only = game_id == "code_slingshot" and unlocks.drill_backed_count(conn, user_id) < 10
-    return pick(topics, seed, n, exclude, expressions_only=expressions_only, kinds=GAME_META[game_id]["kinds"])
+    return pick(topics, seed, n, exclude, expressions_only=expressions_only, kinds=GAME_META[game_id]["kinds"],
+                prefer_topics=GAME_META[game_id].get("topics_bias"))
 
 
 @router.post("/session/start")
@@ -225,7 +277,24 @@ def _session_or_error(conn, session_id: str, user_id: str):
 def _item_index(ids: list) -> dict:
     from arcade.pools import _choice_items
     wanted = set(ids)
-    return {i["id"]: i for i in _choice_items() if i["id"] in wanted}
+    bases = {}
+    for vid in wanted:
+        if "~p" in vid:
+            bases[vid.rsplit("~p", 1)[0]] = vid
+    out = {}
+    for i in _choice_items():
+        if i["id"] in wanted:
+            out[i["id"]] = i
+        if i["id"] in bases:
+            vid = bases[i["id"]]
+            try:
+                d = int(vid.rsplit("~p", 1)[1])
+            except ValueError:
+                continue
+            v = _pair_variant(i, d)
+            if v:
+                out[vid] = v
+    return out
 
 
 @router.post("/session/questions")

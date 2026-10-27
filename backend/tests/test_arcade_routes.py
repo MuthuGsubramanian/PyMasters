@@ -62,7 +62,7 @@ def test_catalog_reflects_unlocks_and_boards(client):
     assert r.status_code == 200, r.text
     body = r.json()
     games = {g["id"]: g for g in body["games"]}
-    assert set(games) == {"snakes_ladders", "linked_snake", "code_slingshot"}
+    assert set(games) >= {"snakes_ladders", "linked_snake", "code_slingshot"} and len(games) == 7
     assert games["snakes_ladders"]["unlocked"] and games["linked_snake"]["unlocked"] and not games["code_slingshot"]["unlocked"]
     assert "3 more" in games["code_slingshot"]["milestone"]
     boards = {b["key"]: b for b in games["snakes_ladders"]["boards"]}
@@ -260,3 +260,65 @@ def test_xp_capped_flag_on_partial_cap(client):
         client.post("/api/arcade/session/answer", json={"session_id": body["session_id"], "item_id": it["id"], "response": bank[it["id"]]["answer"], "ms": 2500}, headers=_headers("a1"))
     r = client.post("/api/arcade/session/finish", json={"session_id": body["session_id"], "score": 5}, headers=_headers("a1")).json()
     assert r["xp"] == 5 and r["xp_capped"] is True
+
+
+# ── batch 2 ───────────────────────────────────────────────────────────────────
+
+def _unlock_all(client, uid="a1"):
+    conn = _db()
+    for lid in ("for_loops", "conditionals", "functions_basics", "while_loops", "ds_sets", "ds_tuples", "big_o_complexity",
+                "sorting_basics", "searching", "hash_tables", "functions_args", "comprehensions", "errors_handling", "oop_classes",
+                "adv_generators", "recursion_fundamentals", "stacks", "queues"):
+        conn.execute("INSERT OR IGNORE INTO lesson_completions (user_id, lesson_id, xp_awarded) VALUES (?, ?, 10)", [uid, lid])
+    conn.commit(); conn.close()
+
+
+def test_catalog_lists_seven_games(client):
+    _unlock_all(client)
+    cat = client.get("/api/arcade/catalog", headers=_headers("a1")).json()
+    ids = [g["id"] for g in cat["games"]]
+    assert ids == ["snakes_ladders", "linked_snake", "code_slingshot", "loop_runner", "bug_invaders", "dict_dash", "big_o_grand_prix"]
+    assert all(g["unlocked"] for g in cat["games"]), [(g["id"], g["unlocked"]) for g in cat["games"]]
+
+
+def test_bug_invaders_deals_only_line_then_choice(client):
+    _unlock_all(client)
+    bank = _bank_index()
+    r = _start(client, "a1", "bug_invaders")
+    assert r.status_code == 200, r.text
+    assert {bank[i["id"]]["kind"] for i in r.json()["items"]} == {"line_then_choice"}
+
+
+def test_grand_prix_prefers_big_o_topics_and_dict_dash_allows_bins(client):
+    _unlock_all(client)
+    bank = _bank_index()
+    r = _start(client, "a1", "big_o_grand_prix").json()
+    topics = [i["topic"] for i in r["items"]]
+    assert sum(1 for t in topics if t in {"big_o_complexity", "sorting_basics", "searching", "hash_tables", "recursion_fundamentals"}) >= len(topics) * 0.8
+    r2 = _start(client, "a1", "dict_dash").json()
+    kinds = {bank[i["id"]]["kind"] for i in r2["items"]}
+    assert kinds <= {"choice", "bin"} and "line_then_choice" not in kinds
+
+
+def test_loop_runner_deals_two_choice_pair_variants(client):
+    _unlock_all(client)
+    bank = _bank_index()
+    r = _start(client, "a1", "loop_runner")
+    assert r.status_code == 200, r.text
+    items = r.json()["items"]
+    assert len(items) == 20
+    for it in items:
+        assert len(it["choices"]) == 2 and len(set(it["choices"])) == 2, it
+        assert "~p" in it["id"] and "answer" not in it
+        base = bank[it["id"].split("~p")[0]]
+        truth = base["choices"][base["answer"]]
+        assert truth in it["choices"]
+    # grading maps the variant's index back to the real answer
+    it = items[0]
+    base = bank[it["id"].split("~p")[0]]
+    truth_idx = it["choices"].index(base["choices"][base["answer"]])
+    rev = client.post("/api/arcade/session/answer", json={"session_id": r.json()["session_id"], "item_id": it["id"], "response": truth_idx, "ms": 2000}, headers=_headers("a1")).json()
+    assert rev["correct"] is True and rev["answer"] == truth_idx
+    # the same base question may recur with a different distractor
+    more = client.post("/api/arcade/session/questions", json={"session_id": r.json()["session_id"]}, headers=_headers("a1")).json()
+    assert all("~p" in i["id"] for i in more["items"])
