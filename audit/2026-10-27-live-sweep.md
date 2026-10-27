@@ -26,4 +26,6 @@ Live API smoke 14:20 IST (`ops/e2e/api_smoke.py`, 16 calls incl. a real sandbox 
 
 Wave-2 games live-verified 14:38 IST on build 1250dd8 (Bug Hunt keyboard flow + reveal, Shape Sorter arrows/Enter, Big-O with the measured count race, Overfit Detective fit/commit): all working, no console errors.
 
+Browser sweep 14:41 IST as the ops learner (desktop, dark): Overview, Classroom lesson (inline Run + graded challenge → +50 XP), Playground (run 346 ms), Profile, Challenges (week 44 + leaderboard), Community (rank #10), Live Tutor form, Knowledge Map (277 concepts), Super Admin overview — all render, no console errors. Not exercised on purpose (side effects on production): Live Tutor booking submit, Support form, org/admin mutations, signup/forgot-password (email is down anyway).
+
 Next modules to sweep (as learner and as admin): Overview, Classroom (lesson + grade), Playground (execute + install), Paths, Knowledge Map, Challenges, Reference, Explains, Community, Live Tutor, Profile, Org console, Super Admin, Login/Signup/Forgot, Pricing/Upgrade.
