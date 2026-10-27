@@ -47,9 +47,9 @@ def test_ladder_thresholds(db):
     complete(db, "u1", ["lists", "ds_dicts"])
     keys = evaluate(conn(db), "u1")
     assert "game:linked_snake" in keys and "board:lists" in keys and "board:dicts" in keys
-    assert "game:loop_runner" not in keys
+    assert "game:code_slingshot" not in keys
     complete(db, "u1", ["for_loops", "conditionals", "functions_basics"])
-    assert "game:loop_runner" in evaluate(conn(db), "u1")
+    assert "game:code_slingshot" in evaluate(conn(db), "u1")
 
 
 def test_cloud_lessons_do_not_count(db):

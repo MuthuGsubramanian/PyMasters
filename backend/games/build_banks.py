@@ -205,7 +205,125 @@ def _build_bug_hunt(seed: int, per_level: int) -> list:
     return items
 
 
+def _program(context: dict, expr: str) -> str:
+    assigns = "\n".join(f"{k} = {v}" for k, v in context.items())
+    return (assigns + "\n" if assigns else "") + f"print(repr({expr}))"
+
+
+def _build_expressions(seed: int, per_template: int) -> list:
+    """Loop Runner / slingshot gates: evaluate each expression with the real interpreter; distractors
+    are the values of mutated expressions (operator flipped, index shifted...) that differ from the truth."""
+    from games.templates.expressions import TEMPLATES
+    rng = random.Random(seed)
+    lessons = _lesson_index()
+    items, seen, rejects = [], set(), {}
+    for t in TEMPLATES:
+        made, tries = 0, 0
+        while made < per_template and tries < per_template * 8:
+            tries += 1
+            cand = t(rng)
+            code = _program(cand["context"], cand["expr"])
+            if code in seen:
+                continue
+            seen.add(code)
+            try:
+                truth = verify_output(code)
+            except ValueError:
+                rejects["run_failed"] = rejects.get("run_failed", 0) + 1
+                continue
+            distractors = []
+            for alt in cand["mutations"]:
+                try:
+                    val = verify_output(_program(cand["context"], alt))
+                except ValueError:
+                    continue
+                if val != truth and val not in distractors:
+                    distractors.append(val)
+            for lit in ["None", "True", "False", "0", "1", "[]", "''"]:
+                if len(distractors) >= 3:
+                    break
+                if lit != truth and lit not in distractors:
+                    distractors.append(lit)
+            if len(distractors) < 3:
+                rejects["too_few_distractors"] = rejects.get("too_few_distractors", 0) + 1
+                continue
+            choices = distractors[:3] + [truth]
+            rng.shuffle(choices)
+            shown = "\n".join(f"{k} = {v}" for k, v in cand["context"].items())
+            items.append({"id": _item_id("ex", cand["level"], code), "level": cand["level"], "topic": cand["topic"], "kind": "choice",
+                          "prompt": {"expr": cand["expr"], "context": cand["context"], "code": (shown + "\n" if shown else "") + cand["expr"]},
+                          "choices": choices, "answer": choices.index(truth), "misconception": cand["misconception"],
+                          "why": cand["why"], "lesson_id": lessons.get(cand["topic"], "")})
+            made += 1
+        print(f"{t.__name__}: {made} items ({tries} tries)")
+    items = [i for i in items if i["lesson_id"]]
+    items.sort(key=lambda i: (i["level"], i["id"]))
+    print(f"total {len(items)} items; rejects {rejects}")
+    return items
+
+
+_MUTATIONS = [
+    (r"\+ 1\b", "+ 2"), (r"\b1\b", "2"), (r"\b2\b", "3"), (r"\b3\b", "4"), (r"\b4\b", "5"), (r"\b5\b", "6"), (r"\b10\b", "11"),
+    (r"\[0\]", "[1]"), (r"\[-1\]", "[0]"), (r"\[1\]", "[-1]"), (r"\[1:\]", "[:1]"), (r"\[:2\]", "[2:]"), (r"\[::2\]", "[1::2]"),
+    (r" == ", " != "), (r" < ", " <= "), (r" > ", " >= "), (r" and ", " or "), (r" or ", " and "), (r"\bnot ", ""),
+    (r"\.append\(", ".insert(0, "), (r"\.upper\(\)", ".lower()"), (r"\.lower\(\)", ".upper()"), (r"\.strip\(\)", ".lstrip()"),
+    (r"range\((\d+)\)", lambda m: f"range({int(m.group(1)) + 1})"), (r"range\(1, ", "range(0, "), (r"range\(0, ", "range(1, "),
+    (r" \* ", " + "), (r" \+ ", " * "), (r" // ", " / "), (r" / ", " // "), (r" % ", " // "),
+    (r"reverse=True", "reverse=False"), (r"sorted\(", "list("), (r"\bmax\(", "min("), (r"\bmin\(", "max("), (r"\blen\(", "sum("),
+    (r"\bTrue\b", "False"), (r"\bFalse\b", "True"), (r"\bis\b", "=="), (r"global ", "nonlocal "),
+]
+
+
+def _build_arcade_choices(seed: int) -> list:
+    """Choice twins for free-text Output Oracle items: mutate the program a little, keep the runs
+    whose stdout differs from the truth as distractors, fall back to generic distractors."""
+    import re
+    rng = random.Random(seed)
+    with open(BANKS_DIR / "output_oracle.json", encoding="utf-8") as fh:
+        oracle = json.load(fh)
+    items, rejects = [], {}
+    for orig in oracle:
+        if orig.get("kind") != "text":
+            continue
+        code, truth = orig["prompt"]["code"], orig["answer"]
+        distractors = []
+        for pattern, repl in _MUTATIONS:
+            if len(distractors) >= 3:
+                break
+            if not re.search(pattern, code):
+                continue
+            alt = re.sub(pattern, repl, code, count=1)
+            if alt == code:
+                continue
+            try:
+                out = verify_output(alt)
+            except ValueError:
+                continue
+            if out and out != truth and out not in distractors and len(out) <= 120:
+                distractors.append(out)
+        for lit in list(orig.get("extra_distractors") or []) + GENERIC_DISTRACTORS:
+            if len(distractors) >= 3:
+                break
+            if lit != truth and lit not in distractors:
+                distractors.append(lit)
+        if len(distractors) < 3:
+            rejects["too_few_distractors"] = rejects.get("too_few_distractors", 0) + 1
+            continue
+        choices = distractors[:3] + [truth]
+        rng.shuffle(choices)
+        items.append({"id": "ac_" + orig["id"], "source_id": orig["id"], "level": orig["level"], "topic": orig["topic"], "kind": "choice",
+                      "prompt": {"code": code}, "choices": choices, "answer": choices.index(truth),
+                      "misconception": orig["misconception"], "why": orig["why"], "lesson_id": orig["lesson_id"]})
+    items.sort(key=lambda i: (i["level"], i["id"]))
+    print(f"total {len(items)} choice twins; rejects {rejects}")
+    return items
+
+
 def build(game_id: str, seed: int = 2026, per_level: int = 30) -> list:
+    if game_id == "expressions":
+        return _build_expressions(seed, max(4, per_level // 6))
+    if game_id == "arcade_choices":
+        return _build_arcade_choices(seed)
     if game_id == "shape_sorter":
         from games.templates.shape_sorter import build_items
         items = build_items()

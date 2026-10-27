@@ -16,9 +16,9 @@ BACKEND = Path(__file__).resolve().parent.parent
 LESSONS_DIR = BACKEND / "lessons"
 BANKS_DIR = BACKEND / "games" / "banks"
 
-GAMES = ["snakes_ladders", "linked_snake", "loop_runner"]
-GAME_TITLES = {"snakes_ladders": "Snakes & Ladders", "linked_snake": "Linked Snake", "loop_runner": "Loop Runner"}
-LADDER = {"snakes_ladders": 1, "linked_snake": 3, "loop_runner": 6}
+GAMES = ["snakes_ladders", "linked_snake", "code_slingshot"]
+GAME_TITLES = {"snakes_ladders": "Snakes & Ladders", "linked_snake": "Linked Snake", "code_slingshot": "Code Slingshot"}
+LADDER = {"snakes_ladders": 1, "linked_snake": 3, "code_slingshot": 6}
 BOARD_MIN_POOL = 24
 CHOICE_KINDS = {"choice", "line_then_choice", "bin"}
 NOTIFICATION_TYPE = "game_unlocked"
