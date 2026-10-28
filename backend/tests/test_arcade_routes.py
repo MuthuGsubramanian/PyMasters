@@ -125,7 +125,15 @@ def test_answer_grades_and_partial_credit_is_wrong_for_the_game(client):
     # idempotent: answering again returns the stored reveal unchanged
     r2 = client.post("/api/arcade/session/answer", json={"session_id": sid, "item_id": first["id"], "response": "nonsense", "ms": 1}, headers=_headers("a1")).json()
     assert r2 == r
-    ltc = next((i for i in body["items"] if bank[i["id"]]["kind"] == "line_then_choice"), None)
+    # Flaky-test fix (2026-10-28): must exclude `first` — if the randomly-dealt
+    # first item is itself line_then_choice, submitting a second (wrong)
+    # response to the same item hits the idempotent-reveal early-return in
+    # answer_item() and gets back the cached *correct* result from the first
+    # answer, not a fresh grading of the wrong one. This made the test flaky
+    # (failed only on sessions where item 0 happened to be line_then_choice),
+    # which blocked at least one real production deploy via the CI gate.
+    ltc = next((i for i in body["items"]
+                if i["id"] != first["id"] and bank[i["id"]]["kind"] == "line_then_choice"), None)
     if ltc:
         line, fix = bank[ltc["id"]]["answer"]
         r3 = client.post("/api/arcade/session/answer", json={"session_id": sid, "item_id": ltc["id"], "response": [line, (fix + 1) % 3], "ms": 2000}, headers=_headers("a1")).json()
