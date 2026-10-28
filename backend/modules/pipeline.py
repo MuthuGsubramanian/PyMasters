@@ -172,7 +172,13 @@ def stage_2_narrative(job_id, outline, user_id, directive=""):
         student_profile=profile,
         lesson_context={"pipeline_stage": "narrative", "outline": outline},
         temperature=0.7,
-        max_tokens=1200,
+        # 1200 was too tight for the current model (gpt-oss:120b) to produce a
+        # full bilingual markdown narrative (headings/tables/blockquotes) —
+        # confirmed live (2026-10-28): it silently returned zero content at
+        # 1200 and a real ~3100-char response at 4000, for the identical
+        # prompt. Real narratives run 625-8671 chars (median ~2074) in en
+        # alone per the 511 shipped lesson files, so 1200 was never enough.
+        max_tokens=4000,
     )
 
     raw_message = response.get("message", "")
