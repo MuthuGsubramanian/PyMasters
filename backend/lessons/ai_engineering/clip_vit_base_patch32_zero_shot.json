@@ -1,0 +1,191 @@
+{
+  "id": "clip_vit_base_patch32_zero_shot",
+  "topic": "clip_vit_base_patch32_zero_shot",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 54,
+  "title": {
+    "en": "Lightweight Zero-Shot Vision: CLIP ViT-B/32 for Edge and Offline Apps",
+    "ta": ""
+  },
+  "description": {
+    "en": "Learn openai/clip-vit-base-patch32 â€” the compact, fast CLIP variant that powers edge and offline zero-shot image classification, including local photo-search plugins. Compare it against larger CLIP variants and build a model-selection decision engine.",
+    "ta": ""
+  },
+  "xp_reward": 60,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Small, Fast, and Still Smart: CLIP ViT-B/32\n\nVaathiyaar here! Not every zero-shot classifier needs to be a monster. `openai/clip-vit-base-patch32` is the compact sibling of the famous CLIP family â€” about a third the size of `clip-vit-large-patch14`, and noticeably faster at inference. It still does the same trick: map any image and any text description into one shared embedding space, so classification becomes 'which sentence is closest to this picture?' No training, no labeled dataset.\n\nThe name tells you exactly how it works. 'ViT-B' means the vision encoder is a Base-sized Vision Transformer. 'patch32' means each image is sliced into 32Ã—32 pixel patches before being fed to the transformer. A 224Ã—224 image becomes a 7Ã—7 grid â€” just 49 patches plus one CLS token, 50 tokens total. Compare that to `patch14`, which slices the same image into 16Ã—16 = 256 patches. Since transformer attention cost grows roughly with the square of the sequence length, fewer patches means dramatically less compute â€” which is exactly why patch32 is the variant people reach for on CPUs, phones, and background jobs.\n\n### Base/32 vs Large/14\n\n| Property | ViT-B/32 (this lesson) | ViT-L/14 |\n|---|---|---|\n| Parameters | ~151M | ~428M |\n| Patch size | 32Ã—32 | 14Ã—14 |\n| Tokens per 224px image | 50 | 257 |\n| Typical CPU latency | Low | High |\n| Zero-shot ImageNet accuracy | ~63% | ~76% |\n| Best for | Edge devices, offline tools, background indexing | Max accuracy, GPU-backed services |\n\n### Zero-Shot Classification\n\n```python\nfrom transformers import pipeline\nfrom PIL import Image\n\nclassifier = pipeline(\n    \"zero-shot-image-classification\",\n    model=\"openai/clip-vit-base-patch32\"\n)\n\nimage = Image.open(\"photo.jpg\")\ncandidates = [\"a receipt\", \"a product photo\", \"a screenshot\", \"a selfie\"]\n\nresults = classifier(image, candidate_labels=candidates)\nfor r in results:\n    print(f\"{r['score']:.3f} | {r['label']}\")\n```\n\n### Building an Offline Photo Index\n\nThis is the exact pattern behind an offline CLIP-powered photo-search plugin: encode a whole folder once, cache the embeddings, then search instantly with plain English â€” no network call, no re-encoding.\n\n```python\nfrom transformers import CLIPModel, CLIPProcessor\nimport torch, os, json\nfrom PIL import Image\n\nMODEL_NAME = \"openai/clip-vit-base-patch32\"\nmodel = CLIPModel.from_pretrained(MODEL_NAME)\nprocessor = CLIPProcessor.from_pretrained(MODEL_NAME)\n\ndef build_offline_index(photo_dir, cache_path=\"clip_index.json\"):\n    paths = [os.path.join(photo_dir, f) for f in os.listdir(photo_dir)]\n    images = [Image.open(p).convert(\"RGB\") for p in paths]\n    inputs = processor(images=images, return_tensors=\"pt\", padding=True)\n    with torch.no_grad():\n        embeds = model.get_image_features(**inputs)\n        embeds = embeds / embeds.norm(dim=-1, keepdim=True)\n    index = {\"paths\": paths, \"embeddings\": embeds.tolist()}\n    with open(cache_path, \"w\") as f:\n        json.dump(index, f)\n    return index\n```\n\nBecause the base/32 model is small and CPU-friendly, this indexing job can run quietly in the background on a laptop or a low-power server without a GPU â€” something `clip-vit-large-patch14` would struggle to do at the same speed.\n\n### When to Pick Which Variant\n\n- **Pick ViT-B/32** when you need low latency, no GPU, or you're processing thousands of images in a background job.\n- **Pick ViT-L/14** when accuracy matters more than speed and you have GPU inference available.\n- Both share the same API â€” swapping the model name is often the only code change needed.\n\n> **Key Insight:** `clip-vit-base-patch32` trades a bit of accuracy for a lot of speed by cutting the number of image patches from 256 down to 49. For offline tools, background indexing jobs, and edge deployments, that tradeoff is almost always worth it â€” you get the same zero-shot superpower with a fraction of the compute.",
+    "ta": ""
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_1",
+      "content": "openai/clip-vit-base-patch32 slices a 224px image into 49 patches (32x32 each) instead of 256 â€” far fewer tokens, far less attention compute. Same zero-shot superpower as larger CLIP models, built for edge devices and offline background jobs.",
+      "visual_theme": "modern"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_1",
+      "language": "python",
+      "code": "from transformers import pipeline\nfrom PIL import Image\n\nclassifier = pipeline(\n    \"zero-shot-image-classification\",\n    model=\"openai/clip-vit-base-patch32\"\n)\n\nimage = Image.open(\"photo.jpg\")\n\ncandidates = [\n    \"a receipt\",\n    \"a product photo\",\n    \"a screenshot\",\n    \"a selfie\"\n]\n\nresults = classifier(image, candidate_labels=candidates)\n\nfor r in results:\n    print(f\"{r['score']:.3f} | {r['label']}\")",
+      "steps": [
+        {
+          "line": 1,
+          "explanation": "Import the Hugging Face pipeline helper â€” it handles model loading, preprocessing, and inference behind one call."
+        },
+        {
+          "line": 2,
+          "explanation": "PIL opens the image in a format the CLIP processor understands. Install with: pip install Pillow transformers torch."
+        },
+        {
+          "line": 4,
+          "explanation": "Create a zero-shot-image-classification pipeline, loading both the vision encoder and text encoder."
+        },
+        {
+          "line": 6,
+          "explanation": "Specify clip-vit-base-patch32 â€” the compact ~151M parameter variant, roughly a third the size of the large/14 model."
+        },
+        {
+          "line": 8,
+          "explanation": "Load any image as a PIL Image; the processor resizes it to 224x224 internally."
+        },
+        {
+          "line": 10,
+          "explanation": "Define candidate labels as natural-language phrases â€” a photo organizer's categories, changeable anytime without retraining."
+        },
+        {
+          "line": 16,
+          "explanation": "The pipeline encodes the image into 50 tokens (49 patches + CLS), encodes each label, and compares them in shared embedding space."
+        },
+        {
+          "line": 18,
+          "explanation": "Results come back sorted by score descending, softmax-normalized so all scores sum to 1.0."
+        }
+      ]
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_2",
+      "language": "python",
+      "code": "from transformers import CLIPModel, CLIPProcessor\nimport torch, os, json\nfrom PIL import Image\n\nMODEL_NAME = \"openai/clip-vit-base-patch32\"\nmodel = CLIPModel.from_pretrained(MODEL_NAME)\nprocessor = CLIPProcessor.from_pretrained(MODEL_NAME)\n\ndef build_offline_index(photo_dir, cache_path=\"clip_index.json\"):\n    paths = [os.path.join(photo_dir, f) for f in os.listdir(photo_dir)]\n    images = [Image.open(p).convert(\"RGB\") for p in paths]\n    inputs = processor(images=images, return_tensors=\"pt\", padding=True)\n    with torch.no_grad():\n        embeds = model.get_image_features(**inputs)\n        embeds = embeds / embeds.norm(dim=-1, keepdim=True)\n    index = {\"paths\": paths, \"embeddings\": embeds.tolist()}\n    with open(cache_path, \"w\") as f:\n        json.dump(index, f)\n    return index",
+      "steps": [
+        {
+          "line": 5,
+          "explanation": "Pin the model name to the base/32 checkpoint â€” small enough to run comfortably on CPU for background jobs."
+        },
+        {
+          "line": 6,
+          "explanation": "CLIPModel loads both encoders (~600MB total), far lighter than the ~1.7GB large/14 checkpoint."
+        },
+        {
+          "line": 9,
+          "explanation": "build_offline_index encodes an entire photo folder once â€” the expensive step you only pay for a single time."
+        },
+        {
+          "line": 13,
+          "explanation": "get_image_features returns just the image embedding (512-dim for base/32), skipping any text cross-attention."
+        },
+        {
+          "line": 14,
+          "explanation": "L2-normalizing embeddings turns a later dot product into cosine similarity â€” the standard trick for fast search."
+        },
+        {
+          "line": 16,
+          "explanation": "Cache paths and embeddings to disk as JSON so search queries never need to re-run the model."
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "comparison_1",
+      "left_label": "clip-vit-base-patch32",
+      "right_label": "clip-vit-large-patch14",
+      "items": [
+        {
+          "left": "~151M parameters, ~600MB",
+          "right": "~428M parameters, ~1.7GB"
+        },
+        {
+          "left": "50 tokens per 224px image",
+          "right": "257 tokens per 224px image"
+        },
+        {
+          "left": "Runs comfortably on CPU",
+          "right": "Wants a GPU for low latency"
+        },
+        {
+          "left": "Good for background/offline jobs",
+          "right": "Best when accuracy is the priority"
+        },
+        {
+          "left": "~63% zero-shot ImageNet accuracy",
+          "right": "~76% zero-shot ImageNet accuracy"
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_1",
+      "effect": "confetti",
+      "message": "You can now pick the right CLIP variant and run fast, offline zero-shot classification with no training data!"
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Build a `PatchGrid` class that reasons about how Vision Transformers split images into patches â€” the core idea behind the 'patch32' in CLIP's name. Implement `num_patches(image_size, patch_size)` returning `(image_size // patch_size) ** 2`, `sequence_length(image_size, patch_size)` returning `num_patches(...) + 1` (for the CLS token), and `relative_speed(image_size, patch_size_a, patch_size_b)` which estimates how many times faster model 'a' is than model 'b', using the fact that transformer attention cost scales roughly with the square of sequence length. Return `sequence_length(image_size, patch_size_b) ** 2 / sequence_length(image_size, patch_size_a) ** 2`, rounded to 2 decimals."
+      },
+      "starter_code": "class PatchGrid:\n    def num_patches(self, image_size: int, patch_size: int) -> int:\n        # (image_size // patch_size) ** 2\n        pass\n\n    def sequence_length(self, image_size: int, patch_size: int) -> int:\n        # num_patches(...) + 1 for the CLS token\n        pass\n\n    def relative_speed(self, image_size: int, patch_size_a: int, patch_size_b: int) -> float:\n        # sequence_length(image_size, patch_size_b) ** 2 / sequence_length(image_size, patch_size_a) ** 2\n        # rounded to 2 decimals\n        pass\n\n# Test it:\ngrid = PatchGrid()\nprint(grid.num_patches(224, 32))\nprint(grid.sequence_length(224, 32))\nprint(grid.relative_speed(224, 32, 14))",
+      "expected_output": "49\n50\n26.42",
+      "hints": {
+        "en": [
+          "num_patches: (image_size // patch_size) ** 2 â€” a 224px image with 32px patches gives a 7x7 grid, 49 patches.",
+          "sequence_length adds exactly 1 to num_patches for the CLS token: 49 + 1 = 50.",
+          "relative_speed compares sequence_length squared for patch_size_b against patch_size_a â€” patch14 on a 224px image gives 257 tokens, so (257**2)/(50**2) â‰ˆ 26.42."
+        ]
+      },
+      "test_code": "g = PatchGrid()\nassert g.num_patches(224, 32) == 49\nassert g.num_patches(32, 32) == 1\nassert g.sequence_length(224, 32) == 50\nassert g.sequence_length(224, 14) == 257\nassert abs(g.relative_speed(224, 32, 14) - 26.42) < 0.01\nassert g.relative_speed(224, 32, 32) == 1.0"
+    },
+    {
+      "instruction": {
+        "en": "Build a `ModelPicker` class that decides between `clip-vit-base-patch32` and `clip-vit-large-patch14` given latency and accuracy constraints â€” the kind of decision an offline photo-search plugin needs to make. Use the fixed `PROFILES` dict provided. Implement `pick(max_latency_ms, min_accuracy)` which returns the name of the fastest model (lowest `latency_ms`) among those satisfying BOTH `latency_ms <= max_latency_ms` and `accuracy >= min_accuracy`. If no model satisfies both constraints, return `None`."
+      },
+      "starter_code": "PROFILES = {\n    \"openai/clip-vit-base-patch32\": {\"latency_ms\": 45, \"accuracy\": 0.68, \"size_mb\": 600},\n    \"openai/clip-vit-large-patch14\": {\"latency_ms\": 210, \"accuracy\": 0.76, \"size_mb\": 1700},\n}\n\nclass ModelPicker:\n    def pick(self, max_latency_ms: float, min_accuracy: float):\n        # Return the name of the fastest model in PROFILES satisfying\n        # both latency_ms <= max_latency_ms and accuracy >= min_accuracy.\n        # Return None if no model satisfies both.\n        pass\n\n# Test it:\npicker = ModelPicker()\nprint(picker.pick(max_latency_ms=100, min_accuracy=0.6))\nprint(picker.pick(max_latency_ms=300, min_accuracy=0.75))\nprint(picker.pick(max_latency_ms=50, min_accuracy=0.9))",
+      "expected_output": "openai/clip-vit-base-patch32\nopenai/clip-vit-large-patch14\nNone",
+      "hints": {
+        "en": [
+          "Filter PROFILES to models where profile['latency_ms'] <= max_latency_ms and profile['accuracy'] >= min_accuracy.",
+          "Among the surviving candidates, pick the one with the smallest latency_ms using min(..., key=...).",
+          "If the filtered list is empty, return None instead of calling min() on it."
+        ]
+      },
+      "test_code": "p = ModelPicker()\nassert p.pick(max_latency_ms=100, min_accuracy=0.6) == \"openai/clip-vit-base-patch32\"\nassert p.pick(max_latency_ms=300, min_accuracy=0.75) == \"openai/clip-vit-large-patch14\"\nassert p.pick(max_latency_ms=50, min_accuracy=0.9) is None\nassert p.pick(max_latency_ms=300, min_accuracy=0.6) == \"openai/clip-vit-base-patch32\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "CLIP ViT-B/32",
+      "vision transformer patches",
+      "zero-shot classification",
+      "model size vs accuracy tradeoffs",
+      "offline embedding index",
+      "model selection"
+    ],
+    "concepts_required": [
+      "python classes",
+      "dictionaries",
+      "basic transformer concepts",
+      "pip install"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "project",
+    "estimated_minutes": 28,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering"
+    ]
+  },
+  "generated": true
+}
