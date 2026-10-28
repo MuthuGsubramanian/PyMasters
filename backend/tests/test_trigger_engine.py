@@ -46,6 +46,37 @@ def test_no_trigger_on_single_failure(db_path):
     assert result["triggered"] is False
 
 
+def test_interest_detection_triggers_on_three_chat_questions(db_path):
+    from modules.trigger_engine import check_triggers
+    conn = sqlite3.connect(db_path)
+    for i in range(3):
+        conn.execute(
+            "INSERT INTO learning_signals (id, user_id, signal_type, topic, value, session_id) VALUES (?, 1, 'chat_question', 'decorators', '{}', 'sess1')",
+            [f"s{i}"],
+        )
+    conn.commit()
+    conn.close()
+
+    result = check_triggers(user_id=1, signal_type="chat_question", topic="decorators", value={})
+    assert result["triggered"] is True
+    assert "interest" in result["reason"].lower()
+
+
+def test_no_trigger_on_two_chat_questions(db_path):
+    from modules.trigger_engine import check_triggers
+    conn = sqlite3.connect(db_path)
+    for i in range(2):
+        conn.execute(
+            "INSERT INTO learning_signals (id, user_id, signal_type, topic, value, session_id) VALUES (?, 1, 'chat_question', 'decorators', '{}', 'sess1')",
+            [f"s{i}"],
+        )
+    conn.commit()
+    conn.close()
+
+    result = check_triggers(user_id=1, signal_type="chat_question", topic="decorators", value={})
+    assert result["triggered"] is False
+
+
 def test_no_duplicate_generation(db_path):
     from modules.trigger_engine import check_triggers
     conn = sqlite3.connect(db_path)

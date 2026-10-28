@@ -530,16 +530,37 @@ def chat(request: ChatRequest, caller: str = Depends(get_current_user_id)):
     # Auto-record profile_update signal if present and non-trivial
     profile_update = response.get("profile_update")
     if profile_update and profile_update.get("topic_practiced"):
+        topic_practiced = profile_update["topic_practiced"]
         try:
             record_signal(
                 db_path,
                 user_id=request.user_id,
                 signal_type="profile_update",
-                topic=profile_update["topic_practiced"],
+                topic=topic_practiced,
                 value=profile_update,
             )
         except Exception:
             pass  # Best-effort; don't fail the request
+
+        # Interest detection: repeated chat engagement on the same topic can
+        # trigger AI-inferred module generation (modules/trigger_engine.py),
+        # mirroring the code_evaluation trigger check in /evaluate below.
+        try:
+            record_signal(
+                db_path,
+                user_id=request.user_id,
+                signal_type="chat_question",
+                topic=topic_practiced,
+                value={"message": request.message},
+            )
+            check_triggers(
+                user_id=request.user_id,
+                signal_type="chat_question",
+                topic=topic_practiced,
+                value={"message": request.message},
+            )
+        except Exception:
+            pass  # Trigger check should never block the chat response
 
     return response
 
@@ -632,6 +653,39 @@ def chat_stream(request: ChatRequest, caller: str = Depends(get_current_user_id)
                 )
             except Exception:
                 pass
+
+            # Same signal recording as /chat (previously missing here entirely,
+            # even though this is the primary UI chat path — see /chat above
+            # for why both profile_update and chat_question are recorded).
+            profile_update = (parsed_response or {}).get("profile_update")
+            if profile_update and profile_update.get("topic_practiced"):
+                topic_practiced = profile_update["topic_practiced"]
+                try:
+                    record_signal(
+                        db_path,
+                        user_id=request.user_id,
+                        signal_type="profile_update",
+                        topic=topic_practiced,
+                        value=profile_update,
+                    )
+                except Exception:
+                    pass
+                try:
+                    record_signal(
+                        db_path,
+                        user_id=request.user_id,
+                        signal_type="chat_question",
+                        topic=topic_practiced,
+                        value={"message": request.message},
+                    )
+                    check_triggers(
+                        user_id=request.user_id,
+                        signal_type="chat_question",
+                        topic=topic_practiced,
+                        value={"message": request.message},
+                    )
+                except Exception:
+                    pass
 
             yield f"data: {json.dumps({'done': True, 'message': clean_message, 'phase': parsed_response.get('phase') if parsed_response else 'chat', 'full_response': full_response, 'pair_id': pair_id})}\n\n"
         except VaathiyaarUnavailable as exc:
