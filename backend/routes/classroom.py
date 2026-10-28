@@ -342,6 +342,37 @@ def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict
     base = Path(lessons_dir) if lessons_dir else LESSONS_DIR
     lessons = list(_list_static_lessons(base))
 
+    # "Fresh lessons" (2026-10-28): the nightly content job (jobs/content_job.py)
+    # QA-gates generated lessons and flags the passing ones published_to='platform'.
+    # Those are shown to EVERY learner — unconditionally, unlike the per-owner
+    # "generated" block below — as track "fresh", regardless of who owns the row.
+    try:
+        conn = sqlite3.connect(_get_db_path())
+        conn.row_factory = sqlite3.Row
+        fresh_rows = conn.execute(
+            "SELECT lesson_data FROM generated_lessons WHERE published_to = 'platform'"
+        ).fetchall()
+        conn.close()
+        seen_ids = {l.get("id") for l in lessons}
+        for row in fresh_rows:
+            data = json.loads(row["lesson_data"])
+            if data.get("id") in seen_ids:
+                continue
+            seen_ids.add(data.get("id"))
+            lessons.append({
+                "id": data.get("id"),
+                "title": data.get("title", {}),
+                "description": data.get("description", {}),
+                "xp_reward": data.get("xp_reward", 50),
+                "topic": data.get("topic"),
+                "track": "fresh",
+                "module": data.get("module"),
+                "order": 0,
+                "generated": True,
+            })
+    except Exception:
+        pass
+
     # Generated lessons from database
     if user_id:
         try:

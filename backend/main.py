@@ -373,6 +373,15 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_jobs_status ON module_generation_jobs(status, priority)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_lessons_user ON generated_lessons(user_id)")
 
+        # 2026-10-28: a lesson the nightly content job (jobs/content_job.py) QA-passed
+        # is flagged published_to='platform' and shown to EVERY learner (track
+        # "fresh" in routes/classroom.py), not just the system author that owns the row.
+        cursor.execute("PRAGMA table_info(generated_lessons)")
+        if "published_to" not in [c[1] for c in cursor.fetchall()]:
+            print("Migrating DB: Adding generated_lessons.published_to column")
+            cursor.execute("ALTER TABLE generated_lessons ADD COLUMN published_to TEXT")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_gen_lessons_published ON generated_lessons(published_to)")
+
         # ── On-demand generated "Explains" visual essays (per-lesson Explain button) ──
         # Stores only DATA (title/steps/takeaway/animation) produced by the LLM —
         # never code — rendered by the generic data-driven Explains renderer.
@@ -789,15 +798,26 @@ def init_db():
             from routes.admin import SUPER_ADMINS
             if SUPER_ADMINS:
                 placeholders = ",".join("?" for _ in SUPER_ADMINS)
+                admins = sorted(SUPER_ADMINS)
+                # Exactly the founder identities hold the flag: grant to them, revoke from everyone else
+                # (including the bootstrap 'admin' seed and any service account). Founder directive 2026-10-28.
                 cursor.execute(
-                    f"UPDATE users SET is_super_admin = 1 "
-                    f"WHERE lower(email) IN ({placeholders}) "
-                    f"OR lower(username) IN ({placeholders})",
-                    list(SUPER_ADMINS) + list(SUPER_ADMINS),
+                    f"UPDATE users SET is_super_admin = CASE WHEN lower(COALESCE(email,'')) IN ({placeholders}) "
+                    f"OR lower(COALESCE(username,'')) IN ({placeholders}) THEN 1 ELSE 0 END",
+                    admins + admins,
                 )
                 conn.commit()
         except Exception as e:
             print(f"Super-admin resolve: {e}")
+        # Backend jobs (lifecycle, content, socials): a daemon thread, on only where PYMASTERS_JOBS=1.
+        try:
+            from jobs import registry as _jobs_registry
+            _jobs_registry.register_all()
+            from jobs.scheduler import start_background as _start_jobs
+            if _start_jobs(DB_PATH):
+                print("[jobs] scheduler running")
+        except Exception as e:
+            print(f"[jobs] scheduler not started: {e}")
 
     except Exception as e:
         # Loud, grep-able failure with a traceback — a half-applied migration must

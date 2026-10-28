@@ -106,7 +106,7 @@ def _conn(db_path: str):
 
 
 def _topics_for(conn, user_id: str, game_id: str, board: Optional[str]) -> set:
-    learned = unlocks.completed_topics(conn, user_id)
+    learned = set(unlocks.drill_backed_topics()) if _is_super_admin(conn, user_id) else unlocks.completed_topics(conn, user_id)
     if game_id == "snakes_ladders" and board:
         return learned.intersection(unlocks.BOARDS.get(board, {}).get("topics", []))
     return learned
@@ -132,6 +132,11 @@ def _next_lesson(conn, user_id: str) -> Optional[str]:
     return best[1] if best else None
 
 
+def _is_super_admin(conn, user_id: str) -> bool:
+    row = conn.execute("SELECT COALESCE(is_super_admin, 0) FROM users WHERE id = ?", [str(user_id)]).fetchone()
+    return bool(row and int(row[0]) == 1)
+
+
 def _bests(conn, user_id: str) -> dict:
     rows = conn.execute("SELECT game_id, board, MAX(score) AS best, COUNT(*) AS plays FROM arcade_sessions "
                         "WHERE user_id = ? AND finished_at IS NOT NULL GROUP BY game_id, board", [user_id]).fetchall()
@@ -150,10 +155,18 @@ def arcade_catalog(user_id: str = Depends(get_current_user_id)):
     db = _guard(user_id)
     conn = _conn(db)
     try:
-        newly = unlocks.evaluate(conn, user_id)
-        have = unlocks.unlocked_keys(conn, user_id)
-        learned = unlocks.completed_topics(conn, user_id)
-        completed = unlocks.drill_backed_count(conn, user_id)
+        admin = _is_super_admin(conn, user_id)
+        if admin:
+            # The founder sees everything unlocked, with the full question pool, and is never "notified".
+            newly = []
+            have = {f"game:{g}" for g in unlocks.GAMES} | {f"board:{b}" for b in unlocks.BOARDS}
+            learned = set(unlocks.drill_backed_topics())
+            completed = max(unlocks.LADDER.values())
+        else:
+            newly = unlocks.evaluate(conn, user_id)
+            have = unlocks.unlocked_keys(conn, user_id)
+            learned = unlocks.completed_topics(conn, user_id)
+            completed = unlocks.drill_backed_count(conn, user_id)
         bests = _bests(conn, user_id)
         next_lesson = _next_lesson(conn, user_id)
         games = []
@@ -262,8 +275,11 @@ def start_session(body: StartBody, user_id: str = Depends(get_current_user_id)):
         raise HTTPException(status_code=404, detail="Unknown game")
     conn = _conn(db)
     try:
-        unlocks.evaluate(conn, user_id)
-        have = unlocks.unlocked_keys(conn, user_id)
+        if _is_super_admin(conn, user_id):
+            have = {f"game:{g}" for g in unlocks.GAMES} | {f"board:{b}" for b in unlocks.BOARDS}
+        else:
+            unlocks.evaluate(conn, user_id)
+            have = unlocks.unlocked_keys(conn, user_id)
         if f"game:{body.game_id}" not in have:
             raise HTTPException(status_code=403, detail="Game is locked. Keep learning to unlock it.")
         board = body.board if body.game_id == "snakes_ladders" else None

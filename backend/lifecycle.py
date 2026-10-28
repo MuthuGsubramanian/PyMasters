@@ -25,7 +25,10 @@ import os
 import sqlite3
 from datetime import datetime, timedelta
 
-INACTIVITY_DAYS = int(os.getenv("LIFECYCLE_INACTIVITY_DAYS", "10"))
+# Founder directive 2026-10-28: accounts idle for more than 21 days are removed automatically
+# (18 days → notice, 3 days grace → deletion). Super admins, org admins/owners and accounts with a
+# successful payment are never touched.
+INACTIVITY_DAYS = int(os.getenv("LIFECYCLE_INACTIVITY_DAYS", "18"))
 GRACE_DAYS = int(os.getenv("LIFECYCLE_GRACE_DAYS", "3"))
 APP_BASE_URL = os.getenv("APP_BASE_URL", "https://pymasters.net")
 
@@ -33,7 +36,14 @@ _TS = "%Y-%m-%d %H:%M:%S"
 
 
 def _delete_enabled() -> bool:
-    return os.getenv("LIFECYCLE_DELETE_ENABLED", "0") == "1"
+    return os.getenv("LIFECYCLE_DELETE_ENABLED", "1") == "1"
+
+
+PROTECTED_SQL = """
+    COALESCE(u.is_super_admin, 0) = 0
+    AND u.id NOT IN (SELECT user_id FROM org_members WHERE role IN ('admin', 'owner', 'super_admin'))
+    AND u.id NOT IN (SELECT user_id FROM payments WHERE status IN ('captured', 'paid', 'success', 'authorized'))
+"""
 
 
 def ensure_tables(conn: sqlite3.Connection) -> None:
@@ -175,7 +185,7 @@ def run_sweep(db_path: str, dry_run: bool = True, now: datetime = None) -> dict:
         candidates = conn.execute(
             f"""SELECT u.id, u.username, u.email, {activity} AS last_activity
                 FROM users u
-                WHERE COALESCE(u.is_super_admin, 0) = 0
+                WHERE {PROTECTED_SQL}
                   AND u.id NOT IN (SELECT user_id FROM account_lifecycle)"""
         ).fetchall()
         for u in candidates:
@@ -202,7 +212,7 @@ def run_sweep(db_path: str, dry_run: bool = True, now: datetime = None) -> dict:
             f"""SELECT al.user_id, al.delete_after, u.username, u.email,
                        {activity} AS last_activity
                 FROM account_lifecycle al JOIN users u ON u.id = al.user_id
-                WHERE al.delete_after <= ?""",
+                WHERE al.delete_after <= ? AND {PROTECTED_SQL}""",
             [now_s],
         ).fetchall()
         for r in due:

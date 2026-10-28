@@ -22,16 +22,19 @@ from auth import get_current_user_id, optional_user_id
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
-SUPER_ADMINS = {
-    e.strip().lower()
-    # claude-qa@pymasters.net is the functional/service account MSG requested
-    # (2026-07-02) so the autonomous QA/ops loops can exercise admin surfaces.
-    for e in os.getenv(
-        "SUPER_ADMIN_EMAILS",
-        "muthu@pymasters.net,muthu.g.subramanian@gmail.com,claude-qa@pymasters.net",
-    ).split(",")
-    if e.strip()
-}
+# Founder directive 2026-10-28: muthu@pymasters.net is always and the only super admin, with
+# muthu.g.subramanian@gmail.com as the backup identity. This set is fixed in code on purpose: an
+# environment variable must not be able to widen it (SUPER_ADMIN_EMAILS is ignored). Startup
+# resolves it into users.is_super_admin and strips the flag from every other account.
+SUPER_ADMIN_PRIMARY = "muthu@pymasters.net"
+SUPER_ADMIN_BACKUP = "muthu.g.subramanian@gmail.com"
+SUPER_ADMINS = {SUPER_ADMIN_PRIMARY, SUPER_ADMIN_BACKUP}
+
+# Reserved service-account identifiers (2026-10-28): claude-qa@pymasters.net is the
+# seeded QA/ops account and must stay unclaimable by public registration — but it is
+# NOT a super admin any more (the directive above is deliberately narrower than that).
+# Kept separate from SUPER_ADMINS so is_reserved_identifier() below still blocks it.
+RESERVED_SERVICE_IDENTIFIERS = {"claude-qa", "claude-qa@pymasters.net"}
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -44,10 +47,11 @@ def _conn():
 
 def is_reserved_identifier(*identifiers) -> bool:
     """True if any supplied identifier (username or email) is a reserved
-    super-admin address. Used to REJECT writes — never to grant access.
-    Matching is case-insensitive and ignores blanks."""
+    super-admin address OR a reserved service-account identifier (e.g.
+    claude-qa). Used to REJECT writes — never to grant access. Matching is
+    case-insensitive and ignores blanks."""
     vals = {str(x).strip().lower() for x in identifiers if x and str(x).strip()}
-    return bool(vals & SUPER_ADMINS)
+    return bool(vals & (SUPER_ADMINS | RESERVED_SERVICE_IDENTIFIERS))
 
 
 def _validate_expiry(expires_at):
@@ -255,6 +259,97 @@ def lifecycle_run(body: LifecycleRunBody = LifecycleRunBody(), caller: str = Dep
     require_super_admin(caller)
     from lifecycle import run_sweep
     return run_sweep(DB_PATH, dry_run=body.dry_run)
+
+
+@router.get("/jobs")
+def jobs_status(limit: int = 50, caller: str = Depends(get_current_user_id)):
+    """Backend job runs (lifecycle, content, socials) and the registered schedule."""
+    require_super_admin(caller)
+    from jobs import scheduler
+    from jobs import registry
+    registry.register_all()
+    return {"enabled": scheduler.enabled(),
+            "jobs": {n: {k: v for k, v in spec.items() if k != "run"} for n, spec in scheduler.JOBS.items()},
+            "runs": scheduler.recent_runs(DB_PATH, limit=limit)}
+
+
+@router.post("/jobs/{name}/run")
+def jobs_run_now(name: str, caller: str = Depends(get_current_user_id)):
+    """Run one backend job immediately (founder/manager action); recorded like a scheduled run."""
+    require_super_admin(caller)
+    from jobs import scheduler, registry
+    registry.register_all()
+    spec = scheduler.JOBS.get(name)
+    if not spec:
+        raise HTTPException(status_code=404, detail="Unknown job")
+    from datetime import datetime
+    result = spec["run"](DB_PATH)
+    import json as _json
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        scheduler.ensure_tables(conn)
+        conn.execute("INSERT OR REPLACE INTO job_runs (job, window, status, started_at, finished_at, result) VALUES (?, ?, 'ok', ?, ?, ?)",
+                     [name, "manual-" + datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"), datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+                      datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"), _json.dumps(result, default=str)[:20000]])
+        conn.commit()
+    finally:
+        conn.close()
+    return {"job": name, "result": result}
+
+
+@router.get("/content/queue")
+def content_queue_status(limit: int = 100, caller: str = Depends(get_current_user_id)):
+    """Nightly content job's topic queue: what shipped, what's pending, what's
+    backing off after a QA failure (jobs/content_job.py)."""
+    require_super_admin(caller)
+    from jobs.content_job import ensure_tables as _ensure_queue
+    conn = _conn()
+    try:
+        _ensure_queue(conn)
+        rows = conn.execute(
+            "SELECT id, topic, track, status, attempts, lesson_id, last_error, next_attempt_at, "
+            "created_at, updated_at FROM content_queue ORDER BY id DESC LIMIT ?",
+            [max(1, min(int(limit), 500))],
+        ).fetchall()
+        return {"queue": [dict(r) for r in rows]}
+    finally:
+        conn.close()
+
+
+@router.get("/content/fresh-lessons")
+def fresh_lessons(limit: int = 50, caller: str = Depends(get_current_user_id)):
+    """Lessons the content job published to every learner's "Fresh lessons" track."""
+    require_super_admin(caller)
+    conn = _conn()
+    try:
+        rows = conn.execute(
+            "SELECT id, topic, track, created_at FROM generated_lessons "
+            "WHERE published_to = 'platform' ORDER BY created_at DESC LIMIT ?",
+            [max(1, min(int(limit), 200))],
+        ).fetchall()
+        return {"lessons": [dict(r) for r in rows]}
+    finally:
+        conn.close()
+
+
+@router.post("/content/fresh-lessons/{lesson_id}/unpublish")
+def unpublish_fresh_lesson(lesson_id: str, caller: str = Depends(get_current_user_id)):
+    """Pull a lesson back out of the platform-wide track without deleting it."""
+    require_super_admin(caller)
+    conn = _conn()
+    try:
+        updated = conn.execute(
+            "UPDATE generated_lessons SET published_to = NULL WHERE id = ? AND published_to = 'platform'",
+            [lesson_id],
+        ).rowcount
+        conn.commit()
+        if not updated:
+            raise HTTPException(status_code=404, detail="No published lesson with that id")
+        _audit(conn, caller, "unpublish_fresh_lesson", "content", lesson_id, None)
+        conn.commit()
+        return {"ok": True, "lesson_id": lesson_id}
+    finally:
+        conn.close()
 
 
 @router.get("/lifecycle/log")
