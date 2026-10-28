@@ -1,0 +1,216 @@
+{
+  "id": "kv_cache_incremental_decoding",
+  "topic": "kv_cache_incremental_decoding",
+  "track": "transformers_scratch",
+  "module": "attention",
+  "order": 6,
+  "title": {
+    "en": "KV Cache: Generate Without Recomputing the Past"
+  },
+  "description": {
+    "en": "Generating token 100 should not redo the work of tokens 1-99. Cache each token's key and value once, and each new step costs one query against the cache. Prove it gives identical results."
+  },
+  "xp_reward": 100,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The waste in naive generation\n\nTo produce the next token, the model attends over all earlier tokens. A naive loop re-runs the whole prefix every step: step 1 processes 1 token, step 2 processes 2, ... step n processes n. Total work grows like **1 + 2 + ... + n = n(n+1)/2**.\n\n### The observation that fixes it\n\nWith a causal mask, an earlier token's **key** and **value** never change when later tokens arrive. So compute them once and keep them: the **KV cache**.\n\nEach new step then:\n\n1. Computes the new token's query, key and value.\n2. Appends the key and value to the cache.\n3. Attends the *single* new query over all cached keys/values.\n\n```\nstep 1: process 1 token   cache = [k1]\nstep 2: process 1 token   cache = [k1 k2]\nstep 3: process 1 token   cache = [k1 k2 k3]\n```\n\nFresh token work drops from n(n+1)/2 to n. For 4 tokens that is 4 instead of 10; for 1000 tokens, 1000 instead of 500,500.\n\n### The price: memory\n\nThe cache grows with every token, every layer and every head. That is why long contexts eat GPU memory, and why tricks like grouped-query attention and sliding windows exist.\n\n### Honest caveats\n\n- The cache saves recomputation of K and V projections and earlier layers' activations; attending over the cache is still O(n) per step.\n- Results are mathematically identical to full recomputation. Below you will check that with assertions.\n\n> **Vaathiyaar's rule:** the past doesn't change, so never recompute it. Cache it."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "cache_stack",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "KV cache",
+          "children": [
+            "keys/values of past tokens never change (causal)",
+            "compute once, append to cache",
+            "each step: 1 new query over the cache",
+            "trades memory for compute"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "cache_k.append(K[t]); cache_v.append(V[t])",
+          "highlight": "append",
+          "explanation": {
+            "en": "Store the new token's key and value; old entries are untouched"
+          }
+        },
+        {
+          "line": "inc = attend(Q[t], cache_k, cache_v)",
+          "highlight": "attend",
+          "explanation": {
+            "en": "Only the newest query is computed, against the whole cache"
+          }
+        },
+        {
+          "line": "full = attend(Q[t], K[:t + 1], V[:t + 1])",
+          "highlight": "K[:t + 1]",
+          "explanation": {
+            "en": "Recomputing from the full prefix gives the same answer"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "label": "Without cache",
+        "result": false,
+        "items": [
+          "reprocess whole prefix every step",
+          "work ~ n(n+1)/2",
+          "low memory"
+        ]
+      },
+      "right": {
+        "label": "With KV cache",
+        "result": true,
+        "items": [
+          "process only the new token",
+          "work ~ n",
+          "memory grows with context"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "tokens processed with cache: 4",
+        "tokens processed without cache: 10",
+        "outputs identical: True"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "done",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `attend(q, keys, values)`: scaled dot-product attention for ONE query. scores = dot(q, k)/sqrt(d) for each key, weights = softmax(scores), output = weighted sum of the value vectors. Print the output for the last query rounded to 4 decimals. Expected output: [3.8438, 4.8438]"
+      },
+      "starter_code": "import math\ndef softmax(row):\n    m = max(row)\n    e = [math.exp(v - m) for v in row]\n    s = sum(e)\n    return [v / s for v in e]\ndef attend(q, keys, values):\n    # TODO: scores -> softmax -> weighted sum of values\n    pass\nK = [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [0.5, -0.5]]\nV = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0]]\nQ = [[1.0, 0.5], [0.2, 1.0], [0.9, 0.9], [-0.3, 0.8]]\nout = attend(Q[3], K, V)\nprint([round(v, 4) for v in out])",
+      "hints": {
+        "en": [
+          "d = len(q); score = dot(q, k) / math.sqrt(d)",
+          "w = softmax(scores)",
+          "output[c] = sum(w[t] * values[t][c] for t in ...)"
+        ]
+      },
+      "expected_output": "[3.8438, 4.8438]"
+    },
+    {
+      "instruction": {
+        "en": "Simulate cached decoding: for t in 0..3 append K[t], V[t] to a cache and attend with Q[t]. Assert the result equals attending over the full prefix `K[:t+1]`. Count tokens whose K/V were computed fresh (with cache) versus without (sum of prefix lengths). Print both counts. Expected output: 4 10"
+      },
+      "starter_code": "import math\ndef softmax(row):\n    m = max(row)\n    e = [math.exp(v - m) for v in row]\n    s = sum(e)\n    return [v / s for v in e]\ndef attend(q, keys, values):\n    d = len(q)\n    scores = [sum(a * b for a, b in zip(q, k)) / math.sqrt(d) for k in keys]\n    w = softmax(scores)\n    return [sum(w[t] * values[t][c] for t in range(len(values))) for c in range(len(values[0]))]\nK = [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [0.5, -0.5]]\nV = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0]]\nQ = [[1.0, 0.5], [0.2, 1.0], [0.9, 0.9], [-0.3, 0.8]]\ncache_k, cache_v = [], []\nfresh = 0\nfor t in range(4):\n    # TODO: append K[t], V[t] to the caches and count one fresh token\n    inc = attend(Q[t], cache_k, cache_v)\n    full = attend(Q[t], K[:t + 1], V[:t + 1])\n    assert all(abs(a - b) < 1e-12 for a, b in zip(inc, full))\nrecompute = sum(range(1, 5))\nprint(fresh, recompute)",
+      "hints": {
+        "en": [
+          "cache_k.append(K[t]); cache_v.append(V[t])",
+          "fresh += 1",
+          "Expected: 4 fresh vs 10 without the cache"
+        ]
+      },
+      "expected_output": "4 10"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why can keys and values be cached?"
+      },
+      "options": {
+        "en": [
+          "They are random",
+          "With causal masking, earlier tokens' K and V never change",
+          "They are tiny",
+          "Queries are cached instead"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Roughly how does fresh token work scale with a cache for n tokens?"
+      },
+      "options": {
+        "en": [
+          "n squared",
+          "n",
+          "log n",
+          "constant"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the main cost of the KV cache?"
+      },
+      "options": {
+        "en": [
+          "Lower accuracy",
+          "Memory that grows with context length",
+          "Slower training",
+          "Different outputs"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Do cached and uncached decoding give the same outputs?"
+      },
+      "options": {
+        "en": [
+          "No, cache is approximate",
+          "Yes, mathematically identical",
+          "Only for short prompts",
+          "Only on GPU"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "kv_cache",
+      "incremental_decoding",
+      "autoregressive_inference",
+      "memory_compute_tradeoff"
+    ],
+    "concepts_required": [
+      "causal_mask_attention",
+      "dot_product_attention"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 22,
+    "category": "transformers",
+    "path_memberships": []
+  },
+  "generated": false
+}

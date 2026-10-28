@@ -1,0 +1,215 @@
+{
+  "id": "rmsnorm_vs_layernorm",
+  "topic": "rmsnorm_vs_layernorm",
+  "track": "transformers_scratch",
+  "module": "architecture",
+  "order": 4,
+  "title": {
+    "en": "RMSNorm vs LayerNorm: Why Llama Dropped the Mean"
+  },
+  "description": {
+    "en": "Both keep activations at a steady scale so deep stacks train stably. LayerNorm subtracts the mean and divides by the standard deviation; RMSNorm skips the mean and just divides by the root-mean-square. Build both and compare."
+  },
+  "xp_reward": 95,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Keeping numbers at a steady size\n\nAfter dozens of layers, activations can drift huge or tiny. A **normalisation layer** rescales each token's vector so downstream layers always see numbers of a similar size.\n\n### LayerNorm (the original transformer)\n\n1. Compute the mean of the vector.\n2. Compute the variance around that mean.\n3. Output `(x - mean) / sqrt(variance + eps)`.\n\nThe result has mean 0 and standard deviation 1. (Real layers then multiply by a learned scale and add a learned shift; we leave those out to see the core.)\n\n### RMSNorm (Llama, Qwen, Mistral)\n\nSkip the mean entirely: divide by the **root mean square**, `sqrt(mean(x²) + eps)`. The output has RMS ≈ 1 but is *not* re-centred.\n\n```\nx          = [4, 2, 0, 6]\nLayerNorm  = [ 0.4472, -0.4472, -1.3416, 1.3416]   # centred AND scaled\nRMSNorm    = [ 1.0690,  0.5345,  0.0,    1.6036]   # scaled only\n```\n\n### Why drop the mean?\n\n- Fewer operations per token (no mean pass, no shift parameter), which adds up over billions of tokens.\n- Papers found the re-centring contributes little; the **re-scaling** does most of the stabilising work.\n\n### Honest caveats\n\n- If a vector already has mean ≈ 0, the two give nearly identical results. They differ when activations are offset.\n- Both are scale-invariant: multiply the input by 10 and the output is (almost) unchanged. That is the point.\n- `eps` is a tiny constant that prevents dividing by zero.\n\n> **Vaathiyaar's rule:** LayerNorm = centre + scale. RMSNorm = scale only. Modern LLMs picked the cheaper one."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "steady_scale",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Normalisation",
+          "children": [
+            "LayerNorm: subtract mean, divide by std",
+            "RMSNorm: divide by root-mean-square only",
+            "both are scale-invariant",
+            "RMSNorm is cheaper; used in Llama/Qwen"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "mean = sum(x) / len(x)",
+          "highlight": "mean",
+          "explanation": {
+            "en": "LayerNorm first finds the average of the vector"
+          }
+        },
+        {
+          "line": "var = sum((v - mean) ** 2 for v in x) / len(x)",
+          "highlight": "var",
+          "explanation": {
+            "en": "Then the variance around that mean"
+          }
+        },
+        {
+          "line": "ms = sum(v * v for v in x) / len(x)",
+          "highlight": "ms",
+          "explanation": {
+            "en": "RMSNorm skips both and only needs the mean of squares"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "label": "LayerNorm",
+        "result": false,
+        "items": [
+          "subtract mean + divide by std",
+          "output mean 0, std 1",
+          "learned scale AND shift"
+        ]
+      },
+      "right": {
+        "label": "RMSNorm",
+        "result": true,
+        "items": [
+          "divide by root-mean-square only",
+          "not re-centred",
+          "learned scale only; cheaper"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "layer [0.4472, -0.4472, -1.3416, 1.3416]",
+        "rms   [1.069, 0.5345, 0.0, 1.6036]",
+        "rms of rms_norm(10x): 1.0"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "done",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `layer_norm(x, eps=1e-5)` in pure Python: subtract the mean, then divide by `sqrt(variance + eps)` (population variance, divide by n). Print the result for `[4.0, 2.0, 0.0, 6.0]` rounded to 4 decimals. Expected output: [0.4472, -0.4472, -1.3416, 1.3416]"
+      },
+      "starter_code": "import math\ndef layer_norm(x, eps=1e-5):\n    # TODO: mean, variance, then (v - mean) / sqrt(var + eps)\n    pass\nx = [4.0, 2.0, 0.0, 6.0]\nprint([round(v, 4) for v in layer_norm(x)])",
+      "hints": {
+        "en": [
+          "mean = sum(x) / len(x)",
+          "var = sum((v - mean) ** 2 for v in x) / len(x)",
+          "math.sqrt(var + eps) is the denominator"
+        ]
+      },
+      "expected_output": "[0.4472, -0.4472, -1.3416, 1.3416]"
+    },
+    {
+      "instruction": {
+        "en": "Implement `rms_norm(x, eps=1e-5)`, then show scale invariance. `rms(v)` (provided) is the root-mean-square of a vector. Print `rms(layer_norm(x))`, `rms(rms_norm(x))` and `rms(rms_norm(10x))`, space separated. Expected output: 1.0 1.0 1.0"
+      },
+      "starter_code": "import math\ndef layer_norm(x, eps=1e-5):\n    mean = sum(x) / len(x)\n    var = sum((v - mean) ** 2 for v in x) / len(x)\n    return [(v - mean) / math.sqrt(var + eps) for v in x]\ndef rms_norm(x, eps=1e-5):\n    # TODO: divide each v by sqrt(mean of squares + eps)\n    pass\nx = [4.0, 2.0, 0.0, 6.0]\ndef rms(v):\n    return round(math.sqrt(sum(a * a for a in v) / len(v)), 4)\nbig = [10 * v for v in x]\nprint(rms(layer_norm(x)), rms(rms_norm(x)), rms(rms_norm(big)))",
+      "hints": {
+        "en": [
+          "ms = sum(v * v for v in x) / len(x)",
+          "return [v / math.sqrt(ms + eps) for v in x]",
+          "All three numbers should be ~1.0"
+        ]
+      },
+      "expected_output": "1.0 1.0 1.0"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does RMSNorm skip compared with LayerNorm?"
+      },
+      "options": {
+        "en": [
+          "Dividing by a scale",
+          "Subtracting the mean",
+          "The epsilon term",
+          "The learned weight"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Multiplying the input by 10 before normalising changes the output..."
+      },
+      "options": {
+        "en": [
+          "a lot",
+          "a little, almost none (scale invariance)",
+          "by exactly 10x",
+          "into NaN"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is eps added inside the square root?"
+      },
+      "options": {
+        "en": [
+          "To make outputs positive",
+          "To avoid division by zero",
+          "To add noise",
+          "To speed up training"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which models commonly use RMSNorm?"
+      },
+      "options": {
+        "en": [
+          "Original 2017 Transformer",
+          "Llama and Qwen",
+          "Only CNNs",
+          "Only BERT"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "layer_normalization",
+      "rms_norm",
+      "scale_invariance",
+      "activation_stability"
+    ],
+    "concepts_required": [
+      "the_transformer_block"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "transformers",
+    "path_memberships": []
+  },
+  "generated": false
+}

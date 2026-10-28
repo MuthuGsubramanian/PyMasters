@@ -1,0 +1,216 @@
+{
+  "id": "causal_mask_attention",
+  "topic": "causal_mask_attention",
+  "track": "transformers_scratch",
+  "module": "attention",
+  "order": 5,
+  "title": {
+    "en": "Causal Masking: Why GPT Cannot Peek at the Future"
+  },
+  "description": {
+    "en": "A language model is trained to predict the next token, so each position must be blocked from attending to later positions. Build the causal mask and watch the future weights drop to exactly zero."
+  },
+  "xp_reward": 100,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Predicting the next word means you can't see the next word\n\nImagine a quiz: \"The cat sat on the ___\". If you could read the answer on the next line, you'd learn nothing about language. A decoder-only model (GPT, Llama, Qwen) faces the same problem during training: the whole sentence is fed in at once, so **position 2 could simply read position 3** and copy it.\n\nThe fix is the **causal mask**: before softmax, set every score where the key position `j` is *after* the query position `i` to `-infinity`.\n\n### Why -infinity?\n\nSoftmax computes `exp(score)`. Since `exp(-inf) = 0`, a masked position gets weight exactly 0, and the remaining weights are renormalised so each row still sums to 1. Adding a big negative number like -1e9 works too, but `-inf` is exact.\n\n```\nscores (3 tokens)        after mask             after softmax\n[2.0  1.0  0.5]          [2.0  -inf -inf]       [1.00 0.00 0.00]\n[0.5  2.0  1.0]    ->    [0.5  2.0  -inf]  ->   [0.18 0.82 0.00]\n[1.0  0.5  2.0]          [1.0  0.5  2.0 ]       [0.23 0.14 0.63]\n```\n\nLook at the pattern: a **lower-triangular** matrix of weights. Row 0 can only see itself; the last row sees everything.\n\n### Honest caveats\n\n- The mask is applied **before** softmax, never after: zeroing weights after softmax would leave rows that don't sum to 1.\n- Encoder models like BERT do *not* use a causal mask; they attend in both directions.\n- During generation the mask is implicit, since future tokens don't exist yet. It matters for training and for processing the prompt in one pass.\n\n> **Vaathiyaar's rule:** mask first, softmax second. The future gets weight 0, and the rest renormalise."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "triangle_mask",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Causal masking",
+          "children": [
+            "score matrix: query i x key j",
+            "set j > i to -inf (the future)",
+            "softmax: exp(-inf) = 0",
+            "rows still sum to 1; matrix is lower-triangular"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "n = len(scores)",
+          "highlight": "len(scores)",
+          "explanation": {
+            "en": "Number of tokens; the score matrix is n x n"
+          }
+        },
+        {
+          "line": "scores[i][j] if j <= i else float('-inf')",
+          "highlight": "j <= i",
+          "explanation": {
+            "en": "Keep a score only if the key is the same as or before the query"
+          }
+        },
+        {
+          "line": "w = [softmax(r) for r in masked]",
+          "highlight": "softmax(r)",
+          "explanation": {
+            "en": "exp(-inf) is 0, so masked positions get zero weight and the rest renormalise"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "label": "No mask (encoder, e.g. BERT)",
+        "result": false,
+        "items": [
+          "every token sees every token",
+          "full square of weights",
+          "fine for understanding text"
+        ]
+      },
+      "right": {
+        "label": "Causal mask (decoder, e.g. GPT)",
+        "result": true,
+        "items": [
+          "token i sees only tokens 0..i",
+          "lower-triangular weights",
+          "required to train next-token prediction"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "[1.0, 0.0, 0.0]",
+        "[0.182, 0.818, 0.0]",
+        "[0.231, 0.14, 0.629]"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "done",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `causal_mask(scores)`: given an n x n list of scores, return a new matrix where every entry with column j > row i is replaced by `float('-inf')`. Then softmax each row (a pure-Python `softmax` is provided) and print the weights rounded to 4 decimals. Expected output: [[1.0, 0.0, 0.0], [0.1824, 0.8176, 0.0], [0.2312, 0.1402, 0.6285]]"
+      },
+      "starter_code": "import math\ndef softmax(row):\n    m = max(row)\n    e = [math.exp(x - m) for x in row]\n    s = sum(e)\n    return [x / s for x in e]\n\ndef causal_mask(scores):\n    # TODO: keep scores[i][j] when j <= i, otherwise float(\"-inf\")\n    pass\nscores = [[2.0, 1.0, 0.5], [0.5, 2.0, 1.0], [1.0, 0.5, 2.0]]\nw = [softmax(r) for r in causal_mask(scores)]\nprint([[round(x, 4) for x in r] for r in w])",
+      "hints": {
+        "en": [
+          "Build rows with a nested list comprehension over i and j",
+          "Condition: j <= i keeps the score",
+          "float('-inf') makes exp() return 0.0"
+        ]
+      },
+      "expected_output": "[[1.0, 0.0, 0.0], [0.1824, 0.8176, 0.0], [0.2312, 0.1402, 0.6285]]"
+    },
+    {
+      "instruction": {
+        "en": "Measure information leakage: `leak(w)` sums all weights above the diagonal (j > i). Print `leak` for the unmasked softmax weights and for the masked ones, rounded to 4 decimals, separated by a space. The unmasked leak is large; the masked leak must be exactly 0. Expected output: 0.6027 0.0"
+      },
+      "starter_code": "import math\ndef softmax(row):\n    m = max(row)\n    e = [math.exp(x - m) for x in row]\n    s = sum(e)\n    return [x / s for x in e]\ndef causal_mask(scores):\n    n = len(scores)\n    return [[scores[i][j] if j <= i else float(\"-inf\") for j in range(n)] for i in range(n)]\nscores = [[2.0, 1.0, 0.5], [0.5, 2.0, 1.0], [1.0, 0.5, 2.0]]\ndef leak(w):\n    # TODO: sum w[i][j] for all j > i, rounded to 4 decimals\n    pass\nunmasked = [softmax(r) for r in scores]\nmasked = [softmax(r) for r in causal_mask(scores)]\nprint(leak(unmasked), leak(masked))",
+      "hints": {
+        "en": [
+          "Double loop: for i in range(n) then for j in range(i + 1, n)",
+          "sum(...) of a generator expression works",
+          "round(total, 4)"
+        ]
+      },
+      "expected_output": "0.6027 0.0"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why is -infinity used for masked scores?"
+      },
+      "options": {
+        "en": [
+          "It makes the weights negative",
+          "exp(-inf) = 0, so the masked weight is exactly zero after softmax",
+          "It speeds up matrix multiplication",
+          "It normalises the scores"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What shape do the attention weights take under a causal mask?"
+      },
+      "options": {
+        "en": [
+          "Diagonal",
+          "Upper-triangular",
+          "Lower-triangular",
+          "Uniform"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "When must the mask be applied?"
+      },
+      "options": {
+        "en": [
+          "After softmax",
+          "Before softmax",
+          "After the output projection",
+          "Only at inference"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which model family does NOT use a causal mask in its self-attention?"
+      },
+      "options": {
+        "en": [
+          "GPT",
+          "Llama",
+          "BERT-style encoders",
+          "Qwen decoders"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "causal_masking",
+      "autoregressive_training",
+      "attention_weights",
+      "negative_infinity_softmax"
+    ],
+    "concepts_required": [
+      "softmax_from_scratch",
+      "self_attention"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 22,
+    "category": "transformers",
+    "path_memberships": []
+  },
+  "generated": false
+}
