@@ -2,6 +2,7 @@
 
 import sys
 import os
+from datetime import datetime
 
 # Ensure the project root is on the path so imports work when running directly
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -183,6 +184,26 @@ def run_daily_pipeline():
                                 "pipeline/video/README.md")
             except Exception as e:
                 log.error(f"YouTube upload failed: {e}")
+
+        # 4b-2. Weekly recap: stitches the week's daily Shorts into one video,
+        # on WEEKLY_VIDEO_DAY (default Sunday) — reuses this same daily trigger
+        # rather than a separate scheduled task.
+        weekly_day = os.environ.get("WEEKLY_VIDEO_DAY", "Sunday").strip().lower()
+        today_name = datetime.now().strftime("%A").lower()
+        if weekly_day == today_name:
+            log.info(f"Today is {weekly_day} — building the weekly compilation video...")
+            try:
+                from pipeline.video.weekly_compilation import run_weekly_compilation
+                weekly_result = run_weekly_compilation()
+                log.info(f"  Weekly compilation: {weekly_result.get('status', 'unknown')}")
+                if (os.environ.get("YOUTUBE_UPLOAD") == "1"
+                        and weekly_result.get("status") == "generated"):
+                    from pipeline.video.upload_youtube import upload_weekly_video, credentials_available
+                    if credentials_available():
+                        up = upload_weekly_video(weekly_result["video_path"], weekly_result["metadata_path"])
+                        log.info(f"  Weekly YouTube upload: {up.get('status', 'unknown')}")
+            except Exception as e:
+                log.error(f"Weekly compilation failed: {e}")
 
     # 4c. Social content generation (always, from top items)
     social_result = {}

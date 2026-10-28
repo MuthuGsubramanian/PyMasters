@@ -91,3 +91,87 @@ set to `1` in the vault per the founder's directive that posts actually go out, 
 `is_reserved_identifier()` in `routes/admin.py` had reused the super-admin set to also mean "reserved service
 identifier". Split into a separate `RESERVED_SERVICE_IDENTIFIERS` set so claude-qa stays unclaimable without
 being a super admin again. Caught by the existing `test_ops_auth.py::test_service_account_cannot_be_registered_by_public`.
+
+## Follow-up (2026-10-28, same day): animated LinkedIn explainers + weekly YouTube recap
+
+**Founder directive (verbatim, 2026-10-28 13:33–13:49 IST):** "the linkedin posts should be live like, check
+sample or reference posts in linkedin where a gif image explains topics, i want similar posts done daily. For
+youtube i need a clear explained with example topics daily as shorts and weekly as videos which can be a
+combination of shorts... no compraize in quality or the content uniqueness." Plus a general standing rule:
+"Ensure that the quality of the content generated for anything should be of high quality, unique and
+professional always" (saved to memory as `feedback_content_quality_bar`).
+
+**Visual direction — corrected from real references, not guessed.** The founder shared three real LinkedIn
+infographic posts (`media.licdn.com` images: "Traditional AI vs Agentic AI vs Agentic RAG", "From LLM →
+Agentic AI", "LLM vs RAG vs Agent Evals"). Common thread: clean **white** background, one bold color per
+numbered tier/branch, flat icons, short chip labels, dense-but-concrete text, author/brand credit line — the
+opposite of PyMasters' existing dark navy/violet video brand. Founder's explicit follow-up correction: the
+references were *animated* ("live") with a *clearly animated flow between steps* — not just boxes fading in
+independently. Both points are load-bearing in the implementation below.
+
+**Also independently learned from the founder's own prior Claude Design session** (`claude.ai/design` project
+"PyMasters LinkedIn content", read via browser this session): LinkedIn does **not** animate GIF/image
+attachments in the feed — only native video posts auto-play/loop. Confirms the white-infographic look must
+ship as an actual LinkedIn video upload, not a GIF/PNG attachment, to satisfy "live".
+
+**Built:**
+- `pipeline/actors/stack_explainer.py` — topic → validated JSON spec (title, subtitle, 5-7 numbered tiers each
+  with an emoji icon + colored chip + one concrete 1-2 line fact, takeaway, 3 hashtags). `validate_stack()` is
+  a hard QA gate (structural + `BANNED_PHRASES` hype-language check); **no generic template fallback** — unlike
+  every other generator in this repo, a failure here returns `None` and the caller falls back to the existing
+  static Pillow banner, because a generic animated explainer is worse than no animation. Colors cycle through
+  `TIER_COLORS` (blue/orange/violet/red/green/cyan/pink), matching the references' one-color-per-tier look.
+- `pipeline/actors/stack_render.py` — renders a validated spec to a white-background HTML/CSS page (no JS
+  framework, no build step — plain Python string templating) with a numbered tier per row, and, between every
+  pair of tiers, an animated connector: a line that draws downward plus a small dot that travels along it —
+  this is the "flow" the founder flagged as the key quality signal, not just independent fade-ins. Captured
+  via headless Chromium (Playwright, newly installed on the laptop: `pip install playwright && playwright
+  install chromium`) screenshotting at 12fps while the CSS animation plays in real time, then assembled to
+  H.264 MP4 via the existing `find_ffmpeg()`/`_run()` helpers. ~9-12s loop, 1080×1350. Degrades gracefully to
+  `{"status": "skipped: ..."}` if Playwright/ffmpeg are missing — never raises.
+- `pipeline/actors/linkedin_publisher.py` — added `publish_linkedin_video()` + `_upload_video()`: registers a
+  `feedshare-video` asset, uploads the MP4, polls `GET /v2/assets/{id}` for `AVAILABLE` (video needs LinkedIn-
+  side processing, unlike images), then shares with `shareMediaCategory: "VIDEO"`. This is the actual fix for
+  "GIFs don't move in the feed" — a native video post does. Same never-raises/retry-on-401 shape as the
+  existing `publish_linkedin()`.
+- **Bug fixed in the same pass:** `pipeline/social_worker.py::run_job()` checked `pub.get("post_urn")` to
+  surface the published post's id, but `publish_linkedin()`/`publish_linkedin_video()` actually return the key
+  `post_id` — a pre-existing mismatch (flagged earlier this session, not yet fixed) that meant the post id was
+  never surfaced into the job result. Fixed to `pub.get("post_id")`.
+- Wired into both LinkedIn call sites — `pipeline/social_worker.py::run_job()` (on-demand/queued jobs, which is
+  also what the new daily `backend/jobs/social_job.py` queue uses) and `pipeline/actors/social_content.py::
+  generate_social_content()` (the daily pipeline's own top-discovery post) — both try the stack-explainer video
+  first and fall back to the existing static banner+image post unchanged if content generation, the QA gate,
+  Playwright, or ffmpeg aren't available.
+- `pipeline/video/weekly_compilation.py` (new) — `run_weekly_compilation()` collects the last 7 days' daily
+  Shorts (`collect_week_shorts()`, needs `MIN_SHORTS_FOR_WEEKLY = 3` or it skips rather than building a thin
+  video), normalizes each clip + a generated title-card interstitial to a common codec/resolution (a video
+  missing an audio stream silently breaks ffmpeg's concat demuxer otherwise), concatenates into one MP4, and
+  writes Claude-generated weekly recap metadata (title/description naming the week's actual topics). Wired into
+  `pipeline/main.py`'s existing daily 06:30 run, gated by `WEEKLY_VIDEO_DAY` (default `"Sunday"`) — reuses the
+  existing Task Scheduler trigger instead of adding a new one. `pipeline/video/upload_youtube.py` gained
+  `upload_weekly_video()`, reusing the existing `upload_video()` helper.
+- **Real bug fixed along the way:** `pipeline/utils/claude.py::ask_claude()` decoded the Claude CLI's stdout
+  with Windows' default codepage (cp1252) instead of UTF-8, which crashes outright (not mangles — crashes) on
+  any multi-byte UTF-8 sequence. This was latent until now because nothing before asked the CLI for emoji;
+  `stack_explainer.py` does (one emoji icon per tier), so this had to be fixed first. Now explicit
+  `encoding="utf-8", errors="replace"`.
+
+**Live-verified before considering this done:**
+- `stack_explainer.py` demo run produced genuinely specific content (e.g. "22M params", "384-dim", "WordPiece",
+  "FAISS/Chroma", a real contrarian takeaway) — not generic filler.
+- `stack_render.py` demo rendered a real MP4; frames pulled and visually inspected matched the reference style
+  (white bg, numbered colored tiers, connectors, takeaway/footer) after one layout fix (removed a `flex:1` that
+  left an oversized gap before the footer).
+- `weekly_compilation.py` run live against real data: with exactly 3 qualifying days (Oct 23/26/28) it built a
+  real 164s/3.55MB `weekly.mp4` and genuinely topic-specific metadata — confirms `MIN_SHORTS_FOR_WEEKLY` gate
+  and the audio-track normalization both work.
+- A real LinkedIn video post was queued through the production `social_jobs` table (topic: "FastAPI dependency
+  injection, step by step") to exercise the full path end to end (VM queue → laptop `PyMasters-SocialWorker`
+  task → `publish_linkedin_video()` → LinkedIn API) exactly as it runs in production — see the ledger/session
+  notes for the outcome, since this spec is written before that result lands.
+
+**Not built / deferred:** retroactively re-coloring/upgrading the fixed 12-topic set the founder explored by
+hand in Claude Design (LLM vs RAG vs Agent, Pandas vs Polars vs PySpark, etc.) — `stack_explainer.py` is
+topic-general and will cover similar ground organically as daily topics rotate. A real solution-diff QA gate
+for `content_job.py` remains deferred (see the ruling above, unrelated to this follow-up).

@@ -5,8 +5,10 @@ import json
 from datetime import datetime
 from pipeline.utils.claude import ask_claude
 from pipeline.utils.logger import get_logger
-from pipeline.actors.linkedin_publisher import publish_linkedin, linkedin_enabled
+from pipeline.actors.linkedin_publisher import publish_linkedin, publish_linkedin_video, linkedin_enabled
 from pipeline.actors.linkedin_media import generate_post_image
+from pipeline.actors.stack_explainer import generate_stack
+from pipeline.actors.stack_render import render_stack_video
 
 log = get_logger("actor.social_content")
 
@@ -301,14 +303,40 @@ def generate_social_content(scored_items: list[dict], video_meta: dict | None = 
         with open(linkedin_path, "w", encoding="utf-8") as f:
             f.write(linkedin_text)
         log.info(f"LinkedIn post saved: {linkedin_path}")
-        # On-brand banner image (saved for review + attached to the post).
         headline = (top_items[0].get("title") if top_items else None) or "Today in Python & AI"
-        image_bytes = generate_post_image(headline)
-        if image_bytes:
-            with open(os.path.join(day_dir, "linkedin.png"), "wb") as f:
-                f.write(image_bytes)
-            log.info("LinkedIn banner image generated")
-        result = publish_linkedin(linkedin_text, image_bytes=image_bytes)  # no-op unless enabled
+        lead = top_items[0] if top_items else {}
+
+        # Preferred: an animated tiered-explainer video (auto-plays/loops in-feed,
+        # see stack_render.py). Falls back to the static banner image when
+        # content generation, the QA gate, or rendering doesn't produce
+        # something worth posting.
+        video_bytes = None
+        try:
+            stack = generate_stack(headline, context=lead.get("description", ""))
+            if stack:
+                video_path = os.path.join(day_dir, "linkedin_stack.mp4")
+                render = render_stack_video(stack, video_path)
+                if render.get("status") == "rendered":
+                    with open(video_path, "rb") as f:
+                        video_bytes = f.read()
+                    log.info(f"LinkedIn stack-explainer video rendered: {video_path}")
+                else:
+                    log.info(f"Stack video skipped: {render.get('status')}")
+            else:
+                log.info("Stack content generation failed/rejected by QA — using banner.")
+        except Exception as e:
+            log.error(f"Stack video generation failed: {e}")
+
+        image_bytes = None
+        if not video_bytes:
+            image_bytes = generate_post_image(headline)
+            if image_bytes:
+                with open(os.path.join(day_dir, "linkedin.png"), "wb") as f:
+                    f.write(image_bytes)
+                log.info("LinkedIn banner image generated")
+
+        result = (publish_linkedin_video(linkedin_text, video_bytes) if video_bytes
+                  else publish_linkedin(linkedin_text, image_bytes=image_bytes))  # no-op unless enabled
         linkedin_status = result.get("status", "unknown")
         log.info(f"LinkedIn publish: {linkedin_status}")
     except Exception as e:

@@ -216,6 +216,49 @@ def upload_daily_videos(video_dir: str | None = None, dry_run: bool = False) -> 
         return {"status": "error", "error": str(e), "metadata": metadata}
 
 
+def upload_weekly_video(video_path: str, metadata_path: str, dry_run: bool = False) -> dict:
+    """Upload the weekly compilation video (see weekly_compilation.py).
+
+    Same shape/behavior as upload_daily_videos(): never raises for expected
+    conditions, writes the youtube_url back into metadata_path on success.
+    """
+    if not os.path.isfile(video_path):
+        return {"status": "no_videos", "metadata": None}
+    with open(metadata_path, "r", encoding="utf-8") as f:
+        metadata = json.load(f)
+    meta = metadata.get("weekly")
+    if not meta:
+        return {"status": "no_videos", "metadata": metadata}
+
+    if dry_run:
+        size_mb = os.path.getsize(video_path) / (1024 * 1024)
+        print(f"[dry-run] Would upload weekly video: {video_path} ({size_mb:.1f} MB)")
+        print(f"      title: {meta.get('title', '?')}")
+        return {"status": "dry_run", "metadata": metadata}
+
+    if not credentials_available():
+        print(SETUP_INSTRUCTIONS)
+        return {"status": "credentials_missing", "metadata": metadata}
+
+    try:
+        youtube = get_authenticated_service()
+        if youtube is None:
+            return {"status": "credentials_missing", "metadata": metadata}
+        if meta.get("youtube_url"):
+            log.info(f"  weekly already uploaded: {meta['youtube_url']}")
+            return {"status": "uploaded", "uploaded_count": 0, "metadata": metadata}
+        url = upload_video(youtube, video_path, meta, is_short=False)
+        if url:
+            meta["youtube_url"] = url
+            with open(metadata_path, "w", encoding="utf-8") as f:
+                json.dump(metadata, f, indent=2, ensure_ascii=False)
+            return {"status": "uploaded", "uploaded_count": 1, "metadata": metadata}
+        return {"status": "error", "error": "upload_video returned no url", "metadata": metadata}
+    except Exception as e:
+        log.error(f"Weekly YouTube upload failed: {e}")
+        return {"status": "error", "error": str(e), "metadata": metadata}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Upload PyMasters daily videos to YouTube.")
     parser.add_argument("--dry-run", action="store_true",

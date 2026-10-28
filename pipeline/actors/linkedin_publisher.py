@@ -26,6 +26,8 @@ log = get_logger("actor.linkedin")
 UGC_ENDPOINT = "https://api.linkedin.com/v2/ugcPosts"
 REGISTER_ENDPOINT = "https://api.linkedin.com/v2/assets?action=registerUpload"
 _TRUTHY = {"1", "true", "yes", "on"}
+VIDEO_POLL_ATTEMPTS = 20
+VIDEO_POLL_DELAY = 3
 
 
 def author_urn() -> str | None:
@@ -83,6 +85,118 @@ def _upload_image(token: str, owner: str, image_bytes: bytes) -> str | None:
     except Exception as e:
         log.error(f"Image upload failed (posting text-only): {e}")
         return None
+
+
+def _upload_video(token: str, owner: str, video_bytes: bytes) -> str | None:
+    """Register + upload a video asset, polling until LinkedIn finishes
+    processing it. Returns the asset URN (or None on failure).
+
+    Feedshare video posts auto-play/loop in the LinkedIn feed — unlike an
+    image attachment, which LinkedIn always renders as a static frame, GIF
+    included. This is what makes an animated explainer actually move for
+    viewers (confirmed against LinkedIn's own behavior, 2026-10-28).
+    """
+    try:
+        reg_payload = {
+            "registerUploadRequest": {
+                "recipes": ["urn:li:digitalmediaRecipe:feedshare-video"],
+                "owner": owner,
+                "serviceRelationships": [
+                    {"relationshipType": "OWNER", "identifier": "urn:li:userGeneratedContent"}
+                ],
+            }
+        }
+        _, body = _post_json(REGISTER_ENDPOINT, token, reg_payload)
+        data = json.loads(body)["value"]
+        asset = data["asset"]
+        upload_url = data["uploadMechanism"][
+            "com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"]["uploadUrl"]
+
+        put = urllib.request.Request(
+            upload_url, data=video_bytes,
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "video/mp4"},
+            method="PUT",
+        )
+        urllib.request.urlopen(put, timeout=120).read()
+        log.info(f"Video uploaded (asset={asset}), waiting for processing...")
+
+        import time
+        status_url = f"https://api.linkedin.com/v2/assets/{asset.split(':')[-1]}"
+        for _ in range(VIDEO_POLL_ATTEMPTS):
+            time.sleep(VIDEO_POLL_DELAY)
+            req = urllib.request.Request(
+                status_url, headers={"Authorization": f"Bearer {token}"}, method="GET")
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    info = json.loads(resp.read().decode("utf-8"))
+                recipes = info.get("recipes") or []
+                if any(r.get("status") == "AVAILABLE" for r in recipes):
+                    log.info("Video asset processed and AVAILABLE.")
+                    return asset
+            except Exception as e:
+                log.warning(f"Video status poll failed (retrying): {e}")
+        log.warning("Video asset did not report AVAILABLE in time — posting anyway.")
+        return asset
+    except Exception as e:
+        log.error(f"Video upload failed (falling back to text/image): {e}")
+        return None
+
+
+def _build_video_post(org_urn: str, text: str, video_asset_urn: str) -> dict:
+    return {
+        "author": org_urn,
+        "lifecycleState": "PUBLISHED",
+        "specificContent": {"com.linkedin.ugc.ShareContent": {
+            "shareCommentary": {"text": text},
+            "shareMediaCategory": "VIDEO",
+            "media": [{"status": "READY", "media": video_asset_urn,
+                       "title": {"text": "PyMasters"}}],
+        }},
+        "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"},
+    }
+
+
+def publish_linkedin_video(text: str, video_bytes: bytes) -> dict:
+    """Post `text` with a native video attachment (auto-plays/loops in-feed).
+
+    Same safety gates and retry-on-401 behavior as publish_linkedin(); never
+    raises. Returns {"status": "error", ...} on any failure so the caller can
+    fall back to publish_linkedin() with a static image instead.
+    """
+    if os.getenv("LINKEDIN_AUTOPOST", "").strip().lower() not in _TRUTHY:
+        log.info("LinkedIn autopost disabled — video post skipped.")
+        return {"status": "disabled"}
+    org_urn = author_urn()
+    if not org_urn:
+        return {"status": "error", "detail": "LINKEDIN_AUTHOR_URN / LINKEDIN_ORG_URN not set"}
+    token = get_access_token()
+    if not token:
+        return {"status": "no_token", "detail": "no access/refresh token available"}
+
+    video_asset = _upload_video(token, org_urn, video_bytes)
+    if not video_asset:
+        return {"status": "error", "detail": "video upload failed"}
+
+    for attempt in (1, 2):
+        try:
+            resp, _ = _post_json(UGC_ENDPOINT, token, _build_video_post(org_urn, text, video_asset))
+            post_id = resp.headers.get("x-restli-id") or resp.headers.get("X-RestLi-Id")
+            log.info(f"LinkedIn video post published (id={post_id})")
+            return {"status": "posted", "post_id": post_id, "with_video": True}
+        except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", "ignore")[:300]
+            if e.code == 401 and attempt == 1:
+                log.info("401 from LinkedIn — refreshing token and retrying once.")
+                token = get_access_token(force_refresh=True)
+                if not token:
+                    return {"status": "error", "code": 401, "detail": "refresh produced no token"}
+                continue
+            log.error(f"LinkedIn video post failed: HTTP {e.code} {body}")
+            return {"status": "error", "code": e.code, "detail": body}
+        except Exception as e:
+            log.error(f"LinkedIn video post failed: {e}")
+            return {"status": "error", "detail": str(e)}
+    return {"status": "error", "detail": "unreachable"}
 
 
 def _build_post(org_urn: str, text: str, asset_urn: str | None) -> dict:

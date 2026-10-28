@@ -10,10 +10,17 @@ import time
 
 
 def ask_claude(prompt, max_tokens=4096, timeout=300):
-    """Send a prompt to Claude Code CLI and return the response text."""
+    """Send a prompt to Claude Code CLI and return the response text.
+
+    Decodes as UTF-8 explicitly: the CLI emits UTF-8 (prompts asking for an
+    emoji or em-dash are common), but Windows subprocess capture defaults to
+    the system codepage (cp1252) and crashes outright on those byte sequences
+    instead of mangling them. errors="replace" keeps this never-raises.
+    """
     result = subprocess.run(
         ["claude", "--print", "--dangerously-skip-permissions", "-p", prompt],
-        capture_output=True, text=True, timeout=timeout
+        capture_output=True, text=True, timeout=timeout,
+        encoding="utf-8", errors="replace",
     )
     if result.returncode != 0:
         raise RuntimeError(f"Claude CLI failed: {result.stderr}")

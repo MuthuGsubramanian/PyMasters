@@ -84,7 +84,9 @@ def run_job(job: dict) -> dict:
     from pipeline.video.generate_videos import generate_daily_videos
     from pipeline.actors.social_content import generate_linkedin_post, _clean_linkedin_post  # noqa: F401
     from pipeline.actors.linkedin_media import generate_post_image
-    from pipeline.actors.linkedin_publisher import publish_linkedin, linkedin_enabled
+    from pipeline.actors.linkedin_publisher import publish_linkedin, publish_linkedin_video, linkedin_enabled
+    from pipeline.actors.stack_explainer import generate_stack
+    from pipeline.actors.stack_render import render_stack_video
 
     topic = job["topic"]
     style = job.get("style_notes")
@@ -140,16 +142,40 @@ def run_job(job: dict) -> dict:
             f.write(text)
         result["linkedin_draft"] = draft_path
         result["linkedin_preview"] = text[:280]
-        image_bytes = None
+
+        # Preferred: an animated tiered-explainer video (auto-plays/loops in-feed).
+        # Falls back to the static banner image when content generation, the QA
+        # gate, or rendering doesn't produce something worth posting.
+        video_bytes = None
         try:
-            image_bytes = generate_post_image(topic)
+            stack = generate_stack(topic, context=style or "")
+            if stack:
+                video_path = os.path.join(day_dir, f"ondemand-{job['id'][:8]}-stack.mp4")
+                render = render_stack_video(stack, video_path)
+                if render.get("status") == "rendered":
+                    with open(video_path, "rb") as f:
+                        video_bytes = f.read()
+                    result["stack_video"] = video_path
+                else:
+                    result["stack_video_note"] = render.get("status")
+            else:
+                result["stack_video_note"] = "content generation failed/rejected by QA"
         except Exception as e:
-            result["banner_note"] = f"banner failed: {e}"
+            result["stack_video_note"] = f"stack render failed: {e}"
+
+        image_bytes = None
+        if not video_bytes:
+            try:
+                image_bytes = generate_post_image(topic)
+            except Exception as e:
+                result["banner_note"] = f"banner failed: {e}"
+
         if linkedin_enabled():
-            pub = publish_linkedin(text, image_bytes=image_bytes)
+            pub = (publish_linkedin_video(text, video_bytes) if video_bytes
+                   else publish_linkedin(text, image_bytes=image_bytes))
             result["linkedin_status"] = pub.get("status")
-            if pub.get("post_urn"):
-                result["linkedin_post"] = pub.get("post_urn")
+            if pub.get("post_id"):
+                result["linkedin_post"] = pub.get("post_id")
         else:
             result["linkedin_status"] = "draft_only (LinkedIn credentials not configured)"
 
