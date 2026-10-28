@@ -717,9 +717,17 @@ def parse_vaathiyaar_response(raw: str) -> dict:
         if text.rstrip().endswith("```"):
             text = text.rstrip()[:-3].rstrip()
 
-    # Attempt JSON parse
-    try:
-        parsed = json.loads(text)
+    # Attempt JSON parse. Models asked for multi-line prose/markdown inside a
+    # JSON string value very commonly forget to escape the newlines, which
+    # makes otherwise-correct JSON fail with "Invalid control character" —
+    # repair_json_control_chars() fixes exactly that, so a second attempt
+    # catches a large class of responses that would otherwise fall through to
+    # the generic "hiccup" apology below and silently discard real content.
+    for candidate in (text, repair_json_control_chars(text)):
+        try:
+            parsed = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
         if isinstance(parsed, dict):
             # Ensure all required keys exist with defaults
             for key, default_val in _DEFAULTS.items():
@@ -727,8 +735,7 @@ def parse_vaathiyaar_response(raw: str) -> dict:
             if "message" not in parsed:
                 parsed["message"] = _salvage_message(text) or raw
             return _finish(parsed)
-    except json.JSONDecodeError:
-        pass
+        break
 
     # JSON was malformed/truncated (e.g. the reply hit the token cap mid-value).
     # Salvage the human message rather than ever showing the student raw JSON.
@@ -745,6 +752,47 @@ def parse_vaathiyaar_response(raw: str) -> dict:
 
     # Genuine plain text → use it directly.
     return _finish({"message": raw, **_DEFAULTS})
+
+
+def repair_json_control_chars(text: str) -> str:
+    """Escape bare control characters (newline, tab, carriage return) found
+    inside JSON string literals, leaving already-valid JSON untouched.
+
+    The strict JSON spec requires control characters inside a string to be
+    escaped (\\n, not a literal newline), but models asked for multi-line
+    prose/markdown as a JSON string value routinely emit raw newlines —
+    valid-looking JSON that json.loads() rejects outright. This is a pure
+    repair pass: it tracks whether each character is inside a double-quoted
+    span (honoring backslash escapes) and only rewrites control characters
+    found there.
+    """
+    out = []
+    in_string = False
+    escaped = False
+    for ch in text:
+        if in_string:
+            if escaped:
+                out.append(ch)
+                escaped = False
+            elif ch == "\\":
+                out.append(ch)
+                escaped = True
+            elif ch == '"':
+                in_string = False
+                out.append(ch)
+            elif ch == "\n":
+                out.append("\\n")
+            elif ch == "\r":
+                out.append("\\r")
+            elif ch == "\t":
+                out.append("\\t")
+            else:
+                out.append(ch)
+        else:
+            if ch == '"':
+                in_string = True
+            out.append(ch)
+    return "".join(out)
 
 
 # JSON string-escape sequences we decode when salvaging a partial message.

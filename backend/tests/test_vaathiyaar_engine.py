@@ -16,7 +16,7 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from vaathiyaar.modelfile import build_system_prompt, ANIMATION_INSTRUCTIONS
-from vaathiyaar.engine import parse_vaathiyaar_response
+from vaathiyaar.engine import parse_vaathiyaar_response, repair_json_control_chars
 
 
 # ---------------------------------------------------------------------------
@@ -305,6 +305,66 @@ class TestParseJsonWithCodeFences:
         raw = self._wrap_in_fences(self._sample_payload(), "json")
         result = parse_vaathiyaar_response(raw)
         assert isinstance(result, dict)
+
+
+# ---------------------------------------------------------------------------
+# repair_json_control_chars / parse_vaathiyaar_response — unescaped newlines
+#
+# Live bug (2026-10-28): modules/pipeline.py asks the model for multi-line
+# markdown (headings, tables, blockquotes) inside a JSON string value. Models
+# routinely emit that with raw newlines instead of \n, which makes the whole
+# response invalid JSON. Before this fix, parse_vaathiyaar_response silently
+# discarded the real content and returned a generic "hiccup" apology, which
+# made content_job.py's narrative generation fall back to a thin stub on
+# every real run (never met the QA gate's length check).
+# ---------------------------------------------------------------------------
+
+class TestRepairJsonControlChars:
+    def test_fixes_raw_newline_in_string_value(self):
+        broken = '{"en": "line one\nline two"}'
+        repaired = repair_json_control_chars(broken)
+        assert json.loads(repaired)["en"] == "line one\nline two"
+
+    def test_fixes_raw_tab_and_carriage_return(self):
+        broken = '{"en": "a\tb\rc"}'
+        assert json.loads(repair_json_control_chars(broken))["en"] == "a\tb\rc"
+
+    def test_leaves_already_valid_json_unchanged_in_meaning(self):
+        valid = json.dumps({"en": "line1\nline2\t\"quoted\""})
+        assert json.loads(repair_json_control_chars(valid)) == json.loads(valid)
+
+    def test_does_not_touch_whitespace_outside_strings(self):
+        broken = '{\n  "en": "line one\nline two"\n}'
+        parsed = json.loads(repair_json_control_chars(broken))
+        assert parsed["en"] == "line one\nline two"
+
+    def test_handles_escaped_quote_inside_string_without_ending_span_early(self):
+        broken = '{"en": "he said \\"hi\\"\nand left"}'
+        parsed = json.loads(repair_json_control_chars(broken))
+        assert parsed["en"] == 'he said "hi"\nand left'
+
+
+class TestParseJsonWithUnescapedNewlines:
+    def test_chat_shaped_response_with_raw_newlines_recovers_message(self):
+        # A normal {"message": ...} chat reply, but the model left real
+        # newlines inside the string instead of escaping them.
+        broken = '{"message": "Vanakkam!\nLet\'s look at loops.", "phase": "story"}'
+        result = parse_vaathiyaar_response(broken)
+        assert result["message"] == "Vanakkam!\nLet's look at loops."
+        assert result["phase"] == "story"
+
+    def test_chat_shaped_response_does_not_fall_back_to_generic_apology(self):
+        broken = '{"message": "Multi-line\nreply\nhere."}'
+        result = parse_vaathiyaar_response(broken)
+        assert "hiccup" not in result["message"].lower()
+
+    def test_non_chat_shaped_response_with_raw_newlines_is_not_discarded(self):
+        # modules/pipeline.py's stage_2_narrative shape: no "message" key at
+        # all. Before the fix this always produced the canned apology.
+        broken = '{"en": "## Title\n\nSome narrative text.", "ta": ""}'
+        result = parse_vaathiyaar_response(broken)
+        assert "hiccup" not in result["message"].lower()
+        assert result["en"] == "## Title\n\nSome narrative text."
 
 
 # ---------------------------------------------------------------------------

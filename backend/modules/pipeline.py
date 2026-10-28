@@ -6,7 +6,7 @@ import uuid
 import sqlite3
 import os
 from datetime import datetime, timezone
-from vaathiyaar.engine import call_vaathiyaar, VaathiyaarUnavailable
+from vaathiyaar.engine import call_vaathiyaar, VaathiyaarUnavailable, repair_json_control_chars
 from vaathiyaar.profiler import get_student_profile
 from vaathiyaar.modelfile import LANG_NAMES
 from modules.templates import CONCEPT_TEMPLATES, get_template_for_topic
@@ -58,7 +58,13 @@ def _update_job_status(job_id, status, stage_data=None, error=None):
 
 
 def _extract_json(raw: str) -> dict:
-    """Extract a JSON object from a raw string, stripping markdown code fences if present."""
+    """Extract a JSON object from a raw string, stripping markdown code fences if present.
+
+    Tries a control-character repair (see repair_json_control_chars) before
+    giving up — models asked for multi-line markdown inside a JSON string
+    value routinely forget to escape the newlines, which otherwise makes
+    every stage_* generator fall back to its thin stub content.
+    """
     text = raw.strip()
     # Strip markdown code fences (```json ... ``` or ``` ... ```)
     if text.startswith("```"):
@@ -67,18 +73,20 @@ def _extract_json(raw: str) -> dict:
             text = text[first_newline + 1:]
         if text.rstrip().endswith("```"):
             text = text.rstrip()[:-3].rstrip()
-    # Attempt direct JSON parse
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
+    # Attempt direct JSON parse, then the same on a control-char-repaired copy
+    for candidate in (text, repair_json_control_chars(text)):
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
     # Try to find a JSON object within the text using a regex scan
     match = re.search(r'\{[\s\S]*\}', text)
     if match:
-        try:
-            return json.loads(match.group())
-        except json.JSONDecodeError:
-            pass
+        for candidate in (match.group(), repair_json_control_chars(match.group())):
+            try:
+                return json.loads(candidate)
+            except json.JSONDecodeError:
+                continue
     # Return raw text wrapped in a dict as last resort
     return {"raw": raw}
 
