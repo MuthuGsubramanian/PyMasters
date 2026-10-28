@@ -711,14 +711,25 @@ def assemble_video(slides: list[str], audio_paths: list[str], out_path: str,
 # ── Metadata ──────────────────────────────────────────────────────────────────
 
 
-def generate_metadata(item: dict, short_script: dict, explainer_script: dict) -> dict:
+def generate_metadata(item: dict, short_script: dict, explainer_script: dict,
+                      short_format: str = "standard", meme_concept: str | None = None) -> dict:
     """YouTube upload metadata for both videos, with a template fallback."""
     try:
-        raw = ask_claude_json(METADATA_PROMPT.format(
+        prompt = METADATA_PROMPT.format(
             item=json.dumps(_item_summary(item), indent=2),
             short_title=short_script["title"],
             explainer_title=explainer_script["title"],
-        ))
+        )
+        if short_format == "meme":
+            prompt += (
+                f"\n\nNote: today's Short is a MEME-STYLE video explaining the Python "
+                f"concept '{meme_concept}' through a relatable meme format — it is NOT "
+                "about the AI discovery above. Write the short's title/description/tags "
+                "specifically about that Python concept and the meme framing (funny but "
+                "accurate, no hype words). The explainer's metadata stays about the AI "
+                "discovery as described."
+            )
+        raw = ask_claude_json(prompt)
         meta = {}
         for key in ("short", "explainer"):
             entry = raw[key]
@@ -736,10 +747,11 @@ def generate_metadata(item: dict, short_script: dict, explainer_script: dict) ->
         return meta
     except Exception as e:
         log.error(f"Claude metadata failed, using template: {e}")
-        return _fallback_metadata(item, short_script, explainer_script)
+        return _fallback_metadata(item, short_script, explainer_script, short_format, meme_concept)
 
 
-def _fallback_metadata(item: dict, short_script: dict, explainer_script: dict) -> dict:
+def _fallback_metadata(item: dict, short_script: dict, explainer_script: dict,
+                       short_format: str = "standard", meme_concept: str | None = None) -> dict:
     """Template metadata when the AI call fails."""
     topic = item.get("title", "Today's AI discovery")
     base_tags = ["python", "ai", "machine learning", "programming", "coding",
@@ -749,8 +761,19 @@ def _fallback_metadata(item: dict, short_script: dict, explainer_script: dict) -
                  "sandbox-graded Python & AI lessons. Learn by building: "
                  "https://pymasters.net"
                  "\n\n#Python #AI #MachineLearning #Coding #LearnToCode #Programming")
-    return {
-        "short": {
+    if short_format == "meme" and meme_concept:
+        short_meta = {
+            "title": f"{short_script.get('title') or meme_concept} (as a meme)"[:90],
+            "description": (f"{meme_concept}, explained the way it actually feels to "
+                            f"learn it. Still 100% correct Python — just funnier.\n\n"
+                            f"Learn Python & AI by building: https://pymasters.net"
+                            "\n\n#Python #PythonMemes #Coding #LearnToCode #Programming #DevHumor"),
+            "tags": (base_tags + ["python memes", "programmer humor", "shorts"])[:15],
+            "category": "27",
+            "youtube_url": None,
+        }
+    else:
+        short_meta = {
             "title": f"{topic} — in 60 seconds"[:90],
             "description": (f"A 60-second brief on {topic}: what it is, why it matters, "
                             f"and what Python developers can do with it today."
@@ -758,7 +781,9 @@ def _fallback_metadata(item: dict, short_script: dict, explainer_script: dict) -
             "tags": (base_tags + ["shorts", "ai news"])[:15],
             "category": "27",
             "youtube_url": None,
-        },
+        }
+    return {
+        "short": short_meta,
         "explainer": {
             "title": f"{topic} — explained for Python developers"[:90],
             "description": (f"Today's PyMasters explainer covers {topic}: the core concept, "
@@ -806,8 +831,32 @@ def generate_daily_videos(scored_items: list[dict], style_notes: str | None = No
     top_item = scored_items[0]
     log.info(f"Generating daily videos for: {top_item.get('title', '?')}")
 
+    # 0. Decide the Short's format — a few days a week it's a meme explaining
+    # a core Python concept instead of the standard AI-discovery brief, so
+    # the channel doesn't go monotonous. QA-gate failure silently falls back
+    # to the standard Short (never publishes generic meme content).
+    from pipeline.video.meme_shorts import (
+        load_history, save_history, pick_short_format, pick_concept,
+        record_format, generate_meme_script, render_meme_slides, narration_panels,
+    )
+    history = load_history()
+    short_format = pick_short_format(history)
+    meme_concept = None
+    meme_script = None
+    if short_format == "meme":
+        meme_concept = pick_concept(history)
+        meme_script = generate_meme_script(meme_concept, style_notes=style_notes)
+        if meme_script is None:
+            short_format = "standard"
+    record_format(history, short_format)
+    save_history(history)
+
     # 1. Scripts (Claude, template fallback)
-    short_script = generate_short_script(top_item, style_notes=style_notes)
+    if short_format == "meme":
+        short_script = {"title": meme_script["title"], "sections": narration_panels(meme_script)}
+        log.info(f"Today's Short is a meme: {meme_concept}")
+    else:
+        short_script = generate_short_script(top_item, style_notes=style_notes)
     explainer_script = generate_explainer_script(top_item, style_notes=style_notes)
 
     # 2. Narration (edge-tts -> pyttsx3 -> silent)
@@ -823,9 +872,13 @@ def generate_daily_videos(scored_items: list[dict], style_notes: str | None = No
     burn_captions = tts_engine == "none"
 
     # 3. Slides (title + one per section)
-    short_slides = render_slides(short_script, os.path.join(work_dir, "slides_short"),
-                                 vertical=True, kicker="PYMASTERS · 60-SECOND BRIEF",
-                                 burn_captions=burn_captions)
+    if short_format == "meme":
+        short_slides = render_meme_slides(meme_script, os.path.join(work_dir, "slides_short"),
+                                          burn_captions=burn_captions)
+    else:
+        short_slides = render_slides(short_script, os.path.join(work_dir, "slides_short"),
+                                     vertical=True, kicker="PYMASTERS · 60-SECOND BRIEF",
+                                     burn_captions=burn_captions)
     explainer_slides = render_slides(explainer_script, os.path.join(work_dir, "slides_explainer"),
                                      vertical=False, kicker="PYMASTERS · DAILY EXPLAINER",
                                      burn_captions=burn_captions)
@@ -855,13 +908,15 @@ def generate_daily_videos(scored_items: list[dict], style_notes: str | None = No
         return result
 
     # 5. Metadata
-    metadata = generate_metadata(top_item, short_script, explainer_script)
+    metadata = generate_metadata(top_item, short_script, explainer_script,
+                                 short_format=short_format, meme_concept=meme_concept)
     metadata_path = os.path.join(video_dir, "metadata.json")
     with open(metadata_path, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, ensure_ascii=False)
     result["metadata"] = metadata
     result["metadata_path"] = metadata_path
-    log.info(f"Video metadata saved: {metadata_path}")
+    result["short_format"] = short_format
+    log.info(f"Video metadata saved: {metadata_path} (short format: {short_format})")
 
     # 6. Tidy the work dir (keep slides/audio only if something failed, for debugging)
     if result["short_path"] and result["explainer_path"]:
