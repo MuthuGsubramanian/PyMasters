@@ -1,7 +1,7 @@
 ## Innovation Backlog
 
 *Auto-maintained by the PyMasters AI Intelligence Pipeline.*
-*Last updated: 2026-07-26*
+*Last updated: 2026-10-28*
 
 ### Ready to Build (scored >= 8, validated)
 
@@ -21,6 +21,7 @@
 - **nanotron/ultrascale-playbook** (score: 8, source: huggingface, added: 2026-07-26) — Excellent source material for an advanced 'how LLMs are trained at scale' lesson series (parallelism, GPU efficiency) [link](https://huggingface.co/spaces/nanotron/ultrascale-playbook)
 - **Running a 28.9M parameter LLM on an $8 microcontroller** (score: 8, source: hackernews, added: 2026-07-26) — Great tutorial on extreme LLM quantization/tiny models; reinforces Homie's small-local-model story and edge-device ambitions [link](https://github.com/slvDev/esp32-ai)
 - **Claude Opus 5** (score: 8, source: hackernews, added: 2026-07-26) — Timely PyMasters coverage/tutorial on Claude Opus 5 capabilities and API usage; optionally add as a cloud-provider fallback option in Homie [link](https://www.anthropic.com/news/claude-opus-5)
+- **nomic-ai/nomic-embed-text-v1.5** (score: 8, source: huggingface, added: 2026-10-28) — Long-context open embedding model, good RAG-lesson comparison point and solid Homie local-embedding option [link](https://huggingface.co/nomic-ai/nomic-embed-text-v1.5)
 
 ### Prototyping (scored >= 7)
 
@@ -31,6 +32,7 @@
 - **Open-weight AI is having its Kubernetes moment** (score: 7, source: hackernews, added: 2026-07-26) — Open-weight ecosystem overview fits a PyMasters lesson and validates Homie's local-LLM positioning for marketing content [link](https://tobi.knaup.me/2026-07-25-open-weight-ai-is-having-its-kubernetes-moment/)
 - **Becoming a Research Engineer at a Big LLM Lab** (score: 7, source: hackernews, added: 2026-07-26) — Career-path content: adapt into a PyMasters guide on becoming an ML/research engineer [link](https://www.maxmynter.com/pages/blog/jobhunt)
 - **Bringing PyTorch Monarch to AMD GPUs** (score: 7, source: hackernews, added: 2026-07-26) — Tutorial on distributed PyTorch (Monarch) and the AMD GPU ecosystem for advanced learners [link](https://pytorch.org/blog/bringing-pytorch-monarch-to-amd-gpus-single-controller-distributed-training-on-rocm/)
+- **openai-community/gpt2** (score: 7, source: huggingface, added: 2026-10-28) — Evergreen teaching model for a text-generation/decoder-only architecture lesson [link](https://huggingface.co/openai-community/gpt2)
 
 ### Evaluating (scored >= 6)
 
@@ -38,6 +40,9 @@
 - **open-llm-leaderboard/open_llm_leaderboard** (score: 6, source: huggingface, added: 2026-07-26) — Article/lesson on how to read LLM benchmarks and choose a model for your use case [link](https://huggingface.co/spaces/open-llm-leaderboard/open_llm_leaderboard)
 - **black-forest-labs/FLUX.1-dev** (score: 6, source: huggingface, added: 2026-07-26) — Diffusion-model tutorial using FLUX.1-dev with the diffusers library [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-dev)
 - **black-forest-labs/FLUX.1-schnell** (score: 6, source: huggingface, added: 2026-07-26) — Fast 4-step image generation tutorial; borderline feasible as an optional Homie image-gen plugin on GPU machines [link](https://huggingface.co/spaces/black-forest-labs/FLUX.1-schnell)
+- **autogluon/chronos-2** (score: 6, source: huggingface, added: 2026-10-28) — Could anchor a time-series-forecasting-with-transformers lesson in the AI/ML track [link](https://huggingface.co/autogluon/chronos-2)
+- **google/vit-base-patch16-224** (score: 6, source: huggingface, added: 2026-10-28) — Standard ViT for a vision-transformer fundamentals lesson; usable as a Homie image-classification fallback [link](https://huggingface.co/google/vit-base-patch16-224)
+- **bench-induction-ai/Annoy-PyEdu-Rs-Raw** (score: 6, source: huggingface, added: 2026-10-28) — Python-education-flavored dataset worth checking as a source of lesson/example material or curriculum ideas [link](https://huggingface.co/datasets/bench-induction-ai/Annoy-PyEdu-Rs-Raw)
 
 ### Discovered (new)
 
