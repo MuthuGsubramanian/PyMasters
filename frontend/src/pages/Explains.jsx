@@ -32,6 +32,7 @@ import BIAS_VARIANCE from '../components/explains/essays/biasVarianceEssay';
 import TIME_SERIES_FORECASTING from '../components/explains/essays/timeSeriesForecastingEssay';
 
 import GAUSSIAN_MIXTURE from '../components/explains/essays/gmmEssay';
+import NEURAL_NETWORK from '../components/explains/essays/neuralNetworkEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -361,6 +362,7 @@ export const ESSAYS = [
     BIAS_VARIANCE,
     TIME_SERIES_FORECASTING,
     GAUSSIAN_MIXTURE,
+    NEURAL_NETWORK,
 ];
 
 // ── Index page ────────────────────────────────────────────────────────────────
