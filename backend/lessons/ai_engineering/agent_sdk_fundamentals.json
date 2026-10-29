@@ -1,0 +1,198 @@
+{
+  "id": "agent_sdk_fundamentals",
+  "topic": "agent_sdk_fundamentals",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 54,
+  "title": {
+    "en": "The Agent SDK: What an LLM API Call Doesn't Give You for Free"
+  },
+  "description": {
+    "en": "An Agent SDK turns a raw chat-completion call into a durable loop: a tool registry, a plan-act-observe cycle, and conversation state that survives across turns. Build the dispatcher and loop yourself so you know exactly what the SDK is automating."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Gap Between \"Call the Model\" and \"Run an Agent\"\n\nAsk any model a question through a raw API call and you get one reply. Ask it to **use tools, check its work, and keep going until the task is actually done**, and a single call isn't enough — you need a loop. That loop, plus the scaffolding around it, is what an **Agent SDK** actually is. Anthropic's Agent SDK (and others like it) didn't invent a new kind of intelligence; they packaged the *boring but essential* plumbing every real agent needs so you stop reinventing it per project.\n\n### The Three Things Every Agent SDK Gives You\n\n| Without an SDK | With an Agent SDK |\n|---|---|\n| One prompt, one reply | A `history` list carried across turns |\n| You `if/elif` on tool names by hand | A **tool registry** the model can discover and call |\n| You write your own `while` loop and guess when to stop | A built-in **plan → act → observe** cycle with a clear stop condition |\n| Context grows unbounded until it errors | Automatic context management / compaction |\n\nThe core cycle is simple once you see it stripped down:\n\n```python\nwhile True:\n    response = model.plan(history)\n    if response[\"type\"] == \"final_answer\":\n        return response[\"content\"]\n    observation = call_tool(response[\"name\"], response[\"args\"])\n    history.append({\"role\": \"tool\", \"content\": observation})\n```\n\n`model.plan()` looks at the conversation so far and decides: answer now, or reach for a tool first. If it reaches for a tool, your code — not the model — actually executes it, and the result (the *observation*) gets folded back into history before the model plans again. Repeat until the model signals it's done.\n\n### Why the Dispatcher Matters More Than It Looks\n\nThe part that actually breaks in production isn't the model's reasoning — it's the **dispatcher**: the small function that takes a tool name and a dict of arguments and turns them into a real Python call.\n\n```python\ntools = {\"add\": lambda a, b: a + b, \"search\": web_search}\n\ndef call_tool(name, args):\n    if name not in tools:\n        return f\"error: unknown tool '{name}'\"\n    return tools[name](**args)\n```\n\nGet this wrong — a missing key, a mismatched argument name, no guard for an unknown tool — and the whole agent crashes mid-task instead of looping back with a useful error the model can recover from. An Agent SDK's \"magic\" is mostly this: a dispatcher that never crashes the loop, plus bookkeeping that makes the plan-act-observe cycle feel automatic.\n\nToday you build both pieces by hand: the dispatcher, and the loop that calls it.\n\n> **Key Insight:** An Agent SDK is not a smarter model — it's a reliable **loop plus a dispatcher**. Once you can write `call_tool()` and the plan-act-observe `while` loop yourself, you understand exactly what every Agent SDK is doing for you under the hood."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "agent_loop_plumbing",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Agent SDK",
+          "children": [
+            "tool registry",
+            "dispatcher (call_tool)",
+            "plan -> act -> observe loop",
+            "history / state across turns"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "build_loop",
+      "steps": [
+        {
+          "line": "tools = {\"add\": lambda a, b: a + b}",
+          "highlight": "tools = {...}",
+          "explanation": {
+            "en": "Step 1: register callable tools by name — this dict IS the tool registry"
+          }
+        },
+        {
+          "line": "def call_tool(name, args):",
+          "highlight": "def call_tool",
+          "explanation": {
+            "en": "Step 2: the dispatcher turns a tool name + args dict into a real function call"
+          }
+        },
+        {
+          "line": "    if name not in tools: return f\"error: unknown tool '{name}'\"",
+          "highlight": "name not in tools",
+          "explanation": {
+            "en": "Step 3: guard against unknown tools so a bad call returns text, not a crash"
+          }
+        },
+        {
+          "line": "    return tools[name](**args)",
+          "highlight": "tools[name](**args)",
+          "explanation": {
+            "en": "Step 4: unpack the args dict straight into the tool's real parameters"
+          }
+        },
+        {
+          "line": "history = [{\"role\": \"user\", \"content\": question}]",
+          "highlight": "history = [...]",
+          "explanation": {
+            "en": "Step 5: Agent SDKs track state as a growing history list, not one prompt string"
+          }
+        },
+        {
+          "line": "response = model.plan(history)",
+          "highlight": "model.plan(history)",
+          "explanation": {
+            "en": "Step 6: ask the model — answer now, or call a tool next?"
+          }
+        },
+        {
+          "line": "if response[\"type\"] == \"final_answer\": return response[\"content\"]",
+          "highlight": "final_answer",
+          "explanation": {
+            "en": "Step 7: the loop's stop condition — the model decides when it has enough"
+          }
+        },
+        {
+          "line": "observation = call_tool(response[\"name\"], response[\"args\"]); history.append({\"role\": \"tool\", \"content\": observation})",
+          "highlight": "history.append",
+          "explanation": {
+            "en": "Step 8: feed the tool's result back into history so the next plan() sees it"
+          }
+        }
+      ],
+      "duration_ms": 6000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "plan(history) -> {'type': 'tool_call', 'name': 'add', 'args': {'a': 6, 'b': 7}}",
+        "call_tool('add', {'a': 6, 'b': 7}) -> 13",
+        "history += observation 13",
+        "plan(history) -> {'type': 'final_answer', 'content': '13'}"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Raw LLM API call",
+        "items": [
+          "one prompt, one reply",
+          "hand-rolled if/elif on tool names",
+          "no stop condition, context grows unbounded"
+        ]
+      },
+      "right": {
+        "title": "Agent SDK",
+        "items": [
+          "history carried across turns",
+          "tool registry + validated dispatch",
+          "built-in plan-act-observe loop with a clear stop"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "loop_closed",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `call_tool(name, args, registry)` — the dispatcher at the heart of an Agent SDK. `registry` is a dict mapping tool names to callables. Given a tool `name` and an `args` dict, call the matching function with those args unpacked as keyword arguments and return its result. If `name` is not in `registry`, return the string `\"error: unknown tool 'NAME'\"` instead of raising. Test it by registering `\"add\"` as `lambda a, b: a + b` and calling `call_tool(\"add\", {\"a\": 6, \"b\": 7}, registry)`, then print the result."
+      },
+      "starter_code": "def call_tool(name, args, registry):\n    \"\"\"Dispatch a tool call by name; return an error string for unknown tools.\"\"\"\n    # 1. if name isn't in registry, return \"error: unknown tool 'NAME'\"\n    # 2. otherwise call registry[name](**args) and return the result\n    pass\n\nregistry = {\"add\": lambda a, b: a + b}\nprint(call_tool(\"add\", {\"a\": 6, \"b\": 7}, registry))",
+      "hints": {
+        "en": [
+          "Check membership first: `if name not in registry:`",
+          "Build the error string with an f-string: f\"error: unknown tool '{name}'\"",
+          "Unpack the dict into keyword args: registry[name](**args)"
+        ]
+      },
+      "expected_output": "13",
+      "test_code": "registry = {\"add\": lambda a, b: a + b, \"double\": lambda x: x * 2}\nassert call_tool(\"add\", {\"a\": 6, \"b\": 7}, registry) == 13\nassert call_tool(\"double\", {\"x\": 5}, registry) == 10\nresult = call_tool(\"missing\", {}, registry)\nassert isinstance(result, str) and \"unknown tool\" in result and \"missing\" in result"
+    },
+    {
+      "instruction": {
+        "en": "Implement `run_agent(plan_fn, call_tool_fn, question, max_turns=5)` — the plan-act-observe loop. Start `history` as `[{\"role\": \"user\", \"content\": question}]`. Each turn, call `response = plan_fn(history)`. If `response[\"type\"] == \"final_answer\"`, return `response[\"content\"]`. Otherwise call `observation = call_tool_fn(response[\"name\"], response[\"args\"])`, append `{\"role\": \"tool\", \"content\": observation}` to `history`, and continue. If `max_turns` is reached without a final answer, return the string `\"error: max turns reached\"`."
+      },
+      "starter_code": "def run_agent(plan_fn, call_tool_fn, question, max_turns=5):\n    \"\"\"Run the plan -> act -> observe loop until the model gives a final answer.\"\"\"\n    history = [{\"role\": \"user\", \"content\": question}]\n    # loop up to max_turns times:\n    #   response = plan_fn(history)\n    #   if response[\"type\"] == \"final_answer\": return response[\"content\"]\n    #   observation = call_tool_fn(response[\"name\"], response[\"args\"])\n    #   history.append({\"role\": \"tool\", \"content\": observation})\n    # if the loop finishes without returning, return \"error: max turns reached\"\n    pass\n\ndef fake_plan(history):\n    if len(history) < 3:\n        return {\"type\": \"tool_call\", \"name\": \"add\", \"args\": {\"a\": 6, \"b\": 7}}\n    return {\"type\": \"final_answer\", \"content\": \"13\"}\n\ndef fake_call_tool(name, args):\n    return args[\"a\"] + args[\"b\"]\n\nprint(run_agent(fake_plan, fake_call_tool, \"What is 6 + 7?\"))",
+      "hints": {
+        "en": [
+          "Use a for loop over range(max_turns) so it can't run forever",
+          "history grows by exactly one item each turn: the tool observation",
+          "The function returns from inside the loop on 'final_answer' — only reaching the end means max_turns ran out"
+        ]
+      },
+      "expected_output": "13",
+      "test_code": "def fake_plan(history):\n    if len(history) < 3:\n        return {\"type\": \"tool_call\", \"name\": \"add\", \"args\": {\"a\": 6, \"b\": 7}}\n    return {\"type\": \"final_answer\", \"content\": \"13\"}\n\ndef fake_call_tool(name, args):\n    return args[\"a\"] + args[\"b\"]\n\nassert run_agent(fake_plan, fake_call_tool, \"What is 6 + 7?\") == \"13\"\n\ndef never_finishes(history):\n    return {\"type\": \"tool_call\", \"name\": \"add\", \"args\": {\"a\": 1, \"b\": 1}}\n\nassert run_agent(never_finishes, fake_call_tool, \"loop forever?\", max_turns=3) == \"error: max turns reached\""
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "agent_sdk",
+      "tool_registry",
+      "agent_loop",
+      "plan_act_observe"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "dictionaries",
+      "lambda_functions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
