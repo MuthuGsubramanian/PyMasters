@@ -1,0 +1,164 @@
+{
+  "id": "plan_and_execute_dag",
+  "topic": "plan_and_execute_dag",
+  "track": "ai_agents",
+  "module": "from_scratch",
+  "order": 10,
+  "title": {
+    "en": "Plan-and-Execute: Agent Plans as a Dependency Graph"
+  },
+  "description": {
+    "en": "Represent an agent's plan as steps with dependencies, order them with graphlib.TopologicalSorter, reject cyclic plans, run each step with the outputs of its prerequisites, and spot which steps could run in parallel. Standard library only, fully deterministic."
+  },
+  "xp_reward": 120,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Plan First, Then Act\n\nA ReAct-style agent decides one step at a time. A **plan-and-execute** agent first writes down the *whole* plan, then runs it. The plan is just data: a list of steps, each naming the steps it depends on. Once it is data, ordinary Python can validate it, order it and run it, and you can reject a bad plan *before* any tool is called.\n\n### A plan is a dictionary\n\nEach step has a tool, arguments and a `needs` list. Here the plan answers: \"what is the total price of three items with 18% tax?\".\n\n```python\nplan = {\n    \"price_a\":  {\"tool\": \"lookup\", \"args\": {\"item\": \"pen\"},    \"needs\": []},\n    \"price_b\":  {\"tool\": \"lookup\", \"args\": {\"item\": \"book\"},   \"needs\": []},\n    \"price_c\":  {\"tool\": \"lookup\", \"args\": {\"item\": \"bag\"},    \"needs\": []},\n    \"subtotal\": {\"tool\": \"add\",    \"args\": {},                 \"needs\": [\"price_a\", \"price_b\", \"price_c\"]},\n    \"total\":    {\"tool\": \"tax\",    \"args\": {\"rate\": 0.18},     \"needs\": [\"subtotal\"]},\n}\nprint(len(plan), \"steps\")\nfor name, step in plan.items():\n    print(f\"{name:9} needs {step['needs']}\")\n```\n\n```text\n5 steps\nprice_a   needs []\nprice_b   needs []\nprice_c   needs []\nsubtotal  needs ['price_a', 'price_b', 'price_c']\ntotal     needs ['subtotal']\n```\n\n### Ordering with graphlib\n\n`graphlib.TopologicalSorter` (standard library since Python 3.9) takes a mapping from each node to the nodes it depends on, and yields an order where every step comes after its prerequisites. Our `needs` lists are already in exactly that shape.\n\n```python\nfrom graphlib import TopologicalSorter, CycleError\n\ndef order_of(plan):\n    graph = {name: step[\"needs\"] for name, step in plan.items()}\n    return list(TopologicalSorter(graph).static_order())\n\nprint(order_of(plan))\n\nbad = {\"a\": {\"needs\": [\"b\"]}, \"b\": {\"needs\": [\"a\"]}}\ntry:\n    order_of(bad)\nexcept CycleError as err:\n    print(\"rejected:\", err.args[1])\n```\n\n```text\n['price_a', 'price_b', 'price_c', 'subtotal', 'total']\nrejected: ['a', 'b', 'a']\n```\n\nNotice the three lookups come first and `total` comes last. If two steps depend on each other, no valid order exists and `CycleError` is raised, so a confused model cannot send your executor into an infinite loop. Always validate a plan this way before running it.\n\n### Running the plan\n\nEach step receives the results of its prerequisites. The tools below are plain functions with fixed prices, so every run prints the same numbers.\n\n```python\nPRICES = {\"pen\": 20, \"book\": 150, \"bag\": 480}\n\ndef lookup(inputs, item):\n    return PRICES[item]\n\ndef add(inputs):\n    return sum(inputs.values())\n\ndef tax(inputs, rate):\n    (value,) = inputs.values()\n    return round(value * (1 + rate), 2)\n\nTOOLS = {\"lookup\": lookup, \"add\": add, \"tax\": tax}\n\ndef execute(plan):\n    results = {}\n    for name in order_of(plan):\n        step = plan[name]\n        inputs = {dep: results[dep] for dep in step[\"needs\"]}\n        results[name] = TOOLS[step[\"tool\"]](inputs, **step[\"args\"])\n        print(f\"ran {name:9} -> {results[name]}\")\n    return results\n\nfinal = execute(plan)\nprint(\"answer:\", final[\"total\"])\n```\n\n```text\nran price_a   -> 20\nran price_b   -> 150\nran price_c   -> 480\nran subtotal  -> 650\nran total     -> 767.0\nanswer: 767.0\n```\n\nThe arithmetic checks out by hand: 20 + 150 + 480 = 650, and 650 x 1.18 = 767.0.\n\n### Which steps could run together?\n\nThe sorter can also hand you steps in *waves*: everything that is ready right now. Steps in one wave do not depend on each other, so a real agent could call those tools in parallel.\n\n```python\ndef waves(plan):\n    ts = TopologicalSorter({n: s[\"needs\"] for n, s in plan.items()})\n    ts.prepare()\n    out = []\n    while ts.is_active():\n        ready = sorted(ts.get_ready())\n        out.append(ready)\n        ts.done(*ready)\n    return out\n\nfor i, wave in enumerate(waves(plan), 1):\n    print(f\"wave {i}: {wave}\")\nprint(\"sequential steps:\", len(plan), \"| waves:\", len(waves(plan)))\n```\n\n```text\nwave 1: ['price_a', 'price_b', 'price_c']\nwave 2: ['subtotal']\nwave 3: ['total']\nsequential steps: 5 | waves: 3\n```\n\n> **Honest caveat:** a static plan is only as good as the model that wrote it. If step 2 returns something surprising, the rest of the plan may be wrong. Real systems either *re-plan* after a failed or unexpected step, or fall back to step-by-step ReAct for uncertain tasks. Plan-and-execute shines when the task shape is predictable and you want cheap, parallel, auditable execution; it is a poor fit when each result changes what you should do next."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_10",
+      "content": "A ReAct agent decides one step at a time. A plan-and-execute agent writes the whole plan first. If the plan is a dependency graph, Python can validate it, order it, run it and even tell you which steps are safe to run in parallel.",
+      "visual_theme": "blueprint"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_10",
+      "nodes": [
+        "Model writes plan",
+        "Validate (no cycles)",
+        "Topological order",
+        "Run steps with prerequisite outputs",
+        "Final answer"
+      ],
+      "edges": [
+        {
+          "from": "Model writes plan",
+          "to": "Validate (no cycles)"
+        },
+        {
+          "from": "Validate (no cycles)",
+          "to": "Topological order"
+        },
+        {
+          "from": "Topological order",
+          "to": "Run steps with prerequisite outputs"
+        },
+        {
+          "from": "Run steps with prerequisite outputs",
+          "to": "Final answer"
+        }
+      ],
+      "description": "The plan-and-execute pipeline: the model's plan is checked as a graph before any tool runs"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_10",
+      "steps": [
+        {
+          "line": "plan = {name: {tool, args, needs}}",
+          "explanation": {
+            "en": "A plan is a dict of steps; needs lists the prerequisite step names."
+          }
+        },
+        {
+          "line": "graph = {n: s[\"needs\"] for n, s in plan.items()}",
+          "explanation": {
+            "en": "Reshape it into the node-to-dependencies mapping graphlib expects."
+          }
+        },
+        {
+          "line": "order = list(TopologicalSorter(graph).static_order())",
+          "explanation": {
+            "en": "Get a valid order, or CycleError if the plan is circular."
+          }
+        },
+        {
+          "line": "inputs = {dep: results[dep] for dep in step[\"needs\"]}",
+          "explanation": {
+            "en": "Hand each step the results of exactly its prerequisites."
+          }
+        },
+        {
+          "line": "ts.prepare(); ready = ts.get_ready(); ts.done(*ready)",
+          "explanation": {
+            "en": "Walk the graph in waves; steps in one wave can run in parallel."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp_10",
+      "left": {
+        "label": "ReAct (one step at a time)",
+        "code": "think -> act -> observe\nthink -> act -> observe\n... plan lives only in the model's head"
+      },
+      "right": {
+        "label": "Plan-and-execute",
+        "code": "plan = {5 steps with needs}\nvalidate -> order -> run\nwaves: 3 (3 lookups in parallel first)"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term_10",
+      "output": [
+        "wave 1: ['price_a', 'price_b', 'price_c']",
+        "wave 2: ['subtotal']",
+        "wave 3: ['total']",
+        "sequential steps: 5 | waves: 3"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write `order_of(plan)` returning a valid execution order using `graphlib.TopologicalSorter`, and `has_cycle(plan)` returning True when the plan raises `CycleError`. Expected prints: the order `['a', 'b', 'c']`, then `False`, then `True`."
+      },
+      "starter_code": "from graphlib import TopologicalSorter, CycleError\n\ngood = {\"c\": [\"a\", \"b\"], \"b\": [\"a\"], \"a\": []}\nloop = {\"x\": [\"y\"], \"y\": [\"x\"]}\n\ndef order_of(graph):\n    # return list(TopologicalSorter(graph).static_order())\n    pass\n\ndef has_cycle(graph):\n    # try the ordering; return True if CycleError is raised\n    pass\n\nprint(order_of(good))\nprint(has_cycle(good))\nprint(has_cycle(loop))",
+      "hints": [
+        "static_order() returns an iterator; wrap it in list()",
+        "The graph maps each node to the nodes it depends on, so 'a' (no dependencies) comes first",
+        "try: order_of(graph) / except CycleError: return True / return False"
+      ],
+      "expected_output": "['a', 'b', 'c']\nFalse\nTrue"
+    },
+    {
+      "instruction": {
+        "en": "Complete `count_waves(graph)` so it returns how many parallel waves the plan needs, using `prepare()`, `get_ready()` and `done()`. The diamond plan (a, then b and c, then d) needs 3 waves and the flat plan needs 1, so print `3` then `1`."
+      },
+      "starter_code": "from graphlib import TopologicalSorter\n\ndiamond = {\"a\": [], \"b\": [\"a\"], \"c\": [\"a\"], \"d\": [\"b\", \"c\"]}\nflat = {\"x\": [], \"y\": [], \"z\": []}\n\ndef count_waves(graph):\n    ts = TopologicalSorter(graph)\n    ts.prepare()\n    waves = 0\n    # while ts.is_active():\n    #     ready = ts.get_ready()\n    #     waves += 1\n    #     ts.done(*ready)\n    return waves\n\nprint(count_waves(diamond))\nprint(count_waves(flat))",
+      "hints": [
+        "Loop while ts.is_active()",
+        "get_ready() returns every step whose prerequisites are finished; that is one wave",
+        "Call ts.done(*ready) so the next wave unlocks"
+      ],
+      "expected_output": "3\n1"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "plan_and_execute",
+      "dependency_graph",
+      "topological_sort",
+      "cycle_detection",
+      "parallel_waves"
+    ],
+    "concepts_required": [
+      "agent_tool_loop",
+      "python_functions",
+      "dictionaries",
+      "exceptions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "ai_agents"
+    ]
+  },
+  "generated": false
+}

@@ -1,0 +1,163 @@
+{
+  "id": "tool_retry_backoff_idempotency",
+  "topic": "tool_retry_backoff_idempotency",
+  "track": "ai_agents",
+  "module": "from_scratch",
+  "order": 11,
+  "title": {
+    "en": "Safe Tool Retries: Backoff and Idempotency Keys"
+  },
+  "description": {
+    "en": "Retry a flaky tool with exponential backoff using a fake sleep, then see why retrying a side-effecting tool can double-charge a customer and fix it with idempotency keys. Standard library only, deterministic."
+  },
+  "xp_reward": 120,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Retrying Is Easy. Retrying Safely Is the Job.\n\nAgents call tools over networks, and networks fail. The obvious fix is \"try again\". But a retry is only harmless if repeating the call changes nothing. Reading a weather report twice is fine; charging a card twice is not. This lesson builds a retry loop with exponential backoff, then shows the double-charge trap and the standard cure: an **idempotency key**.\n\n### A flaky tool and a retry loop\n\n`flaky` fails a scripted number of times and then succeeds. Instead of real `time.sleep`, we record the delays in a list, so the run is instant and reproducible.\n\n```python\nclass TransientError(Exception):\n    pass\n\ndef make_flaky(failures_before_success):\n    state = {\"calls\": 0}\n    def tool():\n        state[\"calls\"] += 1\n        if state[\"calls\"] <= failures_before_success:\n            raise TransientError(f\"timeout on call {state['calls']}\")\n        return f\"ok after {state['calls']} calls\"\n    return tool\n\ndef retry(tool, max_attempts=5, base_delay=0.5, sleeps=None):\n    for attempt in range(1, max_attempts + 1):\n        try:\n            return tool()\n        except TransientError as err:\n            if attempt == max_attempts:\n                raise\n            delay = base_delay * 2 ** (attempt - 1)\n            print(f\"attempt {attempt} failed ({err}); waiting {delay}s\")\n            if sleeps is not None:\n                sleeps.append(delay)\n\nslept = []\nprint(retry(make_flaky(3), sleeps=slept))\nprint(\"total wait:\", sum(slept), \"seconds\")\n```\n\n```text\nattempt 1 failed (timeout on call 1); waiting 0.5s\nattempt 2 failed (timeout on call 2); waiting 1.0s\nattempt 3 failed (timeout on call 3); waiting 2.0s\nok after 4 calls\ntotal wait: 3.5 seconds\n```\n\nThe delays double each time: 0.5, 1.0, 2.0 seconds. That is **exponential backoff**: a struggling server gets progressively more breathing room instead of a stampede of instant retries. Real code adds random *jitter* so thousands of clients do not all retry at the same instant; we leave it out so the numbers stay exact.\n\n### Giving up\n\nA retry loop must have a limit. When the last attempt fails, the error should reach the caller.\n\n```python\ntry:\n    retry(make_flaky(10), max_attempts=3, sleeps=[])\nexcept TransientError as err:\n    print(\"gave up:\", err)\n```\n\n```text\nattempt 1 failed (timeout on call 1); waiting 0.5s\nattempt 2 failed (timeout on call 2); waiting 1.0s\ngave up: timeout on call 3\n```\n\n### The double-charge trap\n\nNow a tool with a side effect. The charge *succeeds* on the server, but the response is lost on the way back, so the agent sees a timeout and retries. Look at the ledger.\n\n```python\ndef make_payment_system(lose_first_response):\n    ledger = []\n    state = {\"calls\": 0}\n    def charge(customer, amount):\n        state[\"calls\"] += 1\n        ledger.append((customer, amount))\n        if lose_first_response and state[\"calls\"] == 1:\n            raise TransientError(\"response lost\")\n        return \"charged\"\n    return charge, ledger\n\ncharge, ledger = make_payment_system(lose_first_response=True)\nretry(lambda: charge(\"asha\", 499), sleeps=[])\nprint(\"ledger:\", ledger)\nprint(\"customer paid:\", sum(a for _, a in ledger))\n```\n\n```text\nattempt 1 failed (response lost); waiting 0.5s\nledger: [('asha', 499), ('asha', 499)]\ncustomer paid: 998\n```\n\nAsha was charged 998 instead of 499. The retry did exactly what we asked, and that was the bug.\n\n### The fix: idempotency keys\n\nThe agent generates one unique key per *intended* action and sends it with every attempt. The server remembers the keys it has already processed and returns the saved result instead of acting again.\n\n```python\ndef make_idempotent_system(lose_first_response):\n    ledger = []\n    seen = {}\n    state = {\"calls\": 0}\n    def charge(customer, amount, key):\n        state[\"calls\"] += 1\n        if key not in seen:\n            ledger.append((customer, amount))\n            seen[key] = \"charged\"\n        if lose_first_response and state[\"calls\"] == 1:\n            raise TransientError(\"response lost\")\n        return seen[key]\n    return charge, ledger\n\ncharge, ledger = make_idempotent_system(lose_first_response=True)\nkey = \"order-1042-charge\"\nretry(lambda: charge(\"asha\", 499, key), sleeps=[])\nprint(\"ledger:\", ledger)\nprint(\"customer paid:\", sum(a for _, a in ledger))\n```\n\n```text\nattempt 1 failed (response lost); waiting 0.5s\nledger: [('asha', 499)]\ncustomer paid: 499\n```\n\n> **Honest caveat:** idempotency keys only work if the *service* supports them (payment APIs such as Stripe do; many internal tools do not), and the key must be created once per intended action, not once per attempt. Generating a fresh key inside the retry loop silently defeats the whole mechanism. Also retry only errors that are genuinely transient (timeouts, 429, 503); a 400 or a validation error will fail identically forever, so retrying it just burns time and budget."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_11",
+      "content": "Networks fail, so agents retry. But a retry that repeats a side effect, like a card charge, does harm. Exponential backoff spaces retries out; an idempotency key makes repeating the call safe.",
+      "visual_theme": "shield"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_11",
+      "nodes": [
+        "Tool call",
+        "Transient error?",
+        "Wait base x 2^n",
+        "Retry with SAME key",
+        "Success or give up"
+      ],
+      "edges": [
+        {
+          "from": "Tool call",
+          "to": "Transient error?"
+        },
+        {
+          "from": "Transient error?",
+          "to": "Wait base x 2^n"
+        },
+        {
+          "from": "Wait base x 2^n",
+          "to": "Retry with SAME key"
+        },
+        {
+          "from": "Retry with SAME key",
+          "to": "Success or give up"
+        }
+      ],
+      "description": "A safe retry loop: back off, retry with the same idempotency key, stop at a limit"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_11",
+      "steps": [
+        {
+          "line": "delay = base_delay * 2 ** (attempt - 1)",
+          "explanation": {
+            "en": "Each failure doubles the wait: 0.5, 1.0, 2.0 ..."
+          }
+        },
+        {
+          "line": "if attempt == max_attempts: raise",
+          "explanation": {
+            "en": "Always cap retries and let the final error reach the caller."
+          }
+        },
+        {
+          "line": "key = \"order-1042-charge\"",
+          "explanation": {
+            "en": "Make ONE key per intended action, outside the retry loop."
+          }
+        },
+        {
+          "line": "if key not in seen: ledger.append(...)",
+          "explanation": {
+            "en": "The server acts only the first time it sees a key."
+          }
+        },
+        {
+          "line": "return seen[key]",
+          "explanation": {
+            "en": "Repeats get the saved result, so the customer is charged once."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp_11",
+      "left": {
+        "label": "Retry without a key",
+        "code": "attempt 1: charged, response lost\nattempt 2: charged again\nledger: [499, 499] -> paid 998"
+      },
+      "right": {
+        "label": "Retry with idempotency key",
+        "code": "attempt 1: charged, response lost\nattempt 2: key seen, no new charge\nledger: [499] -> paid 499"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term_11",
+      "output": [
+        "attempt 1 failed (response lost); waiting 0.5s",
+        "ledger: [('asha', 499)]",
+        "customer paid: 499"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `backoff_delays(attempts, base)` returning the list of waits between attempts: `base * 2**i` for `i` in `range(attempts - 1)`. With 5 attempts and base 0.5 the waits are `[0.5, 1.0, 2.0, 4.0]`; also print their total."
+      },
+      "starter_code": "def backoff_delays(attempts, base):\n    # n attempts means n-1 waits between them\n    # return [base * 2 ** i for i in range(attempts - 1)]\n    return []\n\ndelays = backoff_delays(5, 0.5)\nprint(delays)\nprint(sum(delays))\nprint(backoff_delays(1, 0.5))",
+      "hints": [
+        "There is no wait after the final attempt, so use attempts - 1",
+        "base * 2 ** i doubles each time",
+        "One attempt means an empty list"
+      ],
+      "expected_output": "[0.5, 1.0, 2.0, 4.0]\n7.5\n[]"
+    },
+    {
+      "instruction": {
+        "en": "Make `charge` idempotent. Keep a `seen` set of keys; only append to the ledger when the key is new. Calling it three times with the same key and once with another should leave a ledger of two entries totalling 700."
+      },
+      "starter_code": "ledger = []\nseen = set()\n\ndef charge(customer, amount, key):\n    # if key in seen: return \"duplicate\"\n    # otherwise remember the key, append (customer, amount) to ledger, return \"charged\"\n    ledger.append((customer, amount))\n    return \"charged\"\n\nprint(charge(\"asha\", 499, \"k1\"))\nprint(charge(\"asha\", 499, \"k1\"))\nprint(charge(\"asha\", 499, \"k1\"))\nprint(charge(\"ravi\", 201, \"k2\"))\nprint(len(ledger), sum(a for _, a in ledger))",
+      "hints": [
+        "Check `key in seen` first and return early",
+        "Add the key to seen before or right after recording the charge",
+        "499 + 201 = 700"
+      ],
+      "expected_output": "charged\nduplicate\nduplicate\ncharged\n2 700"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "retry_with_backoff",
+      "exponential_backoff",
+      "idempotency_keys",
+      "transient_errors",
+      "side_effect_safety"
+    ],
+    "concepts_required": [
+      "agent_tool_loop",
+      "python_functions",
+      "exceptions",
+      "closures"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "ai_agents"
+    ]
+  },
+  "generated": false
+}

@@ -1,0 +1,164 @@
+{
+  "id": "agent_budget_guardrails",
+  "topic": "agent_budget_guardrails",
+  "track": "ai_agents",
+  "module": "from_scratch",
+  "order": 12,
+  "title": {
+    "en": "Agent Guardrails: Budgets, Loop Detection, Approval Gates"
+  },
+  "description": {
+    "en": "Wrap an agent loop with three cheap guardrails: a step and cost budget, repeated-call loop detection, and a human-approval gate for risky tools. Scripted agent, standard library only, deterministic."
+  },
+  "xp_reward": 120,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## An Agent Without Limits Is a Bill Waiting to Happen\n\nA loop that calls a model and tools until it is \"done\" has no built-in notion of *enough*. A confused agent can repeat the same failing search forever, or an over-eager one can run a destructive command nobody approved. Three small guardrails, each a few lines of Python, remove most of that risk: a **budget**, a **loop detector** and an **approval gate**.\n\n### A scripted agent to guard\n\nTo keep output reproducible, the \"agent\" is a fixed list of tool calls it wants to make, each with a made-up cost in cents. The guard sits between the agent and the tools, which is exactly where it would sit in real code.\n\n```python\nSCRIPT = [\n    (\"search\",  {\"q\": \"refund policy\"}, 2),\n    (\"search\",  {\"q\": \"refund policy\"}, 2),\n    (\"search\",  {\"q\": \"refund policy\"}, 2),\n    (\"read\",    {\"doc\": \"policy.md\"},   1),\n    (\"delete\",  {\"path\": \"orders.db\"},  1),\n    (\"summarize\", {\"n\": 3},             5),\n]\nprint(len(SCRIPT), \"calls, total cost\", sum(c for *_, c in SCRIPT), \"cents\")\n```\n\n```text\n6 calls, total cost 13 cents\n```\n\n### Guardrail 1: a budget\n\nTrack steps and spend; refuse the next call that would exceed either limit.\n\n```python\ndef run_with_budget(script, max_steps, max_cents):\n    spent = 0\n    for step, (tool, args, cost) in enumerate(script, 1):\n        if step > max_steps:\n            print(f\"STOP: step limit {max_steps} reached\")\n            break\n        if spent + cost > max_cents:\n            print(f\"STOP: {tool} would push spend to {spent + cost} > {max_cents}\")\n            break\n        spent += cost\n        print(f\"step {step}: {tool} ok (spent {spent})\")\n    return spent\n\nrun_with_budget(SCRIPT, max_steps=10, max_cents=8)\n```\n\n```text\nstep 1: search ok (spent 2)\nstep 2: search ok (spent 4)\nstep 3: search ok (spent 6)\nstep 4: read ok (spent 7)\nstep 5: delete ok (spent 8)\nSTOP: summarize would push spend to 13 > 8\n```\n\nThe first five calls cost 2 + 2 + 2 + 1 + 1 = 8 cents, exactly the limit, so they all run. The sixth would push spend to 13, so it is refused. Notice we check *before* spending, so the limit is never exceeded. Also notice the budget happily let the `delete` run: budgets and approval gates solve different problems.\n\n### Guardrail 2: loop detection\n\nThe script searched for the same thing three times. An identical call (same tool, same arguments) repeated more than twice is a strong sign the agent is stuck.\n\n```python\nfrom collections import Counter\n\ndef detect_loop(script, max_repeats=2):\n    seen = Counter()\n    for step, (tool, args, _) in enumerate(script, 1):\n        signature = (tool, tuple(sorted(args.items())))\n        seen[signature] += 1\n        if seen[signature] > max_repeats:\n            return f\"loop at step {step}: {tool}{args} called {seen[signature]} times\"\n    return \"no loop\"\n\nprint(detect_loop(SCRIPT))\nprint(detect_loop(SCRIPT[3:]))\n```\n\n```text\nloop at step 3: search{'q': 'refund policy'} called 3 times\nno loop\n```\n\nThe signature turns the arguments dict into something hashable (a sorted tuple of items) so a `Counter` can count it. Real agents often feed the loop message back to the model (\"you already tried this; try something different\") before hard-stopping.\n\n### Guardrail 3: an approval gate\n\nSome tools should never run unattended. Mark them, and require an explicit yes. Here the approver is a function we control, standing in for a human click.\n\n```python\nRISKY = {\"delete\", \"send_email\", \"transfer_funds\"}\n\ndef guarded_call(tool, args, approver):\n    if tool in RISKY and not approver(tool, args):\n        return f\"BLOCKED {tool}{args}: not approved\"\n    return f\"ran {tool}{args}\"\n\ndeny_all = lambda tool, args: False\nallow_temp = lambda tool, args: args.get(\"path\", \"\").startswith(\"tmp/\")\n\nprint(guarded_call(\"search\", {\"q\": \"x\"}, deny_all))\nprint(guarded_call(\"delete\", {\"path\": \"orders.db\"}, deny_all))\nprint(guarded_call(\"delete\", {\"path\": \"tmp/cache\"}, allow_temp))\nprint(guarded_call(\"delete\", {\"path\": \"orders.db\"}, allow_temp))\n```\n\n```text\nran search{'q': 'x'}\nBLOCKED delete{'path': 'orders.db'}: not approved\nran delete{'path': 'tmp/cache'}\nBLOCKED delete{'path': 'orders.db'}: not approved\n```\n\n> **Honest caveat:** these guards are blunt on purpose. A budget stops runaway cost but cannot tell a productive long task from a stuck one; loop detection by exact match misses an agent that varies its query slightly each time; and an approval gate is only as good as the list of risky tools, so anything you forgot to mark runs unchecked. Treat guardrails as seat belts, not autopilot: log every blocked call, and review those logs to tune the limits."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_12",
+      "content": "An agent loop has no built-in sense of 'enough'. Three tiny guardrails fix that: a step and cost budget, a detector for repeated identical calls, and an approval gate in front of risky tools.",
+      "visual_theme": "shield"
+    },
+    {
+      "type": "FlowDiagram",
+      "id": "flow_12",
+      "nodes": [
+        "Agent proposes call",
+        "Budget left?",
+        "Repeated too often?",
+        "Risky tool approved?",
+        "Run tool"
+      ],
+      "edges": [
+        {
+          "from": "Agent proposes call",
+          "to": "Budget left?"
+        },
+        {
+          "from": "Budget left?",
+          "to": "Repeated too often?"
+        },
+        {
+          "from": "Repeated too often?",
+          "to": "Risky tool approved?"
+        },
+        {
+          "from": "Risky tool approved?",
+          "to": "Run tool"
+        }
+      ],
+      "description": "Every proposed tool call passes three checks before it runs; failing any check stops or blocks it"
+    },
+    {
+      "type": "CodeStepper",
+      "id": "code_12",
+      "steps": [
+        {
+          "line": "if spent + cost > max_cents: break",
+          "explanation": {
+            "en": "Check the budget before spending so the limit is never exceeded."
+          }
+        },
+        {
+          "line": "signature = (tool, tuple(sorted(args.items())))",
+          "explanation": {
+            "en": "Make the call hashable so identical calls can be counted."
+          }
+        },
+        {
+          "line": "if seen[signature] > max_repeats:",
+          "explanation": {
+            "en": "More than a couple of identical calls means the agent is stuck."
+          }
+        },
+        {
+          "line": "if tool in RISKY and not approver(tool, args):",
+          "explanation": {
+            "en": "Risky tools need an explicit yes before they run."
+          }
+        },
+        {
+          "line": "return f\"BLOCKED ...\"",
+          "explanation": {
+            "en": "Blocked calls return a clear message the agent (and your logs) can see."
+          }
+        }
+      ]
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp_12",
+      "left": {
+        "label": "No guardrails",
+        "code": "search x3 (same), read,\ndelete orders.db, summarize\n-> all run, 13 cents, database gone"
+      },
+      "right": {
+        "label": "With guardrails",
+        "code": "loop flagged at step 3\ndelete orders.db: BLOCKED\nbudget stops summarize at 8 cents"
+      }
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term_12",
+      "output": [
+        "ran search{'q': 'x'}",
+        "BLOCKED delete{'path': 'orders.db'}: not approved",
+        "ran delete{'path': 'tmp/cache'}",
+        "BLOCKED delete{'path': 'orders.db'}: not approved"
+      ]
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write `within_budget(costs, limit)` returning how many calls from `costs` can run in order before the running total would exceed `limit`. For costs `[2, 2, 3, 1]` with limit 6 it is `2`; with limit 8 it is `3`; with limit 1 it is `0`."
+      },
+      "starter_code": "def within_budget(costs, limit):\n    spent = 0\n    count = 0\n    # for cost in costs:\n    #     if spent + cost > limit:\n    #         break\n    #     spent += cost\n    #     count += 1\n    return count\n\nprint(within_budget([2, 2, 3, 1], 6))\nprint(within_budget([2, 2, 3, 1], 8))\nprint(within_budget([2, 2, 3, 1], 1))",
+      "hints": [
+        "Check spent + cost > limit before adding",
+        "break at the first call that does not fit; later cheaper ones must not sneak through",
+        "With limit 6: 2 + 2 = 4 fits, adding 3 makes 7, so stop at 2"
+      ],
+      "expected_output": "2\n4\n0"
+    },
+    {
+      "instruction": {
+        "en": "Write `first_loop(calls, max_repeats)` that takes a list of `(tool, arg)` pairs and returns the 1-based step number where some pair is seen for the `max_repeats + 1`-th time, or `None` if no loop. Expected prints: `4`, then `None`."
+      },
+      "starter_code": "from collections import Counter\n\ndef first_loop(calls, max_repeats):\n    seen = Counter()\n    # for step, call in enumerate(calls, 1):\n    #     seen[call] += 1\n    #     if seen[call] > max_repeats:\n    #         return step\n    return None\n\nstuck = [(\"search\", \"a\"), (\"read\", \"b\"), (\"search\", \"a\"), (\"search\", \"a\"), (\"read\", \"b\")]\nfine = [(\"search\", \"a\"), (\"search\", \"b\"), (\"read\", \"a\")]\nprint(first_loop(stuck, 2))\nprint(first_loop(fine, 2))",
+      "hints": [
+        "Tuples are hashable, so a Counter can count each (tool, arg) pair",
+        "Return the step as soon as a count exceeds max_repeats",
+        "('search', 'a') appears at steps 1, 3 and 4; the third sighting is step 4"
+      ],
+      "expected_output": "4\nNone"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "agent_budgets",
+      "loop_detection",
+      "approval_gates",
+      "guardrails",
+      "counter_hashing"
+    ],
+    "concepts_required": [
+      "agent_tool_loop",
+      "python_functions",
+      "dictionaries",
+      "tuples"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 30,
+    "category": "ai_engineering",
+    "path_memberships": [
+      "ai_engineering",
+      "ai_agents"
+    ]
+  },
+  "generated": false
+}
