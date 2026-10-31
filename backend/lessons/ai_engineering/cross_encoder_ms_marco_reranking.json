@@ -1,0 +1,127 @@
+{
+  "id": "cross_encoder_ms_marco_reranking",
+  "topic": "cross_encoder_ms_marco_reranking",
+  "track": "ai_engineering",
+  "module": "trending_ai",
+  "order": 54,
+  "title": {
+    "en": "Retrieve Then Rerank: Sharpening RAG with Cross-Encoders"
+  },
+  "description": {
+    "en": "Learn why vector search alone leaves relevance on the table, and use cross-encoder/ms-marco-MiniLM-L6-v2 to add a precise reranking stage to a retrieve-then-rerank RAG pipeline."
+  },
+  "xp_reward": 65,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Retrieve Then Rerank: The Second Opinion Your RAG Pipeline Needs\n\nVanakkam! Vaathiyaar here. You've built a RAG pipeline with a bi-encoder like `all-MiniLM-L6-v2` — it embeds your query and every document into the same vector space, then cosine similarity finds the closest matches. Fast, scalable, works on millions of documents. But here's the catch: it embeds the query and the document *separately*, so it never actually looks at them together. It's judging two strangers by their passport photos instead of watching them have a conversation.\n\nThat's where `cross-encoder/ms-marco-MiniLM-L6-v2` comes in. A cross-encoder feeds the query and a candidate document into the model *together*, as one input, and outputs a single relevance score. It can't be used to index millions of documents (too slow — no precomputed embeddings), but it's devastatingly accurate at judging a shortlist. The standard pattern is: **bi-encoder retrieves top-50, cross-encoder reranks to the true top-5.**\n\n### Bi-Encoder vs Cross-Encoder\n\n| | Bi-Encoder (retrieval) | Cross-Encoder (reranking) |\n|---|---|---|\n| Input | Query and doc embedded separately | Query + doc fed together |\n| Speed | Fast — precompute doc embeddings once | Slow — scores one pair at a time |\n| Scale | Millions of documents | Dozens (a shortlist) |\n| Accuracy | Good recall, noisy ranking | High precision ranking |\n| Role in RAG | Stage 1: cast a wide net | Stage 2: pick the best catches |\n\n### The Two-Stage Pipeline\n\n```python\nfrom sentence_transformers import SentenceTransformer, CrossEncoder\n\nbi_encoder = SentenceTransformer(\"all-MiniLM-L6-v2\")\ncross_encoder = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")\n\nquery = \"How do I cancel my subscription?\"\ndocs = [\"Billing FAQ: cancellation steps...\", \"Refund policy overview...\", \"...\"]\n\n# Stage 1: fast retrieval with the bi-encoder (top-k by cosine similarity)\ncandidates = retrieve_top_k(bi_encoder, query, docs, k=20)\n\n# Stage 2: precise reranking with the cross-encoder\npairs = [(query, doc) for doc in candidates]\nscores = cross_encoder.predict(pairs)\n\nreranked = [doc for doc, _ in sorted(zip(candidates, scores),\n                                       key=lambda x: x[1], reverse=True)]\ntop_results = reranked[:5]\n```\n\nThe cross-encoder was trained on the MS MARCO dataset — real search-engine query/passage pairs labeled for relevance — so it has learned the subtle signal a bi-encoder misses: does this *specific* passage actually answer *this* question, not just share similar topic words.\n\n### Why Not Skip Retrieval and Cross-Encode Everything?\n\nBecause a cross-encoder has no precomputed index — every single scoring call reprocesses the full query+document pair through the transformer. Running it against your entire corpus would be far too slow for a live request. Retrieval exists to narrow a million documents down to a shortlist cheaply; reranking exists to get that shortlist exactly right.\n\n> **Key Insight:** Bi-encoders and cross-encoders aren't competitors — they're a relay team. The bi-encoder's job is recall at scale; the cross-encoder's job is precision on a shortlist. Chaining them is what turns a rough RAG pipeline into one that actually surfaces the *right* passage, not just a topically similar one."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "content": {
+        "en": "Your RAG pipeline just retrieved 20 'similar' documents for a user's question. But similar isn't the same as relevant. Let's add a second-opinion stage that actually reads the query and each document together before deciding what's best."
+      }
+    },
+    {
+      "type": "CodeStepper",
+      "steps": [
+        {
+          "code": "from sentence_transformers import CrossEncoder",
+          "explanation": "Import CrossEncoder — a different class from SentenceTransformer. It scores pairs, it doesn't produce standalone embeddings."
+        },
+        {
+          "code": "model = CrossEncoder(\"cross-encoder/ms-marco-MiniLM-L6-v2\")",
+          "explanation": "Load the pretrained cross-encoder, fine-tuned on MS MARCO query/passage relevance pairs."
+        },
+        {
+          "code": "query = \"How do I reset my password?\"",
+          "explanation": "This is the user's question from the retrieval stage — already run through the bi-encoder to get a shortlist."
+        },
+        {
+          "code": "candidates = [\n    \"Password reset: go to Settings > Security > Reset Password.\",\n    \"Our refund policy covers 30 days from purchase.\",\n    \"To change your email, visit Account Settings.\",\n]",
+          "explanation": "A shortlist of 3 documents the bi-encoder already flagged as 'topically close' to the query."
+        },
+        {
+          "code": "pairs = [(query, doc) for doc in candidates]",
+          "explanation": "Cross-encoders score PAIRS, not single texts — so we build (query, doc) tuples for every candidate."
+        },
+        {
+          "code": "scores = model.predict(pairs)",
+          "explanation": "One forward pass per pair. Each score reflects how well that specific document answers that specific query."
+        },
+        {
+          "code": "ranked = sorted(zip(candidates, scores), key=lambda x: x[1], reverse=True)",
+          "explanation": "Sort candidates by their cross-encoder score, highest relevance first."
+        },
+        {
+          "code": "best_doc, best_score = ranked[0]\nprint(best_doc)",
+          "explanation": "The password-reset document should win — even though the refund-policy doc might have looked 'similar enough' to a bi-encoder."
+        }
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "content": {
+        "en": "Retrieve wide, rerank sharp — that's a production RAG pipeline!"
+      }
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write a function `rerank(candidates, scores)` that takes a list of candidate document strings and a parallel list of cross-encoder relevance scores (floats), and returns the documents sorted from most to least relevant (highest score first). Do not modify the input lists."
+      },
+      "starter_code": "def rerank(candidates, scores):\n    # Pair each candidate with its score, sort by score descending,\n    # and return just the documents in the new order.\n    pass\n",
+      "expected_output": "['Password reset: go to Settings > Security > Reset Password.', 'To change your email, visit Account Settings.', 'Our refund policy covers 30 days from purchase.']",
+      "hints": {
+        "en": [
+          "Use zip(candidates, scores) to pair them up before sorting.",
+          "sorted(..., key=..., reverse=True) sorts highest score first.",
+          "After sorting the pairs, pull out just the document with a list comprehension or a generator expression."
+        ]
+      },
+      "test_code": "candidates = [\n    'Our refund policy covers 30 days from purchase.',\n    'Password reset: go to Settings > Security > Reset Password.',\n    'To change your email, visit Account Settings.',\n]\nscores = [0.12, 0.91, 0.34]\nresult = rerank(candidates, scores)\nassert result == [\n    'Password reset: go to Settings > Security > Reset Password.',\n    'To change your email, visit Account Settings.',\n    'Our refund policy covers 30 days from purchase.',\n], f'Unexpected order: {result}'\nassert candidates[0] == 'Our refund policy covers 30 days from purchase.', 'Input list was mutated'\nprint('All tests passed!')",
+      "difficulty": "core"
+    },
+    {
+      "instruction": {
+        "en": "Write a function `filter_and_rerank(candidates, scores, threshold, top_k)` that discards any (document, score) pair where score is below `threshold`, sorts the remaining documents by score descending, and returns at most `top_k` documents. This models a production reranker that refuses to return low-confidence matches even if asked for more results than are actually relevant."
+      },
+      "starter_code": "def filter_and_rerank(candidates, scores, threshold, top_k):\n    # 1. Keep only pairs where score >= threshold\n    # 2. Sort the survivors by score, highest first\n    # 3. Return at most top_k documents\n    pass\n",
+      "expected_output": "['Password reset: go to Settings > Security > Reset Password.', 'To change your email, visit Account Settings.']",
+      "hints": {
+        "en": [
+          "Filter first with a list comprehension and an if condition on the score.",
+          "Reuse the same sort-by-score pattern from the rerank challenge.",
+          "Slicing a list with [:top_k] safely returns fewer items if there aren't enough survivors."
+        ]
+      },
+      "test_code": "candidates = [\n    'Our refund policy covers 30 days from purchase.',\n    'Password reset: go to Settings > Security > Reset Password.',\n    'To change your email, visit Account Settings.',\n    'Our office is closed on public holidays.',\n]\nscores = [0.12, 0.91, 0.55, 0.03]\nresult = filter_and_rerank(candidates, scores, threshold=0.3, top_k=2)\nassert result == [\n    'Password reset: go to Settings > Security > Reset Password.',\n    'To change your email, visit Account Settings.',\n], f'Unexpected result: {result}'\nresult_empty = filter_and_rerank(candidates, scores, threshold=0.99, top_k=5)\nassert result_empty == [], 'Should return empty list when nothing clears the threshold'\nprint('All tests passed!')"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "cross-encoder reranking",
+      "retrieve-then-rerank architecture",
+      "bi-encoder vs cross-encoder tradeoffs",
+      "MS MARCO relevance scoring",
+      "two-stage RAG pipelines"
+    ],
+    "concepts_required": [
+      "sentence embeddings",
+      "cosine similarity",
+      "basic RAG / semantic search",
+      "python sorting and list comprehensions"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "code_challenge",
+    "estimated_minutes": 18,
+    "category": "rag_and_retrieval",
+    "path_memberships": [
+      "ai_engineering",
+      "rag_systems",
+      "trending_ai"
+    ]
+  },
+  "generated": true
+}
