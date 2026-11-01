@@ -116,20 +116,7 @@ def _next_lesson(conn, user_id: str) -> Optional[str]:
     """The lowest-order drill-backed lesson the learner has not completed (python fundamentals first)."""
     done = unlocks.completed_lessons(conn, user_id)
     backed = unlocks.drill_backed_topics()
-    best = None
-    import glob
-    for path in glob.glob(str(unlocks.LESSONS_DIR / "*" / "*.json")):
-        try:
-            with open(path, encoding="utf-8") as fh:
-                d = json.load(fh)
-        except Exception:
-            continue
-        if d.get("topic") not in backed or d.get("id") in done:
-            continue
-        rank = (0 if d.get("track") == "python_fundamentals" else 1 if d.get("track") == "dsa" else 2, d.get("order") or 99, d.get("id"))
-        if best is None or rank < best[0]:
-            best = (rank, d["id"])
-    return best[1] if best else None
+    return next((lid for _rank, lid, topic in unlocks.lesson_order() if topic in backed and lid not in done), None)
 
 
 def _is_super_admin(conn, user_id: str) -> bool:
