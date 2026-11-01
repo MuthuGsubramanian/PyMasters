@@ -53,6 +53,26 @@ def lesson_topics() -> dict:
     return out
 
 
+@lru_cache(maxsize=None)
+def lesson_order() -> tuple:
+    """(rank, lesson_id, topic) for every lesson on disk, best-first (python fundamentals, then DSA, then the
+    rest; by order, then id). Cached like lesson_topics(): lesson files only change with a deploy, and
+    re-parsing all of them per request froze the whole app on the 1 GB production VM."""
+    out = []
+    for path in glob.glob(str(LESSONS_DIR / "*" / "*.json")):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                d = json.load(fh)
+        except Exception:
+            continue
+        if not d.get("id"):
+            continue
+        track = d.get("track")
+        rank = (0 if track == "python_fundamentals" else 1 if track == "dsa" else 2, d.get("order") or 99, d["id"])
+        out.append((rank, d["id"], d.get("topic")))
+    return tuple(sorted(out))
+
+
 def _lessons_for(topics) -> list:
     wanted = set(topics)
     return sorted(lid for lid, t in lesson_topics().items() if t in wanted)
