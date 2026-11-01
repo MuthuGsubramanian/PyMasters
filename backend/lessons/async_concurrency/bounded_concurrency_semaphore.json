@@ -1,0 +1,167 @@
+{
+  "id": "bounded_concurrency_semaphore",
+  "topic": "bounded_concurrency_semaphore",
+  "track": "async_concurrency",
+  "module": "practice",
+  "order": 3,
+  "title": {
+    "en": "Bounded Concurrency: Semaphores and Rate-Limited Gathers"
+  },
+  "description": {
+    "en": "gather() on 10,000 coroutines starts 10,000 things at once, which can crash a server or get you banned by an API. An asyncio.Semaphore is a counter of permits that caps how many run at the same time. Measure the peak concurrency for real."
+  },
+  "xp_reward": 95,
+  "next_unlock": "asyncio_queue_workers",
+  "story_variants": {
+    "en": "## The Stampede Problem\n\n`asyncio.gather(*(fetch(u) for u in urls))` is wonderful for ten URLs. For ten thousand it is a stampede: ten thousand sockets open at once, the remote API answers `429 Too Many Requests`, your own process runs out of file descriptors. Async makes concurrency *cheap*, not *free*. You need a way to say \"run all of these, but never more than N at a time\".\n\n## A Semaphore Is a Bag of Permits\n\nAn `asyncio.Semaphore(3)` holds three permits. `async with sem:` takes one permit on entry and gives it back on exit. If no permit is left, the coroutine **waits** (it suspends, it does not block the loop) until another coroutine finishes and returns its permit.\n\n```python\nsem = asyncio.Semaphore(3)\n\nasync def fetch(i):\n    async with sem:          # at most 3 coroutines are inside this block\n        await asyncio.sleep(0.01)\n        return i * i\n```\n\nAll ten coroutines are *created* immediately, and `gather` still schedules them all. But only three can be past the `async with` line at any moment. The rest are parked, costing almost nothing.\n\n## Don't Trust It, Measure It\n\nYou can prove the cap works by keeping a counter. Increase it when a task enters the guarded block, decrease it when it leaves, and remember the largest value ever seen (the **peak**):\n\n```python\nrunning = peak = 0\nasync with sem:\n    running += 1\n    peak = max(peak, running)\n    await asyncio.sleep(0.01)\n    running -= 1\n```\n\nWith a limit of 3 and 10 tasks the peak is exactly 3. Without the semaphore it would be 10. Because asyncio is single-threaded and only switches at `await`, the counter updates are safe without a lock.\n\n## Where Do You Create the Semaphore?\n\nCreate it **inside** the running event loop (for example inside `main()`), and share one instance across all the tasks you want to limit. A semaphore per task limits nothing. In older Pythons (before 3.10) creating one at import time could bind it to the wrong loop, which is one more reason to build it inside `main()`.\n\n## Semaphore vs Pool vs Rate Limit\n\nA semaphore limits *how many are in flight*, not *how many per second*. If each call takes 10 ms and the limit is 3, you get roughly 300 calls a second. If the API allows 100 per second you also need a delay or a token bucket. And `BoundedSemaphore` raises if you release more than you acquired, which catches bugs; plain `Semaphore` silently lets the count grow.\n\n> **Key idea:** `gather` starts everything; a shared `asyncio.Semaphore(n)` used with `async with` makes the extra coroutines wait for a permit so at most `n` run at once. Create it inside the loop, share one instance, and verify the cap with a peak counter."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "traffic_gate",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "core_ideas",
+      "nodes": [
+        {
+          "label": "Semaphore",
+          "children": [
+            "Semaphore(n) = n permits",
+            "async with sem: take a permit, release on exit",
+            "No permit -> coroutine suspends, loop keeps running",
+            "Limits in-flight count, not calls per second",
+            "One shared instance, created inside the loop"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "before_after",
+      "left": {
+        "label": "gather alone: all 10 coroutines run at once (peak = 10)",
+        "result": false
+      },
+      "right": {
+        "label": "gather + Semaphore(3): extra coroutines wait for a permit (peak = 3)",
+        "result": true
+      },
+      "description": {
+        "en": "Same ten tasks. The semaphore changes only how many may be inside the guarded block simultaneously."
+      }
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "tasks=10 limit=3",
+        "peak without semaphore: 10",
+        "peak with semaphore:    3"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write async def run(n_tasks, limit) that starts n_tasks coroutines with asyncio.gather. Each one must enter a shared asyncio.Semaphore(limit), record the peak number of coroutines inside the guarded block at once, sleep 0.01 seconds, and leave. Return the peak. Print run(10, 3) and run(10, 1). Expected output: 3\n1"
+      },
+      "starter_code": "import asyncio\n\nasync def run(n_tasks, limit):\n    running = 0\n    peak = 0\n    # TODO: create ONE asyncio.Semaphore(limit) here (inside the coroutine)\n\n    async def worker():\n        nonlocal running, peak\n        # TODO: wrap the body in `async with sem:`\n        running += 1\n        peak = max(peak, running)\n        await asyncio.sleep(0.01)\n        running -= 1\n\n    await asyncio.gather(*(worker() for _ in range(n_tasks)))\n    return peak\n\nprint(asyncio.run(run(10, 3)))\nprint(asyncio.run(run(10, 1)))\n",
+      "expected_output": "3\n1",
+      "hints": {
+        "en": [
+          "Create the semaphore once, before defining worker: sem = asyncio.Semaphore(limit).",
+          "Indent the four lines of the body under `async with sem:` so the counter only counts tasks holding a permit.",
+          "With limit 1 the tasks run one after another, so the peak is 1."
+        ]
+      },
+      "test_code": "assert asyncio.run(run(10, 3)) == 3\nassert asyncio.run(run(10, 1)) == 1\nassert asyncio.run(run(2, 5)) == 2"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does `async with sem:` do when all permits of the Semaphore are taken?"
+      },
+      "options": {
+        "en": [
+          "Raises an exception",
+          "Blocks the whole event loop",
+          "Suspends that coroutine until a permit is released, while other coroutines keep running",
+          "Silently skips the block"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "You create a new Semaphore(3) inside every task. How many tasks are limited?"
+      },
+      "options": {
+        "en": [
+          "At most 3 overall",
+          "None - each task has its own private semaphore, so nothing is shared",
+          "Exactly 3 per second",
+          "Only the first three"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A semaphore of 3 and calls taking 10 ms each. What does it guarantee?"
+      },
+      "options": {
+        "en": [
+          "No more than 3 calls in flight at once",
+          "No more than 3 calls per second",
+          "Calls finish in order",
+          "Calls never fail"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why is the peak counter safe without a lock here?"
+      },
+      "options": {
+        "en": [
+          "The GIL makes everything atomic",
+          "asyncio switches tasks only at await points and the counter updates contain no await",
+          "Counters are thread-local",
+          "It is not safe"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "asyncio_semaphore",
+      "bounded_concurrency",
+      "backpressure",
+      "gather_limits",
+      "peak_concurrency_measurement"
+    ],
+    "concepts_required": [
+      "awaiting_and_gather"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "async",
+    "path_memberships": []
+  },
+  "generated": false
+}

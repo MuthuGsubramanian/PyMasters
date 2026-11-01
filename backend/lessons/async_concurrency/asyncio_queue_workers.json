@@ -1,0 +1,167 @@
+{
+  "id": "asyncio_queue_workers",
+  "topic": "asyncio_queue_workers",
+  "track": "async_concurrency",
+  "module": "practice",
+  "order": 4,
+  "title": {
+    "en": "Producer-Consumer with asyncio.Queue and Worker Pools"
+  },
+  "description": {
+    "en": "Instead of one task per item, start a fixed pool of workers that pull jobs from an asyncio.Queue. Learn put/get, task_done/join, and the sentinel pattern for a clean shutdown, with results you can verify."
+  },
+  "xp_reward": 95,
+  "next_unlock": "to_thread_blocking_calls",
+  "story_variants": {
+    "en": "## One Task per Item Doesn't Scale\n\nThe semaphore pattern creates one coroutine per job and makes most of them wait. That is fine for thousands of jobs, but for a stream of work (a crawler discovering links, a feed of events) you do not even know the job count upfront. The classic answer is **producer-consumer**: producers put jobs on a queue, a small fixed pool of **workers** takes them off.\n\n## The Queue API in Four Calls\n\n`asyncio.Queue` is the async-friendly cousin of `queue.Queue`:\n\n- `await q.put(item)` adds a job (waits if a `maxsize` queue is full, which gives you **backpressure**).\n- `await q.get()` removes a job (waits if the queue is empty).\n- `q.task_done()` tells the queue you finished one job.\n- `await q.join()` waits until every job that was put has been marked done.\n\n```python\nasync def worker(q, results):\n    while True:\n        item = await q.get()\n        results.append(item * item)\n        q.task_done()\n```\n\n## Shutting Workers Down\n\nA worker loop with `while True` never ends by itself. Two clean options: cancel the worker tasks after `await q.join()`, or put one **sentinel** (commonly `None`) per worker on the queue so each worker sees it and returns. The sentinel route lets a worker finish cleanup code instead of being interrupted:\n\n```python\nitem = await q.get()\nif item is None:\n    q.task_done()\n    return\n```\n\nForget `task_done()` for the sentinel and `join()` hangs forever, a very common bug.\n\n## Order of Results\n\nFour workers finish jobs at different moments, so results arrive in **completion order**, not submission order. If order matters, put `(index, item)` on the queue and sort the results at the end. Sorting by index is deterministic no matter how the workers interleave.\n\n## How Many Workers?\n\nFor I/O-bound jobs the workers number is your concurrency limit, just like the semaphore. Each worker handles one job at a time, so 4 workers means at most 4 in flight. Add `maxsize` to the queue so a fast producer cannot fill memory while workers are slow.\n\n> **Key idea:** A fixed pool of workers looping on `await q.get()` bounds concurrency and handles streams. Call `task_done()` for every `get()` (including sentinels), `join()` to wait for completion, put one `None` per worker to stop them, and sort `(index, result)` pairs if order matters."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "assembly_line",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "core_ideas",
+      "nodes": [
+        {
+          "label": "asyncio.Queue",
+          "children": [
+            "put / get wait when full / empty",
+            "task_done once per get",
+            "join() waits for all jobs done",
+            "None sentinel per worker = clean exit",
+            "maxsize gives backpressure"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "before_after",
+      "left": {
+        "label": "One task per job: unbounded tasks, unknown job count is awkward",
+        "result": false
+      },
+      "right": {
+        "label": "Worker pool + Queue: fixed concurrency, works for streams",
+        "result": true
+      },
+      "description": {
+        "en": "Both finish the work. The queue version caps concurrency and handles jobs that arrive over time."
+      }
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "jobs=8 workers=3",
+        "results sorted by index: [0, 1, 4, 9, 16, 25, 36, 49]",
+        "every get() matched by a task_done()"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Complete process(jobs, n_workers). Put (index, value) pairs on an asyncio.Queue, then one None sentinel per worker. Each worker squares values, appends (index, value*value) to a shared list, and returns on None. Call task_done for every get, await join, gather the workers, and return the squares sorted by index. Print process([0,1,2,3,4,5,6,7], 3). Expected output: [0, 1, 4, 9, 16, 25, 36, 49]"
+      },
+      "starter_code": "import asyncio\n\nasync def worker(q, results):\n    while True:\n        item = await q.get()\n        # TODO: if item is None -> call q.task_done() and return\n        index, value = item\n        await asyncio.sleep(0.001)\n        results.append((index, value * value))\n        q.task_done()\n\nasync def process(jobs, n_workers):\n    q = asyncio.Queue()\n    results = []\n    workers = [asyncio.create_task(worker(q, results)) for _ in range(n_workers)]\n    for i, v in enumerate(jobs):\n        await q.put((i, v))\n    # TODO: put one None sentinel per worker\n    await q.join()\n    await asyncio.gather(*workers)\n    # TODO: return the squares ordered by index\n    return results\n\nprint(asyncio.run(process([0, 1, 2, 3, 4, 5, 6, 7], 3)))\n",
+      "expected_output": "[0, 1, 4, 9, 16, 25, 36, 49]",
+      "hints": {
+        "en": [
+          "Inside worker, check `if item is None:` right after get(); call q.task_done() before return or join() will hang.",
+          "After the job loop: `for _ in range(n_workers): await q.put(None)`.",
+          "Finish with `return [v for _, v in sorted(results)]` - sorting tuples sorts by index first."
+        ]
+      },
+      "test_code": "assert asyncio.run(process([3, 1, 2], 2)) == [9, 1, 4]\nassert asyncio.run(process([], 2)) == []\nassert asyncio.run(process(list(range(20)), 5)) == [i * i for i in range(20)]"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "A worker gets the None sentinel and returns without calling task_done(). What happens at `await q.join()`?"
+      },
+      "options": {
+        "en": [
+          "It returns immediately",
+          "It waits forever because one item is never marked done",
+          "It raises ValueError",
+          "The queue discards the sentinel"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does a queue with maxsize=10 do when a producer calls `await q.put(x)` and the queue is full?"
+      },
+      "options": {
+        "en": [
+          "Drops x",
+          "Raises QueueFull",
+          "Suspends the producer until a worker frees a slot (backpressure)",
+          "Grows beyond 10"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why attach an index to each job?"
+      },
+      "options": {
+        "en": [
+          "Queues require tuples",
+          "Workers finish in completion order, so the index lets you restore submission order",
+          "It makes workers faster",
+          "To avoid task_done"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "With 4 workers on an I/O-bound queue, what is the maximum number of jobs in flight?"
+      },
+      "options": {
+        "en": [
+          "4",
+          "1",
+          "Unlimited",
+          "The queue maxsize"
+        ]
+      },
+      "correct": 0
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "asyncio_queue",
+      "producer_consumer",
+      "worker_pool",
+      "sentinel_shutdown",
+      "task_done_join"
+    ],
+    "concepts_required": [
+      "bounded_concurrency_semaphore"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "async",
+    "path_memberships": []
+  },
+  "generated": false
+}

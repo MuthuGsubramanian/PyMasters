@@ -1,0 +1,167 @@
+{
+  "id": "to_thread_blocking_calls",
+  "topic": "to_thread_blocking_calls",
+  "track": "async_concurrency",
+  "module": "practice",
+  "order": 5,
+  "title": {
+    "en": "Don't Freeze the Loop: asyncio.to_thread for Blocking Calls"
+  },
+  "description": {
+    "en": "One blocking call inside a coroutine stalls every other task. Use time-based ticks to prove it, then fix it with asyncio.to_thread so a blocking function runs in a worker thread while the event loop keeps going."
+  },
+  "xp_reward": 95,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Silent Killer\n\nYou can write perfectly valid `async def` code and still freeze it. The event loop is **one thread**. If a coroutine calls `time.sleep(0.05)`, or `requests.get(...)`, or reads a big file with plain `open()`, that thread is stuck and **no other coroutine can run** until the call returns. Nothing crashes, it just gets slow, which makes it hard to notice.\n\n## Make It Visible with a Heartbeat\n\nRun a tiny coroutine that counts how many times it wakes up while another job is working:\n\n```python\nasync def heartbeat(stop):\n    ticks = 0\n    while not stop.is_set():\n        await asyncio.sleep(0.01)\n        ticks += 1\n    return ticks\n```\n\nIf the loop is healthy a 0.1 s job lets the heartbeat tick about ten times. If the job blocks the loop with `time.sleep(0.1)`, the heartbeat gets **zero or one** tick, because the loop could not run it. The tick count is a direct measurement of how responsive the loop stayed.\n\n## The Fix: asyncio.to_thread\n\n`await asyncio.to_thread(func, *args)` (Python 3.9+) runs a normal blocking function in a worker thread and hands you the result when it finishes. The coroutine awaits, so the loop is free to run other tasks in the meantime. The function itself stays plain synchronous code, no rewrite needed.\n\n```python\nresult = await asyncio.to_thread(blocking_job, 0.1)\n```\n\nThis works because blocking I/O and `time.sleep` **release the GIL** while waiting, so the loop thread can keep running.\n\n## Caveats, Honestly\n\n1. **CPU-bound work does not get faster.** A pure-Python loop in a thread still holds the GIL and can starve the loop; use `ProcessPoolExecutor` (via `loop.run_in_executor`) for that.\n2. The default thread pool is limited in size (`min(32, cpu_count + 4)`), so thousands of simultaneous `to_thread` calls queue up. Combine with a semaphore if needed.\n3. Thread-safety is now your problem: the function may touch shared state while the loop does too. Pass data in, return data out.\n4. Timing-based demos depend on the OS scheduler. The lesson's test asserts only wide margins for that reason.\n\n> **Key idea:** A blocking call in a coroutine freezes the one-thread event loop. Measure it with a heartbeat, and move the call off the loop with `await asyncio.to_thread(func, ...)`. It helps for blocking I/O, not for CPU-bound Python."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "frozen_loop",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "core_ideas",
+      "nodes": [
+        {
+          "label": "to_thread",
+          "children": [
+            "Blocking call in a coroutine = frozen loop",
+            "Heartbeat ticks measure responsiveness",
+            "await asyncio.to_thread(fn, *args) runs fn in a worker thread",
+            "Good for blocking I/O; not CPU-bound",
+            "Default pool is finite; thread-safety is on you"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "before_after",
+      "left": {
+        "label": "time.sleep(0.1) inside a coroutine: heartbeat barely ticks",
+        "result": false
+      },
+      "right": {
+        "label": "await asyncio.to_thread(time.sleep, 0.1): heartbeat keeps ticking",
+        "result": true
+      },
+      "description": {
+        "en": "The same 0.1 s of waiting. Only the second version lets the loop run other coroutines meanwhile."
+      }
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "blocking call on loop: heartbeat ticks <= 1",
+        "to_thread:               heartbeat ticks >= 5",
+        "loop stayed responsive: True"
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Complete measure(use_thread). It runs a heartbeat coroutine (wakes every 0.01 s and counts ticks) alongside a 0.1 s job. If use_thread is True the job must be run with await asyncio.to_thread(time.sleep, 0.1); otherwise call time.sleep(0.1) directly (blocking the loop). Return the heartbeat's tick count. The exact count varies by machine, so print only whether the loop stayed responsive: print(measure(False) <= 1, measure(True) >= 5). Expected output: True True"
+      },
+      "starter_code": "import asyncio\nimport time\n\nasync def measure(use_thread):\n    stop = asyncio.Event()\n    ticks = 0\n\n    async def heartbeat():\n        nonlocal ticks\n        while not stop.is_set():\n            await asyncio.sleep(0.01)\n            ticks += 1\n\n    hb = asyncio.create_task(heartbeat())\n    await asyncio.sleep(0)          # let the heartbeat start\n    # TODO: if use_thread: await asyncio.to_thread(time.sleep, 0.1)\n    #       else:          time.sleep(0.1)   (blocks the loop on purpose)\n    stop.set()\n    await hb\n    return ticks\n\nprint(asyncio.run(measure(False)) <= 1, asyncio.run(measure(True)) >= 5)\n",
+      "expected_output": "True True",
+      "hints": {
+        "en": [
+          "Use a plain if/else on use_thread.",
+          "The thread branch must be awaited: await asyncio.to_thread(time.sleep, 0.1).",
+          "In the blocking branch the heartbeat cannot run during sleep, so it ticks at most once afterwards."
+        ]
+      },
+      "test_code": "assert asyncio.run(measure(False)) <= 1\nassert asyncio.run(measure(True)) >= 5"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does time.sleep(0.1) inside an async function hurt other tasks?"
+      },
+      "options": {
+        "en": [
+          "It uses too much memory",
+          "The event loop is one thread, so it cannot run anything else while that call blocks",
+          "time.sleep is forbidden in asyncio",
+          "It cancels other tasks"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does `await asyncio.to_thread(fn, 1)` do?"
+      },
+      "options": {
+        "en": [
+          "Runs fn on the event loop thread",
+          "Runs fn in a worker thread and resumes the coroutine with its return value, leaving the loop free meanwhile",
+          "Spawns a new process",
+          "Converts fn into a coroutine that never blocks"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which workload does to_thread NOT speed up?"
+      },
+      "options": {
+        "en": [
+          "A blocking file read",
+          "A blocking HTTP call from a sync library",
+          "A pure-Python CPU-heavy loop, because the GIL is held",
+          "time.sleep"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why does the lesson assert wide tick margins instead of exact counts?"
+      },
+      "options": {
+        "en": [
+          "Heartbeat counts depend on OS scheduling and machine speed",
+          "asyncio randomises ticks",
+          "Python rounds tick counts",
+          "Exact counts are illegal"
+        ]
+      },
+      "correct": 0
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "asyncio_to_thread",
+      "blocking_calls_in_async",
+      "event_loop_responsiveness",
+      "thread_pool_executor_default",
+      "gil_release_on_io"
+    ],
+    "concepts_required": [
+      "bounded_concurrency_semaphore"
+    ],
+    "difficulty": "advanced",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "async",
+    "path_memberships": []
+  },
+  "generated": false
+}
