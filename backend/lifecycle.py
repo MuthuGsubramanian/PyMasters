@@ -16,9 +16,10 @@ Policy (2026-07-17):
     survives the account's deletion.
 
 Safety: the sweep defaults to dry_run=True (reports what WOULD happen,
-touches nothing). Real deletions additionally require the env switch
-LIFECYCLE_DELETE_ENABLED=1 — without it a live sweep sends notices and
-records state but logs `deletion_blocked` instead of deleting.
+touches nothing). Real deletions are ON by default (the 18+3-day policy in
+docs/superpowers/specs/2026-10-28-operations-design.md); set
+LIFECYCLE_DELETE_ENABLED=0 to keep a live sweep to notices + state only,
+logging `deletion_blocked` instead of deleting.
 """
 
 import os
