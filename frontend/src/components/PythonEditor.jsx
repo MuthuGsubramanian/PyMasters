@@ -63,16 +63,19 @@ const CodeMirrorEditor = lazy(() =>
         const { oneDark } = await import('@codemirror/theme-one-dark');
         const { keymap } = await import('@codemirror/view');
         const { indentUnit } = await import('@codemirror/language');
+        const { Prec } = await import('@codemirror/state');
 
         const CodeMirror = mod.default;
 
         function CMEditor({ value, onChange, onRun, readOnly, height, placeholder }) {
             const handleChange = useCallback((val) => onChange?.(val), [onChange]);
 
-            const runKeymap = keymap.of([{
+            // Prec.highest: basicSetup's default keymap binds Mod-Enter to insertBlankLine, which otherwise
+            // wins and Ctrl+Enter just adds a line instead of running.
+            const runKeymap = Prec.highest(keymap.of([{
                 key: 'Mod-Enter',
                 run: () => { onRun?.(); return true; },
-            }]);
+            }]));
 
             return (
                 <CodeMirror
