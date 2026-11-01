@@ -1,0 +1,15 @@
+[Unit]
+Description=PyMasters social bot tick (render ahead at night, publish what is due)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Documents/Development/PyMasters
+Environment=PYTHONPATH=%h/Documents/Development/PyMasters
+Environment=HF_HOME=/mnt/eternity-store/EternityModels/pymasters-social/hf
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+UnsetEnvironment=VIRTUAL_ENV
+ExecStart=%h/pymasters-ops/social-venv/bin/python -m socialbot tick
+TimeoutStartSec=3h
+Nice=10
+CPUWeight=40
