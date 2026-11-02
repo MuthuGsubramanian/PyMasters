@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User, Lock, Mail, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles, Building2, GraduationCap, School, Briefcase, Users, ChevronLeft, Linkedin, Github } from 'lucide-react';
 import clsx from 'clsx';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
+import { rememberReturnTo, takeReturnTo } from '../utils/returnTo';
 
 export default function Login() {
     useEffect(() => { document.title = 'Sign In — PyMasters'; }, []);
@@ -38,6 +39,7 @@ export default function Login() {
         // OAuth results arrive in the URL fragment (#gh_token=...) so the token never reaches server logs;
         // merge them in (query still read for backward compatibility).
         new URLSearchParams((window.location.hash || '').replace(/^#/, '')).forEach((v, k) => params.set(k, v));
+        if (params.get('next')) rememberReturnTo(params.get('next'));
         // Deep-link into signup mode: /login?mode=signup (target of the /signup
         // and /register redirect routes). Param absent = exactly today's behavior.
         if (params.get('mode') === 'signup') {
@@ -61,7 +63,7 @@ export default function Login() {
                     await new Promise((r) => setTimeout(r, 250));
                     login(data);
                     window.history.replaceState({}, '', '/login');
-                    navigate(data.onboarding_completed ? '/dashboard' : '/onboarding');
+                    navigate(data.onboarding_completed ? takeReturnTo('/dashboard') : '/onboarding');
                 } catch {
                     localStorage.removeItem('pm_user');
                     setError(`Could not complete ${providerLabel} sign-in. Please try again.`);
@@ -133,7 +135,7 @@ export default function Login() {
             if (isNewUser || !data.onboarding_completed) {
                 navigate('/onboarding');
             } else {
-                navigate('/dashboard');
+                navigate(takeReturnTo('/dashboard'));
             }
         } catch (err) {
             console.error("Auth Fail", err);
