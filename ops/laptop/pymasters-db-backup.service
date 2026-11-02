@@ -1,0 +1,7 @@
+[Unit]
+Description=PyMasters nightly production DB backup to the ops laptop
+After=network-online.target
+[Service]
+Type=oneshot
+ExecStart=%h/pymasters-ops/db_backup.sh
+TimeoutStartSec=600

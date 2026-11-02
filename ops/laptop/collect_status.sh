@@ -42,6 +42,8 @@ timeout 90 gcloud compute ssh pymasters-vm --project $APP --zone us-central1-a -
 sec "Backups"
 echo "- Litestream replica (gs://pymasters-app-db/vm): last write $(gcloud storage ls -l -r gs://pymasters-app-db/vm/ 2>/dev/null | grep -v TOTAL | sort -k2 | tail -1 | awk '{print $2}')"
 
+echo "- laptop nightly backup: $(tail -1 /mnt/eternity-store/EternityModels/pymasters-social/db-backups/backup.log 2>/dev/null || echo none)"
+
 sec "GCP cost guards"
 # Old Cloud Run services were deleted 2026-11-01 (prod is the VM); any service here is unexpected spend.
 cr=$(gcloud run services list $WA --project $APP --format='value(metadata.name,region)' 2>/dev/null | paste -sd';')
