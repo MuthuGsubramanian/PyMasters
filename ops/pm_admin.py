@@ -23,12 +23,14 @@ from pipeline.utils.secrets import load_secrets  # noqa: E402
 
 load_secrets()
 BASE = os.getenv("PYMASTERS_API", "https://pymasters.net").rstrip("/")
+# Cloudflare's Browser Integrity Check bans urllib's default "Python-urllib/x" agent (error 1010).
+USER_AGENT = "PyMasters-Ops/1.0 (+https://pymasters.net)"
 
 
 def _request(method: str, path: str, body=None, token: str | None = None):
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(BASE + path, data=data, method=method,
-                                 headers={"Content-Type": "application/json",
+                                 headers={"Content-Type": "application/json", "User-Agent": USER_AGENT,
                                           **({"Authorization": f"Bearer {token}"} if token else {})})
     try:
         with urllib.request.urlopen(req, timeout=120) as r:

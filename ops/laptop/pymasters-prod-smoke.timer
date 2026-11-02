@@ -1,0 +1,7 @@
+[Unit]
+Description=PyMasters production smoke at 07:30 IST (before the 08:00 triage and the 09:00 status email)
+[Timer]
+OnCalendar=*-*-* 07:30:00 Asia/Kolkata
+Persistent=true
+[Install]
+WantedBy=timers.target
