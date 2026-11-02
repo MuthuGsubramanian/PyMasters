@@ -179,6 +179,13 @@ def _community_scope_sql(conn, caller, col="u.id", requested_org_id=None):
 
 # ── Global leaderboard ──────────────────────────────────────────────────────
 
+# The seeded ops/QA service account (routes.admin.RESERVED_SERVICE_IDENTIFIERS) runs production
+# smoke tests; it is not a learner and stays out of public leaderboards and the member directory.
+_NOT_SERVICE = " AND COALESCE({p}username,'') <> 'claude-qa'"
+_NOT_SERVICE_U = _NOT_SERVICE.format(p="u.")
+_NOT_SERVICE_BARE = _NOT_SERVICE.format(p="")
+
+
 @router.get("/leaderboard/global")
 def global_leaderboard(
     scope: str = Query("xp", pattern="^(xp|streak)$"),
@@ -216,7 +223,7 @@ def global_leaderboard(
                        {_eff_streak} AS metric
                 FROM users u
                 LEFT JOIN user_streaks s ON s.user_id = u.id
-                WHERE COALESCE(u.is_blocked,0) = 0{sc_sql}
+                WHERE COALESCE(u.is_blocked,0) = 0{_NOT_SERVICE_U}{sc_sql}
                 ORDER BY metric DESC, points DESC, u.created_at ASC
             """
             pre_params = [_today, _yday]
@@ -226,7 +233,7 @@ def global_leaderboard(
                        COALESCE(u.points,0) AS points,
                        COALESCE(u.points,0) AS metric
                 FROM users u
-                WHERE COALESCE(u.is_blocked,0) = 0{sc_sql}
+                WHERE COALESCE(u.is_blocked,0) = 0{_NOT_SERVICE_U}{sc_sql}
                 ORDER BY metric DESC, u.created_at ASC
             """
             pre_params = []
@@ -251,7 +258,7 @@ def global_leaderboard(
 
         tc_sql, tc_params = _community_scope_sql(conn, caller, "id", org_id)
         total = conn.execute(
-            "SELECT COUNT(*) FROM users WHERE COALESCE(is_blocked,0)=0" + tc_sql, tc_params
+            "SELECT COUNT(*) FROM users WHERE COALESCE(is_blocked,0)=0" + _NOT_SERVICE_BARE + tc_sql, tc_params
         ).fetchone()[0]
 
         me = None
@@ -278,7 +285,7 @@ def global_leaderboard(
                     my_points, my_created = myrow[1], myrow[2]
                     rank = conn.execute(
                         "SELECT COUNT(*)+1 FROM users u LEFT JOIN user_streaks s ON s.user_id=u.id "
-                        "WHERE COALESCE(u.is_blocked,0)=0 AND ("
+                        "WHERE COALESCE(u.is_blocked,0)=0" + _NOT_SERVICE_U + " AND ("
                         f"{_eff_streak} > ? "
                         f"OR ({_eff_streak} = ? AND COALESCE(u.points,0) > ?) "
                         f"OR ({_eff_streak} = ? AND COALESCE(u.points,0) = ? AND u.created_at < ?)"
@@ -296,7 +303,7 @@ def global_leaderboard(
                 if myrow:
                     my_created = myrow[1]
                     rank = conn.execute(
-                        "SELECT COUNT(*)+1 FROM users WHERE COALESCE(is_blocked,0)=0 AND ("
+                        "SELECT COUNT(*)+1 FROM users WHERE COALESCE(is_blocked,0)=0" + _NOT_SERVICE_BARE + " AND ("
                         "COALESCE(points,0) > ? "
                         "OR (COALESCE(points,0) = ? AND created_at < ?)"
                         ")" + rsql,
@@ -326,7 +333,7 @@ def list_members(
     try:
         sc_sql, sc_params = _community_scope_sql(conn, caller, "u.id", org_id)
         params = list(sc_params)
-        where = "WHERE COALESCE(u.is_blocked,0) = 0" + sc_sql
+        where = "WHERE COALESCE(u.is_blocked,0) = 0" + _NOT_SERVICE_U + sc_sql
         if q.strip():
             # Escape LIKE metacharacters so the search term matches LITERALLY.
             # Usernames very commonly contain '_' (e.g. "data_science"), which
