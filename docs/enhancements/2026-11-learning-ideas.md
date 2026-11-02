@@ -13,4 +13,4 @@ Ranked by learning impact ÷ cost. ✅ = shipped.
 | 6 ✅ | **Misconception radar**: aggregate a learner's error types into a personal "watch out for" panel linked to lessons | Personalised remediation | Free |
 | 7 ✅ | **Boss battles**: end-of-module mixed challenge with a time-travel replay of the learner's own attempts | Interleaving + consolidation | Free |
 | 8 | **Code review by Vaathiyaar** on passed challenges (style, complexity, edge cases) | Beyond "it works" | LLM (rate-limited) |
-| 9 | **Concept remix games**: generate new Output Oracle / Bug Hunt items from lesson code via the social-bot quality gate on the laptop | Endless fresh practice | Laptop LLM batch, not the VM |
+| 9 ✅ | **Concept remix games**: generate new Output Oracle / Bug Hunt items from lesson code via the social-bot quality gate on the laptop | Endless fresh practice | Laptop LLM batch, not the VM |

@@ -1,5 +1,25 @@
 [
  {
+  "id": "ac_oo_3_0bf0a27a",
+  "source_id": "oo_3_0bf0a27a",
+  "level": 3,
+  "topic": "variables",
+  "kind": "choice",
+  "prompt": {
+   "code": "print(\"tensor\", \"buffer\", sep=\", \", end=\"!\")\nprint(\"socket\")"
+  },
+  "choices": [
+   "0",
+   "tensor, buffer!socket",
+   "Error",
+   "None"
+  ],
+  "answer": 1,
+  "misconception": "print_sep_end",
+  "why": "sep goes BETWEEN the values and end replaces the newline, so the next print continues on the same line.",
+  "lesson_id": "variables_intro"
+ },
+ {
   "id": "ac_oo_3_0c13beca",
   "source_id": "oo_3_0c13beca",
   "level": 3,
@@ -9,10 +29,10 @@
    "code": "s = \"  matrix  \"\nprint(len(s.strip()), s.upper().strip())"
   },
   "choices": [
-   "None",
+   "6 matrix",
    "6 MATRIX",
-   "8 MATRIX",
-   "6 matrix"
+   "None",
+   "8 MATRIX"
   ],
   "answer": 1,
   "misconception": "string_immutable_methods",
@@ -20,144 +40,64 @@
   "lesson_id": "variables_intro"
  },
  {
-  "id": "ac_oo_3_10884c41",
-  "source_id": "oo_3_10884c41",
+  "id": "ac_oo_3_1d6fd679",
+  "source_id": "oo_3_1d6fd679",
+  "level": 3,
+  "topic": "variables",
+  "kind": "choice",
+  "prompt": {
+   "code": "print(\"parser\", \"python\", sep=\"-\", end=\"!\")\nprint(\"tensor\")"
+  },
+  "choices": [
+   "None",
+   "Error",
+   "0",
+   "parser-python!tensor"
+  ],
+  "answer": 3,
+  "misconception": "print_sep_end",
+  "why": "sep goes BETWEEN the values and end replaces the newline, so the next print continues on the same line.",
+  "lesson_id": "variables_intro"
+ },
+ {
+  "id": "ac_oo_3_244ad419",
+  "source_id": "oo_3_244ad419",
   "level": 3,
   "topic": "functions_scope",
   "kind": "choice",
   "prompt": {
-   "code": "def add(item, bucket=[]):\n    bucket.append(item)\n    return len(bucket)\n\nadd(2)\nprint(add(6))"
+   "code": "def add(item, bucket=[]):\n    bucket.append(item)\n    return len(bucket)\n\nadd(4)\nprint(add(1))"
   },
   "choices": [
-   "8",
    "2",
    "Error",
+   "5",
    "None"
   ],
-  "answer": 1,
+  "answer": 0,
   "misconception": "mutable_default",
   "why": "A default value is created once, when the function is defined, so the same list is reused by every call that omits the argument.",
   "lesson_id": "functions_scope"
  },
  {
-  "id": "ac_oo_3_1712d038",
-  "source_id": "oo_3_1712d038",
+  "id": "ac_oo_3_3c39d23f",
+  "source_id": "oo_3_3c39d23f",
   "level": 3,
-  "topic": "lists",
+  "topic": "for_loops",
   "kind": "choice",
   "prompt": {
-   "code": "nums = [6, 5, 3, 1]\nresult = nums.sort()\nprint(result)\nprint(nums[0])"
-  },
-  "choices": [
-   "None\n2",
-   "None\n3",
-   "None",
-   "None\n1"
-  ],
-  "answer": 3,
-  "misconception": "sort_returns_none",
-  "why": "list.sort() sorts in place and returns None; sorted(nums) is the version that returns a new list.",
-  "lesson_id": "lists"
- },
- {
-  "id": "ac_oo_3_1840b4be",
-  "source_id": "oo_3_1840b4be",
-  "level": 3,
-  "topic": "lists",
-  "kind": "choice",
-  "prompt": {
-   "code": "nums = [5, 9, 7, 6]\nresult = nums.sort()\nprint(result)\nprint(nums[0])"
-  },
-  "choices": [
-   "None\n5",
-   "Error",
-   "None\n6",
-   "None"
-  ],
-  "answer": 0,
-  "misconception": "sort_returns_none",
-  "why": "list.sort() sorts in place and returns None; sorted(nums) is the version that returns a new list.",
-  "lesson_id": "lists"
- },
- {
-  "id": "ac_oo_3_3083e7d0",
-  "source_id": "oo_3_3083e7d0",
-  "level": 3,
-  "topic": "functions_scope",
-  "kind": "choice",
-  "prompt": {
-   "code": "def add(item, bucket=[]):\n    bucket.append(item)\n    return len(bucket)\n\nadd(3)\nprint(add(6))"
+   "code": "for i in range(4):\n    pass\nprint(i)"
   },
   "choices": [
    "Error",
-   "2",
+   "3",
    "None",
-   "9"
+   "4"
   ],
   "answer": 1,
-  "misconception": "mutable_default",
-  "why": "A default value is created once, when the function is defined, so the same list is reused by every call that omits the argument.",
-  "lesson_id": "functions_scope"
- },
- {
-  "id": "ac_oo_3_3b3caddf",
-  "source_id": "oo_3_3b3caddf",
-  "level": 3,
-  "topic": "lists",
-  "kind": "choice",
-  "prompt": {
-   "code": "nums = [6, 3, 2, 4]\nresult = nums.sort()\nprint(result)\nprint(nums[0])"
-  },
-  "choices": [
-   "Error",
-   "None",
-   "None\n3",
-   "None\n2"
-  ],
-  "answer": 3,
-  "misconception": "sort_returns_none",
-  "why": "list.sort() sorts in place and returns None; sorted(nums) is the version that returns a new list.",
-  "lesson_id": "lists"
- },
- {
-  "id": "ac_oo_3_3b5299c3",
-  "source_id": "oo_3_3b5299c3",
-  "level": 3,
-  "topic": "functions_scope",
-  "kind": "choice",
-  "prompt": {
-   "code": "x = 10\n\ndef f():\n    x = 47\n    return x\n\nf()\nprint(x)"
-  },
-  "choices": [
-   "10",
-   "None",
-   "11",
-   "Error"
-  ],
-  "answer": 0,
-  "misconception": "scope_local_shadow",
-  "why": "Assigning x inside f creates a new local variable; the global x stays 10. Only the global keyword would change the outer one.",
-  "lesson_id": "functions_scope"
- },
- {
-  "id": "ac_oo_3_3ec70c3e",
-  "source_id": "oo_3_3ec70c3e",
-  "level": 3,
-  "topic": "comprehensions",
-  "kind": "choice",
-  "prompt": {
-   "code": "print([x * 2 for x in range(7) if x % 3 == 0])"
-  },
-  "choices": [
-   "[0, 9, 18]",
-   "[0, 6, 12]",
-   "[0, 8]",
-   "[2, 4, 8, 10]"
-  ],
-  "answer": 1,
-  "misconception": "comprehension_filter_order",
-  "why": "The if clause filters first (keeping multiples of 3 including 0), then the expression doubles each kept value.",
-  "lesson_id": "comprehensions"
+  "misconception": "off_by_one",
+  "why": "The loop variable keeps its last value after the loop ends; range(4) ends at 3, not 4.",
+  "lesson_id": "for_loops"
  },
  {
   "id": "ac_oo_3_41d93f54",
@@ -169,15 +109,35 @@
    "code": "print([x * 2 for x in range(7) if x % 2 == 0])"
   },
   "choices": [
+   "[2, 4, 6, 8]",
    "[2, 6, 10]",
    "[0, 6, 12, 18]",
-   "[2, 4, 6, 8]",
    "[0, 4, 8, 12]"
   ],
   "answer": 3,
   "misconception": "comprehension_filter_order",
   "why": "The if clause filters first (keeping multiples of 2 including 0), then the expression doubles each kept value.",
   "lesson_id": "comprehensions"
+ },
+ {
+  "id": "ac_oo_3_4299b408",
+  "source_id": "oo_3_4299b408",
+  "level": 3,
+  "topic": "variables",
+  "kind": "choice",
+  "prompt": {
+   "code": "print(\"vector\", \"lambda\", sep=\", \", end=\"!\")\nprint(\"socket\")"
+  },
+  "choices": [
+   "vector, lambda!socket",
+   "Error",
+   "None",
+   "0"
+  ],
+  "answer": 0,
+  "misconception": "print_sep_end",
+  "why": "sep goes BETWEEN the values and end replaces the newline, so the next print continues on the same line.",
+  "lesson_id": "variables_intro"
  },
  {
   "id": "ac_oo_3_4ba1dd7a",
@@ -189,29 +149,69 @@
    "code": "s = \"  vector  \"\nprint(len(s.strip()), s.upper().strip())"
   },
   "choices": [
+   "6 vector",
    "6 VECTOR",
    "8 VECTOR",
-   "6 vector",
    "None"
   ],
-  "answer": 0,
+  "answer": 1,
   "misconception": "string_immutable_methods",
   "why": "String methods return new strings and never change s itself; strip removes the surrounding spaces before len counts.",
   "lesson_id": "variables_intro"
  },
  {
-  "id": "ac_oo_3_520aff78",
-  "source_id": "oo_3_520aff78",
+  "id": "ac_oo_3_6918cccf",
+  "source_id": "oo_3_6918cccf",
+  "level": 3,
+  "topic": "functions_scope",
+  "kind": "choice",
+  "prompt": {
+   "code": "def add(item, bucket=[]):\n    bucket.append(item)\n    return len(bucket)\n\nadd(9)\nprint(add(5))"
+  },
+  "choices": [
+   "None",
+   "14",
+   "Error",
+   "2"
+  ],
+  "answer": 3,
+  "misconception": "mutable_default",
+  "why": "A default value is created once, when the function is defined, so the same list is reused by every call that omits the argument.",
+  "lesson_id": "functions_scope"
+ },
+ {
+  "id": "ac_oo_3_6ad154a0",
+  "source_id": "oo_3_6ad154a0",
+  "level": 3,
+  "topic": "variables",
+  "kind": "choice",
+  "prompt": {
+   "code": "print(\"kernel\", \"vector\", sep=\"-\", end=\"!\")\nprint(\"python\")"
+  },
+  "choices": [
+   "kernel-vector!python",
+   "Error",
+   "None",
+   "0"
+  ],
+  "answer": 0,
+  "misconception": "print_sep_end",
+  "why": "sep goes BETWEEN the values and end replaces the newline, so the next print continues on the same line.",
+  "lesson_id": "variables_intro"
+ },
+ {
+  "id": "ac_oo_3_6c448448",
+  "source_id": "oo_3_6c448448",
   "level": 3,
   "topic": "lists",
   "kind": "choice",
   "prompt": {
-   "code": "nums = [9, 3, 5, 1]\nresult = nums.sort()\nprint(result)\nprint(nums[0])"
+   "code": "nums = [2, 7, 6, 4]\nresult = nums.sort()\nprint(result)\nprint(nums[0])"
   },
   "choices": [
-   "None\n1",
    "None\n2",
    "None\n3",
+   "None\n4",
    "None"
   ],
   "answer": 0,
@@ -220,104 +220,264 @@
   "lesson_id": "lists"
  },
  {
-  "id": "ac_oo_3_57a0be46",
-  "source_id": "oo_3_57a0be46",
-  "level": 3,
-  "topic": "functions_scope",
-  "kind": "choice",
-  "prompt": {
-   "code": "x = 24\n\ndef f():\n    x = 20\n    return x\n\nf()\nprint(x)"
-  },
-  "choices": [
-   "24",
-   "Error",
-   "None",
-   "0"
-  ],
-  "answer": 0,
-  "misconception": "scope_local_shadow",
-  "why": "Assigning x inside f creates a new local variable; the global x stays 24. Only the global keyword would change the outer one.",
-  "lesson_id": "functions_scope"
- },
- {
-  "id": "ac_oo_3_62f0b106",
-  "source_id": "oo_3_62f0b106",
+  "id": "ac_oo_3_6d9b2c15",
+  "source_id": "oo_3_6d9b2c15",
   "level": 3,
   "topic": "comprehensions",
   "kind": "choice",
   "prompt": {
-   "code": "print([x * 2 for x in range(8) if x % 3 == 0])"
+   "code": "print([x * 2 for x in range(9) if x % 3 == 0])"
   },
   "choices": [
-   "[0, 9, 18]",
    "[0, 6, 12]",
-   "[0, 8]",
-   "[2, 4, 8, 10, 14]"
+   "[0, 8, 16]",
+   "[0, 9, 18]",
+   "[2, 4, 8, 10, 14, 16]"
   ],
-  "answer": 1,
+  "answer": 0,
   "misconception": "comprehension_filter_order",
   "why": "The if clause filters first (keeping multiples of 3 including 0), then the expression doubles each kept value.",
   "lesson_id": "comprehensions"
  },
  {
-  "id": "ac_oo_3_63efc782",
-  "source_id": "oo_3_63efc782",
+  "id": "ac_oo_3_726e5309",
+  "source_id": "oo_3_726e5309",
   "level": 3,
-  "topic": "for_loops",
+  "topic": "functions_scope",
   "kind": "choice",
   "prompt": {
-   "code": "for i in range(9):\n    pass\nprint(i)"
+   "code": "x = 42\n\ndef f():\n    x = 32\n    return x\n\nf()\nprint(x)"
   },
   "choices": [
-   "8",
-   "Error",
    "None",
-   "9"
+   "42",
+   "Error",
+   "0"
   ],
-  "answer": 0,
-  "misconception": "off_by_one",
-  "why": "The loop variable keeps its last value after the loop ends; range(9) ends at 8, not 9.",
-  "lesson_id": "for_loops"
+  "answer": 1,
+  "misconception": "scope_local_shadow",
+  "why": "Assigning x inside f creates a new local variable; the global x stays 42. Only the global keyword would change the outer one.",
+  "lesson_id": "functions_scope"
  },
  {
-  "id": "ac_oo_3_971b4091",
-  "source_id": "oo_3_971b4091",
+  "id": "ac_oo_3_884cbb60",
+  "source_id": "oo_3_884cbb60",
+  "level": 3,
+  "topic": "functions_scope",
+  "kind": "choice",
+  "prompt": {
+   "code": "x = 7\n\ndef f():\n    x = 10\n    return x\n\nf()\nprint(x)"
+  },
+  "choices": [
+   "7",
+   "0",
+   "Error",
+   "None"
+  ],
+  "answer": 0,
+  "misconception": "scope_local_shadow",
+  "why": "Assigning x inside f creates a new local variable; the global x stays 7. Only the global keyword would change the outer one.",
+  "lesson_id": "functions_scope"
+ },
+ {
+  "id": "ac_oo_3_97ea238e",
+  "source_id": "oo_3_97ea238e",
   "level": 3,
   "topic": "lists",
   "kind": "choice",
   "prompt": {
-   "code": "nums = [2, 4, 7, 3]\nresult = nums.sort()\nprint(result)\nprint(nums[0])"
+   "code": "vals = [9, 4, 9, 2, 5]\nvals.remove(9)\nprint(vals)"
   },
   "choices": [
-   "None\n2",
-   "Error",
-   "None",
-   "None\n3"
+   "[4, 9, 2, 5]",
+   "[4, 9, 2, 6]",
+   "[5, 9, 2, 5]",
+   "[4, 9, 3, 5]"
   ],
   "answer": 0,
-  "misconception": "sort_returns_none",
-  "why": "list.sort() sorts in place and returns None; sorted(nums) is the version that returns a new list.",
+  "misconception": "remove_first_only",
+  "why": "list.remove(x) deletes only the FIRST matching item; later copies stay.",
   "lesson_id": "lists"
  },
  {
-  "id": "ac_oo_3_a7b5df7c",
-  "source_id": "oo_3_a7b5df7c",
+  "id": "ac_oo_3_9e7a7fc9",
+  "source_id": "oo_3_9e7a7fc9",
   "level": 3,
-  "topic": "comprehensions",
+  "topic": "functions_scope",
   "kind": "choice",
   "prompt": {
-   "code": "print([x * 2 for x in range(9) if x % 2 == 0])"
+   "code": "x = 31\n\ndef f():\n    x = 1\n    return x\n\nf()\nprint(x)"
   },
   "choices": [
-   "[0, 6, 12, 18, 24]",
-   "[2, 6, 10, 14]",
-   "[2, 4, 6, 8, 10]",
-   "[0, 4, 8, 12, 16]"
+   "None",
+   "Error",
+   "0",
+   "31"
   ],
   "answer": 3,
-  "misconception": "comprehension_filter_order",
-  "why": "The if clause filters first (keeping multiples of 2 including 0), then the expression doubles each kept value.",
-  "lesson_id": "comprehensions"
+  "misconception": "scope_local_shadow",
+  "why": "Assigning x inside f creates a new local variable; the global x stays 31. Only the global keyword would change the outer one.",
+  "lesson_id": "functions_scope"
+ },
+ {
+  "id": "ac_oo_3_9ffaa56d",
+  "source_id": "oo_3_9ffaa56d",
+  "level": 3,
+  "topic": "variables",
+  "kind": "choice",
+  "prompt": {
+   "code": "print(\"matrix\", \"kernel\", sep=\"-\", end=\"!\")\nprint(\"tensor\")"
+  },
+  "choices": [
+   "None",
+   "Error",
+   "0",
+   "matrix-kernel!tensor"
+  ],
+  "answer": 3,
+  "misconception": "print_sep_end",
+  "why": "sep goes BETWEEN the values and end replaces the newline, so the next print continues on the same line.",
+  "lesson_id": "variables_intro"
+ },
+ {
+  "id": "ac_oo_3_a2344ea3",
+  "source_id": "oo_3_a2344ea3",
+  "level": 3,
+  "topic": "for_loops",
+  "kind": "choice",
+  "prompt": {
+   "code": "for i in range(8):\n    pass\nprint(i)"
+  },
+  "choices": [
+   "None",
+   "7",
+   "Error",
+   "8"
+  ],
+  "answer": 1,
+  "misconception": "off_by_one",
+  "why": "The loop variable keeps its last value after the loop ends; range(8) ends at 7, not 8.",
+  "lesson_id": "for_loops"
+ },
+ {
+  "id": "ac_oo_3_aad5e656",
+  "source_id": "oo_3_aad5e656",
+  "level": 3,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "vals = [9, 3, 9, 1, 7]\nvals.remove(9)\nprint(vals)"
+  },
+  "choices": [
+   "[3, 9, 1, 7]",
+   "None",
+   "[3, 9, 2, 7]",
+   "[4, 9, 1, 7]"
+  ],
+  "answer": 0,
+  "misconception": "remove_first_only",
+  "why": "list.remove(x) deletes only the FIRST matching item; later copies stay.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_3_ab31849e",
+  "source_id": "oo_3_ab31849e",
+  "level": 3,
+  "topic": "variables",
+  "kind": "choice",
+  "prompt": {
+   "code": "s = \"  tensor  \"\nprint(len(s.strip()), s.upper().strip())"
+  },
+  "choices": [
+   "None",
+   "6 tensor",
+   "8 TENSOR",
+   "6 TENSOR"
+  ],
+  "answer": 3,
+  "misconception": "string_immutable_methods",
+  "why": "String methods return new strings and never change s itself; strip removes the surrounding spaces before len counts.",
+  "lesson_id": "variables_intro"
+ },
+ {
+  "id": "ac_oo_3_abb68871",
+  "source_id": "oo_3_abb68871",
+  "level": 3,
+  "topic": "functions_scope",
+  "kind": "choice",
+  "prompt": {
+   "code": "x = 7\n\ndef f():\n    x = 23\n    return x\n\nf()\nprint(x)"
+  },
+  "choices": [
+   "Error",
+   "0",
+   "None",
+   "7"
+  ],
+  "answer": 3,
+  "misconception": "scope_local_shadow",
+  "why": "Assigning x inside f creates a new local variable; the global x stays 7. Only the global keyword would change the outer one.",
+  "lesson_id": "functions_scope"
+ },
+ {
+  "id": "ac_oo_3_b3703f09",
+  "source_id": "oo_3_b3703f09",
+  "level": 3,
+  "topic": "for_loops",
+  "kind": "choice",
+  "prompt": {
+   "code": "for i in range(3):\n    pass\nprint(i)"
+  },
+  "choices": [
+   "3",
+   "None",
+   "Error",
+   "2"
+  ],
+  "answer": 3,
+  "misconception": "off_by_one",
+  "why": "The loop variable keeps its last value after the loop ends; range(3) ends at 2, not 3.",
+  "lesson_id": "for_loops"
+ },
+ {
+  "id": "ac_oo_3_b43ae3e0",
+  "source_id": "oo_3_b43ae3e0",
+  "level": 3,
+  "topic": "variables",
+  "kind": "choice",
+  "prompt": {
+   "code": "print(\"socket\", \"tensor\", sep=\"-\", end=\"!\")\nprint(\"buffer\")"
+  },
+  "choices": [
+   "None",
+   "Error",
+   "socket-tensor!buffer",
+   "0"
+  ],
+  "answer": 2,
+  "misconception": "print_sep_end",
+  "why": "sep goes BETWEEN the values and end replaces the newline, so the next print continues on the same line.",
+  "lesson_id": "variables_intro"
+ },
+ {
+  "id": "ac_oo_3_b4e69f31",
+  "source_id": "oo_3_b4e69f31",
+  "level": 3,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "nums = [8, 6, 3, 7]\nresult = nums.sort()\nprint(result)\nprint(nums[0])"
+  },
+  "choices": [
+   "None\n4",
+   "None\n6",
+   "None\n3",
+   "None"
+  ],
+  "answer": 2,
+  "misconception": "sort_returns_none",
+  "why": "list.sort() sorts in place and returns None; sorted(nums) is the version that returns a new list.",
+  "lesson_id": "lists"
  },
  {
   "id": "ac_oo_3_b5014aeb",
@@ -329,9 +489,9 @@
    "code": "for i in range(6):\n    pass\nprint(i)"
   },
   "choices": [
+   "Error",
    "6",
    "None",
-   "Error",
    "5"
   ],
   "answer": 3,
@@ -340,59 +500,99 @@
   "lesson_id": "for_loops"
  },
  {
-  "id": "ac_oo_3_bcf1a62a",
-  "source_id": "oo_3_bcf1a62a",
+  "id": "ac_oo_3_b5de6b10",
+  "source_id": "oo_3_b5de6b10",
+  "level": 3,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "vals = [5, 4, 5, 1, 7]\nvals.remove(5)\nprint(vals)"
+  },
+  "choices": [
+   "[4, 5, 1, 7]",
+   "[4, 5, 2, 7]",
+   "[5, 5, 1, 7]",
+   "[6, 4, 1, 7]"
+  ],
+  "answer": 0,
+  "misconception": "remove_first_only",
+  "why": "list.remove(x) deletes only the FIRST matching item; later copies stay.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_3_b5e65b4f",
+  "source_id": "oo_3_b5e65b4f",
   "level": 3,
   "topic": "variables",
   "kind": "choice",
   "prompt": {
-   "code": "s = \"  python  \"\nprint(len(s.strip()), s.upper().strip())"
+   "code": "s = \"  parser  \"\nprint(len(s.strip()), s.upper().strip())"
   },
   "choices": [
-   "8 PYTHON",
-   "6 PYTHON",
    "None",
-   "6 python"
+   "8 PARSER",
+   "6 PARSER",
+   "6 parser"
   ],
-  "answer": 1,
+  "answer": 2,
   "misconception": "string_immutable_methods",
   "why": "String methods return new strings and never change s itself; strip removes the surrounding spaces before len counts.",
   "lesson_id": "variables_intro"
  },
  {
-  "id": "ac_oo_3_c3965726",
-  "source_id": "oo_3_c3965726",
+  "id": "ac_oo_3_ba89e0a5",
+  "source_id": "oo_3_ba89e0a5",
   "level": 3,
-  "topic": "functions_scope",
+  "topic": "variables",
   "kind": "choice",
   "prompt": {
-   "code": "def add(item, bucket=[]):\n    bucket.append(item)\n    return len(bucket)\n\nadd(6)\nprint(add(9))"
+   "code": "print(\"matrix\", \"vector\", sep=\"/\", end=\"!\")\nprint(\"cursor\")"
   },
   "choices": [
-   "2",
+   "0",
+   "None",
    "Error",
-   "15",
-   "None"
+   "matrix/vector!cursor"
   ],
-  "answer": 0,
-  "misconception": "mutable_default",
-  "why": "A default value is created once, when the function is defined, so the same list is reused by every call that omits the argument.",
-  "lesson_id": "functions_scope"
+  "answer": 3,
+  "misconception": "print_sep_end",
+  "why": "sep goes BETWEEN the values and end replaces the newline, so the next print continues on the same line.",
+  "lesson_id": "variables_intro"
  },
  {
-  "id": "ac_oo_3_d2469ad8",
-  "source_id": "oo_3_d2469ad8",
+  "id": "ac_oo_3_c1371f7f",
+  "source_id": "oo_3_c1371f7f",
+  "level": 3,
+  "topic": "for_loops",
+  "kind": "choice",
+  "prompt": {
+   "code": "for i in range(7):\n    pass\nprint(i)"
+  },
+  "choices": [
+   "7",
+   "None",
+   "6",
+   "Error"
+  ],
+  "answer": 2,
+  "misconception": "off_by_one",
+  "why": "The loop variable keeps its last value after the loop ends; range(7) ends at 6, not 7.",
+  "lesson_id": "for_loops"
+ },
+ {
+  "id": "ac_oo_3_d221a604",
+  "source_id": "oo_3_d221a604",
   "level": 3,
   "topic": "lists",
   "kind": "choice",
   "prompt": {
-   "code": "nums = [9, 6, 3, 8]\nresult = nums.sort()\nprint(result)\nprint(nums[0])"
+   "code": "nums = [3, 4, 2, 6]\nresult = nums.sort()\nprint(result)\nprint(nums[0])"
   },
   "choices": [
+   "None\n3",
    "None",
-   "None\n4",
-   "None\n6",
-   "None\n3"
+   "Error",
+   "None\n2"
   ],
   "answer": 3,
   "misconception": "sort_returns_none",
@@ -400,19 +600,19 @@
   "lesson_id": "lists"
  },
  {
-  "id": "ac_oo_3_da308ce8",
-  "source_id": "oo_3_da308ce8",
+  "id": "ac_oo_3_d4d179ac",
+  "source_id": "oo_3_d4d179ac",
   "level": 3,
   "topic": "variables",
   "kind": "choice",
   "prompt": {
-   "code": "s = \"  buffer  \"\nprint(len(s.strip()), s.upper().strip())"
+   "code": "s = \"  kernel  \"\nprint(len(s.strip()), s.upper().strip())"
   },
   "choices": [
-   "8 BUFFER",
+   "8 KERNEL",
+   "6 kernel",
    "None",
-   "6 buffer",
-   "6 BUFFER"
+   "6 KERNEL"
   ],
   "answer": 3,
   "misconception": "string_immutable_methods",
@@ -430,128 +630,48 @@
   },
   "choices": [
    "12",
-   "None",
-   "Error",
-   "2"
-  ],
-  "answer": 3,
-  "misconception": "mutable_default",
-  "why": "A default value is created once, when the function is defined, so the same list is reused by every call that omits the argument.",
-  "lesson_id": "functions_scope"
- },
- {
-  "id": "ac_oo_3_e0865528",
-  "source_id": "oo_3_e0865528",
-  "level": 3,
-  "topic": "functions_scope",
-  "kind": "choice",
-  "prompt": {
-   "code": "def add(item, bucket=[]):\n    bucket.append(item)\n    return len(bucket)\n\nadd(1)\nprint(add(2))"
-  },
-  "choices": [
-   "3",
-   "None",
    "2",
-   "Error"
-  ],
-  "answer": 2,
-  "misconception": "mutable_default",
-  "why": "A default value is created once, when the function is defined, so the same list is reused by every call that omits the argument.",
-  "lesson_id": "functions_scope"
- },
- {
-  "id": "ac_oo_3_e8013560",
-  "source_id": "oo_3_e8013560",
-  "level": 3,
-  "topic": "functions_scope",
-  "kind": "choice",
-  "prompt": {
-   "code": "def add(item, bucket=[]):\n    bucket.append(item)\n    return len(bucket)\n\nadd(5)\nprint(add(9))"
-  },
-  "choices": [
-   "14",
-   "None",
-   "2",
-   "Error"
-  ],
-  "answer": 2,
-  "misconception": "mutable_default",
-  "why": "A default value is created once, when the function is defined, so the same list is reused by every call that omits the argument.",
-  "lesson_id": "functions_scope"
- },
- {
-  "id": "ac_oo_3_e87265f8",
-  "source_id": "oo_3_e87265f8",
-  "level": 3,
-  "topic": "lists",
-  "kind": "choice",
-  "prompt": {
-   "code": "nums = [2, 9, 4, 3]\nresult = nums.sort()\nprint(result)\nprint(nums[0])"
-  },
-  "choices": [
-   "Error",
-   "None\n3",
-   "None",
-   "None\n2"
-  ],
-  "answer": 3,
-  "misconception": "sort_returns_none",
-  "why": "list.sort() sorts in place and returns None; sorted(nums) is the version that returns a new list.",
-  "lesson_id": "lists"
- },
- {
-  "id": "ac_oo_3_e8865fdc",
-  "source_id": "oo_3_e8865fdc",
-  "level": 3,
-  "topic": "functions_scope",
-  "kind": "choice",
-  "prompt": {
-   "code": "def add(item, bucket=[]):\n    bucket.append(item)\n    return len(bucket)\n\nadd(6)\nprint(add(3))"
-  },
-  "choices": [
-   "2",
-   "9",
    "None",
    "Error"
   ],
-  "answer": 0,
+  "answer": 1,
   "misconception": "mutable_default",
   "why": "A default value is created once, when the function is defined, so the same list is reused by every call that omits the argument.",
   "lesson_id": "functions_scope"
  },
  {
-  "id": "ac_oo_3_f4badea0",
-  "source_id": "oo_3_f4badea0",
+  "id": "ac_oo_3_df0b5eae",
+  "source_id": "oo_3_df0b5eae",
   "level": 3,
   "topic": "comprehensions",
   "kind": "choice",
   "prompt": {
-   "code": "print([x * 2 for x in range(6) if x % 2 == 0])"
+   "code": "print([x * 2 for x in range(8) if x % 2 == 0])"
   },
   "choices": [
    "[0, 4, 8, 12]",
-   "[2, 6, 10]",
-   "[0, 4, 8]",
-   "[0, 6, 12]"
+   "[0, 4, 8, 12, 16]",
+   "[2, 6, 10, 14]",
+   "[0, 6, 12, 18]"
   ],
-  "answer": 2,
+  "answer": 0,
   "misconception": "comprehension_filter_order",
   "why": "The if clause filters first (keeping multiples of 2 including 0), then the expression doubles each kept value.",
   "lesson_id": "comprehensions"
  },
  {
-  "id": "ac_oo_3_fbc3b365",
-  "source_id": "oo_3_fbc3b365",
+  "id": "ac_oo_3_dff0e53a",
+  "source_id": "oo_3_dff0e53a",
   "level": 3,
   "topic": "functions_scope",
   "kind": "choice",
   "prompt": {
-   "code": "def add(item, bucket=[]):\n    bucket.append(item)\n    return len(bucket)\n\nadd(7)\nprint(add(4))"
+   "code": "def add(item, bucket=[]):\n    bucket.append(item)\n    return len(bucket)\n\nadd(8)\nprint(add(7))"
   },
   "choices": [
    "Error",
-   "11",
    "None",
+   "15",
    "2"
   ],
   "answer": 3,
@@ -560,44 +680,184 @@
   "lesson_id": "functions_scope"
  },
  {
-  "id": "ac_oo_3_fdf4bd86",
-  "source_id": "oo_3_fdf4bd86",
+  "id": "ac_oo_3_e27fe96e",
+  "source_id": "oo_3_e27fe96e",
+  "level": 3,
+  "topic": "variables",
+  "kind": "choice",
+  "prompt": {
+   "code": "print(\"matrix\", \"socket\", sep=\"/\", end=\"!\")\nprint(\"kernel\")"
+  },
+  "choices": [
+   "0",
+   "Error",
+   "None",
+   "matrix/socket!kernel"
+  ],
+  "answer": 3,
+  "misconception": "print_sep_end",
+  "why": "sep goes BETWEEN the values and end replaces the newline, so the next print continues on the same line.",
+  "lesson_id": "variables_intro"
+ },
+ {
+  "id": "ac_oo_3_e8e05abe",
+  "source_id": "oo_3_e8e05abe",
+  "level": 3,
+  "topic": "variables",
+  "kind": "choice",
+  "prompt": {
+   "code": "s = \"  socket  \"\nprint(len(s.strip()), s.upper().strip())"
+  },
+  "choices": [
+   "None",
+   "6 socket",
+   "8 SOCKET",
+   "6 SOCKET"
+  ],
+  "answer": 3,
+  "misconception": "string_immutable_methods",
+  "why": "String methods return new strings and never change s itself; strip removes the surrounding spaces before len counts.",
+  "lesson_id": "variables_intro"
+ },
+ {
+  "id": "ac_oo_3_f0a7235d",
+  "source_id": "oo_3_f0a7235d",
+  "level": 3,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "vals = [7, 8, 7, 6, 9]\nvals.remove(7)\nprint(vals)"
+  },
+  "choices": [
+   "None",
+   "[8, 7, 6, 9]",
+   "0",
+   "Error"
+  ],
+  "answer": 1,
+  "misconception": "remove_first_only",
+  "why": "list.remove(x) deletes only the FIRST matching item; later copies stay.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_3_f18c60e9",
+  "source_id": "oo_3_f18c60e9",
+  "level": 3,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "nums = [5, 8, 2, 9]\nresult = nums.sort()\nprint(result)\nprint(nums[0])"
+  },
+  "choices": [
+   "None",
+   "None\n3",
+   "None\n2",
+   "None\n5"
+  ],
+  "answer": 2,
+  "misconception": "sort_returns_none",
+  "why": "list.sort() sorts in place and returns None; sorted(nums) is the version that returns a new list.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_3_f1b6a313",
+  "source_id": "oo_3_f1b6a313",
+  "level": 3,
+  "topic": "for_loops",
+  "kind": "choice",
+  "prompt": {
+   "code": "for i in range(5):\n    pass\nprint(i)"
+  },
+  "choices": [
+   "Error",
+   "None",
+   "4",
+   "5"
+  ],
+  "answer": 2,
+  "misconception": "off_by_one",
+  "why": "The loop variable keeps its last value after the loop ends; range(5) ends at 4, not 5.",
+  "lesson_id": "for_loops"
+ },
+ {
+  "id": "ac_oo_3_f8626a04",
+  "source_id": "oo_3_f8626a04",
   "level": 3,
   "topic": "functions_scope",
   "kind": "choice",
   "prompt": {
-   "code": "x = 50\n\ndef f():\n    x = 6\n    return x\n\nf()\nprint(x)"
+   "code": "x = 43\n\ndef f():\n    x = 3\n    return x\n\nf()\nprint(x)"
+  },
+  "choices": [
+   "Error",
+   "43",
+   "0",
+   "None"
+  ],
+  "answer": 1,
+  "misconception": "scope_local_shadow",
+  "why": "Assigning x inside f creates a new local variable; the global x stays 43. Only the global keyword would change the outer one.",
+  "lesson_id": "functions_scope"
+ },
+ {
+  "id": "ac_oo_4_06a4575b",
+  "source_id": "oo_4_06a4575b",
+  "level": 4,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "grid = [[0] * 3] * 3\ngrid[0][0] = 5\nprint(grid)"
+  },
+  "choices": [
+   "[[5, 0, 0], [5, 0, 0], [5, 0, 0]]",
+   "[[5, 1, 1], [5, 1, 1], [5, 1, 1]]",
+   "[[5, 0, 0, 0], [5, 0, 0, 0], [5, 0, 0, 0]]",
+   "[[6, 0, 0], [6, 0, 0], [6, 0, 0]]"
+  ],
+  "answer": 0,
+  "misconception": "list_mult_alias",
+  "why": "[[0]*n]*n repeats a reference to ONE inner list, so changing grid[0] changes every row. Use [[0]*n for _ in range(n)].",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_4_06baafe6",
+  "source_id": "oo_4_06baafe6",
+  "level": 4,
+  "topic": "errors_handling",
+  "kind": "choice",
+  "prompt": {
+   "code": "try:\n    print(6 // 0)\nexcept ZeroDivisionError:\n    print(\"div\")\nfinally:\n    print(\"done\")"
   },
   "choices": [
    "None",
    "Error",
-   "50",
+   "div\ndone",
    "0"
   ],
   "answer": 2,
-  "misconception": "scope_local_shadow",
-  "why": "Assigning x inside f creates a new local variable; the global x stays 50. Only the global keyword would change the outer one.",
-  "lesson_id": "functions_scope"
+  "misconception": "finally_always_runs",
+  "why": "finally runs whether or not an exception happened; except only runs for a ZeroDivisionError.",
+  "lesson_id": "errors_handling"
  },
  {
-  "id": "ac_oo_3_ffd9c8f4",
-  "source_id": "oo_3_ffd9c8f4",
-  "level": 3,
-  "topic": "comprehensions",
+  "id": "ac_oo_4_0ee50616",
+  "source_id": "oo_4_0ee50616",
+  "level": 4,
+  "topic": "lists",
   "kind": "choice",
   "prompt": {
-   "code": "print([x * 2 for x in range(5) if x % 3 == 0])"
+   "code": "grid = [[0] * 2] * 2\ngrid[0][0] = 5\nprint(grid)"
   },
   "choices": [
-   "[0, 9]",
-   "[0, 8]",
-   "[2, 4, 8]",
-   "[0, 6]"
+   "[[5, 1], [5, 1]]",
+   "[[5, 0], [5, 0]]",
+   "[[5, 0, 0], [5, 0, 0]]",
+   "[[6, 0], [6, 0]]"
   ],
-  "answer": 3,
-  "misconception": "comprehension_filter_order",
-  "why": "The if clause filters first (keeping multiples of 3 including 0), then the expression doubles each kept value.",
-  "lesson_id": "comprehensions"
+  "answer": 1,
+  "misconception": "list_mult_alias",
+  "why": "[[0]*n]*n repeats a reference to ONE inner list, so changing grid[0] changes every row. Use [[0]*n for _ in range(n)].",
+  "lesson_id": "lists"
  },
  {
   "id": "ac_oo_4_148d57f7",
@@ -620,6 +880,26 @@
   "lesson_id": "conditionals"
  },
  {
+  "id": "ac_oo_4_15292156",
+  "source_id": "oo_4_15292156",
+  "level": 4,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "grid = [[0] * 2] * 2\ngrid[0][0] = 9\nprint(grid)"
+  },
+  "choices": [
+   "None",
+   "[[9, 0, 0], [9, 0, 0]]",
+   "[[9, 0], [9, 0]]",
+   "[[9, 1], [9, 1]]"
+  ],
+  "answer": 2,
+  "misconception": "list_mult_alias",
+  "why": "[[0]*n]*n repeats a reference to ONE inner list, so changing grid[0] changes every row. Use [[0]*n for _ in range(n)].",
+  "lesson_id": "lists"
+ },
+ {
   "id": "ac_oo_4_1e89e456",
   "source_id": "oo_4_1e89e456",
   "level": 4,
@@ -629,110 +909,90 @@
    "code": "print(0 and \"x\")\nprint(\"x\" and 0)"
   },
   "choices": [
-   "x\n0",
    "0\n0",
    "None",
+   "x\n0",
    "Error"
   ],
-  "answer": 1,
-  "misconception": "short_circuit_value",
-  "why": "or returns the first truthy operand (or the last one); and returns the first falsy operand (or the last one). They return the operand itself, not True/False.",
-  "lesson_id": "conditionals"
- },
- {
-  "id": "ac_oo_4_1ed9aae8",
-  "source_id": "oo_4_1ed9aae8",
-  "level": 4,
-  "topic": "comprehensions",
-  "kind": "choice",
-  "prompt": {
-   "code": "print({w[0]: len(w) for w in ['tensor', 'matrix', 'socket']})"
-  },
-  "choices": [
-   "{'t': 6, 'm': 6, 's': 6}",
-   "Error",
-   "None",
-   "{'e': 6, 'a': 6, 'o': 6}"
-  ],
   "answer": 0,
-  "misconception": "dict_comprehension",
-  "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
-  "lesson_id": "comprehensions"
- },
- {
-  "id": "ac_oo_4_23481c17",
-  "source_id": "oo_4_23481c17",
-  "level": 4,
-  "topic": "comprehensions",
-  "kind": "choice",
-  "prompt": {
-   "code": "print({w[0]: len(w) for w in ['socket', 'cursor', 'vector']})"
-  },
-  "choices": [
-   "Error",
-   "None",
-   "{'o': 6, 'u': 6, 'e': 6}",
-   "{'s': 6, 'c': 6, 'v': 6}"
-  ],
-  "answer": 3,
-  "misconception": "dict_comprehension",
-  "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
-  "lesson_id": "comprehensions"
- },
- {
-  "id": "ac_oo_4_37412266",
-  "source_id": "oo_4_37412266",
-  "level": 4,
-  "topic": "conditionals",
-  "kind": "choice",
-  "prompt": {
-   "code": "print(None and \"x\")\nprint(\"x\" and None)"
-  },
-  "choices": [
-   "Error",
-   "None",
-   "x\nNone",
-   "None\nNone"
-  ],
-  "answer": 3,
   "misconception": "short_circuit_value",
   "why": "or returns the first truthy operand (or the last one); and returns the first falsy operand (or the last one). They return the operand itself, not True/False.",
   "lesson_id": "conditionals"
  },
  {
-  "id": "ac_oo_4_38bd375b",
-  "source_id": "oo_4_38bd375b",
+  "id": "ac_oo_4_2ccb6141",
+  "source_id": "oo_4_2ccb6141",
+  "level": 4,
+  "topic": "comprehensions",
+  "kind": "choice",
+  "prompt": {
+   "code": "print({w[0]: len(w) for w in ['tensor', 'python', 'parser']})"
+  },
+  "choices": [
+   "Error",
+   "{'t': 6, 'p': 6}",
+   "{'e': 6, 'y': 6, 'a': 6}",
+   "None"
+  ],
+  "answer": 1,
+  "misconception": "dict_comprehension",
+  "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
+  "lesson_id": "comprehensions"
+ },
+ {
+  "id": "ac_oo_4_2e13a7fe",
+  "source_id": "oo_4_2e13a7fe",
+  "level": 4,
+  "topic": "comprehensions",
+  "kind": "choice",
+  "prompt": {
+   "code": "print({w[0]: len(w) for w in ['kernel', 'buffer', 'cursor']})"
+  },
+  "choices": [
+   "Error",
+   "{'e': 6, 'u': 6}",
+   "None",
+   "{'k': 6, 'b': 6, 'c': 6}"
+  ],
+  "answer": 3,
+  "misconception": "dict_comprehension",
+  "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
+  "lesson_id": "comprehensions"
+ },
+ {
+  "id": "ac_oo_4_30c98e18",
+  "source_id": "oo_4_30c98e18",
   "level": 4,
   "topic": "errors_handling",
   "kind": "choice",
   "prompt": {
-   "code": "try:\n    print(5 // 2)\nexcept ZeroDivisionError:\n    print(\"div\")\nfinally:\n    print(\"done\")"
+   "code": "try:\n    print(5 // 0)\nexcept ZeroDivisionError:\n    print(\"div\")\nfinally:\n    print(\"done\")"
   },
   "choices": [
-   "2.5\ndone",
-   "1\ndone",
-   "3\ndone",
-   "2\ndone"
+   "0",
+   "None",
+   "div\ndone",
+   "Error"
   ],
-  "answer": 3,
+  "answer": 2,
   "misconception": "finally_always_runs",
   "why": "finally runs whether or not an exception happened; except only runs for a ZeroDivisionError.",
   "lesson_id": "errors_handling"
  },
  {
-  "id": "ac_oo_4_39016fd8",
-  "source_id": "oo_4_39016fd8",
+  "id": "ac_oo_4_32a48fa5",
+  "source_id": "oo_4_32a48fa5",
   "level": 4,
   "topic": "lists",
   "kind": "choice",
   "prompt": {
-   "code": "a = [6, 1]\nb = [6, 1]\nc = a\nprint(a == b, a is b, a is c)"
+   "code": "a = [4, 6]\nb = [4, 6]\nc = a\nprint(a == b, a is b, a is c)"
   },
   "choices": [
-   "False False True",
-   "True False True",
    "None",
-   "True True True"
+   "True False True",
+   "True True True",
+   "False False True"
   ],
   "answer": 1,
   "misconception": "is_vs_eq",
@@ -740,24 +1000,64 @@
   "lesson_id": "lists"
  },
  {
-  "id": "ac_oo_4_3b901fc5",
-  "source_id": "oo_4_3b901fc5",
+  "id": "ac_oo_4_3346ed73",
+  "source_id": "oo_4_3346ed73",
   "level": 4,
-  "topic": "conditionals",
+  "topic": "comprehensions",
   "kind": "choice",
   "prompt": {
-   "code": "print([] and [1])\nprint([1] and [])"
+   "code": "print({w[0]: len(w) for w in ['lambda', 'cursor', 'buffer']})"
+  },
+  "choices": [
+   "{'l': 6, 'c': 6, 'b': 6}",
+   "Error",
+   "None",
+   "{'a': 6, 'u': 6}"
+  ],
+  "answer": 0,
+  "misconception": "dict_comprehension",
+  "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
+  "lesson_id": "comprehensions"
+ },
+ {
+  "id": "ac_oo_4_34117aa9",
+  "source_id": "oo_4_34117aa9",
+  "level": 4,
+  "topic": "comprehensions",
+  "kind": "choice",
+  "prompt": {
+   "code": "print({w[0]: len(w) for w in ['socket', 'matrix', 'lambda']})"
   },
   "choices": [
    "Error",
-   "[1]\n[]",
-   "[]\n[]",
-   "None"
+   "None",
+   "{'s': 6, 'm': 6, 'l': 6}",
+   "{'o': 6, 'a': 6}"
   ],
   "answer": 2,
-  "misconception": "short_circuit_value",
-  "why": "or returns the first truthy operand (or the last one); and returns the first falsy operand (or the last one). They return the operand itself, not True/False.",
-  "lesson_id": "conditionals"
+  "misconception": "dict_comprehension",
+  "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
+  "lesson_id": "comprehensions"
+ },
+ {
+  "id": "ac_oo_4_395e4bda",
+  "source_id": "oo_4_395e4bda",
+  "level": 4,
+  "topic": "comprehensions",
+  "kind": "choice",
+  "prompt": {
+   "code": "print({w[0]: len(w) for w in ['python', 'lambda', 'buffer']})"
+  },
+  "choices": [
+   "{'y': 6, 'a': 6, 'u': 6}",
+   "None",
+   "{'p': 6, 'l': 6, 'b': 6}",
+   "Error"
+  ],
+  "answer": 2,
+  "misconception": "dict_comprehension",
+  "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
+  "lesson_id": "comprehensions"
  },
  {
   "id": "ac_oo_4_3cbabdde",
@@ -770,114 +1070,54 @@
   },
   "choices": [
    "Error",
+   "12",
    "None",
-   "10",
-   "12"
+   "10"
   ],
-  "answer": 2,
+  "answer": 3,
   "misconception": "global_keyword",
   "why": "global tells inc to rebind the module-level count instead of creating a local one, so both calls accumulate.",
   "lesson_id": "functions_scope"
  },
  {
-  "id": "ac_oo_4_5171bc3c",
-  "source_id": "oo_4_5171bc3c",
-  "level": 4,
-  "topic": "comprehensions",
-  "kind": "choice",
-  "prompt": {
-   "code": "print({w[0]: len(w) for w in ['python', 'lambda', 'kernel']})"
-  },
-  "choices": [
-   "None",
-   "{'p': 6, 'l': 6, 'k': 6}",
-   "Error",
-   "{'y': 6, 'a': 6, 'e': 6}"
-  ],
-  "answer": 1,
-  "misconception": "dict_comprehension",
-  "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
-  "lesson_id": "comprehensions"
- },
- {
-  "id": "ac_oo_4_62959bd8",
-  "source_id": "oo_4_62959bd8",
-  "level": 4,
-  "topic": "conditionals",
-  "kind": "choice",
-  "prompt": {
-   "code": "print(\"\" or \"x\")\nprint(\"x\" or \"\")"
-  },
-  "choices": [
-   "x\nx",
-   "Error",
-   "\nx",
-   "None"
-  ],
-  "answer": 0,
-  "misconception": "short_circuit_value",
-  "why": "or returns the first truthy operand (or the last one); and returns the first falsy operand (or the last one). They return the operand itself, not True/False.",
-  "lesson_id": "conditionals"
- },
- {
-  "id": "ac_oo_4_65c7f9ae",
-  "source_id": "oo_4_65c7f9ae",
-  "level": 4,
-  "topic": "errors_handling",
-  "kind": "choice",
-  "prompt": {
-   "code": "try:\n    print(1 // 2)\nexcept ZeroDivisionError:\n    print(\"div\")\nfinally:\n    print(\"done\")"
-  },
-  "choices": [
-   "1\ndone",
-   "0.5\ndone",
-   "0\ndone",
-   "None"
-  ],
-  "answer": 2,
-  "misconception": "finally_always_runs",
-  "why": "finally runs whether or not an exception happened; except only runs for a ZeroDivisionError.",
-  "lesson_id": "errors_handling"
- },
- {
-  "id": "ac_oo_4_6a739828",
-  "source_id": "oo_4_6a739828",
-  "level": 4,
-  "topic": "comprehensions",
-  "kind": "choice",
-  "prompt": {
-   "code": "print({w[0]: len(w) for w in ['kernel', 'tensor', 'lambda']})"
-  },
-  "choices": [
-   "Error",
-   "{'k': 6, 't': 6, 'l': 6}",
-   "{'e': 6, 'a': 6}",
-   "None"
-  ],
-  "answer": 1,
-  "misconception": "dict_comprehension",
-  "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
-  "lesson_id": "comprehensions"
- },
- {
-  "id": "ac_oo_4_6a764fe1",
-  "source_id": "oo_4_6a764fe1",
+  "id": "ac_oo_4_54512384",
+  "source_id": "oo_4_54512384",
   "level": 4,
   "topic": "lists",
   "kind": "choice",
   "prompt": {
-   "code": "a = [6, 9]\nb = [6, 9]\nc = a\nprint(a == b, a is b, a is c)"
+   "code": "a = [1, 8]\nb = [1, 8]\nc = a\nprint(a == b, a is b, a is c)"
   },
   "choices": [
-   "True True True",
-   "False False True",
    "None",
+   "False False True",
+   "True True True",
    "True False True"
   ],
   "answer": 3,
   "misconception": "is_vs_eq",
   "why": "== compares values; is compares identity. Two separately built lists are equal but not the same object; c is just another name for a.",
   "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_4_6dfe7915",
+  "source_id": "oo_4_6dfe7915",
+  "level": 4,
+  "topic": "conditionals",
+  "kind": "choice",
+  "prompt": {
+   "code": "print(None and 5)\nprint(5 and None)"
+  },
+  "choices": [
+   "None\nNone",
+   "5\nNone",
+   "Error",
+   "None"
+  ],
+  "answer": 0,
+  "misconception": "short_circuit_value",
+  "why": "or returns the first truthy operand (or the last one); and returns the first falsy operand (or the last one). They return the operand itself, not True/False.",
+  "lesson_id": "conditionals"
  },
  {
   "id": "ac_oo_4_75f4ebdc",
@@ -889,35 +1129,55 @@
    "code": "count = 0\n\ndef inc():\n    global count\n    count += 4\n\ninc()\ninc()\nprint(count)"
   },
   "choices": [
-   "Error",
    "10",
-   "8",
-   "None"
+   "None",
+   "Error",
+   "8"
   ],
-  "answer": 2,
+  "answer": 3,
   "misconception": "global_keyword",
   "why": "global tells inc to rebind the module-level count instead of creating a local one, so both calls accumulate.",
   "lesson_id": "functions_scope"
  },
  {
-  "id": "ac_oo_4_7f0576aa",
-  "source_id": "oo_4_7f0576aa",
+  "id": "ac_oo_4_81d2f9e0",
+  "source_id": "oo_4_81d2f9e0",
   "level": 4,
   "topic": "comprehensions",
   "kind": "choice",
   "prompt": {
-   "code": "print({w[0]: len(w) for w in ['vector', 'cursor', 'buffer']})"
+   "code": "print({w[0]: len(w) for w in ['python', 'buffer', 'matrix']})"
   },
   "choices": [
-   "{'v': 6, 'c': 6, 'b': 6}",
    "None",
-   "{'e': 6, 'u': 6}",
-   "Error"
+   "{'y': 6, 'u': 6, 'a': 6}",
+   "Error",
+   "{'p': 6, 'b': 6, 'm': 6}"
   ],
-  "answer": 0,
+  "answer": 3,
   "misconception": "dict_comprehension",
   "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
   "lesson_id": "comprehensions"
+ },
+ {
+  "id": "ac_oo_4_851434f3",
+  "source_id": "oo_4_851434f3",
+  "level": 4,
+  "topic": "functions_scope",
+  "kind": "choice",
+  "prompt": {
+   "code": "count = 0\n\ndef inc():\n    global count\n    count += 1\n\ninc()\ninc()\nprint(count)"
+  },
+  "choices": [
+   "2",
+   "None",
+   "Error",
+   "4"
+  ],
+  "answer": 0,
+  "misconception": "global_keyword",
+  "why": "global tells inc to rebind the module-level count instead of creating a local one, so both calls accumulate.",
+  "lesson_id": "functions_scope"
  },
  {
   "id": "ac_oo_4_85b471f4",
@@ -929,29 +1189,69 @@
    "code": "try:\n    print(4 // 0)\nexcept ZeroDivisionError:\n    print(\"div\")\nfinally:\n    print(\"done\")"
   },
   "choices": [
+   "Error",
    "0",
    "div\ndone",
-   "None",
-   "Error"
+   "None"
   ],
-  "answer": 1,
+  "answer": 2,
   "misconception": "finally_always_runs",
   "why": "finally runs whether or not an exception happened; except only runs for a ZeroDivisionError.",
   "lesson_id": "errors_handling"
  },
  {
-  "id": "ac_oo_4_8a361972",
-  "source_id": "oo_4_8a361972",
+  "id": "ac_oo_4_887bafc1",
+  "source_id": "oo_4_887bafc1",
+  "level": 4,
+  "topic": "conditionals",
+  "kind": "choice",
+  "prompt": {
+   "code": "print(\"\" or [1])\nprint([1] or \"\")"
+  },
+  "choices": [
+   "[-1]\n[1]",
+   "[1]\n[1]",
+   "\n[1]",
+   "[2]\n[1]"
+  ],
+  "answer": 1,
+  "misconception": "short_circuit_value",
+  "why": "or returns the first truthy operand (or the last one); and returns the first falsy operand (or the last one). They return the operand itself, not True/False.",
+  "lesson_id": "conditionals"
+ },
+ {
+  "id": "ac_oo_4_914e787e",
+  "source_id": "oo_4_914e787e",
+  "level": 4,
+  "topic": "conditionals",
+  "kind": "choice",
+  "prompt": {
+   "code": "print(0 or \"x\")\nprint(\"x\" or 0)"
+  },
+  "choices": [
+   "None",
+   "0\nx",
+   "Error",
+   "x\nx"
+  ],
+  "answer": 3,
+  "misconception": "short_circuit_value",
+  "why": "or returns the first truthy operand (or the last one); and returns the first falsy operand (or the last one). They return the operand itself, not True/False.",
+  "lesson_id": "conditionals"
+ },
+ {
+  "id": "ac_oo_4_9356a4c1",
+  "source_id": "oo_4_9356a4c1",
   "level": 4,
   "topic": "lists",
   "kind": "choice",
   "prompt": {
-   "code": "a = [9, 5]\nb = [9, 5]\nc = a\nprint(a == b, a is b, a is c)"
+   "code": "a = [9, 1]\nb = [9, 1]\nc = a\nprint(a == b, a is b, a is c)"
   },
   "choices": [
-   "None",
-   "False False True",
    "True True True",
+   "False False True",
+   "None",
    "True False True"
   ],
   "answer": 3,
@@ -960,44 +1260,44 @@
   "lesson_id": "lists"
  },
  {
-  "id": "ac_oo_4_91cb1f3c",
-  "source_id": "oo_4_91cb1f3c",
+  "id": "ac_oo_4_950dba8e",
+  "source_id": "oo_4_950dba8e",
   "level": 4,
   "topic": "comprehensions",
   "kind": "choice",
   "prompt": {
-   "code": "print({w[0]: len(w) for w in ['kernel', 'cursor', 'tensor']})"
+   "code": "print({w[0]: len(w) for w in ['buffer', 'parser', 'python']})"
   },
   "choices": [
+   "{'b': 6, 'p': 6}",
+   "{'u': 6, 'a': 6, 'y': 6}",
    "Error",
-   "{'e': 6, 'u': 6}",
-   "{'k': 6, 'c': 6, 't': 6}",
    "None"
   ],
-  "answer": 2,
+  "answer": 0,
   "misconception": "dict_comprehension",
   "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
   "lesson_id": "comprehensions"
  },
  {
-  "id": "ac_oo_4_91e66fd2",
-  "source_id": "oo_4_91e66fd2",
+  "id": "ac_oo_4_955173de",
+  "source_id": "oo_4_955173de",
   "level": 4,
-  "topic": "comprehensions",
+  "topic": "conditionals",
   "kind": "choice",
   "prompt": {
-   "code": "print({w[0]: len(w) for w in ['cursor', 'parser', 'kernel']})"
+   "code": "print(None or \"x\")\nprint(\"x\" or None)"
   },
   "choices": [
+   "x\nx",
    "Error",
-   "{'c': 6, 'p': 6, 'k': 6}",
-   "None",
-   "{'u': 6, 'a': 6, 'e': 6}"
+   "None\nx",
+   "None"
   ],
-  "answer": 1,
-  "misconception": "dict_comprehension",
-  "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
-  "lesson_id": "comprehensions"
+  "answer": 0,
+  "misconception": "short_circuit_value",
+  "why": "or returns the first truthy operand (or the last one); and returns the first falsy operand (or the last one). They return the operand itself, not True/False.",
+  "lesson_id": "conditionals"
  },
  {
   "id": "ac_oo_4_9db568c7",
@@ -1009,88 +1309,8 @@
    "code": "try:\n    print(7 // 0)\nexcept ZeroDivisionError:\n    print(\"div\")\nfinally:\n    print(\"done\")"
   },
   "choices": [
-   "div\ndone",
+   "None",
    "0",
-   "Error",
-   "None"
-  ],
-  "answer": 0,
-  "misconception": "finally_always_runs",
-  "why": "finally runs whether or not an exception happened; except only runs for a ZeroDivisionError.",
-  "lesson_id": "errors_handling"
- },
- {
-  "id": "ac_oo_4_a377afeb",
-  "source_id": "oo_4_a377afeb",
-  "level": 4,
-  "topic": "errors_handling",
-  "kind": "choice",
-  "prompt": {
-   "code": "try:\n    print(5 // 3)\nexcept ZeroDivisionError:\n    print(\"div\")\nfinally:\n    print(\"done\")"
-  },
-  "choices": [
-   "None",
-   "1.6666666666666667\ndone",
-   "1\ndone",
-   "2\ndone"
-  ],
-  "answer": 2,
-  "misconception": "finally_always_runs",
-  "why": "finally runs whether or not an exception happened; except only runs for a ZeroDivisionError.",
-  "lesson_id": "errors_handling"
- },
- {
-  "id": "ac_oo_4_b441da94",
-  "source_id": "oo_4_b441da94",
-  "level": 4,
-  "topic": "comprehensions",
-  "kind": "choice",
-  "prompt": {
-   "code": "print({w[0]: len(w) for w in ['socket', 'lambda', 'matrix']})"
-  },
-  "choices": [
-   "{'o': 6, 'a': 6}",
-   "None",
-   "{'s': 6, 'l': 6, 'm': 6}",
-   "Error"
-  ],
-  "answer": 2,
-  "misconception": "dict_comprehension",
-  "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
-  "lesson_id": "comprehensions"
- },
- {
-  "id": "ac_oo_4_ba0f8d5a",
-  "source_id": "oo_4_ba0f8d5a",
-  "level": 4,
-  "topic": "lists",
-  "kind": "choice",
-  "prompt": {
-   "code": "a = [7, 4]\nb = [7, 4]\nc = a\nprint(a == b, a is b, a is c)"
-  },
-  "choices": [
-   "None",
-   "False False True",
-   "True True True",
-   "True False True"
-  ],
-  "answer": 3,
-  "misconception": "is_vs_eq",
-  "why": "== compares values; is compares identity. Two separately built lists are equal but not the same object; c is just another name for a.",
-  "lesson_id": "lists"
- },
- {
-  "id": "ac_oo_4_c1d4c0db",
-  "source_id": "oo_4_c1d4c0db",
-  "level": 4,
-  "topic": "errors_handling",
-  "kind": "choice",
-  "prompt": {
-   "code": "try:\n    print(8 // 0)\nexcept ZeroDivisionError:\n    print(\"div\")\nfinally:\n    print(\"done\")"
-  },
-  "choices": [
-   "0",
-   "None",
    "Error",
    "div\ndone"
   ],
@@ -1100,21 +1320,61 @@
   "lesson_id": "errors_handling"
  },
  {
-  "id": "ac_oo_4_c26ff88b",
-  "source_id": "oo_4_c26ff88b",
+  "id": "ac_oo_4_b2718c45",
+  "source_id": "oo_4_b2718c45",
+  "level": 4,
+  "topic": "comprehensions",
+  "kind": "choice",
+  "prompt": {
+   "code": "print({w[0]: len(w) for w in ['buffer', 'cursor', 'vector']})"
+  },
+  "choices": [
+   "Error",
+   "None",
+   "{'u': 6, 'e': 6}",
+   "{'b': 6, 'c': 6, 'v': 6}"
+  ],
+  "answer": 3,
+  "misconception": "dict_comprehension",
+  "why": "Each word contributes key = first letter and value = its length; the braces with a colon build a dict, not a set.",
+  "lesson_id": "comprehensions"
+ },
+ {
+  "id": "ac_oo_4_b2bf455f",
+  "source_id": "oo_4_b2bf455f",
+  "level": 4,
+  "topic": "conditionals",
+  "kind": "choice",
+  "prompt": {
+   "code": "print(None and [1])\nprint([1] and None)"
+  },
+  "choices": [
+   "None\nNone",
+   "None",
+   "[1]\nNone",
+   "Error"
+  ],
+  "answer": 0,
+  "misconception": "short_circuit_value",
+  "why": "or returns the first truthy operand (or the last one); and returns the first falsy operand (or the last one). They return the operand itself, not True/False.",
+  "lesson_id": "conditionals"
+ },
+ {
+  "id": "ac_oo_4_ba603a72",
+  "source_id": "oo_4_ba603a72",
   "level": 4,
   "topic": "lists",
   "kind": "choice",
   "prompt": {
-   "code": "a = [6, 5]\nb = [6, 5]\nc = a\nprint(a == b, a is b, a is c)"
+   "code": "a = [9, 8]\nb = [9, 8]\nc = a\nprint(a == b, a is b, a is c)"
   },
   "choices": [
-   "True False True",
    "False False True",
    "None",
+   "True False True",
    "True True True"
   ],
-  "answer": 0,
+  "answer": 2,
   "misconception": "is_vs_eq",
   "why": "== compares values; is compares identity. Two separately built lists are equal but not the same object; c is just another name for a.",
   "lesson_id": "lists"
@@ -1130,8 +1390,8 @@
   },
   "choices": [
    "None",
-   "Error",
    "0",
+   "Error",
    "div\ndone"
   ],
   "answer": 3,
@@ -1140,24 +1400,104 @@
   "lesson_id": "errors_handling"
  },
  {
-  "id": "ac_oo_4_c7d2aff0",
-  "source_id": "oo_4_c7d2aff0",
+  "id": "ac_oo_4_c53a50c3",
+  "source_id": "oo_4_c53a50c3",
+  "level": 4,
+  "topic": "conditionals",
+  "kind": "choice",
+  "prompt": {
+   "code": "print([] or \"x\")\nprint(\"x\" or [])"
+  },
+  "choices": [
+   "Error",
+   "None",
+   "[]\nx",
+   "x\nx"
+  ],
+  "answer": 3,
+  "misconception": "short_circuit_value",
+  "why": "or returns the first truthy operand (or the last one); and returns the first falsy operand (or the last one). They return the operand itself, not True/False.",
+  "lesson_id": "conditionals"
+ },
+ {
+  "id": "ac_oo_4_d6b20a46",
+  "source_id": "oo_4_d6b20a46",
   "level": 4,
   "topic": "lists",
   "kind": "choice",
   "prompt": {
-   "code": "a = [5, 3]\nb = [5, 3]\nc = a\nprint(a == b, a is b, a is c)"
+   "code": "grid = [[0] * 3] * 3\ngrid[0][0] = 4\nprint(grid)"
   },
   "choices": [
-   "True True True",
-   "False False True",
-   "None",
-   "True False True"
+   "[[4, 1, 1], [4, 1, 1], [4, 1, 1]]",
+   "[[4, 0, 0, 0], [4, 0, 0, 0], [4, 0, 0, 0]]",
+   "[[5, 0, 0], [5, 0, 0], [5, 0, 0]]",
+   "[[4, 0, 0], [4, 0, 0], [4, 0, 0]]"
   ],
   "answer": 3,
+  "misconception": "list_mult_alias",
+  "why": "[[0]*n]*n repeats a reference to ONE inner list, so changing grid[0] changes every row. Use [[0]*n for _ in range(n)].",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_4_d82ddc82",
+  "source_id": "oo_4_d82ddc82",
+  "level": 4,
+  "topic": "errors_handling",
+  "kind": "choice",
+  "prompt": {
+   "code": "try:\n    print(2 // 2)\nexcept ZeroDivisionError:\n    print(\"div\")\nfinally:\n    print(\"done\")"
+  },
+  "choices": [
+   "None",
+   "1\ndone",
+   "1.0\ndone",
+   "Error"
+  ],
+  "answer": 1,
+  "misconception": "finally_always_runs",
+  "why": "finally runs whether or not an exception happened; except only runs for a ZeroDivisionError.",
+  "lesson_id": "errors_handling"
+ },
+ {
+  "id": "ac_oo_4_deb9989a",
+  "source_id": "oo_4_deb9989a",
+  "level": 4,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "a = [6, 2]\nb = [6, 2]\nc = a\nprint(a == b, a is b, a is c)"
+  },
+  "choices": [
+   "True False True",
+   "None",
+   "False False True",
+   "True True True"
+  ],
+  "answer": 0,
   "misconception": "is_vs_eq",
   "why": "== compares values; is compares identity. Two separately built lists are equal but not the same object; c is just another name for a.",
   "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_4_e154d8d6",
+  "source_id": "oo_4_e154d8d6",
+  "level": 4,
+  "topic": "conditionals",
+  "kind": "choice",
+  "prompt": {
+   "code": "print(None or [1])\nprint([1] or None)"
+  },
+  "choices": [
+   "[2]\n[1]",
+   "[-1]\n[1]",
+   "None\n[1]",
+   "[1]\n[1]"
+  ],
+  "answer": 3,
+  "misconception": "short_circuit_value",
+  "why": "or returns the first truthy operand (or the last one); and returns the first falsy operand (or the last one). They return the operand itself, not True/False.",
+  "lesson_id": "conditionals"
  },
  {
   "id": "ac_oo_4_e54b56de",
@@ -1169,35 +1509,115 @@
    "code": "count = 0\n\ndef inc():\n    global count\n    count += 3\n\ninc()\ninc()\nprint(count)"
   },
   "choices": [
-   "6",
    "None",
+   "8",
    "Error",
-   "8"
+   "6"
   ],
-  "answer": 0,
+  "answer": 3,
   "misconception": "global_keyword",
   "why": "global tells inc to rebind the module-level count instead of creating a local one, so both calls accumulate.",
   "lesson_id": "functions_scope"
  },
  {
-  "id": "ac_oo_4_f71e3d41",
-  "source_id": "oo_4_f71e3d41",
+  "id": "ac_oo_4_e9fe5722",
+  "source_id": "oo_4_e9fe5722",
+  "level": 4,
+  "topic": "errors_handling",
+  "kind": "choice",
+  "prompt": {
+   "code": "try:\n    print(3 // 1)\nexcept ZeroDivisionError:\n    print(\"div\")\nfinally:\n    print(\"done\")"
+  },
+  "choices": [
+   "3.0\ndone",
+   "3\ndone",
+   "4\ndone",
+   "1\ndone"
+  ],
+  "answer": 1,
+  "misconception": "finally_always_runs",
+  "why": "finally runs whether or not an exception happened; except only runs for a ZeroDivisionError.",
+  "lesson_id": "errors_handling"
+ },
+ {
+  "id": "ac_oo_4_ea9c5b26",
+  "source_id": "oo_4_ea9c5b26",
+  "level": 4,
+  "topic": "errors_handling",
+  "kind": "choice",
+  "prompt": {
+   "code": "try:\n    print(9 // 1)\nexcept ZeroDivisionError:\n    print(\"div\")\nfinally:\n    print(\"done\")"
+  },
+  "choices": [
+   "9.0\ndone",
+   "4\ndone",
+   "9\ndone",
+   "None"
+  ],
+  "answer": 2,
+  "misconception": "finally_always_runs",
+  "why": "finally runs whether or not an exception happened; except only runs for a ZeroDivisionError.",
+  "lesson_id": "errors_handling"
+ },
+ {
+  "id": "ac_oo_4_ec9fb6e4",
+  "source_id": "oo_4_ec9fb6e4",
   "level": 4,
   "topic": "lists",
   "kind": "choice",
   "prompt": {
-   "code": "a = [7, 1]\nb = [7, 1]\nc = a\nprint(a == b, a is b, a is c)"
+   "code": "grid = [[0] * 2] * 2\ngrid[0][0] = 8\nprint(grid)"
   },
   "choices": [
-   "True True True",
+   "[[8, 0], [8, 0]]",
+   "[[8, 1], [8, 1]]",
    "None",
-   "True False True",
-   "False False True"
+   "[[8, 0, 0], [8, 0, 0]]"
+  ],
+  "answer": 0,
+  "misconception": "list_mult_alias",
+  "why": "[[0]*n]*n repeats a reference to ONE inner list, so changing grid[0] changes every row. Use [[0]*n for _ in range(n)].",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_4_f186d694",
+  "source_id": "oo_4_f186d694",
+  "level": 4,
+  "topic": "errors_handling",
+  "kind": "choice",
+  "prompt": {
+   "code": "try:\n    print(2 // 0)\nexcept ZeroDivisionError:\n    print(\"div\")\nfinally:\n    print(\"done\")"
+  },
+  "choices": [
+   "None",
+   "div\ndone",
+   "0",
+   "Error"
+  ],
+  "answer": 1,
+  "misconception": "finally_always_runs",
+  "why": "finally runs whether or not an exception happened; except only runs for a ZeroDivisionError.",
+  "lesson_id": "errors_handling"
+ },
+ {
+  "id": "ac_oo_5_0258cd3f",
+  "source_id": "oo_5_0258cd3f",
+  "level": 5,
+  "topic": "adv_generators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def gen():\n    yield 7\n    yield 4\n    yield 3\n\ng = gen()\nprint(next(g))\nprint(list(g))"
+  },
+  "choices": [
+   "7\n[5, 3]",
+   "7\n[4, 4]",
+   "7\n[4, 3]",
+   "None"
   ],
   "answer": 2,
-  "misconception": "is_vs_eq",
-  "why": "== compares values; is compares identity. Two separately built lists are equal but not the same object; c is just another name for a.",
-  "lesson_id": "lists"
+  "misconception": "generator_exhausted",
+  "why": "next() takes the first value; list() then drains only what remains.",
+  "lesson_id": "adv_generators"
  },
  {
   "id": "ac_oo_5_10959092",
@@ -1209,15 +1629,175 @@
    "code": "g = (x * x for x in range(5))\nprint(sum(g))\nprint(sum(g))"
   },
   "choices": [
-   "20\n0",
-   "30\n0",
    "None",
+   "30\n0",
+   "20\n0",
    "55\n0"
   ],
   "answer": 1,
   "misconception": "generator_exhausted",
   "why": "A generator yields each value once. The first sum consumes it; the second sum sees nothing and returns 0.",
   "lesson_id": "adv_generators"
+ },
+ {
+  "id": "ac_oo_5_170dea86",
+  "source_id": "oo_5_170dea86",
+  "level": 5,
+  "topic": "adv_generators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def gen():\n    yield 4\n    yield 6\n    yield 9\n\ng = gen()\nprint(next(g))\nprint(list(g))"
+  },
+  "choices": [
+   "None",
+   "Error",
+   "5\n[6, 9]",
+   "4\n[6, 9]"
+  ],
+  "answer": 3,
+  "misconception": "generator_exhausted",
+  "why": "next() takes the first value; list() then drains only what remains.",
+  "lesson_id": "adv_generators"
+ },
+ {
+  "id": "ac_oo_5_18ee4cbc",
+  "source_id": "oo_5_18ee4cbc",
+  "level": 5,
+  "topic": "adv_generators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def gen():\n    yield 1\n    yield 6\n    yield 9\n\ng = gen()\nprint(next(g))\nprint(list(g))"
+  },
+  "choices": [
+   "Error",
+   "1\n[6, 9]",
+   "None",
+   "2\n[6, 9]"
+  ],
+  "answer": 1,
+  "misconception": "generator_exhausted",
+  "why": "next() takes the first value; list() then drains only what remains.",
+  "lesson_id": "adv_generators"
+ },
+ {
+  "id": "ac_oo_5_1a1733e8",
+  "source_id": "oo_5_1a1733e8",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "a = [3]\nb = a\na = a + [8]\nprint(b)"
+  },
+  "choices": [
+   "[3]",
+   "None",
+   "Error",
+   "[4]"
+  ],
+  "answer": 0,
+  "misconception": "iadd_mutates_in_place",
+  "why": "a += [...] extends the SAME list (b sees it); a = a + [...] builds a new list and rebinds only a.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_5_1ae95350",
+  "source_id": "oo_5_1ae95350",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "a = [9]\nb = a\na = a + [4]\nprint(b)"
+  },
+  "choices": [
+   "Error",
+   "None",
+   "[9]",
+   "0"
+  ],
+  "answer": 2,
+  "misconception": "iadd_mutates_in_place",
+  "why": "a += [...] extends the SAME list (b sees it); a = a + [...] builds a new list and rebinds only a.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_5_1db98839",
+  "source_id": "oo_5_1db98839",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "a = [9]\nb = a\na += [4]\nprint(b)"
+  },
+  "choices": [
+   "[9, 4]",
+   "[9, 5]",
+   "None",
+   "Error"
+  ],
+  "answer": 0,
+  "misconception": "iadd_mutates_in_place",
+  "why": "a += [...] extends the SAME list (b sees it); a = a + [...] builds a new list and rebinds only a.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_5_1ee1502d",
+  "source_id": "oo_5_1ee1502d",
+  "level": 5,
+  "topic": "adv_generators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def gen():\n    yield 9\n    yield 3\n    yield 5\n\ng = gen()\nprint(next(g))\nprint(list(g))"
+  },
+  "choices": [
+   "9\n[3, 5]",
+   "9\n[4, 5]",
+   "9\n[3, 6]",
+   "None"
+  ],
+  "answer": 0,
+  "misconception": "generator_exhausted",
+  "why": "next() takes the first value; list() then drains only what remains.",
+  "lesson_id": "adv_generators"
+ },
+ {
+  "id": "ac_oo_5_1f10190b",
+  "source_id": "oo_5_1f10190b",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "a = [9]\nb = a\na = a + [7]\nprint(b)"
+  },
+  "choices": [
+   "[9]",
+   "0",
+   "Error",
+   "None"
+  ],
+  "answer": 0,
+  "misconception": "iadd_mutates_in_place",
+  "why": "a += [...] extends the SAME list (b sees it); a = a + [...] builds a new list and rebinds only a.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_5_2164f212",
+  "source_id": "oo_5_2164f212",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "a = [5]\nb = a\na = a + [1]\nprint(b)"
+  },
+  "choices": [
+   "None",
+   "Error",
+   "[6]",
+   "[5]"
+  ],
+  "answer": 3,
+  "misconception": "iadd_mutates_in_place",
+  "why": "a += [...] extends the SAME list (b sees it); a = a + [...] builds a new list and rebinds only a.",
+  "lesson_id": "lists"
  },
  {
   "id": "ac_oo_5_2204fe2e",
@@ -1230,131 +1810,111 @@
   },
   "choices": [
    "6",
-   "7",
    "None",
-   "5"
-  ],
-  "answer": 3,
-  "misconception": "nonlocal_keyword",
-  "why": "nonlocal lets inner rebind outer's n; without it n += 1 would fail as an unbound local.",
-  "lesson_id": "functions_scope"
- },
- {
-  "id": "ac_oo_5_236f2921",
-  "source_id": "oo_5_236f2921",
-  "level": 5,
-  "topic": "adv_generators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def gen():\n    yield 5\n    yield 8\n    yield 9\n\ng = gen()\nprint(next(g))\nprint(list(g))"
-  },
-  "choices": [
-   "None",
-   "6\n[8, 9]",
-   "Error",
-   "5\n[8, 9]"
-  ],
-  "answer": 3,
-  "misconception": "generator_exhausted",
-  "why": "next() takes the first value; list() then drains only what remains.",
-  "lesson_id": "adv_generators"
- },
- {
-  "id": "ac_oo_5_2db5bca3",
-  "source_id": "oo_5_2db5bca3",
-  "level": 5,
-  "topic": "functions_scope",
-  "kind": "choice",
-  "prompt": {
-   "code": "def outer():\n    n = 4\n    def inner():\n        nonlocal n\n        n += 1\n    inner()\n    inner()\n    return n\n\nprint(outer())"
-  },
-  "choices": [
-   "6",
-   "8",
-   "None",
+   "5",
    "7"
   ],
-  "answer": 0,
+  "answer": 2,
   "misconception": "nonlocal_keyword",
   "why": "nonlocal lets inner rebind outer's n; without it n += 1 would fail as an unbound local.",
   "lesson_id": "functions_scope"
  },
  {
-  "id": "ac_oo_5_2efe41d5",
-  "source_id": "oo_5_2efe41d5",
+  "id": "ac_oo_5_25039a14",
+  "source_id": "oo_5_25039a14",
   "level": 5,
   "topic": "adv_generators",
   "kind": "choice",
   "prompt": {
-   "code": "def gen():\n    yield 2\n    yield 3\n    yield 7\n\ng = gen()\nprint(next(g))\nprint(list(g))"
+   "code": "def gen():\n    yield 1\n    yield 5\n    yield 2\n\ng = gen()\nprint(next(g))\nprint(list(g))"
   },
   "choices": [
-   "2\n[3, 7]",
-   "None",
-   "3\n[3, 7]",
-   "2\n[4, 7]"
+   "1\n[5, 3]",
+   "1\n[5, 2]",
+   "2\n[5, 2]",
+   "1\n[6, 2]"
   ],
-  "answer": 0,
+  "answer": 1,
   "misconception": "generator_exhausted",
   "why": "next() takes the first value; list() then drains only what remains.",
   "lesson_id": "adv_generators"
  },
  {
-  "id": "ac_oo_5_3646b76d",
-  "source_id": "oo_5_3646b76d",
+  "id": "ac_oo_5_26586acc",
+  "source_id": "oo_5_26586acc",
   "level": 5,
-  "topic": "adv_generators",
+  "topic": "lists",
   "kind": "choice",
   "prompt": {
-   "code": "def gen():\n    yield 9\n    yield 6\n    yield 5\n\ng = gen()\nprint(next(g))\nprint(list(g))"
+   "code": "a = [1]\nb = a\na += [8]\nprint(b)"
   },
   "choices": [
-   "9\n[6, 6]",
-   "Error",
-   "None",
-   "9\n[6, 5]"
-  ],
-  "answer": 3,
-  "misconception": "generator_exhausted",
-  "why": "next() takes the first value; list() then drains only what remains.",
-  "lesson_id": "adv_generators"
- },
- {
-  "id": "ac_oo_5_41c793b4",
-  "source_id": "oo_5_41c793b4",
-  "level": 5,
-  "topic": "adv_generators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def gen():\n    yield 4\n    yield 7\n    yield 5\n\ng = gen()\nprint(next(g))\nprint(list(g))"
-  },
-  "choices": [
-   "None",
-   "4\n[7, 6]",
-   "5\n[7, 5]",
-   "4\n[7, 5]"
-  ],
-  "answer": 3,
-  "misconception": "generator_exhausted",
-  "why": "next() takes the first value; list() then drains only what remains.",
-  "lesson_id": "adv_generators"
- },
- {
-  "id": "ac_oo_5_4f435d60",
-  "source_id": "oo_5_4f435d60",
-  "level": 5,
-  "topic": "adv_generators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def gen():\n    yield 3\n    yield 1\n    yield 7\n\ng = gen()\nprint(next(g))\nprint(list(g))"
-  },
-  "choices": [
-   "3\n[1, 7]",
-   "4\n[1, 7]",
-   "3\n[2, 7]",
+   "[2, 8]",
+   "[1, 8]",
+   "[-1, 8]",
    "None"
   ],
+  "answer": 1,
+  "misconception": "iadd_mutates_in_place",
+  "why": "a += [...] extends the SAME list (b sees it); a = a + [...] builds a new list and rebinds only a.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_5_347f7a78",
+  "source_id": "oo_5_347f7a78",
+  "level": 5,
+  "topic": "adv_generators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def gen():\n    yield 9\n    yield 1\n    yield 2\n\ng = gen()\nprint(next(g))\nprint(list(g))"
+  },
+  "choices": [
+   "9\n[1, 2]",
+   "None",
+   "9\n[1, 3]",
+   "9\n[2, 2]"
+  ],
   "answer": 0,
+  "misconception": "generator_exhausted",
+  "why": "next() takes the first value; list() then drains only what remains.",
+  "lesson_id": "adv_generators"
+ },
+ {
+  "id": "ac_oo_5_3537b54a",
+  "source_id": "oo_5_3537b54a",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "outer = [[4], [3]]\ncopy = outer.copy()\ncopy[0].append(0)\ncopy.append([])\nprint(outer)"
+  },
+  "choices": [
+   "[[4, 0], [4]]",
+   "[[4, 0], [3]]",
+   "[[4], [3, 0]]",
+   "[[5, 0], [3]]"
+  ],
+  "answer": 1,
+  "misconception": "shallow_copy",
+  "why": ".copy() is shallow: the outer list is new, but the inner lists are shared, so appending inside copy[0] shows up in outer too.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_5_566050b8",
+  "source_id": "oo_5_566050b8",
+  "level": 5,
+  "topic": "adv_generators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def gen():\n    yield 7\n    yield 5\n    yield 4\n\ng = gen()\nprint(next(g))\nprint(list(g))"
+  },
+  "choices": [
+   "7\n[6, 4]",
+   "7\n[5, 5]",
+   "None",
+   "7\n[5, 4]"
+  ],
+  "answer": 3,
   "misconception": "generator_exhausted",
   "why": "next() takes the first value; list() then drains only what remains.",
   "lesson_id": "adv_generators"
@@ -1370,9 +1930,9 @@
   },
   "choices": [
    "91\n0",
-   "None",
+   "30\n0",
    "55\n0",
-   "30\n0"
+   "None"
   ],
   "answer": 2,
   "misconception": "generator_exhausted",
@@ -1380,19 +1940,19 @@
   "lesson_id": "adv_generators"
  },
  {
-  "id": "ac_oo_5_6bd49327",
-  "source_id": "oo_5_6bd49327",
+  "id": "ac_oo_5_61878656",
+  "source_id": "oo_5_61878656",
   "level": 5,
   "topic": "adv_generators",
   "kind": "choice",
   "prompt": {
-   "code": "def gen():\n    yield 2\n    yield 3\n    yield 9\n\ng = gen()\nprint(next(g))\nprint(list(g))"
+   "code": "def gen():\n    yield 4\n    yield 7\n    yield 2\n\ng = gen()\nprint(next(g))\nprint(list(g))"
   },
   "choices": [
-   "3\n[3, 9]",
+   "4\n[7, 3]",
    "None",
-   "2\n[4, 9]",
-   "2\n[3, 9]"
+   "5\n[7, 2]",
+   "4\n[7, 2]"
   ],
   "answer": 3,
   "misconception": "generator_exhausted",
@@ -1400,79 +1960,19 @@
   "lesson_id": "adv_generators"
  },
  {
-  "id": "ac_oo_5_72984389",
-  "source_id": "oo_5_72984389",
+  "id": "ac_oo_5_65908b75",
+  "source_id": "oo_5_65908b75",
   "level": 5,
   "topic": "adv_generators",
   "kind": "choice",
   "prompt": {
-   "code": "def gen():\n    yield 9\n    yield 3\n    yield 6\n\ng = gen()\nprint(next(g))\nprint(list(g))"
+   "code": "def gen():\n    yield 2\n    yield 4\n    yield 8\n\ng = gen()\nprint(next(g))\nprint(list(g))"
   },
   "choices": [
-   "Error",
+   "2\n[4, 8]",
+   "2\n[5, 8]",
    "None",
-   "9\n[4, 6]",
-   "9\n[3, 6]"
-  ],
-  "answer": 3,
-  "misconception": "generator_exhausted",
-  "why": "next() takes the first value; list() then drains only what remains.",
-  "lesson_id": "adv_generators"
- },
- {
-  "id": "ac_oo_5_7b2addb4",
-  "source_id": "oo_5_7b2addb4",
-  "level": 5,
-  "topic": "adv_generators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def gen():\n    yield 9\n    yield 1\n    yield 4\n\ng = gen()\nprint(next(g))\nprint(list(g))"
-  },
-  "choices": [
-   "None",
-   "9\n[2, 4]",
-   "9\n[1, 5]",
-   "9\n[1, 4]"
-  ],
-  "answer": 3,
-  "misconception": "generator_exhausted",
-  "why": "next() takes the first value; list() then drains only what remains.",
-  "lesson_id": "adv_generators"
- },
- {
-  "id": "ac_oo_5_8de00285",
-  "source_id": "oo_5_8de00285",
-  "level": 5,
-  "topic": "adv_generators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def gen():\n    yield 7\n    yield 8\n    yield 5\n\ng = gen()\nprint(next(g))\nprint(list(g))"
-  },
-  "choices": [
-   "None",
-   "7\n[8, 5]",
-   "7\n[8, 6]",
-   "Error"
-  ],
-  "answer": 1,
-  "misconception": "generator_exhausted",
-  "why": "next() takes the first value; list() then drains only what remains.",
-  "lesson_id": "adv_generators"
- },
- {
-  "id": "ac_oo_5_973dfa27",
-  "source_id": "oo_5_973dfa27",
-  "level": 5,
-  "topic": "adv_generators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def gen():\n    yield 2\n    yield 9\n    yield 3\n\ng = gen()\nprint(next(g))\nprint(list(g))"
-  },
-  "choices": [
-   "2\n[9, 3]",
-   "None",
-   "3\n[9, 3]",
-   "2\n[9, 4]"
+   "3\n[4, 8]"
   ],
   "answer": 0,
   "misconception": "generator_exhausted",
@@ -1480,24 +1980,124 @@
   "lesson_id": "adv_generators"
  },
  {
-  "id": "ac_oo_5_abc4ab94",
-  "source_id": "oo_5_abc4ab94",
+  "id": "ac_oo_5_699e4ef5",
+  "source_id": "oo_5_699e4ef5",
   "level": 5,
-  "topic": "adv_generators",
+  "topic": "lists",
   "kind": "choice",
   "prompt": {
-   "code": "g = (x * x for x in range(4))\nprint(sum(g))\nprint(sum(g))"
+   "code": "a = [7]\nb = a\na = a + [2]\nprint(b)"
   },
   "choices": [
-   "30\n0",
-   "12\n0",
-   "None",
-   "14\n0"
+   "[7]",
+   "0",
+   "Error",
+   "None"
   ],
-  "answer": 3,
-  "misconception": "generator_exhausted",
-  "why": "A generator yields each value once. The first sum consumes it; the second sum sees nothing and returns 0.",
-  "lesson_id": "adv_generators"
+  "answer": 0,
+  "misconception": "iadd_mutates_in_place",
+  "why": "a += [...] extends the SAME list (b sees it); a = a + [...] builds a new list and rebinds only a.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_5_731239de",
+  "source_id": "oo_5_731239de",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "outer = [[2], [4]]\ncopy = outer.copy()\ncopy[0].append(0)\ncopy.append([])\nprint(outer)"
+  },
+  "choices": [
+   "[[2, 0], [5]]",
+   "[[3, 0], [4]]",
+   "[[2, 0], [4]]",
+   "[[2], [4, 0]]"
+  ],
+  "answer": 2,
+  "misconception": "shallow_copy",
+  "why": ".copy() is shallow: the outer list is new, but the inner lists are shared, so appending inside copy[0] shows up in outer too.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_5_7c47f697",
+  "source_id": "oo_5_7c47f697",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "outer = [[3], [9]]\ncopy = outer.copy()\ncopy[0].append(0)\ncopy.append([])\nprint(outer)"
+  },
+  "choices": [
+   "[[4, 0], [9]]",
+   "[[3, 0], [9]]",
+   "[[3], [9, 0]]",
+   "[[0, 3], [9]]"
+  ],
+  "answer": 1,
+  "misconception": "shallow_copy",
+  "why": ".copy() is shallow: the outer list is new, but the inner lists are shared, so appending inside copy[0] shows up in outer too.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_5_7ff5654e",
+  "source_id": "oo_5_7ff5654e",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "outer = [[1], [5]]\ncopy = outer.copy()\ncopy[0].append(0)\ncopy.append([])\nprint(outer)"
+  },
+  "choices": [
+   "[[1, 0], [5]]",
+   "[[1, 0], [6]]",
+   "[[1], [5, 0]]",
+   "[[2, 0], [5]]"
+  ],
+  "answer": 0,
+  "misconception": "shallow_copy",
+  "why": ".copy() is shallow: the outer list is new, but the inner lists are shared, so appending inside copy[0] shows up in outer too.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_5_8eb9aa42",
+  "source_id": "oo_5_8eb9aa42",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "outer = [[2], [2]]\ncopy = outer.copy()\ncopy[0].append(0)\ncopy.append([])\nprint(outer)"
+  },
+  "choices": [
+   "[[2, 0], [2]]",
+   "[[3, 0], [2]]",
+   "[[0, 2], [2]]",
+   "[[2], [2, 0]]"
+  ],
+  "answer": 0,
+  "misconception": "shallow_copy",
+  "why": ".copy() is shallow: the outer list is new, but the inner lists are shared, so appending inside copy[0] shows up in outer too.",
+  "lesson_id": "lists"
+ },
+ {
+  "id": "ac_oo_5_9bc975be",
+  "source_id": "oo_5_9bc975be",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "a = [4]\nb = a\na += [6]\nprint(b)"
+  },
+  "choices": [
+   "None",
+   "Error",
+   "[4, 6]",
+   "[5, 6]"
+  ],
+  "answer": 2,
+  "misconception": "iadd_mutates_in_place",
+  "why": "a += [...] extends the SAME list (b sees it); a = a + [...] builds a new list and rebinds only a.",
+  "lesson_id": "lists"
  },
  {
   "id": "ac_oo_5_ac646fd2",
@@ -1510,14 +2110,34 @@
   },
   "choices": [
    "6\n0",
-   "14\n0",
    "None",
-   "5\n0"
+   "5\n0",
+   "14\n0"
   ],
-  "answer": 3,
+  "answer": 2,
   "misconception": "generator_exhausted",
   "why": "A generator yields each value once. The first sum consumes it; the second sum sees nothing and returns 0.",
   "lesson_id": "adv_generators"
+ },
+ {
+  "id": "ac_oo_5_b04f0cf1",
+  "source_id": "oo_5_b04f0cf1",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "outer = [[9], [2]]\ncopy = outer.copy()\ncopy[0].append(0)\ncopy.append([])\nprint(outer)"
+  },
+  "choices": [
+   "[[9, 0], [3]]",
+   "[[9], [2, 0]]",
+   "[[9, 0], [2]]",
+   "[[0, 9], [2]]"
+  ],
+  "answer": 2,
+  "misconception": "shallow_copy",
+  "why": ".copy() is shallow: the outer list is new, but the inner lists are shared, so appending inside copy[0] shows up in outer too.",
+  "lesson_id": "lists"
  },
  {
   "id": "ac_oo_5_b1cad4ee",
@@ -1549,75 +2169,15 @@
    "code": "fs = [lambda: i for i in range(4)]\nprint([f() for f in fs])"
   },
   "choices": [
-   "None",
    "[4, 4, 4, 4, 4]",
    "[3, 3, 3, 3]",
+   "None",
    "Error"
   ],
-  "answer": 2,
+  "answer": 1,
   "misconception": "closure_late_binding",
   "why": "Each lambda looks up i when it is called, after the loop finished with i = 3; use lambda i=i: i to capture each value.",
   "lesson_id": "functions_scope"
- },
- {
-  "id": "ac_oo_5_b3cef6e4",
-  "source_id": "oo_5_b3cef6e4",
-  "level": 5,
-  "topic": "adv_generators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def gen():\n    yield 9\n    yield 7\n    yield 6\n\ng = gen()\nprint(next(g))\nprint(list(g))"
-  },
-  "choices": [
-   "9\n[7, 6]",
-   "Error",
-   "0",
-   "None"
-  ],
-  "answer": 0,
-  "misconception": "generator_exhausted",
-  "why": "next() takes the first value; list() then drains only what remains.",
-  "lesson_id": "adv_generators"
- },
- {
-  "id": "ac_oo_5_b413075e",
-  "source_id": "oo_5_b413075e",
-  "level": 5,
-  "topic": "adv_generators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def gen():\n    yield 1\n    yield 7\n    yield 8\n\ng = gen()\nprint(next(g))\nprint(list(g))"
-  },
-  "choices": [
-   "2\n[7, 8]",
-   "1\n[7, 8]",
-   "Error",
-   "None"
-  ],
-  "answer": 1,
-  "misconception": "generator_exhausted",
-  "why": "next() takes the first value; list() then drains only what remains.",
-  "lesson_id": "adv_generators"
- },
- {
-  "id": "ac_oo_5_b9dfd96d",
-  "source_id": "oo_5_b9dfd96d",
-  "level": 5,
-  "topic": "adv_generators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def gen():\n    yield 4\n    yield 9\n    yield 6\n\ng = gen()\nprint(next(g))\nprint(list(g))"
-  },
-  "choices": [
-   "None",
-   "5\n[9, 6]",
-   "4\n[9, 6]",
-   "Error"
-  ],
-  "answer": 2,
-  "misconception": "generator_exhausted",
-  "why": "next() takes the first value; list() then drains only what remains.",
-  "lesson_id": "adv_generators"
  },
  {
   "id": "ac_oo_5_bb428175",
@@ -1630,14 +2190,34 @@
   },
   "choices": [
    "0",
-   "caught A",
    "Error",
-   "None"
+   "None",
+   "caught A"
   ],
-  "answer": 1,
+  "answer": 3,
   "misconception": "except_order_subclass",
   "why": "except clauses are tried in order and a B is also an A, so the first clause catches it; put subclasses first.",
   "lesson_id": "errors_handling"
+ },
+ {
+  "id": "ac_oo_5_c357082b",
+  "source_id": "oo_5_c357082b",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "outer = [[7], [8]]\ncopy = outer.copy()\ncopy[0].append(0)\ncopy.append([])\nprint(outer)"
+  },
+  "choices": [
+   "[[7, 0], [8]]",
+   "None",
+   "[[7], [8, 0]]",
+   "[[0, 7], [8]]"
+  ],
+  "answer": 0,
+  "misconception": "shallow_copy",
+  "why": ".copy() is shallow: the outer list is new, but the inner lists are shared, so appending inside copy[0] shows up in outer too.",
+  "lesson_id": "lists"
  },
  {
   "id": "ac_oo_5_c5f7aa34",
@@ -1649,15 +2229,35 @@
    "code": "def outer():\n    n = 1\n    def inner():\n        nonlocal n\n        n += 1\n    inner()\n    inner()\n    return n\n\nprint(outer())"
   },
   "choices": [
+   "3",
    "None",
    "Error",
-   "4",
-   "3"
+   "4"
   ],
-  "answer": 3,
+  "answer": 0,
   "misconception": "nonlocal_keyword",
   "why": "nonlocal lets inner rebind outer's n; without it n += 1 would fail as an unbound local.",
   "lesson_id": "functions_scope"
+ },
+ {
+  "id": "ac_oo_5_ce9d9cba",
+  "source_id": "oo_5_ce9d9cba",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "a = [4]\nb = a\na = a + [5]\nprint(b)"
+  },
+  "choices": [
+   "None",
+   "[4]",
+   "[5]",
+   "Error"
+  ],
+  "answer": 1,
+  "misconception": "iadd_mutates_in_place",
+  "why": "a += [...] extends the SAME list (b sees it); a = a + [...] builds a new list and rebinds only a.",
+  "lesson_id": "lists"
  },
  {
   "id": "ac_oo_5_dac4e1c6",
@@ -1670,14 +2270,34 @@
   },
   "choices": [
    "Error",
-   "[2, 2, 2]",
    "None",
+   "[2, 2, 2]",
    "[3, 3, 3, 3]"
   ],
-  "answer": 1,
+  "answer": 2,
   "misconception": "closure_late_binding",
   "why": "Each lambda looks up i when it is called, after the loop finished with i = 2; use lambda i=i: i to capture each value.",
   "lesson_id": "functions_scope"
+ },
+ {
+  "id": "ac_oo_5_dcc8923e",
+  "source_id": "oo_5_dcc8923e",
+  "level": 5,
+  "topic": "adv_generators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def gen():\n    yield 8\n    yield 7\n    yield 6\n\ng = gen()\nprint(next(g))\nprint(list(g))"
+  },
+  "choices": [
+   "None",
+   "0",
+   "Error",
+   "8\n[7, 6]"
+  ],
+  "answer": 3,
+  "misconception": "generator_exhausted",
+  "why": "next() takes the first value; list() then drains only what remains.",
+  "lesson_id": "adv_generators"
  },
  {
   "id": "ac_oo_5_e32b7854",
@@ -1689,15 +2309,35 @@
    "code": "def outer():\n    n = 5\n    def inner():\n        nonlocal n\n        n += 1\n    inner()\n    inner()\n    return n\n\nprint(outer())"
   },
   "choices": [
-   "7",
    "8",
-   "None",
-   "9"
+   "7",
+   "9",
+   "None"
   ],
-  "answer": 0,
+  "answer": 1,
   "misconception": "nonlocal_keyword",
   "why": "nonlocal lets inner rebind outer's n; without it n += 1 would fail as an unbound local.",
   "lesson_id": "functions_scope"
+ },
+ {
+  "id": "ac_oo_5_e6febebb",
+  "source_id": "oo_5_e6febebb",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "a = [5]\nb = a\na = a + [3]\nprint(b)"
+  },
+  "choices": [
+   "[5]",
+   "[6]",
+   "Error",
+   "None"
+  ],
+  "answer": 0,
+  "misconception": "iadd_mutates_in_place",
+  "why": "a += [...] extends the SAME list (b sees it); a = a + [...] builds a new list and rebinds only a.",
+  "lesson_id": "lists"
  },
  {
   "id": "ac_oo_5_e8f65576",
@@ -1709,75 +2349,15 @@
    "code": "def f():\n    try:\n        return \"try\"\n    finally:\n        print(\"finally\")\n\nprint(f())"
   },
   "choices": [
-   "Error",
    "None",
    "finally\ntry",
+   "Error",
    "0"
   ],
-  "answer": 2,
+  "answer": 1,
   "misconception": "finally_always_runs",
   "why": "finally runs before the function actually hands back its return value, so its print appears first.",
   "lesson_id": "errors_handling"
- },
- {
-  "id": "ac_oo_5_ea51717c",
-  "source_id": "oo_5_ea51717c",
-  "level": 5,
-  "topic": "adv_generators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def gen():\n    yield 6\n    yield 3\n    yield 1\n\ng = gen()\nprint(next(g))\nprint(list(g))"
-  },
-  "choices": [
-   "6\n[3, 1]",
-   "6\n[3, 2]",
-   "6\n[4, 1]",
-   "None"
-  ],
-  "answer": 0,
-  "misconception": "generator_exhausted",
-  "why": "next() takes the first value; list() then drains only what remains.",
-  "lesson_id": "adv_generators"
- },
- {
-  "id": "ac_oo_5_eb64f1ee",
-  "source_id": "oo_5_eb64f1ee",
-  "level": 5,
-  "topic": "adv_generators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def gen():\n    yield 8\n    yield 3\n    yield 2\n\ng = gen()\nprint(next(g))\nprint(list(g))"
-  },
-  "choices": [
-   "8\n[3, 2]",
-   "8\n[3, 3]",
-   "8\n[4, 2]",
-   "None"
-  ],
-  "answer": 0,
-  "misconception": "generator_exhausted",
-  "why": "next() takes the first value; list() then drains only what remains.",
-  "lesson_id": "adv_generators"
- },
- {
-  "id": "ac_oo_5_eef4d15b",
-  "source_id": "oo_5_eef4d15b",
-  "level": 5,
-  "topic": "adv_generators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def gen():\n    yield 3\n    yield 5\n    yield 8\n\ng = gen()\nprint(next(g))\nprint(list(g))"
-  },
-  "choices": [
-   "3\n[5, 8]",
-   "None",
-   "3\n[6, 8]",
-   "4\n[5, 8]"
-  ],
-  "answer": 0,
-  "misconception": "generator_exhausted",
-  "why": "next() takes the first value; list() then drains only what remains.",
-  "lesson_id": "adv_generators"
  },
  {
   "id": "ac_oo_5_f7079d64",
@@ -1790,14 +2370,34 @@
   },
   "choices": [
    "None",
+   "2",
    "Error",
-   "4",
-   "2"
+   "4"
   ],
-  "answer": 3,
+  "answer": 1,
   "misconception": "nonlocal_keyword",
   "why": "nonlocal lets inner rebind outer's n; without it n += 1 would fail as an unbound local.",
   "lesson_id": "functions_scope"
+ },
+ {
+  "id": "ac_oo_5_fcac87bd",
+  "source_id": "oo_5_fcac87bd",
+  "level": 5,
+  "topic": "lists",
+  "kind": "choice",
+  "prompt": {
+   "code": "outer = [[5], [5]]\ncopy = outer.copy()\ncopy[0].append(0)\ncopy.append([])\nprint(outer)"
+  },
+  "choices": [
+   "[[0, 5], [5]]",
+   "[[6, 0], [5]]",
+   "[[5, 0], [5]]",
+   "[[5], [5, 0]]"
+  ],
+  "answer": 2,
+  "misconception": "shallow_copy",
+  "why": ".copy() is shallow: the outer list is new, but the inner lists are shared, so appending inside copy[0] shows up in outer too.",
+  "lesson_id": "lists"
  },
  {
   "id": "ac_oo_6_06152506",
@@ -1809,135 +2409,155 @@
    "code": "def log(f):\n    def wrapper(*a):\n        return f(*a)\n    return wrapper\n\n@log\ndef parse(name):\n    return name\n\nprint(parse.__name__)"
   },
   "choices": [
-   "Error",
-   "0",
    "wrapper",
-   "None"
+   "None",
+   "0",
+   "Error"
   ],
-  "answer": 2,
+  "answer": 0,
   "misconception": "decorator_loses_name",
   "why": "A decorator replaces the function with its wrapper, so __name__ becomes 'wrapper' unless functools.wraps copies the metadata across.",
   "lesson_id": "adv_decorators"
  },
  {
-  "id": "ac_oo_6_166d0809",
-  "source_id": "oo_6_166d0809",
+  "id": "ac_oo_6_1ab8d514",
+  "source_id": "oo_6_1ab8d514",
   "level": 6,
   "topic": "adv_decorators",
   "kind": "choice",
   "prompt": {
-   "code": "def repeat(n):\n    def deco(f):\n        def w(x):\n            return [f(x)] * n\n        return w\n    return deco\n\n@repeat(3)\ndef scale(x):\n    return x * 10\n\nprint(scale(5))"
+   "code": "import functools\n\ndef log(f):\n    @functools.wraps(f)\n    def wrapper(*a):\n        return f(*a)\n    return wrapper\n\n@log\ndef render(name):\n    return name\n\nprint(render.__name__)"
   },
   "choices": [
-   "[60, 60, 60]",
-   "[50, 50, 50]",
-   "[50, 50, 50, 50]",
-   "[55, 55, 55]"
-  ],
-  "answer": 1,
-  "misconception": "decorator_factory",
-  "why": "repeat(3) is called first and returns the real decorator; the wrapper then repeats the result 3 times.",
-  "lesson_id": "adv_decorators"
- },
- {
-  "id": "ac_oo_6_1c8b9072",
-  "source_id": "oo_6_1c8b9072",
-  "level": 6,
-  "topic": "adv_decorators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def repeat(n):\n    def deco(f):\n        def w(x):\n            return [f(x)] * n\n        return w\n    return deco\n\n@repeat(4)\ndef scale(x):\n    return x * 3\n\nprint(scale(7))"
-  },
-  "choices": [
-   "[28, 28, 28, 28]",
-   "[21, 21, 21, 21]",
-   "[21, 21, 21, 21, 21]",
-   "None"
-  ],
-  "answer": 1,
-  "misconception": "decorator_factory",
-  "why": "repeat(4) is called first and returns the real decorator; the wrapper then repeats the result 4 times.",
-  "lesson_id": "adv_decorators"
- },
- {
-  "id": "ac_oo_6_1e2cfa62",
-  "source_id": "oo_6_1e2cfa62",
-  "level": 6,
-  "topic": "adv_decorators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def repeat(n):\n    def deco(f):\n        def w(x):\n            return [f(x)] * n\n        return w\n    return deco\n\n@repeat(3)\ndef scale(x):\n    return x * 10\n\nprint(scale(9))"
-  },
-  "choices": [
-   "[90, 90, 90]",
    "None",
-   "[99, 99, 99]",
-   "[90, 90, 90, 90]"
-  ],
-  "answer": 0,
-  "misconception": "decorator_factory",
-  "why": "repeat(3) is called first and returns the real decorator; the wrapper then repeats the result 3 times.",
-  "lesson_id": "adv_decorators"
- },
- {
-  "id": "ac_oo_6_31a1b6b4",
-  "source_id": "oo_6_31a1b6b4",
-  "level": 6,
-  "topic": "functions_args",
-  "kind": "choice",
-  "prompt": {
-   "code": "def f(*args, **kwargs):\n    print(len(args), sorted(kwargs))\n\nf(4, 2, x=5)\nf(*[4], **{'y': 2, 'z': 5})"
-  },
-  "choices": [
-   "6 ['x']\n4 ['y', 'z']",
-   "2 ['x']\n1 ['y', 'z']",
    "Error",
-   "None"
-  ],
-  "answer": 1,
-  "misconception": "args_kwargs_unpacking",
-  "why": "*args collects the positional arguments into a tuple and **kwargs the keyword ones into a dict; * and ** at a call site unpack them.",
-  "lesson_id": "functions_args"
- },
- {
-  "id": "ac_oo_6_337bca2f",
-  "source_id": "oo_6_337bca2f",
-  "level": 6,
-  "topic": "adv_decorators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def twice(f):\n    def w():\n        return f() + f()\n    return w\n\ndef exclaim(f):\n    def w():\n        return f() + \"!\"\n    return w\n\n@twice\n@exclaim\ndef say():\n    return \"py\"\n\nprint(say())"
-  },
-  "choices": [
-   "Error",
-   "None",
    "0",
-   "py!py!"
+   "render"
   ],
   "answer": 3,
+  "misconception": "decorator_loses_name",
+  "why": "A decorator replaces the function with its wrapper, so __name__ becomes 'wrapper' unless functools.wraps copies the metadata across.",
+  "lesson_id": "adv_decorators"
+ },
+ {
+  "id": "ac_oo_6_1f06f58c",
+  "source_id": "oo_6_1f06f58c",
+  "level": 6,
+  "topic": "adv_decorators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def log(f):\n    def wrapper(*a):\n        return f(*a)\n    return wrapper\n\n@log\ndef render(name):\n    return name\n\nprint(render.__name__)"
+  },
+  "choices": [
+   "None",
+   "wrapper",
+   "0",
+   "Error"
+  ],
+  "answer": 1,
+  "misconception": "decorator_loses_name",
+  "why": "A decorator replaces the function with its wrapper, so __name__ becomes 'wrapper' unless functools.wraps copies the metadata across.",
+  "lesson_id": "adv_decorators"
+ },
+ {
+  "id": "ac_oo_6_1f557e96",
+  "source_id": "oo_6_1f557e96",
+  "level": 6,
+  "topic": "oop_magic_methods",
+  "kind": "choice",
+  "prompt": {
+   "code": "class Cell:\n    def __init__(self, v):\n        self.v = v\n\n    def __repr__(self):\n        return f\"Cell({self.v})\"\n\n    def __str__(self):\n        return f\"<{self.v}>\"\n\np = Cell(1)\nprint(p)\nprint([p])"
+  },
+  "choices": [
+   "<1>\n[Cell(1)]",
+   "None",
+   "<2>\n[Cell(2)]",
+   "Error"
+  ],
+  "answer": 0,
+  "misconception": "str_vs_repr",
+  "why": "print(obj) uses __str__, but containers show their elements with __repr__.",
+  "lesson_id": "oop_magic_methods"
+ },
+ {
+  "id": "ac_oo_6_20127a3b",
+  "source_id": "oo_6_20127a3b",
+  "level": 6,
+  "topic": "adv_decorators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def twice(f):\n    def w():\n        return f() + f()\n    return w\n\ndef exclaim(f):\n    def w():\n        return f() + \".\"\n    return w\n\n@exclaim\n@twice\ndef say():\n    return \"yo\"\n\nprint(say())"
+  },
+  "choices": [
+   "None",
+   "yoyo.",
+   "Error",
+   "0"
+  ],
+  "answer": 1,
   "misconception": "decorator_order",
   "why": "Decorators apply bottom-up: the one nearest the def wraps first, the top one wraps the result.",
   "lesson_id": "adv_decorators"
  },
  {
-  "id": "ac_oo_6_4a4ed67e",
-  "source_id": "oo_6_4a4ed67e",
+  "id": "ac_oo_6_30b4465b",
+  "source_id": "oo_6_30b4465b",
   "level": 6,
-  "topic": "functions_args",
+  "topic": "oop_classes",
   "kind": "choice",
   "prompt": {
-   "code": "def f(*args, **kwargs):\n    print(len(args), sorted(kwargs))\n\nf(9, 1, x=7)\nf(*[9], **{'y': 1, 'z': 7})"
+   "code": "class Rect:\n    def __init__(self, w, h):\n        self.w, self.h = w, h\n\n    @property\n    def area(self):\n        return self.w * self.h\n\nr = Rect(6, 9)\nr.w = 7\nprint(r.area)"
   },
   "choices": [
-   "10 ['x']\n9 ['y', 'z']",
+   "16",
    "None",
-   "2 ['x']\n1 ['y', 'z']",
-   "Error"
+   "Error",
+   "63"
+  ],
+  "answer": 3,
+  "misconception": "property_is_computed",
+  "why": "A property is recomputed on every access, so changing w changes the next area read; it is not a stored value.",
+  "lesson_id": "oop_classes"
+ },
+ {
+  "id": "ac_oo_6_31785daf",
+  "source_id": "oo_6_31785daf",
+  "level": 6,
+  "topic": "adv_generators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def counter():\n    total = 1\n    for i in range(1, 5):\n        total += i * 2\n        yield total\n\nprint(list(counter()))"
+  },
+  "choices": [
+   "[3, 7, 13, 21, 31]",
+   "[3, 7, 13, 21]",
+   "[4, 8, 14, 22]",
+   "[4, 10, 19, 31]"
+  ],
+  "answer": 1,
+  "misconception": "generator_state",
+  "why": "A generator keeps its local state between yields, so each yielded value is the running total so far.",
+  "lesson_id": "adv_generators"
+ },
+ {
+  "id": "ac_oo_6_3c2c39af",
+  "source_id": "oo_6_3c2c39af",
+  "level": 6,
+  "topic": "adv_generators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def g():\n    yield from range(2)\n    yield 5\n\nprint(list(g()))"
+  },
+  "choices": [
+   "None",
+   "[0, 1, 2, 5]",
+   "[0, 1, 5]",
+   "[0, 1, 6]"
   ],
   "answer": 2,
-  "misconception": "args_kwargs_unpacking",
-  "why": "*args collects the positional arguments into a tuple and **kwargs the keyword ones into a dict; * and ** at a call site unpack them.",
-  "lesson_id": "functions_args"
+  "misconception": "yield_from",
+  "why": "yield from hands over every value of the inner iterable (0 to 1) before the generator continues to its own yield.",
+  "lesson_id": "adv_generators"
  },
  {
   "id": "ac_oo_6_50651fdf",
@@ -1950,14 +2570,34 @@
   },
   "choices": [
    "None",
-   "0",
    "Error",
-   "1"
+   "1",
+   "0"
   ],
-  "answer": 3,
+  "answer": 2,
   "misconception": "class_attr_shared",
   "why": "members is defined on the class, so every instance shares the same list; assign self.members = [] in __init__ for per-instance state.",
   "lesson_id": "oop_classes"
+ },
+ {
+  "id": "ac_oo_6_51fb647d",
+  "source_id": "oo_6_51fb647d",
+  "level": 6,
+  "topic": "oop_magic_methods",
+  "kind": "choice",
+  "prompt": {
+   "code": "class Node:\n    def __init__(self, v):\n        self.v = v\n\n    def __repr__(self):\n        return f\"Node({self.v})\"\n\n    def __str__(self):\n        return f\"<{self.v}>\"\n\np = Node(2)\nprint(p)\nprint([p])"
+  },
+  "choices": [
+   "None",
+   "<2>\n[Node(2)]",
+   "Error",
+   "<3>\n[Node(3)]"
+  ],
+  "answer": 1,
+  "misconception": "str_vs_repr",
+  "why": "print(obj) uses __str__, but containers show their elements with __repr__.",
+  "lesson_id": "oop_magic_methods"
  },
  {
   "id": "ac_oo_6_539b4c2d",
@@ -1970,8 +2610,8 @@
   },
   "choices": [
    "<2>\n[Point(2)]",
-   "None",
    "Error",
+   "None",
    "<3>\n[Point(3)]"
   ],
   "answer": 0,
@@ -1980,24 +2620,104 @@
   "lesson_id": "oop_magic_methods"
  },
  {
-  "id": "ac_oo_6_5ee21a71",
-  "source_id": "oo_6_5ee21a71",
+  "id": "ac_oo_6_579510f1",
+  "source_id": "oo_6_579510f1",
   "level": 6,
   "topic": "adv_decorators",
   "kind": "choice",
   "prompt": {
-   "code": "def log(f):\n    def wrapper(*a):\n        return f(*a)\n    return wrapper\n\n@log\ndef shout(name):\n    return name\n\nprint(shout.__name__)"
+   "code": "def repeat(n):\n    def deco(f):\n        def w(x):\n            return [f(x)] * n\n        return w\n    return deco\n\n@repeat(4)\ndef scale(x):\n    return x * 3\n\nprint(scale(9))"
   },
   "choices": [
-   "wrapper",
-   "0",
-   "Error",
+   "[27, 27, 27, 27, 27]",
+   "[27, 27, 27, 27]",
+   "[36, 36, 36, 36]",
    "None"
   ],
-  "answer": 0,
-  "misconception": "decorator_loses_name",
-  "why": "A decorator replaces the function with its wrapper, so __name__ becomes 'wrapper' unless functools.wraps copies the metadata across.",
+  "answer": 1,
+  "misconception": "decorator_factory",
+  "why": "repeat(4) is called first and returns the real decorator; the wrapper then repeats the result 4 times.",
   "lesson_id": "adv_decorators"
+ },
+ {
+  "id": "ac_oo_6_5919413f",
+  "source_id": "oo_6_5919413f",
+  "level": 6,
+  "topic": "oop_magic_methods",
+  "kind": "choice",
+  "prompt": {
+   "code": "class Node:\n    def __init__(self, v):\n        self.v = v\n\n    def __repr__(self):\n        return f\"Node({self.v})\"\n\n    def __str__(self):\n        return f\"<{self.v}>\"\n\np = Node(7)\nprint(p)\nprint([p])"
+  },
+  "choices": [
+   "Error",
+   "<7>\n[Node(7)]",
+   "0",
+   "None"
+  ],
+  "answer": 1,
+  "misconception": "str_vs_repr",
+  "why": "print(obj) uses __str__, but containers show their elements with __repr__.",
+  "lesson_id": "oop_magic_methods"
+ },
+ {
+  "id": "ac_oo_6_5c4eb1dd",
+  "source_id": "oo_6_5c4eb1dd",
+  "level": 6,
+  "topic": "adv_decorators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def twice(f):\n    def w():\n        return f() + f()\n    return w\n\ndef exclaim(f):\n    def w():\n        return f() + \"!\"\n    return w\n\n@exclaim\n@twice\ndef say():\n    return \"yo\"\n\nprint(say())"
+  },
+  "choices": [
+   "Error",
+   "None",
+   "yoyo!",
+   "0"
+  ],
+  "answer": 2,
+  "misconception": "decorator_order",
+  "why": "Decorators apply bottom-up: the one nearest the def wraps first, the top one wraps the result.",
+  "lesson_id": "adv_decorators"
+ },
+ {
+  "id": "ac_oo_6_5e1cfec6",
+  "source_id": "oo_6_5e1cfec6",
+  "level": 6,
+  "topic": "functions_args",
+  "kind": "choice",
+  "prompt": {
+   "code": "def f(*args, **kwargs):\n    print(len(args), sorted(kwargs))\n\nf(8, 1, x=4)\nf(*[8], **{'y': 1, 'z': 4})"
+  },
+  "choices": [
+   "Error",
+   "9 ['x']\n8 ['y', 'z']",
+   "None",
+   "2 ['x']\n1 ['y', 'z']"
+  ],
+  "answer": 3,
+  "misconception": "args_kwargs_unpacking",
+  "why": "*args collects the positional arguments into a tuple and **kwargs the keyword ones into a dict; * and ** at a call site unpack them.",
+  "lesson_id": "functions_args"
+ },
+ {
+  "id": "ac_oo_6_6404122d",
+  "source_id": "oo_6_6404122d",
+  "level": 6,
+  "topic": "functions_args",
+  "kind": "choice",
+  "prompt": {
+   "code": "def f(*args, **kwargs):\n    print(len(args), sorted(kwargs))\n\nf(6, 2, x=1)\nf(*[6], **{'y': 2, 'z': 1})"
+  },
+  "choices": [
+   "None",
+   "Error",
+   "2 ['x']\n1 ['y', 'z']",
+   "8 ['x']\n6 ['y', 'z']"
+  ],
+  "answer": 2,
+  "misconception": "args_kwargs_unpacking",
+  "why": "*args collects the positional arguments into a tuple and **kwargs the keyword ones into a dict; * and ** at a call site unpack them.",
+  "lesson_id": "functions_args"
  },
  {
   "id": "ac_oo_6_66564d55",
@@ -2009,70 +2729,70 @@
    "code": "import functools\n\ndef log(f):\n    @functools.wraps(f)\n    def wrapper(*a):\n        return f(*a)\n    return wrapper\n\n@log\ndef shout(name):\n    return name\n\nprint(shout.__name__)"
   },
   "choices": [
-   "Error",
    "None",
-   "shout",
-   "0"
+   "0",
+   "Error",
+   "shout"
   ],
-  "answer": 2,
+  "answer": 3,
   "misconception": "decorator_loses_name",
   "why": "A decorator replaces the function with its wrapper, so __name__ becomes 'wrapper' unless functools.wraps copies the metadata across.",
   "lesson_id": "adv_decorators"
  },
  {
-  "id": "ac_oo_6_69b57ab4",
-  "source_id": "oo_6_69b57ab4",
-  "level": 6,
-  "topic": "oop_magic_methods",
-  "kind": "choice",
-  "prompt": {
-   "code": "class Item:\n    def __init__(self, v):\n        self.v = v\n\n    def __repr__(self):\n        return f\"Item({self.v})\"\n\n    def __str__(self):\n        return f\"<{self.v}>\"\n\np = Item(1)\nprint(p)\nprint([p])"
-  },
-  "choices": [
-   "<2>\n[Item(2)]",
-   "<1>\n[Item(1)]",
-   "None",
-   "Error"
-  ],
-  "answer": 1,
-  "misconception": "str_vs_repr",
-  "why": "print(obj) uses __str__, but containers show their elements with __repr__.",
-  "lesson_id": "oop_magic_methods"
- },
- {
-  "id": "ac_oo_6_6b4094e5",
-  "source_id": "oo_6_6b4094e5",
-  "level": 6,
-  "topic": "adv_decorators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def twice(f):\n    def w():\n        return f() + f()\n    return w\n\ndef exclaim(f):\n    def w():\n        return f() + \"?\"\n    return w\n\n@twice\n@exclaim\ndef say():\n    return \"ok\"\n\nprint(say())"
-  },
-  "choices": [
-   "ok?ok?",
-   "Error",
-   "0",
-   "None"
-  ],
-  "answer": 0,
-  "misconception": "decorator_order",
-  "why": "Decorators apply bottom-up: the one nearest the def wraps first, the top one wraps the result.",
-  "lesson_id": "adv_decorators"
- },
- {
-  "id": "ac_oo_6_6b9dc1e2",
-  "source_id": "oo_6_6b9dc1e2",
+  "id": "ac_oo_6_6995bae0",
+  "source_id": "oo_6_6995bae0",
   "level": 6,
   "topic": "adv_generators",
   "kind": "choice",
   "prompt": {
-   "code": "def counter():\n    total = 0\n    for i in range(1, 4):\n        total += i * 1\n        yield total\n\nprint(list(counter()))"
+   "code": "def counter():\n    total = 2\n    for i in range(1, 6):\n        total += i * 1\n        yield total\n\nprint(list(counter()))"
   },
   "choices": [
-   "[1, 3, 6]",
-   "[2, 5]",
-   "[0, 1, 3, 6]",
-   "[1, 3, 6, 10]"
+   "[4, 6, 9, 13, 18]",
+   "[3, 5, 8, 12, 17]",
+   "[4, 7, 11, 16]",
+   "[2, 3, 5, 8, 12, 17]"
+  ],
+  "answer": 1,
+  "misconception": "generator_state",
+  "why": "A generator keeps its local state between yields, so each yielded value is the running total so far.",
+  "lesson_id": "adv_generators"
+ },
+ {
+  "id": "ac_oo_6_75904553",
+  "source_id": "oo_6_75904553",
+  "level": 6,
+  "topic": "adv_decorators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def repeat(n):\n    def deco(f):\n        def w(x):\n            return [f(x)] * n\n        return w\n    return deco\n\n@repeat(2)\ndef scale(x):\n    return x * 10\n\nprint(scale(5))"
+  },
+  "choices": [
+   "[50, 50, 50]",
+   "[55, 55]",
+   "[50, 50]",
+   "[60, 60]"
+  ],
+  "answer": 2,
+  "misconception": "decorator_factory",
+  "why": "repeat(2) is called first and returns the real decorator; the wrapper then repeats the result 2 times.",
+  "lesson_id": "adv_decorators"
+ },
+ {
+  "id": "ac_oo_6_75df5c4a",
+  "source_id": "oo_6_75df5c4a",
+  "level": 6,
+  "topic": "adv_generators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def counter():\n    total = 1\n    for i in range(1, 5):\n        total += i * 1\n        yield total\n\nprint(list(counter()))"
+  },
+  "choices": [
+   "[2, 4, 7, 11]",
+   "[3, 5, 8, 12]",
+   "[2, 4, 7, 11, 16]",
+   "[1, 2, 4, 7, 11]"
   ],
   "answer": 0,
   "misconception": "generator_state",
@@ -2080,64 +2800,44 @@
   "lesson_id": "adv_generators"
  },
  {
-  "id": "ac_oo_6_6c803186",
-  "source_id": "oo_6_6c803186",
+  "id": "ac_oo_6_7dbc3c41",
+  "source_id": "oo_6_7dbc3c41",
   "level": 6,
-  "topic": "oop_classes",
+  "topic": "functions_args",
   "kind": "choice",
   "prompt": {
-   "code": "class Rect:\n    def __init__(self, w, h):\n        self.w, self.h = w, h\n\n    @property\n    def area(self):\n        return self.w * self.h\n\nr = Rect(6, 2)\nr.w = 7\nprint(r.area)"
+   "code": "def f(*args, **kwargs):\n    print(len(args), sorted(kwargs))\n\nf(1, 6, x=4)\nf(*[1], **{'y': 6, 'z': 4})"
   },
   "choices": [
-   "9",
    "None",
-   "14",
-   "21"
-  ],
-  "answer": 2,
-  "misconception": "property_is_computed",
-  "why": "A property is recomputed on every access, so changing w changes the next area read; it is not a stored value.",
-  "lesson_id": "oop_classes"
- },
- {
-  "id": "ac_oo_6_733bef4d",
-  "source_id": "oo_6_733bef4d",
-  "level": 6,
-  "topic": "adv_decorators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def twice(f):\n    def w():\n        return f() + f()\n    return w\n\ndef exclaim(f):\n    def w():\n        return f() + \".\"\n    return w\n\n@exclaim\n@twice\ndef say():\n    return \"hi\"\n\nprint(say())"
-  },
-  "choices": [
    "Error",
-   "0",
-   "hihi.",
-   "None"
+   "7 ['x']\n1 ['y', 'z']",
+   "2 ['x']\n1 ['y', 'z']"
   ],
-  "answer": 2,
-  "misconception": "decorator_order",
-  "why": "Decorators apply bottom-up: the one nearest the def wraps first, the top one wraps the result.",
-  "lesson_id": "adv_decorators"
+  "answer": 3,
+  "misconception": "args_kwargs_unpacking",
+  "why": "*args collects the positional arguments into a tuple and **kwargs the keyword ones into a dict; * and ** at a call site unpack them.",
+  "lesson_id": "functions_args"
  },
  {
-  "id": "ac_oo_6_79b56771",
-  "source_id": "oo_6_79b56771",
+  "id": "ac_oo_6_7e719fe1",
+  "source_id": "oo_6_7e719fe1",
   "level": 6,
-  "topic": "oop_classes",
+  "topic": "oop_magic_methods",
   "kind": "choice",
   "prompt": {
-   "code": "class Rect:\n    def __init__(self, w, h):\n        self.w, self.h = w, h\n\n    @property\n    def area(self):\n        return self.w * self.h\n\nr = Rect(3, 7)\nr.w = 4\nprint(r.area)"
+   "code": "class Item:\n    def __init__(self, v):\n        self.v = v\n\n    def __repr__(self):\n        return f\"Item({self.v})\"\n\n    def __str__(self):\n        return f\"<{self.v}>\"\n\np = Item(7)\nprint(p)\nprint([p])"
   },
   "choices": [
-   "35",
-   "11",
-   "28",
-   "None"
+   "None",
+   "0",
+   "Error",
+   "<7>\n[Item(7)]"
   ],
-  "answer": 2,
-  "misconception": "property_is_computed",
-  "why": "A property is recomputed on every access, so changing w changes the next area read; it is not a stored value.",
-  "lesson_id": "oop_classes"
+  "answer": 3,
+  "misconception": "str_vs_repr",
+  "why": "print(obj) uses __str__, but containers show their elements with __repr__.",
+  "lesson_id": "oop_magic_methods"
  },
  {
   "id": "ac_oo_6_83393db4",
@@ -2149,55 +2849,35 @@
    "code": "class Rect:\n    def __init__(self, w, h):\n        self.w, self.h = w, h\n\n    @property\n    def area(self):\n        return self.w * self.h\n\nr = Rect(3, 5)\nr.w = 4\nprint(r.area)"
   },
   "choices": [
-   "9",
    "20",
-   "24",
-   "25"
+   "25",
+   "9",
+   "24"
   ],
-  "answer": 1,
+  "answer": 0,
   "misconception": "property_is_computed",
   "why": "A property is recomputed on every access, so changing w changes the next area read; it is not a stored value.",
   "lesson_id": "oop_classes"
  },
  {
-  "id": "ac_oo_6_8acb87ed",
-  "source_id": "oo_6_8acb87ed",
+  "id": "ac_oo_6_8622e655",
+  "source_id": "oo_6_8622e655",
   "level": 6,
-  "topic": "adv_decorators",
+  "topic": "functions_args",
   "kind": "choice",
   "prompt": {
-   "code": "def twice(f):\n    def w():\n        return f() + f()\n    return w\n\ndef exclaim(f):\n    def w():\n        return f() + \"?\"\n    return w\n\n@exclaim\n@twice\ndef say():\n    return \"ok\"\n\nprint(say())"
+   "code": "def f(*args, **kwargs):\n    print(len(args), sorted(kwargs))\n\nf(6, 7, x=3)\nf(*[6], **{'y': 7, 'z': 3})"
   },
   "choices": [
-   "None",
-   "okok?",
    "Error",
-   "0"
+   "13 ['x']\n6 ['y', 'z']",
+   "2 ['x']\n1 ['y', 'z']",
+   "None"
   ],
-  "answer": 1,
-  "misconception": "decorator_order",
-  "why": "Decorators apply bottom-up: the one nearest the def wraps first, the top one wraps the result.",
-  "lesson_id": "adv_decorators"
- },
- {
-  "id": "ac_oo_6_8ccf41bc",
-  "source_id": "oo_6_8ccf41bc",
-  "level": 6,
-  "topic": "adv_decorators",
-  "kind": "choice",
-  "prompt": {
-   "code": "def repeat(n):\n    def deco(f):\n        def w(x):\n            return [f(x)] * n\n        return w\n    return deco\n\n@repeat(4)\ndef scale(x):\n    return x * 2\n\nprint(scale(9))"
-  },
-  "choices": [
-   "None",
-   "[18, 18, 18, 18, 18]",
-   "[27, 27, 27, 27]",
-   "[18, 18, 18, 18]"
-  ],
-  "answer": 3,
-  "misconception": "decorator_factory",
-  "why": "repeat(4) is called first and returns the real decorator; the wrapper then repeats the result 4 times.",
-  "lesson_id": "adv_decorators"
+  "answer": 2,
+  "misconception": "args_kwargs_unpacking",
+  "why": "*args collects the positional arguments into a tuple and **kwargs the keyword ones into a dict; * and ** at a call site unpack them.",
+  "lesson_id": "functions_args"
  },
  {
   "id": "ac_oo_6_905e992d",
@@ -2220,6 +2900,26 @@
   "lesson_id": "adv_generators"
  },
  {
+  "id": "ac_oo_6_94eb4191",
+  "source_id": "oo_6_94eb4191",
+  "level": 6,
+  "topic": "adv_decorators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def repeat(n):\n    def deco(f):\n        def w(x):\n            return [f(x)] * n\n        return w\n    return deco\n\n@repeat(2)\ndef scale(x):\n    return x * 10\n\nprint(scale(2))"
+  },
+  "choices": [
+   "None",
+   "[20, 20]",
+   "[22, 22]",
+   "[20, 20, 20]"
+  ],
+  "answer": 1,
+  "misconception": "decorator_factory",
+  "why": "repeat(2) is called first and returns the real decorator; the wrapper then repeats the result 2 times.",
+  "lesson_id": "adv_decorators"
+ },
+ {
   "id": "ac_oo_6_96277035",
   "source_id": "oo_6_96277035",
   "level": 6,
@@ -2230,9 +2930,9 @@
   },
   "choices": [
    "2",
+   "None",
    "Error",
-   "0",
-   "None"
+   "0"
   ],
   "answer": 0,
   "misconception": "class_attr_shared",
@@ -2240,19 +2940,39 @@
   "lesson_id": "oop_classes"
  },
  {
-  "id": "ac_oo_6_9d31e764",
-  "source_id": "oo_6_9d31e764",
+  "id": "ac_oo_6_b2edcf91",
+  "source_id": "oo_6_b2edcf91",
+  "level": 6,
+  "topic": "adv_decorators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def repeat(n):\n    def deco(f):\n        def w(x):\n            return [f(x)] * n\n        return w\n    return deco\n\n@repeat(4)\ndef scale(x):\n    return x * 10\n\nprint(scale(4))"
+  },
+  "choices": [
+   "[40, 40, 40, 40]",
+   "[40, 40, 40, 40, 40]",
+   "None",
+   "[44, 44, 44, 44]"
+  ],
+  "answer": 0,
+  "misconception": "decorator_factory",
+  "why": "repeat(4) is called first and returns the real decorator; the wrapper then repeats the result 4 times.",
+  "lesson_id": "adv_decorators"
+ },
+ {
+  "id": "ac_oo_6_b35ac3d4",
+  "source_id": "oo_6_b35ac3d4",
   "level": 6,
   "topic": "oop_classes",
   "kind": "choice",
   "prompt": {
-   "code": "class Rect:\n    def __init__(self, w, h):\n        self.w, self.h = w, h\n\n    @property\n    def area(self):\n        return self.w * self.h\n\nr = Rect(2, 4)\nr.w = 3\nprint(r.area)"
+   "code": "class Rect:\n    def __init__(self, w, h):\n        self.w, self.h = w, h\n\n    @property\n    def area(self):\n        return self.w * self.h\n\nr = Rect(5, 9)\nr.w = 6\nprint(r.area)"
   },
   "choices": [
+   "Error",
+   "54",
    "15",
-   "12",
-   "16",
-   "7"
+   "None"
   ],
   "answer": 1,
   "misconception": "property_is_computed",
@@ -2260,36 +2980,36 @@
   "lesson_id": "oop_classes"
  },
  {
-  "id": "ac_oo_6_9f635730",
-  "source_id": "oo_6_9f635730",
+  "id": "ac_oo_6_b82d4107",
+  "source_id": "oo_6_b82d4107",
   "level": 6,
-  "topic": "adv_generators",
+  "topic": "adv_decorators",
   "kind": "choice",
   "prompt": {
-   "code": "def g():\n    yield from range(4)\n    yield 6\n\nprint(list(g()))"
+   "code": "def twice(f):\n    def w():\n        return f() + f()\n    return w\n\ndef exclaim(f):\n    def w():\n        return f() + \"!\"\n    return w\n\n@twice\n@exclaim\ndef say():\n    return \"hi\"\n\nprint(say())"
   },
   "choices": [
    "Error",
+   "0",
    "None",
-   "[0, 1, 2, 3, 6]",
-   "[0, 1, 2, 3, 4, 6]"
+   "hi!hi!"
   ],
-  "answer": 2,
-  "misconception": "yield_from",
-  "why": "yield from hands over every value of the inner iterable (0 to 3) before the generator continues to its own yield.",
-  "lesson_id": "adv_generators"
+  "answer": 3,
+  "misconception": "decorator_order",
+  "why": "Decorators apply bottom-up: the one nearest the def wraps first, the top one wraps the result.",
+  "lesson_id": "adv_decorators"
  },
  {
-  "id": "ac_oo_6_a11f5277",
-  "source_id": "oo_6_a11f5277",
+  "id": "ac_oo_6_c01e8dc8",
+  "source_id": "oo_6_c01e8dc8",
   "level": 6,
   "topic": "functions_args",
   "kind": "choice",
   "prompt": {
-   "code": "def f(*args, **kwargs):\n    print(len(args), sorted(kwargs))\n\nf(7, 8, x=5)\nf(*[7], **{'y': 8, 'z': 5})"
+   "code": "def f(*args, **kwargs):\n    print(len(args), sorted(kwargs))\n\nf(5, 7, x=6)\nf(*[5], **{'y': 7, 'z': 6})"
   },
   "choices": [
-   "15 ['x']\n7 ['y', 'z']",
+   "12 ['x']\n5 ['y', 'z']",
    "Error",
    "None",
    "2 ['x']\n1 ['y', 'z']"
@@ -2300,84 +3020,144 @@
   "lesson_id": "functions_args"
  },
  {
-  "id": "ac_oo_6_a6ed4283",
-  "source_id": "oo_6_a6ed4283",
-  "level": 6,
-  "topic": "oop_classes",
-  "kind": "choice",
-  "prompt": {
-   "code": "class Rect:\n    def __init__(self, w, h):\n        self.w, self.h = w, h\n\n    @property\n    def area(self):\n        return self.w * self.h\n\nr = Rect(4, 6)\nr.w = 5\nprint(r.area)"
-  },
-  "choices": [
-   "11",
-   "30",
-   "36",
-   "None"
-  ],
-  "answer": 1,
-  "misconception": "property_is_computed",
-  "why": "A property is recomputed on every access, so changing w changes the next area read; it is not a stored value.",
-  "lesson_id": "oop_classes"
- },
- {
-  "id": "ac_oo_6_b14aef3b",
-  "source_id": "oo_6_b14aef3b",
-  "level": 6,
-  "topic": "oop_magic_methods",
-  "kind": "choice",
-  "prompt": {
-   "code": "class Point:\n    def __init__(self, v):\n        self.v = v\n\n    def __repr__(self):\n        return f\"Point({self.v})\"\n\n    def __str__(self):\n        return f\"<{self.v}>\"\n\np = Point(6)\nprint(p)\nprint([p])"
-  },
-  "choices": [
-   "<6>\n[Point(6)]",
-   "None",
-   "0",
-   "Error"
-  ],
-  "answer": 0,
-  "misconception": "str_vs_repr",
-  "why": "print(obj) uses __str__, but containers show their elements with __repr__.",
-  "lesson_id": "oop_magic_methods"
- },
- {
-  "id": "ac_oo_6_bdcf3548",
-  "source_id": "oo_6_bdcf3548",
+  "id": "ac_oo_6_c1c10049",
+  "source_id": "oo_6_c1c10049",
   "level": 6,
   "topic": "adv_decorators",
   "kind": "choice",
   "prompt": {
-   "code": "def repeat(n):\n    def deco(f):\n        def w(x):\n            return [f(x)] * n\n        return w\n    return deco\n\n@repeat(2)\ndef scale(x):\n    return x * 3\n\nprint(scale(2))"
+   "code": "def twice(f):\n    def w():\n        return f() + f()\n    return w\n\ndef exclaim(f):\n    def w():\n        return f() + \".\"\n    return w\n\n@exclaim\n@twice\ndef say():\n    return \"py\"\n\nprint(say())"
   },
   "choices": [
-   "[6, 6, 6]",
-   "[6, 6]",
-   "[8, 8]",
+   "pypy.",
+   "0",
+   "Error",
    "None"
   ],
-  "answer": 1,
-  "misconception": "decorator_factory",
-  "why": "repeat(2) is called first and returns the real decorator; the wrapper then repeats the result 2 times.",
+  "answer": 0,
+  "misconception": "decorator_order",
+  "why": "Decorators apply bottom-up: the one nearest the def wraps first, the top one wraps the result.",
   "lesson_id": "adv_decorators"
  },
  {
-  "id": "ac_oo_6_bde041be",
-  "source_id": "oo_6_bde041be",
+  "id": "ac_oo_6_c49da375",
+  "source_id": "oo_6_c49da375",
   "level": 6,
   "topic": "adv_generators",
   "kind": "choice",
   "prompt": {
-   "code": "def counter():\n    total = 0\n    for i in range(1, 4):\n        total += i * 2\n        yield total\n\nprint(list(counter()))"
+   "code": "def g():\n    yield from range(3)\n    yield 7\n\nprint(list(g()))"
   },
   "choices": [
-   "[3, 9, 18]",
-   "[2, 6, 12]",
-   "[2, 6, 12, 20]",
-   "[4, 10]"
+   "None",
+   "Error",
+   "[0, 1, 2, 3, 7]",
+   "[0, 1, 2, 7]"
+  ],
+  "answer": 3,
+  "misconception": "yield_from",
+  "why": "yield from hands over every value of the inner iterable (0 to 2) before the generator continues to its own yield.",
+  "lesson_id": "adv_generators"
+ },
+ {
+  "id": "ac_oo_6_d209b1f5",
+  "source_id": "oo_6_d209b1f5",
+  "level": 6,
+  "topic": "functions_args",
+  "kind": "choice",
+  "prompt": {
+   "code": "def f(*args, **kwargs):\n    print(len(args), sorted(kwargs))\n\nf(1, 9, x=7)\nf(*[1], **{'y': 9, 'z': 7})"
+  },
+  "choices": [
+   "10 ['x']\n1 ['y', 'z']",
+   "None",
+   "2 ['x']\n1 ['y', 'z']",
+   "Error"
+  ],
+  "answer": 2,
+  "misconception": "args_kwargs_unpacking",
+  "why": "*args collects the positional arguments into a tuple and **kwargs the keyword ones into a dict; * and ** at a call site unpack them.",
+  "lesson_id": "functions_args"
+ },
+ {
+  "id": "ac_oo_6_d55d2951",
+  "source_id": "oo_6_d55d2951",
+  "level": 6,
+  "topic": "adv_generators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def counter():\n    total = 2\n    for i in range(1, 4):\n        total += i * 2\n        yield total\n\nprint(list(counter()))"
+  },
+  "choices": [
+   "[5, 9, 15]",
+   "[4, 8, 14]",
+   "[6, 12]",
+   "[4, 8, 14, 22]"
   ],
   "answer": 1,
   "misconception": "generator_state",
   "why": "A generator keeps its local state between yields, so each yielded value is the running total so far.",
   "lesson_id": "adv_generators"
+ },
+ {
+  "id": "ac_oo_6_d6bb33be",
+  "source_id": "oo_6_d6bb33be",
+  "level": 6,
+  "topic": "adv_decorators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def log(f):\n    def wrapper(*a):\n        return f(*a)\n    return wrapper\n\n@log\ndef score(name):\n    return name\n\nprint(score.__name__)"
+  },
+  "choices": [
+   "wrapper",
+   "0",
+   "Error",
+   "None"
+  ],
+  "answer": 0,
+  "misconception": "decorator_loses_name",
+  "why": "A decorator replaces the function with its wrapper, so __name__ becomes 'wrapper' unless functools.wraps copies the metadata across.",
+  "lesson_id": "adv_decorators"
+ },
+ {
+  "id": "ac_oo_6_e221061a",
+  "source_id": "oo_6_e221061a",
+  "level": 6,
+  "topic": "adv_decorators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def repeat(n):\n    def deco(f):\n        def w(x):\n            return [f(x)] * n\n        return w\n    return deco\n\n@repeat(3)\ndef scale(x):\n    return x * 3\n\nprint(scale(3))"
+  },
+  "choices": [
+   "None",
+   "[9, 9, 9, 9]",
+   "[9, 9, 9]",
+   "Error"
+  ],
+  "answer": 2,
+  "misconception": "decorator_factory",
+  "why": "repeat(3) is called first and returns the real decorator; the wrapper then repeats the result 3 times.",
+  "lesson_id": "adv_decorators"
+ },
+ {
+  "id": "ac_oo_6_eaeb1686",
+  "source_id": "oo_6_eaeb1686",
+  "level": 6,
+  "topic": "adv_decorators",
+  "kind": "choice",
+  "prompt": {
+   "code": "def repeat(n):\n    def deco(f):\n        def w(x):\n            return [f(x)] * n\n        return w\n    return deco\n\n@repeat(3)\ndef scale(x):\n    return x * 2\n\nprint(scale(6))"
+  },
+  "choices": [
+   "[18, 18, 18]",
+   "None",
+   "[12, 12, 12]",
+   "[12, 12, 12, 12]"
+  ],
+  "answer": 2,
+  "misconception": "decorator_factory",
+  "why": "repeat(3) is called first and returns the real decorator; the wrapper then repeats the result 3 times.",
+  "lesson_id": "adv_decorators"
  },
  {
   "id": "ac_oo_6_ee9d41d1",
@@ -2389,14 +3169,34 @@
    "code": "class Team:\n    members = []\n\n    def add(self, name):\n        self.members.append(name)\n\na = Team()\nb = Team()\na.add('p0')\na.add('p1')\na.add('p2')\nprint(len(b.members))"
   },
   "choices": [
-   "0",
    "None",
    "3",
-   "Error"
+   "Error",
+   "0"
   ],
-  "answer": 2,
+  "answer": 1,
   "misconception": "class_attr_shared",
   "why": "members is defined on the class, so every instance shares the same list; assign self.members = [] in __init__ for per-instance state.",
   "lesson_id": "oop_classes"
+ },
+ {
+  "id": "ac_oo_6_f33ec41c",
+  "source_id": "oo_6_f33ec41c",
+  "level": 6,
+  "topic": "adv_decorators",
+  "kind": "choice",
+  "prompt": {
+   "code": "import functools\n\ndef log(f):\n    @functools.wraps(f)\n    def wrapper(*a):\n        return f(*a)\n    return wrapper\n\n@log\ndef score(name):\n    return name\n\nprint(score.__name__)"
+  },
+  "choices": [
+   "0",
+   "None",
+   "Error",
+   "score"
+  ],
+  "answer": 3,
+  "misconception": "decorator_loses_name",
+  "why": "A decorator replaces the function with its wrapper, so __name__ becomes 'wrapper' unless functools.wraps copies the metadata across.",
+  "lesson_id": "adv_decorators"
  }
 ]
