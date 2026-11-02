@@ -127,15 +127,14 @@ jobs:
         # digest changed (rolling back on a failed health check). This step just
         # confirms the new build is the one serving pymasters.net.
         run: |
-          # The VM exposes /health by IP over plain HTTP (Caddyfile) so this works
-          # regardless of where pymasters.net currently points.
-          VM=http://35.206.69.198/health
+          # Through Cloudflare, the same path visitors take (2026-11-03: the VM's ports 80/443 only accept
+          # Cloudflare's ranges now, so probing the bare IP from a GitHub runner no longer works).
+          VM=https://pymasters.net/health
           echo "waiting for build ${{ github.sha }} at $VM"
           for i in $(seq 1 45); do
             body=$(curl -s --max-time 15 "$VM" || true)
             if echo "$body" | grep -q '"build":"${{ github.sha }}"'; then
-              echo "VM live: $body"
-              echo "pymasters.net: $(curl -s --max-time 15 https://pymasters.net/health || echo unreachable)"
+              echo "live via Cloudflare: $body"
               exit 0
             fi
             sleep 20
