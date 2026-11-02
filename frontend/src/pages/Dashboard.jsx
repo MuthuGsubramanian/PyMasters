@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../context/AuthContext';
-import { getModules, getModule, completeModule, getCompletions, recordSignal } from '../api';
+import { API_URL, getModules, getModule, completeModule, getCompletions, recordSignal } from '../api';
 import ReviewQueue from '../components/ReviewQueue';
 import WarmUp from '../components/WarmUp';
 import MisconceptionRadar from '../components/MisconceptionRadar';
@@ -213,7 +213,6 @@ function formatLearningTime(minutes) {
     return `${h}h ${m}m`;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8001/api';
 
 // ─── Stat Card ────────────────────────────────────────────────────────────
 // `accent` is a tint class pair (e.g. 'bg-amber-500/12 text-amber-600 dark:text-amber-300')
