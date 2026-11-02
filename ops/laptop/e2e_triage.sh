@@ -59,8 +59,9 @@ Work in $REPO. For EACH distinct defect:
 2. Reproduce it first (ops/e2e/run_scenarios.sh tier1 -k <name>, or nightly -k <name>, PM_E2E_DOCKER=podman
    PM_E2E_PYTHON=~/pymasters-ops/e2e-venv/bin/python). Find the root cause; fix the product, or the content
    (lesson JSON), or the test only when the test is provably wrong.
-3. Run the gates: backend (cd backend && python -m pytest -q), frontend (cd frontend && npm test && npm run build),
-   and ops/e2e/run_scenarios.sh tier1. All must be green.
+3. Run the gates: backend (inside the test container: its image has every backend dependency), frontend
+   (cd frontend && npx -y node@20 node_modules/vitest/vitest.mjs run && npm run build — this laptop's Node 26
+   breaks jsdom's localStorage, CI uses Node 20), and ops/e2e/run_scenarios.sh tier1. All must be green.
 4. Push the branch, open a PR (gh pr create) describing cause and fix, wait for its checks, and merge
    (gh pr merge --squash) ONLY when every check is green.
 
