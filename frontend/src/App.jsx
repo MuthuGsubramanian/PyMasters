@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { trackVisit, trackPing } from './api';
 import { ProfileProvider } from './context/ProfileContext';
-import Layout from './components/Layout';
 import Home from './pages/Home';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -43,6 +42,8 @@ function lazyRetry(factory, name) {
   );
 }
 
+// The dashboard shell pulls react-markdown (Vaathiyaar panel); lazy so the landing page doesn't preload it.
+const Layout = lazyRetry(() => import('./components/Layout'), 'Layout');
 const Login = lazyRetry(() => import('./pages/Login'), 'Login');
 const Onboarding = lazyRetry(() => import('./pages/Onboarding'), 'Onboarding');
 const Overview = lazyRetry(() => import('./pages/Dashboard').then((m) => ({ default: m.Overview })), 'Overview');
