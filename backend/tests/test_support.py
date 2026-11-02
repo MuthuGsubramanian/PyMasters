@@ -119,7 +119,7 @@ def test_access_request_upload_and_admin_grant(client):
                        headers=_auth(admin)).status_code == 409
 
 
-def test_approval_before_signup_grants_on_register(client):
+def test_approval_before_signup_grants_once_email_is_verified(client):
     email = "future@uni.edu"
     assert _submit_access(client, email, data=PNG, filename="id.png").status_code == 200
     admin = _register(client)
@@ -130,6 +130,12 @@ def test_approval_before_signup_grants_on_register(client):
     assert ap.json()["status"] == "approved"
 
     newbie = _register(client, email=email)
+    conn = sqlite3.connect(os.environ["DB_PATH"])
+    # Not granted on bare registration any more (audit M4): someone else's approved email must be PROVEN.
+    assert conn.execute("SELECT COALESCE(plan,'') FROM users WHERE id = ?", [newbie["id"]]).fetchone()[0] != "student"
+    token = conn.execute("SELECT token FROM email_verifications WHERE user_id = ?", [newbie["id"]]).fetchone()[0]
+    conn.close()
+    assert client.post("/api/auth/verify-email", json={"token": token}).status_code == 200
     conn = sqlite3.connect(os.environ["DB_PATH"])
     plan, expires = conn.execute(
         "SELECT plan, plan_expires_at FROM users WHERE id = ?", [newbie["id"]]).fetchone()

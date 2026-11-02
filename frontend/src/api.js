@@ -81,6 +81,8 @@ export const changePassword = (userId, currentPassword, newPassword) =>
     api.post('/auth/change-password', { user_id: userId, current_password: currentPassword, new_password: newPassword });
 export const forgotPassword = (identifier) => api.post('/auth/forgot-password', { identifier });
 export const resetPassword = (token, newPassword) => api.post('/auth/reset-password', { token, new_password: newPassword });
+export const verifyEmail = (token) => api.post('/auth/verify-email', { token });
+export const requestEmailVerification = () => api.post('/auth/verify-email/request');
 export const registerUser = (username, password, name, account_type = 'individual', email = '', organization = null) =>
     api.post('/auth/register', {
         username, password, name, account_type, email,

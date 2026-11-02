@@ -35,6 +35,9 @@ export default function Login() {
     //   GitHub   -> ?gh_token / ?gh_error
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+        // OAuth results arrive in the URL fragment (#gh_token=...) so the token never reaches server logs;
+        // merge them in (query still read for backward compatibility).
+        new URLSearchParams((window.location.hash || '').replace(/^#/, '')).forEach((v, k) => params.set(k, v));
         // Deep-link into signup mode: /login?mode=signup (target of the /signup
         // and /register redirect routes). Param absent = exactly today's behavior.
         if (params.get('mode') === 'signup') {

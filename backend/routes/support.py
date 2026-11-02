@@ -284,9 +284,20 @@ def submit_issue(req: IssueReport, request: Request = None,
 # ── Registration hook ────────────────────────────────────────────────────────
 
 def apply_approved_access_grant(user_id: str, email: str) -> bool:
-    """Called from main.register(): consume a pending approved access request
-    for this email and grant the student plan. Never raises."""
+    """Consume a pending approved access request for this email and grant the student plan. Called once
+    the address is VERIFIED (routes/email_verify.mark_verified) - never on bare registration, so the first
+    person to register with someone else's approved email no longer gets their plan. Never raises."""
     if not email:
+        return False
+    try:
+        _c = _conn()
+        try:
+            _v = _c.execute("SELECT COALESCE(email_verified,0) FROM users WHERE id = ?", [user_id]).fetchone()
+        finally:
+            _c.close()
+        if not _v or not _v[0]:
+            return False
+    except Exception:
         return False
     try:
         conn = _conn()
