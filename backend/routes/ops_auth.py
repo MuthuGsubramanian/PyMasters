@@ -26,10 +26,11 @@ import sqlite3
 import time
 import uuid
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from auth import create_access_token, _current_token_version
+from ratelimit import SlidingWindowRateLimiter, enforce
 
 router = APIRouter(prefix="/api/admin", tags=["admin-ops"])
 
@@ -74,13 +75,29 @@ def _ensure_service_account(conn: sqlite3.Connection) -> sqlite3.Row:
     return row
 
 
+# Internet-facing super-admin door (security fix 2026-11-03): per-IP budget plus a global cap on failures so
+# the static token can't be brute-forced from many IPs, and short-lived tokens so a leaked session expires fast.
+SERVICE_LOGIN_PER_IP = SlidingWindowRateLimiter(max_calls=10, window_seconds=3600)
+SERVICE_LOGIN_FAILURES = SlidingWindowRateLimiter(max_calls=20, window_seconds=3600)
+SERVICE_TOKEN_TTL_SECONDS = 2 * 3600
+
+
+def _client_ip(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for", "")
+    return (fwd.split(",")[0].strip() if fwd else "") or (request.client.host if request.client else "unknown")
+
+
 @router.post("/service-login")
-def service_login(body: ServiceLogin):
+def service_login(body: ServiceLogin, request: Request):
     expected = _ops_token()
     if not expected:
         raise HTTPException(status_code=503, detail="Service login is not enabled on this deployment")
+    enforce(SERVICE_LOGIN_PER_IP, _client_ip(request), "service-login attempts")
+    if SERVICE_LOGIN_FAILURES.retry_after("global"):
+        raise HTTPException(status_code=429, detail="Service login temporarily locked. Try again later.")
     supplied = (body.token or "").strip()
     if not supplied or not hmac.compare_digest(supplied.encode(), expected.encode()):
+        SERVICE_LOGIN_FAILURES.allow("global")
         time.sleep(0.5)
         print("[ops-auth] rejected service-login attempt")
         raise HTTPException(status_code=403, detail="Invalid service token")
@@ -89,6 +106,7 @@ def service_login(body: ServiceLogin):
         row = _ensure_service_account(conn)
     finally:
         conn.close()
-    token = create_access_token(row["id"], row["username"], _current_token_version(row["id"]))
+    token = create_access_token(row["id"], row["username"], _current_token_version(row["id"]),
+                                 ttl_seconds=SERVICE_TOKEN_TTL_SECONDS)
     print(f"[ops-auth] service-login issued for {row['username']}")
     return {"access_token": token, "token_type": "bearer", "user_id": row["id"], "username": row["username"]}

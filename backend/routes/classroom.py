@@ -4,6 +4,7 @@ classroom.py — FastAPI APIRouter for the AI classroom experience.
 Prefix: /api/classroom
 """
 
+import hmac
 import json
 from ratelimit import limit_ai_chat, limit_grading
 import re
@@ -1412,7 +1413,7 @@ EXPORT_TOKEN = os.getenv("EXPORT_TOKEN", "")
 
 def _require_export_access(x_export_token: str = Header(None), authorization: str = Header(None)):
     """Allow training-data export only via the export token OR a super-admin session."""
-    if EXPORT_TOKEN and x_export_token == EXPORT_TOKEN:
+    if EXPORT_TOKEN and x_export_token and hmac.compare_digest(x_export_token.encode(), EXPORT_TOKEN.encode()):
         return True
     from auth import optional_user_id
     uid = optional_user_id(authorization)

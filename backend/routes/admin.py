@@ -47,6 +47,14 @@ RESERVED_SERVICE_IDENTIFIERS = {"claude-qa", "claude-qa@pymasters.net"}
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
+def _protect_founder(target_id: str, caller: str, action: str) -> None:
+    """Founder accounts can only be changed by themselves (security fix 2026-11-03). Without this, any super-admin
+    session — including the ops service token — could change a founder's email and then send itself the
+    founder's password-reset link: a full takeover of the owner account."""
+    if target_id in SUPER_ADMIN_USER_IDS and caller != target_id:
+        raise HTTPException(status_code=403, detail=f"Founder accounts can't be {action} by another admin.")
+
+
 def _conn():
     c = sqlite3.connect(DB_PATH)
     c.row_factory = sqlite3.Row
@@ -641,6 +649,8 @@ def user_view_as(target_id: str, caller: str = Depends(get_current_user_id)):
 @router.patch("/users/{target_id}")
 def edit_user(target_id: str, req: EditUserRequest, caller: str = Depends(get_current_user_id)):
     require_super_admin(caller)
+    if getattr(req, "email", None) is not None:
+        _protect_founder(target_id, caller, "re-addressed")
     conn = _conn()
     sets, vals, detail = [], [], {}
     for f in ["name", "email", "account_type"]:
@@ -662,6 +672,7 @@ def edit_user(target_id: str, req: EditUserRequest, caller: str = Depends(get_cu
 @router.delete("/users/{target_id}")
 def delete_user(target_id: str, caller: str = Depends(get_current_user_id)):
     require_super_admin(caller)
+    _protect_founder(target_id, caller, "deleted")
     if target_id == caller:
         raise HTTPException(status_code=400, detail="You cannot delete your own account")
     conn = _conn()
@@ -776,6 +787,7 @@ def org_audit_platform(org_id: str, limit: int = 100, caller: str = Depends(get_
 @router.post("/users/{target_id}/reset-password")
 def admin_reset_password(target_id: str, caller: str = Depends(get_current_user_id)):
     require_super_admin(caller)
+    _protect_founder(target_id, caller, "reset")
     conn = _conn()
     row = conn.execute("SELECT username, email FROM users WHERE id = ?", [target_id]).fetchone()
     if not row:
@@ -898,6 +910,7 @@ def list_audit(caller: str = Depends(get_current_user_id), limit: int = 50, offs
 def block_user(target_id: str, req: BlockRequest, caller: str = Depends(get_current_user_id)):
     """Block (suspend) or unblock (grant) a user's access."""
     require_super_admin(caller)
+    _protect_founder(target_id, caller, "blocked")
     conn = _conn()
     if req.blocked:
         # Suspending must ALSO revoke any LIVE session, not just future logins.
