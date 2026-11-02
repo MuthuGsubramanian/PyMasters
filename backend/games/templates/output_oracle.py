@@ -374,6 +374,95 @@ def t_property_access(rng):
             "why": "A property is recomputed on every access, so changing w changes the next area read; it is not a stored value."}
 
 
+# ─────────────────────── added 2026-11-02 (classic traps) ───────────────────────
+
+def t_string_compare_lexical(rng):
+    a, b = rng.randint(10, 19), rng.randint(2, 9)
+    return {"level": 1, "topic": "variables", "kind": "choice", "code": f'print("{a}" < "{b}")',
+            "misconception": "string_compare_lexical",
+            "distractor_codes": [f"print({a} < {b})"], "extra_distractors": ["Error", "None"],
+            "why": f"Strings compare character by character: '1' sorts before '{b}', so \"{a}\" < \"{b}\" is True even though {a} > {b} as numbers."}
+
+
+def t_bool_of_string(rng):
+    word = rng.choice(["False", "0", "None", "no"])
+    return {"level": 1, "topic": "conditionals", "kind": "choice", "code": f'print(bool("{word}"))',
+            "misconception": "truthiness",
+            "distractor_codes": ['print(bool(""))'], "extra_distractors": ["Error", word],
+            "why": f"Any non-empty string is truthy, including \"{word}\". Only the empty string \"\" is falsy."}
+
+
+def t_negative_floor_div(rng):
+    a, b = rng.randint(5, 19), rng.randint(2, 4)
+    if a % b == 0:
+        a += 1
+    return {"level": 2, "topic": "variables", "kind": "choice", "code": f"print(-{a} // {b})",
+            "misconception": "floor_toward_negative_infinity",
+            "distractor_codes": [f"print(-({a} // {b}))", f"print(-{a} / {b})", f"print(int(-{a} / {b}))"],
+            "why": "// rounds DOWN (towards minus infinity), not towards zero, so a negative result goes one further from zero."}
+
+
+def t_round_half_even(rng):
+    n = rng.choice([0.5, 2.5, 4.5, 6.5])
+    return {"level": 2, "topic": "variables", "kind": "choice", "code": f"print(round({n}))",
+            "misconception": "round_half_even",
+            "distractor_codes": [f"print(int({n}) + 1)", f"print({n})"], "extra_distractors": [str(int(n) - 1)],
+            "why": "round() uses banker's rounding: an exact .5 goes to the nearest EVEN number, so it can round down."}
+
+
+def t_zip_shortest(rng):
+    a = _ints(rng, rng.randint(3, 5))
+    b = WORDS[:rng.randint(1, 2)]
+    return {"level": 2, "topic": "for_loops", "kind": "choice", "code": f"print(len(list(zip({a}, {b}))))",
+            "misconception": "zip_shortest",
+            "distractor_codes": [f"print(len({a}))", f"print(len({a}) + len({b}))"], "extra_distractors": ["Error"],
+            "why": "zip() stops as soon as the shortest input runs out, silently dropping the rest."}
+
+
+def t_list_remove_first(rng):
+    v = rng.randint(1, 9)
+    others = [x for x in _ints(rng, 4) if x != v][:3]
+    vals = [v] + others[:1] + [v] + others[1:]
+    return {"level": 3, "topic": "lists", "kind": "text", "code": f"vals = {vals}\nvals.remove({v})\nprint(vals)",
+            "misconception": "remove_first_only",
+            "why": "list.remove(x) deletes only the FIRST matching item; later copies stay."}
+
+
+def t_print_sep_end(rng):
+    a, b, c = rng.sample(WORDS, 3)
+    sep = rng.choice(["-", ", ", "/"])
+    return {"level": 3, "topic": "variables", "kind": "text",
+            "code": f'print("{a}", "{b}", sep="{sep}", end="!")\nprint("{c}")',
+            "misconception": "print_sep_end",
+            "why": "sep goes BETWEEN the values and end replaces the newline, so the next print continues on the same line."}
+
+
+def t_nested_list_mult_alias(rng):
+    n = rng.randint(2, 3); v = rng.randint(1, 9)
+    return {"level": 4, "topic": "lists", "kind": "text",
+            "code": f"grid = [[0] * {n}] * {n}\ngrid[0][0] = {v}\nprint(grid)",
+            "misconception": "list_mult_alias",
+            "why": "[[0]*n]*n repeats a reference to ONE inner list, so changing grid[0] changes every row. Use [[0]*n for _ in range(n)]."}
+
+
+def t_iadd_vs_add_alias(rng):
+    a, b = _ints(rng, 2)
+    op = rng.choice(["+=", "= a +"])
+    line = f"a += [{b}]" if op == "+=" else f"a = a + [{b}]"
+    return {"level": 5, "topic": "lists", "kind": "text",
+            "code": f"a = [{a}]\nb = a\n{line}\nprint(b)",
+            "misconception": "iadd_mutates_in_place",
+            "why": "a += [...] extends the SAME list (b sees it); a = a + [...] builds a new list and rebinds only a."}
+
+
+def t_shallow_copy(rng):
+    v = rng.randint(1, 9); w = rng.randint(1, 9)
+    return {"level": 5, "topic": "lists", "kind": "text",
+            "code": f"outer = [[{v}], [{w}]]\ncopy = outer.copy()\ncopy[0].append(0)\ncopy.append([])\nprint(outer)",
+            "misconception": "shallow_copy",
+            "why": ".copy() is shallow: the outer list is new, but the inner lists are shared, so appending inside copy[0] shows up in outer too."}
+
+
 TEMPLATES = [
     t_int_division, t_true_division, t_str_concat, t_rebind_int, t_negative_index, t_slice_end_exclusive, t_range_bounds, t_truthiness,
     t_aliasing_append, t_dict_get_default, t_dict_overwrite, t_single_tuple, t_enumerate_start, t_string_reverse_step, t_elif_order,
@@ -382,4 +471,6 @@ TEMPLATES = [
     t_generator_exhausted, t_generator_next_list, t_return_in_finally, t_late_binding_lambda, t_nonlocal_counter, t_exception_order,
     t_decorator_order, t_decorator_name, t_yield_from, t_decorator_with_args, t_generator_send_state,
     t_class_attr_shared, t_str_vs_repr, t_args_kwargs_unpack, t_property_access,
+    t_string_compare_lexical, t_bool_of_string, t_negative_floor_div, t_round_half_even, t_zip_shortest,
+    t_list_remove_first, t_print_sep_end, t_nested_list_mult_alias, t_iadd_vs_add_alias, t_shallow_copy,
 ]
