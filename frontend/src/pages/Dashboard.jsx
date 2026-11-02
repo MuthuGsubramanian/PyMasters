@@ -32,6 +32,7 @@ import { useAuth } from '../context/AuthContext';
 import { getModules, getModule, completeModule, getCompletions, recordSignal } from '../api';
 import ReviewQueue from '../components/ReviewQueue';
 import WarmUp from '../components/WarmUp';
+import MisconceptionRadar from '../components/MisconceptionRadar';
 import { Badge, Card, Button } from '../components/ui';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -394,6 +395,7 @@ export function Overview() {
                 first, at full width, instead of one panel down the left column. ─── */}
             <ReviewQueue userId={user?.id} />
             <WarmUp lang={user?.preferred_language || 'en'} />
+            <MisconceptionRadar />
 
             {/* ─── Welcome Banner ────────────────────────────────────────── */}
             <motion.div variants={itemVariants}>

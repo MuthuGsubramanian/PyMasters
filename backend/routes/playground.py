@@ -572,6 +572,9 @@ def execute_code(request: dict = Body(...), user_id: str = Depends(get_current_u
 
     output = result["output"]
     error = result["error"]
+    if result["exit_code"] != 0:
+        from routes.misconceptions import record_run_error
+        record_run_error(user_id, error, request.get("lesson_id"))
 
     # Combine output for terminal display
     combined = output

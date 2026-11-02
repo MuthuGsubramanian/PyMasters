@@ -174,6 +174,8 @@ export const getDueReviews = (userId) =>
 // 5-minute warm-up: mixed quiz questions from learned lessons, graded server-side
 export const getWarmup = (lang = 'en') => api.get('/review/warmup', { params: { lang } });
 export const answerWarmup = (id, choice) => api.post('/review/warmup/answer', { id, choice });
+// Misconception radar: the caller's most frequent Python error types (last 60 days)
+export const getMisconceptions = () => api.get('/misconceptions');
 
 // Trending
 export const getTrending = (count = 10, category = '') =>
