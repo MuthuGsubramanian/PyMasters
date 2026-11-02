@@ -956,7 +956,9 @@ app.include_router(platform_settings_router)
 app.include_router(org_requests_router)
 app.include_router(org_curriculum_router)
 from routes.email_verify import router as email_verify_router
+from routes.misconceptions import router as misconceptions_router
 app.include_router(email_verify_router)
+app.include_router(misconceptions_router)
 
 # --- CORS ---
 # NB: no "*" here. With allow_credentials=True, a wildcard makes Starlette echo

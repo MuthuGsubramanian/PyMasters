@@ -159,7 +159,9 @@ export default function RunnableCode({ children, className, code: rawCode, langu
         setOutput('');
         try {
             const { source, offset } = buildFullCode();
-            const res = await api.post('/playground/execute', { code: source });
+            // Lesson blocks tag failed runs with the lesson id for the misconception radar.
+            const lessonId = predict ? (window.location.pathname.match(/\/classroom\/([\w-]+)/) || [])[1] : undefined;
+            const res = await api.post('/playground/execute', { code: source, lesson_id: lessonId });
             const data = res.data || {};
             const out = shiftLines(data.output || '(No output)', offset);
             setOutput(out);
