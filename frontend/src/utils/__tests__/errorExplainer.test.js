@@ -31,6 +31,10 @@ describe('explainError', () => {
         const t = `Traceback (most recent call last):\n  File "/tmp/a/main.py", line 9, in <module>\n  File "/tmp/a/main.py", line 2, in f\nZeroDivisionError: division by zero`;
         expect(explainError(t).line).toBe(2);
     });
+    it('names the missing file', () => {
+        const r = explainError(tb("FileNotFoundError: [Errno 2] No such file or directory: 'config.json'"));
+        expect(r.title).toBe('File "config.json" was not found');
+    });
     it('returns null for normal output', () => {
         expect(explainError('hello world\n42')).toBeNull();
     });

@@ -112,6 +112,14 @@ const RULES = [
         what: 'Python could not find that module - the name may be misspelled, or it is not installed here.',
         fix: 'Check the spelling; common ones are numpy, pandas, matplotlib. The Playground lists which packages are available.',
     })],
+    ['FileNotFoundError', (msg) => {
+        const name = (msg.match(/'([^']+)'/) || [])[1];
+        return {
+        title: name ? `File "${name}" was not found` : 'File not found',
+        what: 'open() looked for a file that does not exist in the folder the program runs in (or the name/path is spelled differently).',
+        fix: 'Check the file name and path. To create a new file, open it with mode "w"; to be safe when reading, check os.path.exists(name) first or use try/except FileNotFoundError.',
+        };
+    }],
     ['UnboundLocalError', () => ({
         title: 'A variable was used before being set inside the function',
         what: 'Assigning to a name inside a function makes it local for the whole function, so reading it before that line fails.',
