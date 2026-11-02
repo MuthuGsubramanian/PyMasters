@@ -36,7 +36,7 @@ echo "- open PRs: $(cd "$REPO" && gh pr list --json number -q 'length' 2>/dev/nu
 echo "- Vaathiyaar training stats: $(curl -s -m 15 https://pymasters.net/api/classroom/training/stats)"
 
 sec "Production VM"
-timeout 90 gcloud compute ssh pymasters-vm --project $APP --zone us-central1-a --quiet --command \
+timeout 90 gcloud compute ssh pymasters-vm --project $APP --zone us-central1-a --quiet --tunnel-through-iap --command \
  'echo "- $(uptime -p), load $(cut -d" " -f1-3 /proc/loadavg)"; free -m | awk "/Mem/{print \"- RAM used \"\$3\"/\"\$2\" MB\"} /Swap/{print \"- swap used \"\$3\" MB\"}"; df -h / | awk "NR==2{print \"- disk \"\$5\" used\"}"; sudo docker ps --format "- container {{.Names}}: {{.Status}}"; systemctl is-failed pymasters-update.service pymasters-learn.service | paste -sd" " | sed "s/^/- timers update\/learn: /"' 2>/dev/null || echo "- SSH to VM failed"
 
 sec "Backups"

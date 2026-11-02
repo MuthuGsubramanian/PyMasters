@@ -17,8 +17,10 @@ VAULT="$HERE/../../ops/vault/pmvault.py"
 HOST="$(gcloud compute instances describe "$VM" --project "$PROJECT" --zone "$ZONE" --format='value(networkInterfaces[0].accessConfigs[0].natIP)')"
 KEY="$HOME/.ssh/google_compute_engine"
 SSH_USER="${SSH_USER:-muthu}"
-SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 "$SSH_USER@$HOST")
-SCP=(scp -q -i "$KEY" -o StrictHostKeyChecking=accept-new)
+# Public SSH is closed (2026-11-02): port 22 only accepts Google IAP tunnels.
+IAP_PROXY="ProxyCommand=gcloud compute start-iap-tunnel pymasters-vm 22 --listen-on-stdin --project=pymasters-app --zone=us-central1-a"
+SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=60 -o "$IAP_PROXY" "$SSH_USER@$HOST")
+SCP=(scp -q -i "$KEY" -o StrictHostKeyChecking=accept-new -o "$IAP_PROXY")
 
 RUNTIME_SECRETS=(JWT_SECRET OLLAMA_API_KEY QUBRID_API_KEY QUBRID2_API_KEY EXPORT_TOKEN SOCIAL_WORKER_TOKEN
   OPS_ADMIN_TOKEN SMTP_USER SMTP_PASS FROM_EMAIL SMTP_BACKUP_USER SMTP_BACKUP_PASS

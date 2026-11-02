@@ -5,7 +5,7 @@ set -euo pipefail
 DEST=/mnt/eternity-store/EternityModels/pymasters-social/db-backups
 mkdir -p "$DEST"
 out="$DEST/pymasters-$(date +%Y%m%d-%H%M).db.gz"
-gcloud compute ssh pymasters-vm --project pymasters-app --zone us-central1-a --quiet --account=muthu@pymasters.net \
+gcloud compute ssh pymasters-vm --project pymasters-app --zone us-central1-a --quiet --tunnel-through-iap --account=muthu@pymasters.net \
   --command 'sudo docker exec pymasters-app sqlite3 /app/data/pymasters.db ".backup /tmp/nightly.db" && sudo docker exec pymasters-app sh -c "gzip -c /tmp/nightly.db && rm -f /tmp/nightly.db"' > "$out.part"
 gzip -t "$out.part" && mv "$out.part" "$out"
 python3 -c "

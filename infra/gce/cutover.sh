@@ -15,7 +15,9 @@ set -euo pipefail
 PROJECT=pymasters-app; REGION=us-central1; ZONE=us-central1-a; VM=pymasters-vm
 IP=35.206.69.198
 KEY="$HOME/.ssh/google_compute_engine"; SSH_USER="${SSH_USER:-muthu}"
-SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 "$SSH_USER@$IP")
+# Public SSH is closed (2026-11-02): port 22 only accepts Google IAP tunnels.
+IAP_PROXY="ProxyCommand=gcloud compute start-iap-tunnel pymasters-vm 22 --listen-on-stdin --project=pymasters-app --zone=us-central1-a"
+SSH=(ssh -i "$KEY" -o StrictHostKeyChecking=accept-new -o ConnectTimeout=60 -o "$IAP_PROXY" "$SSH_USER@$IP")
 IMG=us-central1-docker.pkg.dev/pymasters-app/cloud-run-source-deploy/pymasters:latest
 
 case "${1:-}" in
