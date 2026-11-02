@@ -239,3 +239,46 @@ def warmup_answer(body: dict = Body(...), caller: str = Depends(get_current_user
     finally:
         conn.close()
     return {"correct": correct, "correct_index": correct_index}
+
+
+# ── Track boss battle (2026-11-02) ──────────────────────────────────────────
+# A mixed end-of-track challenge built only from lessons the learner has completed
+# in that track (interleaved retrieval + a bit of drama). Answers go through
+# /warmup/answer, so grading stays server-side and feeds the same review schedule.
+BOSS_SIZE = 8
+BOSS_MIN_LESSONS = 3
+
+
+@router.get("/boss")
+def boss_battle(track: str, lang: str = "en", caller: str = Depends(get_current_user_id)):
+    conn = sqlite3.connect(_db_path())
+    try:
+        try:
+            done = [r[0] for r in conn.execute(
+                "SELECT lesson_id FROM lesson_completions WHERE user_id = ?", [caller]).fetchall()]
+        except sqlite3.OperationalError:
+            done = []
+    finally:
+        conn.close()
+    lessons = []
+    for lesson_id in done:
+        lesson = _load_lesson_from_dir(lesson_id)
+        if lesson and lesson.get("track") == track:
+            quiz = [(i, item) for i, item in enumerate(_quiz(lesson))
+                    if isinstance(item, dict) and _text(item.get("q"), lang) and isinstance(_text(item.get("options"), lang), list)]
+            if quiz:
+                random.shuffle(quiz)
+                lessons.append((lesson_id, _title(lesson, lesson_id), quiz))
+    if len(lessons) < BOSS_MIN_LESSONS:
+        return {"unlocked": False, "completed": len(lessons), "needed": BOSS_MIN_LESSONS, "questions": []}
+    pool = []
+    for rnd in range(BOSS_SIZE):
+        for lesson_id, title, quiz in lessons:
+            if rnd < len(quiz) and len(pool) < BOSS_SIZE:
+                pool.append((lesson_id, title) + quiz[rnd])
+    random.shuffle(pool)
+    return {"unlocked": True, "completed": len(lessons), "needed": BOSS_MIN_LESSONS, "questions": [
+        {"id": f"{lesson_id}:{i}", "topic": lesson_id, "title": title,
+         "q": _text(item["q"], lang), "options": _text(item["options"], lang)}
+        for lesson_id, title, i, item in pool
+    ]}

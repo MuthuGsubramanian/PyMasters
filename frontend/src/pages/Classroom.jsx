@@ -31,6 +31,7 @@ import PythonEditor from '../components/PythonEditor';
 import OutputPanel from '../components/OutputPanel';
 import LearnAnything from '../components/LearnAnything';
 import VoiceTutor from '../components/VoiceTutor';
+import BossBattle from '../components/BossBattle';
 import { Badge } from '../components/ui';
 import useReducedMotion from '../hooks/useReducedMotion';
 
@@ -550,6 +551,7 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                             transition={{ duration: 0.3, ease: 'easeInOut' }}
                                             className="overflow-hidden"
                                         >
+                                            {doneInTrack >= 3 && <BossBattle track={track} name={meta.name} accent={meta.accent} lang={language} />}
                                             <div className="px-3 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 {lessonsInTrack.map((lesson, idx) => {
                                                     // `recommended:false` is soft personalization from the
