@@ -1,0 +1,7 @@
+[Unit]
+Description=PyMasters e2e triage at 08:00 IST (after the 02:00 nightly and the 07:30 production smoke)
+[Timer]
+OnCalendar=*-*-* 08:00:00 Asia/Kolkata
+Persistent=true
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,7 @@
+[Unit]
+Description=PyMasters autonomous e2e triage (fixes red test signals behind the normal gates)
+After=network-online.target
+[Service]
+Type=oneshot
+ExecStart=%h/pymasters-ops/e2e_triage.sh
+TimeoutStartSec=10800
