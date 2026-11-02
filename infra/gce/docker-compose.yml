@@ -58,6 +58,11 @@ services:
     image: caddy:2.9.1
     container_name: pymasters-caddy
     restart: unless-stopped
+    # Only the Vercel origin secret (api.pymasters.net site), not the app's whole .env. Interpolated from
+    # /opt/pymasters/.env; compose refuses to start without it, so the origin can never come up unguarded.
+    # Add it to .env BEFORE copying this file to the VM (update.sh runs `compose up` on every deploy).
+    environment:
+      ORIGIN_SECRET: ${ORIGIN_SECRET:?ORIGIN_SECRET missing in /opt/pymasters/.env}
     ports:
       - "80:80"
       - "443:443"
