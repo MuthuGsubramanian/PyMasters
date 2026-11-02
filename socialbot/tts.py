@@ -15,6 +15,8 @@ def _pipe():
     if _PIPE is None:
         config.ensure_dirs()
         os.environ.pop("VIRTUAL_ENV", None)
+        import torch
+        torch.set_num_threads(int(os.getenv("OMP_NUM_THREADS", "2")))   # heat: keep the laptop cool
         from kokoro import KPipeline
         _PIPE = KPipeline(lang_code="a", repo_id="hexgrad/Kokoro-82M")
     return _PIPE

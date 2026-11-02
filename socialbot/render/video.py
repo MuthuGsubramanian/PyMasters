@@ -4,6 +4,7 @@ Each scene's narration is synthesised first so the visuals are timed to the voic
 no hard trims). Frames stream straight into ffmpeg as raw RGB."""
 import glob
 import json
+import os
 import random
 import subprocess
 from pathlib import Path
@@ -26,7 +27,8 @@ class FFmpegWriter:
                "-r", str(fps), "-i", "-"]
         if audio:
             cmd += ["-i", str(audio)]
-        cmd += ["-c:v", "libx264", "-preset", "medium", "-crf", str(crf), "-pix_fmt", "yuv420p",
+        cmd += ["-threads", os.getenv("PMSOCIAL_FFMPEG_THREADS", "2"),
+                "-c:v", "libx264", "-preset", "medium", "-crf", str(crf), "-pix_fmt", "yuv420p",
                 "-profile:v", "high", "-movflags", "+faststart"]
         if audio:
             cmd += ["-c:a", "aac", "-b:a", "192k", "-shortest"]
