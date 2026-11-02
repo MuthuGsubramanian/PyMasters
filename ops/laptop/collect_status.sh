@@ -8,6 +8,8 @@ APP=pymasters-app
 OLD=festive-bazaar-424313-i5
 GA=--account=muthu.g.subramanian@gmail.com   # owner of the legacy projects
 WA=--account=muthu@pymasters.net             # org + main billing account
+MEDIA=/mnt/eternity-store/EternityModels/pymasters-social
+[ -d "${MEDIA%/*}" ] || MEDIA=~/.local/share/pymasters-social/media   # machines without the Eternity model store
 sec() { echo; echo "## $1"; }
 
 # The org account's gcloud login can expire (Workspace reauthentication). When it has, fall back to the
@@ -67,7 +69,7 @@ q=c.execute(\"select status,count(*) from content_queue group by 1\").fetchall()
 sec "Backups"
 echo "- Litestream replica (gs://pymasters-app-db/vm): last write $(gcloud storage ls -l -r gs://pymasters-app-db/vm/ 2>/dev/null | grep -v TOTAL | sort -k2 | tail -1 | awk '{print $2}')"
 
-echo "- laptop nightly backup: $(tail -1 /mnt/eternity-store/EternityModels/pymasters-social/db-backups/backup.log 2>/dev/null || echo none)"
+echo "- laptop nightly backup: $(tail -1 $MEDIA/db-backups/backup.log 2>/dev/null || echo none)"
 
 sec "GCP cost guards"
 # Old Cloud Run services were deleted 2026-11-01 (prod is the VM); any service here is unexpected spend.

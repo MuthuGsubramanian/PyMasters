@@ -6,7 +6,6 @@ After=network-online.target
 Type=oneshot
 WorkingDirectory=%h/Documents/Development/PyMasters
 Environment=PYTHONPATH=%h/Documents/Development/PyMasters
-Environment=HF_HOME=/mnt/eternity-store/EternityModels/pymasters-social/hf
 Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
 UnsetEnvironment=VIRTUAL_ENV
 ExecStart=%h/pymasters-ops/social-venv/bin/python -m socialbot tick
