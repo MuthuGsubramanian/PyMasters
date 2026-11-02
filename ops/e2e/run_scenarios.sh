@@ -30,7 +30,7 @@ curl -fsS "http://127.0.0.1:$PORT/health" >/dev/null || { "$DOCKER" logs "$NAME"
 
 cd "$HERE/scenarios"
 if [ "$TIER" = nightly ]; then SEL=(-m nightly nightly); else SEL=(-m "not nightly" --ignore=nightly); fi
-"${PM_E2E_PYTHON:-python3}" -m pytest "${SEL[@]}" -n "${PM_E2E_WORKERS:-auto}" --reruns 1 -q --tb=short \
+"${PM_E2E_PYTHON:-python3}" -m pytest "${SEL[@]}" -n "${PM_E2E_WORKERS:-auto}" --reruns "${PM_E2E_RERUNS:-1}" -q -rfER --tb=short \
   --junitxml="$OUT/junit-$TIER.xml" "$@"
 RC=$?
 "$DOCKER" logs "$NAME" > "$OUT/container.log" 2>&1

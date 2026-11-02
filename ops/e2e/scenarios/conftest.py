@@ -74,7 +74,10 @@ def create_user(kind: str = "individual", org_type: str = None, onboard: bool = 
         path = "/api/profile/onboarding/org" if kind == "organization" else "/api/profile/onboarding"
         payload = {**ONBOARDING, "user_id": user["id"]}
         if kind == "organization":
-            payload = {"user_id": user["id"], "org_size": "10-50", "preferred_language": "en"}
+            payload = {"user_id": user["id"], "org_size": "10-50", "preferred_language": "en",
+                       "learner_profile": "k12" if org_type in ("school", None) else "professional",
+                       "skill_level": "beginner", "learning_focus": "fundamentals",
+                       "structure_preference": "assigned"}
         r = s.post(f"{BASE}{path}", json=payload, timeout=30)
         assert r.status_code == 200, f"onboarding {r.status_code}: {r.text[:300]}"
     return user
