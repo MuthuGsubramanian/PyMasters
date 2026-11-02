@@ -15,6 +15,8 @@ echo "# PyMasters daily status — $(date '+%F %H:%M %Z')"
 
 sec "Open reminders"
 [ -s ~/pymasters-ops/reminders.txt ] && cat ~/pymasters-ops/reminders.txt || echo "- none"
+Y=$(date -d yesterday +%F)
+[ -e ~/pymasters-ops/reports/sent-$Y ] || echo "- ACTION FOR OPS: the daily status email for $Y was NOT sent (check ~/pymasters-ops/reports/send-$Y.log)."
 
 sec "Site"
 H=$(curl -s -m 15 https://pymasters.net/health)

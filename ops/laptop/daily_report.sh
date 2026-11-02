@@ -22,4 +22,5 @@ Send it with the Gmail send_message tool to muthu.g.subramanian@gmail.com, subje
 
 $(cat "$F")"
 claude -p "$PROMPT" --allowedTools mcp__claude_ai_Gmail__send_message --output-format text > ~/pymasters-ops/reports/send-$(date +%F).log 2>&1
-grep -q -i -E "sent|message id|1a1[0-9a-f]+" ~/pymasters-ops/reports/send-$(date +%F).log && touch "$MARK"
+# Success only when a Gmail message id is reported; otherwise no marker, so the 11:00/15:00 retries try again.
+grep -q -i -E "message id[^0-9a-f]*[0-9a-f]{16}" ~/pymasters-ops/reports/send-$(date +%F).log && touch "$MARK"

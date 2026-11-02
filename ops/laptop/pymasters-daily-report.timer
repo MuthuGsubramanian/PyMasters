@@ -1,7 +1,9 @@
 [Unit]
-Description=PyMasters daily status email at 09:00 IST
+Description=PyMasters daily status email at 09:00 IST (retries 11:00/15:00 if not sent)
 [Timer]
 OnCalendar=*-*-* 09:00:00 Asia/Kolkata
+OnCalendar=*-*-* 11:00:00 Asia/Kolkata
+OnCalendar=*-*-* 15:00:00 Asia/Kolkata
 Persistent=true
 [Install]
 WantedBy=timers.target
