@@ -18,6 +18,8 @@ const ladderFoot = Number(Object.keys(BOARD_LAYOUTS.variables.ladders)[0])
 const ladderHead = BOARD_LAYOUTS.variables.ladders[ladderFoot]
 
 async function flush(r) { await r.act(async () => { await Promise.resolve(); await Promise.resolve() }) }
+// Flush until `cond()` holds (bounded): a fixed number of flushes was flaky on slower CI runners.
+async function until(r, cond, tries = 50) { for (let i = 0; i < tries && !cond(); i++) await flush(r) }
 
 beforeEach(() => { vi.useFakeTimers({ shouldAdvanceTime: true }) })
 afterEach(() => { vi.useRealTimers() })
@@ -36,8 +38,8 @@ describe('Snakes & Ladders game', () => {
     const card = r.container.querySelector('[data-question-card]')
     expect(card).not.toBeNull()
     r.click(card.querySelector('button[data-choice="1"]'))
-    await flush(r)
-    await flush(r)
+    const pos = () => r.container.querySelector('[data-token="you"]').getAttribute('data-pos')
+    await until(r, () => r.container.textContent.includes('because') && pos() === String(ladderHead))
     expect(r.container.textContent).toContain('because')
     expect(r.container.querySelector('[data-token="you"]').getAttribute('data-pos')).toBe(String(ladderHead))
     await r.act(async () => { vi.advanceTimersByTime(3000) })
