@@ -64,6 +64,7 @@ const GeneratedExplain = lazyRetry(() => import('./pages/GeneratedExplain'), 'Ge
 const SuperAdmin = lazyRetry(() => import('./pages/SuperAdmin'), 'SuperAdmin');
 const ForgotPassword = lazyRetry(() => import('./pages/ForgotPassword'), 'ForgotPassword');
 const ResetPassword = lazyRetry(() => import('./pages/ResetPassword'), 'ResetPassword');
+const VerifyEmail = lazyRetry(() => import('./pages/VerifyEmail'), 'VerifyEmail');
 const Community = lazyRetry(() => import('./pages/Community'), 'Community');
 const OrgCompete = lazyRetry(() => import('./pages/OrgCompete'), 'OrgCompete');
 const KnowledgeMap = lazyRetry(() => import('./pages/KnowledgeMap'), 'KnowledgeMap');
@@ -146,6 +147,7 @@ export default function App() {
               <Route path="/join/:token" element={<ErrorBoundary><JoinOrg /></ErrorBoundary>} />
             <Route path="/forgot-password" element={<ErrorBoundary><ForgotPassword /></ErrorBoundary>} />
             <Route path="/reset-password/:token" element={<ErrorBoundary><ResetPassword /></ErrorBoundary>} />
+            <Route path="/verify-email/:token" element={<ErrorBoundary><VerifyEmail /></ErrorBoundary>} />
               <Route path="/pricing" element={<ErrorBoundary><Pricing /></ErrorBoundary>} />
               <Route path="/terms" element={<ErrorBoundary><Terms /></ErrorBoundary>} />
               <Route path="/privacy" element={<ErrorBoundary><Privacy /></ErrorBoundary>} />

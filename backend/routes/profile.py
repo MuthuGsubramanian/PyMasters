@@ -409,7 +409,7 @@ def get_profile(user_id: str, caller: str = Depends(get_current_user_id)):
     try:
         ec = _get_conn()
         u = ec.execute(
-            "SELECT email, whatsapp, linkedin_url, github_url, twitter_url, website_url, points "
+            "SELECT email, COALESCE(email_verified,0) AS email_verified, whatsapp, linkedin_url, github_url, twitter_url, website_url, points "
             "FROM users WHERE id = ?", [user_id]
         ).fetchone()
         s = ec.execute(
@@ -420,6 +420,7 @@ def get_profile(user_id: str, caller: str = Depends(get_current_user_id)):
         ec.close()
         if u:
             profile["email"] = u["email"] or ""
+            profile["email_verified"] = bool(u["email_verified"])
             profile["whatsapp"] = u["whatsapp"] or ""
             profile["linkedin_url"] = u["linkedin_url"] or ""
             profile["github_url"] = u["github_url"] or ""

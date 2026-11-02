@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
-import { getProfile, recordSignal, changePassword } from '../api';
+import { getProfile, recordSignal, changePassword, requestEmailVerification } from '../api';
 import api from '../api';
 import { isReducedMotion, setReduceMotionPref } from '../hooks/useReducedMotion';
 import clsx from 'clsx';
@@ -288,6 +288,8 @@ export default function Profile() {
     // ─── Personal Info ──────────────────────────────────────────────────────
     const [displayName, setDisplayName] = useState('');
     const [email, setEmail] = useState('');
+    const [emailVerified, setEmailVerified] = useState(true);
+    const [verifySent, setVerifySent] = useState('');
     const [whatsapp, setWhatsapp] = useState('');
     const [bio, setBio] = useState('');
 
@@ -375,6 +377,7 @@ export default function Profile() {
                 // Personal info
                 setDisplayName(p.name || p.username || '');
                 setEmail(p.email || '');
+                setEmailVerified(p.email_verified !== false);
                 setWhatsapp(p.whatsapp || '');
                 setBio(p.bio || '');
 
@@ -800,6 +803,21 @@ export default function Profile() {
                                 placeholder="you@example.com"
                                 icon={Mail}
                             />
+                            {email && !emailVerified && (
+                                <div className="-mt-2 flex flex-wrap items-center gap-2 text-xs text-amber-600">
+                                    <span>Not confirmed yet.</span>
+                                    <button
+                                        type="button"
+                                        className="underline font-semibold"
+                                        onClick={() => requestEmailVerification()
+                                            .then(() => setVerifySent('Check your inbox for the confirmation link.'))
+                                            .catch((e) => setVerifySent(e?.response?.data?.detail || 'Could not send right now.'))}
+                                    >
+                                        Send confirmation link
+                                    </button>
+                                    {verifySent && <span className="text-text-muted">{verifySent}</span>}
+                                </div>
+                            )}
                             <InputField
                                 label="WhatsApp Number"
                                 value={whatsapp}

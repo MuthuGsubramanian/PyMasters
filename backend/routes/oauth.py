@@ -119,7 +119,9 @@ def linkedin_callback(code: str = Query(None), state: str = Query(None), error: 
     frontend = c["frontend"]
 
     def _bounce(**qs):
-        return RedirectResponse(url=f"{frontend}/login?{urlencode(qs)}")
+        # Fragment, not query (audit L2): the 30-day JWT must not land in proxy access logs or Referer
+        # headers; browsers never send the #fragment to a server.
+        return RedirectResponse(url=f"{frontend}/login#{urlencode(qs)}")
 
     if not is_enabled():
         raise HTTPException(status_code=503, detail="LinkedIn sign-in is not configured.")
@@ -206,7 +208,8 @@ def _upsert_linkedin_user(sub: str, email: str, name: str, picture: str):
         # 2) Existing account with this email? Link it.
         if email:
             u = cur.execute(
-                "SELECT id, username, COALESCE(onboarding_completed,0) FROM users WHERE LOWER(email)=?",
+                "SELECT id, username, COALESCE(onboarding_completed,0) FROM users WHERE LOWER(email)=? "
+                "AND COALESCE(email_verified,0)=1",  # only link to a PROVEN address (audit M4)
                 [email],
             ).fetchone()
             if u:
@@ -237,6 +240,14 @@ def _upsert_linkedin_user(sub: str, email: str, name: str, picture: str):
             [sub, uid, email],
         )
         conn.commit()
+        if email:
+            # The provider verified this address, so the new account's email is proven (audit M4); this
+            # also applies any approved student grant waiting for it.
+            try:
+                from routes.email_verify import mark_verified
+                mark_verified(conn, uid)
+            except Exception as e:
+                print(f"[oauth] verify mark failed: {e!r}")
         return uid, True, username, False
     finally:
         conn.close()

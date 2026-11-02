@@ -713,6 +713,16 @@ def init_db():
                 _ensure(DB_PATH)
             except Exception as e:
                 print(f"Table init {getattr(_ensure, '__name__', _ensure)}: {e}")
+        # Email verification column/table/trigger (audit M4, 2026-11-02) - after oauth tables exist.
+        try:
+            from routes.email_verify import ensure_schema as _ensure_email_verify
+            _ev = sqlite3.connect(DB_PATH)
+            try:
+                _ensure_email_verify(_ev)
+            finally:
+                _ev.close()
+        except Exception as e:
+            print(f"Table init email_verify: {e}")
 
         # Bootstrap admin, ONLY on a truly empty DB (rare: first-ever boot with no
         # GCS replica and no baked-in seed). Never a hardcoded password — that put a
@@ -945,6 +955,8 @@ app.include_router(tutor_sessions_router)
 app.include_router(platform_settings_router)
 app.include_router(org_requests_router)
 app.include_router(org_curriculum_router)
+from routes.email_verify import router as email_verify_router
+app.include_router(email_verify_router)
 
 # --- CORS ---
 # NB: no "*" here. With allow_credentials=True, a wildcard makes Starlette echo
@@ -1238,13 +1250,14 @@ def register(user: UserRegister, request: Request = None):
         # Telemetry: first login = signup (background geo, fail-silent).
         record_login(user_id, request)
 
-        # Consume a super-admin-approved student-access request for this email
-        # (support flow): grants the 90-day student plan. Fail-silent.
+        # Email is unverified at signup: send a confirmation link. An approved student-access grant for
+        # this address is applied when the address is verified (routes/email_verify.mark_verified), not
+        # to whoever registers first with it (audit M4, 2026-11-02). Fail-silent.
         try:
-            from routes.support import apply_approved_access_grant
-            apply_approved_access_grant(user_id, email)
+            from routes.email_verify import send_verification
+            send_verification(user_id)
         except Exception as e:
-            print(f"[register] access-grant check failed: {e!r}")
+            print(f"[register] verification email failed: {e!r}")
 
         return {
             "id": user_id,
@@ -1457,6 +1470,12 @@ def reset_password(req: ResetPasswordRequest):
         )
         cursor.execute("UPDATE password_resets SET used = 1 WHERE token = ?", [req.token])
         conn.commit()
+        # The reset link was emailed to users.email, so completing it proves control of that address.
+        try:
+            from routes.email_verify import mark_verified
+            mark_verified(conn, row[0])
+        except Exception as e:
+            print(f"[reset-password] verify mark failed: {e!r}")
         return {"ok": True}
     finally:
         conn.close()
