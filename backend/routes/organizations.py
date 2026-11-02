@@ -446,7 +446,8 @@ def create_org(data: CreateOrgRequest, caller: str = Depends(get_current_user_id
         try: conn.rollback()
         except Exception: pass
         import traceback; traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Could not create organization: {e}")
+        print(f"[org] create failed: {e}")
+        raise HTTPException(status_code=500, detail="Could not create the organization. Please try again.")
     finally:
         conn.close()
     return {

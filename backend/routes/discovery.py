@@ -10,6 +10,7 @@ pipeline so generated lessons land in the same place as everything else.
 Prefix: /api
 """
 
+from ratelimit import limit_ai_generation
 import os
 import uuid
 import sqlite3
@@ -102,6 +103,7 @@ def generate_topic(req: GenerateRequest, caller: str = Depends(get_current_user_
     if req.user_id and req.user_id != caller:
         raise HTTPException(status_code=403, detail="Cannot generate for another user")
     req.user_id = caller
+    limit_ai_generation(caller)
     """Queue a Vaathiyaar-generated session for a topic, enriched with the
     details the learner provided. Returns a job_id to poll /api/modules/status."""
     topic = req.topic.strip()

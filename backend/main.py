@@ -1279,9 +1279,11 @@ def login(user: UserLogin, request: Request = None):
     print(f"Login request for: {user.username}")
     _enforce_ip_limit(_login_ip_limiter, request, "login attempts")
     uname = user.username or ""
-    # Per-username lockout: refuse (even a correct password) while the username has
-    # too many recent failures. retry_after > 0 only once the window is full.
-    _locked_wait = _login_fail_limiter.retry_after(uname)
+    # Lockout keyed on (username, client IP) - security fix 2026-11-02: keyed on username alone, anyone
+    # could keep ANY account (the founder's included) locked out forever with 5 bad guesses per 5 min.
+    # Brute force stays bounded: 5 failures per username per IP per 5 min, plus 15 logins/min per IP.
+    _fail_key = f"{uname.strip().lower()}|{_client_ip(request)}"
+    _locked_wait = _login_fail_limiter.retry_after(_fail_key)
     if _locked_wait > 0:
         raise HTTPException(status_code=429,
                             detail=f"Too many failed logins for this account. Try again in {_locked_wait}s.",
@@ -1297,11 +1299,11 @@ def login(user: UserLogin, request: Request = None):
         record = cursor.fetchone()
 
         if not record or not verify_pw(user.password, record[6]):
-            _login_fail_limiter.allow(uname)  # record the failure toward lockout
+            _login_fail_limiter.allow(_fail_key)  # record the failure toward lockout
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
         # Successful auth: clear this username's failed-login counter.
-        _login_fail_limiter.reset(uname)
+        _login_fail_limiter.reset(_fail_key)
 
         # Transparent upgrade: re-hash legacy (non-bcrypt) passwords with bcrypt on login.
         if record[6] and not str(record[6]).startswith("$2"):

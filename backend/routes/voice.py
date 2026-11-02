@@ -11,6 +11,7 @@ return 503 and the client falls back to typing — never crashes the app.
 
 import os
 import tempfile
+import threading
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
 
@@ -19,8 +20,10 @@ from auth import get_current_user_id
 
 router = APIRouter(prefix="/api/voice", tags=["voice"])
 
-_limiter = SlidingWindowRateLimiter(max_calls=30, window_seconds=60)
+_limiter = SlidingWindowRateLimiter(max_calls=10, window_seconds=60)
 _model = None
+# Whisper is CPU-heavy on a 1 GB / 2 vCPU VM: one transcription at a time (security fix 2026-11-02).
+_TRANSCRIBE_LOCK = threading.BoundedSemaphore(1)
 WHISPER_MODEL = os.getenv("VOICE_WHISPER_MODEL", "tiny")
 # app language codes already match Whisper's ISO codes (en, ta, te, ml, fr, es, it, ko)
 
@@ -35,7 +38,7 @@ def _get_model():
 
 
 @router.post("/transcribe")
-async def transcribe(
+def transcribe(
     audio: UploadFile = File(...),
     language: str = Form("en"),
     caller: str = Depends(get_current_user_id),
@@ -52,7 +55,9 @@ async def transcribe(
         wait = _limiter.retry_after(caller)
         raise HTTPException(status_code=429, detail=f"Too many requests — wait {wait}s.")
 
-    data = await audio.read()
+    # Sync handler: FastAPI runs it in the threadpool, so a transcription no longer blocks the event
+    # loop (it used to stall every request on the server while Whisper ran).
+    data = audio.file.read(8 * 1024 * 1024 + 1)
     if not data:
         raise HTTPException(status_code=400, detail="Empty audio.")
     if len(data) > 8 * 1024 * 1024:  # ~8 MB cap (short utterances only)
@@ -65,17 +70,24 @@ async def transcribe(
         tmp.flush()
         tmp.close()
 
+        if not _TRANSCRIBE_LOCK.acquire(timeout=20):
+            raise HTTPException(status_code=503, detail="Speech recognition is busy - please try again in a moment.")
         try:
-            model = _get_model()
-        except Exception as exc:  # import/load/OOM — let the client fall back to typing
-            raise HTTPException(status_code=503, detail=f"Speech recognition unavailable: {exc}")
+            try:
+                model = _get_model()
+            except Exception as exc:  # import/load/OOM — let the client fall back to typing
+                print(f"[voice] model unavailable: {exc}")
+                raise HTTPException(status_code=503, detail="Speech recognition is unavailable right now.")
 
-        lang = language if language and language not in ("auto", "") else None
-        try:
-            segments, info = model.transcribe(tmp.name, language=lang, vad_filter=True, beam_size=1)
-            text = " ".join(s.text.strip() for s in segments).strip()
-        except Exception as exc:
-            raise HTTPException(status_code=422, detail=f"Could not transcribe audio: {exc}")
+            lang = language if language and language not in ("auto", "") else None
+            try:
+                segments, info = model.transcribe(tmp.name, language=lang, vad_filter=True, beam_size=1)
+                text = " ".join(s.text.strip() for s in segments).strip()
+            except Exception as exc:
+                print(f"[voice] transcription failed: {exc}")
+                raise HTTPException(status_code=422, detail="Could not transcribe that audio. Please try again.")
+        finally:
+            _TRANSCRIBE_LOCK.release()
 
         return {"text": text, "language": getattr(info, "language", lang) or lang}
     finally:

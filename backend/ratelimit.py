@@ -53,3 +53,35 @@ class SlidingWindowRateLimiter:
         """Forget all recorded calls for a key (e.g. clear a username's failed-login
         counter after a successful authentication)."""
         self._calls.pop(key, None)
+
+
+def enforce(limiter: "SlidingWindowRateLimiter", key: str, what: str = "requests") -> None:
+    """Raise HTTP 429 (with Retry-After) when `key` is over the limiter's budget."""
+    if not limiter.allow(str(key)):
+        from fastapi import HTTPException
+        wait = limiter.retry_after(str(key)) or 1
+        raise HTTPException(status_code=429, detail=f"Too many {what}. Please try again in {wait} seconds.",
+                            headers={"Retry-After": str(wait)})
+
+
+# Per-user budgets for endpoints that spend LLM credits or sandbox CPU (security fix 2026-11-02:
+# none of these were limited, so a script could burn the AI provider credits or tie up the 1 GB VM).
+AI_CHAT_MINUTE = SlidingWindowRateLimiter(max_calls=15, window_seconds=60)
+AI_CHAT_DAY = SlidingWindowRateLimiter(max_calls=300, window_seconds=86400)
+AI_GEN_HOUR = SlidingWindowRateLimiter(max_calls=4, window_seconds=3600)
+AI_GEN_DAY = SlidingWindowRateLimiter(max_calls=15, window_seconds=86400)
+GRADING_MINUTE = SlidingWindowRateLimiter(max_calls=20, window_seconds=60)
+
+
+def limit_ai_chat(user_id: str) -> None:
+    enforce(AI_CHAT_MINUTE, user_id, "messages")
+    enforce(AI_CHAT_DAY, user_id, "AI messages today")
+
+
+def limit_ai_generation(user_id: str) -> None:
+    enforce(AI_GEN_HOUR, user_id, "generation requests")
+    enforce(AI_GEN_DAY, user_id, "generation requests today")
+
+
+def limit_grading(user_id: str) -> None:
+    enforce(GRADING_MINUTE, user_id, "code checks")

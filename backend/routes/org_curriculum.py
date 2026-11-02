@@ -21,6 +21,7 @@ Design notes:
 
 import csv
 import io
+from ratelimit import limit_ai_generation
 import os
 import sqlite3
 import threading
@@ -212,6 +213,7 @@ def _require_admin(org_id: str, caller: str):
 def create_lesson_set(org_id: str, req: CreateSetRequest, caller: str = Depends(get_current_user_id)):
     """Create a curriculum set from typed topics. Requires org admin+."""
     _require_admin(org_id, caller)
+    limit_ai_generation(caller)
     topics = _parse_topics([str(t) for t in (req.topics or [])])
     return _create_set(org_id, caller, req.title, req.description, req.group_name, topics)
 
@@ -227,6 +229,7 @@ async def create_lesson_set_upload(
 ):
     """Create a curriculum set from an uploaded text/CSV file (one topic per line)."""
     _require_admin(org_id, caller)
+    limit_ai_generation(caller)
     data = await file.read()
     if len(data) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="File too large (topic lists are small — max 512 KB).")
