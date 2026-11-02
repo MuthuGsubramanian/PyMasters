@@ -15,10 +15,13 @@ MEMORIZE); the half-life function can later be replaced by a trained model.
 """
 
 import os
+import random
 import sqlite3
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
+
+from ratelimit import SlidingWindowRateLimiter, enforce
 
 from routes.classroom import _load_lesson_from_dir
 from auth import get_current_user_id
@@ -124,3 +127,97 @@ def due_reviews(user_id: str, limit: int = 20, caller: str = Depends(get_current
 
     due.sort(key=lambda x: x["recall"])
     return {"due": due[:limit], "total_due": len(due), "tracked": tracked}
+
+
+# ── 5-minute warm-up (2026-11-02) ────────────────────────────────────────────
+# Mixed retrieval practice: a handful of quiz questions from lessons the learner
+# has learned, most-forgotten first (interleaving across topics). Answers are
+# graded here so the correct option never ships to the client, and each answer
+# feeds the same forgetting curve: right -> last_practiced resets, wrong -> the
+# lesson's half-life shrinks so it resurfaces sooner.
+WARMUP_SIZE = 5
+_warmup_limiter = SlidingWindowRateLimiter(max_calls=60, window_seconds=600)
+
+
+def _text(v, lang: str):
+    if isinstance(v, dict):
+        return v.get(lang) or v.get("en") or next(iter(v.values()), None)
+    return v
+
+
+def _quiz(lesson: dict | None) -> list:
+    q = (lesson or {}).get("quiz")
+    return q if isinstance(q, list) else []
+
+
+def _learned_rows(conn, user_id: str):
+    conn.row_factory = sqlite3.Row
+    return conn.execute(
+        """SELECT topic, mastery_level, attempts, struggle_count, last_practiced
+           FROM user_mastery WHERE user_id = ? AND mastery_level >= ?""",
+        [user_id, LEARNED_THRESHOLD],
+    ).fetchall()
+
+
+@router.get("/warmup")
+def warmup(lang: str = "en", caller: str = Depends(get_current_user_id)):
+    conn = sqlite3.connect(_db_path())
+    try:
+        rows = _learned_rows(conn, caller)
+    finally:
+        conn.close()
+    now = datetime.now(timezone.utc)
+    ranked = sorted(rows, key=lambda r: _estimated_recall(
+        r["mastery_level"] or 0.0, r["attempts"] or 1, r["struggle_count"] or 0,
+        _days_since(r["last_practiced"], now)))
+
+    pool = []  # (topic, title, index, item) - one question per lesson first, then seconds
+    lessons = []
+    for r in ranked:
+        lesson = _load_lesson_from_dir(r["topic"])
+        quiz = [(i, item) for i, item in enumerate(_quiz(lesson))
+                if isinstance(item, dict) and _text(item.get("q"), lang) and isinstance(_text(item.get("options"), lang), list)]
+        if quiz:
+            random.shuffle(quiz)
+            lessons.append((r["topic"], _title(lesson, r["topic"]), quiz))
+        if len(lessons) >= WARMUP_SIZE:
+            break
+    for rnd in range(WARMUP_SIZE):
+        for topic, title, quiz in lessons:
+            if rnd < len(quiz) and len(pool) < WARMUP_SIZE:
+                pool.append((topic, title) + quiz[rnd])
+    random.shuffle(pool)
+    return {"questions": [
+        {"id": f"{topic}:{i}", "topic": topic, "title": title,
+         "q": _text(item["q"], lang), "options": _text(item["options"], lang)}
+        for topic, title, i, item in pool
+    ]}
+
+
+@router.post("/warmup/answer")
+def warmup_answer(body: dict = Body(...), caller: str = Depends(get_current_user_id)):
+    enforce(_warmup_limiter, caller, "warm-up answers")
+    qid, choice = str(body.get("id") or ""), body.get("choice")
+    topic, _, idx = qid.rpartition(":")
+    if not topic or not idx.isdigit() or not isinstance(choice, int):
+        raise HTTPException(status_code=400, detail="Invalid answer")
+    quiz = _quiz(_load_lesson_from_dir(topic))
+    if int(idx) >= len(quiz) or not isinstance(quiz[int(idx)], dict):
+        raise HTTPException(status_code=404, detail="Question not found")
+    correct_index = quiz[int(idx)].get("correct")
+    correct = choice == correct_index
+    conn = sqlite3.connect(_db_path())
+    try:
+        # Only lessons the learner has actually learned are rescheduled.
+        if correct:
+            conn.execute("""UPDATE user_mastery SET last_practiced = CURRENT_TIMESTAMP
+                            WHERE user_id = ? AND topic = ? AND mastery_level >= ?""",
+                         [caller, topic, LEARNED_THRESHOLD])
+        else:
+            conn.execute("""UPDATE user_mastery SET struggle_count = COALESCE(struggle_count, 0) + 1
+                            WHERE user_id = ? AND topic = ? AND mastery_level >= ?""",
+                         [caller, topic, LEARNED_THRESHOLD])
+        conn.commit()
+    finally:
+        conn.close()
+    return {"correct": correct, "correct_index": correct_index}

@@ -171,6 +171,9 @@ export const getDailyRecommendation = (userId) =>
 // Spaced-repetition review queue (lessons whose estimated recall has decayed)
 export const getDueReviews = (userId) =>
     api.get('/review/due', { params: { user_id: userId } });
+// 5-minute warm-up: mixed quiz questions from learned lessons, graded server-side
+export const getWarmup = (lang = 'en') => api.get('/review/warmup', { params: { lang } });
+export const answerWarmup = (id, choice) => api.post('/review/warmup/answer', { id, choice });
 
 // Trending
 export const getTrending = (count = 10, category = '') =>
