@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_synapse_fabric",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "TABLES = [\n    {'name': 'dim_customer', 'rows': 500000, 'type': 'dimension'},\n    {'name': 'fact_sales', 'rows': 2000000000, 'type': 'fact', 'hash_col': 'sale_id'},\n    {'name': 'stg_raw', 'rows': 50000000, 'type': 'staging'},\n]\n\ndef strategy(table):\n    if table.get('type') == 'dimension' and table.get('rows', 0) < 1000000:\n        return 'REPLICATE'\n    if table.get('type') == 'fact' and table.get('hash_col'):\n        return f\"HASH({table['hash_col']})\"\n    return 'ROUND_ROBIN'\n\nfor t in TABLES:\n    print(f\"{t['name']} -> {strategy(t)}\")\n",
+      "verified_output": "dim_customer -> REPLICATE\nfact_sales -> HASH(sale_id)\nstg_raw -> ROUND_ROBIN",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

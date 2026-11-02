@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_ecs_eks_containers",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "CAP_CPU = 4096\nCAP_MEM = 8192\n\nTASKS = [\n    (\"api\", 1024, 2048),\n    (\"worker\", 2048, 4096),\n    (\"cron\", 512, 1024),\n    (\"cache\", 1024, 3072),\n]\n\ndef place_tasks(tasks):\n    instances = []  # each: {\"name\": ..., \"cpu\": used, \"mem\": used}\n    placements = []\n    for name, cpu, mem in tasks:\n        target = None\n        for inst in instances:\n            if inst[\"cpu\"] + cpu <= CAP_CPU and inst[\"mem\"] + mem <= CAP_MEM:\n                target = inst\n                break\n        if target is None:\n            target = {\"name\": f\"instance-{len(instances) + 1}\", \"cpu\": 0, \"mem\": 0}\n            instances.append(target)\n        target[\"cpu\"] += cpu\n        target[\"mem\"] += mem\n        placements.append((name, target[\"name\"]))\n    return placements\n\nresult = place_tasks(TASKS)\nfor task, inst in result:\n    print(f\"{task} -> {inst}\")\nprint(f\"instances_used={len({inst for _, inst in result})}\")\n",
+      "verified_output": "api -> instance-1\nworker -> instance-1\ncron -> instance-1\ncache -> instance-2\ninstances_used=2",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

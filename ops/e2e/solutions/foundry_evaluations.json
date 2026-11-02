@@ -1,0 +1,11 @@
+{
+  "lesson_id": "foundry_evaluations",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def exact_match(pred, ref):\n    return 1 if pred.strip().lower() == ref.strip().lower() else 0\n\ndef groundedness(answer, context):\n    a = answer.lower().split()\n    c = set(context.lower().split())\n    if not a:\n        return 0.0\n    return round(sum(1 for w in a if w in c) / len(a), 2)\n\nem_pairs = [('Paris', 'paris'), ('Berlin', 'Munich'), ('42', '42')]\ng1 = ('the plan includes ptu capacity', 'the enterprise plan includes reserved ptu capacity units')\ng2 = ('refunds take ten days', 'refunds are processed within five business days')\n\nscores = [exact_match(p, r) for p, r in em_pairs]\nprint(f\"exact_match_rate: {round(sum(scores) / len(scores), 2)}\")\nprint(f\"groundedness q1: {groundedness(*g1)}\")\nprint(f\"groundedness q2: {groundedness(*g2)}\")\n",
+      "verified_output": "exact_match_rate: 0.67\ngroundedness q1: 1.0\ngroundedness q2: 0.5",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

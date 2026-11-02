@@ -1,0 +1,11 @@
+{
+  "lesson_id": "oop_inheritance",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class Vehicle:\n    def __init__(self, speed):\n        self.speed = speed\n\n\nclass Car(Vehicle):\n    def __init__(self, brand, speed):\n        super().__init__(speed)\n        self.brand = brand\n\n\nc = Car('Tesla', 120)\nprint(c.brand, c.speed)\n",
+      "verified_output": "Tesla 120",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

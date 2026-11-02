@@ -1,0 +1,11 @@
+{
+  "lesson_id": "map_filter_reduce",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from functools import reduce\n\ndef sum_of_even_squares(nums):\n    evens = filter(lambda n: n % 2 == 0, nums)\n    squares = map(lambda n: n * n, evens)\n    return reduce(lambda acc, n: acc + n, squares, 0)\n\nprint(sum_of_even_squares([1, 2, 3, 4, 5, 6]))\n",
+      "verified_output": "56",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

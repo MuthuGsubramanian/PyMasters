@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_vertex_training_tuning",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "TRIALS = [\n    (1, 0.71),\n    (2, 0.78),\n    (3, 0.83),\n    (4, 0.82),\n    (5, 0.80),\n    (6, 0.84),\n]\nPATIENCE = 2\n\ndef run_study(trials, patience):\n    best_acc = float('-inf')\n    best_trial = None\n    no_improve = 0\n    last_trial = None\n    for n, acc in trials:\n        last_trial = n\n        if acc > best_acc:\n            best_acc = acc\n            best_trial = n\n            no_improve = 0\n            print(f'trial {n}: acc={acc:.2f} (new best)')\n        else:\n            no_improve += 1\n            print(f'trial {n}: acc={acc:.2f}')\n        if no_improve == patience:\n            print(f'early stopping triggered after trial {n}')\n            break\n    print(f'best: trial {best_trial} with acc={best_acc:.2f}')\n    return best_trial, best_acc, last_trial\n\nrun_study(TRIALS, PATIENCE)\n",
+      "verified_output": "trial 1: acc=0.71 (new best)\ntrial 2: acc=0.78 (new best)\ntrial 3: acc=0.83 (new best)\ntrial 4: acc=0.82\ntrial 5: acc=0.80\nearly stopping triggered after trial 5\nbest: trial 3 with acc=0.83",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

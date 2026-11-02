@@ -1,0 +1,11 @@
+{
+  "lesson_id": "dot_product_attention",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\ndef softmax(scores):\n    m = max(scores)\n    exps = [math.exp(s - m) for s in scores]\n    total = sum(exps)\n    return [e / total for e in exps]\n\ndef dot(a, b):\n    return sum(x * y for x, y in zip(a, b))\n\ndef attention(query, keys, values):\n    d = len(query)\n    scale = math.sqrt(d)\n    # Step 1+2: scaled score for each key  -> scores = [ (Q·K)/√d for each K ]\n    scores = [dot(query, k) / scale for k in keys]\n    # Step 3: scores -> weights that sum to 1\n    weights = softmax(scores)\n    # Step 4: weighted sum of the value vectors -> output list\n    out = [0.0] * len(values[0])\n    for w, v in zip(weights, values):\n        for j, x in enumerate(v):\n            out[j] += w * x\n    return out\n\n# --- demo (do not change) ---\nquery = [1, 0, 1, 0]\nkeys = [[1, 0, 1, 0], [0, 1, 0, 1], [1, 1, 0, 0]]\nvalues = [[10, 0], [0, 10], [5, 5]]\n\nout = attention(query, keys, values)\nprint([round(x, 4) for x in out])\n",
+      "verified_output": "[6.6008, 3.3992]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

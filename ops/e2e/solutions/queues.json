@@ -1,0 +1,11 @@
+{
+  "lesson_id": "queues",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from collections import deque\n\ndef hot_potato(names, k):\n    q = deque(names)\n    while len(q) > 1:\n        # Pass the potato k-1 times; the k-th holder is eliminated\n        q.rotate(-(k - 1))\n        q.popleft()\n    return q[0]\n\nplayers = ['Alice', 'Bob', 'Charlie', 'David', 'Eve']\nwinner = hot_potato(players, 3)\nprint(f'Winner: {winner}')\n",
+      "verified_output": "Winner: David",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "deployment_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "files = {\n    \"wsgi.py\": \"from app import create_app\\n\\napplication = create_app()\\n\",\n    \"Procfile\": \"web: gunicorn wsgi:application --bind 0.0.0.0:$PORT\\n\",\n    \"requirements.txt\": \"Flask\\ngunicorn\\npython-dotenv\\nFlask-SQLAlchemy\\n\",\n}\n\nenv = {\n    \"SECRET_KEY\": \"production-secret-key-here\",\n    \"DATABASE_URL\": \"sqlite:///app.db\",\n}\n\nworkers = 4\nport = 8000\ncommand = f\"gunicorn wsgi:application --bind 0.0.0.0:{port} --workers {workers}\"\n\n# Simulated deployment check (no network, no files, no real server)\nassert \"wsgi.py\" in files and \"Procfile\" in files and \"requirements.txt\" in files\nassert \"SECRET_KEY\" in env and \"DATABASE_URL\" in env\nassert f\"--workers {workers}\" in command\n\nprint(f\"Gunicorn starts with {workers} workers, serving the app on port {port}\")\n",
+      "verified_output": "Gunicorn starts with 4 workers, serving the app on port 8000",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

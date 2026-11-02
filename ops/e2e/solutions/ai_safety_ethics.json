@@ -1,0 +1,11 @@
+{
+  "lesson_id": "ai_safety_ethics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import re\nimport logging\n\nlogging.basicConfig(level=logging.WARNING)\nlogger = logging.getLogger('safe_ai')\n\nclass SafeAI:\n    def __init__(self):\n        self.blocked_requests = []\n\n    def strip_pii(self, text: str) -> str:\n        \"\"\"Remove email addresses and phone numbers.\"\"\"\n        text = re.sub(r'[\\w.-]+@[\\w.-]+\\.\\w+', '[REDACTED_EMAIL]', text)\n        text = re.sub(r'\\b\\d{10,12}\\b', '[REDACTED_PHONE]', text)\n        return text\n\n    def add_hallucination_guard(self, system_prompt: str) -> str:\n        \"\"\"Add anti-hallucination instruction.\"\"\"\n        return system_prompt + \" If you are unsure about any information, say 'I don't know' rather than guessing.\"\n\n    def check_hallucination(self, prompt: str) -> str:\n        return self.add_hallucination_guard(prompt)\n\n    def log_blocked(self, request: str, reason: str = 'blocked') -> None:\n        self.blocked_requests.append((request, reason))\n        logger.warning(\"Blocked request (%s): %s\", reason, request)\n\n# Test\nsafe = SafeAI()\nprint(safe.strip_pii('Contact me at test@email.com or 9876543210'))\nprint(safe.add_hallucination_guard('You are a helpful assistant.'))\n",
+      "verified_output": "Contact me at [REDACTED_EMAIL] or [REDACTED_PHONE]\nYou are a helpful assistant. If you are unsure about any information, say 'I don't know' rather than guessing.",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

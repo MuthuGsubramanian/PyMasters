@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_cloudwatch_observability_dr",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "REQ_RPO = 60\nREQ_RTO = 120\n\nSTRATEGIES = [\n    {\"name\": \"backup-restore\", \"rpo\": 1440, \"rto\": 1440},\n    {\"name\": \"pilot-light\", \"rpo\": 30, \"rto\": 240},\n    {\"name\": \"warm-standby\", \"rpo\": 5, \"rto\": 30},\n    {\"name\": \"multi-site\", \"rpo\": 0, \"rto\": 1},\n]\n\ndef evaluate(strategy, req_rpo, req_rto):\n    if strategy[\"rpo\"] > req_rpo:\n        return \"FAIL (rpo)\"\n    if strategy[\"rto\"] > req_rto:\n        return \"FAIL (rto)\"\n    return \"PASS\"\n\ndef select(strategies, req_rpo, req_rto):\n    for s in strategies:\n        if evaluate(s, req_rpo, req_rto) == \"PASS\":\n            return s[\"name\"]\n    return None\n\nfor s in STRATEGIES:\n    print(f\"{s['name']}: {evaluate(s, REQ_RPO, REQ_RTO)}\")\nprint(f\"selected={select(STRATEGIES, REQ_RPO, REQ_RTO)}\")\n",
+      "verified_output": "backup-restore: FAIL (rpo)\npilot-light: FAIL (rto)\nwarm-standby: PASS\nmulti-site: PASS\nselected=warm-standby",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

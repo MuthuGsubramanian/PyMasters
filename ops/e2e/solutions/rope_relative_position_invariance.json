@@ -1,0 +1,11 @@
+{
+  "lesson_id": "rope_relative_position_invariance",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\ndef rotate_pair(x1: float, x2: float, angle: float) -> tuple:\n    \"\"\"Standard 2D rotation of (x1, x2) by angle radians.\"\"\"\n    c, s = math.cos(angle), math.sin(angle)\n    return round(x1 * c - x2 * s, 6), round(x1 * s + x2 * c, 6)\n\nprint(rotate_pair(1.0, 0.0, 0.5))\n",
+      "verified_output": "(0.877583, 0.479426)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

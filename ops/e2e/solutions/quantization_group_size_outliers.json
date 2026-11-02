@@ -1,0 +1,11 @@
+{
+  "lesson_id": "quantization_group_size_outliers",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def group_quant_mean_error(values: list, group_size: int) -> float:\n    \"\"\"Mean abs round-trip error when values are quantized in chunks of group_size, each with its own scale.\"\"\"\n    errors = []\n    for start in range(0, len(values), group_size):\n        group = values[start:start + group_size]\n        scale = max(abs(v) for v in group) / 127\n        for v in group:\n            q = round(v / scale)\n            dq = q * scale\n            errors.append(abs(dq - v))\n    return round(sum(errors) / len(errors), 4)\n\nweights = [0.12, -0.08, 0.15, -0.11, 0.09, -0.13, 0.10, 6.40]\nprint(group_quant_mean_error(weights, 8))\n",
+      "verified_output": "0.0104",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

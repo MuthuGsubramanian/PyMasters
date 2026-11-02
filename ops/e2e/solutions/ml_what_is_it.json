@@ -1,0 +1,11 @@
+{
+  "lesson_id": "ml_what_is_it",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\ntry:\n    from sklearn.linear_model import LinearRegression\nexcept ModuleNotFoundError:\n    class LinearRegression:\n        \"\"\"Minimal least-squares stand-in used when scikit-learn is unavailable.\"\"\"\n\n        def fit(self, X, y):\n            X = np.asarray(X, dtype=float)\n            A = np.hstack([X, np.ones((X.shape[0], 1))])\n            coef, *_ = np.linalg.lstsq(A, np.asarray(y, dtype=float), rcond=None)\n            self.coef_ = coef[:-1]\n            self.intercept_ = coef[-1]\n            return self\n\n        def predict(self, X):\n            return np.asarray(X, dtype=float) @ self.coef_ + self.intercept_\n\n# Create training data\nX = np.arange(1, 11).reshape(-1, 1)\ny = X.flatten() * 2 + 1\n\n# Create and train model\nmodel = LinearRegression()\nmodel.fit(X, y)\n\n# Predict for X=15\nresult = model.predict(np.array([[15]]))\nprint(f'Prediction for X=15: {result[0]:.2f}')\n",
+      "verified_output": "Prediction for X=15: 31.00",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

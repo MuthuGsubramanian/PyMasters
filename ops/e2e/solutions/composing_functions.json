@@ -1,0 +1,11 @@
+{
+  "lesson_id": "composing_functions",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def double(n):    return n * 2\ndef increment(n): return n + 1\ndef square(n):    return n * n\n\ndef pipe(value, *funcs):\n    for f in funcs:\n        value = f(value)\n    return value\n\nprint(pipe(3, double, increment, square))\n",
+      "verified_output": "49",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

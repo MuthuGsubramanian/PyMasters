@@ -1,0 +1,11 @@
+{
+  "lesson_id": "regex_in_practice",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import re\n\nitems = [\n    \"AB-1234\",     # valid\n    \"ab-1234\",     # invalid: lowercase letters\n    \"ZZ-0007\",     # valid\n    \"A1-2345\",     # invalid: second char is a digit\n    \"QA-9999\",     # valid\n    \"AB-12345\",    # invalid: 5 digits\n    \"AB-123\",      # invalid: 3 digits\n    \" AB-1234\",    # invalid: leading space\n    \"AB1234\",      # invalid: missing hyphen\n]\n\n# Compiled once at module level, fully anchored, no nested quantifiers.\n# \\Z (not $) so a trailing newline does not slip through.\nCODE = re.compile(r\"[A-Z]{2}-[0-9]{4}\\Z\")\n\n\ndef extract_valid_codes(items):\n    return [s for s in items if CODE.match(s)]\n\n\nprint(extract_valid_codes(items))\n",
+      "verified_output": "['AB-1234', 'ZZ-0007', 'QA-9999']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

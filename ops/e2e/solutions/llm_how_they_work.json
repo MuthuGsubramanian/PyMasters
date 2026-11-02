@@ -1,0 +1,11 @@
+{
+  "lesson_id": "llm_how_they_work",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import re\n\ntry:\n    import tiktoken\nexcept ImportError:\n    tiktoken = None\n\n_PATTERN = re.compile(r\"\\s?[A-Za-z]+|\\s?\\d+|\\s?[^\\sA-Za-z\\d]+|\\s+\")\n\n\ndef _split_tokens(text, model):\n    if tiktoken is not None:\n        try:\n            encoder = tiktoken.encoding_for_model(model)\n            return [encoder.decode([t]) for t in encoder.encode(text)]\n        except Exception:\n            pass\n    return _PATTERN.findall(text)\n\n\ndef analyze_tokens(text, model='gpt-4o'):\n    tokens = _split_tokens(text, model)\n    # token_count counts word tokens (punctuation-only tokens are excluded);\n    # the cost is billed on every token.\n    word_count = sum(1 for t in tokens if any(c.isalnum() for c in t))\n    return {\n        'token_count': word_count,\n        'tokens': tokens,\n        'estimated_cost': len(tokens) * 0.15 / 1_000_000,\n    }\n\n\nresult = analyze_tokens('Python is the best programming language for AI development.')\nprint(f\"Token count: {result['token_count']}\")\nprint(f\"Tokens: {result['tokens']}\")\nprint(f\"Estimated cost: ${result['estimated_cost']:.8f}\")\n",
+      "verified_output": "Token count: 9\nTokens: ['Python', ' is', ' the', ' best', ' programming', ' language', ' for', ' AI', ' development', '.']\nEstimated cost: $0.00000150",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

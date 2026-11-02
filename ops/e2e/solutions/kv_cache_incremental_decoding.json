@@ -1,0 +1,11 @@
+{
+  "lesson_id": "kv_cache_incremental_decoding",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\ndef softmax(row):\n    m = max(row)\n    e = [math.exp(v - m) for v in row]\n    s = sum(e)\n    return [v / s for v in e]\ndef attend(q, keys, values):\n    d = len(q)\n    scores = [sum(a * b for a, b in zip(q, k)) / math.sqrt(d) for k in keys]\n    weights = softmax(scores)\n    dim = len(values[0])\n    return [sum(w * v[j] for w, v in zip(weights, values)) for j in range(dim)]\nK = [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0], [0.5, -0.5]]\nV = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0], [7.0, 8.0]]\nQ = [[1.0, 0.5], [0.2, 1.0], [0.9, 0.9], [-0.3, 0.8]]\nout = attend(Q[3], K, V)\nprint([round(v, 4) for v in out])\n",
+      "verified_output": "[3.8438, 4.8438]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

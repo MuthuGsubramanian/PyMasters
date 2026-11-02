@@ -1,0 +1,11 @@
+{
+  "lesson_id": "measure_dont_guess",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def count_repeats(items):\n    counts = {}\n    for x in items:\n        counts[x] = counts.get(x, 0) + 1\n    return {k: v for k, v in counts.items() if v > 1}\n\ndata = ['a', 'b', 'a', 'c', 'b', 'a', 'd']\nprint(sorted(count_repeats(data).items()))\n",
+      "verified_output": "[('a', 3), ('b', 2)]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

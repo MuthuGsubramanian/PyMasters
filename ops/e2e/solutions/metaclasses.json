@@ -1,0 +1,11 @@
+{
+  "lesson_id": "metaclasses",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class RegistryMeta(type):\n    # Class-level registry shared by every class built with this metaclass.\n    registry = {}\n\n    def __init__(cls, name, bases, namespace):\n        # Always let type finish building the class first.\n        super().__init__(name, bases, namespace)\n        # Record THIS class into the shared registry under its name.\n        RegistryMeta.registry[name] = cls\n\n# --- demo (do not change) ---\nclass Dog(metaclass=RegistryMeta):\n    pass\n\nclass Cat(metaclass=RegistryMeta):\n    pass\n\nprint(sorted(RegistryMeta.registry))\n",
+      "verified_output": "['Cat', 'Dog']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

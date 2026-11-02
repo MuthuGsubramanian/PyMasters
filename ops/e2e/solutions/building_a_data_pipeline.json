@@ -1,0 +1,11 @@
+{
+  "lesson_id": "building_a_data_pipeline",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import csv, io\n\nCSV = (\n    \"category,amount\\n\"\n    \"food,10\\n\"\n    \"travel,50\\n\"\n    \"food,8\\n\"\n    \"food,oops\\n\"\n    \"travel,0\\n\"\n)\n\ndef summarize_expenses(csv_text):\n    reader = csv.DictReader(io.StringIO(csv_text))\n    totals = {}\n    for row in reader:\n        try:\n            amount = int(row['amount'])\n        except (ValueError, TypeError):\n            continue\n        if amount <= 0:\n            continue\n        category = row['category']\n        totals[category] = totals.get(category, 0) + amount\n    return totals\n\nprint(summarize_expenses(CSV))\n",
+      "verified_output": "{'food': 18, 'travel': 50}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

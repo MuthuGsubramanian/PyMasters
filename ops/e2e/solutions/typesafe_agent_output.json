@@ -1,0 +1,11 @@
+{
+  "lesson_id": "typesafe_agent_output",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def validate(data: dict, schema: dict) -> dict:\n    \"\"\"Return a dict with every schema field present and coerced to its type.\n    Raise ValueError if a required field is missing.\"\"\"\n    result = {}\n    for field, typ in schema.items():\n        if field not in data:\n            raise ValueError(f\"missing '{field}'\")\n        result[field] = typ(data[field])\n    return result\n\nprint(validate({\"name\": \"Ada\", \"age\": \"42\"}, {\"name\": str, \"age\": int}))\n",
+      "verified_output": "{'name': 'Ada', 'age': 42}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

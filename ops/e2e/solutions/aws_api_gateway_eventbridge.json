@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_api_gateway_eventbridge",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "RULES = {\n    \"order-created\": {\"source\": [\"orders\"], \"detail-type\": [\"OrderCreated\"]},\n    \"audit-all\": {\"source\": [\"orders\", \"payments\"]},\n    \"payment-failed\": {\"source\": [\"payments\"], \"detail-type\": [\"PaymentFailed\"]},\n}\n\nEVENTS = [\n    (\"event-1\", {\"source\": \"orders\", \"detail-type\": \"OrderCreated\", \"region\": \"us-east-1\"}),\n    (\"event-2\", {\"source\": \"payments\", \"detail-type\": \"PaymentSettled\"}),\n    (\"event-3\", {\"source\": \"inventory\", \"detail-type\": \"StockLow\"}),\n]\n\ndef matches(pattern, event):\n    for key, allowed in pattern.items():\n        if key not in event or event[key] not in allowed:\n            return False\n    return True\n\ndef match_rules(rules, event):\n    return sorted([name for name, pattern in rules.items() if matches(pattern, event)])\n\nfor name, event in EVENTS:\n    matched = match_rules(RULES, event)\n    if matched:\n        print(f\"{name} matches: {', '.join(matched)}\")\n    else:\n        print(f\"{name} matches: (none)\")\n",
+      "verified_output": "event-1 matches: audit-all, order-created\nevent-2 matches: audit-all\nevent-3 matches: (none)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

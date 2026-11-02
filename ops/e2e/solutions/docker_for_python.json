@@ -1,0 +1,11 @@
+{
+  "lesson_id": "docker_for_python",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "dockerfile = \"\"\"# Stage 1: build dependencies into wheels\nFROM python:3.12-slim AS builder\n\nWORKDIR /app\n\nCOPY requirements.txt .\nRUN pip wheel --no-cache-dir --wheel-dir /wheels -r requirements.txt\n\n# Stage 2: slim runtime image\nFROM python:3.12-slim\n\nWORKDIR /app\n\nCOPY --from=builder /wheels /wheels\nCOPY requirements.txt .\nRUN pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt \\\\\n    && rm -rf /wheels\n\nCOPY . .\n\nRUN useradd --create-home appuser\nUSER appuser\n\nEXPOSE 8000\n\nCMD [\"uvicorn\", \"main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\", \"--workers\", \"4\"]\n\"\"\"\n\ncompose = \"\"\"version: '3.8'\nservices:\n  api:\n    build: .\n    ports:\n      - '8000:8000'\n    environment:\n      - DATABASE_URL=postgresql://user:pass@db:5432/myapp\n    depends_on:\n      db:\n        condition: service_healthy\n    restart: unless-stopped\n  db:\n    image: postgres:16\n    environment:\n      POSTGRES_DB: myapp\n      POSTGRES_USER: user\n      POSTGRES_PASSWORD: pass\n    volumes:\n      - pgdata:/var/lib/postgresql/data\n    healthcheck:\n      test: [\"CMD-SHELL\", \"pg_isready -U user -d myapp\"]\n      interval: 5s\n      timeout: 5s\n      retries: 5\n    restart: unless-stopped\nvolumes:\n  pgdata:\n\"\"\"\n\nprint(\"docker-compose up builds and starts both API and database containers\")\n",
+      "verified_output": "docker-compose up builds and starts both API and database containers",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "plan_and_execute_dag",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from graphlib import TopologicalSorter, CycleError\n\ngood = {\"c\": [\"a\", \"b\"], \"b\": [\"a\"], \"a\": []}\nloop = {\"x\": [\"y\"], \"y\": [\"x\"]}\n\ndef order_of(graph):\n    return list(TopologicalSorter(graph).static_order())\n\ndef has_cycle(graph):\n    try:\n        order_of(graph)\n    except CycleError:\n        return True\n    return False\n\nprint(order_of(good))\nprint(has_cycle(good))\nprint(has_cycle(loop))\n",
+      "verified_output": "['a', 'b', 'c']\nFalse\nTrue",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

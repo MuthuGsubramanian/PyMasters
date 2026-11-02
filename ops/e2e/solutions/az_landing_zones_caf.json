@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_landing_zones_caf",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "SUBSCRIPTIONS = [\n    {'name': 'sub-prod', 'policy_assigned': True, 'diagnostics_enabled': True, 'public_ips': 0},\n    {'name': 'sub-dev', 'policy_assigned': True, 'diagnostics_enabled': False, 'public_ips': 2},\n]\n\ndef score(sub):\n    checks = [\n        ('policy_assigned', sub.get('policy_assigned') is True),\n        ('diagnostics_enabled', sub.get('diagnostics_enabled') is True),\n        ('no_public_ip', sub.get('public_ips') == 0),\n    ]\n    failed = [name for name, ok in checks if not ok]\n    return len(checks) - len(failed), failed\n\nfor sub in SUBSCRIPTIONS:\n    passed, failed = score(sub)\n    if failed:\n        print(f\"{sub['name']}: {passed}/3 FAIL ({', '.join(failed)})\")\n    else:\n        print(f\"{sub['name']}: {passed}/3 PASS\")\n",
+      "verified_output": "sub-prod: 3/3 PASS\nsub-dev: 1/3 FAIL (diagnostics_enabled, no_public_ip)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

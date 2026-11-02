@@ -1,0 +1,11 @@
+{
+  "lesson_id": "cnn_convolutions",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\n\ndef convolve2d(image, kernel):\n    image = np.asarray(image, dtype=float)\n    kernel = np.asarray(kernel, dtype=float)\n    ih, iw = image.shape\n    kh, kw = kernel.shape\n    oh, ow = ih - kh + 1, iw - kw + 1\n    if oh <= 0 or ow <= 0:\n        raise ValueError(\"kernel larger than image\")\n    out = np.zeros((oh, ow), dtype=float)\n    for i in range(oh):\n        for j in range(ow):\n            out[i, j] = np.sum(image[i:i + kh, j:j + kw] * kernel)\n    return out\n",
+      "verified_output": "",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

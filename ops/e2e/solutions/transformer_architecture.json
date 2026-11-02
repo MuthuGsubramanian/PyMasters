@@ -1,0 +1,11 @@
+{
+  "lesson_id": "transformer_architecture",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\ndef layer_norm(x, eps=1e-6):\n    x = np.asarray(x, dtype=float)\n    mean = x.mean(axis=-1, keepdims=True)\n    var = x.var(axis=-1, keepdims=True)\n    return (x - mean) / np.sqrt(var + eps)\n",
+      "verified_output": "",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

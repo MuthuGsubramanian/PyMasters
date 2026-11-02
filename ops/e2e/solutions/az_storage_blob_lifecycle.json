@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_storage_blob_lifecycle",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "BLOBS = [\n    ('app.log', 50, 5),\n    ('backup.vhd', 500, 45),\n    ('archive-2019.tar', 1000, 200),\n]\nRATES = {'hot': 0.020, 'cool': 0.010, 'archive': 0.002}\n\ndef tier_for(age_days):\n    if age_days >= 90:\n        return 'archive'\n    if age_days >= 30:\n        return 'cool'\n    return 'hot'\n\ndef monthly_cost(size_gb, tier):\n    return size_gb * RATES[tier]\n\ntotal = 0.0\nfor name, size_gb, age_days in BLOBS:\n    tier = tier_for(age_days)\n    cost = monthly_cost(size_gb, tier)\n    total += cost\n    print(f'{name} | {tier} | ${cost:.2f}')\nprint(f'TOTAL | ${total:.2f}')\n",
+      "verified_output": "app.log | hot | $1.00\nbackup.vhd | cool | $5.00\narchive-2019.tar | archive | $2.00\nTOTAL | $8.00",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

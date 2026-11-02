@@ -1,0 +1,11 @@
+{
+  "lesson_id": "foundry_quota_cost",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "MOCK_RATES = {\n    'gpt-4o': {'in': 5.0, 'out': 15.0},\n    'gpt-4o-mini': {'in': 0.5, 'out': 1.5},\n}\n\ndef cost(model, in_tokens, out_tokens):\n    rates = MOCK_RATES[model]\n    return (in_tokens / 1e6) * rates['in'] + (out_tokens / 1e6) * rates['out']\n\nworkloads = [\n    ('gpt-4o', 2_000_000, 500_000),\n    ('gpt-4o-mini', 10_000_000, 2_000_000),\n]\n\ntotal = 0\nfor model, i, o in workloads:\n    c = cost(model, i, o)\n    total += c\n    print(f'{model}: ${c}')\nprint(f'total: ${total}')\n\ncheapest = min(MOCK_RATES, key=lambda m: cost(m, 1_000_000, 1_000_000))\nprint(f'cheapest per call: {cheapest}')\n",
+      "verified_output": "gpt-4o: $17.5\ngpt-4o-mini: $8.0\ntotal: $25.5\ncheapest per call: gpt-4o-mini",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

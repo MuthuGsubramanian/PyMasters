@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gemini_workspace_enterprise",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "FEATURES = {  # mock tiers for training; real SKUs change over time\n    \"frontline\": [\"gemini_chat\"],\n    \"business\": [\"gemini_chat\", \"gemini_in_docs\", \"gemini_in_gmail\"],\n    \"enterprise\": [\"gemini_chat\", \"gemini_in_docs\", \"gemini_in_gmail\",\n                   \"meet_notes\", \"security_controls\"],\n}\n\nCHECKS = [\n    (\"frontline\", \"gemini_in_docs\"),\n    (\"business\", \"gemini_in_gmail\"),\n    (\"enterprise\", \"security_controls\"),\n]\n\ndef has_feature(tier, feature):\n    return feature in FEATURES.get(tier, [])\n\nfor tier, feature in CHECKS:\n    print(f\"{tier}/{feature}: {'yes' if has_feature(tier, feature) else 'no'}\")\nprint(\"enterprise_features=\" + str(len(FEATURES[\"enterprise\"])))\n",
+      "verified_output": "frontline/gemini_in_docs: no\nbusiness/gemini_in_gmail: yes\nenterprise/security_controls: yes\nenterprise_features=5",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_compliance_frameworks",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "FRAMEWORKS = {\n    \"soc2\": [\"access_control\", \"change_management\", \"monitoring\"],\n    \"iso27001\": [\"access_control\", \"risk_assessment\", \"asset_inventory\"],\n    \"gdpr\": [\"data_mapping\", \"consent_management\", \"breach_notification\"],\n}\n\nIMPLEMENTED = {\"access_control\", \"monitoring\", \"risk_assessment\", \"data_mapping\", \"breach_notification\", \"change_management\"}\n\nORDER = [\"soc2\", \"iso27001\", \"gdpr\"]\n\ndef gaps(framework):\n    return sorted(c for c in FRAMEWORKS[framework] if c not in IMPLEMENTED)\n\ncovered = 0\nfor fw in ORDER:\n    g = gaps(fw)\n    if g:\n        print(f\"{fw}: GAPS {','.join(g)}\")\n    else:\n        print(f\"{fw}: COMPLIANT\")\n        covered += 1\n\nprint(f\"Frameworks fully covered: {covered}/{len(ORDER)}\")\n",
+      "verified_output": "soc2: COMPLIANT\niso27001: GAPS asset_inventory\ngdpr: GAPS consent_management\nFrameworks fully covered: 1/3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "minilm_beyond_search",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def dot(u, v):\n    return sum(x * y for x, y in zip(u, v))\n\n\ndef classify(vec: list, label_vecs: dict) -> str:\n    \"\"\"Return the label whose embedding is most similar to vec.\n    All vectors are normalized, so dot product == cosine similarity.\"\"\"\n    return max(label_vecs, key=lambda name: dot(vec, label_vecs[name]))\n\n\nlabels = {\"positive\": [1.0, 0.0], \"negative\": [-1.0, 0.0], \"neutral\": [0.0, 1.0]}\nprint(classify([0.8, 0.6], labels))\n",
+      "verified_output": "positive\nAll tests passed!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

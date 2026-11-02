@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_llmops_genai_gateway",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "COST_PER_1K = {\"fast-small\": 1, \"balanced\": 3, \"frontier\": 15}\n\nREQUESTS = [\n    {\"id\": \"r1\", \"tokens\": 1000, \"complexity\": \"low\"},\n    {\"id\": \"r2\", \"tokens\": 2000, \"complexity\": \"medium\"},\n    {\"id\": \"r3\", \"tokens\": 8000, \"complexity\": \"low\"},\n    {\"id\": \"r4\", \"tokens\": 1000, \"complexity\": \"high\"},\n]\n\ndef route(req):\n    if req['tokens'] > 4000 or req['complexity'] == 'high':\n        return 'frontier'\n    elif req['complexity'] == 'medium':\n        return 'balanced'\n    else:\n        return 'fast-small'\n\ndef cost_units(req, model):\n    return (req['tokens'] // 1000) * COST_PER_1K[model]\n\ntotal = 0\nfor req in REQUESTS:\n    model = route(req)\n    cost = cost_units(req, model)\n    total += cost\n    print(f\"{req['id']} -> {model} (cost={cost})\")\nprint(f\"Total cost units: {total}\")\n",
+      "verified_output": "r1 -> fast-small (cost=1)\nr2 -> balanced (cost=6)\nr3 -> frontier (cost=120)\nr4 -> frontier (cost=15)\nTotal cost units: 142",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

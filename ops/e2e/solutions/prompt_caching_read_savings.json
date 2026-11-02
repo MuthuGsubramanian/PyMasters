@@ -1,0 +1,11 @@
+{
+  "lesson_id": "prompt_caching_read_savings",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def cached_call_cost(prefix_tokens: int, new_tokens: int, rate_per_million: float) -> float:\n    \"\"\"Cost of one cached-prefix API call: prefix tokens at 0.1x, new tokens at full rate.\"\"\"\n    billed_tokens = prefix_tokens * 0.1 + new_tokens\n    cost = billed_tokens * rate_per_million / 1_000_000\n    return round(cost, 5)\n\nprint(cached_call_cost(20000, 50, 3.0))\n",
+      "verified_output": "0.00615",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

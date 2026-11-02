@@ -1,0 +1,11 @@
+{
+  "lesson_id": "custom_exceptions_and_chaining",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import sys\n\n\nclass InsufficientFundsError(Exception):\n    \"\"\"Raised when a withdrawal exceeds the available balance.\"\"\"\n\n\ndef withdraw(balance, amount):\n    if amount > balance:\n        raise InsufficientFundsError(\"insufficient funds\")\n    return balance - amount\n\n\n# --- demo (do not change) ---\nprint(f\"Balance after withdrawal: {withdraw(100, 30)}\")\n\ntry:\n    withdraw(100, 150)\nexcept InsufficientFundsError as e:\n    print(f\"Declined: {e}\")\n\nsys.stdout.flush()\n",
+      "verified_output": "Balance after withdrawal: 70\nDeclined: insufficient funds",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

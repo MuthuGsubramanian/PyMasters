@@ -1,0 +1,11 @@
+{
+  "lesson_id": "pathlib_files",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from pathlib import Path\n\nnotes_dir = Path('notes')\nnotes_dir.mkdir(exist_ok=True)\n\nfor i in range(1, 4):\n    (notes_dir / f'note{i}.txt').write_text(f'This is note {i}')\n\nfor f in sorted(notes_dir.glob('*.txt')):\n    print(f'{f.name}: {f.read_text()}')\n",
+      "verified_output": "note1.txt: This is note 1\nnote2.txt: This is note 2\nnote3.txt: This is note 3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

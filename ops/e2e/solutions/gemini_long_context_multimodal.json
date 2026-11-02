@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gemini_long_context_multimodal",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "DOCS = [\n    (\"contracts\", 400_000),\n    (\"codebase\", 500_000),\n    (\"wiki\", 300_000),\n    (\"logs\", 90_000),\n]\n\nBUDGET = 1_000_000\n\ndef pack(docs, budget):\n    used = 0\n    for name, tokens in docs:\n        if used + tokens <= budget:\n            used += tokens\n            print(f\"packed {name} ({tokens})\")\n        else:\n            print(f\"skipped {name} ({tokens})\")\n    return used\n\nused = pack(DOCS, BUDGET)\nprint(f\"used={used} remaining={BUDGET - used}\")\n",
+      "verified_output": "packed contracts (400000)\npacked codebase (500000)\nskipped wiki (300000)\npacked logs (90000)\nused=990000 remaining=10000",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

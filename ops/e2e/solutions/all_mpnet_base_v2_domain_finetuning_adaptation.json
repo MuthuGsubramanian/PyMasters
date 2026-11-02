@@ -1,0 +1,11 @@
+{
+  "lesson_id": "all_mpnet_base_v2_domain_finetuning_adaptation",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class TrainingPairBuilder:\n    def __init__(self):\n        self.pairs = []  # list of (text_a, text_b, label)\n\n    def add_pair(self, text_a: str, text_b: str, label: float):\n        if isinstance(label, bool) or not isinstance(label, (int, float)):\n            raise ValueError(\"label must be a number between 0.0 and 1.0\")\n        if not 0.0 <= label <= 1.0:\n            raise ValueError(\"label must be between 0.0 and 1.0\")\n        self.pairs.append((text_a, text_b, float(label)))\n\n    def get_positives(self, threshold: float = 0.5) -> list:\n        return [p for p in self.pairs if p[2] >= threshold]\n\n    def get_negatives(self, threshold: float = 0.5) -> list:\n        return [p for p in self.pairs if p[2] < threshold]\n\n    def summary(self, threshold: float = 0.5) -> dict:\n        total = len(self.pairs)\n        avg = sum(p[2] for p in self.pairs) / total if total else 0.0\n        return {\n            'total': total,\n            'positives': len(self.get_positives(threshold)),\n            'negatives': len(self.get_negatives(threshold)),\n            'avg_label': avg,\n        }\n\n\n# Test it:\nbuilder = TrainingPairBuilder()\nbuilder.add_pair(\"heart attack\", \"myocardial infarction\", 0.95)\nbuilder.add_pair(\"heart attack\", \"knee surgery\", 0.1)\nbuilder.add_pair(\"chest pain\", \"angina symptoms\", 0.85)\nbuilder.add_pair(\"blood test\", \"car repair\", 0.0)\n\nprint(len(builder.get_positives()))\nprint(len(builder.get_negatives()))\ns = builder.summary()\nprint(s['total'])\nprint(round(s['avg_label'], 2))\n",
+      "verified_output": "2\n2\n4\n0.47",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

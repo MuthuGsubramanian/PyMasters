@@ -1,0 +1,11 @@
+{
+  "lesson_id": "frontier_tokens_context_pricing",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "PRICING = {  # mock per-1M-token rates for training purposes\n    \"provider_a\": {\"input\": 3.0, \"output\": 15.0},\n    \"provider_b\": {\"input\": 2.0, \"output\": 8.0},\n    \"provider_c\": {\"input\": 1.0, \"output\": 4.0},\n}\n\nWORKLOAD = {\"in_tokens\": 20_000_000, \"out_tokens\": 2_000_000}\n\ndef monthly_cost(in_tokens, out_tokens, rates):\n    return (in_tokens / 1_000_000) * rates['input'] + (out_tokens / 1_000_000) * rates['output']\n\ncosts = {}\nfor provider, rates in PRICING.items():\n    costs[provider] = monthly_cost(WORKLOAD[\"in_tokens\"], WORKLOAD[\"out_tokens\"], rates)\n    print(f\"{provider}: ${costs[provider]:.2f}\")\n\ncheapest = min(costs, key=costs.get)\npriciest = max(costs, key=costs.get)\ndiff = costs[priciest] - costs[cheapest]\nprint(f\"cheapest={cheapest} saves ${diff:.2f} vs {priciest}\")\n",
+      "verified_output": "provider_a: $90.00\nprovider_b: $56.00\nprovider_c: $28.00\ncheapest=provider_c saves $62.00 vs provider_a",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "decorators_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import functools\n\ndef logger(func):\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        print(f'Calling {func.__name__}')\n        result = func(*args, **kwargs)\n        print(f'Done with {func.__name__}')\n        return result\n    return wrapper\n\n@logger\ndef greet(name):\n    print(f'Hello, {name}!')\n\ngreet('Vaathiyaar')\n",
+      "verified_output": "Calling greet\nHello, Vaathiyaar!\nDone with greet",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "eafp_nested_access",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def get_nested(d: dict, path: list):\n    \"\"\"Walk `path` into `d` the EAFP way; return None on any failure.\"\"\"\n    try:\n        current = d\n        for key in path:\n            current = current[key]\n        return current\n    except (KeyError, TypeError):\n        return None\n\nprint(get_nested({'a': {'b': 42}}, ['a', 'b']))\n",
+      "verified_output": "42",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

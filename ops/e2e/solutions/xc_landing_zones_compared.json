@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_landing_zones_compared",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "REQUIRED_GUARDRAILS = [\"mfa_enforced\", \"central_logging\", \"network_baseline\", \"budget_alerts\", \"deny_public_storage\"]\n\nACCOUNTS = [\n    {\"name\": \"prod\", \"guardrails\": [\"mfa_enforced\", \"central_logging\", \"network_baseline\", \"budget_alerts\", \"deny_public_storage\"]},\n    {\"name\": \"dev\", \"guardrails\": [\"mfa_enforced\", \"central_logging\", \"network_baseline\"]},\n    {\"name\": \"sandbox\", \"guardrails\": [\"mfa_enforced\"]},\n]\n\n\ndef missing_guardrails(account):\n    present = set(account.get(\"guardrails\", []))\n    return sorted(g for g in REQUIRED_GUARDRAILS if g not in present)\n\n\ncompliant = 0\nfor account in ACCOUNTS:\n    missing = missing_guardrails(account)\n    if missing:\n        print(f\"{account['name']}: MISSING {','.join(missing)}\")\n    else:\n        print(f\"{account['name']}: COMPLIANT\")\n        compliant += 1\n\nprint(f\"Compliant accounts: {compliant}/{len(ACCOUNTS)}\")\n",
+      "verified_output": "prod: COMPLIANT\ndev: MISSING budget_alerts,deny_public_storage\nsandbox: MISSING budget_alerts,central_logging,deny_public_storage,network_baseline\nCompliant accounts: 1/3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

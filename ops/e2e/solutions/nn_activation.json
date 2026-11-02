@@ -1,0 +1,11 @@
+{
+  "lesson_id": "nn_activation",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\n\ndef relu(x):\n    return x if x > 0 else 0\n\n\ndef sigmoid(x):\n    if x >= 0:\n        return 1.0 / (1.0 + math.exp(-x))\n    e = math.exp(x)\n    return e / (1.0 + e)\n\n\ndef softmax(xs):\n    m = max(xs)\n    exps = [math.exp(x - m) for x in xs]\n    total = sum(exps)\n    return [e / total for e in exps]\n\n\nif __name__ == \"__main__\":\n    print(relu(3.0), relu(-5.0))\n    print(sigmoid(0))\n    print(softmax([1.0, 2.0, 3.0]))\n",
+      "verified_output": "3.0 0\n0.5\n[0.09003057317038046, 0.24472847105479764, 0.6652409557748218]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

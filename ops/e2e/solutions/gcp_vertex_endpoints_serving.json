@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_vertex_endpoints_serving",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def route(request_id, challenger_pct):\n    return 'challenger' if request_id % 100 < challenger_pct else 'champion'\n\ndef count_split(n_requests, challenger_pct):\n    champ = 0\n    chall = 0\n    for i in range(n_requests):\n        if route(i, challenger_pct) == 'challenger':\n            chall += 1\n        else:\n            champ += 1\n    return champ, chall\n\ndef report(n_requests, challenger_pct):\n    champ, chall = count_split(n_requests, challenger_pct)\n    print(f\"champion: {champ} requests ({champ / n_requests * 100:.1f}%)\")\n    print(f\"challenger: {chall} requests ({chall / n_requests * 100:.1f}%)\")\n\nreport(100, 10)\nprint(\"after rollout to 50/50:\")\nreport(100, 50)\n",
+      "verified_output": "champion: 90 requests (90.0%)\nchallenger: 10 requests (10.0%)\nafter rollout to 50/50:\nchampion: 50 requests (50.0%)\nchallenger: 50 requests (50.0%)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

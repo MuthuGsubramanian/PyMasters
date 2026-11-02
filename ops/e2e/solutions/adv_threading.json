@@ -1,0 +1,11 @@
+{
+  "lesson_id": "adv_threading",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import threading\n\nresults = []\nlock = threading.Lock()\n\ndef task(name):\n    with lock:\n        results.append(name)\n\nt1 = threading.Thread(target=task, args=('thread-1',))\nt2 = threading.Thread(target=task, args=('thread-2',))\nt1.start(); t2.start()\nt1.join(); t2.join()\n\nassert 'thread-1' in results\nassert 'thread-2' in results\nprint(sorted(results))\n",
+      "verified_output": "['thread-1', 'thread-2']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

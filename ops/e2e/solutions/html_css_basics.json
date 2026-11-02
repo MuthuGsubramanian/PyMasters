@@ -1,0 +1,11 @@
+{
+  "lesson_id": "html_css_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "PAGE = \"\"\"<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>My Portfolio</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body { font-family: sans-serif; line-height: 1.6; }\n        header { display: flex; justify-content: space-between; padding: 1rem 2rem; background: #2d3436; color: white; }\n        nav a { color: #dfe6e9; margin-left: 1rem; text-decoration: none; }\n        .projects { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; padding: 2rem; }\n        .card { border: 1px solid #ddd; border-radius: 8px; padding: 1.5rem; }\n        footer { text-align: center; padding: 1rem; background: #2d3436; color: white; }\n    </style>\n</head>\n<body>\n    <header>\n        <h1>Your Name</h1>\n        <nav><a href=\"#\">Home</a><a href=\"#\">Projects</a><a href=\"#\">Contact</a></nav>\n    </header>\n    <main>\n        <section style=\"padding: 2rem;\"><p>Python developer passionate about web development.</p></section>\n        <section class=\"projects\">\n            <article class=\"card\"><h3>Project 1</h3><p>A Flask blog application</p></article>\n            <article class=\"card\"><h3>Project 2</h3><p>A Django REST API</p></article>\n            <article class=\"card\"><h3>Project 3</h3><p>A FastAPI microservice</p></article>\n        </section>\n    </main>\n    <footer><p>&copy; 2026 Your Name</p></footer>\n</body>\n</html>\n\"\"\"\n\nchecks = [\"<header\", \"display: flex\", \"display: grid\", \"<footer\", \"<main\"]\nassert all(c in PAGE for c in checks)\nassert PAGE.count('class=\"card\"') == 3\n\nprint(\"A responsive portfolio page with header, bio, 3-column project grid, and footer\")\n",
+      "verified_output": "A responsive portfolio page with header, bio, 3-column project grid, and footer",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

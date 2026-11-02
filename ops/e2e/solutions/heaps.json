@@ -1,0 +1,11 @@
+{
+  "lesson_id": "heaps",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import heapq\n\ndef kth_largest(nums, k):\n    # Min-heap of size k holds the k largest elements seen so far\n    heap = []\n    for n in nums:\n        if len(heap) < k:\n            heapq.heappush(heap, n)\n        elif n > heap[0]:\n            heapq.heapreplace(heap, n)\n    return heap[0]\n\ndef merge_sorted_lists(lists):\n    # Heap entries: (value, list index, element index)\n    heap = []\n    for i, lst in enumerate(lists):\n        if lst:\n            heapq.heappush(heap, (lst[0], i, 0))\n    result = []\n    while heap:\n        val, i, j = heapq.heappop(heap)\n        result.append(val)\n        if j + 1 < len(lists[i]):\n            heapq.heappush(heap, (lists[i][j + 1], i, j + 1))\n    return result\n\nprint(kth_largest([3, 1, 4, 1, 5, 9, 2, 6], 3))\nprint(merge_sorted_lists([[1, 4, 7], [2, 5, 8], [3, 6, 9]]))\n",
+      "verified_output": "5\n[1, 2, 3, 4, 5, 6, 7, 8, 9]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

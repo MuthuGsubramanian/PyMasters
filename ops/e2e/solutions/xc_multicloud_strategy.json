@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_multicloud_strategy",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "WORKLOADS = [\n    {\"name\": \"core-banking\", \"vendor_lockin_risk\": \"high\", \"needs_best_of_breed\": False, \"team_platform_skills\": 2},\n    {\"name\": \"marketing-site\", \"vendor_lockin_risk\": \"low\", \"needs_best_of_breed\": False, \"team_platform_skills\": 1},\n    {\"name\": \"ml-training\", \"vendor_lockin_risk\": \"low\", \"needs_best_of_breed\": True, \"team_platform_skills\": 2},\n    {\"name\": \"internal-crm\", \"vendor_lockin_risk\": \"medium\", \"needs_best_of_breed\": False, \"team_platform_skills\": 3},\n]\n\ndef score_workload(w):\n    score = 0\n    if w[\"vendor_lockin_risk\"] == \"high\":\n        score += 2\n    if w[\"needs_best_of_breed\"] is True:\n        score += 2\n    if w[\"team_platform_skills\"] >= 2:\n        score += 1\n    return score\n\ndef classify(score):\n    return \"MULTI_CLOUD\" if score >= 3 else \"SINGLE_CLOUD\"\n\nmulti_count = 0\nfor w in WORKLOADS:\n    s = score_workload(w)\n    label = classify(s)\n    if label == \"MULTI_CLOUD\":\n        multi_count += 1\n    print(f\"{w['name']}: score={s} -> {label}\")\n\nprint(f\"MULTI_CLOUD workloads: {multi_count}/{len(WORKLOADS)}\")\n",
+      "verified_output": "core-banking: score=3 -> MULTI_CLOUD\nmarketing-site: score=0 -> SINGLE_CLOUD\nml-training: score=3 -> MULTI_CLOUD\ninternal-crm: score=1 -> SINGLE_CLOUD\nMULTI_CLOUD workloads: 2/4",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

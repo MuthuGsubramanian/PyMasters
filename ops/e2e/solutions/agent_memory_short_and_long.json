@@ -1,0 +1,11 @@
+{
+  "lesson_id": "agent_memory_short_and_long",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def estimate_tokens(text):\n    return max(1, len(text) // 4)\n\ndef trim_to_budget(messages, budget):\n    \"\"\"Keep messages[0] (system) plus the newest turns that fit in budget.\"\"\"\n    system, rest = messages[0], messages[1:]\n    used = estimate_tokens(system[\"content\"])\n    kept = []\n    for m in reversed(rest):\n        cost = estimate_tokens(m[\"content\"])\n        if used + cost > budget:\n            break\n        kept.append(m)\n        used += cost\n    kept.reverse()\n    return [system] + kept\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"Be brief.\"},\n    {\"role\": \"user\", \"content\": \"My name is Arun and I live in Madurai.\"},\n    {\"role\": \"assistant\", \"content\": \"Hello Arun.\"},\n    {\"role\": \"user\", \"content\": \"What is a tuple?\"},\n    {\"role\": \"assistant\", \"content\": \"An immutable sequence.\"},\n    {\"role\": \"user\", \"content\": \"And a list?\"},\n]\nfor m in trim_to_budget(messages, budget=16):\n    print(m[\"role\"], \"|\", m[\"content\"])\n",
+      "verified_output": "system | Be brief.\nassistant | Hello Arun.\nuser | What is a tuple?\nassistant | An immutable sequence.\nuser | And a list?",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

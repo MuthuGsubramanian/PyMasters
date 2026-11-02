@@ -1,0 +1,11 @@
+{
+  "lesson_id": "smol_training_playbook",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from fractions import Fraction\n\n\ndef compute_data_mix(weights: dict[str, float], total_tokens: int) -> dict[str, int]:\n    \"\"\"Given dataset weights and total token count,\n    return token allocation per dataset.\n    Weights are normalized to sum to 1.0.\"\"\"\n    if not weights:\n        return {}\n    exact = {name: Fraction(str(w)) for name, w in weights.items()}\n    total_w = sum(exact.values())\n    if total_w <= 0:\n        raise ValueError(\"weights must sum to a positive value\")\n\n    shares = {name: w / total_w * total_tokens for name, w in exact.items()}\n    alloc = {name: int(s) for name, s in shares.items()}  # floor (non-negative)\n\n    # Distribute leftover tokens by largest fractional remainder\n    leftover = total_tokens - sum(alloc.values())\n    order = sorted(shares, key=lambda n: shares[n] - alloc[n], reverse=True)\n    for name in order[:leftover]:\n        alloc[name] += 1\n    return alloc\n\n\n# Test\nmix = compute_data_mix(\n    {\"FineWeb-Edu\": 0.70, \"Stack-Edu-Python\": 0.20, \"FineMath\": 0.10},\n    total_tokens=11_000_000_000_000\n)\nfor name, tokens in mix.items():\n    print(f\"{name}: {tokens:,} tokens\")\n",
+      "verified_output": "FineWeb-Edu: 7,700,000,000,000 tokens\nStack-Edu-Python: 2,200,000,000,000 tokens\nFineMath: 1,100,000,000,000 tokens",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "langchain_agents",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "try:\n    from langchain.agents import tool\nexcept ImportError:\n    try:\n        from langchain_core.tools import tool\n    except ImportError:\n        class _Tool:\n            def __init__(self, func):\n                self.func = func\n                self.name = func.__name__\n                self.description = func.__doc__\n\n            def invoke(self, arg):\n                return self.func(arg)\n\n            def __call__(self, arg):\n                return self.func(arg)\n\n        def tool(func):\n            return _Tool(func)\n\n\n@tool\ndef word_count(text: str) -> str:\n    \"\"\"Count the number of words in the given text.\"\"\"\n    return str(len(text.split()))\n\n\n@tool\ndef reverse_text(text: str) -> str:\n    \"\"\"Reverse the given text string.\"\"\"\n    return text[::-1]\n\n\n# Test the tools directly\nprint(word_count.invoke('Hello world from PyMasters'))\nprint(reverse_text.invoke('Python'))\n",
+      "verified_output": "4\nnohtyP",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

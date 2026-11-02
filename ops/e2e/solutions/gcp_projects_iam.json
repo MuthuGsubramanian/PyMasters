@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_projects_iam",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "BINDINGS = {\n    \"roles/viewer\": [\"user:asha@example.com\", \"group:analysts@example.com\"],\n    \"roles/bigquery.dataViewer\": [\"group:analysts@example.com\"],\n    \"roles/editor\": [\"user:dev@example.com\"],\n    \"roles/storage.objectAdmin\": [\"serviceAccount:etl@proj.iam.gserviceaccount.com\", \"user:asha@example.com\"],\n}\n\ndef roles_for(member, bindings):\n    return sorted(role for role, members in bindings.items() if member in members)\n\nMEMBERS = [\"user:asha@example.com\", \"group:analysts@example.com\", \"user:nobody@example.com\"]\n\nfor m in MEMBERS:\n    roles = roles_for(m, BINDINGS)\n    if roles:\n        print(f\"{m} -> {', '.join(roles)}\")\n    else:\n        print(f\"{m} -> NO ACCESS\")\n",
+      "verified_output": "user:asha@example.com -> roles/storage.objectAdmin, roles/viewer\ngroup:analysts@example.com -> roles/bigquery.dataViewer, roles/viewer\nuser:nobody@example.com -> NO ACCESS",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

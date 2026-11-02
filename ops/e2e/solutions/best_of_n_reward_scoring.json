@@ -1,0 +1,11 @@
+{
+  "lesson_id": "best_of_n_reward_scoring",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def best_of_n(candidates: list, scores: list) -> str:\n    \"\"\"Return the candidate with the highest score; ties keep the earliest candidate.\"\"\"\n    best_idx = 0\n    for i in range(1, len(scores)):\n        if scores[i] > scores[best_idx]:\n            best_idx = i\n    return candidates[best_idx]\n\nprint(best_of_n(['ans1', 'ans2', 'ans3'], [0.62, 0.91, 0.77]))\n",
+      "verified_output": "ans2",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

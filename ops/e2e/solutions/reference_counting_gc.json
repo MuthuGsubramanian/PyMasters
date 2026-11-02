@@ -1,0 +1,11 @@
+{
+  "lesson_id": "reference_counting_gc",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import sys\n\ndef refcount_deltas():\n    obj = object()\n    base = sys.getrefcount(obj)\n\n    # 1) Bind a SECOND name to the same object (aliasing):\n    alias = obj\n    after_alias = sys.getrefcount(obj)\n\n    # 2) Append the SAME object to a list:\n    bucket = []\n    bucket.append(obj)\n    after_append = sys.getrefcount(obj)\n\n    # 3) Delete the alias name:\n    del alias\n    after_del = sys.getrefcount(obj)\n\n    # Return the DELTA for each step (after - before for that step):\n    return {\n        \"alias\": after_alias - base,\n        \"append\": after_append - after_alias,\n        \"del\": after_del - after_append,\n    }\n\nr = refcount_deltas()\nprint(f\"alias:{r['alias']} append:{r['append']} del:{r['del']}\")\n",
+      "verified_output": "alias:1 append:1 del:-1",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

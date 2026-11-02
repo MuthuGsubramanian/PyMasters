@@ -1,0 +1,11 @@
+{
+  "lesson_id": "currying_functions",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def add(a):\n    \"\"\"Curried add: add(a)(b)(c) == a + b + c.\"\"\"\n    def with_b(b):\n        def with_c(c):\n            return a + b + c\n        return with_c\n    return with_b\n\nprint(add(1)(2)(3))\n",
+      "verified_output": "6",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

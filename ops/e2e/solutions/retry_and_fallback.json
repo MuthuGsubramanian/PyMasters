@@ -1,0 +1,11 @@
+{
+  "lesson_id": "retry_and_fallback",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def make_flaky(fail_times):\n    # Returns a function that raises ConnectionError its first `fail_times`\n    # calls, then returns 'success' on every call after that. The mutable\n    # counter makes the outcome fully deterministic (no real network).\n    state = {\"calls\": 0}\n    def flaky():\n        state[\"calls\"] += 1\n        if state[\"calls\"] <= fail_times:\n            raise ConnectionError(f\"transient blip #{state['calls']}\")\n        return \"success\"\n    return flaky\n\ndef retry(func, attempts, fallback):\n    for _ in range(attempts):\n        try:\n            return func()\n        except Exception:\n            continue\n    return fallback\n\n# Fails twice, then succeeds. With 5 attempts that's plenty.\nresult = retry(make_flaky(2), attempts=5, fallback=\"cached_default\")\nprint(result)\n",
+      "verified_output": "success",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

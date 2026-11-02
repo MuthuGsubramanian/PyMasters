@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_openai_service_intro",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "TPM_QUOTA = 10000\nREQUESTS = [(0, 4000), (10, 5000), (20, 2000), (30, 1000), (65, 8000), (70, 3000)]\n\nclass RateLimiter:\n    def __init__(self, quota):\n        self.quota = quota\n        self.window = None\n        self.used = 0\n\n    def allow(self, ts, tokens):\n        window = ts // 60\n        if window != self.window:\n            self.window = window\n            self.used = 0\n        if self.used + tokens <= self.quota:\n            self.used += tokens\n            return True\n        return False\n\nlimiter = RateLimiter(TPM_QUOTA)\naccepted = 0\nrejected = 0\nfor ts, tokens in REQUESTS:\n    if limiter.allow(ts, tokens):\n        accepted += 1\n        print(f\"t={ts} tokens={tokens} -> 200\")\n    else:\n        rejected += 1\n        print(f\"t={ts} tokens={tokens} -> 429\")\nprint(f\"accepted={accepted} rejected={rejected}\")\n",
+      "verified_output": "t=0 tokens=4000 -> 200\nt=10 tokens=5000 -> 200\nt=20 tokens=2000 -> 429\nt=30 tokens=1000 -> 200\nt=65 tokens=8000 -> 200\nt=70 tokens=3000 -> 429\naccepted=4 rejected=2",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

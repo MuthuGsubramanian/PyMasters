@@ -1,0 +1,11 @@
+{
+  "lesson_id": "async_vs_threads_vs_processes",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "# Each workload is tagged with (bound, libs):\n#   bound: 'cpu' or 'io'\n#   libs:  'async' or 'blocking'  (only meaningful for I/O work)\n# THE RULE:\n#   cpu                  -> 'processes'  (separate processes = separate GILs)\n#   io + async libraries -> 'asyncio'    (one thread, thousands of awaits)\n#   io + blocking libs   -> 'threads'    (GIL released while waiting)\nworkloads = {\n    \"10k async HTTP requests\":     (\"io\",  \"async\"),\n    \"CPU-heavy image processing\":  (\"cpu\", \"blocking\"),\n    \"blocking DB driver queries\":  (\"io\",  \"blocking\"),\n    \"50k open websockets\":         (\"io\",  \"async\"),\n    \"hash 1000 large files\":       (\"cpu\", \"blocking\"),\n    \"legacy synchronous SDK call\": (\"io\",  \"blocking\"),\n    \"crunch big matrices (pure Python)\": (\"cpu\", \"async\"),\n}\n\ndef choose_model(workload):\n    bound, libs = workloads[workload]\n    if bound == \"cpu\":\n        return \"processes\"\n    if libs == \"async\":\n        return \"asyncio\"\n    return \"threads\"\n\nprint(choose_model(\"10k async HTTP requests\"))\n",
+      "verified_output": "asyncio",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

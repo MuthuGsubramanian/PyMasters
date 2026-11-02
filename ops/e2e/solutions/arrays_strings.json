@@ -1,0 +1,11 @@
+{
+  "lesson_id": "arrays_strings",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def rotate_left(arr, k):\n    # Rotate list left by k positions\n    if not arr:\n        return []\n    k %= len(arr)\n    return arr[k:] + arr[:k]\n\ndef is_anagram(s1, s2):\n    # Check if s1 and s2 are anagrams\n    return sorted(s1.replace(' ', '').lower()) == sorted(s2.replace(' ', '').lower())\n\nprint(rotate_left([1, 2, 3, 4, 5], 2))\nprint(is_anagram('listen', 'silent'))\nprint(is_anagram('hello', 'world'))\n",
+      "verified_output": "[3, 4, 5, 1, 2]\nTrue\nFalse",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

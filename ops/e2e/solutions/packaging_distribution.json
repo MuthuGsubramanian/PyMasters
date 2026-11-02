@@ -1,0 +1,11 @@
+{
+  "lesson_id": "packaging_distribution",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import tomllib\n\nPYPROJECT = \"\"\"\n[build-system]\nrequires = [\"setuptools>=68.0\", \"wheel\"]\nbuild-backend = \"setuptools.build_meta\"\n\n[project]\nname = \"mathutils\"\nversion = \"0.1.0\"\ndescription = \"Math utility functions\"\nrequires-python = \">=3.10\"\ndependencies = [\n    \"numpy\",\n]\n\n[project.optional-dependencies]\ndev = [\n    \"pytest\",\n]\n\"\"\"\n\ndata = tomllib.loads(PYPROJECT)\nproject = data[\"project\"]\n\nassert project[\"name\"] == \"mathutils\"\nassert project[\"version\"] == \"0.1.0\"\nassert project[\"requires-python\"] == \">=3.10\"\nassert any(d.startswith(\"numpy\") for d in project[\"dependencies\"])\nassert any(d.startswith(\"pytest\") for d in project[\"optional-dependencies\"][\"dev\"])\n\nprint(\"Valid pyproject.toml with all fields filled\")\n",
+      "verified_output": "Valid pyproject.toml with all fields filled",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

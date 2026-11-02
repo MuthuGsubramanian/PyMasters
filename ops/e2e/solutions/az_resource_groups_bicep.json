@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_resource_groups_bicep",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import heapq\n\nRESOURCES = {\n    'vnet': [],\n    'subnet': ['vnet'],\n    'nsg': [],\n    'nic': ['subnet', 'nsg'],\n    'vm': ['nic', 'storage'],\n    'storage': [],\n}\n\ndef deployment_order(resources):\n    deps = {name: set(d) for name, d in resources.items()}\n    for d in list(deps.values()):\n        for x in d:\n            deps.setdefault(x, set())\n    dependents = {name: [] for name in deps}\n    indegree = {}\n    for name, d in deps.items():\n        indegree[name] = len(d)\n        for x in d:\n            dependents[x].append(name)\n\n    ready = [n for n, k in indegree.items() if k == 0]\n    heapq.heapify(ready)\n    order = []\n    while ready:\n        node = heapq.heappop(ready)\n        order.append(node)\n        for nxt in dependents[node]:\n            indegree[nxt] -= 1\n            if indegree[nxt] == 0:\n                heapq.heappush(ready, nxt)\n    if len(order) != len(deps):\n        raise ValueError(\"cycle detected in resource dependencies\")\n    return order\n\norder = deployment_order(RESOURCES)\nfor i, name in enumerate(order, 1):\n    print(f\"{i}. {name}\")\n\norder = deployment_order(RESOURCES)\nassert order == ['nsg', 'storage', 'vnet', 'subnet', 'nic', 'vm']\nassert deployment_order({'a': [], 'b': ['a']}) == ['a', 'b']\nassert deployment_order({'z': [], 'a': ['z']}) == ['z', 'a']\npos = {n: i for i, n in enumerate(order)}\nfor name, deps in RESOURCES.items():\n    for d in deps:\n        assert pos[d] < pos[name]\n",
+      "verified_output": "1. nsg\n2. storage\n3. vnet\n4. subnet\n5. nic\n6. vm",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

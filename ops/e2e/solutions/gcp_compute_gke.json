@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_compute_gke",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "MACHINE_SPECS = {\n    \"e2-standard-4\": (4, 16),\n    \"e2-standard-8\": (8, 32),\n    \"n2-highmem-4\": (4, 32),\n}\n\nPOOLS = [\n    (\"e2-standard-4\", 3, 1),\n    (\"e2-standard-8\", 2, 2),\n    (\"n2-highmem-4\", 4, 1),\n]\n\ndef pool_capacity(machine_type, node_count):\n    vcpu, mem = MACHINE_SPECS[machine_type]\n    return (vcpu * node_count, mem * node_count)\n\ndef max_pods(machine_type, node_count, pod_cpu):\n    vcpu, _ = MACHINE_SPECS[machine_type]\n    allocatable = vcpu - 1\n    return (allocatable // pod_cpu) * node_count\n\nfor mt, count, pod_cpu in POOLS:\n    total_vcpu, total_mem = pool_capacity(mt, count)\n    pods = max_pods(mt, count, pod_cpu)\n    print(f\"{mt} x{count} -> {total_vcpu} vCPU, {total_mem} GiB, max {pods} pods\")\n",
+      "verified_output": "e2-standard-4 x3 -> 12 vCPU, 48 GiB, max 9 pods\ne2-standard-8 x2 -> 16 vCPU, 64 GiB, max 6 pods\nn2-highmem-4 x4 -> 16 vCPU, 128 GiB, max 12 pods",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

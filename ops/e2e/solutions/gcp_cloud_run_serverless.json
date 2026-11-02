@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_cloud_run_serverless",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\nCONCURRENCY = 80\nMIN_I = 1\nMAX_I = 10\nLOADS = [40, 400, 900, 0]\n\ndef instances_for(load, concurrency, min_i, max_i):\n    needed = math.ceil(load / concurrency)\n    return max(min_i, min(max_i, needed))\n\nfor load in LOADS:\n    needed = math.ceil(load / CONCURRENCY)\n    n = instances_for(load, CONCURRENCY, MIN_I, MAX_I)\n    line = f\"load={load} -> instances={n}\"\n    if needed > MAX_I:\n        line += \" (max reached)\"\n    elif needed < MIN_I:\n        line += \" (min floor)\"\n    print(line)\n",
+      "verified_output": "load=40 -> instances=1\nload=400 -> instances=5\nload=900 -> instances=10 (max reached)\nload=0 -> instances=1 (min floor)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

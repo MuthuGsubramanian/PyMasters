@@ -1,0 +1,11 @@
+{
+  "lesson_id": "searching",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def binary_search(arr, target):\n    left, right = 0, len(arr) - 1\n    while left <= right:\n        mid = (left + right) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return -1\n\ndef binary_search_recursive(arr, target, left=0, right=None):\n    if right is None:\n        right = len(arr) - 1\n    if left > right:\n        return -1\n    mid = (left + right) // 2\n    if arr[mid] == target:\n        return mid\n    if arr[mid] < target:\n        return binary_search_recursive(arr, target, mid + 1, right)\n    return binary_search_recursive(arr, target, left, mid - 1)\n\ndef _bound(arr, target, find_first):\n    left, right = 0, len(arr) - 1\n    result = -1\n    while left <= right:\n        mid = (left + right) // 2\n        if arr[mid] == target:\n            result = mid\n            if find_first:\n                right = mid - 1\n            else:\n                left = mid + 1\n        elif arr[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return result\n\ndef find_first_last(arr, target):\n    return (_bound(arr, target, True), _bound(arr, target, False))\n\nprint(binary_search([1, 3, 5, 7, 9], 7))\narr = [1, 2, 2, 2, 3, 4, 5]\nprint(find_first_last(arr, 2))\n",
+      "verified_output": "3\n(1, 3)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

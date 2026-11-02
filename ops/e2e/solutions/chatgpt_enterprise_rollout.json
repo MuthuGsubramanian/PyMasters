@@ -1,0 +1,11 @@
+{
+  "lesson_id": "chatgpt_enterprise_rollout",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "PHASES = [\n    (\"pilot\", 25),\n    (\"engineering\", 150),\n    (\"company_wide\", 825),\n]\n\ndef plan_rollout(phases):\n    lines = []\n    total = 0\n    for name, seats in phases:\n        total += seats\n        lines.append(f\"{name}: {seats} seats (total {total})\")\n    return lines\n\nfor line in plan_rollout(PHASES):\n    print(line)\nprint(f\"rollout_complete={sum(seats for _, seats in PHASES)}\")\n",
+      "verified_output": "pilot: 25 seats (total 25)\nengineering: 150 seats (total 175)\ncompany_wide: 825 seats (total 1000)\nrollout_complete=1000",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

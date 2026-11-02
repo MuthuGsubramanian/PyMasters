@@ -1,0 +1,11 @@
+{
+  "lesson_id": "flask_authentication",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import hashlib\nimport hmac\nimport secrets\n\nITERATIONS = 260000\n\n\ndef generate_password_hash(password):\n    salt = secrets.token_hex(8)\n    digest = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), ITERATIONS).hex()\n    return f'pbkdf2:sha256:{ITERATIONS}${salt}${digest}'\n\n\ndef check_password_hash(pwhash, password):\n    method, salt, digest = pwhash.split('$')\n    iterations = int(method.split(':')[2])\n    test = hashlib.pbkdf2_hmac('sha256', password.encode(), salt.encode(), iterations).hex()\n    return hmac.compare_digest(test, digest)\n\n\nclass User:\n    def __init__(self, username):\n        self.username = username\n        self.password_hash = None\n\n    def set_password(self, password):\n        self.password_hash = generate_password_hash(password)\n\n    def check_password(self, password):\n        return check_password_hash(self.password_hash, password)\n\n\n# Test it out\nalice = User('alice')\nalice.set_password('secret123')\n\n# Show only the method/iterations prefix; the salt and digest stay out of the output\nprint(f'Hash: {alice.password_hash.split(\"$\")[0]}$...')\nprint(f'Correct password: {alice.check_password(\"secret123\")}')\nprint(f'Wrong password: {alice.check_password(\"wrong\")}')\n\n# Same password, different hash (salting!)\nbob = User('bob')\nbob.set_password('secret123')\nprint(f'Same password, same hash? {alice.password_hash == bob.password_hash}')\n",
+      "verified_output": "Hash: pbkdf2:sha256:260000$...\nCorrect password: True\nWrong password: False\nSame password, same hash? False",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "virtual_filesystem_over_rag",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class VirtualDocFS:\n    def __init__(self, docs: dict):\n        self._docs = dict(docs)\n\n    def list_topics(self) -> list[str]:\n        return sorted(self._docs)\n\n    def read_section(self, topic: str) -> str:\n        return self._docs.get(topic, 'Not found')\n\n\n# Test it:\nfs = VirtualDocFS({\"auth\": \"# Authentication\\nUse API keys.\", \"setup\": \"# Setup\\nInstall via pip.\"})\nprint(fs.list_topics())\nprint(fs.read_section(\"auth\"))\nprint(fs.read_section(\"unknown\"))\n",
+      "verified_output": "['auth', 'setup']\n# Authentication\nUse API keys.\nNot found",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "rnn_text_generation",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def build_vocab(text):\n    chars = sorted(set(text))\n    char2idx = {ch: i for i, ch in enumerate(chars)}\n    idx2char = {i: ch for i, ch in enumerate(chars)}\n    return char2idx, idx2char\n\n\nif __name__ == \"__main__\":\n    c2i, i2c = build_vocab(\"hello\")\n    print(c2i)\n    print(i2c)\n",
+      "verified_output": "{'e': 0, 'h': 1, 'l': 2, 'o': 3}\n{0: 'e', 1: 'h', 2: 'l', 3: 'o'}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

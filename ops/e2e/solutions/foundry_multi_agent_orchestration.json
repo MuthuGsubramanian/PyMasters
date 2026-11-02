@@ -1,0 +1,11 @@
+{
+  "lesson_id": "foundry_multi_agent_orchestration",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def route(message):\n    text = message.lower()\n    if 'invoice' in text or 'refund' in text:\n        return 'billing'\n    elif 'crash' in text or 'error' in text:\n        return 'tech'\n    return 'general'\n\nmessages = [\n    'my invoice is wrong',\n    'app crashes on login',\n    'what are your hours',\n]\n\ncounts = {'billing': 0, 'tech': 0, 'general': 0}\nfor m in messages:\n    agent = route(m)\n    print(f\"'{m}' -> {agent}\")\n    counts[agent] += 1\n\nprint(f\"Handoffs: billing={counts['billing']} tech={counts['tech']} general={counts['general']}\")\n",
+      "verified_output": "'my invoice is wrong' -> billing\n'app crashes on login' -> tech\n'what are your hours' -> general\nHandoffs: billing=1 tech=1 general=1",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

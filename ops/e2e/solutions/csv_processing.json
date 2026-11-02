@@ -1,0 +1,11 @@
+{
+  "lesson_id": "csv_processing",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import csv\nimport io\n\n# A quoted field with a comma inside it: \"Bob, Jr.\".\n# A naive csv_text.split(',') would shatter that row and shift every column.\nCSV_TEXT = '''name,department,sales\nAlice,Hardware,120\n\"Bob, Jr.\",Hardware,80\nCarol,Software,200\nDave,Software,50\nEve,Hardware,30\n'''\n\ndef total_sales_for(csv_text, department):\n    total = 0\n    reader = csv.DictReader(io.StringIO(csv_text))\n    for row in reader:\n        if row[\"department\"] == department:\n            total += int(row[\"sales\"])\n    return total\n\nprint(total_sales_for(CSV_TEXT, \"Hardware\"))\n",
+      "verified_output": "230",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "group_by_key",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def group_by(items: list, key_fn) -> dict:\n    \"\"\"Bucket items into {key: [items]} using key_fn(item) as the key.\"\"\"\n    buckets = {}\n    for item in items:\n        buckets.setdefault(key_fn(item), []).append(item)\n    return buckets\n\nprint(group_by(['ant', 'bee', 'bear'], lambda s: s[0]))\n",
+      "verified_output": "{'a': ['ant'], 'b': ['bee', 'bear']}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

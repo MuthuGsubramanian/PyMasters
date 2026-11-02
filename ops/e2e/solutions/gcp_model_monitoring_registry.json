@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_model_monitoring_registry",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "TRAIN_MEANS = {\"age\": 42.0, \"income\": 58.0, \"tenure\": 12.0}\nSERVE_MEANS = {\"age\": 43.0, \"income\": 71.0, \"tenure\": 11.5}\nTHRESHOLD = 0.10\n\ndef relative_drift(train_mean, serve_mean):\n    return abs(serve_mean - train_mean) / train_mean\n\ndef check_features(train, serve, threshold):\n    return sorted(\n        name for name in train\n        if relative_drift(train[name], serve[name]) > threshold\n    )\n\ndrifted = check_features(TRAIN_MEANS, SERVE_MEANS, THRESHOLD)\nfor feature in sorted(TRAIN_MEANS):\n    d = relative_drift(TRAIN_MEANS[feature], SERVE_MEANS[feature])\n    status = \"DRIFT\" if feature in drifted else \"OK\"\n    print(f\"{feature}: drift={d:.3f} {status}\")\nprint(f\"drifted features: {len(drifted)}\")\nprint(\"action: rollback\" if len(drifted) > 0 else \"action: none\")\n\nassert abs(relative_drift(58.0, 71.0) - 0.2241379) < 1e-6\nassert abs(relative_drift(42.0, 43.0) - 0.0238095) < 1e-6\nassert check_features(TRAIN_MEANS, SERVE_MEANS, 0.10) == [\"income\"]\nassert check_features(TRAIN_MEANS, SERVE_MEANS, 0.30) == []\nassert check_features(TRAIN_MEANS, SERVE_MEANS, 0.02) == [\"age\", \"income\", \"tenure\"]\n",
+      "verified_output": "age: drift=0.024 OK\nincome: drift=0.224 DRIFT\ntenure: drift=0.042 OK\ndrifted features: 1\naction: rollback",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

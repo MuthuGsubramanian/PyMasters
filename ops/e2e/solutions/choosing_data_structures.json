@@ -1,0 +1,11 @@
+{
+  "lesson_id": "choosing_data_structures",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def word_counts(words):\n    counts = {}\n    for w in words:\n        counts[w] = counts.get(w, 0) + 1\n    return counts\n\nsample = \"the cat sat on the mat the mat was flat\".split()\nresult = word_counts(sample)\nprint(result[\"the\"])\n",
+      "verified_output": "3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

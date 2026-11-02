@@ -1,0 +1,11 @@
+{
+  "lesson_id": "agent_sdk_fundamentals",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def call_tool(name, args, registry):\n    \"\"\"Dispatch a tool call by name; return an error string for unknown tools.\"\"\"\n    if name not in registry:\n        return f\"error: unknown tool '{name}'\"\n    return registry[name](**args)\n\nregistry = {\"add\": lambda a, b: a + b}\nprint(call_tool(\"add\", {\"a\": 6, \"b\": 7}, registry))\n",
+      "verified_output": "13",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

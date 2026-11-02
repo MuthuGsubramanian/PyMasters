@@ -1,0 +1,11 @@
+{
+  "lesson_id": "set_membership_speed",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def count_flagged(items: list, flagged: list) -> int:\n    \"\"\"Count how many items appear in flagged, using a set for O(1) lookups.\"\"\"\n    flagged_set = set(flagged)\n    return sum(1 for item in items if item in flagged_set)\n\nprint(count_flagged([1, 2, 3, 4], [2, 4, 6]))\n",
+      "verified_output": "2",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

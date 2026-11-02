@@ -1,0 +1,11 @@
+{
+  "lesson_id": "agentic_skill_internalization_rl",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class SkillFadeScheduler:\n    def __init__(self, phases: int = 5):\n        self.phase = 0\n        if phases <= 1:\n            self.schedule = [1.0]\n        else:\n            self.schedule = [1.0 - i / (phases - 1) for i in range(phases)]\n            self.schedule[-1] = 0.0\n\n    def advance(self):\n        if self.phase < len(self.schedule) - 1:\n            self.phase += 1\n\n    def current_visibility(self) -> float:\n        return self.schedule[self.phase]\n\n    def filter_procedures(self, procedures: list[str]) -> list[str]:\n        n = round(len(procedures) * self.current_visibility())\n        return procedures[:n]\n\n\n# Test it:\nscheduler = SkillFadeScheduler(5)\nprocs = [\"step1\", \"step2\", \"step3\", \"step4\"]\nprint(scheduler.current_visibility())\nprint(scheduler.filter_procedures(procs))\nscheduler.advance()\nscheduler.advance()\nprint(scheduler.current_visibility())\nprint(scheduler.filter_procedures(procs))\nscheduler.advance()\nscheduler.advance()\nprint(scheduler.current_visibility())\nprint(scheduler.filter_procedures(procs))\n",
+      "verified_output": "1.0\n['step1', 'step2', 'step3', 'step4']\n0.5\n['step1', 'step2']\n0.0\n[]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

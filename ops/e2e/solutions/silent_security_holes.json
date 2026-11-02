@@ -1,0 +1,11 @@
+{
+  "lesson_id": "silent_security_holes",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def build_user_query(username):\n    query = \"SELECT * FROM users WHERE name = ?\"\n    params = (username,)\n    return query, params\n\nprint(build_user_query(\"alice\"))\n",
+      "verified_output": "('SELECT * FROM users WHERE name = ?', ('alice',))",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

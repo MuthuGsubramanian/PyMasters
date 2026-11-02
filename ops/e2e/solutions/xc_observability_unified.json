@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_observability_unified",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "MAPPING = {\n    \"Percentage CPU\": \"system.cpu.utilization\",\n    \"CPUUtilization\": \"system.cpu.utilization\",\n    \"instance/cpu/utilization\": \"system.cpu.utilization\",\n    \"Available Memory Bytes\": \"system.memory.available\",\n}\n\nREADINGS = [\n    (\"azure\", \"Percentage CPU\"),\n    (\"aws\", \"CPUUtilization\"),\n    (\"gcp\", \"instance/cpu/utilization\"),\n    (\"aws\", \"NetworkIn\"),\n    (\"azure\", \"Available Memory Bytes\"),\n]\n\ndef map_metric(name):\n    return MAPPING.get(name, \"UNMAPPED\")\n\nmapped_count = 0\nfor provider, name in READINGS:\n    mapped = map_metric(name)\n    if mapped != \"UNMAPPED\":\n        mapped_count += 1\n    print(f\"{provider}/{name} -> {mapped}\")\n\nprint(f\"Unified: {mapped_count}/{len(READINGS)}\")\n",
+      "verified_output": "azure/Percentage CPU -> system.cpu.utilization\naws/CPUUtilization -> system.cpu.utilization\ngcp/instance/cpu/utilization -> system.cpu.utilization\naws/NetworkIn -> UNMAPPED\nazure/Available Memory Bytes -> system.memory.available\nUnified: 4/5",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "llm_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def create_prompt(topic, difficulty='beginner'):\n    \"\"\"Create a prompt template for an LLM.\"\"\"\n    styles = {\n        'beginner': 'Use simple analogies and short code examples. Avoid jargon.',\n        'intermediate': 'Include code examples and explain the underlying concepts.',\n        'advanced': 'Go deep into implementation details and edge cases.'\n    }\n    style = styles.get(difficulty, styles['beginner'])\n    return f'Explain {topic} to a {difficulty}. {style}'\n\n# Test it\nprompt = create_prompt('recursion', 'beginner')\nprint(prompt)\n",
+      "verified_output": "Explain recursion to a beginner. Use simple analogies and short code examples. Avoid jargon.",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

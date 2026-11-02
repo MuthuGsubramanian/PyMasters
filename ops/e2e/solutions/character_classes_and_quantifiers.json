@@ -1,0 +1,11 @@
+{
+  "lesson_id": "character_classes_and_quantifiers",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import re\n\ndef extract_ints(text):\n    matches = re.findall(r\"\\d+\", text)\n    return [int(m) for m in matches]\n\nprint(extract_ints(\"order 42: 7 boxes, 1000 units\"))\n",
+      "verified_output": "[42, 7, 1000]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

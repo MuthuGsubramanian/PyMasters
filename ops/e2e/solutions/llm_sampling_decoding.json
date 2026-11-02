@@ -1,0 +1,11 @@
+{
+  "lesson_id": "llm_sampling_decoding",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def greedy(logits: list) -> int:\n    \"\"\"Return the index of the highest-scoring token (greedy decoding).\"\"\"\n    best = 0\n    for i, v in enumerate(logits):\n        if v > logits[best]:\n            best = i\n    return best\n\nprint(greedy([1.0, 3.0, 2.0, 0.5]))\n",
+      "verified_output": "1",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

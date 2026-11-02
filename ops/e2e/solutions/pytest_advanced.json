@@ -1,0 +1,11 @@
+{
+  "lesson_id": "pytest_advanced",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import requests\nfrom unittest.mock import patch, MagicMock\n\ndef fetch_user(user_id):\n    response = requests.get(f'https://api.example.com/users/{user_id}')\n    return response.json()['name']\n\n@patch('__main__.requests.get')\ndef test_fetch_user(mock_get):\n    mock_response = MagicMock()\n    mock_response.json.return_value = {'name': 'Muthu'}\n    mock_get.return_value = mock_response\n    result = fetch_user(1)\n    assert result == 'Muthu'\n    mock_get.assert_called_once_with('https://api.example.com/users/1')\n\ntests = [test_fetch_user]\npassed = 0\nfor t in tests:\n    try:\n        t()\n        passed += 1\n    except AssertionError:\n        pass\nprint(f\"{passed} passed\")\n",
+      "verified_output": "1 passed",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

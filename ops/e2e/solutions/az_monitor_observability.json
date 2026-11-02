@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_monitor_observability",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "LOGS = [\n    ('web', 'ERROR'), ('web', 'INFO'), ('api', 'ERROR'), ('db', 'ERROR'),\n    ('web', 'ERROR'), ('api', 'WARN'), ('db', 'ERROR'), ('web', 'ERROR'),\n]\nALERT_THRESHOLD = 3\n\ndef error_counts(logs):\n    counts = {}\n    for service, severity in logs:\n        if severity == 'ERROR':\n            counts[service] = counts.get(service, 0) + 1\n    return counts\n\ndef should_alert(count):\n    return count >= ALERT_THRESHOLD\n\ncounts = error_counts(LOGS)\nfor service in sorted({s for s, _ in LOGS}):\n    n = counts.get(service, 0)\n    print(f\"{service}: errors={n} alert={'yes' if should_alert(n) else 'no'}\")\nprint(f\"total errors: {sum(counts.values())}\")\n",
+      "verified_output": "api: errors=1 alert=no\ndb: errors=2 alert=no\nweb: errors=3 alert=yes\ntotal errors: 6",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

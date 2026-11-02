@@ -1,0 +1,11 @@
+{
+  "lesson_id": "openai_models_api",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "TASKS = [\n    (\"math_proof\", {\"complexity\": 5, \"latency_sensitive\": False}),\n    (\"chat_widget\", {\"complexity\": 2, \"latency_sensitive\": True}),\n    (\"report_draft\", {\"complexity\": 3, \"latency_sensitive\": False}),\n]\n\ndef route(task):\n    if task[\"complexity\"] >= 4:\n        return \"o-series\"\n    if task[\"latency_sensitive\"] is True:\n        return \"gpt-mini\"\n    return \"gpt-flagship\"\n\nfor name, task in TASKS:\n    print(f\"{name} -> {route(task)}\")\nprint(f\"routed={len(TASKS)}\")\n",
+      "verified_output": "math_proof -> o-series\nchat_widget -> gpt-mini\nreport_draft -> gpt-flagship\nrouted=3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_cost_finops",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "USAGE = 100\nRATE = 10.0\nCOMMIT = 70\nDISCOUNT = 0.37\nBUDGET = 900.0\nALERT_THRESHOLD = 0.8\n\n\ndef on_demand_cost(usage, rate):\n    return usage * rate\n\n\ndef cud_cost(usage, commit, rate, discount):\n    covered = min(usage, commit)\n    extra = max(0, usage - commit)\n    return covered * rate * (1 - discount) + extra * rate\n\n\ndef budget_alert(cost, budget, threshold):\n    return cost >= budget * threshold\n\n\non_demand = on_demand_cost(USAGE, RATE)\nwith_cud = cud_cost(USAGE, COMMIT, RATE, DISCOUNT)\nsavings = on_demand - with_cud\npct = savings / on_demand * 100 if on_demand else 0.0\ntriggered = budget_alert(with_cud, BUDGET, ALERT_THRESHOLD)\n\nprint(f\"on-demand cost: {on_demand:.2f}\")\nprint(f\"with 1yr CUD on {COMMIT} units: {with_cud:.2f}\")\nprint(f\"savings: {savings:.2f} ({pct:.1f}%)\")\nprint(f\"budget alert at 80%: {'triggered' if triggered else 'not triggered'}\")\n",
+      "verified_output": "on-demand cost: 1000.00\nwith 1yr CUD on 70 units: 741.00\nsavings: 259.00 (25.9%)\nbudget alert at 80%: triggered",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

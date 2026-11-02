@@ -1,0 +1,11 @@
+{
+  "lesson_id": "asyncio_gather_concurrent",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import asyncio\n\nasync def double(n):\n    return n * 2\n\nasync def run_all(nums):\n    \"\"\"Concurrently double each number; return results in order.\"\"\"\n    coros = [double(n) for n in nums]\n    return list(await asyncio.gather(*coros))\n\nprint(asyncio.run(run_all([1, 2, 3])))\n",
+      "verified_output": "[2, 4, 6]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

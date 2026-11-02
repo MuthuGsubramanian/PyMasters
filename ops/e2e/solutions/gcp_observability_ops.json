@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_observability_ops",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "LOGS = [\"INFO\"] * 90 + [\"WARNING\"] * 6 + [\"ERROR\"] * 3 + [\"CRITICAL\"] * 1\nSEVERITY_ORDER = [\"INFO\", \"WARNING\", \"ERROR\", \"CRITICAL\"]\nERROR_BUDGET = 0.01  # 99% SLO\n\ndef count_by_severity(logs):\n    counts = {sev: 0 for sev in SEVERITY_ORDER}\n    for entry in logs:\n        if entry in counts:\n            counts[entry] += 1\n    return counts\n\ndef error_ratio(counts):\n    total = sum(counts.values())\n    if total == 0:\n        return 0.0\n    return (counts[\"ERROR\"] + counts[\"CRITICAL\"]) / total\n\ndef burn_rate(ratio, error_budget):\n    return ratio / error_budget\n\ncounts = count_by_severity(LOGS)\nfor sev in SEVERITY_ORDER:\n    print(f\"{sev}: {counts[sev]}\")\nratio = error_ratio(counts)\nprint(f\"error ratio: {ratio * 100:.2f}%\")\nbr = burn_rate(ratio, ERROR_BUDGET)\nif br > 1:\n    print(f\"burn rate: {br:.1f}x -> PAGE\")\nelse:\n    print(f\"burn rate: {br:.1f}x -> OK\")\n",
+      "verified_output": "INFO: 90\nWARNING: 6\nERROR: 3\nCRITICAL: 1\nerror ratio: 4.00%\nburn rate: 4.0x -> PAGE",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

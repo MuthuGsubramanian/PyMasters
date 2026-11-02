@@ -1,0 +1,11 @@
+{
+  "lesson_id": "multi_head_attention",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def concat_heads(heads):\n    out = []\n    for head in heads:\n        out.extend(head)\n    return out\n\ndef split_heads(vec, h):\n    size = len(vec) // h\n    return [list(vec[i * size:(i + 1) * size]) for i in range(h)]\n\n# --- demo (do not change) ---\ncombined = concat_heads([[1, 2], [3, 4], [5, 6]])\nheads = split_heads([10, 20, 30, 40], 2)\nprint(combined, heads)\n",
+      "verified_output": "[1, 2, 3, 4, 5, 6] [[10, 20], [30, 40]]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

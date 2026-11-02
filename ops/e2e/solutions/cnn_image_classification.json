@@ -1,0 +1,11 @@
+{
+  "lesson_id": "cnn_image_classification",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def count_conv_params(in_ch, out_ch, kernel_size):\n    \"\"\"Total parameters in a Conv2d layer: weights + bias.\"\"\"\n    if isinstance(kernel_size, int):\n        kh = kw = kernel_size\n    else:\n        kh, kw = kernel_size\n    weights = out_ch * in_ch * kh * kw\n    bias = out_ch\n    return weights + bias\n\n\nconv1 = count_conv_params(1, 32, 3)\nconv2 = count_conv_params(32, 64, 3)\ntotal_conv = conv1 + conv2\n\nprint(f\"Conv1 params: {conv1}\")\nprint(f\"Conv2 params: {conv2}\")\nprint(f\"Total conv params: {total_conv}\")\n",
+      "verified_output": "Conv1 params: 320\nConv2 params: 18496\nTotal conv params: 18816",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

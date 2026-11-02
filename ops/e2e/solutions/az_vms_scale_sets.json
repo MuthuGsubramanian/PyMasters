@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_vms_scale_sets",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "METRICS = [45, 75, 82, 90, 65, 25, 20, 15]\nMIN_INSTANCES, MAX_INSTANCES = 2, 5\n\ndef step(instances, cpu):\n    if cpu > 70:\n        return 'out', min(instances + 1, MAX_INSTANCES)\n    if cpu < 30:\n        return 'in', max(instances - 1, MIN_INSTANCES)\n    return 'hold', instances\n\ninstances = 2\nfor cpu in METRICS:\n    action, instances = step(instances, cpu)\n    print(f'cpu={cpu} action={action} instances={instances}')\nprint(f'final={instances}')\n",
+      "verified_output": "cpu=45 action=hold instances=2\ncpu=75 action=out instances=3\ncpu=82 action=out instances=4\ncpu=90 action=out instances=5\ncpu=65 action=hold instances=5\ncpu=25 action=in instances=4\ncpu=20 action=in instances=3\ncpu=15 action=in instances=2\nfinal=2",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

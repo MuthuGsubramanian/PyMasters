@@ -1,0 +1,11 @@
+{
+  "lesson_id": "all_minilm_l6_v2_multiframework",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import hashlib\n\nclass EmbeddingCache:\n    def __init__(self):\n        self.cache = {}\n        self.cache_hits = 0\n        self.cache_misses = 0\n\n    def _hash(self, text: str) -> str:\n        return hashlib.sha256(text.encode(\"utf-8\")).hexdigest()[:8]\n\n    def encode_single(self, text: str) -> dict:\n        freq = {}\n        for word in text.lower().split():\n            freq[word] = freq.get(word, 0) + 1\n        return freq\n\n    def encode_batch(self, texts: list[str]) -> list[dict]:\n        results = []\n        for text in texts:\n            key = self._hash(text)\n            if key in self.cache:\n                self.cache_hits += 1\n            else:\n                self.cache_misses += 1\n                self.cache[key] = self.encode_single(text)\n            results.append(self.cache[key])\n        return results\n\n# Test it:\nec = EmbeddingCache()\n\ntexts = [\"hello world\", \"foo bar\", \"hello world\", \"baz qux\", \"foo bar\"]\nresults = ec.encode_batch(texts)\nprint(len(results))\nprint(ec.cache_hits)\nprint(ec.cache_misses)\nprint(results[0] == results[2])\nprint(results[1] == results[4])\n\n# Second batch — all cached now\nresults2 = ec.encode_batch([\"hello world\", \"foo bar\"])\nprint(ec.cache_hits)\nprint(ec.cache_misses)\n",
+      "verified_output": "5\n2\n3\nTrue\nTrue\n4\n3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

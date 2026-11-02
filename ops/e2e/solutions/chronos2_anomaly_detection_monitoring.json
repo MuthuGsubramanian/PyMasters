@@ -1,0 +1,11 @@
+{
+  "lesson_id": "chronos2_anomaly_detection_monitoring",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import random\n\nclass AnomalyDetector:\n    def __init__(self, noise_scale: float = 0.05):\n        self.noise_scale = noise_scale\n\n    def _forecast_distribution(self, history: list[float],\n                                num_samples: int = 100) -> list[float]:\n        if len(history) < 2:\n            trend = 0.0\n        else:\n            trend = (history[-1] - history[0]) / (len(history) - 1)\n        base = history[-1] + trend\n        sigma = abs(base * self.noise_scale)\n        samples = [base + random.gauss(0, sigma) for _ in range(num_samples)]\n        samples.sort()\n        return samples\n\n    def check(self, history: list[float], actual: float,\n              threshold_pct: float = 5.0) -> dict:\n        samples = self._forecast_distribution(history)\n        n = len(samples)\n        low = samples[min(max(int(threshold_pct / 100 * n), 0), n - 1)]\n        high = samples[min(max(int((100 - threshold_pct) / 100 * n), 0), n - 1)]\n        median = samples[n // 2]\n        is_anomaly = actual < low or actual > high\n        deviation_score = abs(actual - median) / max(high - low, 1e-6)\n        if actual > high:\n            anomaly_type = \"spike\"\n        elif actual < low:\n            anomaly_type = \"drop\"\n        else:\n            anomaly_type = \"normal\"\n        return {\n            \"is_anomaly\": is_anomaly,\n            \"actual\": actual,\n            \"expected_range\": (low, high),\n            \"median\": median,\n            \"deviation_score\": deviation_score,\n            \"anomaly_type\": anomaly_type,\n        }\n\n# Test it:\nrandom.seed(42)\ndetector = AnomalyDetector(noise_scale=0.05)\n\nstable = [100, 102, 98, 104, 101, 99, 103, 100]\nresult_normal = detector.check(stable, actual=103)\nprint(result_normal[\"is_anomaly\"])\nprint(result_normal[\"anomaly_type\"])\n\nresult_spike = detector.check(stable, actual=200)\nprint(result_spike[\"is_anomaly\"])\nprint(result_spike[\"anomaly_type\"])\nprint(result_spike[\"deviation_score\"] > 5)\n",
+      "verified_output": "False\nnormal\nTrue\nspike\nTrue",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

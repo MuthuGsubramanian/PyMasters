@@ -1,0 +1,11 @@
+{
+  "lesson_id": "big_o_complexity",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def get_last(items):\n    # O(1) - return the last element\n    return items[-1] if items else None\n\ndef count_evens(items):\n    # O(n) - count even numbers\n    count = 0\n    for x in items:\n        if x % 2 == 0:\n            count += 1\n    return count\n\ndef pair_sum(items, target):\n    # O(n^2) - find all pairs that sum to target\n    pairs = []\n    for i in range(len(items)):\n        for j in range(i + 1, len(items)):\n            if items[i] + items[j] == target:\n                pairs.append((items[i], items[j]))\n    return pairs\n\ndata = [1, 2, 3, 4, 5, 6, 7, 8]\nprint(get_last(data))\nprint(count_evens(data))\nprint(pair_sum(data, 9))\n",
+      "verified_output": "8\n4\n[(1, 8), (2, 7), (3, 6), (4, 5)]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "fastapi_intro",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import json\nfrom fastapi import FastAPI, HTTPException, Query\nfrom fastapi.testclient import TestClient\nfrom pydantic import BaseModel, Field\n\napp = FastAPI(title='Product API')\n\nclass ProductCreate(BaseModel):\n    name: str = Field(..., min_length=1, max_length=200)\n    price: float = Field(..., gt=0)\n    in_stock: bool = True\n    category: str = Field(..., min_length=1)\n\nclass ProductResponse(ProductCreate):\n    id: int\n\nproducts_db = []\n\n@app.post('/products/', response_model=ProductResponse, status_code=201)\nasync def create_product(product: ProductCreate):\n    new_id = len(products_db) + 1\n    product_dict = {'id': new_id, **product.model_dump()}\n    products_db.append(product_dict)\n    return product_dict\n\n@app.get('/products/', response_model=list[ProductResponse])\nasync def list_products(category: str | None = None):\n    if category:\n        return [p for p in products_db if p['category'] == category]\n    return products_db\n\n@app.get('/products/{product_id}', response_model=ProductResponse)\nasync def get_product(product_id: int):\n    for p in products_db:\n        if p['id'] == product_id:\n            return p\n    raise HTTPException(status_code=404, detail='Product not found')\n\nclient = TestClient(app)\nr = client.post('/products/', json={'name': 'Laptop', 'price': 999.99, 'in_stock': True, 'category': 'electronics'})\ndata = r.json()\nordered = {'id': data['id']}\nordered.update({k: v for k, v in data.items() if k != 'id'})\nprint('POST /products/ →', json.dumps(ordered))\n",
+      "verified_output": "POST /products/ → {\"id\": 1, \"name\": \"Laptop\", \"price\": 999.99, \"in_stock\": true, \"category\": \"electronics\"}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

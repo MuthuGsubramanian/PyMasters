@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_hybrid_rag_architectures",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "USE_CASES = [\n    (\"support-bot\", \"eu-west\", False, \"eu-west\"),\n    (\"sales-assistant\", \"us-east\", True, \"eu-west\"),\n    (\"health-records-qa\", \"eu-central\", False, \"us-east\"),\n    (\"wiki-search\", \"ap-south\", True, \"ap-south\"),\n]\n\ndef plan(data_region, movable, model_region):\n    if data_region == model_region:\n        return \"colocated_rag\"\n    if movable is True:\n        return \"replicate_index\"\n    return \"retrieval_at_source\"\n\npatterns = set()\nfor name, data_region, movable, model_region in USE_CASES:\n    pattern = plan(data_region, movable, model_region)\n    patterns.add(pattern)\n    print(f\"{name}: {pattern}\")\nprint(f\"Patterns used: {len(patterns)}\")\n",
+      "verified_output": "support-bot: colocated_rag\nsales-assistant: replicate_index\nhealth-records-qa: retrieval_at_source\nwiki-search: colocated_rag\nPatterns used: 3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

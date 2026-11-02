@@ -1,0 +1,11 @@
+{
+  "lesson_id": "linked_lists",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class Node:\n    def __init__(self, data):\n        self.data = data\n        self.next = None\n\nclass LinkedList:\n    def __init__(self):\n        self.head = None\n\n    def append(self, data):\n        # Add to end\n        node = Node(data)\n        if self.head is None:\n            self.head = node\n            return\n        current = self.head\n        while current.next:\n            current = current.next\n        current.next = node\n\n    def prepend(self, data):\n        # Add to beginning\n        node = Node(data)\n        node.next = self.head\n        self.head = node\n\n    def delete(self, data):\n        # Delete first occurrence\n        current = self.head\n        prev = None\n        while current:\n            if current.data == data:\n                if prev:\n                    prev.next = current.next\n                else:\n                    self.head = current.next\n                return True\n            prev = current\n            current = current.next\n        return False\n\n    def search(self, data):\n        current = self.head\n        while current:\n            if current.data == data:\n                return True\n            current = current.next\n        return False\n\n    def reverse(self):\n        # Reverse in-place\n        prev = None\n        current = self.head\n        while current:\n            nxt = current.next\n            current.next = prev\n            prev = current\n            current = nxt\n        self.head = prev\n\n    def display(self):\n        elements = []\n        current = self.head\n        while current:\n            elements.append(str(current.data))\n            current = current.next\n        return ' -> '.join(elements)\n\nll = LinkedList()\nfor v in [1, 2, 3, 4, 5]:\n    ll.append(v)\nprint(ll.display())\nll.reverse()\nprint(ll.display())\n",
+      "verified_output": "1 -> 2 -> 3 -> 4 -> 5\n5 -> 4 -> 3 -> 2 -> 1",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

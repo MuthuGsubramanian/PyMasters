@@ -1,0 +1,11 @@
+{
+  "lesson_id": "grpo_kl_penalty",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\ndef kl_penalty(logp_theta: float, logp_ref: float) -> float:\n    \"\"\"Unbiased per-token KL estimate between the policy and a frozen reference.\"\"\"\n    ratio = math.exp(logp_ref - logp_theta)\n    return round(ratio - math.log(ratio) - 1, 4)\n\nprint(kl_penalty(-2.1, -2.4))\n",
+      "verified_output": "0.0408",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "adv_iterators",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class FibIterator:\n    def __init__(self, n):\n        self.n = n\n        self.count = 0\n        self.a, self.b = 0, 1\n\n    def __iter__(self):\n        return self\n\n    def __next__(self):\n        if self.count >= self.n:\n            raise StopIteration\n        val = self.a\n        self.a, self.b = self.b, self.a + self.b\n        self.count += 1\n        return val\n\n\nprint(list(FibIterator(7)))\n",
+      "verified_output": "[0, 1, 1, 2, 3, 5, 8]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

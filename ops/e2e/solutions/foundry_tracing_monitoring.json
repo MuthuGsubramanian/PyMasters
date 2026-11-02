@@ -1,0 +1,11 @@
+{
+  "lesson_id": "foundry_tracing_monitoring",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "spans = [\n    {'name': 'chat_request', 'start_ms': 0, 'end_ms': 1200, 'parent': None},\n    {'name': 'retrieval', 'start_ms': 50, 'end_ms': 350, 'parent': 'chat_request'},\n    {'name': 'llm_call', 'start_ms': 400, 'end_ms': 1150, 'parent': 'chat_request'},\n]\n\ndef duration(span):\n    return span['end_ms'] - span['start_ms']\n\ndef analyze(spans):\n    root = next(s for s in spans if s['parent'] is None)\n    root_dur = duration(root)\n    print(f\"{root['name']}: {root_dur}ms\")\n    children = [s for s in spans if s['parent'] == root['name']]\n    for c in children:\n        print(f\"  {c['name']}: {duration(c)}ms\")\n    if children:\n        slowest = max(children, key=duration)\n        pct = int(duration(slowest) / root_dur * 100)\n        print(f\"Slowest child: {slowest['name']} ({pct}% of trace)\")\n\nanalyze(spans)\n",
+      "verified_output": "chat_request: 1200ms\n  retrieval: 300ms\n  llm_call: 750ms\nSlowest child: llm_call (62% of trace)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

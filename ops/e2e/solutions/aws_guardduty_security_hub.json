@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_guardduty_security_hub",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "FINDINGS = [\n    {\"id\": \"f-01\", \"severity\": \"HIGH\", \"title\": \"S3 bucket policy allows public read\"},\n    {\"id\": \"f-02\", \"severity\": \"CRITICAL\", \"title\": \"Root account used without MFA\"},\n    {\"id\": \"f-03\", \"severity\": \"MEDIUM\", \"title\": \"Security group open on port 22\"},\n    {\"id\": \"f-02\", \"severity\": \"CRITICAL\", \"title\": \"Root account used without MFA\"},\n    {\"id\": \"f-04\", \"severity\": \"LOW\", \"title\": \"CloudTrail log validation disabled\"},\n    {\"id\": \"f-05\", \"severity\": \"MEDIUM\", \"title\": \"IAM user with unused credentials\"},\n    {\"id\": \"f-06\", \"severity\": \"HIGH\", \"title\": \"EBS volume unencrypted\"},\n    {\"id\": \"f-07\", \"severity\": \"MEDIUM\", \"title\": \"ALB without WAF association\"},\n]\n\nSEVERITY_ORDER = [\"CRITICAL\", \"HIGH\", \"MEDIUM\", \"LOW\"]\n\n\ndef dedupe(findings):\n    seen = set()\n    result = []\n    for f in findings:\n        if f[\"id\"] not in seen:\n            seen.add(f[\"id\"])\n            result.append(f)\n    return result\n\n\ndef count_by_severity(findings):\n    counts = {}\n    for f in findings:\n        counts[f[\"severity\"]] = counts.get(f[\"severity\"], 0) + 1\n    return counts\n\n\ndeduped = dedupe(FINDINGS)\ncounts = count_by_severity(deduped)\nfor sev in SEVERITY_ORDER:\n    print(f\"{sev}: {counts.get(sev, 0)}\")\n\ntop = next((f[\"title\"] for f in deduped if f[\"severity\"] == \"CRITICAL\"), None)\nprint(f\"top_finding={top}\")\n",
+      "verified_output": "CRITICAL: 1\nHIGH: 2\nMEDIUM: 3\nLOW: 1\ntop_finding=Root account used without MFA",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

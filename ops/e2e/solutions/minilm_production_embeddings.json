@@ -1,0 +1,11 @@
+{
+  "lesson_id": "minilm_production_embeddings",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def embed_with_cache(texts: list, cache: dict, embed_fn) -> list:\n    \"\"\"Return one vector per text, calling embed_fn only for cache misses.\n    New results must be stored in cache so later calls skip them too.\"\"\"\n    for t in texts:\n        if t not in cache:\n            cache[t] = embed_fn(t)\n    return [cache[t] for t in texts]\n\ncalls = []\ndef fake_embed(text):\n    calls.append(text)\n    return [float(len(text)), 1.0]\n\ndocs = [\"hello\", \"world\", \"hello\", \"hi\", \"world\"]\nvecs = embed_with_cache(docs, {}, fake_embed)\nprint(len(vecs), len(calls))\n",
+      "verified_output": "5 3\nAll tests passed!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

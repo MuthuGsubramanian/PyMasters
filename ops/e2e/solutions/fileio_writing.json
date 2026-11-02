@@ -1,0 +1,11 @@
+{
+  "lesson_id": "fileio_writing",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "fruits = ['apple', 'banana', 'cherry']\n\nwith open('fruits.txt', 'w') as f:\n    for fruit in fruits:\n        f.write(fruit + '\\n')\n\nwith open('fruits.txt', 'r') as f:\n    lines = f.readlines()\n\nprint(lines)\nassert [l.strip() for l in lines] == fruits\n",
+      "verified_output": "['apple\\n', 'banana\\n', 'cherry\\n']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

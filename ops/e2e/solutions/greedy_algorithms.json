@@ -1,0 +1,11 @@
+{
+  "lesson_id": "greedy_algorithms",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def max_activities(activities):\n    sorted_acts = sorted(activities, key=lambda x: x[1])\n    selected = [sorted_acts[0]]\n    last_end = sorted_acts[0][1]\n    for start, end in sorted_acts[1:]:\n        if start >= last_end:\n            selected.append((start, end))\n            last_end = end\n    return selected\n\ndef fractional_knapsack(items, capacity):\n    # items = [(weight, value)]\n    total = 0.0\n    remaining = capacity\n    for weight, value in sorted(items, key=lambda x: x[1] / x[0], reverse=True):\n        if remaining <= 0:\n            break\n        take = min(weight, remaining)\n        total += value * take / weight\n        remaining -= take\n    return total\n\ndef greedy_coins(coins, amount):\n    result = []\n    for coin in sorted(coins, reverse=True):\n        while amount >= coin:\n            result.append(coin)\n            amount -= coin\n    return f\"{result} ({len(result)} coins)\"\n\nmeetings = [(1,3), (2,5), (3,6), (5,7), (6,8), (8,10)]\nprint('Activities:', max_activities(meetings))\n\nitems = [(10, 60), (20, 100), (30, 120)]\nprint('Knapsack:', fractional_knapsack(items, 50))\n\nprint('Greedy [1,3,4] for 6:', greedy_coins([1,3,4], 6))\nprint('Optimal for 6: [3,3] = 2 coins')\n",
+      "verified_output": "Activities: [(1, 3), (3, 6), (6, 8), (8, 10)]\nKnapsack: 240.0\nGreedy [1,3,4] for 6: [4, 1, 1] (3 coins)\nOptimal for 6: [3,3] = 2 coins",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

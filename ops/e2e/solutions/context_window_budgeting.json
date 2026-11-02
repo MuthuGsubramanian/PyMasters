@@ -1,0 +1,11 @@
+{
+  "lesson_id": "context_window_budgeting",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def fit_budget(messages: list, budget: int) -> list:\n    \"\"\"Keep the newest messages that fit in `budget`, in original order.\"\"\"\n    kept = []\n    total = 0\n    for text, cost in reversed(messages):\n        if total + cost > budget:\n            break\n        total += cost\n        kept.append(text)\n    kept.reverse()\n    return kept\n\nprint(fit_budget([(\"m1\", 40), (\"m2\", 30), (\"m3\", 25), (\"m4\", 20)], 60))\n",
+      "verified_output": "['m3', 'm4']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

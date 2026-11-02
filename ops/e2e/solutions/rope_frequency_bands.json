@@ -1,0 +1,11 @@
+{
+  "lesson_id": "rope_frequency_bands",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def rope_theta(i: int, head_dim: int, base: int = 10000) -> float:\n    \"\"\"Fixed rotation frequency for dimension pair i, out of head_dim/2 pairs.\"\"\"\n    return round(base ** (-(2 * i) / head_dim), 6)\n\nprint(rope_theta(32, 128))\n",
+      "verified_output": "0.01",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "foundry_governance_enterprise",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "REQUIRED = ['content_filter', 'managed_identity', 'network_isolation']\n\ndef check(deployment):\n    return [key for key in REQUIRED if not deployment.get(key)]\n\ndeployments = [\n    {'name': 'prod-bot', 'content_filter': True, 'managed_identity': True, 'network_isolation': True},\n    {'name': 'legacy-tool', 'content_filter': False, 'managed_identity': False, 'network_isolation': True},\n]\n\npassing = 0\nfor d in deployments:\n    missing = check(d)\n    if not missing:\n        passing += 1\n        print(f\"{d['name']}: PASS\")\n    else:\n        print(f\"{d['name']}: FAIL (missing: {', '.join(missing)})\")\n\nprint(f'Compliance: {passing}/{len(deployments)}')\n",
+      "verified_output": "prod-bot: PASS\nlegacy-tool: FAIL (missing: content_filter, managed_identity)\nCompliance: 1/2",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

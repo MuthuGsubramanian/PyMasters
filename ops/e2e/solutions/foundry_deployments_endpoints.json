@@ -1,0 +1,11 @@
+{
+  "lesson_id": "foundry_deployments_endpoints",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def tokens_per_month(rpm, avg_tokens):\n    return rpm * avg_tokens * 60 * 24 * 30\n\ndef recommend(monthly_tokens):\n    return 'PTU' if monthly_tokens >= 1_000_000_000 else 'PAYGO'\n\nworkloads = [('chatbot', 50, 800), ('batch-report', 2, 1500)]\nfor name, rpm, avg in workloads:\n    total = tokens_per_month(rpm, avg)\n    print(f'{name}: {total} tokens/month -> {recommend(total)}')\n",
+      "verified_output": "chatbot: 1728000000 tokens/month -> PTU\nbatch-report: 129600000 tokens/month -> PAYGO",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

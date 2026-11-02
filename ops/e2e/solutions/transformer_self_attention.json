@@ -1,0 +1,11 @@
+{
+  "lesson_id": "transformer_self_attention",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\n\ndef causal_mask(seq_len):\n    \"\"\"Lower-triangular boolean mask: True where a token may attend.\"\"\"\n    return np.tril(np.ones((seq_len, seq_len), dtype=bool))\n\n\ndef apply_mask(scores, mask):\n    \"\"\"Set scores to -1e9 where the mask is False.\"\"\"\n    return np.where(mask, scores, -1e9)\n\n\nif __name__ == \"__main__\":\n    m = causal_mask(4)\n    print(m)\n    print(apply_mask(np.zeros((4, 4)), m))\n",
+      "verified_output": "[[ True False False False]\n [ True  True False False]\n [ True  True  True False]\n [ True  True  True  True]]\n[[ 0.e+00 -1.e+09 -1.e+09 -1.e+09]\n [ 0.e+00  0.e+00 -1.e+09 -1.e+09]\n [ 0.e+00  0.e+00  0.e+00 -1.e+09]\n [ 0.e+00  0.e+00  0.e+00  0.e+00]]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

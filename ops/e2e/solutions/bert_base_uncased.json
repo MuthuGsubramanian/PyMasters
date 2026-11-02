@@ -1,0 +1,11 @@
+{
+  "lesson_id": "bert_base_uncased",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class MaskedLanguageModel:\n    def __init__(self, vocab_context: dict[str, list[str]]):\n        # vocab_context maps each word to its context words\n        self.vocab_context = vocab_context\n\n    def mask_sentence(self, sentence: str, mask_index: int) -> str:\n        words = sentence.lower().split()\n        if 0 <= mask_index < len(words):\n            words[mask_index] = \"[MASK]\"\n        return \" \".join(words)\n\n    def predict_mask(self, masked_sentence: str) -> list[dict]:\n        words = set(masked_sentence.lower().split())\n        results = []\n        for word, context in self.vocab_context.items():\n            score = sum(1 for c in context if c.lower() in words)\n            if score > 0:\n                results.append({\"token\": word, \"score\": score})\n        results.sort(key=lambda r: -r[\"score\"])\n        return results\n\n\n# Test it:\nvocab = {\n    \"paris\": [\"france\", \"capital\", \"city\", \"european\"],\n    \"london\": [\"england\", \"capital\", \"city\", \"british\"],\n    \"sushi\": [\"japan\", \"food\", \"rice\", \"fish\"],\n    \"lyon\": [\"france\", \"city\", \"french\"]\n}\n\nmlm = MaskedLanguageModel(vocab)\n\nmasked = mlm.mask_sentence(\"The capital of France is Paris\", 5)\nprint(masked)\n\npredictions = mlm.predict_mask(\"the capital of france is [MASK]\")\nprint(predictions[0][\"token\"])\nprint(predictions[0][\"score\"] > predictions[1][\"score\"])\n",
+      "verified_output": "the capital of france is [MASK]\nparis\nTrue",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

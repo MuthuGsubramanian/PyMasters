@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_dr_bcp_multicloud",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "WORKLOADS = [\n    (\"payments\", 10, 0),\n    (\"orders\", 45, 10),\n    (\"analytics\", 180, 60),\n    (\"archive\", 1440, 720),\n]\n\ndef classify(rto_min, rpo_min):\n    if rto_min <= 15 and rpo_min <= 5:\n        return \"multi_site_active_active\"\n    if rto_min <= 60 and rpo_min <= 15:\n        return \"warm_standby\"\n    if rto_min <= 240 and rpo_min <= 60:\n        return \"pilot_light\"\n    return \"backup_restore\"\n\ntotal = 0\nfor name, rto, rpo in WORKLOADS:\n    tier = classify(rto, rpo)\n    print(f\"{name} (RTO={rto}m RPO={rpo}m): {tier}\")\n    total += 1\nprint(f\"Tiers assigned: {total}\")\n",
+      "verified_output": "payments (RTO=10m RPO=0m): multi_site_active_active\norders (RTO=45m RPO=10m): warm_standby\nanalytics (RTO=180m RPO=60m): pilot_light\narchive (RTO=1440m RPO=720m): backup_restore\nTiers assigned: 4",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

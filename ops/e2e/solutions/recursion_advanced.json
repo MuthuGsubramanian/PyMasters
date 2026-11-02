@@ -1,0 +1,11 @@
+{
+  "lesson_id": "recursion_advanced",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from functools import lru_cache\n\n@lru_cache(maxsize=None)\ndef climb_stairs_memo(n):\n    # Top-down: how many ways to climb n stairs?\n    if n <= 2:\n        return n\n    return climb_stairs_memo(n - 1) + climb_stairs_memo(n - 2)\n\ndef climb_stairs_dp(n):\n    # Bottom-up: use a DP table\n    if n <= 2:\n        return n\n    dp = [0] * (n + 1)\n    dp[1], dp[2] = 1, 2\n    for i in range(3, n + 1):\n        dp[i] = dp[i - 1] + dp[i - 2]\n    return dp[n]\n\nfor i in range(1, 8):\n    print(f'n={i}: memo={climb_stairs_memo(i)}, dp={climb_stairs_dp(i)}')\n",
+      "verified_output": "n=1: memo=1, dp=1\nn=2: memo=2, dp=2\nn=3: memo=3, dp=3\nn=4: memo=5, dp=5\nn=5: memo=8, dp=8\nn=6: memo=13, dp=13\nn=7: memo=21, dp=21",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

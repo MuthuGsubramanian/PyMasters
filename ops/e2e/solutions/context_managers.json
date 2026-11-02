@@ -1,0 +1,11 @@
+{
+  "lesson_id": "context_managers",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class FileLogger:\n    def __init__(self, filename):\n        self.filename = filename\n\n    def __enter__(self):\n        self.file = open(self.filename, 'w')\n        return self\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        self.file.close()\n        print(f'{self.filename} closed safely')\n        return False\n\n    def log(self, message):\n        self.file.write(message + '\\n')\n\nwith FileLogger('app.log') as logger:\n    logger.log('App started')\n    logger.log('Processing data')\n    logger.log('App finished')\n\nwith open('app.log') as f:\n    print(f.read())\n",
+      "verified_output": "app.log closed safely\nApp started\nProcessing data\nApp finished",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

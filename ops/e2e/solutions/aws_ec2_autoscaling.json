@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_ec2_autoscaling",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\nSCENARIOS = [\n    (4, 80, 50, 2, 10),\n    (7, 20, 50, 2, 10),\n    (3, 90, 50, 2, 5),\n]\n\ndef desired_capacity(current, metric, target, min_c, max_c):\n    raw = math.ceil(current * metric / target)\n    return max(min_c, min(max_c, raw))\n\nfor current, metric, target, min_c, max_c in SCENARIOS:\n    raw = math.ceil(current * metric / target)\n    clamped = desired_capacity(current, metric, target, min_c, max_c)\n    line = f\"cpu={metric}% current={current} -> desired={clamped}\"\n    if raw > max_c:\n        line += \" (clamped to max)\"\n    print(line)\n",
+      "verified_output": "cpu=80% current=4 -> desired=7\ncpu=20% current=7 -> desired=3\ncpu=90% current=3 -> desired=5 (clamped to max)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

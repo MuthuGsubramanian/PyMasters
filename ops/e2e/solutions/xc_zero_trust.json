@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_zero_trust",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "REQUESTS = [\n    {\"user\": \"asha\", \"identity_verified\": True, \"device_compliant\": True, \"mfa\": True, \"resource_sensitivity\": \"high\"},\n    {\"user\": \"ravi\", \"identity_verified\": True, \"device_compliant\": False, \"mfa\": True, \"resource_sensitivity\": \"low\"},\n    {\"user\": \"kim\", \"identity_verified\": True, \"device_compliant\": True, \"mfa\": False, \"resource_sensitivity\": \"high\"},\n    {\"user\": \"bot-ci\", \"identity_verified\": False, \"device_compliant\": True, \"mfa\": False, \"resource_sensitivity\": \"low\"},\n]\n\ndef evaluate(req):\n    if not req['identity_verified']:\n        return 'DENY (identity_not_verified)'\n    if not req['device_compliant']:\n        return 'DENY (device_not_compliant)'\n    if req['resource_sensitivity'] == 'high' and not req['mfa']:\n        return 'DENY (mfa_required)'\n    return 'ALLOW'\n\nallowed = 0\nfor req in REQUESTS:\n    decision = evaluate(req)\n    if decision == 'ALLOW':\n        allowed += 1\n    print(f\"{req['user']} -> {decision}\")\nprint(f\"Allowed: {allowed}/{len(REQUESTS)}\")\n",
+      "verified_output": "asha -> ALLOW\nravi -> DENY (device_not_compliant)\nkim -> DENY (mfa_required)\nbot-ci -> DENY (identity_not_verified)\nAllowed: 1/4",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

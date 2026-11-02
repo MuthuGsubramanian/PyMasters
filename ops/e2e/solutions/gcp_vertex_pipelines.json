@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_vertex_pipelines",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "DAG = {\n    \"ingest\": [],\n    \"validate\": [\"ingest\"],\n    \"profile\": [\"ingest\"],\n    \"train\": [\"validate\"],\n    \"evaluate\": [\"train\"],\n    \"deploy\": [\"evaluate\"],\n}\n\ndef topo_order(dag):\n    done = set()\n    order = []\n    while len(order) < len(dag):\n        ready = sorted(t for t in dag if t not in done and all(d in done for d in dag[t]))\n        if not ready:\n            raise ValueError(\"cycle detected\")\n        task = ready[0]\n        done.add(task)\n        order.append(task)\n    return order\n\norder = topo_order(DAG)\nfor i, task in enumerate(order, 1):\n    print(f\"step {i}: {task}\")\nprint(f\"pipeline complete: {len(order)} tasks\")\n",
+      "verified_output": "step 1: ingest\nstep 2: profile\nstep 3: validate\nstep 4: train\nstep 5: evaluate\nstep 6: deploy\npipeline complete: 6 tasks",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

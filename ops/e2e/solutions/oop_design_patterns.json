@@ -1,0 +1,11 @@
+{
+  "lesson_id": "oop_design_patterns",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class Subscriber:\n    def __init__(self, name):\n        self.name = name\n\n    def update(self, message):\n        print(f'{self.name} received: {message}')\n\nclass Channel:\n    def __init__(self):\n        self.subscribers = []\n\n    def subscribe(self, observer):\n        self.subscribers.append(observer)\n\n    def notify(self, message):\n        for subscriber in self.subscribers:\n            subscriber.update(message)\n\nch = Channel()\nch.subscribe(Subscriber('Alice'))\nch.subscribe(Subscriber('Bob'))\nch.notify('New video uploaded!')\n",
+      "verified_output": "Alice received: New video uploaded!\nBob received: New video uploaded!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

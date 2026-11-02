@@ -1,0 +1,11 @@
+{
+  "lesson_id": "all_minilm_l6_v2_local_semantic_search",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\nclass MiniSemanticSearch:\n    def __init__(self, corpus: list[str]):\n        self.corpus = corpus\n        self.vectors = [self._encode(d) for d in corpus]\n\n    def _encode(self, text: str) -> dict:\n        counts = {}\n        for w in text.lower().split():\n            counts[w] = counts.get(w, 0) + 1\n        return counts\n\n    def _cosine(self, a: dict, b: dict) -> float:\n        mag_a = math.sqrt(sum(v * v for v in a.values()))\n        mag_b = math.sqrt(sum(v * v for v in b.values()))\n        if mag_a == 0 or mag_b == 0:\n            return 0.0\n        dot = sum(v * b[k] for k, v in a.items() if k in b)\n        return dot / (mag_a * mag_b)\n\n    def search(self, query: str, top_k: int = 2) -> list[dict]:\n        q = self._encode(query)\n        scored = [\n            {\"doc\": doc, \"score\": self._cosine(q, vec)}\n            for doc, vec in zip(self.corpus, self.vectors)\n        ]\n        scored.sort(key=lambda x: x[\"score\"], reverse=True)\n        return scored[:top_k]\n\n# Test it:\nengine = MiniSemanticSearch([\n    \"reset my account password\",\n    \"update my billing information\",\n    \"how to optimize python performance\",\n    \"make my python code run faster\",\n])\n\nresults = engine.search(\"speed up my python program\", top_k=2)\nprint(len(results))\nprint(results[0][\"score\"] >= results[1][\"score\"])\nprint(\"python\" in results[0][\"doc\"])\n",
+      "verified_output": "2\nTrue\nTrue",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

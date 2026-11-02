@@ -1,0 +1,11 @@
+{
+  "lesson_id": "kv_cache_sliding_window",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def evict_kv_cache(cache: list, window: int) -> list:\n    \"\"\"Keep only the most recent `window` cache entries, evicting older ones.\"\"\"\n    if window <= 0:\n        return []\n    if len(cache) <= window:\n        return cache\n    return cache[-window:]\n\nprint(evict_kv_cache([1, 2, 3, 4, 5, 6], 3))\n",
+      "verified_output": "[4, 5, 6]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "graphs_advanced",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import heapq\n\ndef dijkstra(graph, start):\n    distances = {node: float('inf') for node in graph}\n    distances[start] = 0\n    pq = [(0, start)]\n    visited = set()\n    while pq:\n        dist, node = heapq.heappop(pq)\n        if node in visited:\n            continue\n        visited.add(node)\n        for neighbor, weight in graph[node]:\n            new_dist = dist + weight\n            if new_dist < distances[neighbor]:\n                distances[neighbor] = new_dist\n                heapq.heappush(pq, (new_dist, neighbor))\n    return distances\n\ndef has_cycle(graph):\n    WHITE, GRAY, BLACK = 0, 1, 2\n    color = {node: WHITE for node in graph}\n\n    def dfs(node):\n        color[node] = GRAY\n        for neighbor in graph.get(node, []):\n            state = color.get(neighbor, WHITE)\n            if state == GRAY:\n                return True\n            if state == WHITE and dfs(neighbor):\n                return True\n        color[node] = BLACK\n        return False\n\n    for node in graph:\n        if color[node] == WHITE and dfs(node):\n            return True\n    return False\n\nweighted_graph = {\n    'A': [('B', 1), ('C', 4)],\n    'B': [('C', 2), ('D', 5)],\n    'C': [('D', 1)],\n    'D': []\n}\n\nprint(dijkstra(weighted_graph, 'A'))\n\ncyclic = {'A': ['B'], 'B': ['C'], 'C': ['A']}\nacyclic = {'A': ['B'], 'B': ['C'], 'C': []}\nprint(has_cycle(cyclic))\nprint(has_cycle(acyclic))\n",
+      "verified_output": "{'A': 0, 'B': 1, 'C': 3, 'D': 4}\nTrue\nFalse",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

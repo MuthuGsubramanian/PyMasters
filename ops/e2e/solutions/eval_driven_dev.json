@@ -1,0 +1,11 @@
+{
+  "lesson_id": "eval_driven_dev",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from dataclasses import dataclass, field\n\n\n@dataclass\nclass EvalCase:\n    input: str\n    expected: str\n    tags: list = field(default_factory=list)\n\n\ndataset = [\n    EvalCase(\"I absolutely love this product, it works perfectly!\", \"positive\", [\"clear\", \"product\"]),\n    EvalCase(\"This was the worst experience I have ever had.\", \"negative\", [\"clear\", \"service\"]),\n    EvalCase(\"The package arrived on Tuesday.\", \"neutral\", [\"factual\"]),\n    EvalCase(\"Not bad at all, I was pleasantly surprised.\", \"positive\", [\"negation\", \"edge-case\"]),\n    EvalCase(\"I wouldn't recommend this to anyone; it broke after a day.\", \"negative\", [\"negation\", \"product\"]),\n    EvalCase(\"The meeting is scheduled for 3 PM in room 204.\", \"neutral\", [\"factual\", \"short\"]),\n]\n\nfor case in dataset:\n    print(case)\n",
+      "verified_output": "EvalCase(input='I absolutely love this product, it works perfectly!', expected='positive', tags=['clear', 'product'])\nEvalCase(input='This was the worst experience I have ever had.', expected='negative', tags=['clear', 'service'])\nEvalCase(input='The package arrived on Tuesday.', expected='neutral', tags=['factual'])\nEvalCase(input='Not bad at all, I was pleasantly surprised.', expected='positive', tags=['negation', 'edge-case'])\nEvalCase(input=\"I wouldn't recommend this to anyone; it broke after a day.\", expected='negative', tags=['negation', 'product'])\nEvalCase(input='The meeting is scheduled for 3 PM in room 204.', expected='neutral', tags=['factual', 'short'])",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "readable_then_fast",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from collections import Counter\n\nevents = [\n    (\"alice\", \"click\"),\n    (\"bob\", \"click\"),\n    (\"alice\", \"view\"),\n    (\"alice\", \"click\"),\n    (\"carol\", \"view\"),\n    (\"bob\", \"view\"),\n    (\"alice\", \"view\"),\n    (\"bob\", \"click\"),\n    (\"carol\", \"click\"),\n    (\"alice\", \"click\"),\n]\n\ndef clicks_per_user(ev):\n    return dict(Counter(user for user, action in ev if action == \"click\"))\n\nprint(clicks_per_user(events))\n",
+      "verified_output": "{'alice': 3, 'bob': 2, 'carol': 1}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

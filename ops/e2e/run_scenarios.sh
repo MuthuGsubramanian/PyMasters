@@ -24,7 +24,8 @@ export PM_E2E_OPS_TOKEN="$(rnd 24)" PM_E2E_BASE="http://127.0.0.1:$PORT" PM_E2E_
   -e SEMANTIC_AUTOSTART=1 -e APP_BASE_URL="http://127.0.0.1:$PORT" -e FRONTEND_URL="http://127.0.0.1:$PORT" \
   "$IMAGE" >/dev/null || { echo "container start failed"; exit 2; }
 export PM_E2E_RZP_SECRET
-"$DOCKER" exec "$NAME" mkdir -p /app/ops_e2e && "$DOCKER" cp "$HERE/scenarios/_dbtool.py" "$NAME:/app/ops_e2e/_dbtool.py"
+"$DOCKER" exec "$NAME" mkdir -p /app/ops_e2e && "$DOCKER" cp "$HERE/scenarios/_dbtool.py" "$NAME:/app/ops_e2e/_dbtool.py" \
+  && "$DOCKER" cp "$HERE/solutions/verify.py" "$NAME:/app/ops_e2e/verify.py"
 for i in $(seq 1 90); do curl -fsS "http://127.0.0.1:$PORT/health" >/dev/null 2>&1 && break; sleep 2; done
 curl -fsS "http://127.0.0.1:$PORT/health" >/dev/null || { "$DOCKER" logs "$NAME" > "$OUT/container.log" 2>&1; echo "container never became healthy"; exit 2; }
 

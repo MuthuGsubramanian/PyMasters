@@ -1,0 +1,11 @@
+{
+  "lesson_id": "quantization_affine_scale_zero_point",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def affine_scale_zero_point(min_val: float, max_val: float) -> tuple:\n    \"\"\"8-bit affine quantization params: scale and zero_point for range [min_val, max_val].\"\"\"\n    scale = (max_val - min_val) / 255\n    zero_point = round(0 - min_val / scale)\n    return (round(scale, 4), zero_point)\n\nscale, zero_point = affine_scale_zero_point(-2.0, 6.0)\nprint(scale)\nprint(zero_point)\n",
+      "verified_output": "0.0314\n64",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

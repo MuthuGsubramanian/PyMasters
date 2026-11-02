@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_policy_defender_governance",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "ALLOWED_LOCATIONS = ['eastus2', 'westeurope']\nRESOURCES = [\n    {'name': 'vm1', 'location': 'eastus2', 'tags': {'costCenter': 'CC01'}},\n    {'name': 'vm2', 'location': 'centralus', 'tags': {'costCenter': 'CC02'}},\n    {'name': 'st1', 'location': 'westeurope', 'tags': {}},\n]\n\ndef evaluate(resource):\n    # Deny policy first: deny wins and stops evaluation\n    if resource.get('location') not in ALLOWED_LOCATIONS:\n        return 'DENIED by allowed-locations'\n    # Audit policy: missing costCenter tag\n    if 'costCenter' not in (resource.get('tags') or {}):\n        return 'AUDIT by require-costcenter'\n    return 'COMPLIANT'\n\nfor resource in RESOURCES:\n    print(f\"{resource['name']}: {evaluate(resource)}\")\n",
+      "verified_output": "vm1: COMPLIANT\nvm2: DENIED by allowed-locations\nst1: AUDIT by require-costcenter",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

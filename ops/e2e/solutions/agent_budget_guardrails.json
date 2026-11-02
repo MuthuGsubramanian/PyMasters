@@ -1,0 +1,11 @@
+{
+  "lesson_id": "agent_budget_guardrails",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def within_budget(costs, limit):\n    spent = 0\n    count = 0\n    for cost in costs:\n        if spent + cost > limit:\n            break\n        spent += cost\n        count += 1\n    return count\n\nprint(within_budget([2, 2, 3, 1], 6))\nprint(within_budget([2, 2, 3, 1], 8))\nprint(within_budget([2, 2, 3, 1], 1))\n",
+      "verified_output": "2\n4\n0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

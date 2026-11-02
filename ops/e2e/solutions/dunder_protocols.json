@@ -1,0 +1,11 @@
+{
+  "lesson_id": "dunder_protocols",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class Vector:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n\n    def __add__(self, other):\n        if not isinstance(other, Vector):\n            return NotImplemented\n        return Vector(self.x + other.x, self.y + other.y)\n\n    def __eq__(self, other):\n        if not isinstance(other, Vector):\n            return NotImplemented\n        return (self.x, self.y) == (other.x, other.y)\n\n    def __hash__(self):\n        return hash((self.x, self.y))\n\n    def __repr__(self):\n        return f\"Vector({self.x}, {self.y})\"\n\n\n# --- demo (do not change) ---\nresult = Vector(1, 2) + Vector(3, 4)\nprint(result)\n",
+      "verified_output": "Vector(4, 6)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

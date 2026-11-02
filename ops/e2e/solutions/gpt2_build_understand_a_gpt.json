@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gpt2_build_understand_a_gpt",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class TinyGPT:\n    def __init__(self):\n        # Map each word -> {next_word: count}\n        self.bigrams = {}\n\n    def train(self, text: str):\n        words = text.lower().split()\n        for a, b in zip(words, words[1:]):\n            nxt = self.bigrams.setdefault(a, {})\n            nxt[b] = nxt.get(b, 0) + 1\n\n    def predict_next(self, word: str):\n        nxt = self.bigrams.get(word)\n        if not nxt:\n            return None\n        best = None\n        best_count = 0\n        for w, c in nxt.items():  # dicts keep insertion order -> ties go to first seen\n            if c > best_count:\n                best, best_count = w, c\n        return best\n\n    def generate(self, start_word: str, n: int = 5) -> list:\n        result = [start_word]\n        while len(result) < n:\n            nxt = self.predict_next(result[-1])\n            if nxt is None:\n                break\n            result.append(nxt)\n        return result\n\n\n# Test it:\ngpt = TinyGPT()\ngpt.train(\"the cat sat on the mat the cat ran\")\n\nprint(gpt.predict_next(\"the\"))   # 'cat' (appears most after 'the')\nprint(gpt.predict_next(\"cat\"))   # 'sat' or 'ran' (tie -> first seen)\nprint(gpt.predict_next(\"zebra\")) # None\nprint(gpt.generate(\"the\", 4))\n",
+      "verified_output": "cat\nsat\nNone\n['the', 'cat', 'sat', 'on']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

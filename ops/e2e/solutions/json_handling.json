@@ -1,0 +1,11 @@
+{
+  "lesson_id": "json_handling",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import json\n\nraw = '''\n{\n  \"customer\": \"Ada\",\n  \"orders\": [\n    {\"id\": 1, \"amount\": 120.50, \"status\": \"paid\"},\n    {\"id\": 2, \"amount\": 75.00,  \"status\": \"refunded\"},\n    {\"id\": 3, \"amount\": 30.00,  \"status\": \"paid\"},\n    {\"id\": 4, \"amount\": 10.00,  \"status\": \"pending\"},\n    {\"id\": 5, \"amount\": 49.50,  \"status\": \"paid\"}\n  ]\n}\n'''\n\ndef total_paid(raw):\n    data = json.loads(raw)\n    return sum(o[\"amount\"] for o in data.get(\"orders\", []) if o.get(\"status\") == \"paid\")\n\nprint(total_paid(raw))\n",
+      "verified_output": "200.0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "llm_json_extraction",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def extract_json(reply: str) -> str:\n    \"\"\"Return the first balanced {...} substring from reply.\"\"\"\n    start = reply.index('{')\n    depth = 0\n    for i in range(start, len(reply)):\n        ch = reply[i]\n        if ch == '{':\n            depth += 1\n        elif ch == '}':\n            depth -= 1\n            if depth == 0:\n                return reply[start:i + 1]\n    raise ValueError(\"no balanced JSON object found\")\n\nprint(extract_json('Sure! Here: {\"ok\": true, \"n\": {\"x\": 1}} -- done'))\n",
+      "verified_output": "{\"ok\": true, \"n\": {\"x\": 1}}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "dynamic_programming",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def coin_change(coins, amount):\n    dp = [float('inf')] * (amount + 1)\n    dp[0] = 0\n    for i in range(1, amount + 1):\n        for coin in coins:\n            if coin <= i:\n                dp[i] = min(dp[i], dp[i - coin] + 1)\n    return dp[amount] if dp[amount] != float('inf') else -1\n\ndef lcs_with_string(s1, s2):\n    m, n = len(s1), len(s2)\n    dp = [[0] * (n + 1) for _ in range(m + 1)]\n    for i in range(1, m + 1):\n        for j in range(1, n + 1):\n            if s1[i - 1] == s2[j - 1]:\n                dp[i][j] = dp[i - 1][j - 1] + 1\n            else:\n                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])\n    i, j = m, n\n    out = []\n    while i > 0 and j > 0:\n        if s1[i - 1] == s2[j - 1]:\n            out.append(s1[i - 1])\n            i -= 1\n            j -= 1\n        elif dp[i - 1][j] >= dp[i][j - 1]:\n            i -= 1\n        else:\n            j -= 1\n    return dp[m][n], ''.join(reversed(out))\n\nprint(coin_change([1, 5, 10], 13))\nprint(coin_change([2], 3))\nlength, subseq = lcs_with_string('ABCBDAB', 'BDCAB')\nprint(f'LCS length: {length}, sequence: {subseq}')\n",
+      "verified_output": "4\n-1\nLCS length: 4, sequence: BCAB",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

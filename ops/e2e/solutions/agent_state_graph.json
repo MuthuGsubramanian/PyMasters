@@ -1,0 +1,11 @@
+{
+  "lesson_id": "agent_state_graph",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def run(nodes: dict, edges: dict, start: str, state: dict) -> dict:\n    \"\"\"Walk the graph from `start`, applying nodes, until 'END'. Return state.\"\"\"\n    current = start\n    while current != \"END\":\n        state = nodes[current](state)\n        current = edges[current]\n    return state\n\nnodes = {\n    \"add\": lambda s: {**s, \"n\": s[\"n\"] + 1},\n    \"double\": lambda s: {**s, \"n\": s[\"n\"] * 2},\n}\nedges = {\"add\": \"double\", \"double\": \"END\"}\nprint(run(nodes, edges, \"add\", {\"n\": 3}))\n",
+      "verified_output": "{'n': 8}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

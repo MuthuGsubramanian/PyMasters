@@ -1,0 +1,11 @@
+{
+  "lesson_id": "minilm_local_rag",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def top_k(query_vec: list, chunk_vecs: list, k: int) -> list:\n    \"\"\"Return indices of the k most similar chunks, best first.\n    All vectors are normalized, so dot product == cosine similarity.\"\"\"\n    def dot(u, v):\n        return sum(x * y for x, y in zip(u, v))\n\n    scores = [dot(query_vec, c) for c in chunk_vecs]\n    ranked = sorted(range(len(chunk_vecs)), key=lambda i: scores[i], reverse=True)\n    return ranked[:k]\n\nvecs = [[0.9, 0.44], [0.0, 1.0], [0.7, 0.71], [1.0, 0.0]]\nprint(top_k([1.0, 0.0], vecs, 2))\n",
+      "verified_output": "[3, 0]\nAll tests passed!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

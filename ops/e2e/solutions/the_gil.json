@@ -1,0 +1,11 @@
+{
+  "lesson_id": "the_gil",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "# Each workload is tagged with its TRUE nature:\n#   'io'  -> I/O-bound  (mostly waiting on network/disk) -> threads\n#   'cpu' -> CPU-bound  (mostly crunching numbers)        -> processes\nworkloads = {\n    \"download 100 URLs\": \"io\",\n    \"hash a huge file\": \"cpu\",\n    \"scrape pages\": \"io\",\n    \"multiply big matrices in pure Python\": \"cpu\",\n    \"read 1000 small files\": \"io\",\n    \"compute primes up to 10 million\": \"cpu\",\n}\n\ndef best_tool(workload):\n    nature = workloads[workload]\n    if nature == \"io\":\n        return \"threads\"\n    return \"processes\"\n\nprint(best_tool(\"download 100 URLs\"))\n",
+      "verified_output": "threads",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}
