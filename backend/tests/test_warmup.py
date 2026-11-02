@@ -80,3 +80,22 @@ def test_completed_lessons_count_as_learned(db):
     assert [d["topic"] for d in due["due"]] == ["l2"] and due["tracked"] == 2   # fresh completion not due yet
     assert review.warmup_answer({"id": "l2:0", "choice": 1}, caller="u3")["correct"] is True
     assert review.due_reviews(user_id="u3", caller="u3")["total_due"] == 0       # correct recall resets the clock
+
+
+def test_boss_battle_needs_three_completed_lessons_in_track(db, monkeypatch):
+    track_lessons = {k: {**v, "track": "t1"} for k, v in LESSONS.items()}
+    monkeypatch.setattr(review, "_load_lesson_from_dir", lambda t: track_lessons.get(t))
+    conn = sqlite3.connect(db)
+    conn.execute("CREATE TABLE lesson_completions (user_id TEXT, lesson_id TEXT, completed_at TIMESTAMP, xp_awarded INTEGER)")
+    conn.executemany("INSERT INTO lesson_completions VALUES ('u4', ?, '2026-10-01 00:00:00', 10)", [("l0",), ("l1",)])
+    conn.commit()
+    r = review.boss_battle(track="t1", caller="u4")
+    assert r["unlocked"] is False and r["completed"] == 2 and r["questions"] == []
+    conn.execute("INSERT INTO lesson_completions VALUES ('u4', 'l2', '2026-10-01 00:00:00', 10)")
+    conn.commit()
+    conn.close()
+    r = review.boss_battle(track="t1", caller="u4")
+    assert r["unlocked"] and len(r["questions"]) == 6          # 3 lessons x 2 questions (< BOSS_SIZE)
+    assert {q["topic"] for q in r["questions"]} == {"l0", "l1", "l2"}
+    assert all("correct" not in q for q in r["questions"])
+    assert review.boss_battle(track="other", caller="u4")["unlocked"] is False
