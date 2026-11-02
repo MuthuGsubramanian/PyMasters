@@ -9,6 +9,7 @@ The suites drive a disposable copy of the production image (see ../run_scenarios
 Every user gets its own fake client IP (X-Forwarded-For; nginx in the container passes it through) so the
 per-IP signup/login limits behave as they would for real, separate visitors.
 """
+import base64
 import itertools
 import json
 import os
@@ -88,10 +89,33 @@ def create_user(kind: str = "individual", org_type: str = None, onboard: bool = 
     return user
 
 
+def ops_user(ops_token: str) -> dict:
+    """The ops service account (platform admin) as a `user` dict, from its service-login JWT."""
+    claims = json.loads(base64.urlsafe_b64decode(ops_token.split(".")[1] + "==="))
+    return {"id": claims["sub"], "username": claims.get("username", "claude-qa"), "token": ops_token, "ip": None}
+
+
 def session_payload(user: dict) -> dict:
     """The localStorage `pm_user` shape the frontend expects after login (same as ops/e2e/module_sweep.py)."""
-    return {"id": user["id"], "username": user["username"], "name": user.get("name"), "token": user["token"],
-            "onboarding_completed": True}
+    payload = {"id": user["id"], "username": user["username"], "name": user.get("name"), "token": user["token"],
+               "onboarding_completed": True}
+    if user.get("org"):
+        payload["org"] = user["org"]
+    return payload
+
+
+def with_org(user: dict) -> dict:
+    """Sign in through the real login API and keep its `org` (the active org a real login hands the app)."""
+    r = api(user["ip"]).post(f"{BASE}/api/auth/login", json={"username": user["username"], "password": user["password"]},
+                             timeout=30)
+    assert r.status_code == 200, r.text[:200]
+    return {**user, "token": r.json().get("token", user["token"]), "org": r.json().get("org")}
+
+
+_SEED_STORAGE = ("([u, v, dark]) => { localStorage.setItem('pm_user', JSON.stringify(u));"
+                 " localStorage.setItem('pm_release_seen', v);"
+                 " if (dark !== null) localStorage.setItem('pm_dark_mode', dark ? '1' : '0');"
+                 " if (u.org) localStorage.setItem('pm_active_org', JSON.stringify(u.org)); }")
 
 
 def solution_for(lesson_id: str, index: int, expected_output: str) -> str:
@@ -154,8 +178,7 @@ def signed_in_context(browser, user: dict, width: int = 1366, height: int = 850)
                               extra_http_headers={"X-Forwarded-For": user.get("ip") or fake_ip()})
     page = ctx.new_page()
     page.goto(f"{BASE}/login", wait_until="domcontentloaded")
-    page.evaluate("([u, v]) => { localStorage.setItem('pm_user', JSON.stringify(u)); localStorage.setItem('pm_release_seen', v); }",
-                  [session_payload(user), RELEASE_VERSION])
+    page.evaluate(_SEED_STORAGE, [session_payload(user), RELEASE_VERSION, None])
     return ctx, page
 
 
@@ -206,10 +229,7 @@ def logged_in_page(browser):
         page.on("response", lambda r: page.problems.append(f"http {r.status} {r.url[:120]}")
                 if r.status >= 400 and "/api/" in r.url else None)
         page.goto(f"{BASE}/login", wait_until="domcontentloaded")
-        page.evaluate("([u, dark, v]) => { localStorage.setItem('pm_user', JSON.stringify(u));"
-                      " localStorage.setItem('pm_release_seen', v);"
-                      " localStorage.setItem('pm_dark_mode', dark ? '1' : '0'); }",
-                      [session_payload(user), dark, RELEASE_VERSION])
+        page.evaluate(_SEED_STORAGE, [session_payload(user), RELEASE_VERSION, dark])
         page.problems.clear()
         return page
 

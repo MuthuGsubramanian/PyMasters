@@ -42,7 +42,6 @@ def test_redirect_routes_land_where_expected(logged_in_page, src, dest):
     assert page.url.split("?")[0].rstrip("/").endswith(dest.rstrip("/")), page.url
 
 
-@pytest.mark.xfail(strict=False, reason="module suites land in Tasks 8-10; enforced once they exist")
 def test_every_backend_router_is_exercised():
     corpus = "\n".join(p.read_text() for p in SCEN.rglob("test_*.py") if p.name != Path(__file__).name)
     missing = sorted(p for p in backend_prefixes() if p not in corpus)
