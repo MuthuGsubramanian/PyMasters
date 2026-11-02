@@ -118,6 +118,14 @@ if [ -n "$T" ]; then
    FROM \`pymasters-app.billing_export.$T\`
    WHERE usage_start_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 35 DAY)
    GROUP BY 1,2 HAVING month_to_date > 0 ORDER BY month_to_date DESC LIMIT 15" 2>&1
+  echo "- totals (gross = list price, net = after credits). If data_through is more than 2 days old the export is lagging/backfilling: say spend is not yet known, do not treat it as low:"
+  bq query --project_id=pymasters-app --use_legacy_sql=false --format=pretty "
+   SELECT invoice.month AS month, ANY_VALUE(currency) AS cur, ROUND(SUM(cost),2) AS gross,
+          ROUND(SUM(cost) + SUM(IFNULL((SELECT SUM(c.amount) FROM UNNEST(credits) c),0)),2) AS net,
+          CAST(MAX(DATE(usage_start_time, 'Asia/Kolkata')) AS STRING) AS data_through
+   FROM \`pymasters-app.billing_export.$T\`
+   WHERE invoice.month >= FORMAT_DATE('%Y%m', DATE_SUB(CURRENT_DATE('Asia/Kolkata'), INTERVAL 1 MONTH))
+   GROUP BY 1 ORDER BY 1" 2>&1
 else
   echo "- billing export not enabled yet (Console > Billing > Billing export > BigQuery, dataset pymasters-app.billing_export)"
 fi
