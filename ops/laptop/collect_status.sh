@@ -10,10 +10,21 @@ GA=--account=muthu.g.subramanian@gmail.com   # owner of the legacy projects
 WA=--account=muthu@pymasters.net             # org + main billing account
 sec() { echo; echo "## $1"; }
 
+# The org account's gcloud login can expire (Workspace reauthentication). When it has, fall back to the
+# owner's gmail account for every read it is allowed (billing, BigQuery, storage, compute list) and flag it;
+# IAP SSH to the VM still needs the org account, so the VM sections will say "SSH to VM failed".
+ORG_AUTH=ok
+if ! timeout 30 gcloud auth print-access-token --account=muthu@pymasters.net >/dev/null 2>&1; then
+  ORG_AUTH=expired
+  export CLOUDSDK_CORE_ACCOUNT=muthu.g.subramanian@gmail.com
+  WA=$GA
+fi
+
 {
 echo "# PyMasters daily status — $(date '+%F %H:%M %Z')"
 
 sec "Open reminders"
+[ "$ORG_AUTH" = expired ] && echo "- ACTION FOR OWNER (urgent): the laptop's gcloud login for muthu@pymasters.net expired. Run: gcloud auth login muthu@pymasters.net (on this laptop). Until then the VM checks and the nightly laptop DB backup cannot run (the VM's own Cloud Storage backup is unaffected)."
 [ -s ~/pymasters-ops/reminders.txt ] && cat ~/pymasters-ops/reminders.txt || echo "- none"
 Y=$(date -d yesterday +%F)
 [ -e ~/pymasters-ops/reports/sent-$Y ] || echo "- ACTION FOR OPS: the daily status email for $Y was NOT sent (check ~/pymasters-ops/reports/send-$Y.log)."
@@ -92,7 +103,7 @@ echo "- last bot runs: $(journalctl --user -u pymasters-social.service --since '
 sec "Free tier usage (month to date)"
 python3 - <<'PY'
 import json, subprocess, datetime, urllib.request, urllib.parse
-A="--account=muthu@pymasters.net"
+A="$WA"
 tok=subprocess.run(["gcloud","auth","print-access-token",A],capture_output=True,text=True).stdout.strip()
 now=datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None); start=now.replace(day=1,hour=0,minute=0,second=0,microsecond=0)
 def q(metric, group, per=None):
@@ -115,8 +126,8 @@ try:
 except Exception as e:
     print("- monitoring query failed:", e)
 PY
-echo "- Artifact Registry images: $(gcloud artifacts docker images list us-central1-docker.pkg.dev/pymasters-app/cloud-run-source-deploy/pymasters --account=muthu@pymasters.net --format='value(metadata.imageSizeBytes)' 2>/dev/null | awk '{s+=$1;n++} END {printf "%d images, %.2f GB (before layer sharing)", n, s/1e9}') — 0.5 GB free; policy keeps the newest 2"
-echo "- Secret Manager active versions: $(for s in $(gcloud secrets list --project pymasters-app --account=muthu@pymasters.net --format='value(name)'); do gcloud secrets versions list $s --project pymasters-app --account=muthu@pymasters.net --filter='state=enabled' --format='value(name)'; done | wc -l) of 6 free"
+echo "- Artifact Registry images: $(gcloud artifacts docker images list us-central1-docker.pkg.dev/pymasters-app/cloud-run-source-deploy/pymasters $WA --format='value(metadata.imageSizeBytes)' 2>/dev/null | awk '{s+=$1;n++} END {printf "%d images, %.2f GB (before layer sharing)", n, s/1e9}') — 0.5 GB free; policy keeps the newest 2"
+echo "- Secret Manager active versions: $(for s in $(gcloud secrets list --project pymasters-app $WA --format='value(name)'); do gcloud secrets versions list $s --project pymasters-app $WA --filter='state=enabled' --format='value(name)'; done | wc -l) of 6 free"
 echo "- Budget: one budget, INR 5,000/month ceiling (owner limit), alerts at 2/5/25/50/90/100% + forecast"
 
 sec "GCP spend (billing export)"
