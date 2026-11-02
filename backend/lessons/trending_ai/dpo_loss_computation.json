@@ -162,5 +162,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Using the lesson's dpo_pair_loss, what does print(dpo_pair_loss(0.3, 0.3)) output?",
+        "ta": "பாடத்தின் dpo_pair_loss-ஐப் பயன்படுத்தினால், print(dpo_pair_loss(0.3, 0.3)) என்ன அச்சிடும்?"
+      },
+      "options": {
+        "en": [
+          "0.5",
+          "0.6931",
+          "1.0",
+          "0.0"
+        ],
+        "ta": [
+          "0.5",
+          "0.6931",
+          "1.0",
+          "0.0"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "If the policy strongly prefers the rejected completion (large negative margin), what happens to the DPO loss?",
+        "ta": "policy நிராகரிக்கப்பட்ட completion-ஐ வலுவாக விரும்பினால் (பெரிய எதிர்மறை margin), DPO loss-க்கு என்ன ஆகும்?"
+      },
+      "options": {
+        "en": [
+          "It drops to 0 because negative margins are ignored",
+          "It grows large, since -log blows up as probability nears 0",
+          "It stays capped at 1.0",
+          "It becomes negative"
+        ],
+        "ta": [
+          "எதிர்மறை margin-கள் புறக்கணிக்கப்படுவதால் அது 0 ஆகிவிடும்",
+          "probability 0-ஐ நெருங்கும்போது -log வெடித்து அதிகரிப்பதால் அது பெரிதாகும்",
+          "அது அதிகபட்சம் 1.0-இல் நின்றுவிடும்",
+          "அது எதிர்மறையாகிவிடும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does the pair (0.05, 0.4) have the highest loss in the lesson's batch?",
+        "ta": "பாடத்தின் batch-இல் (0.05, 0.4) என்ற pair-க்கு ஏன் அதிகபட்ச loss உள்ளது?"
+      },
+      "options": {
+        "en": [
+          "Its r_rejected is positive, which is always penalized",
+          "Its margin is -0.35, so the policy favors the rejected one",
+          "Its r_chosen is the smallest number in the batch",
+          "It is the middle pair, which gets weighted more"
+        ],
+        "ta": [
+          "அதன் r_rejected நேர்மறை, அது எப்போதும் தண்டிக்கப்படும்",
+          "அதன் margin -0.35, அதனால் policy நிராகரிக்கப்பட்டதை விரும்புகிறது",
+          "அதன் r_chosen தான் batch-இலேயே மிகச் சிறிய எண்",
+          "அது நடுவில் உள்ள pair, அதற்கு அதிக எடை கொடுக்கப்படும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: a learner's pair loss ends with return round(math.log(prob), 4). What goes wrong?",
+        "ta": "தவறைக் கண்டுபிடி: ஒரு மாணவரின் pair loss, return round(math.log(prob), 4) என்று முடிகிறது. என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "Missing minus: loss is negative, and minimizing lowers confidence",
+          "math.log needs base 10 for DPO",
+          "round must be applied before math.log",
+          "Nothing; log and -log give the same value after rounding"
+        ],
+        "ta": [
+          "கழித்தல் குறி இல்லை: loss எதிர்மறை, குறைத்தால் நம்பிக்கை குறையும்",
+          "DPO-க்கு math.log-இல் base 10 தேவை",
+          "math.log-க்கு முன்பே round பயன்படுத்த வேண்டும்",
+          "தவறு இல்லை; round செய்த பிறகு log-உம் -log-உம் ஒரே மதிப்பு தரும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

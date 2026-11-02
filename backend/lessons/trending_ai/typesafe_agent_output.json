@@ -142,5 +142,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nraw = {\"age\": \"42\"}\nprint(int(raw[\"age\"]) + 1)",
+        "ta": "இது என்ன அச்சிடும்?\nraw = {\"age\": \"42\"}\nprint(int(raw[\"age\"]) + 1)"
+      },
+      "options": {
+        "en": [
+          "421",
+          "43",
+          "TypeError: can't add str and int",
+          "42"
+        ],
+        "ta": [
+          "421",
+          "43",
+          "TypeError: str மற்றும் int-ஐ கூட்ட முடியாது",
+          "42"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "With schema {\"age\": int}, the LLM returns \"age\": \"forty-two\". What should a good validator do?",
+        "ta": "schema {\"age\": int} எனும்போது, LLM \"age\": \"forty-two\" எனத் தருகிறது. ஒரு நல்ல validator என்ன செய்ய வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Keep the string as-is",
+          "Convert it to 42 automatically",
+          "Fail loudly with an error",
+          "Quietly store it as 0"
+        ],
+        "ta": [
+          "string-ஐ அப்படியே வைத்திருக்க வேண்டும்",
+          "தானாகவே 42 ஆக மாற்ற வேண்டும்",
+          "தெளிவான பிழையுடன் உரக்கத் தோல்வியடைய வேண்டும்",
+          "அமைதியாக 0 ஆகச் சேமிக்க வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: the validator loops with `for field, typ in schema:` over a dict schema. What's wrong?",
+        "ta": "தவறைக் கண்டுபிடி: validator ஒரு dict schema மீது `for field, typ in schema:` என loop செய்கிறது. என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "Looping a dict gives only keys; use schema.items()",
+          "Dicts can't be looped over at all",
+          "It should be `for typ, field in schema:`",
+          "Nothing; it yields (field, type) pairs"
+        ],
+        "ta": [
+          "dict-ஐ loop செய்தால் keys மட்டுமே வரும்; schema.items() பயன்படுத்து",
+          "dict-ஐ loop செய்யவே முடியாது",
+          "`for typ, field in schema:` என்று இருக்க வேண்டும்",
+          "தவறு இல்லை; அது (field, type) ஜோடிகளைத் தரும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Following the lesson, what happens with validate({\"name\": \"Ada\"}, {\"name\": str, \"age\": int})?",
+        "ta": "பாடத்தின்படி, validate({\"name\": \"Ada\"}, {\"name\": str, \"age\": int}) இயக்கினால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Returns {'name': 'Ada'}",
+          "Returns {'name': 'Ada', 'age': 0}",
+          "Returns {'name': 'Ada', 'age': None}",
+          "Raises ValueError: missing 'age'"
+        ],
+        "ta": [
+          "{'name': 'Ada'} ஐத் திருப்பும்",
+          "{'name': 'Ada', 'age': 0} ஐத் திருப்பும்",
+          "{'name': 'Ada', 'age': None} ஐத் திருப்பும்",
+          "ValueError: missing 'age' எழுப்பும்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

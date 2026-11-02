@@ -160,5 +160,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print? y0=[[7,5]]; y1=[[4,10]]; print([a+b for a,b in zip(y0,y1)])",
+        "ta": "இது என்ன அச்சிடும்? y0=[[7,5]]; y1=[[4,10]]; print([a+b for a,b in zip(y0,y1)])"
+      },
+      "options": {
+        "en": [
+          "[[11, 15]]",
+          "[[7, 5], [4, 10]]",
+          "[[7, 5, 4, 10]]",
+          "[11, 15]"
+        ],
+        "ta": [
+          "[[11, 15]]",
+          "[[7, 5], [4, 10]]",
+          "[[7, 5, 4, 10]]",
+          "[11, 15]"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print? p0=[[1,2]]; p1=[[6,3]]; print([[a+b for a,b in zip(r0,r1)] for r0,r1 in zip(p0,p1)])",
+        "ta": "இது என்ன அச்சிடும்? p0=[[1,2]]; p1=[[6,3]]; print([[a+b for a,b in zip(r0,r1)] for r0,r1 in zip(p0,p1)])"
+      },
+      "options": {
+        "en": [
+          "[[7], [5]]",
+          "[7, 5]",
+          "[[1, 2, 6, 3]]",
+          "[[7, 5]]"
+        ],
+        "ta": [
+          "[[7], [5]]",
+          "[7, 5]",
+          "[[1, 2, 6, 3]]",
+          "[[7, 5]]"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In a column split of y = x @ W across two workers, what does each worker use and produce?",
+        "ta": "y = x @ W ஐ இரண்டு workers இடையே column split செய்யும்போது, ஒவ்வொரு worker உம் எதைப் பயன்படுத்தி எதை உருவாக்கும்?"
+      },
+      "options": {
+        "en": [
+          "The full x; a partial y that must be summed",
+          "The full x; a column slice of y",
+          "Half of x's rows (tokens); half of y's rows",
+          "Half of x's features; a partial y of full shape"
+        ],
+        "ta": [
+          "முழு x; கூட்டப்பட வேண்டிய ஒரு பகுதி y",
+          "முழு x; y இன் ஒரு column பகுதி",
+          "x இன் பாதி rows (tokens); y இன் பாதி rows",
+          "x இன் பாதி features; முழு வடிவிலான ஒரு பகுதி y"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the bug in row_parallel: p0 = matmul([r[:s] for r in x], W[:s]); p1 = matmul(x, W[s:])",
+        "ta": "row_parallel இல் உள்ள பிழையைக் கண்டறியவும்: p0 = matmul([r[:s] for r in x], W[:s]); p1 = matmul(x, W[s:])"
+      },
+      "options": {
+        "en": [
+          "W should be split by columns, not rows",
+          "p0 and p1 should be concatenated, not summed",
+          "Arguments are reversed: it should be matmul(W[s:], x)",
+          "p1 must use x's columns [s:] to match W's rows [s:]"
+        ],
+        "ta": [
+          "W ஐ rows ஆக அல்ல, columns ஆகப் பிரிக்க வேண்டும்",
+          "p0, p1 ஐக் கூட்டாமல் இணைக்க (concatenate) வேண்டும்",
+          "Arguments தலைகீழாக உள்ளன: matmul(W[s:], x) ஆக இருக்க வேண்டும்",
+          "W இன் rows [s:] உடன் பொருந்த p1 இல் x இன் columns [s:] வேண்டும்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

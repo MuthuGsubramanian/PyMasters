@@ -156,5 +156,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Using the lesson's majority_vote, what does this print?\nprint(majority_vote(['b', 'a', 'a', 'b']))",
+        "ta": "பாடத்தில் உள்ள majority_vote-ஐப் பயன்படுத்தினால், இது என்ன அச்சிடும்?\nprint(majority_vote(['b', 'a', 'a', 'b']))"
+      },
+      "options": {
+        "en": [
+          "None, because there is a tie",
+          "b",
+          "a",
+          "2"
+        ],
+        "ta": [
+          "None, ஏனெனில் சமநிலை உள்ளது",
+          "b",
+          "a",
+          "2"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is self-consistency called a form of \"test-time compute\"?",
+        "ta": "Self-consistency ஏன் \"test-time compute\" இன் ஒரு வடிவம் என்று அழைக்கப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "It switches to a model with more parameters at test time",
+          "It retrains the model's weights on each new question",
+          "It runs only one greedy pass to save compute",
+          "It spends more inference compute sampling a fixed model"
+        ],
+        "ta": [
+          "test நேரத்தில் அதிக parameters கொண்ட மாடலுக்கு மாறுகிறது",
+          "ஒவ்வொரு புதிய கேள்விக்கும் மாடலின் weights-ஐ மீண்டும் பயிற்றுவிக்கிறது",
+          "compute-ஐ மிச்சப்படுத்த ஒரே ஒரு greedy pass மட்டும் இயக்குகிறது",
+          "மாறாத ஒரே மாடலில் பல முறை sample செய்ய அதிக inference compute செலவிடுகிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why does the correct answer usually win the vote, even when no single sample is trustworthy?",
+        "ta": "எந்த ஒரு sample-உம் நம்பகமானதாக இல்லாவிட்டாலும், சரியான பதில் பொதுவாக ஏன் வாக்கெடுப்பில் வெல்கிறது?"
+      },
+      "options": {
+        "en": [
+          "The model always gives the right answer at high temperature",
+          "Wrong answers are deleted before the vote is counted",
+          "Later samples are weighted more heavily than early ones",
+          "Wrong paths scatter; the right answer is reached many ways"
+        ],
+        "ta": [
+          "அதிக temperature-இல் மாடல் எப்போதும் சரியான பதிலைத் தருகிறது",
+          "வாக்குகளை எண்ணும் முன் தவறான பதில்கள் நீக்கப்படுகின்றன",
+          "முந்தைய samples-ஐ விட பிந்தையவற்றுக்கு அதிக எடை தரப்படுகிறது",
+          "தவறான பாதைகள் சிதறுகின்றன; சரியான பதில் பல வழிகளில் அடையப்படுகிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "A vote_confidence returns 0.6 instead of 60.0 using:\nreturn round(counts[winner] / len(answers), 1)\nWhat's the bug?",
+        "ta": "ஒரு vote_confidence இதைப் பயன்படுத்தி 60.0-க்குப் பதிலாக 0.6 தருகிறது:\nreturn round(counts[winner] / len(answers), 1)\nபிழை என்ன?"
+      },
+      "options": {
+        "en": [
+          "round should use 0 decimal places",
+          "The division should be reversed",
+          "It is missing * 100 to make a percentage",
+          "counts[winner] should be max(answers)"
+        ],
+        "ta": [
+          "round 0 தசம இடங்களைப் பயன்படுத்த வேண்டும்",
+          "வகுத்தல் தலைகீழாக இருக்க வேண்டும்",
+          "சதவீதமாக்க * 100 விடுபட்டுள்ளது",
+          "counts[winner] என்பது max(answers) ஆக இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

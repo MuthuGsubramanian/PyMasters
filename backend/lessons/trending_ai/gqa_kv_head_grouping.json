@@ -156,5 +156,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nnum_q, num_kv = 12, 3\nprint(7 // (num_q // num_kv))",
+        "ta": "இது என்ன அச்சிடும்?\nnum_q, num_kv = 12, 3\nprint(7 // (num_q // num_kv))"
+      },
+      "options": {
+        "en": [
+          "3",
+          "1",
+          "0",
+          "2"
+        ],
+        "ta": [
+          "3",
+          "1",
+          "0",
+          "2"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which attention scheme makes every query head share one single key/value head?",
+        "ta": "எந்த attention முறையில் எல்லா query head-களும் ஒரே ஒரு key/value head-ஐப் பகிர்ந்துகொள்கின்றன?"
+      },
+      "options": {
+        "en": [
+          "GQA where group_size is 1",
+          "Multi-Head Attention (MHA)",
+          "Multi-Query Attention (MQA)",
+          "Grouped-Query Attention (GQA) with 2 groups"
+        ],
+        "ta": [
+          "group_size 1 ஆக உள்ள GQA",
+          "Multi-Head Attention (MHA)",
+          "Multi-Query Attention (MQA)",
+          "2 குழுக்கள் கொண்ட Grouped-Query Attention (GQA)"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nprint([i // 2 for i in range(4)])",
+        "ta": "இது என்ன அச்சிடும்?\nprint([i // 2 for i in range(4)])"
+      },
+      "options": {
+        "en": [
+          "[0, 1, 2, 3]",
+          "[0, 0, 1, 1]",
+          "[0, 0, 0, 1]",
+          "[0, 1, 0, 1]"
+        ],
+        "ta": [
+          "[0, 1, 2, 3]",
+          "[0, 0, 1, 1]",
+          "[0, 0, 0, 1]",
+          "[0, 1, 0, 1]"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "This version returns 2 for (5, 8, 2) instead of 1:\nreturn query_head_idx // num_kv_heads\nWhat is the mistake?",
+        "ta": "இந்தப் பதிப்பு (5, 8, 2)-க்கு 1-க்குப் பதிலாக 2-ஐத் தருகிறது:\nreturn query_head_idx // num_kv_heads\nதவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "Group indices should start at 1, not 0",
+          "It should use / to get the exact float group",
+          "It must divide by group size: num_query_heads // num_kv_heads",
+          "It should use % instead of //"
+        ],
+        "ta": [
+          "குழு எண்கள் 0-இல் அல்ல, 1-இல் தொடங்க வேண்டும்",
+          "சரியான float குழுவைப் பெற / பயன்படுத்த வேண்டும்",
+          "group size-ஆல் வகுக்க வேண்டும்: num_query_heads // num_kv_heads",
+          "// க்குப் பதிலாக % பயன்படுத்த வேண்டும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

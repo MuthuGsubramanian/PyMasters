@@ -232,5 +232,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print? (model is all-MiniLM-L6-v2)\nvecs = model.encode([\"hi\", \"hey\"])\nprint(vecs.shape)",
+        "ta": "இது என்ன அச்சிடும்? (model என்பது all-MiniLM-L6-v2)\nvecs = model.encode([\"hi\", \"hey\"])\nprint(vecs.shape)"
+      },
+      "options": {
+        "en": [
+          "(384, 2)",
+          "(2, 384)",
+          "(2,)",
+          "(2, 768)"
+        ],
+        "ta": [
+          "(384, 2)",
+          "(2, 384)",
+          "(2,)",
+          "(2, 768)"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does semantic search find 'Titanic' for the query 'a film about a sinking ship'?",
+        "ta": "'a film about a sinking ship' என்ற query-க்கு semantic search ஏன் 'Titanic'-ஐக் கண்டுபிடிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Cosine similarity counts the words both texts share",
+          "Keyword search matches words like 'ship' in titles",
+          "The model secretly adds the word 'Titanic' to the query",
+          "Embeddings place texts with similar meaning close together"
+        ],
+        "ta": [
+          "இரண்டு உரைகளிலும் உள்ள பொதுவான சொற்களை cosine similarity எண்ணுகிறது",
+          "Keyword search தலைப்புகளில் 'ship' போன்ற சொற்களைப் பொருத்துகிறது",
+          "மாடல் query-யில் 'Titanic' என்ற சொல்லை ரகசியமாகச் சேர்க்கிறது",
+          "ஒத்த பொருள் கொண்ட உரைகளை embeddings அருகருகே வைக்கின்றன"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why is all-MiniLM-L6-v2 a common pick for a local RAG index?",
+        "ta": "Local RAG index-க்கு all-MiniLM-L6-v2 ஏன் பொதுவாகத் தேர்ந்தெடுக்கப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "It is small (~90 MB) and runs fast on a laptop CPU",
+          "It skips vectors and matches keywords directly",
+          "It gives 768-dim vectors, the highest quality available",
+          "It needs a GPU but is the most accurate model"
+        ],
+        "ta": [
+          "அது சிறியது (~90 MB), laptop CPU-வில் வேகமாக இயங்கும்",
+          "அது vectors இல்லாமல் நேரடியாக keywords-ஐப் பொருத்துகிறது",
+          "அது 768-dim vectors தருகிறது, மிக உயர்ந்த தரம் கொண்டது",
+          "அதற்கு GPU தேவை, ஆனால் அதுவே மிகத் துல்லியமானது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the bug: best_match should return the document text.\nscores = util.cos_sim(q_emb, doc_emb)[0]\nreturn int(scores.argmax())",
+        "ta": "பிழையைக் கண்டறியவும்: best_match ஆவண உரையைத் திருப்பித் தர வேண்டும்.\nscores = util.cos_sim(q_emb, doc_emb)[0]\nreturn int(scores.argmax())"
+      },
+      "options": {
+        "en": [
+          "cos_sim must take the documents first, then the query",
+          "It returns an index, not documents[index]",
+          "[0] removes the best document from the scores",
+          "argmax finds the lowest score; argmin is needed"
+        ],
+        "ta": [
+          "cos_sim-க்கு முதலில் documents, பிறகு query கொடுக்க வேண்டும்",
+          "அது documents[index]-ஐ அல்ல, ஒரு index-ஐத் திருப்புகிறது",
+          "[0] சிறந்த ஆவணத்தை scores-இலிருந்து நீக்குகிறது",
+          "argmax குறைந்த score-ஐக் கண்டறியும்; argmin தேவை"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

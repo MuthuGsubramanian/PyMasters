@@ -148,5 +148,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nprint(round(0.5 * (-8.0 - (-6.0)), 4))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(round(0.5 * (-8.0 - (-6.0)), 4))"
+      },
+      "options": {
+        "en": [
+          "1.0",
+          "-1.0",
+          "-7.0",
+          "-2.0"
+        ],
+        "ta": [
+          "1.0",
+          "-1.0",
+          "-7.0",
+          "-2.0"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Compared with classic RLHF, which stage does DPO drop entirely?",
+        "ta": "பாரம்பரிய RLHF உடன் ஒப்பிடும்போது, DPO எந்த நிலையை முழுவதுமாக நீக்குகிறது?"
+      },
+      "options": {
+        "en": [
+          "Collecting human preference data",
+          "Training the policy model",
+          "Keeping a frozen reference model",
+          "Training a separate reward model"
+        ],
+        "ta": [
+          "மனித விருப்பத் தரவைச் சேகரித்தல்",
+          "policy model-ஐப் பயிற்றுவித்தல்",
+          "உறைந்த reference model-ஐ வைத்திருத்தல்",
+          "தனி reward model-ஐப் பயிற்றுவித்தல்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In DPO's implicit reward, what is pi_ref usually?",
+        "ta": "DPO-வின் மறைமுக reward-இல், pi_ref பொதுவாக என்ன?"
+      },
+      "options": {
+        "en": [
+          "A human-labeled score for each completion",
+          "The policy being updated right now",
+          "A frozen copy of the model from before this training round",
+          "A separately trained reward model"
+        ],
+        "ta": [
+          "ஒவ்வொரு completion-க்கும் மனிதர் இட்ட மதிப்பெண்",
+          "இப்போது புதுப்பிக்கப்படும் policy",
+          "இந்தப் பயிற்சிச் சுற்றுக்கு முந்தைய மாதிரியின் உறைந்த நகல்",
+          "தனியாகப் பயிற்றுவிக்கப்பட்ட reward model"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this implicit reward:\nreturn round(beta * (logp_ref - logp_policy), 4)",
+        "ta": "இந்த மறைமுக reward-இல் உள்ள பிழையைக் கண்டறியவும்:\nreturn round(beta * (logp_ref - logp_policy), 4)"
+      },
+      "options": {
+        "en": [
+          "Nothing; subtraction order doesn't matter",
+          "beta should be added, not multiplied",
+          "The subtraction is reversed, so the reward's sign flips",
+          "round must be applied before multiplying by beta"
+        ],
+        "ta": [
+          "பிழை இல்லை; கழித்தல் வரிசை முக்கியமில்லை",
+          "beta-வைப் பெருக்காமல் கூட்ட வேண்டும்",
+          "கழித்தல் தலைகீழாக உள்ளது, அதனால் reward-இன் குறி மாறுகிறது",
+          "beta-வால் பெருக்குவதற்கு முன் round செய்ய வேண்டும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

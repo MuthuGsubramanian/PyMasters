@@ -157,5 +157,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Using the lesson's kl_divergence, what does print(kl_divergence([0.5, 0.5], [0.5, 0.5])) output?",
+        "ta": "பாடத்தில் உள்ள kl_divergence-ஐப் பயன்படுத்தினால், print(kl_divergence([0.5, 0.5], [0.5, 0.5])) என்ன அச்சிடும்?"
+      },
+      "options": {
+        "en": [
+          "0.6931",
+          "1.0",
+          "0.0",
+          "0.5"
+        ],
+        "ta": [
+          "0.6931",
+          "1.0",
+          "0.0",
+          "0.5"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why does kl_divergence skip terms where p_i is 0?",
+        "ta": "p_i 0 ஆக இருக்கும் உறுப்புகளை kl_divergence ஏன் தவிர்க்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Those classes are where the student is most wrong",
+          "Only to make the loop run faster",
+          "The teacher gives them no probability, so nothing to match",
+          "Zero terms would make the KL value negative"
+        ],
+        "ta": [
+          "அந்த வகுப்புகளில்தான் மாணவர் மிக அதிகமாகத் தவறுகிறார்",
+          "loop வேகமாக ஓடுவதற்காக மட்டுமே",
+          "ஆசிரியர் அங்கு நிகழ்தகவு தரவில்லை, எனவே ஒப்பிட எதுவும் இல்லை",
+          "பூஜ்ய உறுப்புகள் KL மதிப்பை எதிர்மறையாக்கும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In soft_target_loss, why is the KL value multiplied by T ** 2?",
+        "ta": "soft_target_loss-இல் KL மதிப்பு ஏன் T ** 2 ஆல் பெருக்கப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "To make the student's distribution softer",
+          "To turn KL into a symmetric distance",
+          "To keep the loss between 0 and 1",
+          "Dividing by T shrinks gradients ~T^2; this restores the scale"
+        ],
+        "ta": [
+          "மாணவரின் பரவலை இன்னும் மென்மையாக்க",
+          "KL-ஐ சமச்சீரான தூரமாக மாற்ற",
+          "loss-ஐ 0 மற்றும் 1-க்கு இடையில் வைத்திருக்க",
+          "T ஆல் வகுப்பது gradient-களை ~T^2 அளவு சுருக்கும்; இது அளவை மீட்கிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: with p = teacher and q = student, a loss returns round(kl_divergence(q, p) * T ** 2, 4).",
+        "ta": "தவறைக் கண்டுபிடி: p = ஆசிரியர், q = மாணவர் எனும்போது, ஒரு loss round(kl_divergence(q, p) * T ** 2, 4) ஐத் திருப்புகிறது."
+      },
+      "options": {
+        "en": [
+          "round must be applied before multiplying by T ** 2",
+          "T ** 2 should be T / 2",
+          "Arguments swapped: KL isn't symmetric, teacher p must come first",
+          "Nothing: KL(q||p) always equals KL(p||q)"
+        ],
+        "ta": [
+          "T ** 2 ஆல் பெருக்கும் முன் round செய்ய வேண்டும்",
+          "T ** 2 என்பது T / 2 ஆக இருக்க வேண்டும்",
+          "arguments இடம் மாறியுள்ளன: KL சமச்சீரற்றது, ஆசிரியர் p முதலில் வர வேண்டும்",
+          "தவறு இல்லை: KL(q||p) எப்போதும் KL(p||q)-க்குச் சமம்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

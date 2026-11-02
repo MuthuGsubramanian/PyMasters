@@ -231,5 +231,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nb = 16 / 8\nprint(4_000_000_000 * b / 1e9)",
+        "ta": "இது என்ன அச்சிடும்?\nb = 16 / 8\nprint(4_000_000_000 * b / 1e9)"
+      },
+      "options": {
+        "en": [
+          "8",
+          "2.0",
+          "64.0",
+          "8.0"
+        ],
+        "ta": [
+          "8",
+          "2.0",
+          "64.0",
+          "8.0"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "With enable_thinking=True, what does Qwen3-4B do before giving its final answer?",
+        "ta": "enable_thinking=True என அமைத்தால், இறுதி பதிலுக்கு முன் Qwen3-4B என்ன செய்யும்?"
+      },
+      "options": {
+        "en": [
+          "Sends the prompt to a cloud API",
+          "Writes its reasoning inside <think>...</think>",
+          "Downloads a bigger model for hard tasks",
+          "Quantizes itself to 4-bit"
+        ],
+        "ta": [
+          "prompt-ஐ கிளவுட் API-க்கு அனுப்பும்",
+          "தன் சிந்தனையை <think>...</think> உள்ளே எழுதும்",
+          "கடினமான பணிகளுக்கு பெரிய மாடலை பதிவிறக்கும்",
+          "தன்னைத்தானே 4-bit ஆக quantize செய்யும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: msgs = {'role': 'user', 'content': q} is passed to tok.apply_chat_template(msgs, ...)",
+        "ta": "தவறைக் கண்டுபிடி: msgs = {'role': 'user', 'content': q} என்பது tok.apply_chat_template(msgs, ...)-க்கு அனுப்பப்படுகிறது"
+      },
+      "options": {
+        "en": [
+          "'role' should be 'assistant'",
+          "q must be wrapped in <think> tags",
+          "msgs should be a list of message dicts",
+          "'content' must be tokenized first"
+        ],
+        "ta": [
+          "'role' என்பது 'assistant' ஆக இருக்க வேண்டும்",
+          "q-ஐ <think> tag-களுக்குள் வைக்க வேண்டும்",
+          "msgs என்பது message dict-களின் list ஆக இருக்க வேண்டும்",
+          "'content' முதலில் tokenize செய்யப்பட வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why pass add_generation_prompt=True to apply_chat_template?",
+        "ta": "apply_chat_template-க்கு add_generation_prompt=True ஏன் கொடுக்கப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "It adds the assistant turn marker so the model replies",
+          "It returns token IDs instead of a string",
+          "It adds a system prompt automatically",
+          "It turns on thinking mode"
+        ],
+        "ta": [
+          "மாடல் பதிலளிக்க assistant turn குறியைச் சேர்க்கும்",
+          "string-க்கு பதிலாக token ID-களைத் தரும்",
+          "தானாகவே ஒரு system prompt-ஐச் சேர்க்கும்",
+          "அது thinking mode-ஐ இயக்கும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

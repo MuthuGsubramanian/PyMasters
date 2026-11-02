@@ -156,5 +156,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ntotal = 0\nfor s in range(1, 5): total += s\nprint(total)",
+        "ta": "இது என்ன அச்சிடும்?\ntotal = 0\nfor s in range(1, 5): total += s\nprint(total)"
+      },
+      "options": {
+        "en": [
+          "6",
+          "4",
+          "10",
+          "15"
+        ],
+        "ta": [
+          "6",
+          "4",
+          "10",
+          "15"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why can a token's key and value projections be safely cached during generation?",
+        "ta": "உருவாக்கத்தின்போது ஒரு டோக்கனின் key, value projections-ஐ ஏன் பாதுகாப்பாக cache செய்யலாம்?"
+      },
+      "options": {
+        "en": [
+          "They depend on tokens that come after them",
+          "They are recomputed anyway when later tokens arrive",
+          "The cache refreshes them on every step",
+          "They depend only on that token and earlier ones"
+        ],
+        "ta": [
+          "அவை தமக்குப் பின் வரும் டோக்கன்களைச் சார்ந்தவை",
+          "பின்வரும் டோக்கன்கள் வரும்போது அவை எப்படியும் மீண்டும் கணக்கிடப்படும்",
+          "ஒவ்வொரு படியிலும் cache அவற்றைப் புதுப்பிக்கிறது",
+          "அவை அந்த டோக்கனையும் முந்தைய டோக்கன்களையும் மட்டுமே சார்ந்தவை"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "With a KV cache, how many K/V projections are computed in total to generate 10 tokens?",
+        "ta": "KV cache இருந்தால், 10 டோக்கன்களை உருவாக்க மொத்தம் எத்தனை K/V projections கணக்கிடப்படும்?"
+      },
+      "options": {
+        "en": [
+          "55",
+          "10",
+          "100",
+          "1"
+        ],
+        "ta": [
+          "55",
+          "10",
+          "100",
+          "1"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "This should return 15 for seq_len=5 but returns 10. What's the bug?\nfor step in range(1, seq_len): total += step",
+        "ta": "seq_len=5 க்கு இது 15 தர வேண்டும், ஆனால் 10 தருகிறது. பிழை என்ன?\nfor step in range(1, seq_len): total += step"
+      },
+      "options": {
+        "en": [
+          "total += step should be total = step",
+          "range stops before seq_len; use range(1, seq_len + 1)",
+          "It should add seq_len each time, not step",
+          "range should start at 0, not 1"
+        ],
+        "ta": [
+          "total += step என்பது total = step ஆக இருக்க வேண்டும்",
+          "range seq_len-க்கு முன்பே நிற்கிறது; range(1, seq_len + 1) பயன்படுத்தவும்",
+          "ஒவ்வொரு முறையும் step அல்ல, seq_len கூட்ட வேண்டும்",
+          "range 1-இல் அல்ல, 0-இல் தொடங்க வேண்டும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

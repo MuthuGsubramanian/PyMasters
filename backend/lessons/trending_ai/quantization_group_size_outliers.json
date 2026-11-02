@@ -162,5 +162,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does one huge outlier hurt the precision of ordinary weights that share its scale?",
+        "ta": "ஒரே scale-ஐப் பகிரும் சாதாரண weights-இன் துல்லியத்தை ஒரு பெரிய outlier ஏன் கெடுக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It stretches the scale, cramming small values into few buckets",
+          "It shifts all ordinary values toward the outlier's sign",
+          "It makes rounding of every value overflow past 127",
+          "Ordinary values are inherently hard to represent in int8"
+        ],
+        "ta": [
+          "அது scale-ஐ நீட்டி, சிறிய மதிப்புகளைச் சில buckets-இல் அடைக்கிறது",
+          "அது எல்லா சாதாரண மதிப்புகளையும் outlier-இன் குறிக்கு நகர்த்துகிறது",
+          "அது ஒவ்வொரு மதிப்பின் rounding-ஐயும் 127-ஐத் தாண்டச் செய்கிறது",
+          "சாதாரண மதிப்புகளை int8-இல் குறிப்பதே இயல்பாகக் கடினம்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\ng = [3, -254, 100]\nprint(max(abs(v) for v in g) / 127)",
+        "ta": "இது என்ன அச்சிடும்?\ng = [3, -254, 100]\nprint(max(abs(v) for v in g) / 127)"
+      },
+      "options": {
+        "en": [
+          "-2.0",
+          "0.7874015748031497",
+          "2.0",
+          "254"
+        ],
+        "ta": [
+          "-2.0",
+          "0.7874015748031497",
+          "2.0",
+          "254"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nv = [1, 2, 3, 4, 5]\nprint([v[i:i+2] for i in range(0, len(v), 2)])",
+        "ta": "இது என்ன அச்சிடும்?\nv = [1, 2, 3, 4, 5]\nprint([v[i:i+2] for i in range(0, len(v), 2)])"
+      },
+      "options": {
+        "en": [
+          "IndexError, since the last chunk is incomplete",
+          "[[1, 2], [3, 4]]",
+          "[[1, 2], [3, 4], [5]]",
+          "[[1, 2], [2, 3], [3, 4], [4, 5]]"
+        ],
+        "ta": [
+          "கடைசி chunk முழுமையற்றதால் IndexError",
+          "[[1, 2], [3, 4]]",
+          "[[1, 2], [3, 4], [5]]",
+          "[[1, 2], [2, 3], [3, 4], [4, 5]]"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "A learner writes scale = max(group) / 127. What is the mistake?",
+        "ta": "ஒரு மாணவர் scale = max(group) / 127 என்று எழுதுகிறார். இதில் உள்ள தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "It should divide by 255, not 127",
+          "A big negative value like -6.4 won't set the scale",
+          "max() cannot be used on a list slice",
+          "Nothing; max already returns the largest magnitude"
+        ],
+        "ta": [
+          "127 அல்ல, 255-ஆல் வகுக்க வேண்டும்",
+          "-6.4 போன்ற பெரிய எதிர்மறை மதிப்பு scale-ஐ நிர்ணயிக்காது",
+          "list slice-இல் max() பயன்படுத்த முடியாது",
+          "தவறில்லை; max ஏற்கனவே மிகப்பெரிய அளவைத் தருகிறது"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

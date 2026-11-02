@@ -148,5 +148,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nd = lambda u, v: sum(x * y for x, y in zip(u, v))\nprint(d([0.6, 0.8], [1.0, 0.0]))",
+        "ta": "இது என்ன அச்சிடும்?\nd = lambda u, v: sum(x * y for x, y in zip(u, v))\nprint(d([0.6, 0.8], [1.0, 0.0]))"
+      },
+      "options": {
+        "en": [
+          "1.4",
+          "0.8",
+          "[0.6, 0.0]",
+          "0.6"
+        ],
+        "ta": [
+          "1.4",
+          "0.8",
+          "[0.6, 0.0]",
+          "0.6"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why can the lesson use a plain dot product as cosine similarity for MiniLM vectors?",
+        "ta": "MiniLM வெக்டர்களுக்கு சாதாரண dot product-ஐயே cosine similarity-ஆக பாடம் ஏன் பயன்படுத்த முடிகிறது?"
+      },
+      "options": {
+        "en": [
+          "The model runs on a CPU instead of a GPU",
+          "They were encoded with normalize_embeddings=True",
+          "MiniLM vectors always have exactly 384 dimensions",
+          "Dot product and cosine are equal for any two vectors"
+        ],
+        "ta": [
+          "மாடல் GPU-க்கு பதிலாக CPU-வில் இயங்குகிறது",
+          "அவை normalize_embeddings=True உடன் encode செய்யப்பட்டன",
+          "MiniLM வெக்டர்களுக்கு எப்போதும் சரியாக 384 பரிமாணங்கள் உள்ளன",
+          "எந்த இரண்டு வெக்டர்களுக்கும் dot product-உம் cosine-உம் சமம்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "To add a fourth category to the embedding-based zero-shot classifier, what do you need?",
+        "ta": "embedding அடிப்படையிலான zero-shot classifier-இல் நான்காவது வகையைச் சேர்க்க என்ன தேவை?"
+      },
+      "options": {
+        "en": [
+          "Just one more label string to encode",
+          "A few hundred labeled examples of the new class",
+          "Fine-tuning MiniLM on the new category",
+          "A bigger embedding model with more dimensions"
+        ],
+        "ta": [
+          "encode செய்ய இன்னும் ஒரு label string மட்டும்",
+          "புதிய வகைக்கான சில நூறு labeled எடுத்துக்காட்டுகள்",
+          "புதிய வகைக்காக MiniLM-ஐ fine-tune செய்வது",
+          "அதிக பரிமாணங்கள் கொண்ட பெரிய embedding மாடல்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "A dedup loop keeps vecs[i] only if dot(vecs[i], vecs[i-1]) < threshold. What is the mistake?",
+        "ta": "ஒரு dedup loop, dot(vecs[i], vecs[i-1]) < threshold என்றால் மட்டுமே vecs[i]-ஐ வைத்துக்கொள்கிறது. இதில் உள்ள தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "The threshold must always be exactly 1.0",
+          "Dot product can't be used on normalized vectors",
+          "It should keep vectors whose similarity is above threshold",
+          "It must compare with every already-kept vector, not just the previous"
+        ],
+        "ta": [
+          "threshold எப்போதும் சரியாக 1.0 ஆக இருக்க வேண்டும்",
+          "normalized வெக்டர்களில் dot product பயன்படுத்த முடியாது",
+          "similarity threshold-ஐ விட அதிகமான வெக்டர்களை வைத்திருக்க வேண்டும்",
+          "முந்தையதுடன் மட்டுமல்ல, ஏற்கனவே வைத்த ஒவ்வொரு வெக்டருடனும் ஒப்பிட வேண்டும்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

@@ -139,5 +139,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nprint(round((1 - 0.5 ** 3) / (1 - 0.5), 2))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(round((1 - 0.5 ** 3) / (1 - 0.5), 2))"
+      },
+      "options": {
+        "en": [
+          "1.5",
+          "2.0",
+          "3.0",
+          "1.75"
+        ],
+        "ta": [
+          "1.5",
+          "2.0",
+          "3.0",
+          "1.75"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "If the draft model is almost always wrong (alpha close to 0), about how many tokens does one target-model pass give?",
+        "ta": "டிராஃப்ட் மாடல் கிட்டத்தட்ட எப்போதும் தவறாக இருந்தால் (alpha 0-க்கு அருகில்), ஒரு target-model pass சுமார் எத்தனை டோக்கன்களைத் தரும்?"
+      },
+      "options": {
+        "en": [
+          "0, because every draft is rejected",
+          "1, just the bonus token",
+          "K + 1, drafts plus the bonus",
+          "K, one per drafted token"
+        ],
+        "ta": [
+          "0, ஏனெனில் எல்லா டிராஃப்ட்டுகளும் நிராகரிக்கப்படும்",
+          "1, போனஸ் டோக்கன் மட்டும்",
+          "K + 1, டிராஃப்ட்டுகளும் போனஸும்",
+          "K, ஒவ்வொரு டிராஃப்ட் டோக்கனுக்கும் ஒன்று"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "As alpha gets close to 1, what does E[tokens] approach for a draft length K?",
+        "ta": "alpha 1-ஐ நெருங்கும்போது, டிராஃப்ட் நீளம் K-க்கு E[tokens] எதை நெருங்கும்?"
+      },
+      "options": {
+        "en": [
+          "Infinity, since the denominator goes to 0",
+          "1",
+          "K + 1",
+          "K"
+        ],
+        "ta": [
+          "முடிவிலி, ஏனெனில் வகுத்தி 0-ஐ நெருங்குகிறது",
+          "1",
+          "K + 1",
+          "K"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this line of expected_tokens_per_step:\nnumerator = 1 - alpha ** k",
+        "ta": "expected_tokens_per_step-இல் உள்ள இந்த வரியில் உள்ள தவறைக் கண்டறியவும்:\nnumerator = 1 - alpha ** k"
+      },
+      "options": {
+        "en": [
+          "alpha should be multiplied by k, not raised to it",
+          "The exponent should be k + 1",
+          "Nothing is wrong; alpha ** k is correct",
+          "It should be 1 + alpha ** k"
+        ],
+        "ta": [
+          "alpha-வை k-ஆல் பெருக்க வேண்டும், அடுக்காக்கக் கூடாது",
+          "அடுக்கு k + 1 ஆக இருக்க வேண்டும்",
+          "தவறு இல்லை; alpha ** k சரியானது",
+          "அது 1 + alpha ** k ஆக இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

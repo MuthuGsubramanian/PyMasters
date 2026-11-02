@@ -163,5 +163,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nr = 8; d = 4096\nprint(r * (d + d))",
+        "ta": "இது என்ன அச்சிடும்?\nr = 8; d = 4096\nprint(r * (d + d))"
+      },
+      "options": {
+        "en": [
+          "65536",
+          "8192",
+          "16777216",
+          "32768"
+        ],
+        "ta": [
+          "65536",
+          "8192",
+          "16777216",
+          "32768"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In lora_total = L x 4 x [r x (d + d)], what does the 4 represent?",
+        "ta": "lora_total = L x 4 x [r x (d + d)] என்பதில் 4 எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Matrices per layer that get an adapter (Q, K, V, O)",
+          "Bytes needed to store each parameter",
+          "The number of transformer layers",
+          "The LoRA rank used for each adapter"
+        ],
+        "ta": [
+          "ஒரு layer-இல் adapter பெறும் matrix-கள் (Q, K, V, O)",
+          "ஒவ்வொரு parameter-ஐயும் சேமிக்கத் தேவையான bytes",
+          "transformer layer-களின் எண்ணிக்கை",
+          "ஒவ்வொரு adapter-க்கும் பயன்படுத்தப்படும் LoRA rank"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake:\ndef full_finetune_params(L, d, m):\n    return L * m * (d + d)",
+        "ta": "பிழையைக் கண்டுபிடிக்கவும்:\ndef full_finetune_params(L, d, m):\n    return L * m * (d + d)"
+      },
+      "options": {
+        "en": [
+          "It should use d * d, not d + d",
+          "It must also multiply by the rank r",
+          "Nothing; this is the correct full count",
+          "It should divide by m instead of multiplying"
+        ],
+        "ta": [
+          "d + d அல்ல, d * d பயன்படுத்த வேண்டும்",
+          "rank r-ஆலும் பெருக்க வேண்டும்",
+          "பிழை இல்லை; இதுவே சரியான முழு எண்ணிக்கை",
+          "m-ஆல் பெருக்காமல் வகுக்க வேண்டும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nL = 2; r = 8; d = 16\nprint(L * 4 * r * (d + d))",
+        "ta": "இது என்ன அச்சிடும்?\nL = 2; r = 8; d = 16\nprint(L * 4 * r * (d + d))"
+      },
+      "options": {
+        "en": [
+          "256",
+          "16384",
+          "2048",
+          "512"
+        ],
+        "ta": [
+          "256",
+          "16384",
+          "2048",
+          "512"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

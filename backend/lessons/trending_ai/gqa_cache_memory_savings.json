@@ -155,5 +155,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nprint(round((1 - 8/32) * 100, 1))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(round((1 - 8/32) * 100, 1))"
+      },
+      "options": {
+        "en": [
+          "0.75",
+          "25.0",
+          "75",
+          "75.0"
+        ],
+        "ta": [
+          "0.75",
+          "25.0",
+          "75",
+          "75.0"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Under GQA, which head count belongs in the KV cache size formula?",
+        "ta": "GQA-வில், KV cache அளவு சூத்திரத்தில் எந்த head எண்ணிக்கை வர வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "num_query_heads × num_kv_heads",
+          "num_kv_heads, since only those keys/values are stored",
+          "num_query_heads / num_kv_heads",
+          "num_query_heads, since queries read the cache"
+        ],
+        "ta": [
+          "num_query_heads × num_kv_heads",
+          "num_kv_heads, ஏனெனில் அந்த keys/values மட்டுமே சேமிக்கப்படுகின்றன",
+          "num_query_heads / num_kv_heads",
+          "num_query_heads, ஏனெனில் queries தான் cache-ஐப் படிக்கின்றன"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A learner computes Llama-3-8B's GQA cache as 2*32*32*128*4096*2 bytes. What's the mistake?",
+        "ta": "ஒரு மாணவர் Llama-3-8B-இன் GQA cache-ஐ 2*32*32*128*4096*2 bytes எனக் கணக்கிடுகிறார். தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "The leading factor 2 should be dropped",
+          "It uses 32 query heads instead of the 8 KV heads",
+          "head_dim should be 32, not 128",
+          "bf16 should use 4 bytes per value"
+        ],
+        "ta": [
+          "முன்னால் உள்ள 2 என்ற காரணியை நீக்க வேண்டும்",
+          "8 KV heads-க்கு பதிலாக 32 query heads-ஐப் பயன்படுத்துகிறது",
+          "head_dim 128 அல்ல, 32 ஆக இருக்க வேண்டும்",
+          "bf16-க்கு ஒரு மதிப்புக்கு 4 bytes வேண்டும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nprint(round(2*32*8*128*4096*2 / 1e9, 2))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(round(2*32*8*128*4096*2 / 1e9, 2))"
+      },
+      "options": {
+        "en": [
+          "536870912",
+          "0.54",
+          "0.27",
+          "2.15"
+        ],
+        "ta": [
+          "536870912",
+          "0.54",
+          "0.27",
+          "2.15"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

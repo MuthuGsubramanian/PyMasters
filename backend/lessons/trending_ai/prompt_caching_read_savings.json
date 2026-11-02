@@ -156,5 +156,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nprint(round((1000 * 0.1 + 0) * 3.0 / 1_000_000, 5))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(round((1000 * 0.1 + 0) * 3.0 / 1_000_000, 5))"
+      },
+      "options": {
+        "en": [
+          "0.0",
+          "0.0003",
+          "0.00003",
+          "0.003"
+        ],
+        "ta": [
+          "0.0",
+          "0.0003",
+          "0.00003",
+          "0.003"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "On Claude's API in 2026, what does a cached prefix token cost compared to the standard input rate?",
+        "ta": "2026-இல் Claude API-யில், சாதாரண input விலையுடன் ஒப்பிடும்போது cache செய்யப்பட்ட prefix token-க்கு என்ன விலை?"
+      },
+      "options": {
+        "en": [
+          "0.9x the rate (a 10% discount)",
+          "0.1x the rate (a 90% discount)",
+          "Nothing at all, cached tokens are free",
+          "0.5x the rate (a 50% discount)"
+        ],
+        "ta": [
+          "0.9x விலை (10% தள்ளுபடி)",
+          "0.1x விலை (90% தள்ளுபடி)",
+          "எதுவும் இல்லை, cache tokens இலவசம்",
+          "0.5x விலை (50% தள்ளுபடி)"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When does a later API call get a cache hit on the prefix?",
+        "ta": "பின்னர் வரும் API அழைப்புக்கு prefix-இல் எப்போது cache hit கிடைக்கும்?"
+      },
+      "options": {
+        "en": [
+          "When the prefix is roughly similar in meaning",
+          "When it starts with the exact same prefix",
+          "When the prompt has the same total token count",
+          "Whenever the same new question is asked again"
+        ],
+        "ta": [
+          "prefix-இன் பொருள் ஏறக்குறைய ஒத்திருக்கும்போது",
+          "அதே துல்லியமான prefix-உடன் தொடங்கும்போது",
+          "prompt-இன் மொத்த token எண்ணிக்கை ஒன்றாக இருக்கும்போது",
+          "அதே புதிய கேள்வி மீண்டும் கேட்கப்படும்போதெல்லாம்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this cached-cost line:\ncost = (prefix_tokens + new_tokens * 0.1) * rate / 1_000_000",
+        "ta": "இந்த cached-cost வரியில் உள்ள பிழையைக் கண்டறியவும்:\ncost = (prefix_tokens + new_tokens * 0.1) * rate / 1_000_000"
+      },
+      "options": {
+        "en": [
+          "rate should be multiplied by 0.1 as well",
+          "The 0.1 discount belongs on prefix_tokens, not new_tokens",
+          "It should multiply by 1_000_000 instead of dividing",
+          "Nothing, the order of the discount does not matter"
+        ],
+        "ta": [
+          "rate-ஐயும் 0.1-ஆல் பெருக்க வேண்டும்",
+          "0.1 தள்ளுபடி new_tokens-க்கு அல்ல, prefix_tokens-க்கு வர வேண்டும்",
+          "1_000_000-ஆல் வகுப்பதற்குப் பதில் பெருக்க வேண்டும்",
+          "பிழை இல்லை, தள்ளுபடியின் இடம் முக்கியமில்லை"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

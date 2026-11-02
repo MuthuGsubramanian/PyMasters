@@ -157,5 +157,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print? logits = [0.2, 0.9, 0.4]; print(logits.index(max(logits)))",
+        "ta": "இது என்ன அச்சிடும்? logits = [0.2, 0.9, 0.4]; print(logits.index(max(logits)))"
+      },
+      "options": {
+        "en": [
+          "0",
+          "2",
+          "0.9",
+          "1"
+        ],
+        "ta": [
+          "0",
+          "2",
+          "0.9",
+          "1"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In greedy decoding, which token is chosen at each step?",
+        "ta": "Greedy decoding-இல் ஒவ்வொரு படியிலும் எந்த token தேர்ந்தெடுக்கப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "A random token weighted by its probability",
+          "The single highest-probability token",
+          "The token left after flattening scores with temperature",
+          "A random token from the k most likely"
+        ],
+        "ta": [
+          "நிகழ்தகவுக்கு ஏற்ப எடையிடப்பட்ட சீரற்ற token",
+          "மிக அதிக நிகழ்தகவு கொண்ட ஒரே ஒரு token",
+          "temperature மூலம் மதிப்பெண்களைத் தட்டையாக்கிய பின் மீதமுள்ள token",
+          "மிகவும் சாத்தியமான k token-களில் ஒரு சீரற்ற token"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A model's output keeps repeating itself. Following Vaathiyaar's rule, what should you do?",
+        "ta": "ஒரு மாடலின் வெளியீடு அதையே திரும்பத் திரும்பச் சொல்கிறது. வாத்தியாரின் விதிப்படி என்ன செய்ய வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Switch to greedy decoding",
+          "Raise the temperature or k",
+          "Lower the temperature",
+          "Set k to 1"
+        ],
+        "ta": [
+          "greedy decoding-க்கு மாறவும்",
+          "temperature அல்லது k-ஐ அதிகரிக்கவும்",
+          "temperature-ஐக் குறைக்கவும்",
+          "k-ஐ 1 ஆக அமைக்கவும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print? s = [2.0, 1.0, 3.0]; print(sorted(range(3), key=lambda i: s[i], reverse=True)[:2])",
+        "ta": "இது என்ன அச்சிடும்? s = [2.0, 1.0, 3.0]; print(sorted(range(3), key=lambda i: s[i], reverse=True)[:2])"
+      },
+      "options": {
+        "en": [
+          "[0, 2]",
+          "[0, 1]",
+          "[3.0, 2.0]",
+          "[2, 0]"
+        ],
+        "ta": [
+          "[0, 2]",
+          "[0, 1]",
+          "[3.0, 2.0]",
+          "[2, 0]"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

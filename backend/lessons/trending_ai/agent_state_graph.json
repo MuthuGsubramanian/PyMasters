@@ -136,5 +136,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "In the run() executor, what happens when the current node becomes \"END\"?",
+        "ta": "run() executor-இல், தற்போதைய node \"END\" ஆக மாறும்போது என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "The loop stops and the final state is returned",
+          "nodes[\"END\"] runs once, then the loop stops",
+          "The graph restarts from the start node",
+          "The state is reset to its initial value"
+        ],
+        "ta": [
+          "loop நின்று, இறுதி state திருப்பித் தரப்படும்",
+          "nodes[\"END\"] ஒருமுறை இயங்கும், பிறகு loop நிற்கும்",
+          "graph மீண்டும் start node-இலிருந்து தொடங்கும்",
+          "state அதன் ஆரம்ப மதிப்புக்கு மீட்டமைக்கப்படும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In a LangGraph-style graph, what is a node?",
+        "ta": "LangGraph பாணி graph-இல், node என்பது என்ன?"
+      },
+      "options": {
+        "en": [
+          "A dict holding the agent's shared data",
+          "A function that takes the state and returns an updated state",
+          "A special name that stops the machine",
+          "A map deciding which step runs next"
+        ],
+        "ta": [
+          "agent-இன் பகிரப்பட்ட தரவை வைத்திருக்கும் dict",
+          "state-ஐ எடுத்து புதுப்பிக்கப்பட்ட state-ஐத் தரும் function",
+          "இயந்திரத்தை நிறுத்தும் சிறப்புப் பெயர்",
+          "அடுத்து எந்த படி இயங்கும் என்று தீர்மானிக்கும் map"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Bug: while current != \"END\": current = edges[current]; state = nodes[current](state). What goes wrong?",
+        "ta": "பிழை: while current != \"END\": current = edges[current]; state = nodes[current](state). என்ன தவறு நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "It never reaches END, so it loops forever",
+          "Nothing; the order of these two lines doesn't matter",
+          "It runs the start node twice",
+          "It skips the start node and ends up calling nodes['END']"
+        ],
+        "ta": [
+          "அது END-ஐ அடையாது, எனவே முடிவில்லாமல் loop ஆகும்",
+          "ஒன்றுமில்லை; இந்த இரண்டு வரிகளின் வரிசை முக்கியமில்லை",
+          "அது start node-ஐ இருமுறை இயக்கும்",
+          "அது start node-ஐத் தவிர்த்து, இறுதியில் nodes['END']-ஐ அழைக்கும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\ns = {\"n\": 3, \"k\": 1}\nprint({**s, \"n\": s[\"n\"] + 1})",
+        "ta": "இது என்ன அச்சிடும்?\ns = {\"n\": 3, \"k\": 1}\nprint({**s, \"n\": s[\"n\"] + 1})"
+      },
+      "options": {
+        "en": [
+          "{'n': 4}",
+          "{'n': 3, 'k': 1}",
+          "{'n': 4, 'k': 1}",
+          "{'n': 3, 'k': 1, 'n': 4}"
+        ],
+        "ta": [
+          "{'n': 4}",
+          "{'n': 3, 'k': 1}",
+          "{'n': 4, 'k': 1}",
+          "{'n': 3, 'k': 1, 'n': 4}"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

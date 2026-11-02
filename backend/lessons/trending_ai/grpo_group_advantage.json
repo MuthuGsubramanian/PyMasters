@@ -148,5 +148,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "In GRPO, what replaces PPO's separate critic network as the baseline?",
+        "ta": "GRPO-வில், PPO-வின் தனி critic நெட்வொர்க்குக்குப் பதிலாக baseline-ஆக எது பயன்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "A smaller critic trained with temporal-difference learning",
+          "Group mean/std of rewards for several completions of one prompt",
+          "A fixed absolute reward threshold such as 0.5",
+          "The mean reward across all prompts in the dataset"
+        ],
+        "ta": [
+          "temporal-difference கற்றலால் பயிற்றுவிக்கப்பட்ட சிறிய critic",
+          "ஒரே prompt-இன் பல completions-இன் reward-களின் group mean/std",
+          "0.5 போன்ற நிலையான முழுமையான reward வரம்பு",
+          "dataset-இல் உள்ள எல்லா prompt-களின் சராசரி reward"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Every completion scored 0.5, so std is 0. What does this print?\nprint(round((0.5 - 0.5) / (0.0 + 1e-4), 4))",
+        "ta": "எல்லா completion-களும் 0.5 மதிப்பெண் பெற்றன, எனவே std 0. இது என்ன அச்சிடும்?\nprint(round((0.5 - 0.5) / (0.0 + 1e-4), 4))"
+      },
+      "options": {
+        "en": [
+          "ZeroDivisionError",
+          "0.0",
+          "nan",
+          "1.0"
+        ],
+        "ta": [
+          "ZeroDivisionError",
+          "0.0",
+          "nan",
+          "1.0"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A group's mean reward is 0.475. One completion scored 0.3. What is the sign of its GRPO advantage?",
+        "ta": "ஒரு group-இன் சராசரி reward 0.475. ஒரு completion 0.3 மதிப்பெண் பெற்றது. அதன் GRPO advantage-இன் குறி என்ன?"
+      },
+      "options": {
+        "en": [
+          "Negative, because it is below its group's mean",
+          "Positive, because the reward is above zero",
+          "Depends on the critic's estimate of the state",
+          "Zero, since only the best and worst get updated"
+        ],
+        "ta": [
+          "எதிர்மறை, ஏனெனில் அது தன் group சராசரியை விடக் குறைவு",
+          "நேர்மறை, ஏனெனில் reward பூஜ்ஜியத்தை விட அதிகம்",
+          "critic-இன் state மதிப்பீட்டைப் பொறுத்தது",
+          "பூஜ்ஜியம், ஏனெனில் சிறந்ததும் மோசமானதும் மட்டுமே புதுப்பிக்கப்படும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this group_advantage body:\nreturn round((reward - mean_r) / std_r + eps, 4)",
+        "ta": "இந்த group_advantage உடலில் உள்ள பிழையைக் கண்டறியவும்:\nreturn round((reward - mean_r) / std_r + eps, 4)"
+      },
+      "options": {
+        "en": [
+          "eps should be subtracted from reward instead",
+          "eps is added after dividing, not to std_r in the divisor",
+          "round must be applied before subtracting mean_r",
+          "mean_r should be divided by std_r before subtracting"
+        ],
+        "ta": [
+          "eps-ஐ reward-இலிருந்து கழிக்க வேண்டும்",
+          "eps வகுத்த பிறகு கூட்டப்படுகிறது, வகுஎண்ணில் std_r-உடன் அல்ல",
+          "mean_r-ஐக் கழிப்பதற்கு முன் round செய்ய வேண்டும்",
+          "கழிப்பதற்கு முன் mean_r-ஐ std_r-ஆல் வகுக்க வேண்டும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

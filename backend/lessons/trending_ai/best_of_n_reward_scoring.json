@@ -156,5 +156,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "9 of 10 samples share the same wrong fix; 1 rare sample is correct. Why can Best-of-N still pick the right one?",
+        "ta": "10 மாதிரிகளில் 9 ஒரே தவறான திருத்தத்தைக் கொண்டுள்ளன; 1 அரிய மாதிரி மட்டுமே சரி. Best-of-N ஏன் இன்னும் சரியானதைத் தேர்வு செய்ய முடியும்?"
+      },
+      "options": {
+        "en": [
+          "It counts votes but gives rare answers extra weight",
+          "It averages all candidates into one answer",
+          "It always picks the least common answer",
+          "A verifier scores each candidate and the top score wins"
+        ],
+        "ta": [
+          "வாக்குகளை எண்ணுகிறது, ஆனால் அரிய பதில்களுக்கு கூடுதல் எடை தருகிறது",
+          "எல்லா candidate-களையும் சராசரி செய்து ஒரே பதிலாக்குகிறது",
+          "எப்போதும் மிகக் குறைவாக வரும் பதிலையே தேர்வு செய்கிறது",
+          "ஒரு verifier ஒவ்வொரு candidate-க்கும் மதிப்பெண் தருகிறது; அதிக மதிப்பெண் வெல்லும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Using the lesson's best_of_n, what prints?\nprint(best_of_n(['a', 'b', 'c'], [0.5, 0.9, 0.9]))",
+        "ta": "பாடத்தில் உள்ள best_of_n-ஐப் பயன்படுத்தினால், என்ன அச்சிடப்படும்?\nprint(best_of_n(['a', 'b', 'c'], [0.5, 0.9, 0.9]))"
+      },
+      "options": {
+        "en": [
+          "b",
+          "c",
+          "0.9",
+          "['b', 'c']"
+        ],
+        "ta": [
+          "b",
+          "c",
+          "0.9",
+          "['b', 'c']"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In best_of_n, a learner writes `if scores[i] >= scores[best_idx]:` instead of `>`. What goes wrong?",
+        "ta": "best_of_n-இல் ஒரு மாணவர் `>`-க்குப் பதிலாக `if scores[i] >= scores[best_idx]:` என்று எழுதுகிறார். என்ன தவறு நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "It returns the lowest-scoring candidate",
+          "It raises IndexError on the last element",
+          "On a tie it returns the last tied candidate, not the first",
+          "Nothing: > and >= behave the same here"
+        ],
+        "ta": [
+          "மிகக் குறைந்த மதிப்பெண் கொண்ட candidate-ஐத் திருப்பும்",
+          "கடைசி உறுப்பில் IndexError ஏற்படும்",
+          "சமநிலையில் முதல் candidate-க்குப் பதிலாக கடைசி candidate-ஐத் திருப்பும்",
+          "ஒன்றுமில்லை: இங்கே > மற்றும் >= ஒரே மாதிரி செயல்படும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "best_of_n wrongly ends with `return scores[best_idx]`. What does the lesson's example call (scores [0.62, 0.91, 0.77]) print?",
+        "ta": "best_of_n தவறாக `return scores[best_idx]` என்று முடிகிறது. பாடத்தின் உதாரண அழைப்பு (scores [0.62, 0.91, 0.77]) என்ன அச்சிடும்?"
+      },
+      "options": {
+        "en": [
+          "ans2",
+          "0.91",
+          "ans3",
+          "1"
+        ],
+        "ta": [
+          "ans2",
+          "0.91",
+          "ans3",
+          "1"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

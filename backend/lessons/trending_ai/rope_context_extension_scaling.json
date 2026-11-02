@@ -158,5 +158,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "In RoPE, what is the 'wavelength' of a dimension pair?",
+        "ta": "RoPE-இல், ஒரு dimension pair-இன் 'wavelength' என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "The number of dimension pairs in one head",
+          "The angle it rotates per position, theta_i",
+          "Positions until its rotation returns to where it started",
+          "The longest context the whole model supports"
+        ],
+        "ta": [
+          "ஒரு head-இல் உள்ள dimension pairs எண்ணிக்கை",
+          "ஒவ்வொரு position-க்கும் அது சுழலும் கோணம், theta_i",
+          "அதன் சுழற்சி தொடங்கிய இடத்துக்கே திரும்ப ஆகும் positions எண்ணிக்கை",
+          "முழு model ஆதரிக்கும் மிக நீண்ட context"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport math\nprint(round(2 * math.pi * (500000 ** (0 / 128)), 1))",
+        "ta": "இது என்ன print செய்யும்?\nimport math\nprint(round(2 * math.pi * (500000 ** (0 / 128)), 1))"
+      },
+      "options": {
+        "en": [
+          "6.3",
+          "2559196.0",
+          "0.0",
+          "3.1"
+        ],
+        "ta": [
+          "6.3",
+          "2559196.0",
+          "0.0",
+          "3.1"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "With head_dim=128, which dimension pair's wavelength limits long-range position distinctions?",
+        "ta": "head_dim=128 எனில், தொலைவான positions-ஐ வேறுபடுத்தும் திறனை எந்த dimension pair-இன் wavelength கட்டுப்படுத்துகிறது?"
+      },
+      "options": {
+        "en": [
+          "Pair 63, the slowest-rotating one",
+          "Pair 127, the last dimension index",
+          "Pair 64, the middle of head_dim",
+          "Pair 0, the fastest-rotating one"
+        ],
+        "ta": [
+          "Pair 63, மிக மெதுவாகச் சுழல்வது",
+          "Pair 127, கடைசி dimension index",
+          "Pair 64, head_dim-இன் நடுப்பகுதி",
+          "Pair 0, மிக வேகமாகச் சுழல்வது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the bug in this wavelength code:\nreturn round(2 * math.pi / (base ** ((2 * i) / head_dim)), 1)",
+        "ta": "இந்த wavelength code-இல் உள்ள பிழையைக் கண்டறியவும்:\nreturn round(2 * math.pi / (base ** ((2 * i) / head_dim)), 1)"
+      },
+      "options": {
+        "en": [
+          "head_dim should be head_dim / 2",
+          "2 * i should be just i",
+          "It divides by base ** (...) instead of multiplying",
+          "It should round to 2 decimals, not 1"
+        ],
+        "ta": [
+          "head_dim என்பது head_dim / 2 ஆக இருக்க வேண்டும்",
+          "2 * i என்பதற்குப் பதில் i மட்டும் இருக்க வேண்டும்",
+          "base ** (...) கொண்டு பெருக்குவதற்குப் பதில் வகுக்கிறது",
+          "1 அல்ல, 2 decimals-க்கு round செய்ய வேண்டும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

@@ -155,5 +155,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nimport math\np = [0.25, 0.5, 0.25]\nprint(round(-math.log(p[1]), 4))",
+        "ta": "இது என்ன அச்சிடும்?\nimport math\np = [0.25, 0.5, 0.25]\nprint(round(-math.log(p[1]), 4))"
+      },
+      "options": {
+        "en": [
+          "-0.6931",
+          "0.5",
+          "1.3863",
+          "0.6931"
+        ],
+        "ta": [
+          "-0.6931",
+          "0.5",
+          "1.3863",
+          "0.6931"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "The student is confident but wrong, so q_1[true_index] is tiny. What happens to CE = -log(q_1[true_index])?",
+        "ta": "மாணவர் மாதிரி நம்பிக்கையுடன் தவறாகக் கணிக்கிறது, அதனால் q_1[true_index] மிகச் சிறியது. CE = -log(q_1[true_index])-க்கு என்ன ஆகும்?"
+      },
+      "options": {
+        "en": [
+          "CE is unchanged; it depends only on the teacher",
+          "CE becomes very large",
+          "CE is close to 0",
+          "CE becomes negative"
+        ],
+        "ta": [
+          "CE மாறாது; அது ஆசிரியரை மட்டுமே சார்ந்தது",
+          "CE மிகப் பெரியதாகிவிடும்",
+          "CE 0-க்கு அருகில் இருக்கும்",
+          "CE எதிர்மறை எண்ணாகிவிடும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In total_loss = alpha * soft_target_loss + (1 - alpha) * CE, what does the total become when alpha = 1.0?",
+        "ta": "total_loss = alpha * soft_target_loss + (1 - alpha) * CE இல், alpha = 1.0 ஆக இருந்தால் மொத்த இழப்பு எதுவாகும்?"
+      },
+      "options": {
+        "en": [
+          "Only the soft-target loss",
+          "The sum soft + CE",
+          "The average (soft + CE) / 2",
+          "Only the hard-label cross-entropy"
+        ],
+        "ta": [
+          "soft-target loss மட்டும்",
+          "soft + CE கூட்டுத்தொகை",
+          "(soft + CE) / 2 சராசரி",
+          "hard-label cross-entropy மட்டும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nsoft, hard, alpha = 0.2, 0.4, 0.75\nprint(round(alpha * soft + (1 - alpha) * hard, 4))",
+        "ta": "இது என்ன அச்சிடும்?\nsoft, hard, alpha = 0.2, 0.4, 0.75\nprint(round(alpha * soft + (1 - alpha) * hard, 4))"
+      },
+      "options": {
+        "en": [
+          "0.25",
+          "0.6",
+          "0.35",
+          "0.15"
+        ],
+        "ta": [
+          "0.25",
+          "0.6",
+          "0.35",
+          "0.15"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

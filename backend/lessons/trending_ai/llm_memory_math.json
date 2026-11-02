@@ -167,5 +167,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "How many bytes does one weight take when a model is quantized to 4-bit?",
+        "ta": "ஒரு மாடல் 4-bit ஆக quantize செய்யப்படும்போது ஒரு weight எத்தனை bytes எடுக்கும்?"
+      },
+      "options": {
+        "en": [
+          "0.25 bytes",
+          "4 bytes",
+          "2 bytes",
+          "0.5 bytes"
+        ],
+        "ta": [
+          "0.25 bytes",
+          "4 bytes",
+          "2 bytes",
+          "0.5 bytes"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nprint(round(7e9 * (8 / 8) * 1.2 / 1e9, 2))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(round(7e9 * (8 / 8) * 1.2 / 1e9, 2))"
+      },
+      "options": {
+        "en": [
+          "8400000000.0",
+          "8.4",
+          "7.0",
+          "67.2"
+        ],
+        "ta": [
+          "8400000000.0",
+          "8.4",
+          "7.0",
+          "67.2"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: return round(params * bits * 1.2 / 1e9, 2)",
+        "ta": "தவறைக் கண்டுபிடிக்கவும்: return round(params * bits * 1.2 / 1e9, 2)"
+      },
+      "options": {
+        "en": [
+          "The overhead factor should be 0.2, not 1.2",
+          "It should divide by 1e6, not 1e9, for gigabytes",
+          "round() should be replaced with int()",
+          "bits must be divided by 8 to get bytes per weight"
+        ],
+        "ta": [
+          "overhead காரணி 1.2 அல்ல, 0.2 ஆக இருக்க வேண்டும்",
+          "gigabytes-க்கு 1e9 அல்ல, 1e6 ஆல் வகுக்க வேண்டும்",
+          "round()-க்கு பதிலாக int() பயன்படுத்த வேண்டும்",
+          "ஒரு weight-க்கான bytes பெற bits-ஐ 8 ஆல் வகுக்க வேண்டும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why does the RAM formula multiply by 1.2?",
+        "ta": "RAM சூத்திரம் ஏன் 1.2 ஆல் பெருக்குகிறது?"
+      },
+      "options": {
+        "en": [
+          "To reserve ~20% for KV cache, activations and overhead",
+          "To convert GB into GiB",
+          "To make up for accuracy lost during quantization",
+          "To convert bits into bytes"
+        ],
+        "ta": [
+          "KV cache, activations, overhead-க்கு ~20% ஒதுக்க",
+          "GB-ஐ GiB ஆக மாற்ற",
+          "quantization-இல் இழந்த துல்லியத்தை ஈடுசெய்ய",
+          "bits-ஐ bytes ஆக மாற்ற"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }
