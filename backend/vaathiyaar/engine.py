@@ -509,11 +509,32 @@ def _qubrid2_stream(messages: list, options: dict):
             yield token
 
 
+# Deterministic provider for the CI scenario tests (2026-11-03): fixed, well-formed tutor replies so every
+# tutor feature can be exercised without API keys. Never answers real learners — refused in production.
+STUB_REPLY = "Stub tutor reply."
+
+
+def _stub_guard() -> None:
+    if os.getenv("K_SERVICE") or os.getenv("PYMASTERS_ENV") == "production":
+        raise RuntimeError("stub provider disabled in production")
+
+
+def _stub_complete(messages: list, options: dict) -> str:
+    _stub_guard()
+    return json.dumps({"message": STUB_REPLY, "phase": "feedback", "animation": None})
+
+
+def _stub_stream(messages: list, options: dict):
+    _stub_guard()
+    for word in STUB_REPLY.split(" "):
+        yield word + " "
+
+
 # Registries: provider name → callable. Extend to add fallback providers.
 _PROVIDER_COMPLETE = {"ollama": _ollama_complete, "gemini": _gemini_complete,
-                      "qubrid": _qubrid_complete, "qubrid2": _qubrid2_complete}
+                      "qubrid": _qubrid_complete, "qubrid2": _qubrid2_complete, "stub": _stub_complete}
 _PROVIDER_STREAM = {"ollama": _ollama_stream, "gemini": _gemini_stream,
-                    "qubrid": _qubrid_stream, "qubrid2": _qubrid2_stream}
+                    "qubrid": _qubrid_stream, "qubrid2": _qubrid2_stream, "stub": _stub_stream}
 
 
 def _db_path_for_exemplars() -> str:
