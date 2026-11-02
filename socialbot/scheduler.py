@@ -113,7 +113,28 @@ def refresh_metrics():
                       [item_id, taken, v, l, cm])
 
 
+def resume_interrupted():
+    """Ticks never overlap (systemd oneshot), so an item still 'drafted' at tick start was cut off mid-render
+    (e.g. the laptop's thermal power-off). Re-render it from the saved draft: no new LLM cost."""
+    from socialbot import pipeline, sources
+    for it in store.items(status="drafted", limit=20):
+        les = next((l for l in sources.candidates() if l["key"] == it["source_key"]), None)
+        if not les:
+            store.update_item(it["id"], status="failed", error="resume: lesson no longer exists")
+            continue
+        log.info("resuming interrupted render #%s %s", it["id"], it["kind"])
+        out_dir = config.RENDERS_DIR / f"{datetime.now():%Y%m%d}-{it['kind']}-{it['id']}"
+        try:
+            media = pipeline.render(it["kind"], it["draft"], les, out_dir)
+            media["lesson_url"] = les["url"]
+            store.update_item(it["id"], status="rendered", media=media, error=None)
+        except Exception as e:
+            log.exception("resume render failed")
+            store.update_item(it["id"], status="failed", error=f"render: {e}"[:500])
+
+
 def tick():
+    resume_interrupted()
     hour = datetime.now(TZ).hour
     if 1 <= hour < 6:
         produce_ahead()

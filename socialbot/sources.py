@@ -81,7 +81,7 @@ def pick(kind: str, n: int = 1, seed=None) -> list:
         if (les["key"], kind) in used:
             continue
         tk = _tokens(les["title"] + " " + les["topic"])
-        if any(len(tk & r) / max(1, len(tk | r)) > 0.5 for r in recent):
+        if any(len(tk & r) / max(1, min(len(tk), len(r))) >= 0.5 for r in recent):  # overlap vs the smaller title
             continue
         w = TRACK_WEIGHT.get(les["track"], 1.0)
         if kind == "long":
