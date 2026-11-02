@@ -1523,9 +1523,9 @@ export default function Classroom() {
     }, []);
 
     const loadLessons = () => {
-        const params = user?.id ? `?user_id=${user.id}` : '';
+        // lang trims titles/descriptions to this language + English (smaller catalogue download).
         return api
-            .get(`/classroom/lessons${params}`)
+            .get('/classroom/lessons', { params: { user_id: user?.id || undefined, lang: language } })
             .then((r) => {
                 setLessons(r.data.lessons ?? r.data);
                 if (r.data.profile_hint) setProfileHint(r.data.profile_hint);
@@ -1535,7 +1535,7 @@ export default function Classroom() {
             .finally(() => setLessonsLoading(false));
     };
 
-    useEffect(() => { loadLessons(); }, [user]);
+    useEffect(() => { loadLessons(); }, [user, language]);   // refetch if the profile language arrives late
 
     useEffect(() => {
         if (user?.id) {

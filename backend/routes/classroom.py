@@ -708,7 +708,7 @@ def chat_stream(request: ChatRequest, caller: str = Depends(get_current_user_id)
 
 
 @router.get("/lessons")
-def list_lessons(user_id: str = None, authorization: str = Header(None)):
+def list_lessons(user_id: str = None, lang: str = None, authorization: str = Header(None)):
     """
     List all available lessons, personalized to the user's onboarding profile.
 
@@ -749,6 +749,15 @@ def list_lessons(user_id: str = None, authorization: str = Header(None)):
         verified_user_id = optional_user_id(authorization)
         if not has_enterprise_access(_get_db_path(), verified_user_id):
             lessons = [l for l in lessons if l.get("track") not in ENTERPRISE_TRACKS]
+
+        # ?lang= (2026-11-02): keep only that language + English in title/description. The catalogue
+        # is the biggest response on a slow India -> us-central1 path (-33% gzip for English).
+        # Copies, never mutating the cached lesson dicts.
+        if lang and re.fullmatch(r"[a-z]{2}(-[A-Za-z]{2,4})?", lang):
+            keep = {lang, "en"}
+            lessons = [{**l, **{k: {c: t for c, t in l[k].items() if c in keep} or l[k]
+                                for k in ("title", "description") if isinstance(l.get(k), dict)}}
+                       for l in lessons]
 
         if user_id:
             try:
