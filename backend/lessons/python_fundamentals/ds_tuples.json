@@ -180,5 +180,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ncoords = (10, 20)\nx, y = coords\nprint(y, x)",
+        "ta": "இது என்ன அச்சிடும்?\ncoords = (10, 20)\nx, y = coords\nprint(y, x)"
+      },
+      "options": {
+        "en": [
+          "20 10",
+          "Error: a tuple can't be unpacked",
+          "(20, 10)",
+          "10 20"
+        ],
+        "ta": [
+          "20 10",
+          "பிழை: tuple-ஐ unpack செய்ய முடியாது",
+          "(20, 10)",
+          "10 20"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why can a tuple be used as a dictionary key while a list cannot?",
+        "ta": "tuple-ஐ dictionary key ஆகப் பயன்படுத்தலாம், ஆனால் list-ஐ ஏன் பயன்படுத்த முடியாது?"
+      },
+      "options": {
+        "en": [
+          "Lists are always longer than tuples",
+          "Tuples are immutable; lists can be changed",
+          "Dict keys must be written with round brackets",
+          "Tuples are always kept in sorted order"
+        ],
+        "ta": [
+          "List-கள் எப்போதும் tuple-களை விட நீளமானவை",
+          "Tuple-களை மாற்ற முடியாது; list-களை மாற்றலாம்",
+          "Dict key-கள் வட்ட அடைப்புக்குறிகளுடன் எழுதப்பட வேண்டும்",
+          "Tuple-கள் எப்போதும் வரிசைப்படுத்தப்பட்டே இருக்கும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: what happens when this runs?\nt = (1, 2, 3)\nt[0] = 9",
+        "ta": "தவறைக் கண்டுபிடியுங்கள்: இது இயங்கும்போது என்ன நடக்கும்?\nt = (1, 2, 3)\nt[0] = 9"
+      },
+      "options": {
+        "en": [
+          "t becomes (9, 2, 3)",
+          "Python silently ignores the second line",
+          "t becomes (9, 1, 2, 3)",
+          "TypeError: a tuple's items can't be changed"
+        ],
+        "ta": [
+          "t என்பது (9, 2, 3) ஆக மாறும்",
+          "Python இரண்டாவது வரியை எதுவும் சொல்லாமல் புறக்கணிக்கும்",
+          "t என்பது (9, 1, 2, 3) ஆக மாறும்",
+          "TypeError: tuple-இன் உருப்படிகளை மாற்ற முடியாது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\ndef stats(nums):\n    return min(nums), max(nums), sum(nums)\nprint(stats([3, 1, 9]))",
+        "ta": "இது என்ன அச்சிடும்?\ndef stats(nums):\n    return min(nums), max(nums), sum(nums)\nprint(stats([3, 1, 9]))"
+      },
+      "options": {
+        "en": [
+          "TypeError: a function returns only one value",
+          "(1, 9, 13)",
+          "1",
+          "[1, 9, 13]"
+        ],
+        "ta": [
+          "TypeError: ஒரு function ஒரே ஒரு மதிப்பை மட்டுமே திருப்பும்",
+          "(1, 9, 13)",
+          "1",
+          "[1, 9, 13]"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

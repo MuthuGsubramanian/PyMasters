@@ -246,5 +246,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nit = iter([1, 2])\nnext(it)\nprint(next(it))",
+        "ta": "இது என்ன அச்சிடும்?\nit = iter([1, 2])\nnext(it)\nprint(next(it))"
+      },
+      "options": {
+        "en": [
+          "1",
+          "2",
+          "StopIteration",
+          "[1, 2]"
+        ],
+        "ta": [
+          "1",
+          "2",
+          "StopIteration",
+          "[1, 2]"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Inside __next__, how should an iterator signal that there are no more items?",
+        "ta": "__next__ உள்ளே, இனி உருப்படிகள் இல்லை என்பதை ஒரு iterator எப்படிக் குறிக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "raise IndexError",
+          "return False",
+          "return None",
+          "raise StopIteration"
+        ],
+        "ta": [
+          "raise IndexError",
+          "return False",
+          "return None",
+          "raise StopIteration"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Which statement about iterables and iterators is true?",
+        "ta": "iterable மற்றும் iterator பற்றிய எந்தக் கூற்று சரியானது?"
+      },
+      "options": {
+        "en": [
+          "Iterables remember their position; iterators do not",
+          "A list is an iterator because it can be looped",
+          "An iterator only needs __next__, never __iter__",
+          "Every iterator is an iterable, but not every iterable is an iterator"
+        ],
+        "ta": [
+          "iterable-கள் தங்கள் நிலையை நினைவில் வைக்கும்; iterator-கள் வைக்காது",
+          "லூப் செய்ய முடிவதால் list ஒரு iterator ஆகும்",
+          "iterator-க்கு __next__ மட்டும் போதும், __iter__ தேவையே இல்லை",
+          "ஒவ்வொரு iterator-உம் ஒரு iterable, ஆனால் ஒவ்வொரு iterable-உம் iterator அல்ல"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "A class has a working __next__, but its __iter__ body is just `pass`. Why does a for loop over it fail?",
+        "ta": "ஒரு class-இல் __next__ சரியாக வேலை செய்கிறது, ஆனால் __iter__ உள்ளே `pass` மட்டுமே உள்ளது. அதன் மேல் for loop ஏன் தோல்வியடைகிறது?"
+      },
+      "options": {
+        "en": [
+          "It doesn't fail; for loops only call __next__",
+          "__iter__ must return the iterator, usually self",
+          "The class also needs a __len__ method",
+          "__next__ must return None at the end"
+        ],
+        "ta": [
+          "தோல்வியடையாது; for loop-கள் __next__-ஐ மட்டுமே அழைக்கும்",
+          "__iter__ iterator-ஐத் திருப்பித் தர வேண்டும், பொதுவாக self",
+          "அந்த class-க்கு __len__ method-உம் தேவை",
+          "இறுதியில் __next__ None-ஐத் திருப்பித் தர வேண்டும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

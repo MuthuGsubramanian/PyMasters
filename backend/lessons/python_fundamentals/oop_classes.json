@@ -226,5 +226,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nclass D:\n    def __init__(self, n): self.n = n\nprint(D(\"Rex\").n)",
+        "ta": "இது என்ன அச்சிடும்?\nclass D:\n    def __init__(self, n): self.n = n\nprint(D(\"Rex\").n)"
+      },
+      "options": {
+        "en": [
+          "TypeError: missing argument for self",
+          "Rex",
+          "None",
+          "n"
+        ],
+        "ta": [
+          "TypeError: self-க்கான argument இல்லை",
+          "Rex",
+          "None",
+          "n"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When you call d.bark() on a Dog instance d, what does Python pass as self?",
+        "ta": "Dog instance ஆன d-யில் d.bark() என்று அழைக்கும்போது, Python self ஆக எதை அனுப்புகிறது?"
+      },
+      "options": {
+        "en": [
+          "The Dog class itself",
+          "The instance d, automatically",
+          "Nothing — you must write d.bark(d)",
+          "The string 'self'"
+        ],
+        "ta": [
+          "Dog class-ஐயே",
+          "instance d-யை, தானாகவே",
+          "எதுவும் இல்லை — நீங்கள் d.bark(d) என்று எழுத வேண்டும்",
+          "'self' என்ற string-ஐ"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: inside class Dog, the method is written as def bark(): return 'Woof'. Calling Dog().bark() fails. Why?",
+        "ta": "தவறைக் கண்டுபிடி: class Dog-க்குள் method def bark(): return 'Woof' என எழுதப்பட்டுள்ளது. Dog().bark() தோல்வியடைகிறது. ஏன்?"
+      },
+      "options": {
+        "en": [
+          "Dog() needs a name argument",
+          "Methods must use print, not return",
+          "Class names must be lowercase",
+          "bark needs self as its first parameter"
+        ],
+        "ta": [
+          "Dog()-க்கு ஒரு name argument தேவை",
+          "Method-கள் return அல்ல, print பயன்படுத்த வேண்டும்",
+          "Class பெயர்கள் சிறிய எழுத்தில் இருக்க வேண்டும்",
+          "bark-க்கு முதல் parameter ஆக self தேவை"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Dog.species is a class variable, while self.name is an instance variable. Which statement is true?",
+        "ta": "Dog.species ஒரு class variable, self.name ஒரு instance variable. எந்தக் கூற்று சரி?"
+      },
+      "options": {
+        "en": [
+          "species is shared by all dogs; name is per dog",
+          "Only the first Dog created can see species",
+          "species is unique to each dog, like name",
+          "name is shared by all Dog objects"
+        ],
+        "ta": [
+          "species எல்லா நாய்களுக்கும் பொது; name ஒவ்வொரு நாய்க்கும் தனி",
+          "முதலில் உருவான Dog மட்டுமே species-ஐப் பார்க்க முடியும்",
+          "name போலவே species ஒவ்வொரு நாய்க்கும் தனித்தது",
+          "name எல்லா Dog object-களுக்கும் பொதுவானது"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

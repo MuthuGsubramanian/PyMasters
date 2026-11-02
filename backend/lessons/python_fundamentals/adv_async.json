@@ -250,5 +250,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nimport asyncio\nasync def f(): return 'hi'\nprint(asyncio.run(f()))",
+        "ta": "இது என்ன அச்சிடும்?\nimport asyncio\nasync def f(): return 'hi'\nprint(asyncio.run(f()))"
+      },
+      "options": {
+        "en": [
+          "<coroutine object f>",
+          "hi",
+          "None",
+          "An error: f() must be awaited first"
+        ],
+        "ta": [
+          "<coroutine object f>",
+          "hi",
+          "None",
+          "பிழை: f() முதலில் await செய்யப்பட வேண்டும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Calling a function defined with async def, like f(), without await or asyncio.run() gives you what?",
+        "ta": "async def மூலம் வரையறுக்கப்பட்ட f() ஐ await அல்லது asyncio.run() இல்லாமல் அழைத்தால் என்ன கிடைக்கும்?"
+      },
+      "options": {
+        "en": [
+          "A coroutine object that has not run yet",
+          "The function's return value",
+          "None, because nothing ran",
+          "A new thread running the function"
+        ],
+        "ta": [
+          "இன்னும் இயங்காத ஒரு coroutine object",
+          "செயல்பாட்டின் திருப்பு மதிப்பு",
+          "None, ஏனெனில் எதுவும் இயங்கவில்லை",
+          "செயல்பாட்டை இயக்கும் ஒரு புதிய thread"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Assume asyncio is imported. What prints?\nasync def v(x): return x\nasync def main(): return await asyncio.gather(v(1), v(2))\nprint(asyncio.run(main()))",
+        "ta": "asyncio import செய்யப்பட்டதாகக் கொள்க. என்ன அச்சிடப்படும்?\nasync def v(x): return x\nasync def main(): return await asyncio.gather(v(1), v(2))\nprint(asyncio.run(main()))"
+      },
+      "options": {
+        "en": [
+          "1",
+          "(1, 2) in a random order",
+          "2",
+          "[1, 2]"
+        ],
+        "ta": [
+          "1",
+          "சீரற்ற வரிசையில் (1, 2)",
+          "2",
+          "[1, 2]"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "According to the lesson, which job benefits most from async/await?",
+        "ta": "பாடத்தின்படி, எந்த வேலைக்கு async/await அதிகம் பயன்படும்?"
+      },
+      "options": {
+        "en": [
+          "Resizing a big image pixel by pixel",
+          "Sorting a huge list in memory",
+          "Calculating millions of prime numbers",
+          "Sending many network requests and waiting for replies"
+        ],
+        "ta": [
+          "ஒரு பெரிய படத்தை pixel வாரியாக மறுஅளவிடுதல்",
+          "நினைவகத்தில் ஒரு பெரிய பட்டியலை வரிசைப்படுத்துதல்",
+          "மில்லியன் கணக்கான பகா எண்களைக் கணக்கிடுதல்",
+          "பல network கோரிக்கைகளை அனுப்பி பதில்களுக்காகக் காத்திருத்தல்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

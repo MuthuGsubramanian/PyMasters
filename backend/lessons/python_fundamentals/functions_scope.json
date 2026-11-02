@@ -265,5 +265,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nx = 10\ndef f(): x = 99\nf(); print(x)",
+        "ta": "இது என்ன அச்சிடும்?\nx = 10\ndef f(): x = 99\nf(); print(x)"
+      },
+      "options": {
+        "en": [
+          "None",
+          "10",
+          "An error: x is not defined",
+          "99"
+        ],
+        "ta": [
+          "None",
+          "10",
+          "பிழை: x வரையறுக்கப்படவில்லை",
+          "99"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Following the LEGB rule, in which order does Python search for a name?",
+        "ta": "LEGB விதியின்படி, Python ஒரு பெயரை எந்த வரிசையில் தேடுகிறது?"
+      },
+      "options": {
+        "en": [
+          "Global → Local → Enclosing → Built-in",
+          "Built-in → Global → Enclosing → Local",
+          "Local → Enclosing → Global → Built-in",
+          "Local → Global only; enclosing functions are skipped"
+        ],
+        "ta": [
+          "Global → Local → Enclosing → Built-in",
+          "Built-in → Global → Enclosing → Local",
+          "Local → Enclosing → Global → Built-in",
+          "Local → Global மட்டும்; வெளிப்புறச் செயல்பாடுகள் தவிர்க்கப்படும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "This should add n to the global total but fails. What is the fix?\ntotal = 0\ndef add(n): total += n",
+        "ta": "இது n-ஐ global total-இல் கூட்ட வேண்டும், ஆனால் தோல்வியடைகிறது. என்ன திருத்தம்?\ntotal = 0\ndef add(n): total += n"
+      },
+      "options": {
+        "en": [
+          "Add 'return total' at the end of the function",
+          "Rename total inside the function to Total",
+          "Put 'global total' inside the function before += runs",
+          "Change += to = so Python can see the global"
+        ],
+        "ta": [
+          "செயல்பாட்டின் முடிவில் 'return total' சேர்க்கவும்",
+          "செயல்பாட்டுக்குள் total-ஐ Total என மறுபெயரிடவும்",
+          "+= இயங்கும் முன் செயல்பாட்டுக்குள் 'global total' வைக்கவும்",
+          "Python global-ஐப் பார்க்க += ஐ = ஆக மாற்றவும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What happens when this runs?\ndef f(): y = 5\nf()\nprint(y)",
+        "ta": "இது இயங்கும்போது என்ன நடக்கும்?\ndef f(): y = 5\nf()\nprint(y)"
+      },
+      "options": {
+        "en": [
+          "It prints 5",
+          "It prints 0",
+          "It prints None",
+          "NameError, because y is local to f()"
+        ],
+        "ta": [
+          "5 அச்சிடும்",
+          "0 அச்சிடும்",
+          "None அச்சிடும்",
+          "NameError, ஏனெனில் y என்பது f()-க்கு local"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

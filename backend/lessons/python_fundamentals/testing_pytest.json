@@ -128,5 +128,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "Which of these file names will pytest automatically discover as a test file?",
+        "ta": "இவற்றில் எந்தக் கோப்புப் பெயரை pytest தானாகவே சோதனைக் கோப்பாகக் கண்டறியும்?"
+      },
+      "options": {
+        "en": [
+          "testmath.txt",
+          "test_math.py",
+          "math_tests.py",
+          "checks_math.py"
+        ],
+        "ta": [
+          "testmath.txt",
+          "test_math.py",
+          "math_tests.py",
+          "checks_math.py"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In test_math.py you write def check_addition(): assert 1 + 1 == 2. What happens when you run pytest?",
+        "ta": "test_math.py-இல் def check_addition(): assert 1 + 1 == 2 என்று எழுதுகிறீர்கள். pytest இயக்கினால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "pytest raises an error for a bad file name",
+          "It fails because the assert is missing a message",
+          "It runs and passes like any other function",
+          "It is skipped: the name doesn't start with test_"
+        ],
+        "ta": [
+          "தவறான கோப்புப் பெயருக்காக pytest பிழை எழுப்பும்",
+          "assert-இல் செய்தி இல்லாததால் தோல்வியடையும்",
+          "மற்ற செயல்பாடுகளைப் போல இயங்கி வெற்றி பெறும்",
+          "அது தவிர்க்கப்படும்: பெயர் test_ என்று தொடங்கவில்லை"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "How does test_len(sample_list) receive the list from the @pytest.fixture named sample_list?",
+        "ta": "sample_list என்ற @pytest.fixture-இலிருந்து test_len(sample_list) பட்டியலை எப்படிப் பெறுகிறது?"
+      },
+      "options": {
+        "en": [
+          "You must call sample_list() inside the test",
+          "pytest matches the parameter name to the fixture",
+          "The fixture must be passed in the pytest command",
+          "You import sample_list as a global variable"
+        ],
+        "ta": [
+          "சோதனைக்குள் sample_list()-ஐ அழைக்க வேண்டும்",
+          "அளவுருவின் பெயரை fixture உடன் pytest பொருத்துகிறது",
+          "pytest கட்டளையில் fixture-ஐக் கொடுக்க வேண்டும்",
+          "sample_list-ஐ global மாறியாக import செய்ய வேண்டும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nprint(10 / 2)",
+        "ta": "இது என்ன அச்சிடும்?\nprint(10 / 2)"
+      },
+      "options": {
+        "en": [
+          "5.00",
+          "TypeError",
+          "5",
+          "5.0"
+        ],
+        "ta": [
+          "5.00",
+          "TypeError",
+          "5",
+          "5.0"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

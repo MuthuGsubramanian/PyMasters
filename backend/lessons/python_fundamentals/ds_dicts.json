@@ -175,5 +175,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nd = {'a': 1}\nprint(d.get('b', 0))",
+        "ta": "இது என்ன அச்சிடும்?\nd = {'a': 1}\nprint(d.get('b', 0))"
+      },
+      "options": {
+        "en": [
+          "None",
+          "b",
+          "0",
+          "KeyError is raised"
+        ],
+        "ta": [
+          "None",
+          "b",
+          "0",
+          "KeyError எழுப்பப்படும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nd = {'a': 1}\nd['a'] = 5\nprint(d)",
+        "ta": "இது என்ன அச்சிடும்?\nd = {'a': 1}\nd['a'] = 5\nprint(d)"
+      },
+      "options": {
+        "en": [
+          "{'a': 5}",
+          "{'a': 1, 'a': 5}",
+          "{'a': 1}",
+          "An error, because 'a' already exists"
+        ],
+        "ta": [
+          "{'a': 5}",
+          "{'a': 1, 'a': 5}",
+          "{'a': 1}",
+          "பிழை, ஏனெனில் 'a' ஏற்கனவே உள்ளது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Which of these CANNOT be used as a dictionary key?",
+        "ta": "இவற்றில் எதை dictionary key ஆகப் பயன்படுத்த முடியாது?"
+      },
+      "options": {
+        "en": [
+          "[1, 2]",
+          "'name'",
+          "(1, 2)",
+          "42"
+        ],
+        "ta": [
+          "[1, 2]",
+          "'name'",
+          "(1, 2)",
+          "42"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What is wrong with this code?\ncounts = {}\ncounts['a'] += 1",
+        "ta": "இந்தக் குறியீட்டில் உள்ள தவறு என்ன?\ncounts = {}\ncounts['a'] += 1"
+      },
+      "options": {
+        "en": [
+          "Nothing is wrong; counts['a'] becomes 1",
+          "'a' is not a key yet, so it raises KeyError",
+          "+= cannot be used on dictionary values",
+          "Strings cannot be dictionary keys"
+        ],
+        "ta": [
+          "தவறு எதுவும் இல்லை; counts['a'] 1 ஆகிவிடும்",
+          "'a' இன்னும் key ஆக இல்லை, அதனால் KeyError எழும்",
+          "dictionary மதிப்புகளில் += பயன்படுத்த முடியாது",
+          "String-களை dictionary key ஆகப் பயன்படுத்த முடியாது"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

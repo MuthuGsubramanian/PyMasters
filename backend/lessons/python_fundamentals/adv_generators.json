@@ -216,5 +216,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ng = (x*2 for x in range(3))\nprint(next(g), next(g))",
+        "ta": "இது என்ன அச்சிடும்?\ng = (x*2 for x in range(3))\nprint(next(g), next(g))"
+      },
+      "options": {
+        "en": [
+          "0 2",
+          "[0, 2]",
+          "2 4",
+          "0 0"
+        ],
+        "ta": [
+          "0 2",
+          "[0, 2]",
+          "2 4",
+          "0 0"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\ng = (x for x in range(3))\nprint(sum(g), sum(g))",
+        "ta": "இது என்ன அச்சிடும்?\ng = (x for x in range(3))\nprint(sum(g), sum(g))"
+      },
+      "options": {
+        "en": [
+          "Error: TypeError",
+          "3 0",
+          "3 3",
+          "0 3"
+        ],
+        "ta": [
+          "பிழை: TypeError",
+          "3 0",
+          "3 3",
+          "0 3"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\ndef f(): yield 1; yield 2\nprint(list(f()))",
+        "ta": "இது என்ன அச்சிடும்?\ndef f(): yield 1; yield 2\nprint(list(f()))"
+      },
+      "options": {
+        "en": [
+          "[1, 2]",
+          "1",
+          "[2]",
+          "[1]"
+        ],
+        "ta": [
+          "[1, 2]",
+          "1",
+          "[2]",
+          "[1]"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "This should yield evens from 0 to n inclusive. What's wrong?\ndef evens(n):\n    for i in range(0, n, 2): yield i",
+        "ta": "இது 0 முதல் n வரை (n உட்பட) இரட்டை எண்களை yield செய்ய வேண்டும். என்ன தவறு?\ndef evens(n):\n    for i in range(0, n, 2): yield i"
+      },
+      "options": {
+        "en": [
+          "yield must be replaced with return",
+          "range stops before n; use n+1",
+          "for loops can't be used inside generators",
+          "The step 2 should be 1"
+        ],
+        "ta": [
+          "yield-ஐ return ஆக மாற்ற வேண்டும்",
+          "range, n-க்கு முன்பே நின்றுவிடும்; n+1 பயன்படுத்தவும்",
+          "generator-களுக்குள் for loop பயன்படுத்த முடியாது",
+          "படி 2-க்கு பதிலாக 1 இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

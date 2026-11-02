@@ -191,5 +191,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does the Global Interpreter Lock (GIL) do?",
+        "ta": "Global Interpreter Lock (GIL) என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Lets only one thread run Python bytecode at a time",
+          "Stops threads from doing any I/O at the same time",
+          "Locks a shared list so threads can't append to it",
+          "Gives each thread its own separate memory"
+        ],
+        "ta": [
+          "ஒரே நேரத்தில் ஒரு thread மட்டுமே Python bytecode-ஐ இயக்க அனுமதிக்கிறது",
+          "threads ஒரே நேரத்தில் எந்த I/O-வும் செய்யாமல் தடுக்கிறது",
+          "threads append செய்ய முடியாதபடி பகிரப்பட்ட list-ஐ பூட்டுகிறது",
+          "ஒவ்வொரு thread-க்கும் தனி நினைவகம் தருகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "You need to speed up heavy number crunching on several CPU cores. Which should you use?",
+        "ta": "பல CPU cores-இல் கனமான எண் கணக்கீட்டை வேகப்படுத்த வேண்டும். எதைப் பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "asyncio, since it runs code on all cores at once",
+          "multiprocessing, since separate processes avoid the GIL",
+          "ThreadPoolExecutor, since a pool bypasses the GIL",
+          "threading, since threads share memory and are faster"
+        ],
+        "ta": [
+          "asyncio, ஏனெனில் அது எல்லா cores-இலும் ஒரே நேரத்தில் இயங்கும்",
+          "multiprocessing, ஏனெனில் தனி processes GIL-ஐத் தவிர்க்கின்றன",
+          "ThreadPoolExecutor, ஏனெனில் pool GIL-ஐத் தாண்டிச் செல்லும்",
+          "threading, ஏனெனில் threads நினைவகத்தைப் பகிர்வதால் வேகமானவை"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport threading; r = []\nt = threading.Thread(target=r.append, args=(5,))\nt.start(); t.join(); print(r)",
+        "ta": "இது என்ன அச்சிடும்?\nimport threading; r = []\nt = threading.Thread(target=r.append, args=(5,))\nt.start(); t.join(); print(r)"
+      },
+      "options": {
+        "en": [
+          "[]",
+          "[(5,)]",
+          "[5]",
+          "None"
+        ],
+        "ta": [
+          "[]",
+          "[(5,)]",
+          "[5]",
+          "None"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: t = threading.Thread(target=task('a')); t.start()",
+        "ta": "தவறைக் கண்டறியவும்: t = threading.Thread(target=task('a')); t.start()"
+      },
+      "options": {
+        "en": [
+          "task('a') runs at once in the main thread; use args=('a',)",
+          "Thread needs a name= argument before it can start",
+          "start() must be called before the Thread is created",
+          "Nothing is wrong; task('a') runs in the new thread"
+        ],
+        "ta": [
+          "task('a') main thread-இலேயே உடனே இயங்கும்; args=('a',) பயன்படுத்தவும்",
+          "Thread தொடங்க name= argument தேவை",
+          "Thread உருவாக்கும் முன்பே start() அழைக்கப்பட வேண்டும்",
+          "தவறு இல்லை; task('a') புதிய thread-இல் இயங்கும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

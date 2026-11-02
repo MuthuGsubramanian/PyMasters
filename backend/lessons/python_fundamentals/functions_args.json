@@ -237,5 +237,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ndef f(*args):\n    print(type(args).__name__)\nf(1, 2)",
+        "ta": "இது என்ன அச்சிடும்?\ndef f(*args):\n    print(type(args).__name__)\nf(1, 2)"
+      },
+      "options": {
+        "en": [
+          "tuple",
+          "int",
+          "dict",
+          "list"
+        ],
+        "ta": [
+          "tuple",
+          "int",
+          "dict",
+          "list"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\ndef greet(name, greeting='Hello'):\n    return greeting + ' ' + name\nprint(greet('Ana'))",
+        "ta": "இது என்ன அச்சிடும்?\ndef greet(name, greeting='Hello'):\n    return greeting + ' ' + name\nprint(greet('Ana'))"
+      },
+      "options": {
+        "en": [
+          "TypeError: missing 'greeting'",
+          "Hello Ana",
+          "Ana",
+          "None Ana"
+        ],
+        "ta": [
+          "TypeError: 'greeting' கொடுக்கப்படவில்லை",
+          "Hello Ana",
+          "Ana",
+          "None Ana"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Inside def f(**kwargs):, which loop correctly gets each key and its value?",
+        "ta": "def f(**kwargs): உள்ளே, ஒவ்வொரு key-யையும் அதன் value-வையும் சரியாகப் பெறும் loop எது?"
+      },
+      "options": {
+        "en": [
+          "for k, v in kwargs.pairs():",
+          "for k, v in args.items():",
+          "for k, v in kwargs:",
+          "for k, v in kwargs.items():"
+        ],
+        "ta": [
+          "for k, v in kwargs.pairs():",
+          "for k, v in args.items():",
+          "for k, v in kwargs:",
+          "for k, v in kwargs.items():"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Which function header breaks Python's parameter order rule?",
+        "ta": "Python-இன் parameter வரிசை விதியை மீறும் function header எது?"
+      },
+      "options": {
+        "en": [
+          "def f(*args):",
+          "def f(**kwargs, *args):",
+          "def f(a, *args, b, **kwargs):",
+          "def f(a, *args, **kwargs):"
+        ],
+        "ta": [
+          "def f(*args):",
+          "def f(**kwargs, *args):",
+          "def f(a, *args, b, **kwargs):",
+          "def f(a, *args, **kwargs):"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

@@ -195,5 +195,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "According to the lesson, what is the main reason to write a failing test before the code?",
+        "ta": "பாடத்தின்படி, code எழுதுவதற்கு முன் தோல்வியடையும் test-ஐ எழுதுவதற்கான முக்கிய காரணம் என்ன?"
+      },
+      "options": {
+        "en": [
+          "It removes the need to refactor later",
+          "It makes the final code run faster",
+          "It makes you design the interface from the user's perspective",
+          "pytest cannot run tests on code that already exists"
+        ],
+        "ta": [
+          "பின்னர் refactor செய்ய வேண்டிய தேவையை அது நீக்குகிறது",
+          "இறுதி code வேகமாக இயங்க அது உதவுகிறது",
+          "பயனரின் பார்வையிலிருந்து interface-ஐ வடிவமைக்க அது உங்களைத் தூண்டுகிறது",
+          "ஏற்கனவே உள்ள code-இல் pytest test-களை இயக்க முடியாது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Using the lesson's Queue class: q = Queue(); q.enqueue(5); q.enqueue(7); print(q.dequeue(), len(q)). What is printed?",
+        "ta": "பாடத்தில் உள்ள Queue class-ஐப் பயன்படுத்தி: q = Queue(); q.enqueue(5); q.enqueue(7); print(q.dequeue(), len(q)). என்ன அச்சிடப்படும்?"
+      },
+      "options": {
+        "en": [
+          "7 1",
+          "7 2",
+          "5 2",
+          "5 1"
+        ],
+        "ta": [
+          "7 1",
+          "7 2",
+          "5 2",
+          "5 1"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: dequeue is `return self._data.pop()`. Why does `q.enqueue(1); q.enqueue(2); assert q.dequeue() == 1` fail?",
+        "ta": "தவறைக் கண்டறியுங்கள்: dequeue என்பது `return self._data.pop()`. `q.enqueue(1); q.enqueue(2); assert q.dequeue() == 1` ஏன் தோல்வியடைகிறது?"
+      },
+      "options": {
+        "en": [
+          "pop() removes the item but returns None",
+          "pop() needs an index, so it raises an error",
+          "pop() with no index removes the last item, so it returns 2",
+          "The test is wrong: a queue should return the newest item first"
+        ],
+        "ta": [
+          "pop() உருப்படியை நீக்கும் ஆனால் None-ஐத் தரும்",
+          "pop()-க்கு index தேவை, எனவே அது பிழையை எழுப்பும்",
+          "index இல்லாத pop() கடைசி உருப்படியை நீக்கும், எனவே 2-ஐத் தரும்",
+          "test தவறு: queue புதிய உருப்படியை முதலில் தர வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In the Green phase of TDD, how much code should you write?",
+        "ta": "TDD-இன் Green கட்டத்தில், எவ்வளவு code எழுத வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Clean, final code so no refactoring is needed",
+          "Just enough to make the failing test pass",
+          "The code plus tests for the next feature",
+          "The complete feature, including likely future needs"
+        ],
+        "ta": [
+          "refactor தேவைப்படாத சுத்தமான இறுதி code-ஐ",
+          "தோல்வியடையும் test வெற்றிபெறப் போதுமான அளவு மட்டும்",
+          "code-உடன் அடுத்த feature-க்கான test-களையும்",
+          "எதிர்காலத் தேவைகள் உட்பட முழு feature-ஐயும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

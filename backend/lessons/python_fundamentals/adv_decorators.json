@@ -223,5 +223,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "Which line is equivalent to putting @my_decorator above def my_function():?",
+        "ta": "def my_function(): க்கு மேலே @my_decorator வைப்பதற்குச் சமமான வரி எது?"
+      },
+      "options": {
+        "en": [
+          "my_function = my_decorator()",
+          "my_function(my_decorator)",
+          "my_function = my_decorator(my_function)",
+          "my_decorator = my_function(my_decorator)"
+        ],
+        "ta": [
+          "my_function = my_decorator()",
+          "my_function(my_decorator)",
+          "my_function = my_decorator(my_function)",
+          "my_decorator = my_function(my_decorator)"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why should you apply @functools.wraps(func) to your wrapper?",
+        "ta": "உங்கள் wrapper மீது ஏன் @functools.wraps(func) பயன்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "It stops the original function from being changed",
+          "It keeps func's __name__, __doc__ and other metadata",
+          "It lets the wrapper accept any arguments",
+          "It caches results so the function runs faster"
+        ],
+        "ta": [
+          "அசல் function மாற்றப்படுவதைத் தடுக்கிறது",
+          "func இன் __name__, __doc__ மற்றும் பிற metadata-வைப் பாதுகாக்கிறது",
+          "wrapper எந்த arguments-ஐயும் ஏற்க அனுமதிக்கிறது",
+          "முடிவுகளை cache செய்து function-ஐ வேகமாக்குகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is the inner function written as def wrapper(*args, **kwargs)?",
+        "ta": "inner function ஏன் def wrapper(*args, **kwargs) என்று எழுதப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "To pass through whatever arguments the function takes",
+          "Python requires every inner function to have them",
+          "Decorators only work on functions with no arguments",
+          "To preserve the function's __name__"
+        ],
+        "ta": [
+          "function எடுக்கும் எந்த arguments-ஐயும் அப்படியே அனுப்ப",
+          "ஒவ்வொரு inner function-க்கும் Python அவற்றைக் கட்டாயமாக்குகிறது",
+          "decorators arguments இல்லாத functions-இல் மட்டுமே வேலை செய்யும்",
+          "function-இன் __name__-ஐப் பாதுகாக்க"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "A wrapper calls func(*args, **kwargs) but has no return statement. What does the decorated add(2, 3) return?",
+        "ta": "ஒரு wrapper func(*args, **kwargs)-ஐ அழைக்கிறது, ஆனால் return statement இல்லை. decorate செய்யப்பட்ட add(2, 3) எதைத் திருப்பித் தரும்?"
+      },
+      "options": {
+        "en": [
+          "None",
+          "The wrapper function object",
+          "5",
+          "It raises a TypeError"
+        ],
+        "ta": [
+          "None",
+          "wrapper function object",
+          "5",
+          "TypeError எழுப்பும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

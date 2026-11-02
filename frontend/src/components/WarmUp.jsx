@@ -87,7 +87,11 @@ export default function WarmUp({ lang = 'en' }) {
                         <span className="uppercase tracking-wider">{q.title}</span>
                         <span>{i + 1} / {questions.length}</span>
                     </div>
-                    <p className="mb-3 text-sm font-semibold text-text-primary">{q.q}</p>
+                    {/* Questions may carry a short snippet after the first line: show it as code. */}
+                    <p className="mb-2 text-sm font-semibold text-text-primary">{q.q.split('\n')[0]}</p>
+                    {q.q.includes('\n') && (
+                        <pre className="surface-code mb-3 overflow-x-auto rounded-lg p-2.5 font-mono text-xs">{q.q.split('\n').slice(1).join('\n')}</pre>
+                    )}
                     <div className="grid gap-2">
                         {q.options.map((opt, k) => {
                             const isRight = result && result.correct_index === k;
