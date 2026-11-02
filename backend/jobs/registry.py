@@ -24,8 +24,6 @@ def register_all() -> None:
         scheduler.register("content", _content, every="daily", at_utc="20:30")          # 02:00 IST, off-peak
     except ImportError:
         pass
-    try:
-        from jobs.social_job import run_linkedin as _linkedin
-        scheduler.register("linkedin", _linkedin, every="weekly", at_utc="04:00", days=[0, 2, 4])   # Mon/Wed/Fri 09:30 IST
-    except ImportError:
-        pass
+    # LinkedIn queueing (jobs/social_job.py) is retired 2026-11-02: its queue was drained by the old
+    # Windows worker, which the owner replaced with the laptop social bot (socialbot/, its own
+    # 3-posts-a-week cadence). Queueing here as well would double-post once that worker runs again.
