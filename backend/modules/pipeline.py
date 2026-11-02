@@ -160,8 +160,7 @@ def stage_2_narrative(job_id, outline, user_id, directive=""):
         "> blockquote callouts for key concepts\n\n"
         "Return a JSON object with this structure:\n"
         "{\n"
-        '  "en": "## Story Title\\n\\nNarrative content in English...",\n'
-        '  "ta": "## கதை தலைப்பு\\n\\nTamil narrative content..."\n'
+        '  "en": "## Story Title\\n\\nNarrative content in English..."\n'
         "}\n\n"
         "Make the story relatable with a real-world analogy (e.g. postman, chef, train). "
         "Respond ONLY with valid JSON. No extra text."
@@ -178,11 +177,16 @@ def stage_2_narrative(job_id, outline, user_id, directive=""):
         # 1200 and a real ~3100-char response at 4000, for the identical
         # prompt. Real narratives run 625-8671 chars (median ~2074) in en
         # alone per the 511 shipped lesson files, so 1200 was never enough.
+        # English only: asking for en + ta in one reply ran past the token budget (Tamil script is
+        # token-heavy), the truncated JSON failed to parse and the stub fallback below tripped the content
+        # job's "narrative too short" gate (2026-10-28/29). Other languages are translated on demand and
+        # cached (vaathiyaar/translator.py).
         max_tokens=4000,
     )
 
     raw_message = response.get("message", "")
     narrative = _extract_json(raw_message)
+    narrative.setdefault("ta", "")
 
     # Ensure at minimum an English variant exists
     if "en" not in narrative or not isinstance(narrative.get("en"), str):
