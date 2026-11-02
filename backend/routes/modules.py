@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 import sqlite3
 import uuid
+from ratelimit import limit_ai_generation
 import json
 import os
 import threading
@@ -23,6 +24,7 @@ async def request_module(data: ModuleRequest, caller: str = Depends(get_current_
     if data.user_id and data.user_id != caller:
         raise HTTPException(status_code=403, detail="Cannot request modules for another user")
     data.user_id = caller
+    limit_ai_generation(caller)
     job_id = str(uuid.uuid4())
     conn = sqlite3.connect(_get_db_path())
     conn.execute(

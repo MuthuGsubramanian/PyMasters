@@ -5,6 +5,7 @@ Prefix: /api/classroom
 """
 
 import json
+from ratelimit import limit_ai_chat, limit_grading
 import re
 import os
 import sqlite3
@@ -473,6 +474,7 @@ def chat(request: ChatRequest, caller: str = Depends(get_current_user_id)):
     # via classroomChat) always sends the session user's own id with a Bearer
     # token, so legitimate traffic is unaffected.
     _require_self(request.user_id, caller)
+    limit_ai_chat(caller)
     db_path = _get_db_path()
     from access import assert_learning_access
     assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
@@ -576,6 +578,7 @@ def chat_stream(request: ChatRequest, caller: str = Depends(get_current_user_id)
     # Same IDOR / paywall-bypass guard as /chat (this is the primary UI chat
     # path). Fail closed before the paywall check or any per-user write.
     _require_self(request.user_id, caller)
+    limit_ai_chat(caller)
     db_path = _get_db_path()
     from access import assert_learning_access
     assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
@@ -970,8 +973,11 @@ def get_lesson(
             detail="This lesson is part of the enterprise curriculum, available on organization plans.",
         )
 
-    if not user_id:
+    # Personalise only for the VERIFIED caller (security fix 2026-11-02): the ?user_id= param used to load
+    # any user's profile (language, skill, mastery) and trigger translations on their behalf.
+    if not user_id or not verified_user_id or str(user_id) != str(verified_user_id):
         return lesson
+    user_id = verified_user_id
 
     db_path = _get_db_path()
     profile = get_student_profile(db_path, user_id)
@@ -1064,6 +1070,7 @@ def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id
     # user's own id with a Bearer token, so legitimate traffic is unaffected.
     if request.user_id != caller:
         raise HTTPException(status_code=403, detail="Forbidden")
+    limit_grading(caller)
     db_path = _get_db_path()
     from access import assert_learning_access
     assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
@@ -1104,9 +1111,18 @@ def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id
             }
             sandbox_files = _clean or None
 
+    # Server-authoritative expected output (security fix 2026-11-02): for a real lesson the client's
+    # expected_output is ignored - it let a script "pass" with print(1)/"1" and farm XP. The client
+    # grades against practice_challenges[0], so the server uses the same challenge.
+    if lesson_obj:
+        _exp = ((lesson_obj.get("practice_challenges") or [{}])[0] or {}).get("expected_output")
+        expected_for_grading = _exp if isinstance(_exp, str) else ""
+    else:
+        expected_for_grading = request.expected_output or ""
+
     result = evaluate_code(
         student_code=request.code,
-        expected_output=request.expected_output,
+        expected_output=expected_for_grading,
         student_profile=profile,
         lesson_context=lesson_context,
         attempt_count=request.attempt_count or 0,
@@ -1152,12 +1168,13 @@ def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id
 
     # Award XP when student completes a challenge successfully
     unlocked = []
-    if result["success"] and request.topic:
+    # XP only for real lessons (security fix 2026-11-02): random lesson_id/topic values used to mint a
+    # fresh "completion" - and XP - on every request.
+    if result["success"] and lesson_obj:
         lesson = lesson_obj  # already loaded above (avoids a second disk read)
-        xp_reward = lesson.get("xp_reward", 25) if lesson else 25
+        xp_reward = lesson.get("xp_reward", 25)
 
-        # Use lesson_id for deduplication; fall back to topic when no lesson_id
-        lesson_id_for_completion = request.lesson_id or request.topic
+        lesson_id_for_completion = lesson.get("id") or request.lesson_id
 
         try:
             conn = sqlite3.connect(db_path)
@@ -1313,6 +1330,7 @@ def generate_explain(request: ExplainRequest, caller: str = Depends(get_current_
     LLM returns only TEXT (title/steps/takeaway); the frontend renders it with the
     generic Explains visual. Never generates or runs code."""
     _require_self(request.user_id, caller)
+    limit_ai_chat(caller)
     db_path = _get_db_path()
     from access import assert_learning_access
     assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
@@ -1419,6 +1437,7 @@ def diagnostic(request: DiagnosticRequest, caller: str = Depends(get_current_use
     # body-supplied user_id. Derive the acting user from the JWT and refuse
     # cross-user writes (no anonymous signal forgery).
     _require_self(request.user_id, caller)
+    limit_grading(caller)
     challenge = DIAGNOSTIC_CHALLENGES.get(request.challenge_id)
     if not challenge:
         raise HTTPException(

@@ -16,7 +16,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from auth import get_current_user_id
-from ratelimit import SlidingWindowRateLimiter
+from ratelimit import SlidingWindowRateLimiter, limit_ai_chat
 from vaathiyaar.engine import (
     call_vaathiyaar, get_ollama_client, OLLAMA_MODEL,
     stream as vaathiyaar_stream, VaathiyaarUnavailable, FRIENDLY_UNAVAILABLE,
@@ -394,6 +394,7 @@ def playground_chat(request: PlaygroundChatRequest, caller: str = Depends(get_cu
     Each prompt costs 1 credit (1 XP = 100 credits).
     """
     _require_self(request.user_id, caller)
+    limit_ai_chat(caller)
     db_path = _get_db_path()
     from access import assert_learning_access
     assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed
@@ -464,6 +465,7 @@ def playground_chat(request: PlaygroundChatRequest, caller: str = Depends(get_cu
 def playground_chat_stream(request: PlaygroundChatRequest, caller: str = Depends(get_current_user_id)):
     """Stream a free-form Vaathiyaar response token by token using SSE."""
     _require_self(request.user_id, caller)
+    limit_ai_chat(caller)
     db_path = _get_db_path()
     from access import assert_learning_access
     assert_learning_access(db_path, request.user_id)  # 402 when trial lapsed

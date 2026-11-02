@@ -484,7 +484,8 @@ def report_ops_activity(req: OpsActivityRequest, caller: str = Depends(get_curre
         conn.commit()
         return {"ok": True}
     except sqlite3.OperationalError as exc:
-        raise HTTPException(status_code=503, detail=f"Telemetry store unavailable: {exc}")
+        print(f"[admin] telemetry store unavailable: {exc}")
+        raise HTTPException(status_code=503, detail="Telemetry store unavailable.")
     finally:
         conn.close()
 

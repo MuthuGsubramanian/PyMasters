@@ -26,7 +26,10 @@ import threading
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
+
+from auth import optional_user_id
+from ratelimit import SlidingWindowRateLimiter
 from pydantic import BaseModel
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
@@ -173,9 +176,24 @@ class VisitPing(BaseModel):
     path: Optional[str] = None
 
 
+# Security fix 2026-11-02: these endpoints trusted a body user_id without auth (anyone could mark any
+# account "active" - defeating the idle-account lifecycle - and grow site_visits unboundedly). The user
+# now comes ONLY from the verified JWT (optional: anonymous visits still count) and calls are IP-limited.
+_telemetry_ip_limiter = SlidingWindowRateLimiter(max_calls=60, window_seconds=60)
+
+
+def _telemetry_allowed(request: Request) -> bool:
+    ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+          or (request.client.host if request.client else "unknown"))
+    return _telemetry_ip_limiter.allow(ip)
+
+
 @router.post("/visit")
-def track_visit(ping: VisitPing):
+def track_visit(ping: VisitPing, request: Request, caller: Optional[str] = Depends(optional_user_id)):
     """One row per real page load (Layout mount). Anonymous visits count too."""
+    if not _telemetry_allowed(request):
+        return {"ok": False}
+    ping.user_id = caller
     _ensure_once()
     try:
         conn = sqlite3.connect(DB_PATH)
@@ -196,9 +214,12 @@ def track_visit(ping: VisitPing):
 
 
 @router.post("/ping")
-def track_ping(ping: VisitPing):
+def track_ping(ping: VisitPing, request: Request, caller: Optional[str] = Depends(optional_user_id)):
     """Heartbeat (every ~3 min while the app is open). Updates presence only —
     no visit row, so the visits log reflects real page loads."""
+    if not _telemetry_allowed(request):
+        return {"ok": False}
+    ping.user_id = caller
     _ensure_once()
     try:
         if ping.user_id:
