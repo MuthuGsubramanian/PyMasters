@@ -105,5 +105,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "In skill internalization (ICARL), where does the agent's skill knowledge live at inference time?",
+        "ta": "திறன் உள்வாங்கலில் (ICARL), inference நேரத்தில் agent-இன் திறன் அறிவு எங்கே இருக்கும்?"
+      },
+      "options": {
+        "en": [
+          "In the tool schemas passed with each prompt",
+          "In a retrieval index queried per task",
+          "In the context window as injected skill text",
+          "In the model's parameters (weights)"
+        ],
+        "ta": [
+          "ஒவ்வொரு prompt-உடனும் அனுப்பப்படும் tool schemas-இல்",
+          "ஒவ்வொரு பணிக்கும் தேடப்படும் retrieval index-இல்",
+          "context window-இல் சேர்க்கப்பட்ட திறன் உரையாக",
+          "மாடலின் parameters-இல் (weights)"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\np = 3\nprint([1.0 - i/(p-1) for i in range(p)])",
+        "ta": "இது என்ன அச்சிடும்?\np = 3\nprint([1.0 - i/(p-1) for i in range(p)])"
+      },
+      "options": {
+        "en": [
+          "[1.0, 0.5]",
+          "[1.0, 0.6666666666666667, 0.33333333333333337]",
+          "[0.0, 0.5, 1.0]",
+          "[1.0, 0.5, 0.0]"
+        ],
+        "ta": [
+          "[1.0, 0.5]",
+          "[1.0, 0.6666666666666667, 0.33333333333333337]",
+          "[0.0, 0.5, 1.0]",
+          "[1.0, 0.5, 0.0]"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "A SkillFadeScheduler's advance() is just self.phase += 1. What goes wrong if it's called again after the last phase?",
+        "ta": "SkillFadeScheduler-இன் advance() வெறும் self.phase += 1 மட்டுமே. கடைசி phase-க்குப் பிறகு மீண்டும் அழைத்தால் என்ன தவறு நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Visibility wraps back around to 1.0",
+          "Visibility becomes a negative number",
+          "Nothing; Python caps list indexes automatically",
+          "current_visibility() raises IndexError"
+        ],
+        "ta": [
+          "visibility மீண்டும் 1.0-க்குச் சுற்றி வரும்",
+          "visibility எதிர்மறை எண்ணாக மாறும்",
+          "ஒன்றுமில்லை; Python list index-ஐ தானாகக் கட்டுப்படுத்தும்",
+          "current_visibility() IndexError எழுப்பும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nprocs = [\"a\", \"b\", \"c\", \"d\"]\nn = round(len(procs) * 0.75)\nprint(procs[:n])",
+        "ta": "இது என்ன அச்சிடும்?\nprocs = [\"a\", \"b\", \"c\", \"d\"]\nn = round(len(procs) * 0.75)\nprint(procs[:n])"
+      },
+      "options": {
+        "en": [
+          "['a', 'b', 'c']",
+          "['d']",
+          "['a', 'b']",
+          "['a', 'b', 'c', 'd']"
+        ],
+        "ta": [
+          "['a', 'b', 'c']",
+          "['d']",
+          "['a', 'b']",
+          "['a', 'b', 'c', 'd']"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

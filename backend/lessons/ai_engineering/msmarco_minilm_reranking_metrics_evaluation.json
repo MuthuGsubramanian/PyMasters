@@ -132,5 +132,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Using the lesson's function, what does reciprocal_rank([\"x\", \"a\", \"b\"], {\"b\", \"a\"}) return?",
+        "ta": "பாடத்தில் உள்ள function-ஐப் பயன்படுத்தினால், reciprocal_rank([\"x\", \"a\", \"b\"], {\"b\", \"a\"}) என்ன return செய்யும்?"
+      },
+      "options": {
+        "en": [
+          "1.0",
+          "0.3333333333333333",
+          "2",
+          "0.5"
+        ],
+        "ta": [
+          "1.0",
+          "0.3333333333333333",
+          "2",
+          "0.5"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "A query's reciprocal rank is 0.5. What does that tell you?",
+        "ta": "ஒரு query-யின் reciprocal rank 0.5. இது உங்களுக்கு என்ன சொல்கிறது?"
+      },
+      "options": {
+        "en": [
+          "The reranker is 50% confident in its top document",
+          "The first relevant document is at position 2",
+          "The first relevant document is at position 5",
+          "Half of the top-K documents are relevant"
+        ],
+        "ta": [
+          "reranker தன் முதல் ஆவணத்தில் 50% நம்பிக்கை கொண்டுள்ளது",
+          "முதல் தொடர்புடைய ஆவணம் 2-ஆம் இடத்தில் உள்ளது",
+          "முதல் தொடர்புடைய ஆவணம் 5-ஆம் இடத்தில் உள்ளது",
+          "top-K ஆவணங்களில் பாதி தொடர்புடையவை"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In dcg_at_k, someone writes rel / math.log2(i + 1), with i from enumerate starting at 0. What goes wrong?",
+        "ta": "dcg_at_k-இல் ஒருவர் rel / math.log2(i + 1) என்று எழுதுகிறார்; i, 0-இலிருந்து தொடங்கும் enumerate-இலிருந்து வருகிறது. என்ன தவறு நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Nothing; +1 and +2 give the same DCG",
+          "The scores only become slightly larger",
+          "Position 1 divides by log2(1) = 0, raising ZeroDivisionError",
+          "The last document in the top-k is skipped"
+        ],
+        "ta": [
+          "எதுவும் இல்லை; +1, +2 இரண்டும் ஒரே DCG தரும்",
+          "மதிப்பெண்கள் சற்றே அதிகமாகும், அவ்வளவுதான்",
+          "முதல் இடத்தில் log2(1) = 0 ஆல் வகுப்பதால் ZeroDivisionError வரும்",
+          "top-k-இல் உள்ள கடைசி ஆவணம் தவிர்க்கப்படும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does ndcg_at_k([3, 2, 0], k=3) return?",
+        "ta": "ndcg_at_k([3, 2, 0], k=3) என்ன return செய்யும்?"
+      },
+      "options": {
+        "en": [
+          "0.5",
+          "1.0, because the list is already in ideal order",
+          "5.0, the sum of the relevance grades",
+          "about 4.26, the raw DCG"
+        ],
+        "ta": [
+          "0.5",
+          "1.0, ஏனெனில் பட்டியல் ஏற்கனவே ideal வரிசையில் உள்ளது",
+          "5.0, relevance மதிப்புகளின் கூட்டுத்தொகை",
+          "சுமார் 4.26, normalize செய்யப்படாத DCG"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

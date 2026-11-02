@@ -66,5 +66,91 @@
       "hints": ["Start with {'role': 'system', 'content': system_prompt}", "Add each user message with role 'user'", "The function builds the conversation structure, not the API call"],
       "test_code": "msgs = build_conversation('Be helpful', ['Hello', 'Thanks'])\nassert msgs[0]['role'] == 'system'\nassert msgs[1]['role'] == 'user'\nassert msgs[1]['content'] == 'Hello'"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Spot the mistake in this Anthropic call: messages=[{'role': 'system', 'content': 'Be brief'}, {'role': 'user', 'content': 'Hi'}]",
+        "ta": "இந்த Anthropic அழைப்பில் உள்ள தவறைக் கண்டறியுங்கள்: messages=[{'role': 'system', 'content': 'Be brief'}, {'role': 'user', 'content': 'Hi'}]"
+      },
+      "options": {
+        "en": [
+          "content must be a list, not a string",
+          "The role must be 'human', not 'user'",
+          "Messages must start with an 'assistant' message",
+          "The system prompt goes in the separate system= parameter"
+        ],
+        "ta": [
+          "content ஒரு string அல்ல, list ஆக இருக்க வேண்டும்",
+          "role 'user' அல்ல, 'human' ஆக இருக்க வேண்டும்",
+          "Messages ஒரு 'assistant' செய்தியுடன் தொடங்க வேண்டும்",
+          "System prompt தனியான system= parameter-இல் தர வேண்டும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "With the OpenAI SDK, which expression gets the reply text from a chat completion response?",
+        "ta": "OpenAI SDK-இல், chat completion response-இலிருந்து பதில் உரையை எந்த expression பெறும்?"
+      },
+      "options": {
+        "en": [
+          "response.choices[0].message.content",
+          "response.text",
+          "response.content[0].text",
+          "response.message"
+        ],
+        "ta": [
+          "response.choices[0].message.content",
+          "response.text",
+          "response.content[0].text",
+          "response.message"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print? msgs = [{'role': 'system'}]; msgs.append({'role': 'user'}); print(len(msgs), msgs[-1]['role'])",
+        "ta": "இது என்ன அச்சிடும்? msgs = [{'role': 'system'}]; msgs.append({'role': 'user'}); print(len(msgs), msgs[-1]['role'])"
+      },
+      "options": {
+        "en": [
+          "1 user",
+          "2 system",
+          "2 user",
+          "3 user"
+        ],
+        "ta": [
+          "1 user",
+          "2 system",
+          "2 user",
+          "3 user"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is the main problem with this line? client = OpenAI(api_key='sk-abc123')",
+        "ta": "இந்த வரியில் உள்ள முக்கிய பிரச்சனை என்ன? client = OpenAI(api_key='sk-abc123')"
+      },
+      "options": {
+        "en": [
+          "OpenAI() does not accept an api_key argument",
+          "The model name must be passed to OpenAI()",
+          "OpenAI keys must start with 'sk-ant-'",
+          "The key is hardcoded; read it from an environment variable"
+        ],
+        "ta": [
+          "OpenAI() ஒரு api_key argument-ஐ ஏற்காது",
+          "Model பெயரை OpenAI()-க்கு அனுப்ப வேண்டும்",
+          "OpenAI keys 'sk-ant-' என்று தொடங்க வேண்டும்",
+          "Key நேரடியாக code-இல் எழுதப்பட்டுள்ளது; environment variable-இலிருந்து படிக்க வேண்டும்"
+        ]
+      },
+      "correct": 3
+    }
   ]
 }

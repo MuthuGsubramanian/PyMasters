@@ -127,5 +127,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does benchmark_latency() call model.generate() once before it starts timing?",
+        "ta": "benchmark_latency() நேரத்தை அளக்கத் தொடங்கும் முன் ஏன் model.generate()-ஐ ஒருமுறை அழைக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "To cache the answer so later runs return it instantly",
+          "To add one extra fast run to the average",
+          "To check that the right tokenizer was loaded",
+          "First run is slow: memory allocation and kernel compilation"
+        ],
+        "ta": [
+          "பதிலை cache செய்து, பின்வரும் ஓட்டங்கள் உடனே தர",
+          "சராசரியில் கூடுதலாக ஒரு வேகமான ஓட்டம் சேர்க்க",
+          "சரியான tokenizer ஏற்றப்பட்டதா எனச் சரிபார்க்க",
+          "முதல் ஓட்டம் மெதுவானது: memory allocation, kernel compilation"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nchecks = {\"Memory\": True, \"Speed\": False}\nprint(all(checks.values()))",
+        "ta": "இது என்ன அச்சிடும்?\nchecks = {\"Memory\": True, \"Speed\": False}\nprint(all(checks.values()))"
+      },
+      "options": {
+        "en": [
+          "TypeError: dict values aren't iterable",
+          "True",
+          "None",
+          "False"
+        ],
+        "ta": [
+          "TypeError: dict values-ஐ iterate செய்ய முடியாது",
+          "True",
+          "None",
+          "False"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nkws = [\"list\", \"dict\"]\nr = \"use a dictionary\"\nprint(any(k in r for k in kws))",
+        "ta": "இது என்ன அச்சிடும்?\nkws = [\"list\", \"dict\"]\nr = \"use a dictionary\"\nprint(any(k in r for k in kws))"
+      },
+      "options": {
+        "en": [
+          "False",
+          "['dict']",
+          "True",
+          "dict"
+        ],
+        "ta": [
+          "False",
+          "['dict']",
+          "True",
+          "dict"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "A test case uses expected_contains: [\"Interpret\"]. Why does it always FAIL in evaluate_accuracy()?",
+        "ta": "ஒரு test case-இல் expected_contains: [\"Interpret\"] உள்ளது. evaluate_accuracy()-இல் அது ஏன் எப்போதும் FAIL ஆகிறது?"
+      },
+      "options": {
+        "en": [
+          "skip_special_tokens=True removes capitalized words",
+          "max_new_tokens=100 is too short for that word",
+          "The response is lowercased, so 'Interpret' can never match",
+          "any() needs at least two keywords to work"
+        ],
+        "ta": [
+          "skip_special_tokens=True பெரிய எழுத்து வார்த்தைகளை நீக்கும்",
+          "அந்த வார்த்தைக்கு max_new_tokens=100 போதாது",
+          "பதில் lowercase ஆக்கப்படுவதால் 'Interpret' பொருந்தவே முடியாது",
+          "any() வேலை செய்ய குறைந்தது இரண்டு keywords தேவை"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

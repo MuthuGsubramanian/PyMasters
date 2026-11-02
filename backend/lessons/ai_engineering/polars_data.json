@@ -65,5 +65,91 @@
       "hints": ["Use df.with_columns()", "Use pl.col('sales').rank(descending=True).over('department')", "Alias the result as 'dept_rank'"],
       "test_code": "import polars as pl\nassert 'dept_rank' in result.columns\nassert result.filter(pl.col('dept_rank') == 1).height >= 1"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In a lazy query started with pl.scan_csv(), what does .collect() do?",
+        "ta": "pl.scan_csv() மூலம் தொடங்கிய lazy query-இல் .collect() என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Runs the optimized query plan and returns a DataFrame",
+          "Reads the whole CSV into memory as soon as it is called",
+          "Prints the query plan without running it",
+          "Frees unused memory, like a garbage collector"
+        ],
+        "ta": [
+          "மேம்படுத்தப்பட்ட query plan-ஐ இயக்கி ஒரு DataFrame-ஐத் தருகிறது",
+          "அழைக்கப்பட்டவுடன் முழு CSV-யையும் நினைவகத்தில் படிக்கிறது",
+          "query plan-ஐ இயக்காமல் அச்சிடுகிறது",
+          "garbage collector போல பயன்படாத நினைவகத்தை விடுவிக்கிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake:\ndf.filter(pl.col(\"age\") > 30 and pl.col(\"salary\") > 80000)",
+        "ta": "தவறைக் கண்டுபிடிக்கவும்:\ndf.filter(pl.col(\"age\") > 30 and pl.col(\"salary\") > 80000)"
+      },
+      "options": {
+        "en": [
+          "filter() needs column names as strings, not pl.col()",
+          "The comparisons must be done inside .select() first",
+          "Use & with each condition in parentheses instead of `and`",
+          "Polars uses df.where() for rows, not df.filter()"
+        ],
+        "ta": [
+          "filter()-க்கு pl.col() அல்ல, column பெயர்கள் string-ஆக வேண்டும்",
+          "ஒப்பீடுகளை முதலில் .select()-க்குள் செய்ய வேண்டும்",
+          "`and`-க்குப் பதிலாக ஒவ்வொரு நிபந்தனையையும் அடைப்புக்குள் வைத்து & பயன்படுத்தவும்",
+          "Polars-இல் வரிசைகளுக்கு df.filter() அல்ல, df.where() பயன்படும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "How is pl.col(\"salary\").mean().over(\"department\") different from group_by(\"department\").agg(...)?",
+        "ta": "pl.col(\"salary\").mean().over(\"department\") என்பது group_by(\"department\").agg(...)-இலிருந்து எப்படி வேறுபடுகிறது?"
+      },
+      "options": {
+        "en": [
+          "It keeps every row and puts the group's mean on each row",
+          "It computes one mean over the whole DataFrame",
+          "It only works in lazy mode with scan_csv()",
+          "It returns just one row per department"
+        ],
+        "ta": [
+          "அது எல்லா வரிசைகளையும் வைத்துக்கொண்டு, ஒவ்வொரு வரிசையிலும் அந்தக் குழுவின் சராசரியைச் சேர்க்கிறது",
+          "முழு DataFrame-க்கும் ஒரே சராசரியைக் கணக்கிடுகிறது",
+          "scan_csv() உடன் lazy mode-இல் மட்டுமே வேலை செய்கிறது",
+          "ஒவ்வொரு department-க்கும் ஒரே ஒரு வரிசையைத் தருகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport polars as pl\ndf = pl.DataFrame({\"x\": [1, 2, 3]})\nprint(df.filter(pl.col(\"x\") > 1).height)",
+        "ta": "இது என்ன அச்சிடும்?\nimport polars as pl\ndf = pl.DataFrame({\"x\": [1, 2, 3]})\nprint(df.filter(pl.col(\"x\") > 1).height)"
+      },
+      "options": {
+        "en": [
+          "[2, 3]",
+          "2",
+          "3",
+          "1"
+        ],
+        "ta": [
+          "[2, 3]",
+          "2",
+          "3",
+          "1"
+        ]
+      },
+      "correct": 1
+    }
   ]
 }

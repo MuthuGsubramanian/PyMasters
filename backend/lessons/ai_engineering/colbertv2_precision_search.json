@@ -127,5 +127,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does a dense retriever return import-error docs for the query \"errors NOT about imports\"?",
+        "ta": "\"errors NOT about imports\" என்று தேடும்போது dense retriever ஏன் import பிழை ஆவணங்களைத் தருகிறது?"
+      },
+      "options": {
+        "en": [
+          "Its vocabulary has no token for the word NOT",
+          "All tokens are pooled into one vector, so the negation gets diluted",
+          "It scores each token separately and ignores the sum",
+          "It only matches exact acronyms, not whole words"
+        ],
+        "ta": [
+          "அதன் சொல்லகராதியில் NOT என்ற சொல்லுக்கு token இல்லை",
+          "எல்லா token-களும் ஒரே vector-ஆகத் திரட்டப்படுவதால் மறுப்பு நீர்த்துப்போகிறது",
+          "அது ஒவ்வொரு token-ஐயும் தனியாக மதிப்பிட்டு கூட்டுத்தொகையைப் புறக்கணிக்கிறது",
+          "அது முழுச் சொற்களை அல்ல, சரியான சுருக்கெழுத்துகளை மட்டுமே பொருத்துகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Bottleneck scoring of one doc across constraints. What does this print?\nscores = [12.5, 3.0, 9.1]\nprint(min(scores))",
+        "ta": "ஒரு ஆவணத்தின் constraint மதிப்பெண்களுக்கு bottleneck scoring. இது என்ன அச்சிடும்?\nscores = [12.5, 3.0, 9.1]\nprint(min(scores))"
+      },
+      "options": {
+        "en": [
+          "3.0",
+          "8.2",
+          "12.5",
+          "24.6"
+        ],
+        "ta": [
+          "3.0",
+          "8.2",
+          "12.5",
+          "24.6"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "MaxSim sums each query token's best match. What does this print?\nsims = [[9, 1], [2, 7]]\nprint(sum(max(row) for row in sims))",
+        "ta": "MaxSim ஒவ்வொரு query token-இன் சிறந்த பொருத்தத்தையும் கூட்டுகிறது. இது என்ன அச்சிடும்?\nsims = [[9, 1], [2, 7]]\nprint(sum(max(row) for row in sims))"
+      },
+      "options": {
+        "en": [
+          "9",
+          "11",
+          "16",
+          "19"
+        ],
+        "ta": [
+          "9",
+          "11",
+          "16",
+          "19"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Averaging token vectors like a dense retriever. What does this print?\nvs = [[1, 2], [3, 4]]\nprint([sum(c) / len(vs) for c in zip(*vs)])",
+        "ta": "Dense retriever போல token vector-களைச் சராசரியாக்குதல். இது என்ன அச்சிடும்?\nvs = [[1, 2], [3, 4]]\nprint([sum(c) / len(vs) for c in zip(*vs)])"
+      },
+      "options": {
+        "en": [
+          "[2, 3]",
+          "[1.5, 3.5]",
+          "[2.0, 3.0]",
+          "[4, 6]"
+        ],
+        "ta": [
+          "[2, 3]",
+          "[1.5, 3.5]",
+          "[2.0, 3.0]",
+          "[4, 6]"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

@@ -130,5 +130,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Using the lesson's chunk_text, what prints?\nprint(chunk_text(\"a b c d e f g h\", max_words=4, overlap=1))",
+        "ta": "பாடத்தின் chunk_text-ஐப் பயன்படுத்தினால், இது என்ன அச்சிடும்?\nprint(chunk_text(\"a b c d e f g h\", max_words=4, overlap=1))"
+      },
+      "options": {
+        "en": [
+          "['a b c d', 'e f g h']",
+          "['a b c d', 'd e f g']",
+          "['a b c d', 'c d e f', 'e f g h']",
+          "['a b c d', 'd e f g', 'g h']"
+        ],
+        "ta": [
+          "['a b c d', 'e f g h']",
+          "['a b c d', 'd e f g']",
+          "['a b c d', 'c d e f', 'e f g h']",
+          "['a b c d', 'd e f g', 'g h']"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why does the lesson split text into ~80-word chunks before encoding with this model?",
+        "ta": "இந்த மாடலில் encode செய்வதற்கு முன் உரையை ~80-சொல் துண்டுகளாகப் பிரிப்பது ஏன்?"
+      },
+      "options": {
+        "en": [
+          "Texts over 80 words can't be embedded across languages",
+          "Short chunks get 384-dim vectors; long texts get bigger ones",
+          "The model silently cuts input after 128 tokens, losing the rest",
+          "The model raises an error on texts over 80 words"
+        ],
+        "ta": [
+          "80 சொற்களுக்கு மேல் உள்ள உரைகள் பல மொழிகளில் embed ஆகாது",
+          "குறுகிய துண்டுகளுக்கு 384-dim, நீளமானவற்றுக்குப் பெரிய வெக்டர்கள்",
+          "மாடல் 128 டோக்கன்களுக்குப் பின் உள்ளதை அமைதியாக வெட்டிவிடும்",
+          "80 சொற்களுக்கு மேல் இருந்தால் மாடல் பிழை எழுப்பும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "On CPU, switching this model from the PyTorch backend to ONNX mainly changes what?",
+        "ta": "CPU-வில் இந்த மாடலை PyTorch backend-இலிருந்து ONNX-க்கு மாற்றினால் முக்கியமாக எது மாறும்?"
+      },
+      "options": {
+        "en": [
+          "Speed: about 2-3x faster, with the same vectors",
+          "Languages: ONNX supports more than 50 languages",
+          "Vectors: ONNX gives more accurate embeddings",
+          "Dimensions: ONNX outputs smaller vectors"
+        ],
+        "ta": [
+          "வேகம்: சுமார் 2-3x வேகம், அதே வெக்டர்கள்",
+          "மொழிகள்: ONNX 50-க்கும் மேற்பட்ட மொழிகளை ஆதரிக்கும்",
+          "வெக்டர்கள்: ONNX அதிக துல்லியமான embeddings தரும்",
+          "பரிமாணங்கள்: ONNX சிறிய வெக்டர்களைத் தரும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "You have 4 eval queries. For 3 of them, the expected doc is the top-1 result. What is precision@1?",
+        "ta": "4 மதிப்பீட்டுக் கேள்விகள் உள்ளன. அவற்றில் 3-க்கு எதிர்பார்த்த ஆவணம் top-1 முடிவாக வருகிறது. Precision@1 என்ன?"
+      },
+      "options": {
+        "en": [
+          "3",
+          "0.75",
+          "0.25",
+          "1.0 (any hit counts as success)"
+        ],
+        "ta": [
+          "3",
+          "0.75",
+          "0.25",
+          "1.0 (ஒரு hit வந்தாலே வெற்றி)"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

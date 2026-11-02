@@ -128,5 +128,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "For a CPU-only container serving embeddings, which runtime does the lesson recommend, and why?",
+        "ta": "CPU மட்டும் உள்ள container-இல் embeddings வழங்க, பாடம் எந்த runtime-ஐ பரிந்துரைக்கிறது, ஏன்?"
+      },
+      "options": {
+        "en": [
+          "TensorFlow: it is required for any CPU deployment",
+          "PyTorch: it is the fastest runtime on every device",
+          "Rust candle: the only runtime that gives identical vectors",
+          "ONNX Runtime: removes Python graph overhead, ~2-3x faster"
+        ],
+        "ta": [
+          "TensorFlow: எந்த CPU deployment-க்கும் இது கட்டாயம்",
+          "PyTorch: எல்லா சாதனங்களிலும் இதுவே மிக வேகமானது",
+          "Rust candle: ஒரே மாதிரி vectors தரும் ஒரே runtime இதுதான்",
+          "ONNX Runtime: Python graph overhead-ஐ நீக்கி ~2-3x வேகம் தரும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why can Homie's retriever use np.dot instead of computing cosine similarity separately?",
+        "ta": "Homie retriever தனியாக cosine similarity கணக்கிடாமல் np.dot-ஐ ஏன் பயன்படுத்த முடிகிறது?"
+      },
+      "options": {
+        "en": [
+          "Embeddings are normalized, so dot product equals cosine",
+          "Dot product always gives better rankings than cosine",
+          "np.dot automatically normalizes the vectors first",
+          "ONNX output can't be used with cosine similarity"
+        ],
+        "ta": [
+          "Embeddings normalize செய்யப்பட்டதால் dot product = cosine",
+          "Dot product எப்போதும் cosine-ஐ விட சிறந்த ranking தரும்",
+          "np.dot தானாகவே vectors-ஐ முதலில் normalize செய்கிறது",
+          "ONNX output-ஐ cosine similarity-யுடன் பயன்படுத்த முடியாது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport hashlib\nh = hashlib.sha256(\"hi\".encode()).hexdigest()[:8]\nprint(len(h))",
+        "ta": "இது என்ன அச்சிடும்?\nimport hashlib\nh = hashlib.sha256(\"hi\".encode()).hexdigest()[:8]\nprint(len(h))"
+      },
+      "options": {
+        "en": [
+          "16",
+          "8",
+          "64",
+          "32"
+        ],
+        "ta": [
+          "16",
+          "8",
+          "64",
+          "32"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nd = {}\nfor w in \"Go go GO\".lower().split(): d[w] = d.get(w, 0) + 1\nprint(d)",
+        "ta": "இது என்ன அச்சிடும்?\nd = {}\nfor w in \"Go go GO\".lower().split(): d[w] = d.get(w, 0) + 1\nprint(d)"
+      },
+      "options": {
+        "en": [
+          "{'go': 1}",
+          "['go', 'go', 'go']",
+          "{'Go': 1, 'go': 1, 'GO': 1}",
+          "{'go': 3}"
+        ],
+        "ta": [
+          "{'go': 1}",
+          "['go', 'go', 'go']",
+          "{'Go': 1, 'go': 1, 'GO': 1}",
+          "{'go': 3}"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

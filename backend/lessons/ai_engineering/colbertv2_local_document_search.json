@@ -114,5 +114,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nw = \"a b c d e\".split()\nprint([\" \".join(w[i:i+2]) for i in range(0, 5, 2)])",
+        "ta": "இது என்ன அச்சிடும்?\nw = \"a b c d e\".split()\nprint([\" \".join(w[i:i+2]) for i in range(0, 5, 2)])"
+      },
+      "options": {
+        "en": [
+          "['a b', 'b c', 'c d', 'd e']",
+          "['a b', 'c d']",
+          "['a b', 'c d', 'e']",
+          "['ab', 'cd', 'e']"
+        ],
+        "ta": [
+          "['a b', 'b c', 'c d', 'd e']",
+          "['a b', 'c d']",
+          "['a b', 'c d', 'e']",
+          "['ab', 'cd', 'e']"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why does the lesson split files into ~100-word chunks before indexing?",
+        "ta": "Index செய்வதற்கு முன் கோப்புகளை ஏன் ~100 சொற்கள் கொண்ட துண்டுகளாகப் பிரிக்கிறோம்?"
+      },
+      "options": {
+        "en": [
+          "ColBERTv2 cannot read any text longer than 100 words",
+          "JSON files cannot store long strings",
+          "Shorter chunks give sharper matches; token embeddings stay focused",
+          "Chunking shrinks the ~500MB model download"
+        ],
+        "ta": [
+          "ColBERTv2 100 சொற்களுக்கு மேல் உள்ள உரையைப் படிக்கவே முடியாது",
+          "JSON கோப்புகளால் நீண்ட strings-ஐச் சேமிக்க முடியாது",
+          "சிறிய துண்டுகள் கூர்மையான பொருத்தம் தரும்; token embeddings கவனம் சிதறாது",
+          "துண்டாக்குவது ~500MB மாதிரிப் பதிவிறக்கத்தைக் குறைக்கும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "MaxSim-style scoring: what does this print?\nsim = [[2, 9], [5, 7]]\nprint(sum(max(row) for row in sim))",
+        "ta": "MaxSim முறை மதிப்பீடு: இது என்ன அச்சிடும்?\nsim = [[2, 9], [5, 7]]\nprint(sum(max(row) for row in sim))"
+      },
+      "options": {
+        "en": [
+          "16",
+          "14",
+          "23",
+          "9"
+        ],
+        "ta": [
+          "16",
+          "14",
+          "23",
+          "9"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Bug hunt: search() ends with results.sort(key=lambda x: x[\"score\"]) then return results[:k]. What goes wrong?",
+        "ta": "பிழையைக் கண்டறி: search() இறுதியில் results.sort(key=lambda x: x[\"score\"]) பின் return results[:k] உள்ளது. என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "sort() returns a new list, so results is unchanged",
+          "It should be results[k:] to get the best ones",
+          "Without reverse=True it returns the k lowest-scoring chunks",
+          "sort() cannot take a lambda as the key"
+        ],
+        "ta": [
+          "sort() புதிய பட்டியலைத் தருவதால் results மாறாது",
+          "சிறந்தவற்றைப் பெற results[k:] என இருக்க வேண்டும்",
+          "reverse=True இல்லாமல் மிகக் குறைந்த மதிப்பெண் கொண்ட k துண்டுகள் வரும்",
+          "sort() ஒரு lambda-வை key ஆக ஏற்காது"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

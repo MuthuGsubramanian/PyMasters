@@ -163,5 +163,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "In an AlbumentationsX Compose pipeline, how are the random parameters handled on each call?",
+        "ta": "AlbumentationsX Compose pipeline-இல், ஒவ்வொரு அழைப்பிலும் random மதிப்புகள் எப்படிக் கையாளப்படுகின்றன?"
+      },
+      "options": {
+        "en": [
+          "Sampled separately for each target, using the same seed",
+          "Sampled once per epoch and reused for every image",
+          "Sampled once, then applied to image, mask and boxes alike",
+          "Sampled only for the image; labels stay unchanged"
+        ],
+        "ta": [
+          "ஒரே seed-ஐப் பயன்படுத்தி, ஒவ்வொரு target-க்கும் தனித்தனியாக எடுக்கப்படும்",
+          "ஒரு epoch-க்கு ஒருமுறை எடுக்கப்பட்டு, எல்லா image-களுக்கும் மீண்டும் பயன்படுத்தப்படும்",
+          "ஒருமுறை மட்டும் எடுக்கப்பட்டு, image, mask, boxes அனைத்திற்கும் ஒரே மாதிரி பயன்படுத்தப்படும்",
+          "image-க்கு மட்டுமே எடுக்கப்படும்; labels மாறாமல் இருக்கும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nW, b = 5, [0, 0, 2, 1]\nprint([W - b[2], b[1], W - b[0], b[3]])",
+        "ta": "இது என்ன அச்சிடும்?\nW, b = 5, [0, 0, 2, 1]\nprint([W - b[2], b[1], W - b[0], b[3]])"
+      },
+      "options": {
+        "en": [
+          "[0, 0, 2, 1]",
+          "[5, 0, 3, 1]",
+          "[3, 0, 5, 1]",
+          "[3, 1, 5, 0]"
+        ],
+        "ta": [
+          "[0, 0, 2, 1]",
+          "[5, 0, 3, 1]",
+          "[3, 0, 5, 1]",
+          "[3, 1, 5, 0]"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "When RandomBrightnessContrast runs inside a Compose pipeline, what happens to the mask?",
+        "ta": "Compose pipeline-க்குள் RandomBrightnessContrast இயங்கும்போது, mask-க்கு என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "It is dropped from the output dictionary",
+          "It is brightened by the same amount as the image",
+          "It is skipped — labels aren't pixels to recolor",
+          "It is resampled with nearest-neighbor interpolation"
+        ],
+        "ta": [
+          "output dictionary-இலிருந்து நீக்கப்படும்",
+          "image அளவுக்கே அதுவும் பிரகாசமாக்கப்படும்",
+          "அது தவிர்க்கப்படும் — labels நிறம் மாற்ற வேண்டிய pixels அல்ல",
+          "nearest-neighbor interpolation மூலம் மீண்டும் மாதிரியாக்கப்படும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\ng = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]\nprint([r[1:3] for r in g[0:2]])",
+        "ta": "இது என்ன அச்சிடும்?\ng = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]\nprint([r[1:3] for r in g[0:2]])"
+      },
+      "options": {
+        "en": [
+          "[[1, 2], [4, 5]]",
+          "[[2, 3], [5, 6], [8, 9]]",
+          "[[2, 3], [5, 6]]",
+          "[[4, 5], [7, 8]]"
+        ],
+        "ta": [
+          "[[1, 2], [4, 5]]",
+          "[[2, 3], [5, 6], [8, 9]]",
+          "[[2, 3], [5, 6]]",
+          "[[4, 5], [7, 8]]"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

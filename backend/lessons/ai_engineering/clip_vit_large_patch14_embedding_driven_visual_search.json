@@ -116,5 +116,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nv = [3.0, 4.0]\nn = sum(x**2 for x in v) ** 0.5\nprint([x / n for x in v])",
+        "ta": "இது என்ன அச்சிடும்?\nv = [3.0, 4.0]\nn = sum(x**2 for x in v) ** 0.5\nprint([x / n for x in v])"
+      },
+      "options": {
+        "en": [
+          "[0.5, 0.5]",
+          "[0.12, 0.16]",
+          "[3.0, 4.0]",
+          "[0.6, 0.8]"
+        ],
+        "ta": [
+          "[0.5, 0.5]",
+          "[0.12, 0.16]",
+          "[3.0, 4.0]",
+          "[0.6, 0.8]"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print? (np = numpy)\ns = np.array([0.2, 0.9, 0.5])\nprint(np.argsort(s)[::-1][:2])",
+        "ta": "இது என்ன அச்சிடும்? (np = numpy)\ns = np.array([0.2, 0.9, 0.5])\nprint(np.argsort(s)[::-1][:2])"
+      },
+      "options": {
+        "en": [
+          "[0 2]",
+          "[0.9 0.5]",
+          "[2 1]",
+          "[1 2]"
+        ],
+        "ta": [
+          "[0 2]",
+          "[0.9 0.5]",
+          "[2 1]",
+          "[1 2]"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "This search() should return the best matches. What's the bug?\nresults.sort(key=lambda r: r[\"score\"])\nreturn results[:top_k]",
+        "ta": "இந்த search() சிறந்த பொருத்தங்களைத் தர வேண்டும். பிழை என்ன?\nresults.sort(key=lambda r: r[\"score\"])\nreturn results[:top_k]"
+      },
+      "options": {
+        "en": [
+          "It sorts ascending, so it returns the least similar items",
+          "sort() returns a new list, so results stays unchanged",
+          "Slicing [:top_k] returns top_k + 1 items",
+          "A list of dicts can't be sorted with a key function"
+        ],
+        "ta": [
+          "ஏறுவரிசையில் வரிசைப்படுத்துவதால், மிகக் குறைந்த ஒற்றுமை உள்ளவை வரும்",
+          "sort() புதிய பட்டியலைத் தருவதால் results மாறாமல் இருக்கும்",
+          "[:top_k] ஸ்லைசிங் top_k + 1 உருப்படிகளைத் தரும்",
+          "dict-களின் பட்டியலை key செயல்பாட்டுடன் வரிசைப்படுத்த முடியாது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\navg = {\"dog\": 0.7, \"cat\": 0.3}\nprint(max(avg, key=avg.get))",
+        "ta": "இது என்ன அச்சிடும்?\navg = {\"dog\": 0.7, \"cat\": 0.3}\nprint(max(avg, key=avg.get))"
+      },
+      "options": {
+        "en": [
+          "cat",
+          "dog",
+          "('dog', 0.7)",
+          "0.7"
+        ],
+        "ta": [
+          "cat",
+          "dog",
+          "('dog', 0.7)",
+          "0.7"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

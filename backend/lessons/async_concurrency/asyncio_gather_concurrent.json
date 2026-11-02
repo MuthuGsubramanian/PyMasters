@@ -120,5 +120,91 @@
       "async_concurrency"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "With async def double(n): return n * 2, what does await asyncio.gather(double(5), double(1)) return?",
+        "ta": "async def double(n): return n * 2 எனில், await asyncio.gather(double(5), double(1)) என்ன திருப்பித் தரும்?"
+      },
+      "options": {
+        "en": [
+          "[10, 2]",
+          "[2, 10]",
+          "An un-awaited coroutine object",
+          "12"
+        ],
+        "ta": [
+          "[10, 2]",
+          "[2, 10]",
+          "await செய்யப்படாத ஒரு coroutine பொருள்",
+          "12"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "If the first coroutine passed to gather finishes last, where does its result appear in the returned list?",
+        "ta": "gather-க்கு அனுப்பிய முதல் coroutine கடைசியாக முடிந்தால், அதன் முடிவு திருப்பித் தரும் பட்டியலில் எங்கே இருக்கும்?"
+      },
+      "options": {
+        "en": [
+          "At the last index, matching completion order",
+          "In a random position each run",
+          "It is dropped because it finished late",
+          "At index 0, matching argument order"
+        ],
+        "ta": [
+          "கடைசி index-இல், முடிந்த வரிசைப்படி",
+          "ஒவ்வொரு ஓட்டத்திலும் சீரற்ற இடத்தில்",
+          "தாமதமாக முடிந்ததால் அது விடப்படும்",
+          "index 0-இல், argument வரிசைப்படி"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Three independent network calls take 2 seconds each. Roughly how long does awaiting them with asyncio.gather take?",
+        "ta": "சார்பற்ற மூன்று network அழைப்புகள் ஒவ்வொன்றும் 2 வினாடிகள் எடுக்கின்றன. asyncio.gather மூலம் await செய்தால் தோராயமாக எவ்வளவு நேரம் ஆகும்?"
+      },
+      "options": {
+        "en": [
+          "About 6 seconds",
+          "About 2 seconds",
+          "About 4 seconds",
+          "About 0 seconds"
+        ],
+        "ta": [
+          "சுமார் 6 வினாடிகள்",
+          "சுமார் 2 வினாடிகள்",
+          "சுமார் 4 வினாடிகள்",
+          "சுமார் 0 வினாடிகள்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does asyncio.gather make independent I/O tasks finish sooner?",
+        "ta": "சார்பற்ற I/O பணிகளை asyncio.gather ஏன் விரைவாக முடிக்கச் செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It skips the await points inside the coroutines",
+          "It makes every single coroutine execute faster",
+          "It runs each coroutine on a separate CPU core",
+          "Their await points overlap: while one waits, another runs"
+        ],
+        "ta": [
+          "coroutine-களுக்குள் உள்ள await புள்ளிகளைத் தவிர்க்கிறது",
+          "ஒவ்வொரு coroutine-ஐயும் வேகமாக இயக்குகிறது",
+          "ஒவ்வொரு coroutine-ஐயும் தனி CPU core-இல் ஓட்டுகிறது",
+          "அவற்றின் await புள்ளிகள் ஒன்றின்மேல் ஒன்று: ஒன்று காத்திருக்கையில் மற்றொன்று ஓடும்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

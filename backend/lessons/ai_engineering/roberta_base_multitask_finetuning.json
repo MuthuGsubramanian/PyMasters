@@ -115,5 +115,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "When you fine-tune RoBERTa for classification, NER or sentiment instead, what changes in the model?",
+        "ta": "RoBERTa-வை classification, NER அல்லது sentiment பணிக்கு fine-tune செய்யும்போது மாடலில் எது மாறுகிறது?"
+      },
+      "options": {
+        "en": [
+          "The number of encoder layers is reduced",
+          "Only the final output head",
+          "The tokenizer must be retrained",
+          "All 12 encoder layers are replaced"
+        ],
+        "ta": [
+          "Encoder அடுக்குகளின் எண்ணிக்கை குறைக்கப்படுகிறது",
+          "இறுதி output head மட்டும்",
+          "Tokenizer மீண்டும் பயிற்றுவிக்கப்பட வேண்டும்",
+          "12 encoder அடுக்குகளும் மாற்றப்படுகின்றன"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What shape are the logits from RobertaForTokenClassification?",
+        "ta": "RobertaForTokenClassification தரும் logits-இன் வடிவம் (shape) என்ன?"
+      },
+      "options": {
+        "en": [
+          "(batch, num_labels)",
+          "(seq_len,)",
+          "(batch, 3)",
+          "(batch, seq_len, num_tags)"
+        ],
+        "ta": [
+          "(batch, num_labels)",
+          "(seq_len,)",
+          "(batch, 3)",
+          "(batch, seq_len, num_tags)"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nscores = [0.2, 0.9, 0.5]\nprint(scores.index(max(scores)))",
+        "ta": "இது என்ன அச்சிடும்?\nscores = [0.2, 0.9, 0.5]\nprint(scores.index(max(scores)))"
+      },
+      "options": {
+        "en": [
+          "2",
+          "[1]",
+          "1",
+          "0.9"
+        ],
+        "ta": [
+          "2",
+          "[1]",
+          "1",
+          "0.9"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: which BIO tag sequence is INVALID?",
+        "ta": "தவறைக் கண்டுபிடிக்கவும்: எந்த BIO tag வரிசை செல்லாதது (invalid)?"
+      },
+      "options": {
+        "en": [
+          "[\"B-PER\", \"I-PER\", \"O\"]",
+          "[\"O\", \"O\", \"O\"]",
+          "[\"O\", \"I-LOC\", \"I-LOC\"]",
+          "[\"B-LOC\", \"B-PER\", \"I-PER\"]"
+        ],
+        "ta": [
+          "[\"B-PER\", \"I-PER\", \"O\"]",
+          "[\"O\", \"O\", \"O\"]",
+          "[\"O\", \"I-LOC\", \"I-LOC\"]",
+          "[\"B-LOC\", \"B-PER\", \"I-PER\"]"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

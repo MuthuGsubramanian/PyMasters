@@ -118,5 +118,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "In from_pretrained(), what does device_map=\"auto\" do?",
+        "ta": "from_pretrained()-இல் device_map=\"auto\" என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Always forces the model to run on the CPU",
+          "Picks the smallest model size automatically",
+          "Uses the GPU if available, otherwise falls back to CPU",
+          "Downloads the weights again on every run"
+        ],
+        "ta": [
+          "மாடலை எப்போதும் CPU-இல் மட்டுமே இயக்கும்",
+          "மிகச் சிறிய மாடல் அளவைத் தானாகத் தேர்ந்தெடுக்கும்",
+          "GPU இருந்தால் அதைப் பயன்படுத்தும், இல்லையெனில் CPU-க்கு மாறும்",
+          "ஒவ்வொரு முறையும் weights-ஐ மீண்டும் பதிவிறக்கும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why does the code decode output[0][inputs[\"input_ids\"].shape[-1]:] instead of just output[0]?",
+        "ta": "குறியீடு ஏன் output[0]-ஐ மட்டும் இல்லாமல் output[0][inputs[\"input_ids\"].shape[-1]:]-ஐ decode செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "To remove special tokens like end-of-turn markers",
+          "To drop the prompt tokens and keep only the reply",
+          "To turn the tensor into a Python string",
+          "To cut the reply down to max_new_tokens"
+        ],
+        "ta": [
+          "end-of-turn குறிகள் போன்ற சிறப்பு tokens-ஐ நீக்க",
+          "prompt tokens-ஐ நீக்கி மாடலின் பதிலை மட்டும் வைத்திருக்க",
+          "tensor-ஐ Python string ஆக மாற்ற",
+          "பதிலை max_new_tokens அளவுக்குக் குறைக்க"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nm = \"Tell me about PYTHON\"\nprint(\"python\" in m)",
+        "ta": "இது என்ன அச்சிடும்?\nm = \"Tell me about PYTHON\"\nprint(\"python\" in m)"
+      },
+      "options": {
+        "en": [
+          "False",
+          "True",
+          "python",
+          "TypeError"
+        ],
+        "ta": [
+          "False",
+          "True",
+          "python",
+          "TypeError"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "A LocalChatbot gets one system message, then chat() is called 3 times. What does len(bot.get_history()) return?",
+        "ta": "ஒரு LocalChatbot-க்கு ஒரு system message சேர்க்கப்பட்டு, பின் chat() 3 முறை அழைக்கப்படுகிறது. len(bot.get_history()) என்ன தரும்?"
+      },
+      "options": {
+        "en": [
+          "6",
+          "3",
+          "4",
+          "7"
+        ],
+        "ta": [
+          "6",
+          "3",
+          "4",
+          "7"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

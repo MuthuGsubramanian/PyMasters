@@ -156,5 +156,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "With MultipleNegativesRankingLoss and batch_size=128, how many free negatives does each anchor get?",
+        "ta": "MultipleNegativesRankingLoss மற்றும் batch_size=128 உடன், ஒவ்வொரு anchor-க்கும் எத்தனை இலவச negatives கிடைக்கும்?"
+      },
+      "options": {
+        "en": [
+          "127",
+          "128",
+          "64, half the batch",
+          "0 — negatives must be labelled by hand"
+        ],
+        "ta": [
+          "127",
+          "128",
+          "64, batch-இன் பாதி",
+          "0 — negatives-ஐ கையால் label செய்ய வேண்டும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "After fine-tuning all-MiniLM-L6-v2 on your domain pairs, what changes?",
+        "ta": "உங்கள் domain pairs மீது all-MiniLM-L6-v2-ஐ fine-tune செய்த பிறகு, எது மாறுகிறது?"
+      },
+      "options": {
+        "en": [
+          "Only how it places your texts in the same 384-dim space",
+          "The model gains extra parameters and gets slower",
+          "The embedding grows beyond 384 dimensions",
+          "The model file shrinks well below 80 MB"
+        ],
+        "ta": [
+          "அதே 384-dim இடத்தில் உங்கள் உரைகளை வைக்கும் விதம் மட்டும்",
+          "Model கூடுதல் parameters பெற்று மெதுவாகிறது",
+          "Embedding 384 பரிமாணங்களுக்கு மேல் வளர்கிறது",
+          "Model கோப்பு 80 MB-ஐ விட மிகவும் சிறியதாகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\ng = [\"a\", \"b\", \"c\"]\np = [(x, y) for x in g for y in g if x != y]\nprint(len(p))",
+        "ta": "இது என்ன அச்சிடும்?\ng = [\"a\", \"b\", \"c\"]\np = [(x, y) for x in g for y in g if x != y]\nprint(len(p))"
+      },
+      "options": {
+        "en": [
+          "3",
+          "9",
+          "6",
+          "4"
+        ],
+        "ta": [
+          "3",
+          "9",
+          "6",
+          "4"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nrow = [0.5, 0.5, 0.2]\nprint(all(row[0] > v for v in row[1:]))",
+        "ta": "இது என்ன அச்சிடும்?\nrow = [0.5, 0.5, 0.2]\nprint(all(row[0] > v for v in row[1:]))"
+      },
+      "options": {
+        "en": [
+          "False",
+          "True",
+          "0.5",
+          "TypeError"
+        ],
+        "ta": [
+          "False",
+          "True",
+          "0.5",
+          "TypeError"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

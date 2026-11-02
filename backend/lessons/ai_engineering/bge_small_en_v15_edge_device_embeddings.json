@@ -115,5 +115,70 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does the lesson load bge-small with ONNX Runtime instead of sentence-transformers on edge devices?",
+        "ta": "எட்ஜ் சாதனங்களில் sentence-transformers-க்கு பதிலாக ONNX Runtime மூலம் bge-small-ஐ ஏற்ற பாடம் ஏன் பரிந்துரைக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "ONNX Runtime gives 768-dim vectors, so it is more accurate",
+          "ONNX Runtime runs the model on a cloud GPU for speed",
+          "sentence-transformers cannot load BGE models at all",
+          "sentence-transformers pulls in PyTorch (~2GB); ONNX Runtime is ~50MB"
+        ],
+        "ta": [
+          "ONNX Runtime 768-பரிமாண வெக்டர்களைத் தருவதால் அதிக துல்லியம்",
+          "ONNX Runtime வேகத்திற்காக மாடலை கிளவுட் GPU-வில் இயக்குகிறது",
+          "sentence-transformers BGE மாடல்களை ஏற்றவே முடியாது",
+          "sentence-transformers PyTorch-ஐ (~2GB) இழுக்கிறது; ONNX Runtime ~50MB மட்டுமே"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In streaming_encode, the final `if buffer:` block is deleted. With 100 texts and buffer_size=16, what shape is returned?",
+        "ta": "streaming_encode-இல் கடைசி `if buffer:` பகுதி நீக்கப்பட்டது. 100 உரைகள், buffer_size=16 எனில் திரும்பும் shape என்ன?"
+      },
+      "options": {
+        "en": [
+          "(100, 384)",
+          "(16, 384)",
+          "(112, 384)",
+          "(96, 384)"
+        ],
+        "ta": [
+          "(100, 384)",
+          "(16, 384)",
+          "(112, 384)",
+          "(96, 384)"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does INT8 quantization change in bge-small-en-v1.5?",
+        "ta": "INT8 quantization, bge-small-en-v1.5-இல் எதை மாற்றுகிறது?"
+      },
+      "options": {
+        "en": [
+          "It adds a query prefix to improve retrieval",
+          "The model gets 4× bigger but runs faster",
+          "Weights go float32→int8: ~4× smaller, small accuracy loss",
+          "Embedding size drops from 384 to 96 dimensions"
+        ],
+        "ta": [
+          "மீட்டெடுப்பை மேம்படுத்த query prefix-ஐச் சேர்க்கிறது",
+          "மாடல் 4× பெரிதாகிறது, ஆனால் வேகமாக இயங்குகிறது",
+          "எடைகள் float32→int8: ~4× சிறியது, சிறிய துல்லிய இழப்பு",
+          "எம்பெடிங் அளவு 384-இலிருந்து 96 பரிமாணங்களாகக் குறைகிறது"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

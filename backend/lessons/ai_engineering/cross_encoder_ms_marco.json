@@ -149,5 +149,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why can't ms-marco-MiniLM-L6-v2 precompute scores for all documents ahead of time?",
+        "ta": "ms-marco-MiniLM-L6-v2 ஏன் எல்லா ஆவணங்களுக்கும் மதிப்பெண்களை முன்கூட்டியே கணக்கிட முடியாது?"
+      },
+      "options": {
+        "en": [
+          "It only runs on GPUs, not during indexing",
+          "Its 384-dim vectors take too long to save",
+          "Each score depends on the query, read together with the doc",
+          "The model is too large to store the results"
+        ],
+        "ta": [
+          "அது GPU-வில் மட்டுமே இயங்கும், indexing-இன் போது இயங்காது",
+          "அதன் 384-dim vectors-ஐச் சேமிக்க அதிக நேரம் ஆகும்",
+          "ஒவ்வொரு மதிப்பெண்ணும் query-ஐப் பொறுத்தது; அது doc-உடன் சேர்த்துப் படிக்கப்படுகிறது",
+          "முடிவுகளைச் சேமிக்க முடியாத அளவுக்கு மாடல் மிகப் பெரியது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nq = \"fix python import error\".split()\nd = set(\"python list guide\".split())\nprint(sum(t in d for t in q) / len(q))",
+        "ta": "இது என்ன அச்சிடும்?\nq = \"fix python import error\".split()\nd = set(\"python list guide\".split())\nprint(sum(t in d for t in q) / len(q))"
+      },
+      "options": {
+        "en": [
+          "1.0",
+          "0.25",
+          "0.3333333333333333",
+          "0.75"
+        ],
+        "ta": [
+          "1.0",
+          "0.25",
+          "0.3333333333333333",
+          "0.75"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Stage 1 uses top_k=50, but the right answer ranks 80th in vector search. What actually fixes this?",
+        "ta": "Stage 1-இல் top_k=50 பயன்படுத்தப்படுகிறது, ஆனால் சரியான பதில் vector search-இல் 80-ஆவது இடத்தில் உள்ளது. இதை உண்மையில் சரிசெய்வது எது?"
+      },
+      "options": {
+        "en": [
+          "Run the reranker twice on the same 50",
+          "Widen stage 1, e.g. raise top_k above 80",
+          "Rerank with reverse=False instead",
+          "Use a stronger cross-encoder in stage 2"
+        ],
+        "ta": [
+          "அதே 50 ஆவணங்களில் reranker-ஐ இரண்டு முறை இயக்குவது",
+          "stage 1-ஐ விரிவாக்குவது, எ.கா. top_k-ஐ 80-க்கு மேல் உயர்த்துவது",
+          "அதற்குப் பதிலாக reverse=False கொண்டு rerank செய்வது",
+          "stage 2-இல் இன்னும் வலுவான cross-encoder-ஐப் பயன்படுத்துவது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A student's score_pair ends with return round(hits / len(doc_tokens), 4). What's the mistake?",
+        "ta": "ஒரு மாணவரின் score_pair, return round(hits / len(doc_tokens), 4) என்று முடிகிறது. இதில் உள்ள தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "It should divide by the number of query tokens",
+          "It should round to 2 decimals, not 4",
+          "The texts must not be lowercased first",
+          "doc_tokens should be a list, not a set"
+        ],
+        "ta": [
+          "query tokens-இன் எண்ணிக்கையால் வகுக்க வேண்டும்",
+          "4 அல்ல, 2 தசம இடங்களுக்கு round செய்ய வேண்டும்",
+          "உரைகளை முதலில் lowercase செய்யக் கூடாது",
+          "doc_tokens ஒரு set ஆக இல்லாமல் list ஆக இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

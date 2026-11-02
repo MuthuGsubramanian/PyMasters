@@ -121,5 +121,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "In the SmolLM3 ablations, why did GQA-4 win the attention comparison?",
+        "ta": "SmolLM3 ablation சோதனைகளில், attention ஒப்பீட்டில் GQA-4 ஏன் வென்றது?"
+      },
+      "options": {
+        "en": [
+          "It scored far higher than every other option",
+          "It gave the best long-context generalization",
+          "It had the smallest KV cache of all options",
+          "It matched MHA quality with 4× less KV cache"
+        ],
+        "ta": [
+          "மற்ற எல்லா விருப்பங்களையும் விட மிக அதிக மதிப்பெண் பெற்றது",
+          "மிகச் சிறந்த long-context பொதுமைப்படுத்தலைத் தந்தது",
+          "எல்லா விருப்பங்களிலும் அதற்குத்தான் மிகச் சிறிய KV cache இருந்தது",
+          "4× குறைவான KV cache உடன் MHA-வின் தரத்துக்கு இணையாக இருந்தது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nw = {\"X\": 7, \"Y\": 3}\nt = sum(w.values())\nprint({k: int(v / t * 1000) for k, v in w.items()})",
+        "ta": "இது என்ன அச்சிடும்?\nw = {\"X\": 7, \"Y\": 3}\nt = sum(w.values())\nprint({k: int(v / t * 1000) for k, v in w.items()})"
+      },
+      "options": {
+        "en": [
+          "{'X': 7, 'Y': 3}",
+          "{'X': 700.0, 'Y': 300.0}",
+          "{'X': 0.7, 'Y': 0.3}",
+          "{'X': 700, 'Y': 300}"
+        ],
+        "ta": [
+          "{'X': 7, 'Y': 3}",
+          "{'X': 700.0, 'Y': 300.0}",
+          "{'X': 0.7, 'Y': 0.3}",
+          "{'X': 700, 'Y': 300}"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nr = [{\"n\": \"MHA\", \"s\": 0.71}, {\"n\": \"GQA-4\", \"s\": 0.72}]\ntop = sorted(r, key=lambda x: x[\"s\"], reverse=True)\nprint(top[0][\"n\"])",
+        "ta": "இது என்ன அச்சிடும்?\nr = [{\"n\": \"MHA\", \"s\": 0.71}, {\"n\": \"GQA-4\", \"s\": 0.72}]\ntop = sorted(r, key=lambda x: x[\"s\"], reverse=True)\nprint(top[0][\"n\"])"
+      },
+      "options": {
+        "en": [
+          "MHA",
+          "0.72",
+          "KeyError",
+          "GQA-4"
+        ],
+        "ta": [
+          "MHA",
+          "0.72",
+          "KeyError",
+          "GQA-4"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "For the improvement of best over worst, a student writes pct = (best - worst) / best * 100. What is the mistake?",
+        "ta": "best, worst-ஐ விட எவ்வளவு மேம்பட்டது என்பதைக் கணக்கிட ஒரு மாணவர் pct = (best - worst) / best * 100 என்று எழுதுகிறார். இதில் உள்ள தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "It should divide by worst, not best",
+          "It should subtract best from worst",
+          "Scores must be converted to int first",
+          "It should multiply by 1000, not 100"
+        ],
+        "ta": [
+          "best-ஆல் அல்ல, worst-ஆல் வகுக்க வேண்டும்",
+          "worst-இலிருந்து best-ஐக் கழிக்க வேண்டும்",
+          "முதலில் மதிப்பெண்களை int ஆக மாற்ற வேண்டும்",
+          "100-ஆல் அல்ல, 1000-ஆல் பெருக்க வேண்டும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

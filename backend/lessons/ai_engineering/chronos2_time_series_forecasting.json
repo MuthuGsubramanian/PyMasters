@@ -113,5 +113,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does 'zero-shot' forecasting mean for Chronos-2?",
+        "ta": "Chronos-2-க்கு 'zero-shot' முன்கணிப்பு என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "It needs a short fine-tuning run on each dataset first",
+          "It only works on series it saw during pretraining",
+          "It picks ARIMA or Prophet automatically for each series",
+          "It forecasts new series with no per-dataset training"
+        ],
+        "ta": [
+          "முதலில் ஒவ்வொரு dataset-லும் சிறிய fine-tuning தேவை",
+          "pretraining-ல் பார்த்த தொடர்களில் மட்டுமே வேலை செய்யும்",
+          "ஒவ்வொரு தொடருக்கும் ARIMA அல்லது Prophet-ஐ தானாகத் தேர்ந்தெடுக்கும்",
+          "ஒவ்வொரு dataset-க்கும் பயிற்சி இல்லாமலே புதிய தொடர்களை முன்கணிக்கிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Between the 10th and 90th percentiles, a forecast's interval gets wider at later steps. What does that tell you?",
+        "ta": "10வது முதல் 90வது percentile வரையிலான இடைவெளி பின்வரும் படிகளில் அகலமாகிறது. இது என்ன சொல்கிறது?"
+      },
+      "options": {
+        "en": [
+          "num_samples was set too high",
+          "The model is more confident about those steps",
+          "The model is less confident about those steps",
+          "The median forecast is wrong at those steps"
+        ],
+        "ta": [
+          "num_samples மிக அதிகமாக அமைக்கப்பட்டுள்ளது",
+          "அந்தப் படிகளில் மாடலுக்கு நம்பிக்கை அதிகம்",
+          "அந்தப் படிகளில் மாடலுக்கு நம்பிக்கை குறைவு",
+          "அந்தப் படிகளில் median முன்கணிப்பு தவறு"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nc = [10, 20, 40]\nprint((c[-1] - c[0]) / (len(c) - 1))",
+        "ta": "இது என்ன அச்சிடும்?\nc = [10, 20, 40]\nprint((c[-1] - c[0]) / (len(c) - 1))"
+      },
+      "options": {
+        "en": [
+          "15.0",
+          "20.0",
+          "15",
+          "10.0"
+        ],
+        "ta": [
+          "15.0",
+          "20.0",
+          "15",
+          "10.0"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\na, p = [10, 20], [12, 18]\nprint(sum(abs(x - y) for x, y in zip(a, p)) / len(a))",
+        "ta": "இது என்ன அச்சிடும்?\na, p = [10, 20], [12, 18]\nprint(sum(abs(x - y) for x, y in zip(a, p)) / len(a))"
+      },
+      "options": {
+        "en": [
+          "4",
+          "0.0",
+          "2.0",
+          "1.0"
+        ],
+        "ta": [
+          "4",
+          "0.0",
+          "2.0",
+          "1.0"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

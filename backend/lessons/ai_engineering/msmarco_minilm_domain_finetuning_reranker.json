@@ -127,5 +127,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "According to the lesson, which passages make the best hard negatives for training the cross-encoder?",
+        "ta": "பாடத்தின்படி, cross-encoder பயிற்சிக்கு சிறந்த hard negatives எந்த பகுதிகள்?"
+      },
+      "options": {
+        "en": [
+          "Extra copies of the positive passages labeled 0.0",
+          "Random passages picked from anywhere in the corpus",
+          "Top bi-encoder hits that aren't actually relevant",
+          "Passages sharing no words with the query"
+        ],
+        "ta": [
+          "label 0.0 கொடுத்த positive பகுதிகளின் கூடுதல் நகல்கள்",
+          "corpus-இல் எங்கிருந்தோ தற்செயலாக எடுத்த பகுதிகள்",
+          "bi-encoder மேலே தரவரிசைப்படுத்தியும் உண்மையில் பொருத்தமற்ற பகுதிகள்",
+          "query-உடன் ஒரு சொல்லும் பொதுவாக இல்லாத பகுதிகள்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "The relevant doc is index 1. What does this print?\nranked = [3, 1, 0]\nrank = ranked.index(1) + 1\nprint(1.0 / rank)",
+        "ta": "பொருத்தமான ஆவணம் index 1. இது என்ன அச்சிடும்?\nranked = [3, 1, 0]\nrank = ranked.index(1) + 1\nprint(1.0 / rank)"
+      },
+      "options": {
+        "en": [
+          "2.0",
+          "0.5",
+          "1.0",
+          "0.3333333333333333"
+        ],
+        "ta": [
+          "2.0",
+          "0.5",
+          "1.0",
+          "0.3333333333333333"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "According to the lesson, when does fine-tuning the reranker clearly pay off?",
+        "ta": "பாடத்தின்படி, reranker-ஐ fine-tune செய்வது எப்போது தெளிவாகப் பலன் தரும்?"
+      },
+      "options": {
+        "en": [
+          "Only when you have more than 5000 labeled examples",
+          "When your domain uses jargon or acronyms absent from web search",
+          "Whenever the corpus is small, regardless of vocabulary",
+          "General Q&A over docs, where generic MRR is already ~0.75"
+        ],
+        "ta": [
+          "5000-க்கும் மேற்பட்ட labeled examples இருந்தால் மட்டும்",
+          "web search-இல் இல்லாத jargon அல்லது acronyms உங்கள் துறையில் இருக்கும்போது",
+          "சொற்களஞ்சியம் எதுவாக இருந்தாலும், corpus சிறியதாக இருந்தால் எப்போதும்",
+          "ஆவணங்கள் மீதான பொது Q&A-இல், generic MRR ஏற்கனவே ~0.75 இருக்கும்போது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this hard-negative picker (s = similarity scores):\nneg = sorted(ids, key=lambda i: s[i])[:2]",
+        "ta": "இந்த hard-negative தேர்வில் உள்ள பிழையைக் கண்டறியவும் (s = similarity scores):\nneg = sorted(ids, key=lambda i: s[i])[:2]"
+      },
+      "options": {
+        "en": [
+          "It picks the lowest-similarity (easiest) negatives",
+          "No mistake: sorted() is descending by default",
+          "[:2] should be [2:] to take the top negatives",
+          "The key should be lambda i: i, not s[i]"
+        ],
+        "ta": [
+          "இது மிகக் குறைந்த similarity (எளிதான) negatives-ஐத் தேர்ந்தெடுக்கிறது",
+          "பிழை இல்லை: sorted() இயல்பாகவே இறங்கு வரிசையில் இருக்கும்",
+          "மேல் negatives பெற [:2] என்பது [2:] ஆக இருக்க வேண்டும்",
+          "key ஆனது s[i] அல்ல, lambda i: i ஆக இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

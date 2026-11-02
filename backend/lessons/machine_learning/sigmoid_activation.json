@@ -113,5 +113,91 @@
       "machine_learning"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "With math imported, what does this print?\nz = 0\nprint(round(1 / (1 + math.exp(-z)), 3))",
+        "ta": "math இறக்குமதி செய்யப்பட்டிருந்தால், இது என்ன அச்சிடும்?\nz = 0\nprint(round(1 / (1 + math.exp(-z)), 3))"
+      },
+      "options": {
+        "en": [
+          "0.5",
+          "1.0",
+          "0.25",
+          "0.0"
+        ],
+        "ta": [
+          "0.5",
+          "1.0",
+          "0.25",
+          "0.0"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "A model gives a raw score of z = -50. What is sigmoid(z) close to?",
+        "ta": "ஒரு மாதிரி z = -50 என்ற மூல மதிப்பெண்ணைத் தருகிறது. sigmoid(z) எதற்கு அருகில் இருக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Close to 0.5 (undecided)",
+          "Exactly -50, since sigmoid keeps the sign and size",
+          "Close to 0 (very unlikely)",
+          "Close to -1 (strongly negative)"
+        ],
+        "ta": [
+          "0.5-க்கு அருகில் (முடிவில்லாத நிலை)",
+          "சரியாக -50, ஏனெனில் sigmoid குறியையும் அளவையும் மாற்றாது",
+          "0-க்கு அருகில் (மிகவும் சாத்தியமில்லை)",
+          "-1-க்கு அருகில் (வலுவாக எதிர்மறை)"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake:\ndef sigmoid(z):\n    return round(1 / (1 + math.exp(z)), 3)",
+        "ta": "தவறைக் கண்டுபிடிக்கவும்:\ndef sigmoid(z):\n    return round(1 / (1 + math.exp(z)), 3)"
+      },
+      "options": {
+        "en": [
+          "math.exp should be math.log",
+          "It should round to 2 decimals, not 3",
+          "math.exp(z) should be math.exp(-z)",
+          "The 1 + should be 1 - in the denominator"
+        ],
+        "ta": [
+          "math.exp என்பது math.log ஆக இருக்க வேண்டும்",
+          "3 அல்ல, 2 தசம இடங்களுக்கு round செய்ய வேண்டும்",
+          "math.exp(z) என்பது math.exp(-z) ஆக இருக்க வேண்டும்",
+          "வகுக்கும் எண்ணில் 1 + என்பது 1 - ஆக இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "A spam classifier's sigmoid outputs 0.88 for an email. Using the usual threshold, what is the decision?",
+        "ta": "ஒரு மின்னஞ்சலுக்கு spam வகைப்படுத்தியின் sigmoid 0.88 தருகிறது. வழக்கமான வரம்பைப் பயன்படுத்தினால், முடிவு என்ன?"
+      },
+      "options": {
+        "en": [
+          "Undecided, because it is not exactly 0 or 1",
+          "Not spam, because only outputs of exactly 1 count as spam",
+          "Spam, because 0.88 is above the 0.5 threshold",
+          "Not spam, because the threshold is 0.9"
+        ],
+        "ta": [
+          "முடிவில்லை, ஏனெனில் அது சரியாக 0 அல்லது 1 அல்ல",
+          "Spam இல்லை, ஏனெனில் சரியாக 1 மட்டுமே spam ஆகக் கருதப்படும்",
+          "Spam, ஏனெனில் 0.88 என்பது 0.5 வரம்பை விட அதிகம்",
+          "Spam இல்லை, ஏனெனில் வரம்பு 0.9"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

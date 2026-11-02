@@ -119,5 +119,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What lets a cross-encoder score relevance more precisely than a bi-encoder?",
+        "ta": "bi-encoder-ஐ விட cross-encoder பொருத்தத்தை மிகத் துல்லியமாக மதிப்பிட எது உதவுகிறது?"
+      },
+      "options": {
+        "en": [
+          "It has far more parameters than any bi-encoder",
+          "It compares one query vector with one doc vector via dot product",
+          "It reads the query and document together with full self-attention",
+          "It precomputes document embeddings so they can be compared faster"
+        ],
+        "ta": [
+          "அதில் எந்த bi-encoder-ஐ விடவும் மிக அதிகமான parameters உள்ளன",
+          "அது ஒரு query vector-ஐ ஒரு doc vector-உடன் dot product மூலம் ஒப்பிடுகிறது",
+          "அது query-யையும் document-ஐயும் முழு self-attention மூலம் சேர்த்துப் படிக்கிறது",
+          "அது document embeddings-ஐ முன்கூட்டியே கணக்கிட்டு வேகமாக ஒப்பிடுகிறது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why use a bi-encoder first, and the cross-encoder only on the top 20-100 candidates?",
+        "ta": "முதலில் bi-encoder-ஐயும், மேல் 20-100 candidates-க்கு மட்டும் cross-encoder-ஐயும் ஏன் பயன்படுத்துகிறோம்?"
+      },
+      "options": {
+        "en": [
+          "Cross-encoders can't score more than 100 documents at once",
+          "Bi-encoders give more accurate scores, so they set the final order",
+          "Cross-encoders need doc embeddings that the bi-encoder creates first",
+          "Cross-encoders must score every pair, too slow for millions of docs"
+        ],
+        "ta": [
+          "Cross-encoder ஒரே நேரத்தில் 100-க்கு மேற்பட்ட documents-ஐ மதிப்பிட முடியாது",
+          "Bi-encoder மதிப்பெண்கள் அதிக துல்லியமானவை, எனவே அதுவே இறுதி வரிசையைத் தீர்மானிக்கும்",
+          "Bi-encoder முதலில் உருவாக்கும் doc embeddings cross-encoder-க்குத் தேவை",
+          "Cross-encoder ஒவ்வொரு pair-ஐயும் மதிப்பிட வேண்டும்; மில்லியன் docs-க்கு மிக மெதுவானது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nq = {\"hello\", \"world\"}\nd = {\"hello\", \"earth\"}\nprint(len(q & d) / len(q | d))",
+        "ta": "இது என்ன print செய்யும்?\nq = {\"hello\", \"world\"}\nd = {\"hello\", \"earth\"}\nprint(len(q & d) / len(q | d))"
+      },
+      "options": {
+        "en": [
+          "0.5",
+          "1",
+          "0.6666666666666666",
+          "0.3333333333333333"
+        ],
+        "ta": [
+          "0.5",
+          "1",
+          "0.6666666666666666",
+          "0.3333333333333333"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "This line should pick the 5 highest-scoring docs: top = np.argsort(scores)[:5]. What's wrong?",
+        "ta": "இந்த வரி அதிக மதிப்பெண் பெற்ற 5 docs-ஐத் தேர்ந்தெடுக்க வேண்டும்: top = np.argsort(scores)[:5]. என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "Nothing — argsort orders values from highest to lowest",
+          "argsort sorts ascending, so [:5] gives the 5 lowest scores",
+          "argsort returns the sorted scores, not document indices",
+          "[:5] should be [5:] to take the first five items"
+        ],
+        "ta": [
+          "எந்தத் தவறும் இல்லை — argsort அதிகத்திலிருந்து குறைவுக்கு வரிசைப்படுத்தும்",
+          "argsort ஏறுவரிசையில் வரிசைப்படுத்தும், எனவே [:5] மிகக் குறைந்த 5 மதிப்பெண்களைத் தரும்",
+          "argsort வரிசைப்படுத்திய scores-ஐத் தரும், document indices-ஐ அல்ல",
+          "முதல் ஐந்து items-ஐ எடுக்க [:5] என்பதை [5:] என மாற்ற வேண்டும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

@@ -119,5 +119,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "In from_pretrained(), what does device_map=\"auto\" do?",
+        "ta": "from_pretrained()-இல் device_map=\"auto\" என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Spreads layers across available GPUs, else falls back to CPU",
+          "Forces the whole model to run on the CPU",
+          "Picks the best precision, e.g. float16, by itself",
+          "Automatically downloads a 4-bit quantized version"
+        ],
+        "ta": [
+          "கிடைக்கும் GPU-களில் layers-ஐப் பகிர்கிறது, இல்லையெனில் CPU-க்கு மாறுகிறது",
+          "முழு model-ஐயும் CPU-இல் மட்டுமே இயங்க வைக்கிறது",
+          "float16 போன்ற சிறந்த precision-ஐ தானாகவே தேர்ந்தெடுக்கிறது",
+          "தானாகவே 4-bit quantized பதிப்பைப் பதிவிறக்குகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nBYTES = {\"float16\": 2, \"int4\": 0.5}\nprint(7 * BYTES[\"int4\"])",
+        "ta": "இது என்ன அச்சிடும்?\nBYTES = {\"float16\": 2, \"int4\": 0.5}\nprint(7 * BYTES[\"int4\"])"
+      },
+      "options": {
+        "en": [
+          "3.5",
+          "14",
+          "3.0",
+          "3"
+        ],
+        "ta": [
+          "3.5",
+          "14",
+          "3.0",
+          "3"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "This should detect a code prompt. Why does it print False?\np = \"Implement a CLASS\"\nprint(any(k in p for k in [\"class\", \"code\"]))",
+        "ta": "இது code prompt-ஐக் கண்டறிய வேண்டும். ஏன் False அச்சிடுகிறது?\np = \"Implement a CLASS\"\nprint(any(k in p for k in [\"class\", \"code\"]))"
+      },
+      "options": {
+        "en": [
+          "any() needs a list, not a generator",
+          "any() stops after checking the first keyword",
+          "The prompt is not lowercased before checking",
+          "in only matches whole words, not substrings"
+        ],
+        "ta": [
+          "any()-க்கு generator அல்ல, list தேவை",
+          "any() முதல் keyword-ஐச் சரிபார்த்தவுடன் நின்றுவிடும்",
+          "சரிபார்க்கும் முன் prompt lowercase-ஆக மாற்றப்படவில்லை",
+          "in முழு வார்த்தைகளை மட்டுமே பொருத்தும், substrings-ஐ அல்ல"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why decode output[0][inputs[\"input_ids\"].shape[-1]:] instead of just output[0]?",
+        "ta": "output[0]-க்குப் பதிலாக output[0][inputs[\"input_ids\"].shape[-1]:]-ஐ ஏன் decode செய்கிறோம்?"
+      },
+      "options": {
+        "en": [
+          "To remove special tokens like end-of-text markers",
+          "To cut the reply down to max_new_tokens",
+          "To drop the prompt tokens and keep only the new reply",
+          "To move the tensor from GPU to CPU"
+        ],
+        "ta": [
+          "end-of-text போன்ற special tokens-ஐ நீக்க",
+          "பதிலை max_new_tokens அளவுக்குக் குறைக்க",
+          "prompt tokens-ஐ நீக்கி, புதிய பதிலை மட்டும் வைத்துக்கொள்ள",
+          "tensor-ஐ GPU-இலிருந்து CPU-க்கு மாற்ற"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

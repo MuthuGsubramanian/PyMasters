@@ -116,5 +116,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "When picking an embedding model for RAG, why should you check the Retrieval tab instead of the overall average?",
+        "ta": "RAG-க்கு embedding model-ஐத் தேர்வு செய்யும்போது, ஒட்டுமொத்த சராசரிக்குப் பதிலாக Retrieval tab-ஐ ஏன் பார்க்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Small models never appear in the average ranking",
+          "The average score only includes retrieval tasks",
+          "Retrieval scores are always higher than the average",
+          "A model can top the average but still do poorly at retrieval"
+        ],
+        "ta": [
+          "சிறிய model-கள் சராசரி தரவரிசையில் ஒருபோதும் வராது",
+          "சராசரி மதிப்பெண்ணில் retrieval பணிகள் மட்டுமே சேர்க்கப்படும்",
+          "Retrieval மதிப்பெண்கள் எப்போதும் சராசரியைவிட அதிகமாக இருக்கும்",
+          "ஒரு model சராசரியில் முதலிடம் பெற்றாலும் retrieval-இல் மோசமாகச் செயல்படலாம்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nscores = {\"r\": 80.0, \"s\": 60.0}\nprint(round(sum(scores.values()) / len(scores), 2))",
+        "ta": "இது என்ன அச்சிடும்?\nscores = {\"r\": 80.0, \"s\": 60.0}\nprint(round(sum(scores.values()) / len(scores), 2))"
+      },
+      "options": {
+        "en": [
+          "140.0",
+          "35.0",
+          "70",
+          "70.0"
+        ],
+        "ta": [
+          "140.0",
+          "35.0",
+          "70",
+          "70.0"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Which MTEB metric does the lesson call the primary retrieval metric?",
+        "ta": "பாடத்தின்படி, retrieval-க்கான முதன்மை MTEB metric எது?"
+      },
+      "options": {
+        "en": [
+          "STS similarity score",
+          "MAP",
+          "Recall@100",
+          "NDCG@10"
+        ],
+        "ta": [
+          "STS similarity மதிப்பெண்",
+          "MAP",
+          "Recall@100",
+          "NDCG@10"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "This should return the top-k models by retrieval_score. What's wrong?\nsorted(ms, key=lambda m: m[\"retrieval_score\"])[:k]",
+        "ta": "இது retrieval_score அடிப்படையில் முதல் k model-களைத் தர வேண்டும். என்ன தவறு?\nsorted(ms, key=lambda m: m[\"retrieval_score\"])[:k]"
+      },
+      "options": {
+        "en": [
+          "Slicing [:k] returns k+1 items",
+          "A lambda can't read dictionary keys",
+          "reverse=True is missing, so it returns the lowest scores",
+          "sorted() changes the original list in place"
+        ],
+        "ta": [
+          "[:k] slicing k+1 உருப்படிகளைத் தரும்",
+          "lambda-வால் dictionary key-களைப் படிக்க முடியாது",
+          "reverse=True இல்லை, அதனால் குறைந்த மதிப்பெண்கள் வரும்",
+          "sorted() மூல list-ஐயே நேரடியாக மாற்றிவிடும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

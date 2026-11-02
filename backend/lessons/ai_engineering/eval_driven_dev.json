@@ -65,5 +65,91 @@
       "hints": ["contains_match: check expected.lower() in output.lower()", "run_eval: loop cases, call task_fn and scorer_fn, average the scores", "Return the average as a float"],
       "test_code": "assert contains_match('Paris is the capital', 'Paris') == 1.0\nassert contains_match('London is great', 'Paris') == 0.0"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ndef f(o, e): return 1.0 if e.lower() in o.lower() else 0.0\nprint(f(\"PARIS rocks\", \"paris\"))",
+        "ta": "இது என்ன அச்சிடும்?\ndef f(o, e): return 1.0 if e.lower() in o.lower() else 0.0\nprint(f(\"PARIS rocks\", \"paris\"))"
+      },
+      "options": {
+        "en": [
+          "1.0",
+          "True",
+          "An error, because the strings differ in length",
+          "0.0, because the case is different"
+        ],
+        "ta": [
+          "1.0",
+          "True",
+          "பிழை, ஏனெனில் சரங்களின் நீளம் வேறுபடுகிறது",
+          "0.0, ஏனெனில் எழுத்து வடிவம் (case) வேறுபடுகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "According to the lesson, which three components does every eval have?",
+        "ta": "பாடத்தின்படி, ஒவ்வொரு eval-க்கும் உள்ள மூன்று கூறுகள் எவை?"
+      },
+      "options": {
+        "en": [
+          "Prompt, model, and temperature",
+          "Dataset, task, and scorer",
+          "Training data, fine-tuning, and deployment",
+          "Inputs, logs, and a dashboard"
+        ],
+        "ta": [
+          "Prompt, model மற்றும் temperature",
+          "Dataset, task மற்றும் scorer",
+          "பயிற்சி தரவு, fine-tuning மற்றும் deployment",
+          "Inputs, logs மற்றும் ஒரு dashboard"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\no, e = \" Paris. \", \"paris\"\nprint(1.0 if o.strip().lower() == e.strip().lower() else 0.0)",
+        "ta": "இது என்ன அச்சிடும்?\no, e = \" Paris. \", \"paris\"\nprint(1.0 if o.strip().lower() == e.strip().lower() else 0.0)"
+      },
+      "options": {
+        "en": [
+          "True",
+          "0.0",
+          "1.0, since 'paris' appears inside the output",
+          "1.0, since strip() and lower() normalize both"
+        ],
+        "ta": [
+          "True",
+          "0.0",
+          "1.0, ஏனெனில் 'paris' வெளியீட்டுக்குள் உள்ளது",
+          "1.0, ஏனெனில் strip() மற்றும் lower() இரண்டையும் சமப்படுத்துகின்றன"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A dev tests a new prompt on 10 easy cases, gets 100%, and ships it. What is the main mistake?",
+        "ta": "ஒரு டெவலப்பர் புதிய prompt-ஐ 10 எளிய cases-ல் சோதித்து 100% பெற்று, அதை வெளியிடுகிறார். முக்கியத் தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "He should have used exact match instead of contains",
+          "Too few cases and no edge cases; aim for 50-200 with hard ones",
+          "Nothing; 100% accuracy proves the prompt works",
+          "He should have used temperature=1 for variety"
+        ],
+        "ta": [
+          "contains-க்குப் பதிலாக exact match பயன்படுத்தியிருக்க வேண்டும்",
+          "மிகக் குறைந்த cases, edge cases இல்லை; கடினமானவை உட்பட 50-200 வேண்டும்",
+          "தவறு இல்லை; 100% துல்லியம் prompt வேலை செய்வதை நிரூபிக்கிறது",
+          "பல்வகைமைக்காக temperature=1 பயன்படுத்தியிருக்க வேண்டும்"
+        ]
+      },
+      "correct": 1
+    }
   ]
 }

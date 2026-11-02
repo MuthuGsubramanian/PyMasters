@@ -113,5 +113,91 @@
       "performance_optimization"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ns = set([2, 4, 6])\nprint(sum(1 for x in [1, 2, 3, 4] if x in s))",
+        "ta": "இது என்ன அச்சிடும்?\ns = set([2, 4, 6])\nprint(sum(1 for x in [1, 2, 3, 4] if x in s))"
+      },
+      "options": {
+        "en": [
+          "True",
+          "4",
+          "6",
+          "2"
+        ],
+        "ta": [
+          "True",
+          "4",
+          "6",
+          "2"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why is `x in some_set` near-instant while `x in some_list` gets slow on big data?",
+        "ta": "பெரிய தரவில் `x in some_list` மெதுவாகும்போது `x in some_set` ஏன் உடனடியாக இருக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Sets are kept sorted, so Python does a binary search",
+          "Sets use less memory, so scanning them is quicker",
+          "Sets stop at the first match, but lists always scan everything",
+          "The set hashes x and jumps straight to its bucket"
+        ],
+        "ta": [
+          "Set வரிசைப்படுத்தப்பட்டிருப்பதால் Python binary search செய்கிறது",
+          "Set குறைந்த நினைவகம் எடுப்பதால் அதைத் தேடுவது வேகம்",
+          "Set முதல் பொருத்தத்தில் நிற்கும், list எப்போதும் முழுவதும் தேடும்",
+          "Set, x-ஐ hash செய்து நேரடியாக அதன் bucket-க்குத் தாவுகிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake:\nfor r in requests:\n    if r in set(bad_ids): count += 1",
+        "ta": "தவறைக் கண்டுபிடிக்கவும்:\nfor r in requests:\n    if r in set(bad_ids): count += 1"
+      },
+      "options": {
+        "en": [
+          "It should be written as `bad_ids in r`",
+          "Sets are unordered, so `in` may give wrong answers",
+          "set(bad_ids) is rebuilt every pass; build it once before the loop",
+          "`in` only works on lists, not on sets"
+        ],
+        "ta": [
+          "இது `bad_ids in r` என்று எழுதப்பட வேண்டும்",
+          "Set வரிசையற்றது, எனவே `in` தவறான பதில் தரலாம்",
+          "set(bad_ids) ஒவ்வொரு சுற்றிலும் மீண்டும் உருவாகிறது; loop-க்கு முன் ஒருமுறை உருவாக்கவும்",
+          "`in` list-இல் மட்டுமே வேலை செய்யும், set-இல் அல்ல"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "For a list with n items, what is the cost of checking `x in a_list`?",
+        "ta": "n உருப்படிகள் கொண்ட list-இல் `x in a_list` சரிபார்ப்பின் செலவு என்ன?"
+      },
+      "options": {
+        "en": [
+          "O(log n)",
+          "O(n²)",
+          "O(n)",
+          "O(1)"
+        ],
+        "ta": [
+          "O(log n)",
+          "O(n²)",
+          "O(n)",
+          "O(1)"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

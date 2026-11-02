@@ -103,5 +103,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What core change does BCR make to RL training?",
+        "ta": "RL பயிற்சியில் BCR செய்யும் முக்கிய மாற்றம் என்ன?"
+      },
+      "options": {
+        "en": [
+          "A length penalty on every long answer",
+          "A multi-stage curriculum from easy to hard",
+          "Mixing easy and hard problems in the same batch",
+          "A separate classifier routes problems by difficulty"
+        ],
+        "ta": [
+          "நீளமான ஒவ்வொரு பதிலுக்கும் நீள அபராதம்",
+          "எளியதிலிருந்து கடினமானது வரை பல நிலைப் பாடத்திட்டம்",
+          "ஒரே batch-இல் எளிய மற்றும் கடினமான பிரச்சனைகளைக் கலத்தல்",
+          "சிரம அளவின்படி பிரச்சனைகளை அனுப்ப ஒரு தனி வகைப்படுத்தி"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "The exercise says wrong answers get no efficiency bonus. What's the bug if you reuse the lesson's bcr_reward unchanged?",
+        "ta": "தவறான பதில்களுக்குச் செயல்திறன் போனஸ் இல்லை என்று பயிற்சி சொல்கிறது. பாடத்தின் bcr_reward-ஐ மாற்றாமல் பயன்படுத்தினால் என்ன பிழை?"
+      },
+      "options": {
+        "en": [
+          "It gives -0.5 for correct answers",
+          "It gives a negative bonus for above-average token use",
+          "It divides by a global average, not the batch average",
+          "It adds the efficiency bonus even when is_correct is False"
+        ],
+        "ta": [
+          "சரியான பதில்களுக்கு -0.5 தருகிறது",
+          "சராசரியை விட அதிக tokens பயன்படுத்தினால் எதிர்மறை போனஸ் தருகிறது",
+          "batch சராசரியால் அல்ல, உலகளாவிய சராசரியால் வகுக்கிறது",
+          "is_correct False ஆக இருந்தாலும் செயல்திறன் போனஸைச் சேர்க்கிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In BCR's reward, what is a problem's token usage compared against?",
+        "ta": "BCR reward-இல், ஒரு பிரச்சனையின் token பயன்பாடு எதனுடன் ஒப்பிடப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "The token count of the reference solution",
+          "A fixed global token limit",
+          "The longest answer in the whole training set",
+          "The average tokens used in its batch"
+        ],
+        "ta": [
+          "குறிப்புத் தீர்வின் token எண்ணிக்கை",
+          "நிலையான உலகளாவிய token வரம்பு",
+          "முழு பயிற்சித் தொகுப்பிலும் உள்ள மிக நீளமான பதில்",
+          "அதன் batch-இல் பயன்படுத்தப்பட்ட சராசரி tokens"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print? easy = [d for d in [0.1, 0.5, 0.7] if d < 0.5]; print(len(easy))",
+        "ta": "இது என்ன அச்சிடும்? easy = [d for d in [0.1, 0.5, 0.7] if d < 0.5]; print(len(easy))"
+      },
+      "options": {
+        "en": [
+          "2",
+          "3",
+          "1",
+          "0"
+        ],
+        "ta": [
+          "2",
+          "3",
+          "1",
+          "0"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

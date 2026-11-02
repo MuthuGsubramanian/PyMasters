@@ -114,5 +114,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nimport random\nrandom.seed(7); a = random.random()\nrandom.seed(7); print(a == random.random())",
+        "ta": "இது என்ன அச்சிடும்?\nimport random\nrandom.seed(7); a = random.random()\nrandom.seed(7); print(a == random.random())"
+      },
+      "options": {
+        "en": [
+          "0.7",
+          "False",
+          "True",
+          "An error: a seed can be set only once"
+        ],
+        "ta": [
+          "0.7",
+          "False",
+          "True",
+          "பிழை: seed-ஐ ஒருமுறை மட்டுமே அமைக்க முடியும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake:\nr = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\")\nr(\"Python is a [MASK] language.\")",
+        "ta": "தவறைக் கண்டுபிடியுங்கள்:\nr = pipeline(\"fill-mask\", model=\"FacebookAI/roberta-base\")\nr(\"Python is a [MASK] language.\")"
+      },
+      "options": {
+        "en": [
+          "RoBERTa expects <mask>, not [MASK]",
+          "The sentence needs two mask tokens",
+          "The task name must be \"fill_mask\" with an underscore",
+          "fill-mask works only with bert-base-uncased"
+        ],
+        "ta": [
+          "RoBERTa [MASK]-ஐ அல்ல, <mask>-ஐ எதிர்பார்க்கிறது",
+          "வாக்கியத்தில் இரண்டு mask டோக்கன்கள் தேவை",
+          "task பெயர் underscore உடன் \"fill_mask\" ஆக இருக்க வேண்டும்",
+          "fill-mask, bert-base-uncased உடன் மட்டுமே வேலை செய்யும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "According to the lesson, how did RoBERTa beat BERT on benchmarks?",
+        "ta": "பாடத்தின்படி, RoBERTa எப்படி benchmark-களில் BERT-ஐ மிஞ்சியது?"
+      },
+      "options": {
+        "en": [
+          "It replaced self-attention with recurrent layers",
+          "Same architecture, better training: more data, no NSP",
+          "It added a stronger next sentence prediction task",
+          "It added more transformer layers to BERT"
+        ],
+        "ta": [
+          "self-attention-க்குப் பதில் recurrent அடுக்குகளைப் பயன்படுத்தியது",
+          "அதே கட்டமைப்பு, சிறந்த பயிற்சி: அதிக தரவு, NSP இல்லை",
+          "வலுவான next sentence prediction பணியைச் சேர்த்தது",
+          "BERT-இல் கூடுதல் transformer அடுக்குகளைச் சேர்த்தது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does dynamic masking help RoBERTa generalize better than static masking?",
+        "ta": "நிலையான (static) masking-ஐ விட dynamic masking ஏன் RoBERTa சிறப்பாகப் பொதுமைப்படுத்த உதவுகிறது?"
+      },
+      "options": {
+        "en": [
+          "New mask positions each epoch stop it memorizing masks",
+          "It removes the need for a tokenizer",
+          "It masks fewer tokens, so training finishes faster",
+          "It keeps the same masks so gradients stay stable"
+        ],
+        "ta": [
+          "ஒவ்வொரு epoch-இலும் புதிய mask இடங்கள் இருப்பதால் mask-களை மனப்பாடம் செய்ய முடியாது",
+          "tokenizer தேவையை நீக்குகிறது",
+          "குறைவான டோக்கன்களை mask செய்வதால் பயிற்சி விரைவில் முடியும்",
+          "அதே mask-களை வைத்திருப்பதால் gradient-கள் நிலையாக இருக்கும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

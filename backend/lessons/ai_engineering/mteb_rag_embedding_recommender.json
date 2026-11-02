@@ -167,5 +167,91 @@
       "ai_engineering"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "For a RAG stack, which MTEB column should you rank embedding models by?",
+        "ta": "RAG அமைப்புக்கு, எந்த MTEB நெடுவரிசையின்படி embedding மாதிரிகளை வரிசைப்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "STS Spearman correlation",
+          "Classification accuracy",
+          "Retrieval nDCG@10",
+          "The overall mean score"
+        ],
+        "ta": [
+          "STS Spearman தொடர்பு",
+          "Classification துல்லியம்",
+          "Retrieval nDCG@10",
+          "ஒட்டுமொத்த சராசரி மதிப்பெண்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nm = [(\"big\", 55, 300), (\"small\", 55, 100)]\nprint(max(m, key=lambda x: (x[1], -x[2]))[0])",
+        "ta": "இது என்ன அச்சிடும்?\nm = [(\"big\", 55, 300), (\"small\", 55, 100)]\nprint(max(m, key=lambda x: (x[1], -x[2]))[0])"
+      },
+      "options": {
+        "en": [
+          "big",
+          "('small', 55, 100)",
+          "small",
+          "55"
+        ],
+        "ta": [
+          "big",
+          "('small', 55, 100)",
+          "small",
+          "55"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "recommend() skips `if not ok: return None` and no model passes the filters. What happens?",
+        "ta": "recommend() இல் `if not ok: return None` இல்லை; எந்த மாதிரியும் வடிகட்டலில் தேறவில்லை. என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "max() raises ValueError on the empty list",
+          "It returns the first model in the input",
+          "It returns an empty list []",
+          "It returns None automatically"
+        ],
+        "ta": [
+          "காலியான பட்டியலில் max() ValueError எழுப்பும்",
+          "உள்ளீட்டின் முதல் மாதிரியைத் திருப்பும்",
+          "காலியான பட்டியல் [] திருப்பும்",
+          "தானாகவே None திருப்பும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Your chunker makes 1,000-token chunks but the model's max tokens is 512. What happens?",
+        "ta": "உங்கள் chunker 1,000-token துண்டுகளை உருவாக்குகிறது, ஆனால் மாதிரியின் max tokens 512. என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Each chunk is split into two vectors automatically",
+          "Text past 512 tokens is silently thrown away",
+          "The vector dimensions double to fit the text",
+          "The model raises an error for long chunks"
+        ],
+        "ta": [
+          "ஒவ்வொரு துண்டும் தானாக இரண்டு vector-களாகப் பிரிக்கப்படும்",
+          "512 token-களுக்கு மேலான உரை அமைதியாக நீக்கப்படும்",
+          "உரைக்கு இடமளிக்க vector பரிமாணங்கள் இரட்டிப்பாகும்",
+          "நீண்ட துண்டுகளுக்கு மாதிரி பிழை எழுப்பும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }
