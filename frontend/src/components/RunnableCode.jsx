@@ -1,6 +1,8 @@
-import { useState, useCallback, useRef } from 'react';
-import { Play, Loader2, Check, X, Copy } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Play, Loader2, Check, X, Copy, Target } from 'lucide-react';
 import api from '../api';
+import ErrorExplainer from './ErrorExplainer';
+import { comparePrediction, recordPrediction } from '../utils/predict';
 
 // Flatten ReactMarkdown's `children` (string | node | node[]) to raw code text.
 function flattenText(node) {
@@ -40,6 +42,21 @@ function importsAllAvailable(code) {
     }
     return true;
 }
+
+// Earlier blocks run first as setup, but silently: the learner should only see (and predict) the
+// output of the block they clicked. SETUP_LINES = lines the wrapper adds before their code.
+const SETUP_LINES = 4;
+function withSilentPrelude(prelude, code) {
+    return 'import contextlib as _pm_cl, io as _pm_io\n'
+        + 'with _pm_cl.redirect_stdout(_pm_io.StringIO()):\n'
+        + `    try: exec(${JSON.stringify(prelude)})\n`
+        + '    except Exception: pass\n'
+        + code;
+}
+// Map traceback line numbers back to the block the learner is looking at.
+const shiftLines = (text, offset) => (offset
+    ? text.replace(/(File "[^"]*main\.py", line )(\d+)/g, (_, pre, n) => `${pre}${Math.max(1, Number(n) - offset)}`)
+    : text);
 
 // Reference cards frequently show *cheatsheets* — bare operator or keyword
 // listings (`+ - * / // % **`, `== != < >`, `and or not`) that aren't valid
@@ -95,7 +112,7 @@ function isRunnablePython(code, className) {
  *    Trending snippet modal). `label` overrides the shown language; `copy`
  *    adds a copy-to-clipboard button (preserves Reference's affordance).
  */
-export default function RunnableCode({ children, className, code: rawCode, language, dark = false, copy = false }) {
+export default function RunnableCode({ children, className, code: rawCode, language, dark = false, copy = false, predict = false }) {
     const code = (rawCode != null ? rawCode : flattenText(children)).replace(/\n$/, '');
     const runnable = isRunnablePython(code, className || (language ? `language-${language}` : ''));
 
@@ -103,44 +120,58 @@ export default function RunnableCode({ children, className, code: rawCode, langu
     const [state, setState] = useState('idle'); // idle | running | done | error
     const [output, setOutput] = useState('');
     const [copied, setCopied] = useState(false);
+    // Predict-then-run: null (off) | 'open' (writing a guess) | { ...comparePrediction, stats, errorType }
+    const [predicting, setPredicting] = useState(null);
+    const [guess, setGuess] = useState('');
+    const canPredict = predict && /\bprint\s*\(/.test(code);
 
-    const doCopy = useCallback(() => {
+    const doCopy = () => {
         try {
             navigator.clipboard?.writeText(code);
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
         } catch { /* clipboard unavailable — no-op */ }
-    }, [code]);
+    };
 
     // Lesson code blocks are usually CUMULATIVE — a later `print(b.shape)`
     // depends on `b = np.array(...)` defined in an earlier block. Running a
     // block in isolation would NameError. So we prepend the code of every
     // earlier runnable block within the same lesson section (marked with
-    // data-runcode-scope) as setup. Redefinition is harmless in Python, and
-    // chat answers (no scope wrapper) run standalone, which is what we want.
-    const buildFullCode = useCallback(() => {
+    // data-runcode-scope) as setup (silently - see withSilentPrelude). Redefinition
+    // is harmless in Python, and chat answers (no scope wrapper) run standalone.
+    const buildFullCode = () => {
         const scope = rootRef.current?.closest('[data-runcode-scope]');
-        if (!scope) return code;
+        if (!scope) return { source: code, offset: 0 };
         const roots = [...scope.querySelectorAll('[data-runnable-code]')];
         const idx = roots.indexOf(rootRef.current);
-        if (idx <= 0) return code;
+        if (idx <= 0) return { source: code, offset: 0 };
         const prelude = roots
             .slice(0, idx)
             .map((r) => r.querySelector('pre')?.textContent || '')
             .filter(Boolean)
             .join('\n');
-        return prelude ? `${prelude}\n${code}` : code;
-    }, [code]);
+        return prelude ? { source: withSilentPrelude(prelude, code), offset: SETUP_LINES } : { source: code, offset: 0 };
+    };
 
-    const run = useCallback(async () => {
+    const run = async (prediction = null) => {
         if (state === 'running') return;
         setState('running');
         setOutput('');
         try {
-            const res = await api.post('/playground/execute', { code: buildFullCode() });
+            const { source, offset } = buildFullCode();
+            const res = await api.post('/playground/execute', { code: source });
             const data = res.data || {};
-            setOutput(data.output || '(No output)');
+            const out = shiftLines(data.output || '(No output)', offset);
+            setOutput(out);
             setState(data.exit_code === 0 ? 'done' : 'error');
+            if (prediction !== null) {
+                const err = (data.error || '').trim();
+                const printed = err ? (data.output || '').replace(err, '').trim() : (data.output || '');
+                const errorType = data.exit_code === 0 ? null
+                    : ((err.split('\n').pop() || '').match(/^(\w+(?:Error|Exception))/) || [])[1] || null;
+                const result = comparePrediction(prediction, printed === '(No output)' ? '' : printed, errorType);
+                setPredicting({ ...result, errorType, stats: recordPrediction(result.exact) });
+            }
         } catch (e) {
             // 402 (trial lapsed) is handled by the global interceptor → redirect;
             // anything else shows a calm inline message.
@@ -149,8 +180,9 @@ export default function RunnableCode({ children, className, code: rawCode, langu
                 : 'Could not reach the sandbox. Please try again.';
             setOutput(msg);
             setState('error');
+            if (prediction !== null) setPredicting(null);
         }
-    }, [buildFullCode, state]);
+    };
 
     const preCls = dark
         ? 'surface-code p-3 rounded-lg text-xs font-mono overflow-x-auto border border-white/[0.06]'
@@ -200,9 +232,20 @@ export default function RunnableCode({ children, className, code: rawCode, langu
                 <span className="text-[10px] font-mono text-slate-400 ml-1">{language || 'python'}</span>
                 <div className="ml-auto flex items-center gap-1">
                     {copyBtn}
+                    {canPredict && (
+                        <button
+                            type="button"
+                            onClick={() => { setPredicting('open'); setGuess(''); }}
+                            disabled={state === 'running'}
+                            title="Guess the output first, then run to check"
+                            className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md bg-violet-500/80 hover:bg-violet-500 text-white disabled:opacity-60 transition-colors"
+                        >
+                            <Target size={12} /> Predict
+                        </button>
+                    )}
                     <button
                         type="button"
-                        onClick={run}
+                        onClick={() => { setPredicting(null); run(); }}
                         disabled={state === 'running'}
                         className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md bg-green-500/90 hover:bg-green-500 text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                     >
@@ -216,9 +259,63 @@ export default function RunnableCode({ children, className, code: rawCode, langu
             {/* Code */}
             <pre className={`${preCls} rounded-none border-0 my-0`}>{codeBody}</pre>
 
+            {/* Predict-then-run: commit to a guess before seeing the output */}
+            {predicting === 'open' && (
+                <div className="border-t border-white/[0.06] bg-slate-900 px-3 py-2.5 border-l-2 border-l-violet-400">
+                    <label className="block text-[11px] font-semibold text-violet-200 mb-1.5" htmlFor={`guess-${code.length}`}>
+                        What will this print? Write it exactly, one line per line of output (or name the error).
+                    </label>
+                    <textarea
+                        id={`guess-${code.length}`}
+                        value={guess}
+                        onChange={(e) => setGuess(e.target.value)}
+                        rows={Math.min(6, Math.max(2, guess.split('\n').length))}
+                        autoFocus
+                        className="w-full rounded-md bg-black/40 border border-white/10 px-2 py-1.5 text-xs font-mono text-slate-100 focus:outline-none focus:border-violet-400"
+                        placeholder="e.g. 6"
+                    />
+                    <div className="mt-2 flex items-center gap-2">
+                        <button
+                            type="button"
+                            onClick={() => run(guess)}
+                            disabled={!guess.trim() || state === 'running'}
+                            className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md bg-violet-500 hover:bg-violet-400 text-white disabled:opacity-50 transition-colors"
+                        >
+                            <Play size={12} fill="currentColor" /> Run &amp; check
+                        </button>
+                        <button type="button" onClick={() => setPredicting(null)} className="text-[11px] text-slate-400 hover:text-slate-200">Cancel</button>
+                    </div>
+                </div>
+            )}
+            {predicting && predicting !== 'open' && state !== 'running' && (
+                <div className={`border-t border-white/[0.06] bg-slate-900 border-l-2 px-3 py-2.5 text-xs ${predicting.exact ? 'border-l-green-400' : 'border-l-amber-400'}`} role="status">
+                    <div className={`font-bold ${predicting.exact ? 'text-green-300' : 'text-amber-300'}`}>
+                        {predicting.exact
+                            ? (predicting.errorType ? `Spot on - you saw the ${predicting.errorType} coming.` : 'Spot on - your prediction matched exactly.')
+                            : predicting.errorType
+                                ? `Not quite - this stops with ${predicting.errorType}.`
+                                : `${predicting.matched} of ${predicting.total} line${predicting.total === 1 ? '' : 's'} right.`}
+                    </div>
+                    {!predicting.exact && !predicting.errorType && (
+                        <table className="mt-1.5 font-mono text-[11.5px]">
+                            <thead><tr className="text-slate-400"><th className="pr-4 text-left font-normal">Your guess</th><th className="text-left font-normal">Actual</th></tr></thead>
+                            <tbody>
+                                {predicting.lines.filter((l) => !l.ok).slice(0, 5).map((l, k) => (
+                                    <tr key={k}><td className="pr-4 text-red-300">{l.got || '(nothing)'}</td><td className="text-green-300">{l.expected || '(nothing)'}</td></tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+                    <div className="mt-1 text-[11px] text-slate-400">
+                        Prediction accuracy {predicting.stats.correct}/{predicting.stats.tries}
+                        {predicting.stats.streak > 1 ? ` - ${predicting.stats.streak} in a row` : ''}
+                    </div>
+                </div>
+            )}
+
             {/* Output */}
             {state !== 'idle' && (
-                <div className="border-t border-white/[0.06] bg-black/40">
+                <div className="border-t border-white/[0.06] bg-slate-950">
                     <div className="flex items-center gap-1.5 px-3 pt-2 text-[10px] font-bold uppercase tracking-wider">
                         {state === 'running' && <span className="text-slate-400">Executing…</span>}
                         {state === 'done' && <><Check size={11} className="text-green-400" /><span className="text-green-400">Output</span></>}
@@ -229,6 +326,7 @@ export default function RunnableCode({ children, className, code: rawCode, langu
                             ? 'The sandbox may take a few seconds to warm up on the first run…'
                             : output}
                     </pre>
+                    {state === 'error' && <ErrorExplainer text={output} className="mx-3 mb-3 mt-0" />}
                 </div>
             )}
         </div>
