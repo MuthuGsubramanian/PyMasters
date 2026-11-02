@@ -64,3 +64,19 @@ def test_answer_rejects_bad_input(db, body, code):
     with pytest.raises(HTTPException) as e:
         review.warmup_answer(body, caller="u1")
     assert e.value.status_code == code
+
+
+def test_completed_lessons_count_as_learned(db):
+    """Production had completions but mastery <= 0.27, so warm-up and review were always empty."""
+    conn = sqlite3.connect(db)
+    conn.execute("CREATE TABLE lesson_completions (user_id TEXT, lesson_id TEXT, completed_at TIMESTAMP, xp_awarded INTEGER)")
+    conn.execute("INSERT INTO lesson_completions VALUES ('u3', 'l2', '2026-01-01 00:00:00', 50)")
+    conn.execute("INSERT INTO user_mastery VALUES ('u3', 'l2', 0.2, 1, 0, '2026-01-01 00:00:00', 0)")
+    conn.execute("INSERT INTO lesson_completions VALUES ('u3', 'l3', datetime('now'), 50)")  # just finished
+    conn.commit()
+    conn.close()
+    assert {q["topic"] for q in review.warmup(caller="u3")["questions"]} == {"l2", "l3"}
+    due = review.due_reviews(user_id="u3", caller="u3")
+    assert [d["topic"] for d in due["due"]] == ["l2"] and due["tracked"] == 2   # fresh completion not due yet
+    assert review.warmup_answer({"id": "l2:0", "choice": 1}, caller="u3")["correct"] is True
+    assert review.due_reviews(user_id="u3", caller="u3")["total_due"] == 0       # correct recall resets the clock
