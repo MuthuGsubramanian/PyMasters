@@ -31,11 +31,15 @@ services:
       GOOGLE_CLOUD_PROJECT: pymasters-app
       GOOGLE_CLOUD_LOCATION: us-central1
       OLLAMA_MODEL: gpt-oss:120b
+      PYMASTERS_ENV: production
       VAATHIYAAR_PROVIDERS: ollama+qubrid+qubrid2
       QUBRID2_MODEL: qwen3.6-plus
     volumes:
       - /opt/pymasters/data:/app/data
       - /opt/pymasters/litestream.yml:/etc/litestream.yml:ro
+    # start.sh adds an iptables rule blocking all egress of the `sandbox` uid (learner code)
+    cap_add:
+      - NET_ADMIN
     ports:
       - "127.0.0.1:8080:8080"      # local health checks only; Caddy reaches it on the compose network
     healthcheck:

@@ -29,8 +29,11 @@ _MIN_SECRET_LEN = 16
 
 
 def is_production() -> bool:
-    """True when running on Cloud Run (which injects K_SERVICE), false locally."""
-    return bool(os.getenv("K_SERVICE"))
+    """True in production: Cloud Run (K_SERVICE) or the GCE VM (PYMASTERS_ENV=production, or the jobs
+    scheduler switched on). Previously only Cloud Run counted, so on the VM a missing JWT_SECRET would
+    silently fall back to the public default and anyone could forge tokens (security fix 2026-11-02)."""
+    return bool(os.getenv("K_SERVICE")) or os.getenv("PYMASTERS_ENV") == "production" \
+        or os.getenv("PYMASTERS_JOBS") == "1"
 
 
 def assert_secret_is_safe(secret: str, is_production: bool) -> None:

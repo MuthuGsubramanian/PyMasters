@@ -5,6 +5,7 @@ Prefix: /api/classroom
 """
 
 import json
+import re
 import os
 import sqlite3
 import threading
@@ -180,16 +181,20 @@ def _require_self(user_id: str, caller: str) -> None:
 def _load_lesson_from_dir(lesson_id: str, lessons_dir: str = None) -> dict | None:
     """Load a lesson by ID, searching across all track subdirectories."""
     base = Path(lessons_dir) if lessons_dir else LESSONS_DIR
+    # File lookups only for plain ids: a body lesson_id like "../../x" must not open arbitrary files
+    # (security fix 2026-11-02). Generated-lesson ids (DB lookup below) are unaffected.
+    if not re.fullmatch(r"[A-Za-z0-9_\-]{1,120}", str(lesson_id or "")):
+        base = None
     # Search track subdirectories
-    for track_dir in sorted(base.iterdir()):
+    for track_dir in (sorted(base.iterdir()) if base else []):
         if track_dir.is_dir():
             lesson_file = track_dir / f"{lesson_id}.json"
             if lesson_file.exists():
                 with open(lesson_file, "r", encoding="utf-8") as f:
                     return json.load(f)
     # Fallback: check root directory (backward compat)
-    root_file = base / f"{lesson_id}.json"
-    if root_file.exists():
+    root_file = base / f"{lesson_id}.json" if base else None
+    if root_file is not None and root_file.exists():
         with open(root_file, "r", encoding="utf-8") as f:
             return json.load(f)
 

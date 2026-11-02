@@ -53,8 +53,8 @@ def _ensure_service_account(conn: sqlite3.Connection) -> sqlite3.Row:
     conn.row_factory = sqlite3.Row
     row = conn.execute(
         "SELECT id, username, COALESCE(is_super_admin,0) AS is_super_admin FROM users "
-        "WHERE lower(COALESCE(email,'')) = ? OR username = ? LIMIT 1",
-        [SERVICE_EMAIL, SERVICE_USERNAME],
+        "WHERE username = ? LIMIT 1",  # username only: emails are user-editable (security fix 2026-11-02)
+        [SERVICE_USERNAME],
     ).fetchone()
     if row is None:
         from main import hash_pw  # local import: main imports this router

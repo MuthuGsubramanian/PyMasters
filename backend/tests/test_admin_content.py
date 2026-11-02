@@ -39,6 +39,7 @@ def app(tmp_path, monkeypatch):
         [json.dumps({"id": "gen_fresh_1", "title": {"en": "X"}})],
     )
     conn.commit(); conn.close()
+    monkeypatch.setattr(admin_mod, "SUPER_ADMIN_USER_IDS", {"owner"})   # founders are pinned by id
     main_mod.init_db()  # resolve super admins on existing rows
     from fastapi.testclient import TestClient
     return main_mod, TestClient(main_mod.app)

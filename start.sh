@@ -40,5 +40,30 @@ from main import app
 print('App import OK')
 " 2>&1
 
+# --- Sandbox network isolation (2026-11-02 security fix) ---
+# Learner code runs as the unprivileged `sandbox` uid. Docker's seccomp profile forbids `unshare`,
+# so the namespace isolation in vaathiyaar/execution.py is unavailable here; reject ALL outbound
+# traffic from that uid instead (metadata server, internet, and the API on loopback), then verify.
+# Needs cap_add: NET_ADMIN (infra/gce/docker-compose.yml). Only root holds it; the sandbox uid has none.
+# The app refuses to execute code unless SANDBOX_NET_FIREWALL=1 (fail closed).
+export SANDBOX_NET_FIREWALL=0
+if id sandbox >/dev/null 2>&1 && command -v iptables >/dev/null 2>&1; then
+  for ipt in iptables ip6tables; do
+    $ipt -C OUTPUT -m owner --uid-owner sandbox -j REJECT 2>/dev/null \
+      || $ipt -A OUTPUT -m owner --uid-owner sandbox -j REJECT 2>/dev/null || true
+  done
+  probe=$(su -s /bin/sh sandbox -c "python3 -I -c 'import socket
+try:
+    socket.create_connection((\"169.254.169.254\", 80), 2).close(); print(\"REACHABLE\")
+except Exception:
+    print(\"blocked\")'" 2>/dev/null || echo unknown)
+  if [ "$probe" = "blocked" ]; then
+    export SANDBOX_NET_FIREWALL=1
+    echo "Sandbox egress firewall: active (sandbox uid cannot reach the network)"
+  else
+    echo "WARNING: sandbox egress firewall NOT verified (probe=$probe) - code execution will be refused"
+  fi
+fi
+
 echo "=== Starting services (nginx + uvicorn + litestream) ==="
 exec supervisord -c /etc/supervisor/conf.d/pymasters.conf

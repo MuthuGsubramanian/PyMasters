@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     ca-certificates \
     sqlite3 \
+    iptables \
     && rm -rf /var/lib/apt/lists/*
 
 # --- Litestream (continuous SQLite -> GCS replication) ---

@@ -33,6 +33,8 @@ def app(tmp_path, monkeypatch):
     conn.execute("INSERT INTO users (id, username, password_hash, name, email, created_at, is_super_admin) VALUES ('imposter','imp','h','I','someone@else.com', CURRENT_TIMESTAMP, 1)")
     conn.execute("INSERT INTO users (id, username, password_hash, name, email, created_at, is_super_admin) VALUES ('qa','claude-qa','h','Q','claude-qa@pymasters.net', CURRENT_TIMESTAMP, 1)")
     conn.commit(); conn.close()
+    import routes.admin as admin_mod
+    monkeypatch.setattr(admin_mod, "SUPER_ADMIN_USER_IDS", {"owner", "backup"})   # founders pinned by id
     main_mod.init_db()     # second boot: the resolver runs again on existing rows
     from fastapi.testclient import TestClient
     return main_mod, TestClient(main_mod.app)

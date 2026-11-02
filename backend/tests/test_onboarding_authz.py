@@ -140,3 +140,13 @@ def test_create_org_rate_limited(client):
     # 6th within the window -> 429
     assert client.post("/api/org", json={"name": "Org 6", "user_id": user["id"]},
                        headers=_auth(user)).status_code == 429
+
+
+def test_onboarding_rejects_reserved_founder_email(client):
+    """Security fix 2026-11-02 (C1): onboarding was the one email write path without the reserved-
+    identifier check, letting any user claim the founder address."""
+    user = _register(client)
+    body = _onboarding_body(user["id"])
+    body["email"] = "Muthu@PyMasters.net"
+    r = client.post("/api/profile/onboarding", json=body, headers=_auth(user))
+    assert r.status_code == 400
