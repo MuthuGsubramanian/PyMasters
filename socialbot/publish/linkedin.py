@@ -6,7 +6,7 @@ import json
 import logging
 import re
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import requests
 
@@ -15,7 +15,13 @@ from socialbot import config
 log = logging.getLogger("socialbot.linkedin")
 
 API = "https://api.linkedin.com/rest"
-VERSION = "202510"
+def _api_version():
+    """LinkedIn only serves versions from roughly the last 12 months; use last month's (YYYYMM) so it never ages out."""
+    d = datetime.now(timezone.utc).replace(day=1) - timedelta(days=1)
+    return d.strftime("%Y%m")
+
+
+VERSION = _api_version()
 # Two identities. "org" = the PyMasters company page via the PyMasters Publisher app (Community Management API,
 # pending LinkedIn review). "member" = the owner's profile via the existing PyMasters app (Share on LinkedIn).
 # Posts go out as the page once its token exists, as the member until then.
@@ -79,7 +85,7 @@ def _token(profile=None):
 
 
 def _h(extra=None):
-    h = {"Authorization": f"Bearer {_token()}", "LinkedIn-Version": VERSION, "X-Restli-Protocol-Version": "2.0.0",
+    h = {"Authorization": f"Bearer {_token()}", "LinkedIn-Version": _api_version(), "X-Restli-Protocol-Version": "2.0.0",
          "Content-Type": "application/json"}
     h.update(extra or {})
     return h
