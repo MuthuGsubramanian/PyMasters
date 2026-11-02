@@ -949,6 +949,15 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
         return {"lessons": []}
 
 
+@router.get("/catalog-stats")
+def catalog_stats():
+    """Public lesson/track totals for the landing page, counted exactly as an anonymous visitor's catalogue
+    (enterprise-only tracks excluded), so the marketing numbers can't drift from what a learner gets.
+    The underlying catalogue is cached; this only counts it."""
+    lessons = list_lessons(user_id=None, lang="en", authorization=None).get("lessons", [])
+    return {"lessons": len(lessons), "tracks": len({l.get("track") for l in lessons if l.get("track")})}
+
+
 @router.get("/lesson/{lesson_id}")
 def get_lesson(
     lesson_id: str,
