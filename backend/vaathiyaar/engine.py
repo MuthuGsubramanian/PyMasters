@@ -33,9 +33,11 @@ OLLAMA_MODEL_REFRESH_SECONDS = int(os.getenv("OLLAMA_MODEL_REFRESH_SECONDS", str
 
 # Vertex AI Gemini fallback provider. Auths via the Cloud Run runtime service
 # account (ADC) — no API key. Activated by adding "gemini" to VAATHIYAAR_PROVIDERS.
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+# gemini-2.5-flash is gone from Vertex (404, checked 2026-11-02); current Gemini models are served from the
+# "global" endpoint, not us-central1.
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 GEMINI_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT", "")
-GEMINI_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+GEMINI_LOCATION = os.getenv("GEMINI_LOCATION", "global")
 
 # Qubrid fallback provider (OpenAI-compatible chat-completions API, added
 # 2026-07-02 at MSG's direction). Last-resort fallback after ollama+gemini.

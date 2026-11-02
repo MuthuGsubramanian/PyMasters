@@ -32,7 +32,9 @@ services:
       GOOGLE_CLOUD_LOCATION: us-central1
       OLLAMA_MODEL: gpt-oss:120b
       PYMASTERS_ENV: production
-      VAATHIYAAR_PROVIDERS: ollama+qubrid+qubrid2
+      # gemini (Vertex AI via the VM service account, roles/aiplatform.user) catches Ollama's weekly usage cap;
+      # both Qubrid keys answered 401 on 2026-11-02.
+      VAATHIYAAR_PROVIDERS: ollama+gemini+qubrid+qubrid2
       QUBRID2_MODEL: qwen3.6-plus
     volumes:
       - /opt/pymasters/data:/app/data
