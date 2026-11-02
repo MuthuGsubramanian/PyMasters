@@ -1,13 +1,22 @@
 # Caddy reverse proxy for PyMasters on the GCE VM. Automatic HTTPS (Let's Encrypt / ZeroSSL).
 {
 	email ops@pymasters.net
+	# Cloudflare (free plan) proxies pymasters.net. Only requests that really come from Cloudflare's published
+	# ranges (https://www.cloudflare.com/ips) may tell us the visitor's IP, via CF-Connecting-IP; anyone else
+	# gets their own remote address. {client_ip} below is that result, so rate limits and the support spam
+	# guard (backend: first X-Forwarded-For hop) see real visitors, and the header can't be spoofed.
+	# Refresh the ranges if Cloudflare changes them (rare; listed on that page).
+	servers {
+		trusted_proxies static 173.245.48.0/20 103.21.244.0/22 103.22.200.0/22 103.31.4.0/22 141.101.64.0/18 108.162.192.0/18 190.93.240.0/20 188.114.96.0/20 197.234.240.0/22 198.41.128.0/17 162.158.0.0/15 104.16.0.0/13 104.24.0.0/14 172.64.0.0/13 131.0.72.0/22 2400:cb00::/32 2606:4700::/32 2803:f800::/32 2405:b500::/32 2405:8100::/32 2a06:98c0::/29 2c0f:f248::/32
+		client_ip_headers CF-Connecting-IP
+	}
 }
 
 pymasters.net {
 	encode zstd gzip
 	reverse_proxy app:8080 {
-		header_up X-Forwarded-For {remote_host}
-		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {client_ip}
+		header_up X-Real-IP {client_ip}
 		# While the app container is being replaced by a rollout (~20-50 s),
 		# hold requests and retry the upstream instead of returning 502.
 		lb_try_duration 60s
