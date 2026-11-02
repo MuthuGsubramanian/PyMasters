@@ -127,5 +127,91 @@
       "dsa"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "When a window of size k slides one step right to end at index i, how should window_sum change?",
+        "ta": "k அளவுள்ள window ஒரு படி வலதுபுறம் நகர்ந்து index i-இல் முடியும்போது, window_sum எப்படி மாற வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Add arr[i] and subtract arr[i - 1]",
+          "Subtract arr[i] and add arr[i - k]",
+          "Add arr[i] only; the window grows by one",
+          "Add arr[i] and subtract arr[i - k]"
+        ],
+        "ta": [
+          "arr[i]-ஐக் கூட்டி arr[i - 1]-ஐக் கழி",
+          "arr[i]-ஐக் கழித்து arr[i - k]-ஐக் கூட்டு",
+          "arr[i]-ஐ மட்டும் கூட்டு; window ஒன்றால் பெரிதாகும்",
+          "arr[i]-ஐக் கூட்டி arr[i - k]-ஐக் கழி"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\narr = [4, 2, 7, 1]; w = sum(arr[:2])\nw += arr[2] - arr[0]\nprint(w)",
+        "ta": "இது என்ன அச்சிடும்?\narr = [4, 2, 7, 1]; w = sum(arr[:2])\nw += arr[2] - arr[0]\nprint(w)"
+      },
+      "options": {
+        "en": [
+          "11",
+          "13",
+          "6",
+          "9"
+        ],
+        "ta": [
+          "11",
+          "13",
+          "6",
+          "9"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Max sum of any k consecutive elements: naive re-adding costs O(n·k). What does the sliding window cost?",
+        "ta": "தொடர்ச்சியான k உறுப்புகளின் அதிகபட்ச கூட்டுத்தொகை: naive முறை O(n·k). sliding window-இன் செலவு என்ன?"
+      },
+      "options": {
+        "en": [
+          "O(n), a single pass",
+          "O(n·k), the same as the naive way",
+          "O(k), only the window size matters",
+          "O(n²), since every window is visited"
+        ],
+        "ta": [
+          "O(n), ஒரே ஒரு pass",
+          "O(n·k), naive முறையைப் போலவே",
+          "O(k), window அளவு மட்டுமே முக்கியம்",
+          "O(n²), ஏனெனில் ஒவ்வொரு window-வும் பார்க்கப்படுகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Bug hunt: in the slide loop someone wrote window += arr[i] - arr[i-1]. What is wrong?",
+        "ta": "பிழையைக் கண்டுபிடி: slide loop-இல் ஒருவர் window += arr[i] - arr[i-1] என்று எழுதினார். என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "It drops the wrong element; the leaving one is arr[i - k]",
+          "Subtracting is unsafe; recompute with sum() instead",
+          "It should be arr[i+1] - arr[i] to look ahead",
+          "Nothing; arr[i-1] is the element leaving the window"
+        ],
+        "ta": [
+          "தவறான உறுப்பைக் கழிக்கிறது; வெளியேறுவது arr[i - k]",
+          "கழிப்பது பாதுகாப்பற்றது; sum() மூலம் மீண்டும் கணக்கிடு",
+          "முன்னோக்கிப் பார்க்க arr[i+1] - arr[i] என்று இருக்க வேண்டும்",
+          "எதுவும் இல்லை; window-இலிருந்து வெளியேறுவது arr[i-1] தான்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

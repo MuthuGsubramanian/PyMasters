@@ -126,5 +126,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nprint(divmod(5, 2))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(divmod(5, 2))"
+      },
+      "options": {
+        "en": [
+          "(2.5, 0)",
+          "(2, 1)",
+          "(1, 2)",
+          "2"
+        ],
+        "ta": [
+          "(2.5, 0)",
+          "(2, 1)",
+          "(1, 2)",
+          "2"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In plain Data Parallel training, what does each GPU hold and process?",
+        "ta": "சாதாரண Data Parallel பயிற்சியில், ஒவ்வொரு GPU-வும் எதை வைத்திருந்து செயலாக்குகிறது?"
+      },
+      "options": {
+        "en": [
+          "A slice of each weight matrix and the same batch",
+          "A shard of the optimizer state only",
+          "A full model copy and a different mini-batch",
+          "A few consecutive layers and micro-batches"
+        ],
+        "ta": [
+          "ஒவ்வொரு weight matrix-இன் ஒரு பகுதி மற்றும் அதே batch",
+          "optimizer state-இன் ஒரு பகுதி மட்டும்",
+          "முழு மாடல் நகல் மற்றும் வேறுபட்ட mini-batch",
+          "சில தொடர்ச்சியான layers மற்றும் micro-batches"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\ng = torch.stack([torch.tensor([1.0, 3.0]), torch.tensor([3.0, 5.0])])\nprint(g.mean(dim=0))",
+        "ta": "இது என்ன அச்சிடும்?\ng = torch.stack([torch.tensor([1.0, 3.0]), torch.tensor([3.0, 5.0])])\nprint(g.mean(dim=0))"
+      },
+      "options": {
+        "en": [
+          "tensor([4., 8.])",
+          "tensor([2., 4., 2., 4.])",
+          "tensor(3.)",
+          "tensor([2., 4.])"
+        ],
+        "ta": [
+          "tensor([4., 8.])",
+          "tensor([2., 4., 2., 4.])",
+          "tensor(3.)",
+          "tensor([2., 4.])"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Which ZeRO stage shards optimizer states, gradients AND parameters across GPUs?",
+        "ta": "எந்த ZeRO stage optimizer states, gradients மற்றும் parameters மூன்றையும் GPUs முழுவதும் பிரிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Stage 0",
+          "Stage 3",
+          "Stage 2",
+          "Stage 1"
+        ],
+        "ta": [
+          "Stage 0",
+          "Stage 3",
+          "Stage 2",
+          "Stage 1"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

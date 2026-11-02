@@ -133,5 +133,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print? a = {'dog', 'park'}; b = {'dog', 'in', 'park'}; print(len(a & b) / len(a | b))",
+        "ta": "இது என்ன அச்சிடும்? a = {'dog', 'park'}; b = {'dog', 'in', 'park'}; print(len(a & b) / len(a | b))"
+      },
+      "options": {
+        "en": [
+          "1.0",
+          "2.0",
+          "0.5",
+          "0.6666666666666666"
+        ],
+        "ta": [
+          "1.0",
+          "2.0",
+          "0.5",
+          "0.6666666666666666"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What happens? scores = [0.0, 0.0]; print([s / sum(scores) for s in scores])",
+        "ta": "என்ன நடக்கும்? scores = [0.0, 0.0]; print([s / sum(scores) for s in scores])"
+      },
+      "options": {
+        "en": [
+          "[nan, nan]",
+          "[0.0, 0.0]",
+          "ZeroDivisionError is raised",
+          "[0.5, 0.5]"
+        ],
+        "ta": [
+          "[nan, nan]",
+          "[0.0, 0.0]",
+          "ZeroDivisionError பிழை எழும்",
+          "[0.5, 0.5]"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: classify() should list the best label first but returns sorted(res, key=lambda r: r['score']). What's wrong?",
+        "ta": "பிழையைக் கண்டறி: classify() சிறந்த label-ஐ முதலில் தர வேண்டும், ஆனால் sorted(res, key=lambda r: r['score']) தருகிறது. என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "sorted() can't sort a list of dicts",
+          "The lambda must use r.score, not r['score']",
+          "It sorts ascending; add reverse=True",
+          "sorted() returns None; use res.sort()"
+        ],
+        "ta": [
+          "sorted() dict-களின் பட்டியலை வரிசைப்படுத்த முடியாது",
+          "lambda-வில் r['score'] அல்ல, r.score பயன்படுத்த வேண்டும்",
+          "இது ஏறுவரிசையில் வரிசைப்படுத்தும்; reverse=True சேர்",
+          "sorted() None தரும்; res.sort() பயன்படுத்து"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why can CLIP score image labels it was never trained on as classes?",
+        "ta": "பயிற்சியில் வகுப்புகளாக இல்லாத label-களுக்கும் CLIP ஏன் மதிப்பெண் தர முடிகிறது?"
+      },
+      "options": {
+        "en": [
+          "Images and text map into one shared embedding space",
+          "It looks labels up in a fixed ImageNet class list",
+          "It needs a few labeled examples per new class",
+          "It quickly fine-tunes itself on each new label"
+        ],
+        "ta": [
+          "படங்களும் உரையும் ஒரே பொதுவான embedding இடத்தில் வரைபடமாகின்றன",
+          "நிலையான ImageNet வகுப்பு பட்டியலில் label-ஐத் தேடுகிறது",
+          "ஒவ்வொரு புதிய வகுப்புக்கும் சில labeled உதாரணங்கள் தேவை",
+          "ஒவ்வொரு புதிய label-க்கும் அது விரைவாக fine-tune ஆகிறது"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

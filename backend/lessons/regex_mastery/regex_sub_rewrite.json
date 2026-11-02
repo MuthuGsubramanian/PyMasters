@@ -111,5 +111,91 @@
       "regex_mastery"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nimport re\nprint(re.sub(r'\\d+', '#', 'a1b22c333'))",
+        "ta": "இது என்ன அச்சிடும்?\nimport re\nprint(re.sub(r'\\d+', '#', 'a1b22c333'))"
+      },
+      "options": {
+        "en": [
+          "a#b#c#",
+          "a1b22c333",
+          "abc",
+          "a#b##c###"
+        ],
+        "ta": [
+          "a#b#c#",
+          "a1b22c333",
+          "abc",
+          "a#b##c###"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In what order does re.sub take its three arguments?",
+        "ta": "re.sub தனது மூன்று arguments-ஐ எந்த வரிசையில் பெறுகிறது?"
+      },
+      "options": {
+        "en": [
+          "(pattern, text, replacement)",
+          "(pattern, replacement, text)",
+          "(replacement, pattern, text)",
+          "(text, pattern, replacement)"
+        ],
+        "ta": [
+          "(pattern, text, replacement)",
+          "(pattern, replacement, text)",
+          "(replacement, pattern, text)",
+          "(text, pattern, replacement)"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Someone wants 'Room 42' to become 'Room #' but wrote re.sub(r'\\d', '#', 'Room 42'). What goes wrong?",
+        "ta": "ஒருவர் 'Room 42' என்பதை 'Room #' ஆக மாற்ற re.sub(r'\\d', '#', 'Room 42') என்று எழுதினார். என்ன தவறு நடக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Missing +, so each digit is replaced: 'Room ##'",
+          "It raises an error because r'\\d' is invalid",
+          "Only the first digit is replaced: 'Room #2'",
+          "Nothing is replaced because \\d needs quotes"
+        ],
+        "ta": [
+          "+ இல்லாததால் ஒவ்வொரு இலக்கமும் மாற்றப்படும்: 'Room ##'",
+          "r'\\d' தவறானது என்பதால் error வரும்",
+          "முதல் இலக்கம் மட்டுமே மாற்றப்படும்: 'Room #2'",
+          "\\d-க்கு quotes தேவை என்பதால் எதுவும் மாற்றப்படாது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why does the lesson say to write regex patterns as raw strings like r'\\d+'?",
+        "ta": "regex patterns-ஐ r'\\d+' போன்ற raw strings ஆக எழுத வேண்டும் என்று பாடம் ஏன் கூறுகிறது?"
+      },
+      "options": {
+        "en": [
+          "So backslashes mean regex, not Python escapes",
+          "Raw strings make matching case-insensitive",
+          "Raw strings make the regex run faster",
+          "re.sub only accepts raw strings as patterns"
+        ],
+        "ta": [
+          "Backslashes Python escapes அல்ல, regex பொருளைத் தர",
+          "Raw strings பொருத்தத்தை case-insensitive ஆக்குகின்றன",
+          "Raw strings regex-ஐ வேகமாக இயக்குகின்றன",
+          "re.sub raw strings-ஐ மட்டுமே pattern ஆக ஏற்கும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

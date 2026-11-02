@@ -135,5 +135,91 @@
       "ai_engineering"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "In mixed-precision Adam training, how many of the 16 bytes per parameter go to fp32 tensors (master weights, Adam m and v)?",
+        "ta": "Adam உடன் mixed-precision பயிற்சியில், ஒரு parameter-க்கான 16 bytes-இல் எத்தனை bytes fp32 tensors-க்கு (master weights, Adam m, v) செல்கின்றன?"
+      },
+      "options": {
+        "en": [
+          "14",
+          "4",
+          "12",
+          "8"
+        ],
+        "ta": [
+          "14",
+          "4",
+          "12",
+          "8"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nw, g, o = 2, 2, 12\no /= 4\nprint(w + g + o)",
+        "ta": "இது என்ன அச்சிடும்?\nw, g, o = 2, 2, 12\no /= 4\nprint(w + g + o)"
+      },
+      "options": {
+        "en": [
+          "16",
+          "7.0",
+          "7",
+          "4.0"
+        ],
+        "ta": [
+          "16",
+          "7.0",
+          "7",
+          "4.0"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Sharding code uses `if stage >= 1:` then `elif stage >= 2:` and `elif stage >= 3:`. What goes wrong?",
+        "ta": "Sharding code-இல் `if stage >= 1:` பிறகு `elif stage >= 2:`, `elif stage >= 3:` பயன்படுத்தப்படுகிறது. என்ன தவறு நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Stage 3 shards weights but not the optimizer states",
+          "Stages 2 and 3 end up sharding only the optimizer states",
+          "Stage 0 wrongly shards the optimizer states",
+          "Nothing; elif works the same as separate ifs here"
+        ],
+        "ta": [
+          "Stage 3 weights-ஐ shard செய்யும், optimizer states-ஐ செய்யாது",
+          "Stage 2, 3 இரண்டும் optimizer states-ஐ மட்டுமே shard செய்யும்",
+          "Stage 0 தவறாக optimizer states-ஐ shard செய்யும்",
+          "எந்தத் தவறும் இல்லை; இங்கே elif தனித்தனி if போலவே செயல்படும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "ZeRO-3 cuts a 7B model to 14 GB per GPU on 8 GPUs. What cost does it pay for that?",
+        "ta": "ZeRO-3, 8 GPUs-இல் 7B model-ஐ ஒரு GPU-க்கு 14 GB ஆகக் குறைக்கிறது. இதற்கு அது செலுத்தும் விலை என்ன?"
+      },
+      "options": {
+        "en": [
+          "Each GPU runs only some layers, adding bubble time",
+          "An all-reduce is needed inside every layer",
+          "Every weight shard is gathered before each forward and backward",
+          "Stored activations are multiplied by the number of GPUs"
+        ],
+        "ta": [
+          "ஒவ்வொரு GPU-வும் சில layers-ஐ மட்டுமே இயக்குவதால் bubble time கூடுகிறது",
+          "ஒவ்வொரு layer-க்குள்ளும் ஒரு all-reduce தேவைப்படுகிறது",
+          "ஒவ்வொரு forward, backward-க்கும் முன் எல்லா weight shards-உம் சேகரிக்கப்படுகின்றன",
+          "சேமிக்கப்பட்ட activations GPUs எண்ணிக்கையால் பெருக்கப்படுகின்றன"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

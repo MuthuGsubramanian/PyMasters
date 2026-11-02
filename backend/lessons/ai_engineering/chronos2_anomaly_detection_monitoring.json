@@ -117,5 +117,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "How does the Chronos-2 approach decide that a live value is an anomaly?",
+        "ta": "Chronos-2 அணுகுமுறை ஒரு நேரடி மதிப்பை anomaly என்று எப்படி தீர்மானிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It is above a fixed threshold set by hand",
+          "It falls outside the percentile band of the forecast samples",
+          "A separate classifier trained on labeled anomalies flags it",
+          "It differs from the previous value by more than 5%"
+        ],
+        "ta": [
+          "கையால் அமைத்த நிலையான threshold-ஐ விட அதிகமாக உள்ளது",
+          "அது forecast மாதிரிகளின் percentile பட்டைக்கு வெளியே விழுகிறது",
+          "குறிக்கப்பட்ட anomaly-களில் பயிற்றுவிக்கப்பட்ட தனி classifier அதைக் குறிக்கிறது",
+          "முந்தைய மதிப்பிலிருந்து 5%-க்கு மேல் வேறுபடுகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In detect_anomaly, you change threshold_pct from 5.0 to 25.0. What happens?",
+        "ta": "detect_anomaly-ல் threshold_pct-ஐ 5.0-இலிருந்து 25.0-க்கு மாற்றினால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Only values 25% above the median are flagged",
+          "The model draws 25 samples instead of 100",
+          "The band widens, so fewer values get flagged",
+          "The band narrows to 25th–75th, so more values get flagged"
+        ],
+        "ta": [
+          "median-ஐ விட 25% அதிகமான மதிப்புகள் மட்டுமே குறிக்கப்படும்",
+          "மாடல் 100-க்குப் பதிலாக 25 மாதிரிகளை எடுக்கும்",
+          "பட்டை அகலமாகும், அதனால் குறைவான மதிப்புகள் குறிக்கப்படும்",
+          "பட்டை 25வது–75வது ஆகக் குறுகும், அதனால் அதிக மதிப்புகள் குறிக்கப்படும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print? low, high, median = 90, 110, 100; print(abs(130 - median) / max(high - low, 1e-6))",
+        "ta": "இது என்ன அச்சிடும்? low, high, median = 90, 110, 100; print(abs(130 - median) / max(high - low, 1e-6))"
+      },
+      "options": {
+        "en": [
+          "1.5",
+          "3.0",
+          "0.75",
+          "30"
+        ],
+        "ta": [
+          "1.5",
+          "3.0",
+          "0.75",
+          "30"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print? buf = [1, 2, 3, 4, 5]; window = 3; print(buf[-window - 1:-1])",
+        "ta": "இது என்ன அச்சிடும்? buf = [1, 2, 3, 4, 5]; window = 3; print(buf[-window - 1:-1])"
+      },
+      "options": {
+        "en": [
+          "[2, 3, 4, 5]",
+          "[2, 3, 4]",
+          "[3, 4, 5]",
+          "[1, 2, 3]"
+        ],
+        "ta": [
+          "[2, 3, 4, 5]",
+          "[2, 3, 4]",
+          "[3, 4, 5]",
+          "[1, 2, 3]"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

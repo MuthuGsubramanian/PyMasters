@@ -116,5 +116,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "In the lesson's compare_images(), where must both images be passed so the model sees them together?",
+        "ta": "பாடத்தின் compare_images()-இல், மாடல் இரண்டு படங்களையும் ஒன்றாகப் பார்க்க அவற்றை எங்கே அனுப்ப வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "In two separate generate() calls, one per image",
+          "Only in the processor's images argument",
+          "In the content list and in the processor's images argument",
+          "Only in the message content list"
+        ],
+        "ta": [
+          "ஒவ்வொரு படத்துக்கும் தனித்தனி generate() அழைப்பில்",
+          "processor-இன் images argument-இல் மட்டும்",
+          "content பட்டியலிலும் processor-இன் images argument-இலும்",
+          "message content பட்டியலில் மட்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "_mock_answer checks 'how many' before 'compar'. What does pipe.ask('a.jpg', 'Compare how many dogs') return?",
+        "ta": "_mock_answer 'compar'-க்கு முன் 'how many'-ஐச் சரிபார்க்கிறது. pipe.ask('a.jpg', 'Compare how many dogs') எதைத் திருப்பும்?"
+      },
+      "options": {
+        "en": [
+          "Both answer strings joined together",
+          "'Visual analysis complete.'",
+          "'Objects detected: 3 items.'",
+          "'Yes, differences found.'"
+        ],
+        "ta": [
+          "இரண்டு பதில் சரங்களும் சேர்ந்து",
+          "'Visual analysis complete.'",
+          "'Objects detected: 3 items.'",
+          "'Yes, differences found.'"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimgs = {\"b.jpg\", \"a.jpg\", \"b.jpg\"}\nprint(sorted(imgs))",
+        "ta": "இது என்ன அச்சிடும்?\nimgs = {\"b.jpg\", \"a.jpg\", \"b.jpg\"}\nprint(sorted(imgs))"
+      },
+      "options": {
+        "en": [
+          "['b.jpg', 'a.jpg']",
+          "['a.jpg', 'b.jpg']",
+          "{'a.jpg', 'b.jpg'}",
+          "['b.jpg', 'a.jpg', 'b.jpg']"
+        ],
+        "ta": [
+          "['b.jpg', 'a.jpg']",
+          "['a.jpg', 'b.jpg']",
+          "{'a.jpg', 'b.jpg'}",
+          "['b.jpg', 'a.jpg', 'b.jpg']"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does follow_up() raise RuntimeError on a brand-new VisualQAPipeline?",
+        "ta": "புதிய VisualQAPipeline-இல் follow_up() ஏன் RuntimeError எழுப்புகிறது?"
+      },
+      "options": {
+        "en": [
+          "History is empty, so there is no image to continue from",
+          "The model_name has not been loaded yet",
+          "follow_up() always needs an image_path argument",
+          "The question did not contain 'how many' or 'compar'"
+        ],
+        "ta": [
+          "history காலியாக உள்ளது, தொடர எந்தப் படமும் இல்லை",
+          "model_name இன்னும் ஏற்றப்படவில்லை",
+          "follow_up()-க்கு எப்போதும் image_path argument தேவை",
+          "கேள்வியில் 'how many' அல்லது 'compar' இல்லை"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

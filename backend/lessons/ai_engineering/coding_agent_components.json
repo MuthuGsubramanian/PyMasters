@@ -121,5 +121,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "In the agent loop, what does the LLM use to decide its next action?",
+        "ta": "agent loop-இல், அடுத்த செயலை முடிவு செய்ய LLM எதைப் பயன்படுத்துகிறது?"
+      },
+      "options": {
+        "en": [
+          "Only the most recent tool result",
+          "Only the original task message",
+          "A fixed script written before the loop starts",
+          "The full conversation history plus tool results"
+        ],
+        "ta": [
+          "கடைசி tool முடிவு மட்டும்",
+          "தொடக்க task செய்தி மட்டும்",
+          "loop தொடங்கும் முன் எழுதப்பட்ட நிலையான script",
+          "முழு உரையாடல் வரலாறும் tool முடிவுகளும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In agent_loop, when does the loop stop running?",
+        "ta": "agent_loop-இல், loop எப்போது ஓடுவதை நிறுத்தும்?"
+      },
+      "options": {
+        "en": [
+          "Right after the first tool call returns",
+          "Only when the LLM raises an error",
+          "When the messages list becomes empty",
+          "When response.done is True or max_steps is used up"
+        ],
+        "ta": [
+          "முதல் tool call முடிந்தவுடனே",
+          "LLM ஒரு error எழுப்பும்போது மட்டும்",
+          "messages பட்டியல் காலியாகும்போது",
+          "response.done True ஆகும்போது அல்லது max_steps தீர்ந்தவுடன்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "The test expects execute_tool('count_lines', ...) == '3'. Why does this tool fail?\nlambda path: len(open(path).read().splitlines())",
+        "ta": "test-இல் execute_tool('count_lines', ...) == '3' என எதிர்பார்க்கப்படுகிறது. இந்த tool ஏன் தோல்வியடைகிறது?\nlambda path: len(open(path).read().splitlines())"
+      },
+      "options": {
+        "en": [
+          "The lambda needs a return keyword",
+          "A lambda can't receive keyword args via **args",
+          "It returns the int 3, not the string '3'",
+          "splitlines() also counts an extra empty last line"
+        ],
+        "ta": [
+          "lambda-வுக்கு return keyword தேவை",
+          "**args மூலம் lambda keyword args பெற முடியாது",
+          "இது string '3' அல்ல, int 3-ஐ திருப்பித் தருகிறது",
+          "splitlines() கடைசியில் ஒரு கூடுதல் காலி வரியையும் எண்ணுகிறது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In AgentMemory, what happens when token_count() exceeds max_tokens?",
+        "ta": "AgentMemory-இல், token_count() ஆனது max_tokens-ஐ மீறும்போது என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "The newest messages are dropped to save space",
+          "The scratchpad is cleared and nothing else changes",
+          "The older half is summarized by the LLM; newer half is kept",
+          "All messages are deleted and the agent restarts"
+        ],
+        "ta": [
+          "இடத்தை சேமிக்க புதிய messages நீக்கப்படும்",
+          "scratchpad மட்டும் அழிக்கப்படும், வேறு எதுவும் மாறாது",
+          "பழைய பாதியை LLM சுருக்குகிறது; புதிய பாதி அப்படியே இருக்கும்",
+          "எல்லா messages-உம் நீக்கப்பட்டு agent மீண்டும் தொடங்கும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

@@ -116,5 +116,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Keyword search misses \"performance optimization techniques\" for the query \"make my code faster\". Why does semantic search find it?",
+        "ta": "\"make my code faster\" என்ற வினவலுக்கு keyword தேடல் \"performance optimization techniques\" ஆவணத்தைத் தவறவிடுகிறது. semantic தேடல் ஏன் அதைக் கண்டுபிடிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It always ranks longer documents higher",
+          "It compares meaning vectors instead of matching words",
+          "It searches the internet for related pages",
+          "It adds synonyms of every word to the query"
+        ],
+        "ta": [
+          "அது எப்போதும் நீளமான ஆவணங்களுக்கு உயர் தரம் தருகிறது",
+          "அது சொற்களைப் பொருத்துவதற்குப் பதிலாக பொருள் vector-களை ஒப்பிடுகிறது",
+          "அது தொடர்புடைய பக்கங்களை இணையத்தில் தேடுகிறது",
+          "அது வினவலின் ஒவ்வொரு சொல்லுக்கும் இணைச்சொற்களைச் சேர்க்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does the lesson encode with normalize_embeddings=True?",
+        "ta": "பாடம் ஏன் normalize_embeddings=True உடன் encode செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It is needed for the ONNX backend to run on CPU",
+          "It shrinks the 80MB model to a smaller size",
+          "It is required for the model to run offline",
+          "Cosine similarity becomes a cheap dot product"
+        ],
+        "ta": [
+          "ONNX backend CPU-வில் இயங்க அது தேவை",
+          "அது 80MB மாதிரியை சிறிய அளவாகக் குறைக்கிறது",
+          "மாதிரி offline-ல் இயங்க அது அவசியம்",
+          "Cosine similarity மலிவான dot product ஆகிவிடுகிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nvec = {}\nfor w in \"Hi hi there\".lower().split(): vec[w] = vec.get(w, 0) + 1\nprint(vec)",
+        "ta": "இது என்ன அச்சிடும்?\nvec = {}\nfor w in \"Hi hi there\".lower().split(): vec[w] = vec.get(w, 0) + 1\nprint(vec)"
+      },
+      "options": {
+        "en": [
+          "{'Hi': 1, 'hi': 1, 'there': 1}",
+          "{'hi': 1, 'there': 1}",
+          "{'hi': 2, 'there': 1}",
+          "['hi', 'hi', 'there']"
+        ],
+        "ta": [
+          "{'Hi': 1, 'hi': 1, 'there': 1}",
+          "{'hi': 1, 'there': 1}",
+          "{'hi': 2, 'there': 1}",
+          "['hi', 'hi', 'there']"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in search():\nreturn sorted(scored, key=lambda r: r[\"score\"])[:top_k]",
+        "ta": "search()-ல் உள்ள தவறைக் கண்டுபிடிக்கவும்:\nreturn sorted(scored, key=lambda r: r[\"score\"])[:top_k]"
+      },
+      "options": {
+        "en": [
+          "sorted() sorts scored in place and returns None",
+          "Missing reverse=True, so the lowest scores are returned",
+          "A lambda cannot read dictionary keys",
+          "[:top_k] must be applied before sorted()"
+        ],
+        "ta": [
+          "sorted() scored-ஐ அதே இடத்தில் வரிசைப்படுத்தி None தரும்",
+          "reverse=True இல்லை, அதனால் குறைந்த மதிப்பெண்கள் திரும்ப வரும்",
+          "lambda-வால் dictionary key-களைப் படிக்க முடியாது",
+          "sorted()-க்கு முன்பே [:top_k] பயன்படுத்தப்பட வேண்டும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

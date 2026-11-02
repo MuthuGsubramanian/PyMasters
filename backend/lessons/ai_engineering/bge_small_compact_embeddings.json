@@ -115,5 +115,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this bigram code print?\nw = \"a b c\".split()\nprint([w[i] + \"_\" + w[i+1] for i in range(len(w) - 1)])",
+        "ta": "இந்த bigram குறியீடு என்ன அச்சிடும்?\nw = \"a b c\".split()\nprint([w[i] + \"_\" + w[i+1] for i in range(len(w) - 1)])"
+      },
+      "options": {
+        "en": [
+          "['a_b', 'b_c', 'c_a']",
+          "['a_b', 'a_c', 'b_c']",
+          "['a_b', 'b_c']",
+          "['a', 'b', 'c']"
+        ],
+        "ta": [
+          "['a_b', 'b_c', 'c_a']",
+          "['a_b', 'a_c', 'b_c']",
+          "['a_b', 'b_c']",
+          "['a', 'b', 'c']"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport numpy as np\ns = np.array([0.2, 0.9, 0.5])\nprint(np.argsort(s)[::-1][:2])",
+        "ta": "இது என்ன அச்சிடும்?\nimport numpy as np\ns = np.array([0.2, 0.9, 0.5])\nprint(np.argsort(s)[::-1][:2])"
+      },
+      "options": {
+        "en": [
+          "[0 2]",
+          "[0.9 0.5]",
+          "[1 2]",
+          "[1 2 0]"
+        ],
+        "ta": [
+          "[0 2]",
+          "[0.9 0.5]",
+          "[1 2]",
+          "[1 2 0]"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why can BGERetriever use `self.embeddings @ q_emb` instead of a full cosine similarity calculation?",
+        "ta": "BGERetriever ஏன் முழு cosine similarity கணக்கீட்டுக்குப் பதிலாக `self.embeddings @ q_emb` பயன்படுத்தலாம்?"
+      },
+      "options": {
+        "en": [
+          "Embeddings are normalized, so dot product equals cosine similarity",
+          "BGE embeddings always contain only 0 or 1 values",
+          "In NumPy, @ automatically computes cosine similarity",
+          "Dot product is a rough approximation that is good enough"
+        ],
+        "ta": [
+          "Embeddings normalize செய்யப்பட்டதால் dot product = cosine similarity",
+          "BGE embeddings-இல் எப்போதும் 0 அல்லது 1 மதிப்புகளே இருக்கும்",
+          "NumPy-இல் @ தானாகவே cosine similarity-ஐக் கணக்கிடும்",
+          "Dot product ஒரு தோராயம், அது போதுமானது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What's wrong here for BGE retrieval?\ndocs = model.encode([PREFIX + d for d in documents])\nq = model.encode(query)",
+        "ta": "BGE retrieval-க்கு இதில் உள்ள தவறு என்ன?\ndocs = model.encode([PREFIX + d for d in documents])\nq = model.encode(query)"
+      },
+      "options": {
+        "en": [
+          "The prefix must go after the text, not before it",
+          "The prefix belongs on the query, not on the documents",
+          "The prefix should be added to both queries and documents",
+          "Queries must never be encoded with the same model"
+        ],
+        "ta": [
+          "Prefix உரைக்கு முன்னால் அல்ல, பின்னால் வர வேண்டும்",
+          "Prefix query-க்கு மட்டுமே உரியது; documents-க்கு அல்ல",
+          "Prefix-ஐ queries, documents இரண்டிலும் சேர்க்க வேண்டும்",
+          "Queries-ஐ ஒரே model-ஆல் encode செய்யக்கூடாது"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

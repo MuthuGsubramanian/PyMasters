@@ -283,5 +283,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Of the four RAG stages, which one costs real compute but is paid only once?",
+        "ta": "RAG இன் நான்கு படிகளில், அதிக கணினி வளம் தேவைப்படும், ஆனால் ஒரே ஒருமுறை மட்டும் செய்யப்படும் படி எது?"
+      },
+      "options": {
+        "en": [
+          "Retrieving: ranking chunks for each question",
+          "Augmenting: pasting chunks into the prompt",
+          "Indexing: encoding every chunk into vectors",
+          "Chunking: splitting documents into pieces"
+        ],
+        "ta": [
+          "Retrieving: ஒவ்வொரு கேள்விக்கும் chunks ஐ வரிசைப்படுத்துதல்",
+          "Augmenting: chunks ஐ prompt இல் ஒட்டுதல்",
+          "Indexing: ஒவ்வொரு chunk ஐயும் vectors ஆக encode செய்தல்",
+          "Chunking: ஆவணங்களைச் சிறு பகுதிகளாகப் பிரித்தல்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why split documents into 2-5 sentence chunks instead of embedding each whole document?",
+        "ta": "ஒவ்வொரு முழு ஆவணத்தையும் embed செய்வதற்குப் பதிலாக, அவற்றை 2-5 வாக்கிய chunks ஆக ஏன் பிரிக்கிறோம்?"
+      },
+      "options": {
+        "en": [
+          "Chunking lets the LLM skip reading the context",
+          "The model can only encode one sentence at a time",
+          "Smaller chunks give vectors with fewer than 384 dimensions",
+          "One whole-doc vector averages topics and matches none well"
+        ],
+        "ta": [
+          "Chunking செய்தால் LLM context ஐப் படிக்கத் தேவையில்லை",
+          "மாடலால் ஒரு நேரத்தில் ஒரு வாக்கியத்தை மட்டுமே encode செய்ய முடியும்",
+          "சிறிய chunks இல் 384 ஐ விடக் குறைவான பரிமாணங்கள் கொண்ட vectors கிடைக்கும்",
+          "முழு ஆவணத்துக்கான ஒரே vector பல தலைப்புகளைச் சராசரியாக்குவதால், எதனுடனும் சரியாகப் பொருந்தாது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake:\nhits = util.semantic_search(q_emb, chunk_emb, top_k=3)\nevidence = [chunks[h[\"corpus_id\"]] for h in hits]",
+        "ta": "தவறைக் கண்டுபிடியுங்கள்:\nhits = util.semantic_search(q_emb, chunk_emb, top_k=3)\nevidence = [chunks[h[\"corpus_id\"]] for h in hits]"
+      },
+      "options": {
+        "en": [
+          "Should index chunks with h['score'] instead",
+          "top_k must equal len(chunks)",
+          "hits must be sorted by score first",
+          "It returns a list per query; [0] is missing"
+        ],
+        "ta": [
+          "அதற்குப் பதிலாக h['score'] மூலம் chunks ஐ index செய்ய வேண்டும்",
+          "top_k ஆனது len(chunks) க்குச் சமமாக இருக்க வேண்டும்",
+          "முதலில் hits ஐ score படி வரிசைப்படுத்த வேண்டும்",
+          "அது ஒவ்வொரு query க்கும் ஒரு list தரும்; [0] விடுபட்டுள்ளது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "After hits = util.semantic_search(...)[0], what must you do to get the chunks best-first?",
+        "ta": "hits = util.semantic_search(...)[0] க்குப் பிறகு, சிறந்த chunks முதலில் வர என்ன செய்ய வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Sort hits by 'corpus_id'",
+          "Sort hits by 'score' ascending",
+          "Reverse the list; lowest scores come first",
+          "Nothing; they're already sorted best-first"
+        ],
+        "ta": [
+          "hits ஐ 'corpus_id' படி வரிசைப்படுத்த வேண்டும்",
+          "hits ஐ 'score' படி ஏறுவரிசையில் வரிசைப்படுத்த வேண்டும்",
+          "list ஐத் தலைகீழாக்க வேண்டும்; குறைந்த scores தான் முதலில் வரும்",
+          "எதுவும் தேவையில்லை; அவை ஏற்கனவே சிறந்தது-முதலில் என்ற வரிசையில் உள்ளன"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

@@ -154,5 +154,91 @@
       "on_device_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ndef est(p, b): return p * b\nprint(f\"{est(0.6, 0.5):.1f} GB\")",
+        "ta": "இது என்ன அச்சிடும்?\ndef est(p, b): return p * b\nprint(f\"{est(0.6, 0.5):.1f} GB\")"
+      },
+      "options": {
+        "en": [
+          "0.30 GB",
+          "0.3 GB",
+          "1.2 GB",
+          "0.6 GB"
+        ],
+        "ta": [
+          "0.30 GB",
+          "0.3 GB",
+          "1.2 GB",
+          "0.6 GB"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In Qwen3's apply_chat_template, what does enable_thinking=False do?",
+        "ta": "Qwen3-இன் apply_chat_template-இல் enable_thinking=False என்ன செய்யும்?"
+      },
+      "options": {
+        "en": [
+          "It writes reasoning inside <think> tags first",
+          "It removes the system message from the prompt",
+          "The model answers directly, faster for casual chat",
+          "It turns off the model's ability to do math"
+        ],
+        "ta": [
+          "முதலில் <think> குறிகளுக்குள் சிந்தனையை எழுதும்",
+          "prompt-இலிருந்து system செய்தியை நீக்கிவிடும்",
+          "மாடல் நேரடியாகப் பதிலளிக்கும்; சாதாரண உரையாடலுக்கு வேகமானது",
+          "மாடலின் கணிதம் செய்யும் திறனை அணைத்துவிடும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Goal: add ' /no_think' only when thinking is False. What is wrong here?\ncontent = p + ' /no_think' if thinking else p",
+        "ta": "நோக்கம்: thinking False ஆக இருக்கும்போது மட்டும் ' /no_think' சேர்க்க வேண்டும். இதில் என்ன தவறு?\ncontent = p + ' /no_think' if thinking else p"
+      },
+      "options": {
+        "en": [
+          "The conditional expression needs parentheses to run",
+          "Strings can't be joined with + in Python 3.12",
+          "It's reversed: it adds /no_think when thinking is True",
+          "Nothing; it works as intended"
+        ],
+        "ta": [
+          "இந்த நிபந்தனை வெளிப்பாடு இயங்க அடைப்புக்குறிகள் தேவை",
+          "Python 3.12-இல் + மூலம் strings-ஐ இணைக்க முடியாது",
+          "தலைகீழாக உள்ளது: thinking True ஆக இருக்கும்போது /no_think சேர்க்கிறது",
+          "தவறு எதுவும் இல்லை; நினைத்தபடி வேலை செய்யும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Which task is a realistic fit for Qwen3-0.6B running locally?",
+        "ta": "உள்ளூரில் இயங்கும் Qwen3-0.6B-க்கு எந்தப் பணி யதார்த்தமாகப் பொருந்தும்?"
+      },
+      "options": {
+        "en": [
+          "Training other large models from scratch",
+          "Replacing a 70B model on every task",
+          "Detecting user intent on-device, even offline",
+          "Writing a full research thesis"
+        ],
+        "ta": [
+          "மற்ற பெரிய மாடல்களை புதிதாகப் பயிற்றுவிப்பது",
+          "எல்லாப் பணிகளிலும் 70B மாடலை மாற்றீடு செய்வது",
+          "இணையம் இல்லாவிட்டாலும் சாதனத்திலேயே பயனர் நோக்கத்தைக் கண்டறிவது",
+          "முழு ஆய்வுக் கட்டுரையை எழுதுவது"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

@@ -162,5 +162,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nw = ['a','b','c','d','e']\nprint([w[i:i+3] for i in range(0, 5, 2)])",
+        "ta": "இது என்ன அச்சிடும்?\nw = ['a','b','c','d','e']\nprint([w[i:i+3] for i in range(0, 5, 2)])"
+      },
+      "options": {
+        "en": [
+          "[['a', 'b', 'c'], ['c', 'd', 'e'], ['e']]",
+          "[['a', 'b', 'c'], ['c', 'd', 'e']]",
+          "[['a', 'b', 'c'], ['d', 'e']]",
+          "IndexError on the last slice"
+        ],
+        "ta": [
+          "[['a', 'b', 'c'], ['c', 'd', 'e'], ['e']]",
+          "[['a', 'b', 'c'], ['c', 'd', 'e']]",
+          "[['a', 'b', 'c'], ['d', 'e']]",
+          "கடைசி slice-இல் IndexError வரும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "With zero overlap, a sentence gets split across a chunk boundary. What does ~25% overlap fix?",
+        "ta": "overlap இல்லாவிட்டால், ஒரு வாக்கியம் chunk எல்லையில் இரண்டாகப் பிரிகிறது. ~25% overlap எதைச் சரிசெய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Duplicate words are removed so the index uses less memory",
+          "The LLM can read the chunks in their original order",
+          "Each chunk's vector becomes smaller and faster to compute",
+          "The sentence appears whole in at least one chunk"
+        ],
+        "ta": [
+          "மீண்டும் வரும் சொற்கள் நீக்கப்படுவதால் index குறைந்த நினைவகம் எடுக்கும்",
+          "LLM chunk-களை அவற்றின் அசல் வரிசையில் படிக்க முடியும்",
+          "ஒவ்வொரு chunk-இன் vector-உம் சிறியதாகி வேகமாகக் கணக்கிடப்படும்",
+          "அந்த வாக்கியம் குறைந்தது ஒரு chunk-இல் முழுமையாக இருக்கும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "According to the lesson, what goes wrong if you make chunks very large?",
+        "ta": "பாடத்தின்படி, chunk-களை மிகப் பெரியதாக்கினால் என்ன தவறு நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Vectors blur and match everything a little but nothing well",
+          "Nothing: ranking gets sharper since each vector holds more facts",
+          "The embedder returns vectors with more than 384 dimensions",
+          "Chunks arrive as fragments with too little context"
+        ],
+        "ta": [
+          "vector-கள் மங்கி, எல்லாவற்றுடனும் கொஞ்சம் பொருந்தும், எதனுடனும் நன்றாகப் பொருந்தாது",
+          "ஒன்றுமில்லை: ஒவ்வொரு vector-இலும் அதிகத் தகவல் இருப்பதால் தரவரிசை கூர்மையாகும்",
+          "embedder 384-க்கு மேற்பட்ட பரிமாணங்கள் கொண்ட vector-களைத் தரும்",
+          "chunk-கள் குறைந்த context உடன் துண்டுகளாக வரும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this top_k body:\nreturn sorted(range(len(vecs)), key=lambda i: dot(q, vecs[i]))[:k]",
+        "ta": "இந்த top_k உடலில் உள்ள தவறைக் கண்டுபிடி:\nreturn sorted(range(len(vecs)), key=lambda i: dot(q, vecs[i]))[:k]"
+      },
+      "options": {
+        "en": [
+          "No reverse=True, so it returns the k LEAST similar chunks",
+          "dot must be replaced by cosine since vectors are normalized",
+          "It should sort the vectors, not range(len(vecs))",
+          "[:k] should be [k:] to get the best chunks"
+        ],
+        "ta": [
+          "reverse=True இல்லை, அதனால் மிகக் குறைவாக ஒத்த k chunk-களைத் தரும்",
+          "vector-கள் normalize செய்யப்பட்டதால் dot-க்குப் பதில் cosine வேண்டும்",
+          "range(len(vecs)) அல்ல, vector-களையே sort செய்ய வேண்டும்",
+          "சிறந்த chunk-களைப் பெற [:k] என்பதை [k:] ஆக்க வேண்டும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

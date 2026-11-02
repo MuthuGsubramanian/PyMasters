@@ -125,5 +125,91 @@
       "error_handling"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does the EAFP style of error handling mean in Python?",
+        "ta": "Python-இல் EAFP பாணி பிழை கையாளுதல் என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "Validate all input first so no exception is ever raised",
+          "Check every condition with if before acting",
+          "Try the operation and catch the exception if it fails",
+          "Let every exception crash the program so you see it"
+        ],
+        "ta": [
+          "எந்த விதிவிலக்கும் வராதபடி முதலில் எல்லா உள்ளீட்டையும் சரிபார்ப்பது",
+          "செயல்படும் முன் ஒவ்வொரு நிபந்தனையையும் if மூலம் சரிபார்ப்பது",
+          "செயலை முயற்சி செய்து, தோல்வியடைந்தால் விதிவிலக்கைப் பிடிப்பது",
+          "பிழை தெரிய, ஒவ்வொரு விதிவிலக்கும் நிரலை நிறுத்த விடுவது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nd = {'a': 1}\ntry: print(d['b'])\nexcept KeyError: print('missing')",
+        "ta": "இது என்ன அச்சிடும்?\nd = {'a': 1}\ntry: print(d['b'])\nexcept KeyError: print('missing')"
+      },
+      "options": {
+        "en": [
+          "None",
+          "1",
+          "missing",
+          "A KeyError traceback"
+        ],
+        "ta": [
+          "None",
+          "1",
+          "missing",
+          "ஒரு KeyError traceback"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Which subtle bug can an LBYL check-then-act approach have that EAFP avoids?",
+        "ta": "EAFP தவிர்க்கும், ஆனால் LBYL 'முதலில் சரிபார், பின் செயல்படு' முறையில் வரக்கூடிய நுட்பமான பிழை எது?"
+      },
+      "options": {
+        "en": [
+          "LBYL code always runs the action twice",
+          "if statements cannot test whether a key is in a dict",
+          "Things can change between the check and the action",
+          "Checks silently convert values to the wrong type"
+        ],
+        "ta": [
+          "LBYL குறியீடு எப்போதும் செயலை இரண்டு முறை இயக்கும்",
+          "ஒரு key dict-இல் உள்ளதா என்று if ஆல் சோதிக்க முடியாது",
+          "சரிபார்ப்புக்கும் செயலுக்கும் இடையில் நிலைமை மாறக்கூடும்",
+          "சரிபார்ப்புகள் மதிப்புகளைத் தவறான வகைக்கு மறைமுகமாக மாற்றும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Using the lesson's get_nested (catching KeyError and TypeError), what does get_nested({'a': 5}, ['a', 'b']) return?",
+        "ta": "பாடத்தின் get_nested (KeyError, TypeError பிடிக்கும்) பயன்படுத்தினால், get_nested({'a': 5}, ['a', 'b']) என்ன திருப்பும்?"
+      },
+      "options": {
+        "en": [
+          "It raises KeyError",
+          "None",
+          "It raises TypeError",
+          "5"
+        ],
+        "ta": [
+          "அது KeyError எழுப்பும்",
+          "None",
+          "அது TypeError எழுப்பும்",
+          "5"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

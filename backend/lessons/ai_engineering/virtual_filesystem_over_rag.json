@@ -116,5 +116,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nd = {\"setup\": \"x\", \"deploy\": \"y\", \"auth\": \"z\"}\nprint(sorted(d.keys()))",
+        "ta": "இது என்ன அச்சிடும்?\nd = {\"setup\": \"x\", \"deploy\": \"y\", \"auth\": \"z\"}\nprint(sorted(d.keys()))"
+      },
+      "options": {
+        "en": [
+          "['x', 'y', 'z']",
+          "dict_keys(['auth', 'deploy', 'setup'])",
+          "['setup', 'deploy', 'auth']",
+          "['auth', 'deploy', 'setup']"
+        ],
+        "ta": [
+          "['x', 'y', 'z']",
+          "dict_keys(['auth', 'deploy', 'setup'])",
+          "['setup', 'deploy', 'auth']",
+          "['auth', 'deploy', 'setup']"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nd = {\"auth\": \"Use keys\"}\nprint(d.get(\"deploy\", \"Not found\"))",
+        "ta": "இது என்ன அச்சிடும்?\nd = {\"auth\": \"Use keys\"}\nprint(d.get(\"deploy\", \"Not found\"))"
+      },
+      "options": {
+        "en": [
+          "None",
+          "A KeyError is raised",
+          "Not found",
+          "deploy"
+        ],
+        "ta": [
+          "None",
+          "KeyError பிழை எழும்",
+          "Not found",
+          "deploy"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nprint(\"api\" in \"Use API keys\")",
+        "ta": "இது என்ன அச்சிடும்?\nprint(\"api\" in \"Use API keys\")"
+      },
+      "options": {
+        "en": [
+          "True",
+          "API",
+          "False",
+          "A TypeError is raised"
+        ],
+        "ta": [
+          "True",
+          "API",
+          "False",
+          "TypeError பிழை எழும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the bug in this search_keyword body:\nreturn sorted(t for t, c in self._docs.items() if keyword in c)",
+        "ta": "இந்த search_keyword உடலில் உள்ள பிழையைக் கண்டறியவும்:\nreturn sorted(t for t, c in self._docs.items() if keyword in c)"
+      },
+      "options": {
+        "en": [
+          "A comprehension can't unpack two loop variables",
+          "It's case-sensitive, so \"api\" won't match \"API\"",
+          ".items() gives only keys, so c is undefined",
+          "keyword in c only matches whole words"
+        ],
+        "ta": [
+          "comprehension-இல் இரண்டு loop மாறிகளைப் பிரிக்க முடியாது",
+          "இது case-sensitive, அதனால் \"api\" என்பது \"API\"-உடன் பொருந்தாது",
+          ".items() keys-ஐ மட்டுமே தரும், அதனால் c வரையறுக்கப்படவில்லை",
+          "keyword in c முழுச் சொற்களை மட்டுமே பொருத்தும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

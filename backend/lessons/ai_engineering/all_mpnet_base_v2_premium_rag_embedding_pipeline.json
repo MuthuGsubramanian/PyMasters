@@ -114,5 +114,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "You benchmark on your own corpus and MiniLM and mpnet give identical rankings. What does the lesson advise?",
+        "ta": "உங்கள் சொந்த corpus-இல் benchmark செய்தபோது MiniLM-உம் mpnet-உம் ஒரே தரவரிசையைத் தருகின்றன. பாடம் என்ன அறிவுறுத்துகிறது?"
+      },
+      "options": {
+        "en": [
+          "Switch to mpnet anyway, its STS score is higher",
+          "Use mpnet for ingestion and MiniLM for queries",
+          "Keep mpnet but raise top_k to hide misses",
+          "Stick with MiniLM for its speed"
+        ],
+        "ta": [
+          "STS மதிப்பெண் அதிகம் என்பதால் எப்படியும் mpnet-க்கு மாறவும்",
+          "ingestion-க்கு mpnet, queries-க்கு MiniLM பயன்படுத்தவும்",
+          "mpnet-ஐ வைத்து, தவறுகளை மறைக்க top_k-ஐ அதிகரிக்கவும்",
+          "வேகத்திற்காக MiniLM-ஐயே தொடரவும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In the dual-tier embedding pattern, how are the two models split?",
+        "ta": "dual-tier embedding முறையில் இரண்டு models எவ்வாறு பிரிக்கப்படுகின்றன?"
+      },
+      "options": {
+        "en": [
+          "mpnet for everything, MiniLM only for testing",
+          "MiniLM for bulk ingestion, mpnet for query-time reranking",
+          "MiniLM for everything, mpnet only as a fallback",
+          "mpnet for bulk ingestion, MiniLM for queries"
+        ],
+        "ta": [
+          "எல்லாவற்றுக்கும் mpnet, MiniLM சோதனைக்கு மட்டும்",
+          "bulk ingestion-க்கு MiniLM, query நேர reranking-க்கு mpnet",
+          "எல்லாவற்றுக்கும் MiniLM, mpnet மாற்று வழியாக மட்டும்",
+          "bulk ingestion-க்கு mpnet, queries-க்கு MiniLM"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport math; v = [3.0, 4.0]\nm = math.sqrt(sum(y**2 for y in v))\nprint([y / m for y in v])",
+        "ta": "இது என்ன அச்சிடும்?\nimport math; v = [3.0, 4.0]\nm = math.sqrt(sum(y**2 for y in v))\nprint([y / m for y in v])"
+      },
+      "options": {
+        "en": [
+          "[0.75, 1.0]",
+          "[0.12, 0.16]",
+          "[0.6, 0.8]",
+          "[3.0, 4.0]"
+        ],
+        "ta": [
+          "[0.75, 1.0]",
+          "[0.12, 0.16]",
+          "[0.6, 0.8]",
+          "[3.0, 4.0]"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "With DualTierEmbedder, which model does embedder.embed([\"doc\"] * 5) use (defaults tier=\"auto\", threshold=10)?",
+        "ta": "DualTierEmbedder-இல் embedder.embed([\"doc\"] * 5) எந்த model-ஐப் பயன்படுத்தும் (இயல்புநிலை tier=\"auto\", threshold=10)?"
+      },
+      "options": {
+        "en": [
+          "Both models, and the results are averaged",
+          "MiniLM, because any list of texts counts as bulk",
+          "mpnet, because 5 is not greater than 10",
+          "MiniLM, because \"auto\" always picks the fast tier"
+        ],
+        "ta": [
+          "இரண்டு models-உம், முடிவுகள் சராசரி செய்யப்படும்",
+          "MiniLM, ஏனெனில் எந்த texts பட்டியலும் bulk ஆகக் கருதப்படும்",
+          "mpnet, ஏனெனில் 5 என்பது 10-ஐ விடப் பெரியதல்ல",
+          "MiniLM, ஏனெனில் \"auto\" எப்போதும் fast tier-ஐத் தேர்ந்தெடுக்கும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

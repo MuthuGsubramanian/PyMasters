@@ -125,5 +125,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Which Open LLM Leaderboard benchmark checks whether a model can follow precise directions?",
+        "ta": "ஒரு மாடல் துல்லியமான அறிவுறுத்தல்களைப் பின்பற்றுகிறதா என்பதைச் சோதிக்கும் Open LLM Leaderboard benchmark எது?"
+      },
+      "options": {
+        "en": [
+          "MuSR",
+          "BBH",
+          "GPQA",
+          "IFEval"
+        ],
+        "ta": [
+          "MuSR",
+          "BBH",
+          "GPQA",
+          "IFEval"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Following Step 1, which benchmarks should get higher weight for a research assistant?",
+        "ta": "படி 1-இன்படி, ஒரு ஆராய்ச்சி உதவியாளருக்கு எந்த benchmark-களுக்கு அதிக எடை கொடுக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "IFEval and MuSR",
+          "GPQA and MMLU-PRO",
+          "Only the Average column",
+          "MATH and BBH"
+        ],
+        "ta": [
+          "IFEval மற்றும் MuSR",
+          "GPQA மற்றும் MMLU-PRO",
+          "Average நெடுவரிசை மட்டும்",
+          "MATH மற்றும் BBH"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A learner writes: if ram > max_ram_gb and m[\"avg\"] < min_avg: continue. What's wrong?",
+        "ta": "ஒரு மாணவர் இப்படி எழுதுகிறார்: if ram > max_ram_gb and m[\"avg\"] < min_avg: continue. இதில் என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "The RAM check should use >= instead of >",
+          "continue exits the whole loop, so use break",
+          "Nothing; and and or behave the same here",
+          "A model failing only one check still passes; use or"
+        ],
+        "ta": [
+          "RAM சோதனையில் >-க்கு பதிலாக >= பயன்படுத்த வேண்டும்",
+          "continue முழு loop-ஐயும் விட்டு வெளியேறும், எனவே break பயன்படுத்தவும்",
+          "தவறு இல்லை; இங்கு and-உம் or-உம் ஒரே மாதிரி செயல்படும்",
+          "ஒரு சோதனையில் மட்டும் தோற்கும் மாடல் இன்னும் தேர்வாகும்; or பயன்படுத்தவும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In select_model, why is the score computed with m.get(k, m[\"avg\"]) instead of m[k]?",
+        "ta": "select_model-இல், score-ஐ m[k]-க்கு பதிலாக m.get(k, m[\"avg\"]) கொண்டு ஏன் கணக்கிடுகிறோம்?"
+      },
+      "options": {
+        "en": [
+          "get() is faster than indexing a dictionary",
+          "m[k] would modify the dictionary while looping",
+          "It makes every model's score equal to its average",
+          "A missing benchmark falls back to avg instead of KeyError"
+        ],
+        "ta": [
+          "dictionary-ஐ index செய்வதை விட get() வேகமானது",
+          "loop செய்யும்போது m[k] dictionary-ஐ மாற்றிவிடும்",
+          "இது ஒவ்வொரு மாடலின் score-ஐயும் அதன் சராசரிக்குச் சமமாக்கும்",
+          "இல்லாத benchmark-க்கு KeyError வராமல் avg மதிப்பு பயன்படும்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

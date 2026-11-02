@@ -127,5 +127,91 @@
       "python_intermediate"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does a decorator like counted do to the original function's code?",
+        "ta": "counted போன்ற ஒரு decorator அசல் function-இன் code-ஐ என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Edits the function body to insert the counter",
+          "Copies the counter code into every function",
+          "Leaves it unchanged and wraps it with extra behavior",
+          "Deletes it and rewrites its code inside wrapper"
+        ],
+        "ta": [
+          "counter-ஐ சேர்க்க function body-ஐ திருத்துகிறது",
+          "counter code-ஐ ஒவ்வொரு function-க்குள்ளும் நகலெடுக்கிறது",
+          "அதை மாற்றாமல், கூடுதல் நடத்தையுடன் சுற்றி wrap செய்கிறது",
+          "அதை நீக்கி, அதன் code-ஐ wrapper-க்குள் மீண்டும் எழுதுகிறது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Using the lesson's counted, what does this print?\n@counted\ndef f(): return 1\nf(); f(); print(f.calls)",
+        "ta": "பாடத்தில் உள்ள counted-ஐப் பயன்படுத்தினால், இது என்ன அச்சிடும்?\n@counted\ndef f(): return 1\nf(); f(); print(f.calls)"
+      },
+      "options": {
+        "en": [
+          "1",
+          "2",
+          "0",
+          "AttributeError"
+        ],
+        "ta": [
+          "1",
+          "2",
+          "0",
+          "AttributeError"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: wrapper runs fn(*args, **kwargs) but has no return. What does calling greet() now give?",
+        "ta": "தவறைக் கண்டுபிடி: wrapper fn(*args, **kwargs)-ஐ இயக்குகிறது, ஆனால் return இல்லை. இப்போது greet() அழைத்தால் என்ன கிடைக்கும்?"
+      },
+      "options": {
+        "en": [
+          "None",
+          "The wrapper function itself",
+          "A TypeError",
+          "\"hi\", since fn still runs"
+        ],
+        "ta": [
+          "None",
+          "wrapper function தானே",
+          "ஒரு TypeError",
+          "\"hi\", ஏனெனில் fn இன்னும் இயங்குகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why does wrapper take *args, **kwargs?",
+        "ta": "wrapper ஏன் *args, **kwargs-ஐ ஏற்கிறது?"
+      },
+      "options": {
+        "en": [
+          "To count how many arguments were passed",
+          "So it can forward any arguments and wrap any function",
+          "Because Python requires it for every inner function",
+          "To store the call count in kwargs"
+        ],
+        "ta": [
+          "எத்தனை arguments அனுப்பப்பட்டன என்று எண்ண",
+          "எந்த arguments-ஐயும் அனுப்பி, எந்த function-ஐயும் wrap செய்ய",
+          "ஒவ்வொரு inner function-க்கும் Python அதைக் கட்டாயப்படுத்துவதால்",
+          "call எண்ணிக்கையை kwargs-இல் சேமிக்க"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

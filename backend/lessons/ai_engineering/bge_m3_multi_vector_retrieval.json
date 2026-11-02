@@ -129,5 +129,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "In BGE-M3, what does the \"M3\" stand for?",
+        "ta": "BGE-M3 இல் \"M3\" என்பது எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Multi-vector, Multi-layer, Multi-head",
+          "Multi-linguality, Multi-functionality, Multi-granularity",
+          "Multi-model, Multi-modal, Multi-task",
+          "Multi-query, Multi-document, Multi-stage"
+        ],
+        "ta": [
+          "Multi-vector, Multi-layer, Multi-head",
+          "Multi-linguality, Multi-functionality, Multi-granularity",
+          "Multi-model, Multi-modal, Multi-task",
+          "Multi-query, Multi-document, Multi-stage"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nq = {'a': 1.0, 'b': 1.0}; d = {'b': 1.0, 'c': 1.0}\nprint(float(len(set(q) & set(d))))",
+        "ta": "இது என்ன அச்சிடும்?\nq = {'a': 1.0, 'b': 1.0}; d = {'b': 1.0, 'c': 1.0}\nprint(float(len(set(q) & set(d))))"
+      },
+      "options": {
+        "en": [
+          "0.5",
+          "1.0",
+          "2.0",
+          "3.0"
+        ],
+        "ta": [
+          "0.5",
+          "1.0",
+          "2.0",
+          "3.0"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport numpy as np\nprint(np.argsort([0.2, 0.9, 0.5])[::-1])",
+        "ta": "இது என்ன அச்சிடும்?\nimport numpy as np\nprint(np.argsort([0.2, 0.9, 0.5])[::-1])"
+      },
+      "options": {
+        "en": [
+          "[0 2 1]",
+          "[2 1 0]",
+          "[0.9 0.5 0.2]",
+          "[1 2 0]"
+        ],
+        "ta": [
+          "[0 2 1]",
+          "[2 1 0]",
+          "[0.9 0.5 0.2]",
+          "[1 2 0]"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the bug. Each query token should keep its best doc-token match:\ns = (q_vecs @ d_vecs.T).max(axis=0).mean()",
+        "ta": "பிழையைக் கண்டறியவும். ஒவ்வொரு query token-உம் தனக்குச் சிறந்த doc token பொருத்தத்தை வைத்துக்கொள்ள வேண்டும்:\ns = (q_vecs @ d_vecs.T).max(axis=0).mean()"
+      },
+      "options": {
+        "en": [
+          "d_vecs should not be transposed with .T",
+          "axis=0 takes max per doc token; it should be axis=1",
+          "No bug: axis=0 and axis=1 give the same result",
+          "ColBERT needs .sum() here, not .mean()"
+        ],
+        "ta": [
+          "d_vecs-ஐ .T மூலம் transpose செய்யக்கூடாது",
+          "axis=0 ஒவ்வொரு doc token-க்கும் max எடுக்கிறது; axis=1 ஆக இருக்க வேண்டும்",
+          "பிழை இல்லை: axis=0, axis=1 இரண்டும் ஒரே முடிவைத் தரும்",
+          "ColBERT-க்கு இங்கு .mean() அல்ல, .sum() தேவை"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

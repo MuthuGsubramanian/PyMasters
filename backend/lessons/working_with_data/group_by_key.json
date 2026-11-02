@@ -126,5 +126,91 @@
       "working_with_data"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nb = {}\nb.setdefault('x', []).append(1); b.setdefault('x', []).append(2)\nprint(b)",
+        "ta": "இது என்ன அச்சிடும்?\nb = {}\nb.setdefault('x', []).append(1); b.setdefault('x', []).append(2)\nprint(b)"
+      },
+      "options": {
+        "en": [
+          "{'x': [2]}",
+          "{'x': [[1], [2]]}",
+          "{'x': [1, 2]}",
+          "{'x': 2}"
+        ],
+        "ta": [
+          "{'x': [2]}",
+          "{'x': [[1], [2]]}",
+          "{'x': [1, 2]}",
+          "{'x': 2}"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "If key already exists in the dict d, what does d.setdefault(key, []) return?",
+        "ta": "key ஏற்கனவே d என்ற dict-இல் இருந்தால், d.setdefault(key, []) எதைத் திருப்பித் தரும்?"
+      },
+      "options": {
+        "en": [
+          "The existing list stored for key, unchanged",
+          "None, because the key was already there",
+          "A new empty list that replaces the old one",
+          "It raises a KeyError for the duplicate key"
+        ],
+        "ta": [
+          "key-க்கு ஏற்கனவே சேமிக்கப்பட்ட பட்டியல், மாற்றமின்றி",
+          "key ஏற்கனவே இருப்பதால் None",
+          "பழையதை மாற்றி வைக்கும் புதிய வெற்றுப் பட்டியல்",
+          "நகல் key-க்காக KeyError எழுப்பும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "A learner writes buckets[key_fn(item)] = [item] inside the loop instead of using setdefault. What goes wrong?",
+        "ta": "ஒரு கற்பவர் setdefault-க்குப் பதிலாக loop-க்குள் buckets[key_fn(item)] = [item] என்று எழுதுகிறார். என்ன தவறு நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Each bucket keeps only the last item with that key",
+          "It raises KeyError the first time a key appears",
+          "It works the same as setdefault(...).append(item)",
+          "Items get added to every bucket, not just one"
+        ],
+        "ta": [
+          "ஒவ்வொரு bucket-இலும் அந்த key-இன் கடைசி உருப்படி மட்டுமே இருக்கும்",
+          "ஒரு key முதன்முறை வரும்போது KeyError எழும்",
+          "setdefault(...).append(item) போலவே வேலை செய்யும்",
+          "உருப்படிகள் ஒரு bucket-இல் மட்டுமல்ல, எல்லாவற்றிலும் சேரும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Using the lesson's group_by, what does print(group_by([1, 2, 3, 4], lambda n: n % 2)) show?",
+        "ta": "பாடத்தின் group_by-ஐப் பயன்படுத்தினால், print(group_by([1, 2, 3, 4], lambda n: n % 2)) என்ன காட்டும்?"
+      },
+      "options": {
+        "en": [
+          "{0: [2, 4], 1: [1, 3]}",
+          "{1: [3], 0: [4]}",
+          "{1: [1, 3], 0: [2, 4]}",
+          "{1: 2, 0: 2}"
+        ],
+        "ta": [
+          "{0: [2, 4], 1: [1, 3]}",
+          "{1: [3], 0: [4]}",
+          "{1: [1, 3], 0: [2, 4]}",
+          "{1: 2, 0: 2}"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

@@ -128,5 +128,91 @@
       "dsa"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\narr = [1, 3, 5, 7, 9, 11]\nmid = (0 + len(arr) - 1) // 2\nprint(arr[mid])",
+        "ta": "இது என்ன அச்சிடும்?\narr = [1, 3, 5, 7, 9, 11]\nmid = (0 + len(arr) - 1) // 2\nprint(arr[mid])"
+      },
+      "options": {
+        "en": [
+          "An error, because 5 / 2 is not a whole number",
+          "7",
+          "5",
+          "2"
+        ],
+        "ta": [
+          "பிழை, ஏனெனில் 5 / 2 முழு எண் அல்ல",
+          "7",
+          "5",
+          "2"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What must be true about a list before you can use binary search on it?",
+        "ta": "ஒரு பட்டியலில் binary search பயன்படுத்தும் முன் அதைப் பற்றி எது உண்மையாக இருக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "It must contain no more than a million items",
+          "Its length must be an even number",
+          "It must contain only integers",
+          "It must be sorted"
+        ],
+        "ta": [
+          "அதில் ஒரு மில்லியனுக்கு மேல் உருப்படிகள் இருக்கக்கூடாது",
+          "அதன் நீளம் இரட்டைப்படை எண்ணாக இருக்க வேண்டும்",
+          "அதில் முழு எண்கள் மட்டுமே இருக்க வேண்டும்",
+          "அது வரிசைப்படுத்தப்பட்டிருக்க வேண்டும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Roughly how many steps does binary search need to search a sorted list of one million items?",
+        "ta": "ஒரு மில்லியன் உருப்படிகள் கொண்ட வரிசைப்படுத்திய பட்டியலில் தேட binary search-க்கு தோராயமாக எத்தனை படிகள் தேவை?"
+      },
+      "options": {
+        "en": [
+          "About 20",
+          "About 1,000",
+          "About 1,000,000",
+          "About 500,000"
+        ],
+        "ta": [
+          "சுமார் 20",
+          "சுமார் 1,000",
+          "சுமார் 1,000,000",
+          "சுமார் 500,000"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: when target > arr[mid], the code runs `low = mid`. What can go wrong?",
+        "ta": "பிழையைக் கண்டுபிடி: target > arr[mid] ஆக இருக்கும்போது குறியீடு `low = mid` என இயக்குகிறது. என்ன தவறு நடக்கலாம்?"
+      },
+      "options": {
+        "en": [
+          "mid stays in the range, so the loop can run forever",
+          "It skips the target and always returns -1",
+          "It raises an IndexError immediately",
+          "Nothing, low = mid works the same as low = mid + 1"
+        ],
+        "ta": [
+          "mid வரம்பிலேயே இருப்பதால் loop முடிவில்லாமல் ஓடலாம்",
+          "அது target-ஐத் தவறவிட்டு எப்போதும் -1 தரும்",
+          "அது உடனே IndexError எழுப்பும்",
+          "எதுவும் இல்லை, low = mid என்பது low = mid + 1 போலவே வேலை செய்யும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

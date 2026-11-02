@@ -115,5 +115,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does the lesson call generate() with temperature=0.1 when asking for JSON output?",
+        "ta": "JSON வெளியீடு கேட்கும்போது பாடம் ஏன் generate()-ஐ temperature=0.1 உடன் அழைக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It shortens the reply to fit max_new_tokens",
+          "It makes the model run faster on a laptop",
+          "It reduces randomness so output stays on-schema",
+          "It forces the model to output only valid JSON"
+        ],
+        "ta": [
+          "max_new_tokens-க்குள் பொருந்த பதிலைச் சுருக்குகிறது",
+          "லேப்டாப்பில் மாடல் வேகமாக இயங்க உதவுகிறது",
+          "சீரற்ற தன்மையைக் குறைத்து வெளியீட்டை schema-வுக்குள் வைக்கிறது",
+          "சரியான JSON மட்டுமே வெளியிட மாடலைக் கட்டாயப்படுத்துகிறது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "With re imported, what prints?\ns = '{\"t\": 1, \"a\": {\"q\": 2}}'\nprint(re.search(r'\\{[^{}]*\\}', s).group())",
+        "ta": "re import செய்யப்பட்டுள்ளது எனில், என்ன அச்சிடப்படும்?\ns = '{\"t\": 1, \"a\": {\"q\": 2}}'\nprint(re.search(r'\\{[^{}]*\\}', s).group())"
+      },
+      "options": {
+        "en": [
+          "{\"t\": 1, \"a\": {\"q\": 2}}",
+          "{\"q\": 2}",
+          "{\"t\": 1, \"a\": {\"q\": 2}",
+          "AttributeError (no match found)"
+        ],
+        "ta": [
+          "{\"t\": 1, \"a\": {\"q\": 2}}",
+          "{\"q\": 2}",
+          "{\"t\": 1, \"a\": {\"q\": 2}",
+          "AttributeError (பொருத்தம் இல்லை)"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "validate() must require ALL keys. What's wrong with: return any(k in data for k in required_keys)?",
+        "ta": "validate() எல்லா key-களையும் கட்டாயமாக்க வேண்டும். return any(k in data for k in required_keys) இல் என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "It returns True even when some keys are missing",
+          "It checks the dict's values instead of its keys",
+          "It crashes with KeyError if a key is missing",
+          "any() needs a list, not a generator"
+        ],
+        "ta": [
+          "சில key-கள் இல்லாவிட்டாலும் True தருகிறது",
+          "dict-இன் key-களுக்குப் பதிலாக value-களைச் சரிபார்க்கிறது",
+          "ஒரு key இல்லையெனில் KeyError உடன் நின்றுவிடும்",
+          "any()-க்கு generator அல்ல, list தேவை"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What prints?\nd = {\"tool\": \"x\", \"args\": \"q\"}\nprint(\"args\" in d and isinstance(d[\"args\"], dict))",
+        "ta": "என்ன அச்சிடப்படும்?\nd = {\"tool\": \"x\", \"args\": \"q\"}\nprint(\"args\" in d and isinstance(d[\"args\"], dict))"
+      },
+      "options": {
+        "en": [
+          "True",
+          "False",
+          "TypeError",
+          "q"
+        ],
+        "ta": [
+          "True",
+          "False",
+          "TypeError",
+          "q"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

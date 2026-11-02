@@ -113,5 +113,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why can BERT use the context on both sides of a word during pre-training?",
+        "ta": "முன்பயிற்சியின் போது ஒரு சொல்லின் இருபுறச் சூழலையும் BERT ஏன் பயன்படுத்த முடிகிறது?"
+      },
+      "options": {
+        "en": [
+          "It predicts masked tokens using full self-attention",
+          "It runs separate left-to-right and right-to-left passes",
+          "It predicts the next token from left to right",
+          "It uses a causal attention mask over the input"
+        ],
+        "ta": [
+          "அது முழு self-attention மூலம் மறைக்கப்பட்ட டோக்கன்களைக் கணிக்கிறது",
+          "அது இடம்-வலம், வலம்-இடம் என தனித்தனி ஓட்டங்களை இயக்குகிறது",
+          "அது இடமிருந்து வலமாக அடுத்த டோக்கனைக் கணிக்கிறது",
+          "அது உள்ளீட்டின் மீது causal attention mask பயன்படுத்துகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In BERT's WordPiece output, what does a token like '##stop' mean?",
+        "ta": "BERT-இன் WordPiece வெளியீட்டில் '##stop' போன்ற டோக்கன் எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It is a special token like [CLS] or [SEP]",
+          "It is an unknown word the model could not match",
+          "It starts a new word after a space",
+          "It continues the previous piece of the same word"
+        ],
+        "ta": [
+          "[CLS] அல்லது [SEP] போன்ற சிறப்பு டோக்கன்",
+          "மாடலால் பொருத்த முடியாத அறியப்படாத சொல்",
+          "இடைவெளிக்குப் பிறகு புதிய சொல்லைத் தொடங்குகிறது",
+          "அதே சொல்லின் முந்தைய பகுதியைத் தொடர்கிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "predict_mask ends with: return sorted(preds, key=lambda p: p[\"score\"]). What's the bug?",
+        "ta": "predict_mask இப்படி முடிகிறது: return sorted(preds, key=lambda p: p[\"score\"]). பிழை என்ன?"
+      },
+      "options": {
+        "en": [
+          "Highest scores end up last; it needs reverse=True",
+          "A lambda cannot read dictionary keys",
+          "sorted() returns None; it should use preds.sort()",
+          "It should sort by p[\"token\"] instead of the score"
+        ],
+        "ta": [
+          "அதிக மதிப்பெண்கள் கடைசியில் வரும்; reverse=True தேவை",
+          "lambda-வால் dictionary key-களைப் படிக்க முடியாது",
+          "sorted() None தரும்; preds.sort() பயன்படுத்த வேண்டும்",
+          "மதிப்பெண்ணுக்குப் பதில் p[\"token\"] மூலம் வரிசைப்படுத்த வேண்டும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nwords = \"a city in france\".split()\nctx = [\"france\", \"city\", \"french\"]\nprint(sum(c in words for c in ctx))",
+        "ta": "இது என்ன அச்சிடும்?\nwords = \"a city in france\".split()\nctx = [\"france\", \"city\", \"french\"]\nprint(sum(c in words for c in ctx))"
+      },
+      "options": {
+        "en": [
+          "2",
+          "1",
+          "True",
+          "3"
+        ],
+        "ta": [
+          "2",
+          "1",
+          "True",
+          "3"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

@@ -118,5 +118,91 @@
       "functional_python"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Using the lesson's curried add, what does print(add(10)(20)(30)) print?",
+        "ta": "பாடத்தில் உள்ள curried add-ஐப் பயன்படுத்தினால், print(add(10)(20)(30)) என்ன அச்சிடும்?"
+      },
+      "options": {
+        "en": [
+          "102030",
+          "TypeError: too many calls",
+          "60",
+          "A function object"
+        ],
+        "ta": [
+          "102030",
+          "TypeError: அதிகமான அழைப்புகள்",
+          "60",
+          "ஒரு function object"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "With the lesson's add, what is add5 right after the line add5 = add(5)?",
+        "ta": "பாடத்தின் add-இல், add5 = add(5) என்ற வரிக்குப் பிறகு add5 என்பது என்ன?"
+      },
+      "options": {
+        "en": [
+          "The number 5",
+          "A function waiting for b",
+          "A function waiting for c",
+          "None, since only one argument was given"
+        ],
+        "ta": [
+          "எண் 5",
+          "b-க்காகக் காத்திருக்கும் ஒரு function",
+          "c-க்காகக் காத்திருக்கும் ஒரு function",
+          "None, ஏனெனில் ஒரே ஒரு argument மட்டுமே கொடுக்கப்பட்டது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A learner ends add with `return with_b()` instead of `return with_b`. What happens when calling add(1)(2)(3)?",
+        "ta": "ஒரு மாணவர் add-ஐ `return with_b` என்பதற்குப் பதிலாக `return with_b()` என்று முடிக்கிறார். add(1)(2)(3) அழைத்தால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "It still prints 6",
+          "It silently returns None",
+          "It prints 1 because only a was used",
+          "TypeError: with_b() is missing argument 'b'"
+        ],
+        "ta": [
+          "அது இன்னும் 6 என்றே அச்சிடும்",
+          "அது அமைதியாக None திருப்பும்",
+          "a மட்டுமே பயன்பட்டதால் 1 அச்சிடும்",
+          "TypeError: with_b()-க்கு 'b' argument இல்லை"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "After add and with_b have returned, how does the innermost with_c still know a and b?",
+        "ta": "add மற்றும் with_b திரும்பிய பிறகும், உள்ளிருக்கும் with_c-க்கு a, b எப்படித் தெரிகின்றன?"
+      },
+      "options": {
+        "en": [
+          "It's a closure that remembers the outer arguments",
+          "Python re-runs add every time with_c is called",
+          "It can't; a and b must be passed again to with_c",
+          "a and b are stored as global variables"
+        ],
+        "ta": [
+          "அது வெளி arguments-ஐ நினைவில் வைக்கும் ஒரு closure",
+          "with_c அழைக்கப்படும் ஒவ்வொரு முறையும் Python add-ஐ மீண்டும் இயக்குகிறது",
+          "தெரியாது; a, b-ஐ with_c-க்கு மீண்டும் அனுப்ப வேண்டும்",
+          "a, b இரண்டும் global மாறிகளாகச் சேமிக்கப்படுகின்றன"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

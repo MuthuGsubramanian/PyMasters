@@ -128,5 +128,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "According to the lesson, what makes BGE-M3 useful for hybrid search?",
+        "ta": "பாடத்தின்படி, hybrid search-க்கு BGE-M3 பயனுள்ளதாக இருப்பது ஏன்?"
+      },
+      "options": {
+        "en": [
+          "It outputs only sparse keyword vectors",
+          "One forward pass gives both dense and sparse vectors",
+          "It only works through a paid cloud API",
+          "It needs a separate model for keyword search"
+        ],
+        "ta": [
+          "அது sparse keyword vectors-ஐ மட்டுமே தரும்",
+          "ஒரே forward pass-இல் dense, sparse இரண்டு vectors-ஐயும் தரும்",
+          "அது கட்டண cloud API மூலம் மட்டுமே இயங்கும்",
+          "keyword search-க்கு தனி model தேவைப்படும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nq = {\"gil\", \"threading\"}\nd = {\"the\", \"gil\"}\nprint(float(len(q & d)))",
+        "ta": "இது என்ன அச்சிடும்?\nq = {\"gil\", \"threading\"}\nd = {\"the\", \"gil\"}\nprint(float(len(q & d)))"
+      },
+      "options": {
+        "en": [
+          "1.0",
+          "{'gil'}",
+          "2.0",
+          "3.0"
+        ],
+        "ta": [
+          "1.0",
+          "{'gil'}",
+          "2.0",
+          "3.0"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this term-frequency code print?\nw = \"a b a c\".split()\nprint(w.count(\"a\") / len(w))",
+        "ta": "இந்த term-frequency code என்ன அச்சிடும்?\nw = \"a b a c\".split()\nprint(w.count(\"a\") / len(w))"
+      },
+      "options": {
+        "en": [
+          "0.6666666666666666",
+          "0.5",
+          "0.25",
+          "2"
+        ],
+        "ta": [
+          "0.6666666666666666",
+          "0.5",
+          "0.25",
+          "2"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In search(), what does np.argsort(combined)[::-1][:top_k] produce?",
+        "ta": "search()-இல், np.argsort(combined)[::-1][:top_k] எதைத் தரும்?"
+      },
+      "options": {
+        "en": [
+          "Indices of the top_k lowest scores",
+          "The top_k highest scores themselves, best first",
+          "The top_k documents sorted alphabetically",
+          "Indices of the top_k highest scores, best first"
+        ],
+        "ta": [
+          "மிகக் குறைந்த top_k scores-இன் indices",
+          "அதிக மதிப்புள்ள top_k scores-ஐயே, சிறந்தது முதலில்",
+          "அகர வரிசைப்படி அடுக்கப்பட்ட top_k documents",
+          "அதிக மதிப்புள்ள top_k scores-இன் indices, சிறந்தது முதலில்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

@@ -133,5 +133,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "GPT-2 logits have shape (batch, seq_len, vocab_size). Why does the lesson use logits[0, -1, :]?",
+        "ta": "GPT-2-இல் logits-இன் வடிவம் (batch, seq_len, vocab_size). பாடம் ஏன் logits[0, -1, :] பயன்படுத்துகிறது?"
+      },
+      "options": {
+        "en": [
+          "-1 selects the lowest-scoring word in the vocabulary",
+          "It averages the scores over all positions",
+          "The last position holds the most likely token in the prompt",
+          "The last position holds the scores for the next token"
+        ],
+        "ta": [
+          "-1 vocabulary-இல் குறைந்த மதிப்பெண் கொண்ட சொல்லைத் தேர்ந்தெடுக்கிறது",
+          "அது எல்லா நிலைகளின் மதிப்பெண்களின் சராசரியை எடுக்கிறது",
+          "கடைசி நிலையில் prompt-இன் மிகவும் சாத்தியமான token உள்ளது",
+          "கடைசி நிலையில் அடுத்த token-க்கான மதிப்பெண்கள் உள்ளன"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nd = {\"a\": 2.0, \"b\": 5.0, \"c\": 3.0}\nprint(max(d, key=d.get))",
+        "ta": "இது என்ன அச்சிடும்?\nd = {\"a\": 2.0, \"b\": 5.0, \"c\": 3.0}\nprint(max(d, key=d.get))"
+      },
+      "options": {
+        "en": [
+          "('b', 5.0)",
+          "b",
+          "c",
+          "5.0"
+        ],
+        "ta": [
+          "('b', 5.0)",
+          "b",
+          "c",
+          "5.0"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nd = {\"P\": 5, \"L\": 2, \"R\": 3}\nprint(sorted(d, key=d.get, reverse=True)[:2])",
+        "ta": "இது என்ன அச்சிடும்?\nd = {\"P\": 5, \"L\": 2, \"R\": 3}\nprint(sorted(d, key=d.get, reverse=True)[:2])"
+      },
+      "options": {
+        "en": [
+          "[5, 3]",
+          "['P', 'L']",
+          "['L', 'R']",
+          "['P', 'R']"
+        ],
+        "ta": [
+          "[5, 3]",
+          "['P', 'L']",
+          "['L', 'R']",
+          "['P', 'R']"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In the lesson's generate() loop, what makes GPT text generation autoregressive?",
+        "ta": "பாடத்தின் generate() loop-இல், GPT உரை உருவாக்கத்தை autoregressive ஆக்குவது எது?"
+      },
+      "options": {
+        "en": [
+          "The model reads the prompt from right to left",
+          "Random tokens are picked first, then corrected later",
+          "Each predicted token is appended to ids and fed back in",
+          "The model predicts all output tokens in one forward pass"
+        ],
+        "ta": [
+          "model prompt-ஐ வலமிருந்து இடமாகப் படிக்கிறது",
+          "முதலில் சீரற்ற token-கள் தேர்ந்தெடுக்கப்பட்டு, பின்னர் திருத்தப்படுகின்றன",
+          "கணிக்கப்பட்ட ஒவ்வொரு token-உம் ids-இல் சேர்க்கப்பட்டு மீண்டும் உள்ளீடாகிறது",
+          "ஒரே forward pass-இல் எல்லா வெளியீட்டு token-களையும் model கணிக்கிறது"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

@@ -65,5 +65,91 @@
       "hints": ["Call model_class.model_json_schema()", "This returns a dict representing the JSON Schema", "The function is a helper for building LLM tool definitions"],
       "test_code": "schema = extract_contacts('test', Person)\nassert 'properties' in schema\nassert 'name' in schema['properties']"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nclass P(BaseModel):\n    age: int\nprint(P(age=\"30\").age + 1)",
+        "ta": "இது என்ன அச்சிடும்?\nclass P(BaseModel):\n    age: int\nprint(P(age=\"30\").age + 1)"
+      },
+      "options": {
+        "en": [
+          "301",
+          "TypeError: can't add str and int",
+          "ValidationError: age must be an int",
+          "31"
+        ],
+        "ta": [
+          "301",
+          "TypeError: str மற்றும் int-ஐ கூட்ட முடியாது",
+          "ValidationError: age ஒரு int ஆக இருக்க வேண்டும்",
+          "31"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nclass P(BaseModel):\n    name: str; note: str | None = None\nprint(P(name=\"Ann\").model_dump())",
+        "ta": "இது என்ன அச்சிடும்?\nclass P(BaseModel):\n    name: str; note: str | None = None\nprint(P(name=\"Ann\").model_dump())"
+      },
+      "options": {
+        "en": [
+          "P(name='Ann', note=None)",
+          "ValidationError: note is missing",
+          "{'name': 'Ann'}",
+          "{'name': 'Ann', 'note': None}"
+        ],
+        "ta": [
+          "P(name='Ann', note=None)",
+          "ValidationError: note இல்லை",
+          "{'name': 'Ann'}",
+          "{'name': 'Ann', 'note': None}"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: the field below should be optional, but Pydantic still requires it.\nvegetarian: bool | None = Field(description=\"Veg?\")",
+        "ta": "தவறைக் கண்டுபிடி: கீழே உள்ள புலம் விருப்பத்தேர்வாக இருக்க வேண்டும், ஆனால் Pydantic இன்னும் அதைக் கட்டாயமாக்குகிறது.\nvegetarian: bool | None = Field(description=\"Veg?\")"
+      },
+      "options": {
+        "en": [
+          "Field cannot be used with a bool type",
+          "Field has no default, e.g. Field(None, description=...)",
+          "bool | None is invalid syntax; Optional[bool] is required",
+          "description must be a positional argument"
+        ],
+        "ta": [
+          "bool வகையுடன் Field-ஐப் பயன்படுத்த முடியாது",
+          "Field-க்கு default இல்லை, உதா. Field(None, description=...)",
+          "bool | None தவறான syntax; Optional[bool] தேவை",
+          "description ஒரு positional argument ஆக இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the lesson, how does Anthropic's Claude produce structured output that matches a Pydantic model?",
+        "ta": "பாடத்தின்படி, Anthropic-இன் Claude ஒரு Pydantic model-க்குப் பொருந்தும் கட்டமைக்கப்பட்ட வெளியீட்டை எப்படித் தருகிறது?"
+      },
+      "options": {
+        "en": [
+          "A tool whose input_schema is model_json_schema()",
+          "Asking for JSON in the prompt and calling json.loads",
+          "Setting response_model= on messages.create",
+          "Passing the model class as response_format="
+        ],
+        "ta": [
+          "input_schema ஆக model_json_schema() உள்ள ஒரு tool மூலம்",
+          "prompt-இல் JSON கேட்டு json.loads அழைப்பதன் மூலம்",
+          "messages.create-இல் response_model= அமைப்பதன் மூலம்",
+          "model class-ஐ response_format= ஆக அனுப்புவதன் மூலம்"
+        ]
+      },
+      "correct": 0
+    }
   ]
 }

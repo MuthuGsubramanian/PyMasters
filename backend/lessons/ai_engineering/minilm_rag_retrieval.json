@@ -156,5 +156,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nq = [0.6, 0.8]; c = [1.0, 0.0]\nprint(sum(a * b for a, b in zip(q, c)))",
+        "ta": "இது என்ன அச்சிடும்?\nq = [0.6, 0.8]; c = [1.0, 0.0]\nprint(sum(a * b for a, b in zip(q, c)))"
+      },
+      "options": {
+        "en": [
+          "[0.6, 0.0]",
+          "0.8",
+          "0.6",
+          "1.4"
+        ],
+        "ta": [
+          "[0.6, 0.0]",
+          "0.8",
+          "0.6",
+          "1.4"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why does the lesson encode with normalize_embeddings=True before calling util.dot_score?",
+        "ta": "util.dot_score-ஐ அழைப்பதற்கு முன் பாடம் ஏன் normalize_embeddings=True உடன் encode செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It stops MiniLM from truncating input at 256 word pieces",
+          "It makes every score a positive number between 0 and 1",
+          "It shrinks the vectors from 384 to fewer dimensions",
+          "With unit-length vectors, dot product equals cosine similarity"
+        ],
+        "ta": [
+          "MiniLM உள்ளீட்டை 256 word pieces-இல் துண்டிப்பதைத் தடுக்கிறது",
+          "ஒவ்வொரு score-ஐயும் 0 முதல் 1 வரையிலான நேர்மறை எண்ணாக்குகிறது",
+          "இது vectors-ஐ 384-இலிருந்து குறைவான பரிமாணங்களுக்குச் சுருக்குகிறது",
+          "நீளம் 1 உள்ள vectors-இல் dot product, cosine similarity-க்குச் சமம்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why do RAG chunkers make neighbouring chunks overlap?",
+        "ta": "RAG chunker-கள் அடுத்தடுத்த chunk-களை ஏன் ஒன்றின் மேல் ஒன்று (overlap) வரும்படி அமைக்கின்றன?"
+      },
+      "options": {
+        "en": [
+          "So the whole document gets one averaged vector",
+          "So top-k returns more results per query",
+          "So boundary content stays intact in at least one chunk",
+          "So each chunk fits under exactly 256 tokens"
+        ],
+        "ta": [
+          "முழு document-க்கும் ஒரே சராசரி vector கிடைப்பதற்காக",
+          "ஒவ்வொரு query-க்கும் top-k அதிக முடிவுகளைத் தருவதற்காக",
+          "எல்லையில் உள்ள உள்ளடக்கம் குறைந்தது ஒரு chunk-இல் முழுமையாக இருப்பதற்காக",
+          "ஒவ்வொரு chunk-உம் சரியாக 256 tokens-க்குள் அடங்குவதற்காக"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What's wrong with this top_k body?\nscored = [(dot(q, c), i) for i, c in enumerate(vecs)]\nreturn [i for s, i in sorted(scored)[:k]]",
+        "ta": "இந்த top_k உடலில் என்ன தவறு?\nscored = [(dot(q, c), i) for i, c in enumerate(vecs)]\nreturn [i for s, i in sorted(scored)[:k]]"
+      },
+      "options": {
+        "en": [
+          "Tuples can't be compared, so sorted() raises an error",
+          "enumerate yields (chunk, index), so i and c are swapped",
+          "It returns the scores instead of the indices",
+          "It sorts ascending, so it returns the k worst chunks"
+        ],
+        "ta": [
+          "Tuples-ஐ ஒப்பிட முடியாது, எனவே sorted() பிழை தரும்",
+          "enumerate (chunk, index) தருகிறது, எனவே i, c இடம் மாறியுள்ளன",
+          "இது indices-க்குப் பதிலாக scores-ஐத் திருப்பித் தருகிறது",
+          "இது ஏறுவரிசையில் வரிசைப்படுத்துவதால் k மோசமான chunk-களைத் தருகிறது"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

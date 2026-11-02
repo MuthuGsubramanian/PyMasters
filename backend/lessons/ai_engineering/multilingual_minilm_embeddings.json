@@ -114,5 +114,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does the shared vector space of paraphrase-multilingual-MiniLM-L12-v2 let a RAG system do?",
+        "ta": "paraphrase-multilingual-MiniLM-L12-v2 இன் பகிரப்பட்ட vector space ஒரு RAG அமைப்புக்கு எதைச் செய்ய உதவுகிறது?"
+      },
+      "options": {
+        "en": [
+          "Match a Tamil query to English documents with no translation",
+          "Translate the query to English before embedding it",
+          "Build a separate index for each language automatically",
+          "Search only when query and documents use the same language"
+        ],
+        "ta": [
+          "மொழிபெயர்ப்பு இல்லாமல் தமிழ் query-ஐ ஆங்கில ஆவணங்களுடன் பொருத்துவது",
+          "embed செய்வதற்கு முன் query-ஐ ஆங்கிலத்துக்கு மொழிபெயர்ப்பது",
+          "ஒவ்வொரு மொழிக்கும் தனி index-ஐ தானாக உருவாக்குவது",
+          "query-யும் ஆவணங்களும் ஒரே மொழியில் இருந்தால் மட்டும் தேடுவது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "search() ends with: return sorted(results, key=lambda r: r[\"score\"])[:top_k]. What is the bug?",
+        "ta": "search() இவ்வாறு முடிகிறது: return sorted(results, key=lambda r: r[\"score\"])[:top_k]. இதில் உள்ள பிழை என்ன?"
+      },
+      "options": {
+        "en": [
+          "It returns the least similar docs; it needs reverse=True",
+          "The slice should be [top_k:] instead",
+          "No bug; sorted() orders highest first by default",
+          "sorted() cannot use a key on a list of dicts"
+        ],
+        "ta": [
+          "இது குறைந்த ஒற்றுமையுள்ள ஆவணங்களைத் தருகிறது; reverse=True தேவை",
+          "slice-ஆனது [top_k:] ஆக இருக்க வேண்டும்",
+          "பிழை இல்லை; sorted() இயல்பாக அதிகமானதை முதலில் வைக்கும்",
+          "dict-களின் list-இல் sorted() key-ஐப் பயன்படுத்த முடியாது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why can the lesson's retriever use util.dot_score instead of util.cos_sim?",
+        "ta": "பாடத்தில் உள்ள retriever ஏன் util.cos_sim-க்கு பதிலாக util.dot_score-ஐப் பயன்படுத்தலாம்?"
+      },
+      "options": {
+        "en": [
+          "cos_sim does not work with tensor embeddings",
+          "Normalized embeddings make dot product equal cosine similarity",
+          "dot_score normalizes the vectors internally each time",
+          "dot_score gives more accurate scores than cos_sim"
+        ],
+        "ta": [
+          "tensor embeddings உடன் cos_sim வேலை செய்யாது",
+          "normalize செய்யப்பட்ட embeddings-இல் dot product = cosine similarity",
+          "dot_score ஒவ்வொரு முறையும் vectors-ஐ உள்ளே normalize செய்கிறது",
+          "dot_score, cos_sim-ஐ விட துல்லியமான மதிப்பெண்களைத் தரும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nt = \"banana\"\nprint(len({t[i:i+3] for i in range(len(t) - 2)}))",
+        "ta": "இது என்ன அச்சிடும்?\nt = \"banana\"\nprint(len({t[i:i+3] for i in range(len(t) - 2)}))"
+      },
+      "options": {
+        "en": [
+          "4",
+          "3",
+          "5",
+          "6"
+        ],
+        "ta": [
+          "4",
+          "3",
+          "5",
+          "6"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

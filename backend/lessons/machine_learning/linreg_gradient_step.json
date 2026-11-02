@@ -127,5 +127,91 @@
       "machine_learning"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "For data (1,2), (2,4), (3,6) starting at w=0, the gradient is negative. What does one step do to w?",
+        "ta": "தரவு (1,2), (2,4), (3,6) க்கு w=0 இல் தொடங்கும்போது gradient எதிர்மறையாக உள்ளது. ஒரு படி w-ஐ என்ன செய்யும்?"
+      },
+      "options": {
+        "en": [
+          "w jumps straight to exactly 2",
+          "w stays at 0 because the error is negative",
+          "w decreases, moving away from 2",
+          "w increases, moving toward 2"
+        ],
+        "ta": [
+          "w நேரடியாக சரியாக 2-க்குத் தாவும்",
+          "பிழை எதிர்மறை என்பதால் w 0-லேயே இருக்கும்",
+          "w குறைந்து 2-இலிருந்து விலகிச் செல்லும்",
+          "w அதிகரித்து 2-ஐ நோக்கி நகரும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nw, lr, g = 1.0, 0.5, 4.0\nprint(w - lr * g)",
+        "ta": "இது என்ன அச்சிடும்?\nw, lr, g = 1.0, 0.5, 4.0\nprint(w - lr * g)"
+      },
+      "options": {
+        "en": [
+          "3.0",
+          "-1.0",
+          "-2.0",
+          "1.0"
+        ],
+        "ta": [
+          "3.0",
+          "-1.0",
+          "-2.0",
+          "1.0"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "With data (1,2), (2,4), (3,6), lr=0.1 and w=2.0, what does gd_step return?",
+        "ta": "தரவு (1,2), (2,4), (3,6), lr=0.1 மற்றும் w=2.0 எனில், gd_step என்ன திருப்பித் தரும்?"
+      },
+      "options": {
+        "en": [
+          "2.0, because the gradient there is 0",
+          "1.9, since each step subtracts lr",
+          "A value above 2, since every step moves w",
+          "0.0, because zero error resets w"
+        ],
+        "ta": [
+          "2.0, ஏனெனில் அங்கே gradient 0",
+          "1.9, ஏனெனில் ஒவ்வொரு படியும் lr-ஐக் கழிக்கும்",
+          "2-ஐ விடப் பெரிய மதிப்பு, ஏனெனில் ஒவ்வொரு படியும் w-ஐ நகர்த்தும்",
+          "0.0, ஏனெனில் பூஜ்ஜியப் பிழை w-ஐ மீட்டமைக்கும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this update line:\nreturn round(w + lr * gradient, 3)",
+        "ta": "இந்த update வரியில் உள்ள தவறைக் கண்டறியுங்கள்:\nreturn round(w + lr * gradient, 3)"
+      },
+      "options": {
+        "en": [
+          "It steps uphill; it should be w - lr * gradient",
+          "round must come before multiplying by lr",
+          "Nothing; + and − give the same result",
+          "lr should divide the gradient, not multiply it"
+        ],
+        "ta": [
+          "இது மேல்நோக்கி நகர்கிறது; w - lr * gradient என இருக்க வேண்டும்",
+          "lr-ஆல் பெருக்குவதற்கு முன்பே round செய்ய வேண்டும்",
+          "தவறு இல்லை; + மற்றும் − ஒரே விடையைத் தரும்",
+          "lr gradient-ஐப் பெருக்கக் கூடாது, வகுக்க வேண்டும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

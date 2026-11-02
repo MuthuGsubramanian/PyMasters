@@ -117,5 +117,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does the lesson call model.generate() with temperature=0.1 for extraction?",
+        "ta": "பிரித்தெடுப்பதற்கு model.generate()-ஐப் பாடம் ஏன் temperature=0.1 உடன் அழைக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "To make generation run faster on CPU",
+          "To reduce GPU memory usage",
+          "To let the model produce longer item lists",
+          "To keep output near-deterministic so JSON stays parseable"
+        ],
+        "ta": [
+          "CPU-இல் உருவாக்கத்தை வேகமாக்க",
+          "GPU நினைவகப் பயன்பாட்டைக் குறைக்க",
+          "மாடல் நீளமான item பட்டியல்களை உருவாக்க அனுமதிக்க",
+          "வெளியீடு ஏறக்குறைய நிலையாக இருந்து JSON சரியாக parse ஆக"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nS = {\"receipt\": \"R\", \"screenshot\": \"S\"}\nprint(S.get(\"form\", S[\"screenshot\"]))",
+        "ta": "இது என்ன அச்சிடும்?\nS = {\"receipt\": \"R\", \"screenshot\": \"S\"}\nprint(S.get(\"form\", S[\"screenshot\"]))"
+      },
+      "options": {
+        "en": [
+          "None",
+          "KeyError is raised",
+          "R",
+          "S"
+        ],
+        "ta": [
+          "None",
+          "KeyError எழுப்பப்படும்",
+          "R",
+          "S"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport json\nprint(json.loads('{\"total\": 12.50}')[\"total\"])",
+        "ta": "இது என்ன அச்சிடும்?\nimport json\nprint(json.loads('{\"total\": 12.50}')[\"total\"])"
+      },
+      "options": {
+        "en": [
+          "12.50",
+          "12.5",
+          "TypeError: string indices must be integers",
+          "'12.50'"
+        ],
+        "ta": [
+          "12.50",
+          "12.5",
+          "TypeError: string indices must be integers",
+          "'12.50'"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does the code decode output[0][inputs[\"input_ids\"].shape[-1]:] instead of output[0]?",
+        "ta": "output[0]-க்குப் பதிலாக output[0][inputs[\"input_ids\"].shape[-1]:]-ஐக் code ஏன் decode செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "To remove special tokens like <eos>",
+          "To skip the prompt tokens and keep only the new reply",
+          "To keep only the first 500 tokens",
+          "To convert the tensor into a JSON string"
+        ],
+        "ta": [
+          "<eos> போன்ற சிறப்பு tokens-ஐ நீக்க",
+          "prompt tokens-ஐத் தவிர்த்துப் புதிதாக உருவான பதிலை மட்டும் வைக்க",
+          "முதல் 500 tokens-ஐ மட்டும் வைக்க",
+          "tensor-ஐ JSON string-ஆக மாற்ற"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

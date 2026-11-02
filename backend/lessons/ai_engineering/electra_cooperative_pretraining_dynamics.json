@@ -114,5 +114,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "In ELECTRA, how is the generator trained?",
+        "ta": "ELECTRA-வில் generator எப்படிப் பயிற்சி பெறுகிறது?"
+      },
+      "options": {
+        "en": [
+          "It isn't trained; it stays a fixed random model",
+          "By trying to fool the discriminator, like a GAN generator",
+          "Only with its own MLM loss; no gradients from the discriminator",
+          "With gradients flowing back through the discriminator's output"
+        ],
+        "ta": [
+          "பயிற்சி பெறுவதில்லை; மாறாத random மாடலாகவே இருக்கும்",
+          "GAN generator போல discriminator-ஐ ஏமாற்ற முயல்வதன் மூலம்",
+          "தன் MLM loss மூலம் மட்டுமே; discriminator-இடமிருந்து gradients வருவதில்லை",
+          "discriminator output வழியாகத் திரும்பி வரும் gradients மூலம்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nlam = 50.0\nprint((1 + lam) * (3 / 6))",
+        "ta": "இது என்ன அச்சிடும்?\nlam = 50.0\nprint((1 + lam) * (3 / 6))"
+      },
+      "options": {
+        "en": [
+          "25.5",
+          "51.0",
+          "3.5",
+          "25.0"
+        ],
+        "ta": [
+          "25.5",
+          "51.0",
+          "3.5",
+          "25.0"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nprint(max(1, round(2 * 0.15)))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(max(1, round(2 * 0.15)))"
+      },
+      "options": {
+        "en": [
+          "2",
+          "0",
+          "0.3",
+          "1"
+        ],
+        "ta": [
+          "2",
+          "0",
+          "0.3",
+          "1"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in discriminate:\nreturn ['replaced' if o == c else 'original' for o, c in zip(original, corrupted)]",
+        "ta": "discriminate-இல் உள்ள தவறைக் கண்டறியவும்:\nreturn ['replaced' if o == c else 'original' for o, c in zip(original, corrupted)]"
+      },
+      "options": {
+        "en": [
+          "Labels are swapped: matching tokens should be 'original'",
+          "It must return booleans, not strings",
+          "It should label only the masked positions",
+          "zip can't be used on two lists of ints"
+        ],
+        "ta": [
+          "labels இடம் மாறியுள்ளன: பொருந்தும் tokens 'original' ஆக இருக்க வேண்டும்",
+          "strings அல்ல, booleans-ஐத் திருப்பித் தர வேண்டும்",
+          "mask செய்யப்பட்ட இடங்களுக்கு மட்டுமே label இட வேண்டும்",
+          "இரண்டு int பட்டியல்களில் zip பயன்படுத்த முடியாது"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

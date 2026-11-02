@@ -155,5 +155,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "You're building a RAG app. According to the lesson, which MTEB leaderboard column should you sort by?",
+        "ta": "நீங்கள் ஒரு RAG செயலியை உருவாக்குகிறீர்கள். பாடத்தின்படி, MTEB லீடர்போர்டை எந்த நெடுவரிசையின்படி வரிசைப்படுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Retrieval",
+          "STS, since RAG compares similar sentences",
+          "The overall score, since it covers every task",
+          "Reranking, since it orders the results"
+        ],
+        "ta": [
+          "Retrieval",
+          "STS, RAG ஒத்த வாக்கியங்களை ஒப்பிடுவதால்",
+          "Overall மதிப்பெண், அது எல்லா பணிகளையும் உள்ளடக்குவதால்",
+          "Reranking, அது முடிவுகளை வரிசைப்படுத்துவதால்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nm = [sum(v)/len(v) for v in {\"r\": [10, 30], \"s\": [50]}.values()]\nprint(sum(m)/len(m))",
+        "ta": "இது என்ன அச்சிடும்?\nm = [sum(v)/len(v) for v in {\"r\": [10, 30], \"s\": [50]}.values()]\nprint(sum(m)/len(m))"
+      },
+      "options": {
+        "en": [
+          "70.0",
+          "35.0",
+          "35",
+          "30.0"
+        ],
+        "ta": [
+          "70.0",
+          "35.0",
+          "35",
+          "30.0"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this size-budget filter:\nfits = [m for m in models if m[\"size_mb\"] < max_size_mb]",
+        "ta": "இந்த அளவு-வரம்பு வடிகட்டியில் உள்ள தவறைக் கண்டறியவும்:\nfits = [m for m in models if m[\"size_mb\"] < max_size_mb]"
+      },
+      "options": {
+        "en": [
+          "It should use > to keep the larger, stronger models",
+          "List comprehensions can't filter a list of dicts",
+          "It must sort by retrieval score before filtering",
+          "A model exactly at the budget is wrongly dropped; use <="
+        ],
+        "ta": [
+          "பெரிய, வலிமையான மாடல்களை வைத்திருக்க > பயன்படுத்த வேண்டும்",
+          "List comprehension-ஆல் dict-களின் பட்டியலை வடிகட்ட முடியாது",
+          "வடிகட்டும் முன் retrieval மதிப்பெண்ணால் வரிசைப்படுத்த வேண்டும்",
+          "வரம்புக்குச் சரியாகச் சமமான மாடல் தவறாக நீக்கப்படுகிறது; <= பயன்படுத்தவும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In pick_embedder, why check for an empty shortlist before calling max()?",
+        "ta": "pick_embedder-இல், max()-ஐ அழைக்கும் முன் shortlist காலியாக உள்ளதா என ஏன் சரிபார்க்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "max() raises ValueError on an empty list",
+          "So the function returns an empty string",
+          "max() would return the leaderboard #1 instead",
+          "max() would return 0, a wrong but valid score"
+        ],
+        "ta": [
+          "காலிப் பட்டியலில் max() ValueError-ஐ எழுப்பும்",
+          "செயல்பாடு ஒரு காலி string-ஐத் தருவதற்காக",
+          "max() அதற்குப் பதிலாக லீடர்போர்டின் #1-ஐத் தரும்",
+          "max() 0-ஐத் தரும், அது தவறான ஆனால் செல்லுபடியான மதிப்பெண்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

@@ -113,5 +113,91 @@
     "category": "ai_engineering",
     "path_memberships": ["ai_engineering"]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does all-mpnet-base-v2 rate \"MI\" vs \"heart attack\" as low similarity before fine-tuning?",
+        "ta": "ஃபைன்-டியூனிங்கிற்கு முன் all-mpnet-base-v2 \"MI\" மற்றும் \"heart attack\" இடையே குறைந்த ஒற்றுமையை ஏன் தருகிறது?"
+      },
+      "options": {
+        "en": [
+          "Abbreviations are removed by the tokenizer",
+          "Domain jargon and synonyms weren't in its training data",
+          "The model is too small and needs more parameters",
+          "Cosine similarity can't compare short texts"
+        ],
+        "ta": [
+          "Tokenizer சுருக்கச் சொற்களை நீக்கிவிடுகிறது",
+          "துறைசார் சொற்களும் ஒத்தசொற்களும் அதன் பயிற்சி தரவில் இல்லை",
+          "மாடல் மிகச் சிறியது, அதிக parameters தேவை",
+          "Cosine similarity குறுகிய உரைகளை ஒப்பிட முடியாது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nlabels = [0.95, 0.1, 0.5, 0.0]\nprint(len([x for x in labels if x >= 0.5]))",
+        "ta": "இது என்ன அச்சிடும்?\nlabels = [0.95, 0.1, 0.5, 0.0]\nprint(len([x for x in labels if x >= 0.5]))"
+      },
+      "options": {
+        "en": [
+          "4",
+          "3",
+          "2",
+          "1"
+        ],
+        "ta": [
+          "4",
+          "3",
+          "2",
+          "1"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does CosineSimilarityLoss do during fine-tuning?",
+        "ta": "ஃபைன்-டியூனிங்கின் போது CosineSimilarityLoss என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Makes every embedding vector the same length",
+          "Pushes positive pairs closer and negative pairs apart",
+          "Turns float labels into 0 or 1 classes",
+          "Removes negative pairs from the training data"
+        ],
+        "ta": [
+          "ஒவ்வொரு embedding vector-ஐயும் ஒரே நீளமாக்குகிறது",
+          "நேர்மறை ஜோடிகளை நெருக்கி, எதிர்மறை ஜோடிகளை விலக்குகிறது",
+          "Float labels-ஐ 0 அல்லது 1 வகுப்புகளாக மாற்றுகிறது",
+          "பயிற்சி தரவிலிருந்து எதிர்மறை ஜோடிகளை நீக்குகிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "During training, the evaluator's Spearman correlation starts dropping. What should you do?",
+        "ta": "பயிற்சியின் போது evaluator-இன் Spearman correlation குறையத் தொடங்குகிறது. நீங்கள் என்ன செய்ய வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Add more epochs so the model can recover",
+          "Raise warmup_steps and keep training",
+          "Stop training and use the best checkpoint",
+          "Ignore it; only the training loss matters"
+        ],
+        "ta": [
+          "மாடல் மீள அதிக epochs சேர்க்கவும்",
+          "warmup_steps-ஐ அதிகரித்து பயிற்சியைத் தொடரவும்",
+          "பயிற்சியை நிறுத்தி சிறந்த checkpoint-ஐப் பயன்படுத்தவும்",
+          "அதைப் புறக்கணிக்கவும்; training loss மட்டுமே முக்கியம்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }
