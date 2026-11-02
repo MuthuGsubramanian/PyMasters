@@ -16,9 +16,9 @@ import subprocess
 import time
 from datetime import datetime
 
-PAUSE_AT, RESUME_AT, ALERT_AT = 82.0, 68.0, 92.0
-MIN_PAUSE_S = 120   # this laptop heats/cools in seconds; short pauses just oscillate
-HEAVY_UNITS = ["pymasters-social.service", "pymasters-daily-report.service"]
+PAUSE_AT, RESUME_AT, ALERT_AT = 84.0, 70.0, 92.0
+MIN_PAUSE_S = 90    # this laptop heats/cools in seconds; short pauses just oscillate
+HEAVY_UNITS = ["pymasters-social.service"]   # the status email is light; never freeze it
 LOG = os.path.expanduser("~/pymasters-ops/thermal.log")
 CSV = os.path.expanduser("~/pymasters-ops/thermal.csv")
 UID = os.getuid()
@@ -79,11 +79,13 @@ def notify(msg):
 
 def main():
     paused, last_csv, last_alert, paused_at = False, 0, 0, 0
+    window = []   # acpitz samples (the zone whose 100 C trip powers the laptop off); k10temp spikes instantly
     signal_units(signal.SIGCONT)   # never leave work frozen by a previous guard instance
     log(f"guard started (pause >= {PAUSE_AT}C, resume <= {RESUME_AT}C, alert >= {ALERT_AT}C)")
     while True:
         t = temps()
-        hot = max([t.get("acpitz", 0), t.get("k10temp", 0), t.get("coretemp", 0)] or [0])
+        window = (window + [t.get("acpitz") or t.get("k10temp") or 0])[-3:]   # ~15 s moving average
+        hot = sum(window) / len(window)
         if not paused and hot >= PAUSE_AT:
             n = signal_units(signal.SIGSTOP)
             paused, paused_at = True, time.time()
