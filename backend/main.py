@@ -795,18 +795,24 @@ def init_db():
         # pre-existing owner account can match — this is a one-way legacy heal, not
         # a self-service escalation path.
         try:
-            from routes.admin import SUPER_ADMINS
-            if SUPER_ADMINS:
-                placeholders = ",".join("?" for _ in SUPER_ADMINS)
-                admins = sorted(SUPER_ADMINS)
-                # Exactly the founder identities hold the flag: grant to them, revoke from everyone else
-                # (including the bootstrap 'admin' seed and any service account). Founder directive 2026-10-28.
+            from routes.admin import SUPER_ADMINS, SUPER_ADMIN_USER_IDS
+            pinned = sorted(SUPER_ADMIN_USER_IDS)
+            id_ph = ",".join("?" for _ in pinned)
+            pinned_present = cursor.execute(
+                f"SELECT COUNT(*) FROM users WHERE id IN ({id_ph})", pinned).fetchone()[0] if pinned else 0
+            if pinned_present:
+                # Exactly the pinned founder accounts hold the flag; everyone else loses it.
                 cursor.execute(
-                    f"UPDATE users SET is_super_admin = CASE WHEN lower(COALESCE(email,'')) IN ({placeholders}) "
-                    f"OR lower(COALESCE(username,'')) IN ({placeholders}) THEN 1 ELSE 0 END",
-                    admins + admins,
-                )
-                conn.commit()
+                    f"UPDATE users SET is_super_admin = CASE WHEN id IN ({id_ph}) THEN 1 ELSE 0 END", pinned)
+            elif SUPER_ADMINS:
+                # Fresh database: fall back to USERNAME only (usernames are immutable and reserved at
+                # registration). Never match on email - it is user-editable.
+                admins = sorted(SUPER_ADMINS)
+                ph = ",".join("?" for _ in admins)
+                cursor.execute(
+                    f"UPDATE users SET is_super_admin = CASE WHEN lower(COALESCE(username,'')) IN ({ph}) "
+                    f"THEN 1 ELSE 0 END", admins)
+            conn.commit()
         except Exception as e:
             print(f"Super-admin resolve: {e}")
         # Backend jobs (lifecycle, content, socials): a daemon thread, on only where PYMASTERS_JOBS=1.

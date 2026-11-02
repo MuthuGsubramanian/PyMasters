@@ -116,10 +116,12 @@ def test_owner_with_column_set_is_authorized(client):
     assert resp.status_code == 200
 
 
-def test_startup_resolver_sets_owner_column(m):
-    """A pre-existing owner row with is_super_admin=0 must be promoted to 1 by the
+def test_startup_resolver_sets_owner_column(m, monkeypatch):
+    """A pre-existing (pinned) owner row with is_super_admin=0 must be promoted to 1 by the
     startup resolver — this is what prevents lockout on deploy after break-glass
     removal (Phase 0 safety mechanism)."""
+    import routes.admin as admin_mod
+    monkeypatch.setattr(admin_mod, "SUPER_ADMIN_USER_IDS", {"preexisting-owner"})
     _insert_user("preexisting-owner", "preowner", email=OWNER_EMAIL, is_super=0)
     m.init_db()  # re-run startup; resolver must promote the row
     conn = sqlite3.connect(os.environ["DB_PATH"])
@@ -193,3 +195,17 @@ def test_reserved_owner_super_admin_not_toggleable_via_console(client):
         headers=_headers("boss2"),
     )
     assert resp.status_code == 400
+
+
+def test_setting_founder_email_does_not_grant_super_admin(m, monkeypatch):
+    """Security fix 2026-11-02 (C1): emails are user-editable, so an attacker who puts the founder
+    email on their own account must NOT become super admin at the next restart."""
+    import routes.admin as admin_mod
+    monkeypatch.setattr(admin_mod, "SUPER_ADMIN_USER_IDS", {"real-owner"})
+    _insert_user("real-owner", "realowner", email="", is_super=0)
+    _insert_user("attacker", "attacker1", email=OWNER_EMAIL, is_super=0)
+    m.init_db()
+    conn = sqlite3.connect(os.environ["DB_PATH"])
+    rows = dict(conn.execute("SELECT id, COALESCE(is_super_admin,0) FROM users WHERE id IN ('real-owner','attacker')").fetchall())
+    conn.close()
+    assert rows == {"real-owner": 1, "attacker": 0}

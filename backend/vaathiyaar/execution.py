@@ -35,6 +35,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 
 
 @functools.lru_cache(maxsize=1)
@@ -70,6 +72,18 @@ def _build_child_command(python_cmd: str, script_path: str) -> list:
     """The exact argv for the sandbox child: network-isolation prefix (if any),
     then the interpreter in isolated mode running the user script."""
     return list(_net_isolation_prefix()) + [python_cmd, "-I", "-B", script_path]
+
+
+def _firewall_isolated() -> bool:
+    """True when the container entrypoint (start.sh) installed an iptables OUTPUT rule rejecting all
+    traffic from the sandbox uid AND verified that the sandbox user cannot reach the metadata server.
+    This is the control on the GCE VM, where Docker's seccomp profile forbids `unshare` (2026-11-02:
+    sandboxed code reached 169.254.169.254 and the VM service account before this existed)."""
+    return os.environ.get("SANDBOX_NET_FIREWALL") == "1"
+
+
+def sandbox_network_isolated() -> bool:
+    return bool(_net_isolation_prefix()) or _firewall_isolated()
 
 
 def egress_self_test(timeout: int = 4) -> str:
@@ -288,6 +302,8 @@ def _minimal_env(python_cmd: str) -> dict:
         "PYTHONDONTWRITEBYTECODE": "1",
         "PYTHONIOENCODING": "utf-8",
         "PYTHONUNBUFFERED": "1",
+        # One thread per numeric library: fewer address-space reservations and no thread fan-out.
+        "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1",
     }
     # The interpreter's own directory on PATH so it can locate its runtime DLLs.
     py_dir = os.path.dirname(python_cmd)
@@ -337,10 +353,67 @@ def _posix_limits(timeout: int, ids=None):
         resource.setrlimit(resource.RLIMIT_FSIZE, (10 * 1024 * 1024, 10 * 1024 * 1024))
         resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
         try:
-            resource.setrlimit(resource.RLIMIT_NPROC, (64, 64))
+            resource.setrlimit(resource.RLIMIT_NPROC, (16, 16))
         except (ValueError, OSError):
             pass
     return _apply
+
+
+# One sandbox run at a time on the 1 GB VM; queued callers wait up to RUN_QUEUE_WAIT_S.
+_RUN_LOCK = threading.BoundedSemaphore(1)
+RUN_QUEUE_WAIT_S = 25
+MAX_OUTPUT_BYTES = 64 * 1024     # returned to the caller per stream; the files are capped at 10 MB by RLIMIT_FSIZE
+
+
+def _read_capped(path: str) -> str:
+    try:
+        with open(path, "rb") as fh:
+            data = fh.read(MAX_OUTPUT_BYTES + 1)
+    except OSError:
+        return ""
+    text = data[:MAX_OUTPUT_BYTES].decode("utf-8", errors="replace")
+    if len(data) > MAX_OUTPUT_BYTES:
+        text += "\n... [output truncated at 64 KB]"
+    return text
+
+
+def _kill_uid_processes(uid: int) -> None:
+    """Kill every process owned by the sandbox uid: catches children that escaped the process group
+    with setsid()/double-fork and would otherwise outlive the timeout."""
+    for _ in range(3):
+        found = False
+        for pid in os.listdir("/proc"):
+            if not pid.isdigit():
+                continue
+            try:
+                if os.stat(f"/proc/{pid}").st_uid == uid:
+                    found = True
+                    os.kill(int(pid), 9)
+            except (OSError, ProcessLookupError):
+                pass
+        if not found:
+            return
+        time.sleep(0.05)
+
+
+def _clean_uid_files(uid: int) -> None:
+    """Remove files the sandbox uid left in shared temp dirs (disk-fill guard)."""
+    for base in ("/tmp", "/var/tmp", "/dev/shm"):
+        try:
+            entries = os.listdir(base)
+        except OSError:
+            continue
+        for name in entries:
+            path = os.path.join(base, name)
+            try:
+                if os.lstat(path).st_uid != uid:
+                    continue
+                if os.path.isdir(path) and not os.path.islink(path):
+                    shutil.rmtree(path, ignore_errors=True)
+                else:
+                    os.remove(path)
+            except OSError:
+                pass
 
 
 def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = None) -> dict:
@@ -355,9 +428,21 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
 
     Returns: { "output": str, "error": str, "exit_code": int }
     """
+    ids = _sandbox_ids() if os.name != "nt" else None
+    if ids is not None and not sandbox_network_isolated():
+        # Production-like (root + sandbox uid) but no verified network isolation: refuse rather than
+        # hand learner code a route to the metadata server and the VM service account.
+        print("[sandbox][SECURITY] refusing to run code: network isolation not verified")
+        return {"output": "", "exit_code": 1,
+                "error": "Code execution is temporarily unavailable while the sandbox is being secured. Please try again shortly."}
+    if not _RUN_LOCK.acquire(timeout=RUN_QUEUE_WAIT_S):
+        return {"output": "", "exit_code": 1,
+                "error": "The code runner is busy right now. Please try again in a few seconds."}
     python_cmd = sys.executable or ("python" if os.name == "nt" else "python3")
     work_dir = tempfile.mkdtemp(prefix="pm_sandbox_")
     script_path = os.path.join(work_dir, "main.py")
+    out_path = os.path.join(work_dir, ".stdout")
+    err_path = os.path.join(work_dir, ".stderr")
 
     try:
         with open(script_path, "w", encoding="utf-8") as f:
@@ -366,38 +451,47 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
         if seed_files:
             for _name, _content in seed_files.items():
                 if (not isinstance(_name, str) or not isinstance(_content, str)
-                        or os.path.basename(_name) != _name or _name == "main.py"):
+                        or os.path.basename(_name) != _name or _name in ("main.py", ".stdout", ".stderr")):
                     continue  # refuse path tricks / clobbering the script
                 with open(os.path.join(work_dir, _name), "w", encoding="utf-8") as sf:
                     sf.write(_content)
 
+        # Output goes to files (bounded by RLIMIT_FSIZE in the child) instead of pipes, so a print
+        # loop can no longer buffer gigabytes in the API process.
+        out_fh = open(out_path, "wb")
+        err_fh = open(err_path, "wb")
         popen_kwargs = dict(
             cwd=work_dir,
             env=_minimal_env(python_cmd),
             stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
+            stdout=out_fh,
+            stderr=err_fh,
         )
         if os.name != "nt":
-            ids = _sandbox_ids()
             if ids is not None:
                 # The throwaway dir (mkdtemp → 0700 root) must be readable by
                 # the sandbox uid; hand it over wholesale (script + seed files).
                 os.chown(work_dir, ids[0], ids[1])
                 for _fn in os.listdir(work_dir):
-                    os.chown(os.path.join(work_dir, _fn), ids[0], ids[1])
+                    if _fn not in (".stdout", ".stderr"):
+                        os.chown(os.path.join(work_dir, _fn), ids[0], ids[1])
             popen_kwargs["preexec_fn"] = _posix_limits(timeout, ids)
 
-        proc = subprocess.Popen(
-            _build_child_command(python_cmd, script_path), **popen_kwargs
-        )
         try:
-            stdout, stderr = proc.communicate(timeout=timeout)
-            return {"output": stdout, "error": stderr, "exit_code": proc.returncode}
+            proc = subprocess.Popen(_build_child_command(python_cmd, script_path), **popen_kwargs)
+        finally:
+            out_fh.close()
+            err_fh.close()
+        try:
+            proc.wait(timeout=timeout)
+            return {"output": _read_capped(out_path), "error": _read_capped(err_path),
+                    "exit_code": proc.returncode}
         except subprocess.TimeoutExpired:
             _kill_process_tree(proc)
-            proc.communicate()
+            try:
+                proc.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                pass
             return {
                 "output": "",
                 "error": f"Execution timed out after {timeout} seconds.",
@@ -406,7 +500,11 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
     except Exception as exc:  # noqa: BLE001 — surface any spawn failure to the user
         return {"output": "", "error": f"Execution failed: {exc}", "exit_code": 1}
     finally:
+        if ids is not None:
+            _kill_uid_processes(ids[0])
+            _clean_uid_files(ids[0])
         shutil.rmtree(work_dir, ignore_errors=True)
+        _RUN_LOCK.release()
 
 
 def _kill_process_tree(proc: "subprocess.Popen") -> None:

@@ -29,6 +29,14 @@ DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 SUPER_ADMIN_PRIMARY = "muthu@pymasters.net"
 SUPER_ADMIN_BACKUP = "muthu.g.subramanian@gmail.com"
 SUPER_ADMINS = {SUPER_ADMIN_PRIMARY, SUPER_ADMIN_BACKUP}
+# The founder accounts pinned by immutable user id (security fix 2026-11-02): emails are user-editable,
+# so granting super admin to "whichever row has this email" let anyone who set that email on their own
+# account become super admin at the next restart. Startup grants the flag ONLY to these ids; matching
+# by username (never email) is a fallback for a fresh database where neither id exists yet.
+SUPER_ADMIN_USER_IDS = {
+    "d0a0ee52-b490-4912-b0b2-3103f559a2a6",   # username muthu@pymasters.net
+    "af570dd1-a5a1-43ea-9001-aa5574623c5c",   # muthu.g.subramanian@gmail.com
+}
 
 # Reserved service-account identifiers (2026-10-28): claude-qa@pymasters.net is the
 # seeded QA/ops account and must stay unclaimable by public registration — but it is

@@ -236,6 +236,19 @@ def onboarding(data: OnboardingData, caller: str = Depends(get_current_user_id))
 
     db_path = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
+    # Reserved addresses (founder / service accounts) can't be claimed here either - this was the one
+    # email write path without the check (security fix 2026-11-02). Keeping your OWN current email is fine.
+    if data.email:
+        from routes.admin import is_reserved_identifier
+        if is_reserved_identifier(data.email):
+            _c = sqlite3.connect(db_path)
+            try:
+                _row = _c.execute("SELECT lower(COALESCE(email,'')) FROM users WHERE id = ?", [caller]).fetchone()
+            finally:
+                _c.close()
+            if not _row or _row[0] != data.email.strip().lower():
+                raise HTTPException(status_code=400, detail="That email address can't be used. Please use your own email.")
+
     payload = {
         "motivation": data.motivation,
         "prior_experience": data.prior_experience,
