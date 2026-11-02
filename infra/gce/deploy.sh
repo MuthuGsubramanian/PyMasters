@@ -47,7 +47,12 @@ echo "== syncing config + secrets"
   "$HERE/pymasters-learn.service" "$HERE/pymasters-learn.timer" "$SSH_USER@$HOST:/tmp/"
 "${SSH[@]}" 'set -e
   sudo install -m 600 -o "$USER" /tmp/pm.env /opt/pymasters/.env && rm -f /tmp/pm.env
-  sudo install -m 644 /tmp/docker-compose.yml /tmp/Caddyfile /tmp/litestream.yml /opt/pymasters/
+  sudo install -m 644 /tmp/docker-compose.yml /opt/pymasters/
+  # Caddyfile and litestream.yml are single-file bind mounts: Docker pins those to the file inode, so
+  # `install` (new inode) leaves the containers reading the OLD file. Overwrite in place instead
+  # (bit us 2026-11-03: Caddy kept the pre-Cloudflare config after a reload).
+  for f in Caddyfile litestream.yml; do sudo cp /tmp/$f /opt/pymasters/$f && sudo chmod 644 /opt/pymasters/$f; done
+  sudo docker exec pymasters-caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile 2>/dev/null || true
   sudo install -m 755 /tmp/update.sh /opt/pymasters/update.sh
   sudo install -m 755 /tmp/learn.sh /opt/pymasters/learn.sh
   sudo install -m 644 /tmp/pymasters-update.service /tmp/pymasters-update.timer /tmp/pymasters-learn.service /tmp/pymasters-learn.timer /etc/systemd/system/
