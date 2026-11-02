@@ -42,6 +42,39 @@ def test_redirect_routes_land_where_expected(logged_in_page, src, dest):
     assert page.url.split("?")[0].rstrip("/").endswith(dest.rstrip("/")), page.url
 
 
+def frontend_api_calls() -> set:
+    """(METHOD, path) for every `api.<verb>('/path…')` call in frontend/src (unit tests excluded).
+    A segment starting with ${…} becomes {param}; a ${…} glued after text (a query string) is dropped."""
+    calls = set()
+    for f in (REPO / "frontend/src").rglob("*.js*"):
+        if "__tests__" in f.parts:
+            continue
+        for verb, raw in re.findall(r"\bapi\.(get|post|put|patch|delete)\(\s*[`'\"](/[^`'\"?]*)", f.read_text()):
+            segs = ["{param}" if s.startswith("${") else re.sub(r"\$\{[^}]+\}", "", s)
+                    for s in raw.strip("/").split("/")]
+            calls.add((verb.upper(), "/api/" + "/".join(segs)))
+    return calls
+
+
+def _segments_match(front: str, back: str) -> bool:
+    f, b = front.strip("/").split("/"), back.strip("/").split("/")
+    return len(f) == len(b) and all(x == y or x == "{param}" or y.startswith("{") for x, y in zip(f, b))
+
+
+def test_every_frontend_api_call_has_a_backend_route():
+    from conftest import CONTAINER, DOCKER
+    import json
+    import subprocess
+    out = subprocess.run([DOCKER, "exec", "-w", "/app/backend", CONTAINER, "python", "-c",
+                          "import json, main; print(json.dumps([[r.path, sorted(r.methods)] "
+                          "for r in main.app.routes if hasattr(r, 'methods')]))"],
+                         capture_output=True, text=True, timeout=120)
+    routes = json.loads(out.stdout.strip().splitlines()[-1])
+    dead = sorted(f"{m} {p}" for m, p in frontend_api_calls()
+                  if not any(_segments_match(p, rp) and m in rm for rp, rm in routes))
+    assert not dead, f"frontend calls endpoints the backend does not have: {dead}"
+
+
 def test_every_backend_router_is_exercised():
     corpus = "\n".join(p.read_text() for p in SCEN.rglob("test_*.py") if p.name != Path(__file__).name)
     missing = sorted(p for p in backend_prefixes() if p not in corpus)

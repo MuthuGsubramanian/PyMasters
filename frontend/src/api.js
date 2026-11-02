@@ -94,8 +94,6 @@ export const registerUser = (username, password, name, account_type = 'individua
             organization_domain: organization.domain || '',
         } : {}),
     });
-export const runCode = (code) => api.post('/run', { code });
-export const chatAI = (prompt, context = "") => api.post('/ai/chat', { prompt, context });
 export const getModules = () => api.get('/content/modules');
 export const getModule = (id) => api.get(`/content/module/${id}`);
 export const completeModule = (userId, moduleId, score) => api.post('/content/complete', { user_id: userId, module_id: moduleId, score });
