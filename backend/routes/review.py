@@ -75,6 +75,36 @@ def _title(lesson: dict | None, topic: str) -> str:
     return t or topic
 
 
+COMPLETED_MASTERY = 0.8  # a passed lesson counts as learned even before mastery climbs (+0.1 per pass)
+
+
+def _learning_rows(conn, user_id: str) -> list[dict]:
+    """The caller's practised lessons with an effective mastery.
+
+    Mastery only grows 0.1 per passed challenge, so in production nobody reached
+    LEARNED_THRESHOLD and both the review queue and the warm-up stayed empty even
+    for learners who had completed lessons. A completion now counts as learned
+    (mastery floor COMPLETED_MASTERY) and its clock starts at the later of the
+    last practice and the completion."""
+    rows = {}
+    for r in conn.execute(
+        """SELECT topic, mastery_level, attempts, struggle_count, last_practiced
+           FROM user_mastery WHERE user_id = ?""", [user_id]).fetchall():
+        rows[r[0]] = {"topic": r[0], "mastery": r[1] or 0.0, "attempts": r[2] or 1,
+                      "struggle": r[3] or 0, "last_practiced": r[4]}
+    try:
+        completions = conn.execute(
+            "SELECT lesson_id, completed_at FROM lesson_completions WHERE user_id = ?", [user_id]).fetchall()
+    except sqlite3.OperationalError:  # table absent in minimal test DBs
+        completions = []
+    for lesson_id, completed_at in completions:
+        r = rows.setdefault(lesson_id, {"topic": lesson_id, "mastery": 0.0, "attempts": 1,
+                                        "struggle": 0, "last_practiced": None})
+        r["mastery"] = max(r["mastery"], COMPLETED_MASTERY)
+        r["last_practiced"] = max(filter(None, [r["last_practiced"], completed_at]), default=None)
+    return list(rows.values())
+
+
 @router.get("/due")
 def due_reviews(user_id: str, limit: int = 20, caller: str = Depends(get_current_user_id)):
     """Lessons due for spaced-repetition review, most-urgent (lowest recall) first.
@@ -93,13 +123,8 @@ def due_reviews(user_id: str, limit: int = 20, caller: str = Depends(get_current
     if caller != user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
     conn = sqlite3.connect(_db_path())
-    conn.row_factory = sqlite3.Row
     try:
-        rows = conn.execute(
-            """SELECT topic, mastery_level, attempts, struggle_count, last_practiced
-               FROM user_mastery WHERE user_id = ?""",
-            [user_id],
-        ).fetchall()
+        rows = _learning_rows(conn, user_id)
     finally:
         conn.close()
 
@@ -107,12 +132,12 @@ def due_reviews(user_id: str, limit: int = 20, caller: str = Depends(get_current
     due = []
     tracked = 0
     for r in rows:
-        mastery = r["mastery_level"] or 0.0
+        mastery = r["mastery"]
         if mastery < LEARNED_THRESHOLD:
             continue
         tracked += 1
         elapsed = _days_since(r["last_practiced"], now)
-        recall = _estimated_recall(mastery, r["attempts"] or 1, r["struggle_count"] or 0, elapsed)
+        recall = _estimated_recall(mastery, r["attempts"], r["struggle"], elapsed)
         if recall >= REVIEW_THRESHOLD:
             continue
         lesson = _load_lesson_from_dir(r["topic"])
@@ -150,26 +175,20 @@ def _quiz(lesson: dict | None) -> list:
     return q if isinstance(q, list) else []
 
 
-def _learned_rows(conn, user_id: str):
-    conn.row_factory = sqlite3.Row
-    return conn.execute(
-        """SELECT topic, mastery_level, attempts, struggle_count, last_practiced
-           FROM user_mastery WHERE user_id = ? AND mastery_level >= ?""",
-        [user_id, LEARNED_THRESHOLD],
-    ).fetchall()
+def _learned_topics(conn, user_id: str) -> list[dict]:
+    return [r for r in _learning_rows(conn, user_id) if r["mastery"] >= LEARNED_THRESHOLD]
 
 
 @router.get("/warmup")
 def warmup(lang: str = "en", caller: str = Depends(get_current_user_id)):
     conn = sqlite3.connect(_db_path())
     try:
-        rows = _learned_rows(conn, caller)
+        rows = _learned_topics(conn, caller)
     finally:
         conn.close()
     now = datetime.now(timezone.utc)
     ranked = sorted(rows, key=lambda r: _estimated_recall(
-        r["mastery_level"] or 0.0, r["attempts"] or 1, r["struggle_count"] or 0,
-        _days_since(r["last_practiced"], now)))
+        r["mastery"], r["attempts"], r["struggle"], _days_since(r["last_practiced"], now)))
 
     pool = []  # (topic, title, index, item) - one question per lesson first, then seconds
     lessons = []
@@ -208,16 +227,15 @@ def warmup_answer(body: dict = Body(...), caller: str = Depends(get_current_user
     correct = choice == correct_index
     conn = sqlite3.connect(_db_path())
     try:
-        # Only lessons the learner has actually learned are rescheduled.
-        if correct:
-            conn.execute("""UPDATE user_mastery SET last_practiced = CURRENT_TIMESTAMP
-                            WHERE user_id = ? AND topic = ? AND mastery_level >= ?""",
-                         [caller, topic, LEARNED_THRESHOLD])
-        else:
-            conn.execute("""UPDATE user_mastery SET struggle_count = COALESCE(struggle_count, 0) + 1
-                            WHERE user_id = ? AND topic = ? AND mastery_level >= ?""",
-                         [caller, topic, LEARNED_THRESHOLD])
-        conn.commit()
+        # Only lessons the learner has actually learned (or completed) are rescheduled.
+        if any(r["topic"] == topic for r in _learned_topics(conn, caller)):
+            if correct:
+                conn.execute("UPDATE user_mastery SET last_practiced = CURRENT_TIMESTAMP WHERE user_id = ? AND topic = ?",
+                             [caller, topic])
+            else:
+                conn.execute("""UPDATE user_mastery SET struggle_count = COALESCE(struggle_count, 0) + 1
+                                WHERE user_id = ? AND topic = ?""", [caller, topic])
+            conn.commit()
     finally:
         conn.close()
     return {"correct": correct, "correct_index": correct_index}
