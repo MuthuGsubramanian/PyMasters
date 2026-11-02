@@ -1,0 +1,7 @@
+[Unit]
+Description=PyMasters daily status email
+After=network-online.target
+[Service]
+Type=oneshot
+ExecStart=%h/pymasters-ops/daily_report.sh
+TimeoutStartSec=900
