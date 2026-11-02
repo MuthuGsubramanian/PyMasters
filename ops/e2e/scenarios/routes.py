@@ -53,7 +53,7 @@ ROUTES = [
 REDIRECTS = {
     "/signup": "/login", "/register": "/login", "/playground": "/dashboard/playground",
     "learn": "/dashboard/classroom", "learn/:id": "/dashboard/classroom",
-    "evolution": "/dashboard/paths", "evolution/:pathId": "/dashboard/paths",
+    "evolution": "/dashboard/paths", "evolution/:pathId": "/dashboard/paths/x",   # keeps the path id (test uses x)
 }
 # The "/dashboard" layout route itself renders only through its children.
 LAYOUTS = {"/dashboard"}

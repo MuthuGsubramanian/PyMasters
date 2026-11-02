@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { trackVisit, trackPing } from './api';
 import { ProfileProvider } from './context/ProfileContext';
@@ -102,6 +102,12 @@ function OnboardedRoute({ children }) {
   return children;
 }
 
+// Old /dashboard/evolution/:pathId links (the nav once said "Evolution") open that same path.
+function EvolutionRedirect() {
+  const { pathId } = useParams();
+  return <Navigate to={`/dashboard/paths/${encodeURIComponent(pathId)}`} replace />;
+}
+
 function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#020617] text-white p-4">
@@ -171,7 +177,7 @@ export default function App() {
                 <Route path="paths/:pathId" element={<ErrorBoundary><Paths /></ErrorBoundary>} />
                 {/* "Evolution" is the nav label for the Paths experience; alias the slug so a directly-typed /dashboard/evolution URL resolves instead of 404ing */}
                 <Route path="evolution" element={<Navigate to="/dashboard/paths" replace />} />
-                <Route path="evolution/:pathId" element={<Navigate to="/dashboard/paths" replace />} />
+                <Route path="evolution/:pathId" element={<EvolutionRedirect />} />
                 <Route path="knowledge" element={<ErrorBoundary><KnowledgeMap /></ErrorBoundary>} />
                 <Route path="upgrade" element={<ErrorBoundary><Upgrade /></ErrorBoundary>} />
                 <Route path="classroom" element={<ErrorBoundary><Classroom /></ErrorBoundary>} />
