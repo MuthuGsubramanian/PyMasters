@@ -8,5 +8,10 @@ dbs:
         bucket: pymasters-app-db
         path: vm/pymasters.db
         retention: 168h
-        snapshot-interval: 6h
-        sync-interval: 1s
+        snapshot-interval: 24h
+        # Free tier: GCS allows 5,000 Class A operations/month. sync-interval 1s cost ~150k/month
+        # (~INR 60/month over the free tier) for a 3.4 MB DB on a durable persistent disk.
+        # 30m keeps an off-site copy at most 30 minutes behind (about 2.9k ops/month max); the ops laptop also pulls a full
+        # nightly backup.
+        sync-interval: 30m
+        retention-check-interval: 24h

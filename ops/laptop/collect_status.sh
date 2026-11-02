@@ -73,6 +73,36 @@ sec "Social bot (YouTube + LinkedIn)"
 (cd "$REPO" && env -u VIRTUAL_ENV PYTHONPATH="$REPO" ~/pymasters-ops/social-venv/bin/python -m socialbot report 2>/dev/null) || echo "- social bot report failed"
 echo "- last bot runs: $(journalctl --user -u pymasters-social.service --since '24 hours ago' --no-pager -o cat 2>/dev/null | grep -c -E 'Finished|Deactivated') ok, $(journalctl --user -u pymasters-social.service --since '24 hours ago' --no-pager -o cat 2>/dev/null | grep -c -i 'failed') failed"
 
+sec "Free tier usage (month to date)"
+python3 - <<'PY'
+import json, subprocess, datetime, urllib.request, urllib.parse
+A="--account=muthu@pymasters.net"
+tok=subprocess.run(["gcloud","auth","print-access-token",A],capture_output=True,text=True).stdout.strip()
+now=datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None); start=now.replace(day=1,hour=0,minute=0,second=0,microsecond=0)
+def q(metric, group, per=None):
+    params={"filter":f'metric.type="{metric}"',"interval.startTime":start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "interval.endTime":now.strftime("%Y-%m-%dT%H:%M:%SZ"),"aggregation.alignmentPeriod":f"{int((now-start).total_seconds())+60}s",
+            "aggregation.perSeriesAligner":"ALIGN_SUM","aggregation.crossSeriesReducer":"REDUCE_SUM","aggregation.groupByFields":group}
+    url="https://monitoring.googleapis.com/v3/projects/pymasters-app/timeSeries?"+urllib.parse.urlencode(params)
+    d=json.load(urllib.request.urlopen(urllib.request.Request(url,headers={"Authorization":"Bearer "+tok})))
+    out={}
+    for t in d.get("timeSeries",[]):
+        k=list(t.get("metric",{}).get("labels",{}).values()); v=t["points"][0]["value"]
+        out[k[0] if k else "all"]=float(v.get("int64Value") or v.get("doubleValue") or 0)
+    return out
+try:
+    ops=q("storage.googleapis.com/api/request_count","metric.label.method")
+    class_a=sum(v for k,v in ops.items() if k in ("WriteObject","ListObjects","ComposeObject","CopyObject","RewriteObject","InsertObject","ListBuckets","SetIamPolicy","GetIamPolicy","UpdateObject"))
+    print(f"- GCS Class A operations: {class_a:,.0f} of 5,000 free")
+    eg=q("compute.googleapis.com/instance/network/sent_bytes_count","metric.label.loadbalanced")
+    print(f"- VM outbound traffic (incl. free traffic to Google services): {sum(eg.values())/1e9:.2f} GB of 1 GB free to the internet")
+except Exception as e:
+    print("- monitoring query failed:", e)
+PY
+echo "- Artifact Registry images: $(gcloud artifacts docker images list us-central1-docker.pkg.dev/pymasters-app/cloud-run-source-deploy/pymasters --account=muthu@pymasters.net --format='value(metadata.imageSizeBytes)' 2>/dev/null | awk '{s+=$1;n++} END {printf "%d images, %.2f GB (before layer sharing)", n, s/1e9}') — 0.5 GB free; policy keeps the newest 2"
+echo "- Secret Manager active versions: $(for s in $(gcloud secrets list --project pymasters-app --account=muthu@pymasters.net --format='value(name)'); do gcloud secrets versions list $s --project pymasters-app --account=muthu@pymasters.net --filter='state=enabled' --format='value(name)'; done | wc -l) of 6 free"
+echo "- Budget: one budget, INR 5,000/month ceiling (owner limit), alerts at 2/5/25/50/90/100% + forecast"
+
 sec "GCP spend (billing export)"
 T=$(bq ls --project_id=pymasters-app --format=json billing_export 2>/dev/null | python3 -c 'import json,sys;t=[x["tableReference"]["tableId"] for x in json.load(sys.stdin) if x["tableReference"]["tableId"].startswith("gcp_billing_export_v1")];print(t[0] if t else "")' 2>/dev/null)
 if [ -n "$T" ]; then
