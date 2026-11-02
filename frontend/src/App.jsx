@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { trackVisit, trackPing } from './api';
 import { ProfileProvider } from './context/ProfileContext';
@@ -84,14 +84,20 @@ function PageLoader() {
   );
 }
 
+// Signed-out visitors keep their destination (e.g. a lesson link shared on LinkedIn) as ?next=.
+function LoginRedirect() {
+  const { pathname, search } = useLocation();
+  return <Navigate to={`/login?next=${encodeURIComponent(pathname + search)}`} replace />;
+}
+
 function PrivateRoute({ children }) {
   const { user } = useAuth();
-  return user ? children : <Navigate to="/login" />;
+  return user ? children : <LoginRedirect />;
 }
 
 function OnboardedRoute({ children }) {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/login" />;
+  if (!user) return <LoginRedirect />;
   if (!user.onboarding_completed) return <Navigate to="/onboarding" />;
   return children;
 }
