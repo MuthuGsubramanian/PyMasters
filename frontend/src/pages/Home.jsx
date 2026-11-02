@@ -1,4 +1,4 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -8,15 +8,17 @@ import {
     LifeBuoy, CalendarClock, BadgeCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import api from '../api';
 import SupportModal from '../components/SupportModal';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
 import PymastersHero from '../assets/pymasters-hero.svg';
 
 /* ─── Tracks ─────────────────────────────────────────────────────────────── */
-// Headline totals across the full catalogue (15 tracks). The cards below are a
-// curated showcase, not the complete list.
-const TOTAL_TRACKS = 15;
-const TOTAL_LESSONS = 380;
+// Headline totals come from /api/classroom/catalog-stats (the catalogue an anonymous visitor really gets);
+// these are only the first-paint fallback. The cards below are a curated showcase, not the complete list.
+const FALLBACK_STATS = { lessons: 430, tracks: 24 };
+// "432" -> "430+": a stable marketing figure that never overstates the live count.
+const roundedDown = (n) => (n >= 20 ? `${Math.floor(n / 10) * 10}+` : String(n));
 
 const TRACKS = [
     {
@@ -289,12 +291,20 @@ function FeatureCard({ icon, title, desc, accent, reduced, delay }) {
 
 /* ─── Main ───────────────────────────────────────────────────────────────── */
 export default function Home() {
-    const navigate = useNavigate();
     const { user } = useAuth();
     const reduced = useReducedMotion();
     const ctaTarget = user ? '/dashboard/classroom' : '/login?mode=signup';
     const navRef = useRef(null);
     const [scrolled, setScrolled] = useState(false);
+    const [stats, setStats] = useState(FALLBACK_STATS);
+
+    useEffect(() => {
+        let alive = true;
+        api.get('/classroom/catalog-stats')
+            .then(({ data }) => { if (alive && data?.lessons > 0 && data?.tracks > 0) setStats(data); })
+            .catch(() => { /* keep the fallback: the landing page must never break on a stats call */ });
+        return () => { alive = false; };
+    }, []);
     const [supportOpen, setSupportOpen] = useState(false);
     const [supportTab, setSupportTab] = useState('access');
     const openSupport = (tab) => { setSupportTab(tab); setSupportOpen(true); };
@@ -317,36 +327,36 @@ export default function Home() {
                 className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${scrolled ? 'bg-[#0a0a14]/85 backdrop-blur-xl border-b border-white/10' : 'bg-transparent'}`}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-                    <button onClick={() => navigate('/')} className="flex items-center gap-2.5 group" aria-label="PyMasters home">
+                    <Link to="/" className="flex items-center gap-2.5 group" aria-label="PyMasters home">
                         <img src={PymastersGlyph} alt="" className="w-8 h-8" style={{ filter: 'drop-shadow(0 0 6px rgba(124,58,237,0.6))' }} />
                         <span className="font-display font-bold text-base sm:text-lg tracking-tight text-white">PYMASTERS</span>
-                    </button>
+                    </Link>
                     <div className="hidden sm:flex items-center gap-6">
                         <a href="#curriculum" className="text-sm text-slate-300 hover:text-white transition-colors">Curriculum</a>
                         <a href="#features" className="text-sm text-slate-300 hover:text-white transition-colors">Features</a>
                         <a href="#organizations" className="text-sm text-slate-300 hover:text-white transition-colors">For Schools</a>
                         <button onClick={() => openSupport('issue')} className="text-sm text-slate-300 hover:text-white transition-colors">Support</button>
-                        <button onClick={() => navigate('/pricing')} className="text-sm text-slate-300 hover:text-white transition-colors">Pricing</button>
+                        <Link to="/pricing" className="text-sm text-slate-300 hover:text-white transition-colors">Pricing</Link>
                         {user ? (
-                            <button onClick={() => navigate('/dashboard')} className="text-sm text-slate-300 hover:text-white transition-colors">Dashboard</button>
+                            <Link to="/dashboard" className="text-sm text-slate-300 hover:text-white transition-colors">Dashboard</Link>
                         ) : (
-                            <button onClick={() => navigate('/login')} className="text-sm text-slate-300 hover:text-white transition-colors">Sign In</button>
+                            <Link to="/login" className="text-sm text-slate-300 hover:text-white transition-colors">Sign In</Link>
                         )}
-                        <button
-                            onClick={() => navigate(ctaTarget)}
+                        <Link
+                            to={ctaTarget}
                             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-purple-900/40"
                         >
                             {user ? 'Continue' : 'Get Started'}
                             <ArrowRight size={14} />
-                        </button>
+                        </Link>
                     </div>
-                    <button
-                        onClick={() => navigate(ctaTarget)}
+                    <Link
+                        to={ctaTarget}
                         className="sm:hidden inline-flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500"
                     >
                         {user ? 'Open' : 'Start'}
                         <ArrowRight size={14} />
-                    </button>
+                    </Link>
                 </div>
             </nav>
 
@@ -372,14 +382,14 @@ export default function Home() {
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
-                        <button
-                            onClick={() => navigate(ctaTarget)}
+                        <Link
+                            to={ctaTarget}
                             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-base font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.03] active:scale-[0.98] transition-transform shadow-xl shadow-purple-900/40 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-slate-950"
                         >
                             <GraduationCap size={18} aria-hidden="true" />
                             {user ? 'Continue Learning' : 'Start Free'}
                             <ArrowRight size={16} aria-hidden="true" />
-                        </button>
+                        </Link>
                         <button
                             onClick={() => document.getElementById('curriculum')?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth' })}
                             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-base font-bold text-slate-200 border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/25 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 focus:ring-offset-slate-950"
@@ -425,7 +435,7 @@ export default function Home() {
                     <div className="text-center mb-14">
                         <span className="inline-flex items-center gap-2 px-3 py-1 mb-5 rounded-full text-[11px] font-semibold tracking-wider uppercase text-purple-200 bg-purple-500/10 border border-purple-500/30">
                             <Layers size={12} aria-hidden="true" />
-                            {TOTAL_TRACKS} Tracks · {TOTAL_LESSONS}+ Lessons
+                            {stats.tracks} Tracks · {roundedDown(stats.lessons)} Lessons
                         </span>
                         <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">
                             Your complete{' '}
@@ -572,19 +582,19 @@ export default function Home() {
                                         <Mail size={16} aria-hidden="true" />
                                         Talk to Sales
                                     </a>
-                                    <button
-                                        onClick={() => navigate('/login')}
+                                    <Link
+                                        to="/login"
                                         className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-slate-200 border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/25 transition-colors"
                                     >
                                         Start a Pilot
                                         <ArrowRight size={14} />
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
                             <div className="relative grid grid-cols-2 gap-3">
                                 {[
-                                    { v: '425+', l: 'Lessons' },
-                                    { v: '24', l: 'Tracks' },
+                                    { v: roundedDown(stats.lessons), l: 'Lessons' },
+                                    { v: String(stats.tracks), l: 'Tracks' },
                                     { v: '∞', l: 'AI Modules' },
                                     { v: 'EN/TA', l: 'Languages' },
                                 ].map(s => (
@@ -643,13 +653,13 @@ export default function Home() {
                             Book a <span className="text-white font-semibold">live 1-on-1 session</span> with a PyMasters tutor —
                             pick a topic and a time that works for you, and we'll confirm by email. Great for getting unstuck or planning your path.
                         </p>
-                        <button
-                            onClick={() => navigate('/dashboard/live-tutor')}
+                        <Link
+                            to="/dashboard/live-tutor"
                             className="mt-auto w-fit inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-purple-900/40"
                         >
                             <CalendarClock size={16} aria-hidden="true" />
                             Schedule a live session
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </section>
@@ -672,14 +682,14 @@ export default function Home() {
                     <p className="text-slate-300/90 mb-8 leading-relaxed">
                         With Vaathiyaar by your side. Free to start.
                     </p>
-                    <button
-                        onClick={() => navigate(ctaTarget)}
+                    <Link
+                        to={ctaTarget}
                         className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.03] active:scale-[0.98] transition-transform shadow-xl shadow-purple-900/40"
                     >
                         <GraduationCap size={18} aria-hidden="true" />
                         {user ? 'Continue Learning' : 'Begin for Free'}
                         <ArrowRight size={16} aria-hidden="true" />
-                    </button>
+                    </Link>
                 </div>
             </section>
 
