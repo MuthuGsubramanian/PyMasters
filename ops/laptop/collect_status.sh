@@ -42,11 +42,11 @@ LIVE=$(echo "$H" | python3 -c 'import json,sys;print(json.load(sys.stdin).get("b
 [ "$LIVE" = "$MAIN" ] && echo "- live build matches main (${MAIN:0:7})" || echo "- WARNING: live build ${LIVE:0:7} != main ${MAIN:0:7}"
 
 sec "CI (last 5 runs)"
-(cd "$REPO" && gh run list -L 5 --json conclusion,displayTitle,createdAt -q '.[] | "- \(.conclusion // "running") — \(.displayTitle) (\(.createdAt))"' 2>&1)
+(cd "$REPO" && gh run list -e push -L 5 --json conclusion,displayTitle,createdAt -q '.[] | "- \(.conclusion // "running") — \(.displayTitle) (\(.createdAt))"' 2>&1)
 
 sec "Test health"
 # Tier 1 gates every deploy (deploy.yml); Tier 2 runs nightly (nightly-e2e.yml); the prod smoke runs here at 07:30.
-echo "- Tier 1 (deploy gate, latest run on main): $(cd "$REPO" && gh run list -w deploy.yml -b main -L 1 --json conclusion,createdAt -q '.[] | "\(.conclusion // "running") (\(.createdAt))"' 2>&1)"
+echo "- Tier 1 (deploy gate, latest run on main): $(cd "$REPO" && gh run list -w deploy.yml -e push -b main -L 1 --json conclusion,createdAt -q '.[] | "\(.conclusion // "running") (\(.createdAt))"' 2>&1)"
 NDIR=$(mktemp -d)
 NRUN=$(cd "$REPO" && gh run list -w nightly-e2e.yml -L 1 --json databaseId,conclusion,createdAt -q '.[0] | "\(.databaseId) \(.conclusion // "running") \(.createdAt)"' 2>/dev/null)
 if [ -n "$NRUN" ] && (cd "$REPO" && gh run download "${NRUN%% *}" -n nightly-report -D "$NDIR" >/dev/null 2>&1); then
