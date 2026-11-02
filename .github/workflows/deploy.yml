@@ -3,13 +3,18 @@ name: Build + roll out to the production VM
 on:
   push:
     branches: [main]
+  # Pull requests run every gate (unit tests, frontend, Tier-1 scenarios against the built image)
+  # but never authenticate to GCP, push an image or touch the VM: those steps are push-only.
+  pull_request:
+    branches: [main]
 
 # Cost control: pushes land as often as every ~30 min from the automation
 # loops. If a new push arrives while an older run is still in test/build,
 # the older run is superseded — cancel it and let the newest one deploy.
-# (Cloud Run revision rollout is atomic, so cancelling a run mid-CI is safe.)
+# (The VM pulls :latest on its own timer, so cancelling a run mid-CI is safe.)
+# Pull requests get their own group so they never cancel a production deploy.
 concurrency:
-  group: deploy-to-cloud-run
+  group: ${{ github.event_name == 'push' && 'deploy-to-cloud-run' || format('pr-{0}', github.ref) }}
   cancel-in-progress: true
 
 jobs:
@@ -80,18 +85,22 @@ jobs:
         run: npm run build
 
   deploy:
-    name: Build image + wait for VM rollout
+    name: Build image + scenario gate + wait for VM rollout
     needs: [test, frontend-test]
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: read
       id-token: write
+    env:
+      IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID || 'pr' }}/cloud-run-source-deploy/pymasters
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud (Workload Identity Federation — keyless)
+        if: github.event_name == 'push'
         uses: google-github-actions/auth@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
@@ -99,11 +108,13 @@ jobs:
           service_account: ${{ secrets.GCP_DEPLOY_SA }}
 
       - name: Set up Cloud SDK
+        if: github.event_name == 'push'
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Configure Docker for Artifact Registry
+        if: github.event_name == 'push'
         run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
       - name: Build Docker image
@@ -111,16 +122,46 @@ jobs:
           docker build \
             --platform linux/amd64 \
             --build-arg BUILD_SHA=${{ github.sha }} \
-            -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/pymasters:${{ github.sha }} \
-            -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/pymasters:latest \
+            -t "$IMAGE:${{ github.sha }}" \
+            -t "$IMAGE:latest" \
             .
 
-      - name: Push Docker image
+      # Tier-1 scenario gate (docs/superpowers/specs/2026-11-03-autonomous-scenario-testing-design.md):
+      # every route, the four journeys and every module, run against THIS image with the stub tutor.
+      # A failure stops the job here, so the image is never pushed and the VM keeps the current one.
+      - name: Set up Python 3.11 (scenario runner)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: ops/e2e/scenarios/requirements.txt
+
+      - name: Install scenario runner + Chromium
         run: |
-          docker push --all-tags \
-            us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/pymasters
+          pip install -r ops/e2e/scenarios/requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Tier-1 scenarios (gate)
+        env:
+          PM_E2E_IMAGE: ${{ env.IMAGE }}:${{ github.sha }}
+          PM_E2E_PYTHON: python
+        run: ops/e2e/run_scenarios.sh tier1
+
+      - name: Upload scenario artifacts (junit, container log)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scenarios-tier1-${{ github.sha }}
+          path: ops/e2e/out/**
+          retention-days: 7
+
+      - name: Push Docker image
+        if: github.event_name == 'push'
+        run: |
+          docker push --all-tags "$IMAGE"
 
       - name: Wait for the VM rollout (pymasters-vm pulls :latest every 2 minutes)
+        if: github.event_name == 'push'
         # Production moved from Cloud Run to a Compute Engine e2-micro on
         # 2026-10-27 (infra/gce/). Nothing deploys from here: the VM's systemd
         # timer pulls the :latest image pushed above and restarts the app if the
@@ -144,6 +185,7 @@ jobs:
           exit 1
 
       - name: Prune old images from Artifact Registry (keep newest 5)
+        if: github.event_name == 'push'
         # Every deploy pushes a ~1GB image tagged with the commit SHA; with the
         # 30-min automation loops this compounds into the largest silent cost
         # line (storage is billed per GB-month, forever). Keep the 5 newest for
