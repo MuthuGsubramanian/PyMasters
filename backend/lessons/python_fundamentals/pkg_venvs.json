@@ -149,5 +149,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "Project A needs Django 3.2 and Project B needs Django 4.2. What is the recommended approach?",
+        "ta": "Project A-க்கு Django 3.2-ம், Project B-க்கு Django 4.2-ம் தேவை. பரிந்துரைக்கப்படும் வழி எது?"
+      },
+      "options": {
+        "en": [
+          "Use Django 4.2 for both; newer versions always work",
+          "Put both projects in one shared venv",
+          "Install both versions globally and switch manually",
+          "Create a separate venv for each project"
+        ],
+        "ta": [
+          "இரண்டுக்கும் Django 4.2; புதிய பதிப்பு எப்போதும் வேலை செய்யும்",
+          "இரண்டு project-களையும் ஒரே பகிர்ந்த venv-இல் வைப்பது",
+          "இரண்டு பதிப்புகளையும் global-ஆக நிறுவி கைமுறையாக மாற்றுவது",
+          "ஒவ்வொரு project-க்கும் தனி venv உருவாக்குவது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nline = 'flask==3.0.0'\nprint(line.split('==')[0])",
+        "ta": "இது என்ன அச்சிடும்?\nline = 'flask==3.0.0'\nprint(line.split('==')[0])"
+      },
+      "options": {
+        "en": [
+          "3.0.0",
+          "['flask', '3.0.0']",
+          "flask==",
+          "flask"
+        ],
+        "ta": [
+          "3.0.0",
+          "['flask', '3.0.0']",
+          "flask==",
+          "flask"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "A teammate commits the venv/ folder to Git along with the code. What's wrong with this?",
+        "ta": "ஒரு குழு உறுப்பினர் code-உடன் venv/ folder-ஐயும் Git-இல் commit செய்கிறார். இதில் என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "Nothing; it helps others skip installing packages",
+          "It should be committed only on Windows",
+          "venv/ is machine-specific and huge; commit requirements.txt",
+          "venv/ must be renamed to env/ before committing"
+        ],
+        "ta": [
+          "தவறில்லை; மற்றவர்கள் packages நிறுவ வேண்டியதில்லை",
+          "Windows-இல் மட்டுமே commit செய்ய வேண்டும்",
+          "venv/ கணினி-சார்ந்தது, மிகப் பெரியது; requirements.txt-ஐ commit செய்க",
+          "commit செய்வதற்கு முன் venv/-ஐ env/ என மாற்ற வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "On a new machine, which command installs all dependencies listed in requirements.txt?",
+        "ta": "புதிய கணினியில், requirements.txt-இல் உள்ள அனைத்து dependencies-ஐயும் நிறுவும் command எது?"
+      },
+      "options": {
+        "en": [
+          "pip install -r requirements.txt",
+          "python -m venv requirements.txt",
+          "pip install requirements.txt",
+          "pip freeze > requirements.txt"
+        ],
+        "ta": [
+          "pip install -r requirements.txt",
+          "python -m venv requirements.txt",
+          "pip install requirements.txt",
+          "pip freeze > requirements.txt"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

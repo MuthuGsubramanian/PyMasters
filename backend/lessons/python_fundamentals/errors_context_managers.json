@@ -207,5 +207,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "In `with Timer() as t:`, what does t get bound to?",
+        "ta": "`with Timer() as t:` இல், t எதனுடன் இணைக்கப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "Always the Timer() object itself, no matter what",
+          "Whatever __exit__ returns",
+          "Whatever Timer().__enter__() returns",
+          "The Timer class itself"
+        ],
+        "ta": [
+          "எதுவாக இருந்தாலும் எப்போதும் Timer() பொருளே",
+          "__exit__ திருப்பி அனுப்பும் மதிப்பு",
+          "Timer().__enter__() திருப்பி அனுப்பும் மதிப்பு",
+          "Timer என்ற class தானே"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In what order does Python run the parts of a with statement?",
+        "ta": "with கூற்றின் பகுதிகளை Python எந்த வரிசையில் இயக்குகிறது?"
+      },
+      "options": {
+        "en": [
+          "__enter__, then the body, then __exit__",
+          "Body first, then __exit__ only",
+          "__enter__ and __exit__ both before the body",
+          "__exit__, then body, then __enter__"
+        ],
+        "ta": [
+          "__enter__, பிறகு body, பிறகு __exit__",
+          "முதலில் body, பிறகு __exit__ மட்டும்",
+          "__enter__, __exit__ இரண்டும் body-க்கு முன்பே",
+          "__exit__, பிறகு body, பிறகு __enter__"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print? (contextmanager imported)\n@contextmanager\ndef cm(): print('A'); yield; print('C')\nwith cm(): print('B')",
+        "ta": "இது என்ன அச்சிடும்? (contextmanager import செய்யப்பட்டுள்ளது)\n@contextmanager\ndef cm(): print('A'); yield; print('C')\nwith cm(): print('B')"
+      },
+      "options": {
+        "en": [
+          "A, C, B on separate lines",
+          "B only",
+          "A, B, C on separate lines",
+          "A, B on separate lines (C is skipped)"
+        ],
+        "ta": [
+          "A, C, B தனித்தனி வரிகளில்",
+          "B மட்டும்",
+          "A, B, C தனித்தனி வரிகளில்",
+          "A, B தனித்தனி வரிகளில் (C தவிர்க்கப்படும்)"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "A Timer's __enter__ sets self.start but has no return statement. In `with Timer() as t:`, what is t?",
+        "ta": "Timer-இன் __enter__ self.start-ஐ அமைக்கிறது, ஆனால் return கூற்று இல்லை. `with Timer() as t:` இல் t என்ன?"
+      },
+      "options": {
+        "en": [
+          "An error is raised at the with line",
+          "The Timer object, returned automatically",
+          "The value of self.start",
+          "None"
+        ],
+        "ta": [
+          "with வரியிலேயே பிழை எழும்",
+          "தானாகத் திருப்பி அனுப்பப்படும் Timer பொருள்",
+          "self.start-இன் மதிப்பு",
+          "None"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

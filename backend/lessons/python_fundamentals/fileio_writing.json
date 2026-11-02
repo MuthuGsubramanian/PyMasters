@@ -174,5 +174,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "notes.txt already has content. What happens when you run open('notes.txt', 'w')?",
+        "ta": "notes.txt கோப்பில் ஏற்கனவே உள்ளடக்கம் உள்ளது. open('notes.txt', 'w') இயக்கினால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "The file opens in read-only mode",
+          "New text is added at the end of the file",
+          "The existing content is erased",
+          "Python raises an error because the file exists"
+        ],
+        "ta": [
+          "கோப்பு படிக்க மட்டும் என்ற mode-ல் திறக்கப்படும்",
+          "புதிய உரை கோப்பின் இறுதியில் சேர்க்கப்படும்",
+          "இருக்கும் உள்ளடக்கம் அழிக்கப்படும்",
+          "கோப்பு ஏற்கனவே இருப்பதால் Python பிழை எழுப்பும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nwith open('t.txt', 'w') as f:\n    f.write('a'); f.write('b')\nprint(open('t.txt').read())",
+        "ta": "இது என்ன அச்சிடும்?\nwith open('t.txt', 'w') as f:\n    f.write('a'); f.write('b')\nprint(open('t.txt').read())"
+      },
+      "options": {
+        "en": [
+          "ab",
+          "a b",
+          "a and b on separate lines",
+          "An error: write() needs a '\\n'"
+        ],
+        "ta": [
+          "ab",
+          "a b",
+          "a, b தனித்தனி வரிகளில்",
+          "பிழை: write()-க்கு '\\n' தேவை"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "data.txt already exists. What does open('data.txt', 'x') do?",
+        "ta": "data.txt ஏற்கனவே உள்ளது. open('data.txt', 'x') என்ன செய்யும்?"
+      },
+      "options": {
+        "en": [
+          "Opens the file for reading",
+          "Appends to the end of the file",
+          "Raises FileExistsError",
+          "Overwrites the file"
+        ],
+        "ta": [
+          "கோப்பைப் படிக்கத் திறக்கும்",
+          "கோப்பின் இறுதியில் சேர்க்கும்",
+          "FileExistsError எழுப்பும்",
+          "கோப்பை மேலெழுதும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Goal: one fruit per line. What's wrong with this?\nf.writelines(['apple', 'banana'])",
+        "ta": "இலக்கு: ஒரு வரிக்கு ஒரு பழம். இதில் என்ன தவறு?\nf.writelines(['apple', 'banana'])"
+      },
+      "options": {
+        "en": [
+          "No '\\n' is added, so the file holds 'applebanana'",
+          "It writes the list literally as \"['apple', 'banana']\"",
+          "writelines() only accepts a single string",
+          "Nothing — each item goes on its own line"
+        ],
+        "ta": [
+          "'\\n' சேர்க்கப்படாது, எனவே கோப்பில் 'applebanana' இருக்கும்",
+          "அது பட்டியலை அப்படியே \"['apple', 'banana']\" என்று எழுதும்",
+          "writelines() ஒரே ஒரு string-ஐ மட்டுமே ஏற்கும்",
+          "தவறு இல்லை — ஒவ்வொன்றும் தனி வரியில் வரும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

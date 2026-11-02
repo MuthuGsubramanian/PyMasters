@@ -205,5 +205,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "By the lesson's golden rule, which relationship is best modelled with inheritance?",
+        "ta": "பாடத்தின் தங்க விதிப்படி, எந்த உறவை inheritance மூலம் அமைப்பது சிறந்தது?"
+      },
+      "options": {
+        "en": [
+          "Phone has-a Battery",
+          "Car is-a Vehicle",
+          "Car has-a GPS",
+          "Car has-a Engine"
+        ],
+        "ta": [
+          "Phone-க்கு ஒரு Battery உள்ளது (has-a)",
+          "Car ஒரு Vehicle ஆகும் (is-a)",
+          "Car-க்கு ஒரு GPS உள்ளது (has-a)",
+          "Car-க்கு ஒரு Engine உள்ளது (has-a)"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nclass E: hp = 90\nclass Car: engine = E()\nprint(Car.engine.hp)",
+        "ta": "இது என்ன அச்சிடும்?\nclass E: hp = 90\nclass Car: engine = E()\nprint(Car.engine.hp)"
+      },
+      "options": {
+        "en": [
+          "90",
+          "AttributeError",
+          "None",
+          "<__main__.E object at 0x...>"
+        ],
+        "ta": [
+          "90",
+          "AttributeError",
+          "None",
+          "<__main__.E object at 0x...>"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Phone.info() returns f'Battery: {self.battery}mah'. What is the mistake?",
+        "ta": "Phone.info() ஆனது f'Battery: {self.battery}mah' ஐத் திருப்புகிறது. இதில் உள்ள தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "Phone must inherit from Battery to use it",
+          "f-strings cannot use self",
+          "It shows the Battery object, not its capacity",
+          "The word mah must be in uppercase"
+        ],
+        "ta": [
+          "Battery-ஐப் பயன்படுத்த Phone அதிலிருந்து inherit செய்ய வேண்டும்",
+          "f-strings-இல் self ஐப் பயன்படுத்த முடியாது",
+          "இது capacity-ஐ அல்ல, Battery object-ஐயே காட்டுகிறது",
+          "mah என்ற சொல் பெரிய எழுத்தில் இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "With the dependency injection pattern, how does Phone get its Battery?",
+        "ta": "Dependency injection முறையில், Phone தனது Battery-ஐ எப்படிப் பெறுகிறது?"
+      },
+      "options": {
+        "en": [
+          "It inherits from the Battery class",
+          "The Battery is passed into Phone's __init__",
+          "It reads a global Battery variable",
+          "It creates Battery() inside info()"
+        ],
+        "ta": [
+          "அது Battery class-இலிருந்து inherit செய்கிறது",
+          "Battery ஆனது Phone-இன் __init__-க்குள் அனுப்பப்படுகிறது",
+          "அது ஒரு global Battery மாறியைப் படிக்கிறது",
+          "அது info()-க்குள் Battery() ஐ உருவாக்குகிறது"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

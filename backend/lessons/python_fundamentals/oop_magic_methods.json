@@ -215,5 +215,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "Which magic method does Python call when you write `x in obj`?",
+        "ta": "`x in obj` என்று எழுதும்போது Python எந்த magic method-ஐ அழைக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "__has__",
+          "__iter_in__",
+          "__contains__",
+          "__in__"
+        ],
+        "ta": [
+          "__has__",
+          "__iter_in__",
+          "__contains__",
+          "__in__"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nclass A:\n    def __str__(self): return 'hi'\nprint(A())",
+        "ta": "இது என்ன அச்சிடும்?\nclass A:\n    def __str__(self): return 'hi'\nprint(A())"
+      },
+      "options": {
+        "en": [
+          "'hi'",
+          "<__main__.A object at 0x...>",
+          "hi",
+          "Nothing, because __str__ is never called"
+        ],
+        "ta": [
+          "'hi'",
+          "<__main__.A object at 0x...>",
+          "hi",
+          "எதுவும் இல்லை, ஏனெனில் __str__ அழைக்கப்படுவதில்லை"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "A Bag class defines `def len(self): return len(self.items)`, but `len(b)` raises TypeError. What's the mistake?",
+        "ta": "ஒரு Bag class `def len(self): return len(self.items)` என வரையறுக்கிறது, ஆனால் `len(b)` TypeError தருகிறது. தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "The method must be named __len__",
+          "It should return self.items, not its length",
+          "len() only works on lists, never on objects",
+          "It needs to be decorated with @property"
+        ],
+        "ta": [
+          "method-இன் பெயர் __len__ ஆக இருக்க வேண்டும்",
+          "அது நீளத்தை அல்ல, self.items-ஐ return செய்ய வேண்டும்",
+          "len() list-களில் மட்டுமே வேலை செய்யும், object-களில் இல்லை",
+          "அதற்கு @property decorator தேவை"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "According to the rule of thumb, which method should you always define because it helps debugging?",
+        "ta": "பொது விதிப்படி, debugging-க்கு உதவுவதால் எப்போதும் எந்த method-ஐ வரையறுக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "__eq__",
+          "__repr__",
+          "__str__",
+          "__len__"
+        ],
+        "ta": [
+          "__eq__",
+          "__repr__",
+          "__str__",
+          "__len__"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

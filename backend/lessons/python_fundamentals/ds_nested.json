@@ -249,5 +249,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print? d = {'math': [90, 85], 'english': [78, 92]}; print(d['english'][1])",
+        "ta": "இது என்ன அச்சிடும்? d = {'math': [90, 85], 'english': [78, 92]}; print(d['english'][1])"
+      },
+      "options": {
+        "en": [
+          "92",
+          "85",
+          "78",
+          "KeyError"
+        ],
+        "ta": [
+          "92",
+          "85",
+          "78",
+          "KeyError"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print? data = {'users': [{'name': 'Ann'}, {'name': 'Ben'}]}; print(data['users'][1]['name'])",
+        "ta": "இது என்ன அச்சிடும்? data = {'users': [{'name': 'Ann'}, {'name': 'Ben'}]}; print(data['users'][1]['name'])"
+      },
+      "options": {
+        "en": [
+          "IndexError",
+          "Ann",
+          "{'name': 'Ben'}",
+          "Ben"
+        ],
+        "ta": [
+          "IndexError",
+          "Ann",
+          "{'name': 'Ben'}",
+          "Ben"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why write data.get('users', []) instead of data['users'] when the structure is uncertain?",
+        "ta": "அமைப்பு உறுதியாகத் தெரியாதபோது data['users'] என்பதற்குப் பதிலாக data.get('users', []) ஏன் எழுதுகிறோம்?"
+      },
+      "options": {
+        "en": [
+          "It makes the lookup run faster",
+          "It makes a safe copy of the list",
+          "It turns the dict into a list",
+          "It avoids a KeyError if 'users' is missing"
+        ],
+        "ta": [
+          "தேடலை வேகமாக இயங்கச் செய்கிறது",
+          "பட்டியலின் பாதுகாப்பான நகலை உருவாக்குகிறது",
+          "dict-ஐ list ஆக மாற்றுகிறது",
+          "'users' இல்லையெனில் KeyError வருவதைத் தவிர்க்கிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "For a list of product dicts, what does max(products, key=lambda p: p['price']) return?",
+        "ta": "product dict-களின் பட்டியலுக்கு, max(products, key=lambda p: p['price']) எதைத் திருப்பித் தரும்?"
+      },
+      "options": {
+        "en": [
+          "Only the highest price number",
+          "The index of the priciest product",
+          "Only the name of the priciest product",
+          "The whole dict of the priciest product"
+        ],
+        "ta": [
+          "அதிகபட்ச விலை எண் மட்டும்",
+          "அதிக விலையுள்ள பொருளின் index",
+          "அதிக விலையுள்ள பொருளின் பெயர் மட்டும்",
+          "அதிக விலையுள்ள பொருளின் முழு dict"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

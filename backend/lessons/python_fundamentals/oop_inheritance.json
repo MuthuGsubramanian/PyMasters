@@ -221,5 +221,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nclass A: x = 1\nclass B(A): pass\nprint(B.x)",
+        "ta": "இது என்ன அச்சிடும்?\nclass A: x = 1\nclass B(A): pass\nprint(B.x)"
+      },
+      "options": {
+        "en": [
+          "None",
+          "0",
+          "AttributeError, because B defines no x",
+          "1"
+        ],
+        "ta": [
+          "None",
+          "0",
+          "AttributeError, ஏனெனில் B-இல் x வரையறுக்கப்படவில்லை",
+          "1"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In Car.__init__, what does super().__init__(speed) do?",
+        "ta": "Car.__init__-இல், super().__init__(speed) என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Deletes the parent's speed attribute",
+          "Calls Car's own __init__ again",
+          "Creates a separate Vehicle object inside the Car",
+          "Runs Vehicle's __init__, so self.speed gets set"
+        ],
+        "ta": [
+          "பெற்றோரின் speed பண்பை நீக்குகிறது",
+          "Car-இன் சொந்த __init__-ஐ மீண்டும் அழைக்கிறது",
+          "Car-க்குள் தனியாக ஒரு Vehicle பொருளை உருவாக்குகிறது",
+          "Vehicle-இன் __init__-ஐ இயக்குகிறது, அதனால் self.speed அமைக்கப்படுகிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Manager.__init__ sets self.department but never calls super().__init__(name, salary). What happens when you access m.name?",
+        "ta": "Manager.__init__ self.department-ஐ அமைக்கிறது, ஆனால் super().__init__(name, salary)-ஐ அழைக்கவில்லை. m.name-ஐ அணுகினால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "m.name is an empty string ''",
+          "Python calls Employee.__init__ automatically",
+          "m.name is None",
+          "AttributeError, because name was never set"
+        ],
+        "ta": [
+          "m.name என்பது வெற்று சரம் ''",
+          "Python தானாகவே Employee.__init__-ஐ அழைக்கும்",
+          "m.name என்பது None",
+          "AttributeError, ஏனெனில் name ஒருபோதும் அமைக்கப்படவில்லை"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "When you call a method on an object, in what order does Python search the classes for it?",
+        "ta": "ஒரு பொருளின் method-ஐ அழைக்கும்போது, Python எந்த வரிசையில் வகுப்புகளில் அதைத் தேடுகிறது?"
+      },
+      "options": {
+        "en": [
+          "Grandparent → parent → child",
+          "Parent first, then the child",
+          "Only the child class, never the parents",
+          "Child → parent → grandparent"
+        ],
+        "ta": [
+          "Grandparent → parent → child",
+          "முதலில் parent, பிறகு child",
+          "child வகுப்பில் மட்டும், parent-களில் ஒருபோதும் இல்லை",
+          "Child → parent → grandparent"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

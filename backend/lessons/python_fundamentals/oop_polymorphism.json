@@ -241,5 +241,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "In subtype polymorphism, how does a child class give its own behaviour for a shared method?",
+        "ta": "subtype polymorphism-இல், பகிரப்பட்ட method-க்கு child class தனது சொந்த நடத்தையை எப்படித் தருகிறது?"
+      },
+      "options": {
+        "en": [
+          "It deletes the method from the parent class",
+          "It overrides the parent's method with the same name",
+          "It calls hasattr() on the parent class",
+          "It must use a different method name than the parent"
+        ],
+        "ta": [
+          "parent class-இலிருந்து அந்த method-ஐ நீக்குகிறது",
+          "அதே பெயருள்ள parent method-ஐ override செய்கிறது",
+          "parent class மீது hasattr()-ஐ அழைக்கிறது",
+          "parent-இலிருந்து வேறுபட்ட method பெயரைப் பயன்படுத்த வேண்டும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "make_sound(animal) prints animal.speak(). With duck typing, which objects can it accept?",
+        "ta": "make_sound(animal) ஆனது animal.speak()-ஐ print செய்கிறது. duck typing-இல் இது எந்த objects-ஐ ஏற்கும்?"
+      },
+      "options": {
+        "en": [
+          "Any object that has a speak() method",
+          "Only instances of Dog or Cat",
+          "Only subclasses of a common Animal class",
+          "Only classes that use @abstractmethod"
+        ],
+        "ta": [
+          "speak() method உள்ள எந்த object-உம்",
+          "Dog அல்லது Cat instances மட்டும்",
+          "பொதுவான Animal class-இன் subclasses மட்டும்",
+          "@abstractmethod பயன்படுத்தும் classes மட்டும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nclass A:\n    def describe(self): return 'hi'\nprint(hasattr(A(), 'describe'), hasattr(42, 'describe'))",
+        "ta": "இது என்ன print செய்யும்?\nclass A:\n    def describe(self): return 'hi'\nprint(hasattr(A(), 'describe'), hasattr(42, 'describe'))"
+      },
+      "options": {
+        "en": [
+          "hi False",
+          "False False",
+          "True True",
+          "True False"
+        ],
+        "ta": [
+          "hi False",
+          "False False",
+          "True True",
+          "True False"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Using the lesson's Rectangle class, what does total_area([Rectangle(4, 6), Rectangle(5, 12)]) return?",
+        "ta": "பாடத்தின் Rectangle class-ஐப் பயன்படுத்தினால், total_area([Rectangle(4, 6), Rectangle(5, 12)]) என்ன return செய்யும்?"
+      },
+      "options": {
+        "en": [
+          "54",
+          "84",
+          "1440",
+          "27"
+        ],
+        "ta": [
+          "54",
+          "84",
+          "1440",
+          "27"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

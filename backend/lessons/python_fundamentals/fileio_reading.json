@@ -159,5 +159,91 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "Why is `with open(...)` preferred over a plain open() call?",
+        "ta": "சாதாரண open()-ஐ விட `with open(...)` ஏன் சிறந்தது?"
+      },
+      "options": {
+        "en": [
+          "It closes the file automatically, even if an error occurs",
+          "It keeps the file open for the rest of the program",
+          "It means you never need to give a mode like 'r'",
+          "It reads the file faster than open() alone"
+        ],
+        "ta": [
+          "பிழை ஏற்பட்டாலும் கோப்பைத் தானாக மூடுகிறது",
+          "நிரல் முடியும் வரை கோப்பைத் திறந்தே வைக்கிறது",
+          "'r' போன்ற mode-ஐ ஒருபோதும் கொடுக்கத் தேவையில்லை",
+          "open()-ஐ விட கோப்பை வேகமாகப் படிக்கிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Which mode does open('data.txt') use when no mode is given?",
+        "ta": "mode எதுவும் கொடுக்காதபோது open('data.txt') எந்த mode-ஐப் பயன்படுத்தும்?"
+      },
+      "options": {
+        "en": [
+          "'r+'",
+          "'rb'",
+          "'r'",
+          "'w'"
+        ],
+        "ta": [
+          "'r+'",
+          "'rb'",
+          "'r'",
+          "'w'"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "sample.txt has 3 lines. What prints?\nwith open('sample.txt') as f:\n    lines = f.readlines()\nprint(len(lines))",
+        "ta": "sample.txt-இல் 3 வரிகள் உள்ளன. என்ன அச்சிடப்படும்?\nwith open('sample.txt') as f:\n    lines = f.readlines()\nprint(len(lines))"
+      },
+      "options": {
+        "en": [
+          "1",
+          "The number of characters in the file",
+          "3",
+          "An error, because f is already closed"
+        ],
+        "ta": [
+          "1",
+          "கோப்பிலுள்ள எழுத்துகளின் எண்ணிக்கை",
+          "3",
+          "பிழை, ஏனெனில் f ஏற்கனவே மூடப்பட்டுவிட்டது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is wrong with this code?\nf = open('notes.txt', 'r')\ntext = f.read()",
+        "ta": "இந்தக் குறியீட்டில் என்ன தவறு?\nf = open('notes.txt', 'r')\ntext = f.read()"
+      },
+      "options": {
+        "en": [
+          "The file is never closed",
+          "open() needs 'rb' to read text",
+          "'r' mode cannot be used with read()",
+          "read() needs a line count argument"
+        ],
+        "ta": [
+          "கோப்பு ஒருபோதும் மூடப்படவில்லை",
+          "உரையைப் படிக்க open()-க்கு 'rb' தேவை",
+          "read()-உடன் 'r' mode-ஐப் பயன்படுத்த முடியாது",
+          "read()-க்கு வரி எண்ணிக்கை argument தேவை"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }
