@@ -154,5 +154,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Compared to the normal input rate, what does writing a 5-minute prompt cache cost?",
+        "ta": "சாதாரண input கட்டணத்துடன் ஒப்பிடும்போது, 5-நிமிட prompt cache-ஐ எழுத எவ்வளவு செலவாகும்?"
+      },
+      "options": {
+        "en": [
+          "1.25x, a small markup",
+          "1.0x, the same as a normal call",
+          "0.1x, because writes also get the cache discount",
+          "2x, double the normal rate"
+        ],
+        "ta": [
+          "1.25x, ஒரு சிறிய கூடுதல் கட்டணம்",
+          "1.0x, ஒரு சாதாரண அழைப்பின் அதே விலை",
+          "0.1x, ஏனெனில் எழுதுவதற்கும் cache தள்ளுபடி கிடைக்கும்",
+          "2x, சாதாரண கட்டணத்தின் இரு மடங்கு"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Call #1 writes the cache and every later call reads it. Which expression gives the total cost of n calls?",
+        "ta": "அழைப்பு #1 cache-ஐ எழுதுகிறது, அதன் பின் வரும் ஒவ்வொரு அழைப்பும் அதைப் படிக்கிறது. n அழைப்புகளின் மொத்த செலவை எந்த expression தரும்?"
+      },
+      "options": {
+        "en": [
+          "write_multiplier + (n - 1) * 0.1",
+          "n * write_multiplier",
+          "n * 0.1",
+          "write_multiplier + n * 0.1"
+        ],
+        "ta": [
+          "write_multiplier + (n - 1) * 0.1",
+          "n * write_multiplier",
+          "n * 0.1",
+          "write_multiplier + n * 0.1"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Using the lesson's cache_breakeven_calls function, what does this print? print(cache_breakeven_calls(2.0))",
+        "ta": "பாடத்தில் உள்ள cache_breakeven_calls function-ஐப் பயன்படுத்தினால், இது என்ன print செய்யும்? print(cache_breakeven_calls(2.0))"
+      },
+      "options": {
+        "en": [
+          "-1",
+          "3",
+          "2",
+          "1"
+        ],
+        "ta": [
+          "-1",
+          "3",
+          "2",
+          "1"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print? print(1.25 + (1 - 1) * 0.1 < 1)",
+        "ta": "இது என்ன print செய்யும்? print(1.25 + (1 - 1) * 0.1 < 1)"
+      },
+      "options": {
+        "en": [
+          "1.25",
+          "True",
+          "TypeError",
+          "False"
+        ],
+        "ta": [
+          "1.25",
+          "True",
+          "TypeError",
+          "False"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

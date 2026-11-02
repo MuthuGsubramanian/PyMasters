@@ -141,5 +141,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nprint(min(1.0, 0.3 / 0.6))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(min(1.0, 0.3 / 0.6))"
+      },
+      "options": {
+        "en": [
+          "0.3",
+          "0.5",
+          "1.0",
+          "2.0"
+        ],
+        "ta": [
+          "0.3",
+          "0.5",
+          "1.0",
+          "2.0"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "If p_target >= p_draft for a drafted token, what happens to that token?",
+        "ta": "ஒரு வரைவு டோக்கனுக்கு p_target >= p_draft எனில், அந்த டோக்கனுக்கு என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "It is accepted with probability p_draft",
+          "It is rejected because the draft was too cautious",
+          "It is always accepted",
+          "It is accepted only if u < p_target"
+        ],
+        "ta": [
+          "p_draft நிகழ்தகவுடன் ஏற்கப்படும்",
+          "வரைவு மிகவும் எச்சரிக்கையாக இருந்ததால் நிராகரிக்கப்படும்",
+          "எப்போதும் ஏற்கப்படும்",
+          "u < p_target எனில் மட்டுமே ஏற்கப்படும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this accept rule:\naccept_prob = min(1.0, p_draft / p_target)\nreturn u < accept_prob",
+        "ta": "இந்த ஏற்பு விதியில் உள்ள பிழையைக் கண்டறியவும்:\naccept_prob = min(1.0, p_draft / p_target)\nreturn u < accept_prob"
+      },
+      "options": {
+        "en": [
+          "The ratio is flipped; it should be p_target / p_draft",
+          "The cap should be 0.5, not 1.0",
+          "The comparison should be u > accept_prob",
+          "min should be max so the probability can exceed 1"
+        ],
+        "ta": [
+          "விகிதம் தலைகீழாக உள்ளது; p_target / p_draft ஆக இருக்க வேண்டும்",
+          "வரம்பு 1.0 அல்ல, 0.5 ஆக இருக்க வேண்டும்",
+          "ஒப்பீடு u > accept_prob ஆக இருக்க வேண்டும்",
+          "நிகழ்தகவு 1-ஐ மீற min-க்கு பதில் max இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\np_draft, p_target, u = 0.6, 0.3, 0.7\nprint(u < min(1.0, p_target / p_draft))",
+        "ta": "இது என்ன அச்சிடும்?\np_draft, p_target, u = 0.6, 0.3, 0.7\nprint(u < min(1.0, p_target / p_draft))"
+      },
+      "options": {
+        "en": [
+          "True",
+          "0.5",
+          "0.7",
+          "False"
+        ],
+        "ta": [
+          "True",
+          "0.5",
+          "0.7",
+          "False"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

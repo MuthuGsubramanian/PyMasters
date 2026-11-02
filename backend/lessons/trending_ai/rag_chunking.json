@@ -144,5 +144,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Your RAG app can't find a fact that is clearly in the document. Per Vaathiyaar's rule, what should you suspect first?",
+        "ta": "ஆவணத்தில் தெளிவாக உள்ள ஒரு தகவலை உங்கள் RAG செயலி கண்டுபிடிக்கவில்லை. வாத்தியாரின் விதிப்படி முதலில் எதைச் சந்தேகிக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "The LLM is too small to understand the fact",
+          "The embedding model is out of date",
+          "The vector database index is corrupted",
+          "Chunking split the fact across two chunks"
+        ],
+        "ta": [
+          "தகவலைப் புரிந்துகொள்ள LLM மிகச் சிறியது",
+          "Embedding மாடல் பழையதாகிவிட்டது",
+          "வெக்டர் தரவுத்தள index சிதைந்துவிட்டது",
+          "Chunking அந்தத் தகவலை இரண்டு chunk-களாகப் பிரித்துவிட்டது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nt = \"abcdef\"\nprint([t[i:i+4] for i in range(0, len(t), 2)])",
+        "ta": "இது என்ன அச்சிடும்?\nt = \"abcdef\"\nprint([t[i:i+4] for i in range(0, len(t), 2)])"
+      },
+      "options": {
+        "en": [
+          "['abcd', 'ef']",
+          "['abcd', 'cdef', 'ef']",
+          "['ab', 'cd', 'ef']",
+          "['abcd', 'cdef']"
+        ],
+        "ta": [
+          "['abcd', 'ef']",
+          "['abcd', 'cdef', 'ef']",
+          "['ab', 'cd', 'ef']",
+          "['abcd', 'cdef']"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why do RAG chunkers make consecutive chunks overlap?",
+        "ta": "RAG chunker-கள் அடுத்தடுத்த chunk-களை ஏன் ஒன்றின் மேல் ஒன்று படியும்படி (overlap) அமைக்கின்றன?"
+      },
+      "options": {
+        "en": [
+          "To remove duplicate text from the document",
+          "So every chunk has exactly the same length",
+          "To make the total number of chunks smaller",
+          "So ideas crossing a boundary survive whole in some chunk"
+        ],
+        "ta": [
+          "ஆவணத்திலிருந்து நகல் உரையை நீக்க",
+          "ஒவ்வொரு chunk-உம் சரியாக ஒரே நீளத்தில் இருக்க",
+          "மொத்த chunk-களின் எண்ணிக்கையைக் குறைக்க",
+          "எல்லையைக் கடக்கும் கருத்துகள் ஏதாவது ஒரு chunk-இல் முழுமையாக இருக்க"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Keeping size fixed, what is the cost of increasing overlap?",
+        "ta": "size-ஐ மாற்றாமல் overlap-ஐ அதிகரித்தால் என்ன விலை கொடுக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Some characters of the text are skipped",
+          "Each chunk becomes longer than size characters",
+          "More chunks, so more storage and embedding cost",
+          "Sentences get torn apart at boundaries more often"
+        ],
+        "ta": [
+          "உரையின் சில எழுத்துகள் தவிர்க்கப்படும்",
+          "ஒவ்வொரு chunk-உம் size எழுத்துகளை விட நீளமாகும்",
+          "அதிக chunk-கள், அதனால் அதிக சேமிப்பு மற்றும் embedding செலவு",
+          "எல்லைகளில் வாக்கியங்கள் அடிக்கடி துண்டிக்கப்படும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

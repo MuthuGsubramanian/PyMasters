@@ -136,5 +136,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Mistral Small 4 has 119B parameters but only 6B are 'active' per token. What does that mean?",
+        "ta": "Mistral Small 4-இல் 119B அளவுருக்கள் உள்ளன, ஆனால் ஒரு டோக்கனுக்கு 6B மட்டுமே 'active'. இதன் பொருள் என்ன?"
+      },
+      "options": {
+        "en": [
+          "Each token runs all 119B, but only 6B are saved",
+          "Only the experts the router picks actually run for that token",
+          "The model was compressed down to 6B after training",
+          "Only 6B parameters were trained; the rest are random"
+        ],
+        "ta": [
+          "ஒவ்வொரு டோக்கனும் 119B முழுவதையும் இயக்கும், 6B மட்டுமே சேமிக்கப்படும்",
+          "அந்த டோக்கனுக்கு router தேர்ந்தெடுக்கும் experts மட்டுமே இயங்கும்",
+          "பயிற்சிக்குப் பிறகு மாடல் 6B ஆகச் சுருக்கப்பட்டது",
+          "6B அளவுருக்கள் மட்டுமே பயிற்றுவிக்கப்பட்டன; மீதி random"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\ns = [0.1, 0.7, 0.2, 0.9]\nprint(sorted(range(len(s)), key=lambda i: s[i], reverse=True)[:2])",
+        "ta": "இது என்ன அச்சிடும்?\ns = [0.1, 0.7, 0.2, 0.9]\nprint(sorted(range(len(s)), key=lambda i: s[i], reverse=True)[:2])"
+      },
+      "options": {
+        "en": [
+          "[0, 2]",
+          "[0.9, 0.7]",
+          "[3, 1]",
+          "[1, 3]"
+        ],
+        "ta": [
+          "[0, 2]",
+          "[0.9, 0.7]",
+          "[3, 1]",
+          "[1, 3]"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this router:\ndef route(scores, k):\n    return sorted(scores, reverse=True)[:k]",
+        "ta": "இந்த router-இல் உள்ள பிழையைக் கண்டறியவும்:\ndef route(scores, k):\n    return sorted(scores, reverse=True)[:k]"
+      },
+      "options": {
+        "en": [
+          "reverse=True puts the lowest scores first",
+          "sorted() changes the original scores list",
+          "It returns the top scores, not the expert indices",
+          "[:k] returns k+1 items instead of k"
+        ],
+        "ta": [
+          "reverse=True குறைந்த மதிப்பெண்களை முதலில் வைக்கிறது",
+          "sorted() அசல் scores பட்டியலை மாற்றுகிறது",
+          "இது expert குறியீடுகளை அல்ல, அதிக மதிப்பெண்களைத் தருகிறது",
+          "[:k] k-க்குப் பதில் k+1 உருப்படிகளைத் தருகிறது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In an MoE layer, what happens when you increase k (the number of experts picked per token)?",
+        "ta": "ஒரு MoE அடுக்கில், k-ஐ (ஒரு டோக்கனுக்குத் தேர்ந்தெடுக்கும் experts எண்ணிக்கை) அதிகரித்தால் என்ன ஆகும்?"
+      },
+      "options": {
+        "en": [
+          "The model gains more total parameters",
+          "Nothing changes; only the router's speed changes",
+          "Quality tends to rise, but each token costs more compute",
+          "Compute per token drops because work is shared"
+        ],
+        "ta": [
+          "மாடலின் மொத்த அளவுருக்கள் அதிகரிக்கும்",
+          "எதுவும் மாறாது; router-இன் வேகம் மட்டுமே மாறும்",
+          "தரம் உயரும், ஆனால் ஒவ்வொரு டோக்கனுக்கும் கணக்கீட்டுச் செலவு கூடும்",
+          "வேலை பகிரப்படுவதால் ஒரு டோக்கனுக்கான கணக்கீடு குறையும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

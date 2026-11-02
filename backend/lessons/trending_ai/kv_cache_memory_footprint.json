@@ -141,5 +141,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nb = 2 * 32 * 32 * 128 * 8192 * 2\nprint(round(b / 1e9, 2))",
+        "ta": "இது என்ன அச்சிடும்?\nb = 2 * 32 * 32 * 128 * 8192 * 2\nprint(round(b / 1e9, 2))"
+      },
+      "options": {
+        "en": [
+          "2.15",
+          "4.3",
+          "8.59",
+          "4.29"
+        ],
+        "ta": [
+          "2.15",
+          "4.3",
+          "8.59",
+          "4.29"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In the KV cache formula, what does the leading 2 stand for?",
+        "ta": "KV cache சூத்திரத்தில், முதலில் வரும் 2 எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Storing both a key and a value vector",
+          "Two GPUs sharing the cache",
+          "A 2x safety margin for overhead",
+          "The 2 bytes used per bf16 value"
+        ],
+        "ta": [
+          "key மற்றும் value இரண்டு vector-களையும் சேமிப்பது",
+          "cache-ஐப் பகிரும் இரண்டு GPU-கள்",
+          "கூடுதல் செலவுக்கான 2 மடங்கு பாதுகாப்பு இடம்",
+          "ஒவ்வொரு bf16 மதிப்புக்கும் பயன்படும் 2 bytes"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "A model's cache is 2.15 GB at 4096 tokens. Roughly how big is it at 8192 tokens, all else equal?",
+        "ta": "4096 tokens-இல் ஒரு மாடலின் cache 2.15 GB. மற்றவை மாறாமல் இருந்தால், 8192 tokens-இல் தோராயமாக எவ்வளவு?"
+      },
+      "options": {
+        "en": [
+          "About 2.15 GB, it stays fixed",
+          "About 3.2 GB, it grows slower than length",
+          "About 8.6 GB, it grows quadratically",
+          "About 4.3 GB"
+        ],
+        "ta": [
+          "சுமார் 2.15 GB, அது மாறாது",
+          "சுமார் 3.2 GB, நீளத்தை விட மெதுவாக வளரும்",
+          "சுமார் 8.6 GB, அது வர்க்கமாக வளரும்",
+          "சுமார் 4.3 GB"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: total = layers * heads * head_dim * seq_len * bytes. For the Llama-2-7B example it gives 1.07 GB. Why?",
+        "ta": "தவறைக் கண்டுபிடி: total = layers * heads * head_dim * seq_len * bytes. Llama-2-7B உதாரணத்துக்கு இது 1.07 GB தருகிறது. ஏன்?"
+      },
+      "options": {
+        "en": [
+          "It drops the factor 2, so values are not counted",
+          "It should divide by 1e6, not 1e9",
+          "seq_len should not be in the formula",
+          "bytes should be 4 for bf16"
+        ],
+        "ta": [
+          "2 என்ற காரணி விடுபட்டதால் values கணக்கில் வரவில்லை",
+          "1e9-க்கு பதிலாக 1e6-ஆல் வகுக்க வேண்டும்",
+          "சூத்திரத்தில் seq_len இருக்கக் கூடாது",
+          "bf16-க்கு bytes 4 ஆக இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

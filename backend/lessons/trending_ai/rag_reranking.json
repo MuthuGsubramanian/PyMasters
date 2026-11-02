@@ -143,5 +143,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ns = [('a', 0.3), ('b', 0.8), ('c', 0.5)]\ns.sort(key=lambda p: p[1], reverse=True)\nprint([c for c, _ in s[:2]])",
+        "ta": "இது என்ன அச்சிடும்?\ns = [('a', 0.3), ('b', 0.8), ('c', 0.5)]\ns.sort(key=lambda p: p[1], reverse=True)\nprint([c for c, _ in s[:2]])"
+      },
+      "options": {
+        "en": [
+          "[0.8, 0.5]",
+          "['a', 'c']",
+          "['b', 'c']",
+          "['a', 'b']"
+        ],
+        "ta": [
+          "[0.8, 0.5]",
+          "['a', 'c']",
+          "['b', 'c']",
+          "['a', 'b']"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In two-stage retrieval, what is the main goal of Stage 1 (fast vector search)?",
+        "ta": "இரண்டு-நிலை மீட்டெடுப்பில், நிலை 1 (வேகமான vector search)-இன் முக்கிய நோக்கம் என்ன?"
+      },
+      "options": {
+        "en": [
+          "Recall: cast a wide net so the answer isn't missed",
+          "Precision: put the single best passage first",
+          "Read the query and each candidate together",
+          "Replace the reranker with a better embedder"
+        ],
+        "ta": [
+          "Recall: பதில் தவறிவிடாமல் இருக்க பரந்த வலை வீசுதல்",
+          "Precision: மிகச் சிறந்த பகுதியை முதலில் வைத்தல்",
+          "query-ஐயும் ஒவ்வொரு candidate-ஐயும் சேர்த்துப் படித்தல்",
+          "reranker-க்குப் பதிலாக சிறந்த embedder-ஐப் பயன்படுத்துதல்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in rerank: paired.sort(key=lambda p: p[1]) then return [c for c, s in paired[:k]]",
+        "ta": "rerank-இல் உள்ள தவறைக் கண்டறியவும்: paired.sort(key=lambda p: p[1]) பிறகு return [c for c, s in paired[:k]]"
+      },
+      "options": {
+        "en": [
+          "A lambda cannot be used as a sort key",
+          "sort() returns a new list, so it must be assigned",
+          "No reverse=True, so the lowest scores come first",
+          "It should sort by p[0], the candidate name"
+        ],
+        "ta": [
+          "lambda-வை sort key-ஆகப் பயன்படுத்த முடியாது",
+          "sort() புதிய பட்டியலைத் தரும், அதனால் அதை assign செய்ய வேண்டும்",
+          "reverse=True இல்லை, அதனால் குறைந்த மதிப்பெண்கள் முதலில் வரும்",
+          "candidate பெயரான p[0] மூலம் வரிசைப்படுத்த வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why does the cross-encoder reranker run only on the ~50 candidates from Stage 1?",
+        "ta": "cross-encoder reranker ஏன் நிலை 1-இலிருந்து வரும் ~50 candidates மீது மட்டும் இயங்குகிறது?"
+      },
+      "options": {
+        "en": [
+          "It can only ever read 50 documents in total",
+          "Vector search already gives the exact best order",
+          "It is slow, so it scores only the survivors",
+          "It ignores the query, so more docs add nothing"
+        ],
+        "ta": [
+          "அது மொத்தமாக 50 ஆவணங்களை மட்டுமே படிக்க முடியும்",
+          "vector search ஏற்கனவே சரியான சிறந்த வரிசையைத் தருகிறது",
+          "அது மெதுவானது, அதனால் தேர்வானவற்றை மட்டும் மதிப்பிடுகிறது",
+          "அது query-ஐப் புறக்கணிப்பதால் அதிக ஆவணங்கள் பயனில்லை"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

@@ -155,5 +155,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nprint(14.0 // 1.0)",
+        "ta": "இது என்ன அச்சிடும்?\nprint(14.0 // 1.0)"
+      },
+      "options": {
+        "en": [
+          "14",
+          "1",
+          "14.0",
+          "TypeError: // needs ints"
+        ],
+        "ta": [
+          "14",
+          "1",
+          "14.0",
+          "TypeError: // க்கு int தேவை"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nprint(int(10.0 // 3.0))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(int(10.0 // 3.0))"
+      },
+      "options": {
+        "en": [
+          "3.3333333333333335",
+          "3.0",
+          "4",
+          "3"
+        ],
+        "ta": [
+          "3.3333333333333335",
+          "3.0",
+          "4",
+          "3"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: samples_within_budget returns budget / cost_per_sample. Why is this wrong?",
+        "ta": "பிழையைக் கண்டறியவும்: samples_within_budget, budget / cost_per_sample ஐத் திருப்புகிறது. இது ஏன் தவறு?"
+      },
+      "options": {
+        "en": [
+          "/ can give a fractional float, not whole samples",
+          "Nothing is wrong; / and // behave the same here",
+          "/ rounds up, so it overcounts samples",
+          "/ fails with a TypeError on two floats"
+        ],
+        "ta": [
+          "/ பின்ன float தரலாம், முழு மாதிரிகள் அல்ல",
+          "தவறு இல்லை; இங்கு / உம் // உம் ஒன்றே",
+          "/ மேல்நோக்கி முழுமையாக்குவதால் அதிகமாக எண்ணுகிறது",
+          "இரண்டு float-களில் / TypeError தரும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What did the compute-optimal test-time scaling research find, at matched total compute?",
+        "ta": "சம மொத்தக் கணிப்பில், compute-optimal test-time scaling ஆய்வு என்ன கண்டறிந்தது?"
+      },
+      "options": {
+        "en": [
+          "A bigger model always wins at the same compute",
+          "A small model needs 14x more compute to match a large one",
+          "Sampling more only helps large models",
+          "A small model sampled many times can beat one up to 14x bigger"
+        ],
+        "ta": [
+          "அதே கணிப்பில் பெரிய மாதிரியே எப்போதும் வெல்லும்",
+          "பெரியதைச் சமன் செய்ய சிறியதுக்கு 14x கணிப்பு தேவை",
+          "அதிக மாதிரிகள் பெரிய மாதிரிகளுக்கு மட்டுமே உதவும்",
+          "பலமுறை மாதிரி எடுத்த சிறிய மாதிரி 14x பெரியதை வெல்லலாம்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

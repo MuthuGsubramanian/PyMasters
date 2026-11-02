@@ -149,5 +149,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Using the lesson's kl_penalty, what does print(kl_penalty(-1.5, -1.5)) print?",
+        "ta": "பாடத்தில் உள்ள kl_penalty-ஐப் பயன்படுத்தினால், print(kl_penalty(-1.5, -1.5)) என்ன அச்சிடும்?"
+      },
+      "options": {
+        "en": [
+          "-1.5",
+          "-1.0",
+          "1.0",
+          "0.0"
+        ],
+        "ta": [
+          "-1.5",
+          "-1.0",
+          "1.0",
+          "0.0"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Clipping already limits each single update. Why does GRPO also add a KL penalty?",
+        "ta": "Clipping ஏற்கனவே ஒவ்வொரு தனி update-ஐயும் கட்டுப்படுத்துகிறது. பிறகு GRPO ஏன் KL penalty-யையும் சேர்க்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It replaces the group-based advantage with a new reward",
+          "It makes each single update smaller than clipping can",
+          "It speeds up training by skipping the surrogate",
+          "Many small safe steps can still drift far from the reference"
+        ],
+        "ta": [
+          "குழு அடிப்படையிலான advantage-க்குப் பதிலாக புதிய reward-ஐ வைக்கிறது",
+          "Clipping-ஐ விட ஒவ்வொரு தனி update-ஐயும் இன்னும் சிறியதாக்குகிறது",
+          "Surrogate-ஐத் தவிர்த்து training-ஐ வேகப்படுத்துகிறது",
+          "பல சிறிய பாதுகாப்பான படிகள் சேர்ந்தும் reference-இலிருந்து வெகுதூரம் விலகலாம்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: def grpo_objective(s, kl, beta=0.04): return round(s + beta * kl, 4)",
+        "ta": "தவறைக் கண்டுபிடியுங்கள்: def grpo_objective(s, kl, beta=0.04): return round(s + beta * kl, 4)"
+      },
+      "options": {
+        "en": [
+          "round must not be used in the objective",
+          "beta's default must be 1.0 for the penalty to work",
+          "KL is added; it must be subtracted to penalize drift",
+          "beta should multiply the surrogate, not the KL"
+        ],
+        "ta": [
+          "Objective-இல் round பயன்படுத்தக் கூடாது",
+          "Penalty வேலை செய்ய beta-வின் default 1.0 ஆக இருக்க வேண்டும்",
+          "KL கூட்டப்படுகிறது; விலகலைத் தண்டிக்க அது கழிக்கப்பட வேண்டும்",
+          "beta, KL-ஐ அல்ல, surrogate-ஐப் பெருக்க வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Using the lesson's grpo_objective, what does print(grpo_objective(0.2, 0.5)) print?",
+        "ta": "பாடத்தில் உள்ள grpo_objective-ஐப் பயன்படுத்தினால், print(grpo_objective(0.2, 0.5)) என்ன அச்சிடும்?"
+      },
+      "options": {
+        "en": [
+          "0.18",
+          "0.1",
+          "0.2",
+          "0.22"
+        ],
+        "ta": [
+          "0.18",
+          "0.1",
+          "0.2",
+          "0.22"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

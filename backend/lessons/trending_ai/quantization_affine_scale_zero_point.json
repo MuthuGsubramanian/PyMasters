@@ -162,5 +162,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "In 8-bit affine quantization, what does `scale` represent?",
+        "ta": "8-bit affine quantization-இல் `scale` எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "How many real units one integer step stands for",
+          "Which integer stands for 0.0",
+          "The largest float value in the range",
+          "How many times smaller the model gets"
+        ],
+        "ta": [
+          "ஒரு integer படி எத்தனை real அலகுகளைக் குறிக்கிறது என்பது",
+          "0.0-ஐ எந்த integer குறிக்கிறது என்பது",
+          "வரம்பில் உள்ள மிகப்பெரிய float மதிப்பு",
+          "மாடல் எத்தனை மடங்கு சிறியதாகிறது என்பது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nscale = (6.0 - -2.0) / 255\nprint(round(scale, 4))",
+        "ta": "இது என்ன அச்சிடும்?\nscale = (6.0 - -2.0) / 255\nprint(round(scale, 4))"
+      },
+      "options": {
+        "en": [
+          "0.0314",
+          "0.0313",
+          "31.875",
+          "0.0157"
+        ],
+        "ta": [
+          "0.0314",
+          "0.0313",
+          "31.875",
+          "0.0157"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nq = round(300.4)\nprint(max(0, min(255, q)))",
+        "ta": "இது என்ன அச்சிடும்?\nq = round(300.4)\nprint(max(0, min(255, q)))"
+      },
+      "options": {
+        "en": [
+          "255",
+          "300",
+          "45",
+          "0"
+        ],
+        "ta": [
+          "255",
+          "300",
+          "45",
+          "0"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Quantizing 1.0 and dequantizing it gives back 1.0039. Where does that error come from?",
+        "ta": "1.0-ஐ quantize செய்து மீண்டும் dequantize செய்தால் 1.0039 கிடைக்கிறது. இந்தப் பிழை எங்கிருந்து வருகிறது?"
+      },
+      "options": {
+        "en": [
+          "zero_point should have been 0",
+          "A bug in the dequantize formula",
+          "Python floats can't store 1.0 exactly",
+          "round() throws away information when picking a bucket"
+        ],
+        "ta": [
+          "zero_point 0 ஆக இருந்திருக்க வேண்டும்",
+          "dequantize சூத்திரத்தில் உள்ள ஒரு bug",
+          "Python float-ஆல் 1.0-ஐ சரியாகச் சேமிக்க முடியாது",
+          "bucket-ஐத் தேர்வு செய்யும்போது round() தகவலை இழக்கச் செய்கிறது"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

@@ -142,5 +142,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nr = {\"mul\": lambda a, b: a * b}\nprint(r[\"mul\"](**{\"a\": 4, \"b\": 5}))",
+        "ta": "இது என்ன அச்சிடும்?\nr = {\"mul\": lambda a, b: a * b}\nprint(r[\"mul\"](**{\"a\": 4, \"b\": 5}))"
+      },
+      "options": {
+        "en": [
+          "TypeError: lambda can't take a dict",
+          "{'a': 4, 'b': 5}",
+          "20",
+          "9"
+        ],
+        "ta": [
+          "TypeError: lambda ஒரு dict-ஐ ஏற்காது",
+          "{'a': 4, 'b': 5}",
+          "20",
+          "9"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "When an LLM decides to use a tool like \"add\", who actually runs the Python function?",
+        "ta": "ஒரு LLM \"add\" போன்ற tool-ஐப் பயன்படுத்த முடிவு செய்தால், உண்மையில் அந்த Python function-ஐ இயக்குவது யார்?"
+      },
+      "options": {
+        "en": [
+          "Your dispatcher code, after looking up the name",
+          "The model's reply text is passed to eval",
+          "The LLM runs it inside the model",
+          "The registry dict calls it by itself"
+        ],
+        "ta": [
+          "பெயரைத் தேடிய பின் உங்கள் dispatcher code",
+          "model-இன் பதில் உரை eval-க்கு அனுப்பப்படுகிறது",
+          "LLM அதை model-க்குள்ளேயே இயக்குகிறது",
+          "registry dict அதைத் தானாகவே அழைக்கிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "A dispatcher is just: return registry[call['name']](**call['args']). What's the problem?",
+        "ta": "ஒரு dispatcher இதுதான்: return registry[call['name']](**call['args']). இதில் என்ன பிரச்சனை?"
+      },
+      "options": {
+        "en": [
+          "It should use *args instead of **args",
+          "A hallucinated tool name crashes it instead of being refused",
+          "Nothing; dicts never raise on a missing key",
+          "It must call eval on the name first"
+        ],
+        "ta": [
+          "**args-க்குப் பதில் *args பயன்படுத்த வேண்டும்",
+          "கற்பனையான tool பெயர் மறுக்கப்படாமல் crash ஆகும்",
+          "எதுவும் இல்லை; இல்லாத key-க்கு dict பிழை தராது",
+          "முதலில் பெயரின் மீது eval அழைக்க வேண்டும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the dispatcher, func(**{\"a\": 2, \"b\": 3}) is equivalent to which call?",
+        "ta": "dispatcher-இல், func(**{\"a\": 2, \"b\": 3}) எந்த அழைப்புக்குச் சமம்?"
+      },
+      "options": {
+        "en": [
+          "func([\"a\", \"b\"], [2, 3])",
+          "func({\"a\": 2, \"b\": 3})",
+          "func(a=2, b=3)",
+          "func(\"a\", \"b\")"
+        ],
+        "ta": [
+          "func([\"a\", \"b\"], [2, 3])",
+          "func({\"a\": 2, \"b\": 3})",
+          "func(a=2, b=3)",
+          "func(\"a\", \"b\")"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

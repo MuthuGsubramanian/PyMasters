@@ -162,5 +162,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Using the lesson's function, what does this print? print(simulate_cache_hits([0, 200, 600], 300))",
+        "ta": "பாடத்தின் function-ஐப் பயன்படுத்தினால், இது என்ன அச்சிடும்? print(simulate_cache_hits([0, 200, 600], 300))"
+      },
+      "options": {
+        "en": [
+          "[False, False, False]",
+          "[False, True, False]",
+          "[True, True, False]",
+          "[False, True, True]"
+        ],
+        "ta": [
+          "[False, False, False]",
+          "[False, True, False]",
+          "[True, True, False]",
+          "[False, True, True]"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Two apps make the same number of cached calls per hour. According to the lesson, what mainly decides which one gets the higher hit rate?",
+        "ta": "இரண்டு app-கள் ஒரு மணி நேரத்தில் ஒரே எண்ணிக்கையிலான cached call-களைச் செய்கின்றன. பாடத்தின்படி, எதற்கு அதிக hit rate என்பதை முக்கியமாகத் தீர்மானிப்பது எது?"
+      },
+      "options": {
+        "en": [
+          "How the caching code is written",
+          "The total number of calls made",
+          "The timing of the calls compared to the TTL",
+          "How long the prompt prefix is"
+        ],
+        "ta": [
+          "caching code எப்படி எழுதப்பட்டுள்ளது",
+          "மொத்தம் செய்யப்பட்ட call-களின் எண்ணிக்கை",
+          "TTL-உடன் ஒப்பிடும்போது call-களின் நேர இடைவெளி",
+          "prompt prefix எவ்வளவு நீளம்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "A student changes the loop to: if hit: last_touch = t. What goes wrong?",
+        "ta": "ஒரு மாணவர் loop-ஐ இப்படி மாற்றுகிறார்: if hit: last_touch = t. என்ன தவறு நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "last_touch stays None, so every call is a miss",
+          "It raises a TypeError on the first call",
+          "Only the first call is counted as a hit",
+          "Every call becomes a hit, even after long gaps"
+        ],
+        "ta": [
+          "last_touch None ஆகவே இருக்கும், அதனால் எல்லா call-களும் miss",
+          "முதல் call-இலேயே TypeError வரும்",
+          "முதல் call மட்டுமே hit ஆகக் கணக்கிடப்படும்",
+          "நீண்ட இடைவெளிக்குப் பிறகும் எல்லா call-களும் hit ஆகும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print? print(cache_hit_rate([0, 10, 20, 30], 300))",
+        "ta": "இது என்ன அச்சிடும்? print(cache_hit_rate([0, 10, 20, 30], 300))"
+      },
+      "options": {
+        "en": [
+          "0.75",
+          "3",
+          "0.25",
+          "1.0"
+        ],
+        "ta": [
+          "0.75",
+          "3",
+          "0.25",
+          "1.0"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

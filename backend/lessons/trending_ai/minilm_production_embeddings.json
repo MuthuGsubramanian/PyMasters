@@ -162,5 +162,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "A MiniLM vector has 384 dimensions. Why is its int8 version about 4x smaller than float32?",
+        "ta": "MiniLM வெக்டரில் 384 பரிமாணங்கள் உள்ளன. float32-ஐ விட அதன் int8 பதிப்பு ஏன் சுமார் 4 மடங்கு சிறியது?"
+      },
+      "options": {
+        "en": [
+          "The model itself shrinks from 80 MB to 20 MB",
+          "int8 compresses the text before it is embedded",
+          "int8 keeps only 96 of the 384 dimensions",
+          "Each dimension takes 1 byte instead of 4"
+        ],
+        "ta": [
+          "மாடலே 80 MB-இலிருந்து 20 MB ஆகச் சுருங்குகிறது",
+          "embed செய்வதற்கு முன் int8 உரையைச் சுருக்குகிறது",
+          "int8 384-இல் 96 பரிமாணங்களை மட்டுமே வைத்திருக்கும்",
+          "ஒவ்வொரு பரிமாணமும் 4 பைட்டுகளுக்குப் பதிலாக 1 பைட் எடுக்கும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\ncache = {\"hi\": [2.0, 1.0]}\ntexts = [\"hi\", \"yo\", \"hi\", \"yo\"]\nprint([t for t in texts if t not in cache])",
+        "ta": "இது என்ன அச்சிடும்?\ncache = {\"hi\": [2.0, 1.0]}\ntexts = [\"hi\", \"yo\", \"hi\", \"yo\"]\nprint([t for t in texts if t not in cache])"
+      },
+      "options": {
+        "en": [
+          "['yo', 'yo']",
+          "['hi', 'hi']",
+          "['yo']",
+          "['hi', 'yo', 'hi', 'yo']"
+        ],
+        "ta": [
+          "['yo', 'yo']",
+          "['hi', 'hi']",
+          "['yo']",
+          "['hi', 'yo', 'hi', 'yo']"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the bug in this cache loop:\nfor t in texts:\n    if t not in cache:\n        cache[t] = embed_fn(t); out.append(cache[t])",
+        "ta": "இந்த cache லூப்பில் உள்ள பிழையைக் கண்டறியுங்கள்:\nfor t in texts:\n    if t not in cache:\n        cache[t] = embed_fn(t); out.append(cache[t])"
+      },
+      "options": {
+        "en": [
+          "The cache should be checked only after calling embed_fn",
+          "embed_fn is called twice for duplicate texts",
+          "Vectors must be stored in a list, not a dict",
+          "Texts already in the cache get no vector in the output"
+        ],
+        "ta": [
+          "embed_fn-ஐ அழைத்த பிறகே cache-ஐச் சரிபார்க்க வேண்டும்",
+          "நகல் உரைகளுக்கு embed_fn இரண்டு முறை அழைக்கப்படுகிறது",
+          "வெக்டர்களை dict-இல் அல்ல, list-இல் சேமிக்க வேண்டும்",
+          "ஏற்கனவே cache-இல் உள்ள உரைகளுக்கு output-இல் வெக்டர் கிடைக்காது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why does search quality barely drop after int8 quantization of embeddings?",
+        "ta": "embeddings-ஐ int8 ஆக quantize செய்த பிறகு தேடல் தரம் ஏன் மிகக் குறைவாகவே குறைகிறது?"
+      },
+      "options": {
+        "en": [
+          "Cosine cares about direction, which rounding barely changes",
+          "int8 values are more precise than float32 values",
+          "Quantization re-runs the model to correct rounding errors",
+          "The original float vector is kept alongside the ints"
+        ],
+        "ta": [
+          "Cosine திசையைப் பார்க்கிறது; rounding அதை அரிதாகவே மாற்றும்",
+          "int8 மதிப்புகள் float32 மதிப்புகளை விடத் துல்லியமானவை",
+          "rounding பிழைகளைச் சரிசெய்ய quantization மாடலை மீண்டும் இயக்குகிறது",
+          "அசல் float வெக்டரும் ints-உடன் சேர்த்து வைக்கப்படுகிறது"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

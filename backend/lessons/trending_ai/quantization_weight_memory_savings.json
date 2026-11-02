@@ -147,5 +147,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nn = 7_000_000_000\nprint(round(n * 1 / 1e9, 2))",
+        "ta": "இது என்ன அச்சிடும்?\nn = 7_000_000_000\nprint(round(n * 1 / 1e9, 2))"
+      },
+      "options": {
+        "en": [
+          "7",
+          "7000000000",
+          "7.0",
+          "14.0"
+        ],
+        "ta": [
+          "7",
+          "7000000000",
+          "7.0",
+          "14.0"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Converting a model's weights from bf16 to int4 makes them how much smaller?",
+        "ta": "ஒரு மாடலின் weights-ஐ bf16-இலிருந்து int4-க்கு மாற்றினால் அவை எத்தனை மடங்கு சிறியதாகும்?"
+      },
+      "options": {
+        "en": [
+          "4 times smaller",
+          "Same size, it only runs faster",
+          "2 times smaller",
+          "Only slightly smaller, from rounding"
+        ],
+        "ta": [
+          "4 மடங்கு சிறியது",
+          "அதே அளவு, வேகமாக மட்டும் இயங்கும்",
+          "2 மடங்கு சிறியது",
+          "rounding காரணமாக சற்றே சிறியது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this GB function:\ndef size_gb(n, b):\n    return round(n * b / 1e6, 2)",
+        "ta": "இந்த GB function-இல் உள்ள பிழையைக் கண்டறியுங்கள்:\ndef size_gb(n, b):\n    return round(n * b / 1e6, 2)"
+      },
+      "options": {
+        "en": [
+          "It should add n + b, not multiply",
+          "Dividing by 1e6 gives MB, not GB",
+          "b must be an int, so 0.5 will crash",
+          "round must be applied before multiplying"
+        ],
+        "ta": [
+          "பெருக்காமல் n + b என்று கூட்ட வேண்டும்",
+          "1e6-ஆல் வகுத்தால் GB அல்ல, MB கிடைக்கும்",
+          "b ஒரு int ஆக இருக்க வேண்டும், எனவே 0.5 crash ஆகும்",
+          "பெருக்குவதற்கு முன் round செய்ய வேண்டும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A 2.4-trillion-parameter model in int4. What does this print?\nprint(round(2.4e12 * 0.5 / 1e9, 2))",
+        "ta": "int4-இல் 2.4 டிரில்லியன் parameter மாடல். இது என்ன அச்சிடும்?\nprint(round(2.4e12 * 0.5 / 1e9, 2))"
+      },
+      "options": {
+        "en": [
+          "4800.0",
+          "1.2",
+          "1200.0",
+          "2400.0"
+        ],
+        "ta": [
+          "4800.0",
+          "1.2",
+          "1200.0",
+          "2400.0"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

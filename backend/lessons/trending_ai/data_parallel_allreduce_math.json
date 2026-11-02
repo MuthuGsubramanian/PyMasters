@@ -154,5 +154,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nlocal = [-3.0, -7.0, -11.0, -15.0]\nprint(sum(local) / len(local))",
+        "ta": "இது என்ன அச்சிடும்?\nlocal = [-3.0, -7.0, -11.0, -15.0]\nprint(sum(local) / len(local))"
+      },
+      "options": {
+        "en": [
+          "-36.0",
+          "-3.0",
+          "-9.0",
+          "-15.0"
+        ],
+        "ta": [
+          "-36.0",
+          "-3.0",
+          "-9.0",
+          "-15.0"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why does averaging equal-size shard gradients give exactly the full-batch gradient?",
+        "ta": "சம அளவு shard gradient-களின் சராசரி ஏன் full-batch gradient-க்கு சரியாகச் சமமாகிறது?"
+      },
+      "options": {
+        "en": [
+          "Averaging cancels random noise, so it is a close estimate",
+          "The optimizer step corrects any difference afterward",
+          "All workers get the same shard, so their gradients match",
+          "The loss is a mean, and the gradient of a mean is the mean of gradients"
+        ],
+        "ta": [
+          "சராசரி எடுப்பது சத்தத்தை நீக்குவதால் இது நெருக்கமான மதிப்பீடு",
+          "பின்னர் வரும் optimizer step எந்த வேறுபாட்டையும் சரிசெய்கிறது",
+          "எல்லா worker-களும் ஒரே shard பெறுவதால் gradient-கள் ஒத்துப்போகின்றன",
+          "Loss ஒரு சராசரி; சராசரியின் gradient என்பது gradient-களின் சராசரி"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nn = 2\nprint(2 * (n - 1) / n * 100)",
+        "ta": "இது என்ன அச்சிடும்?\nn = 2\nprint(2 * (n - 1) / n * 100)"
+      },
+      "options": {
+        "en": [
+          "50.0",
+          "200.0",
+          "100",
+          "100.0"
+        ],
+        "ta": [
+          "50.0",
+          "200.0",
+          "100",
+          "100.0"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "This line should give a shard's MEAN gradient. What is wrong?\ng = sum(2 * (w*x - y) * x for x, y in zip(sx, sy))",
+        "ta": "இந்த வரி ஒரு shard-இன் சராசரி gradient-ஐத் தர வேண்டும். என்ன தவறு?\ng = sum(2 * (w*x - y) * x for x, y in zip(sx, sy))"
+      },
+      "options": {
+        "en": [
+          "The factor 2 should be removed",
+          "It should use y - w*x instead of w*x - y",
+          "It should be multiplied by the number of workers",
+          "It is a sum; it must be divided by len(sx)"
+        ],
+        "ta": [
+          "2 என்ற காரணியை நீக்க வேண்டும்",
+          "w*x - y க்குப் பதிலாக y - w*x பயன்படுத்த வேண்டும்",
+          "worker-களின் எண்ணிக்கையால் பெருக்க வேண்டும்",
+          "இது கூட்டுத்தொகை; len(sx) ஆல் வகுக்க வேண்டும்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

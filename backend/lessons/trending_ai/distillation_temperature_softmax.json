@@ -156,5 +156,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does a larger T flatten the temperature softmax distribution?",
+        "ta": "பெரிய T ஏன் temperature softmax பரவலைத் தட்டையாக்குகிறது?"
+      },
+      "options": {
+        "en": [
+          "A larger T removes the smallest logits before softmax",
+          "A larger T makes exp() grow faster for big logits",
+          "Dividing by T shrinks the differences between logits",
+          "A larger T adds the same constant to every logit"
+        ],
+        "ta": [
+          "பெரிய T softmax-க்கு முன் சிறிய logits-ஐ நீக்குகிறது",
+          "பெரிய T பெரிய logits-க்கு exp()-ஐ வேகமாக வளரச் செய்கிறது",
+          "T-ஆல் வகுப்பது logits இடையிலான வேறுபாடுகளைக் குறைக்கிறது",
+          "பெரிய T ஒவ்வொரு logit-க்கும் ஒரே மாறிலியைக் கூட்டுகிறது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Using the lesson's temperature_softmax, what does this print?\nprint(temperature_softmax([1.0, 1.0], 5))",
+        "ta": "பாடத்தின் temperature_softmax-ஐப் பயன்படுத்தினால், இது என்ன அச்சிடும்?\nprint(temperature_softmax([1.0, 1.0], 5))"
+      },
+      "options": {
+        "en": [
+          "[0.5, 0.5]",
+          "[0.2, 0.2]",
+          "[1.0, 1.0]",
+          "[0.1, 0.1]"
+        ],
+        "ta": [
+          "[0.5, 0.5]",
+          "[0.2, 0.2]",
+          "[1.0, 1.0]",
+          "[0.1, 0.1]"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this line of temperature_softmax:\nexps = [math.exp(x) / T for x in logits]",
+        "ta": "temperature_softmax-இன் இந்த வரியில் உள்ள தவறைக் கண்டறியவும்:\nexps = [math.exp(x) / T for x in logits]"
+      },
+      "options": {
+        "en": [
+          "math.exp cannot take a float argument",
+          "T should multiply the logits, not divide them",
+          "Nothing; dividing before or after exp gives the same result",
+          "x must be divided by T before exp, not after"
+        ],
+        "ta": [
+          "math.exp ஒரு float மதிப்பை ஏற்காது",
+          "T logits-ஐ வகுக்காமல் பெருக்க வேண்டும்",
+          "தவறில்லை; exp-க்கு முன்போ பின்போ வகுத்தாலும் ஒரே முடிவு",
+          "exp-க்குப் பிறகு அல்ல, முன்பே x-ஐ T-ஆல் வகுக்க வேண்டும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In knowledge distillation, what is 'dark knowledge'?",
+        "ta": "Knowledge distillation-இல் 'dark knowledge' என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "The teacher's relative ranking among the wrong answers",
+          "Training images the student never gets to see",
+          "Hidden-layer weights copied directly into the student",
+          "The teacher's single top answer (the hard label)"
+        ],
+        "ta": [
+          "தவறான பதில்களுக்கிடையே teacher கொடுக்கும் ஒப்பீட்டு வரிசை",
+          "Student ஒருபோதும் பார்க்காத பயிற்சிப் படங்கள்",
+          "Student-க்கு நேரடியாக நகலெடுக்கப்படும் மறை அடுக்கு எடைகள்",
+          "Teacher-இன் ஒரே முதன்மைப் பதில் (hard label)"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

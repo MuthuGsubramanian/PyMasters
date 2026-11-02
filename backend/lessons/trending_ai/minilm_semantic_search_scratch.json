@@ -147,5 +147,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nv = [3, 4]\nprint(sum(x*x for x in v) ** 0.5)",
+        "ta": "இது என்ன அச்சிடும்?\nv = [3, 4]\nprint(sum(x*x for x in v) ** 0.5)"
+      },
+      "options": {
+        "en": [
+          "5.0",
+          "25",
+          "12.5",
+          "7"
+        ],
+        "ta": [
+          "5.0",
+          "25",
+          "12.5",
+          "7"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why does normalize_embeddings=True let you use a plain dot product instead of full cosine similarity?",
+        "ta": "normalize_embeddings=True கொடுத்தால், முழு cosine similarity-க்குப் பதிலாக வெறும் dot product ஏன் போதும்?"
+      },
+      "options": {
+        "en": [
+          "Every vector has length 1.0, so dividing by norms changes nothing",
+          "It rounds every vector component to 4 decimals",
+          "It makes all scores whole numbers, so no division is needed",
+          "It shrinks vectors from 384 to fewer dimensions"
+        ],
+        "ta": [
+          "ஒவ்வொரு vector-இன் நீளமும் 1.0, எனவே norm-ஆல் வகுத்தால் எதுவும் மாறாது",
+          "அது ஒவ்வொரு vector கூறையும் 4 தசம இடங்களுக்கு round செய்கிறது",
+          "அது எல்லா மதிப்பெண்களையும் முழு எண்களாக்குகிறது, எனவே வகுத்தல் தேவையில்லை",
+          "அது vector-களை 384-இலிருந்து குறைவான பரிமாணங்களுக்குச் சுருக்குகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\na, b = [0.6, 0.8], [0.8, 0.6]\nprint(round(sum(x*y for x, y in zip(a, b)), 2))",
+        "ta": "இது என்ன அச்சிடும்?\na, b = [0.6, 0.8], [0.8, 0.6]\nprint(round(sum(x*y for x, y in zip(a, b)), 2))"
+      },
+      "options": {
+        "en": [
+          "0.96",
+          "1.0",
+          "0.48",
+          "1.4"
+        ],
+        "ta": [
+          "0.96",
+          "1.0",
+          "0.48",
+          "1.4"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "A learner embeds the docs with all-MiniLM-L6-v2 but the query with all-mpnet-base-v2, then takes dot products. What is the mistake?",
+        "ta": "ஒரு மாணவர் ஆவணங்களை all-MiniLM-L6-v2 கொண்டும், query-ஐ all-mpnet-base-v2 கொண்டும் embed செய்து dot product எடுக்கிறார். தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "Query and docs must be embedded with the same model",
+          "The query must be embedded before the documents",
+          "The docs should be embedded with the bigger model instead",
+          "Nothing is wrong as long as both are normalized"
+        ],
+        "ta": [
+          "Query-யும் ஆவணங்களும் ஒரே model கொண்டு embed செய்யப்பட வேண்டும்",
+          "ஆவணங்களுக்கு முன்பே query-ஐ embed செய்ய வேண்டும்",
+          "ஆவணங்களைப் பெரிய model கொண்டு embed செய்ய வேண்டும்",
+          "இரண்டும் normalize செய்யப்பட்டிருந்தால் எந்தத் தவறும் இல்லை"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

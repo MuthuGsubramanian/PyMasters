@@ -142,5 +142,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does extract_json track brace depth instead of stopping at the first '}' after the '{'?",
+        "ta": "முதல் '{' க்குப் பிறகு வரும் முதல் '}' இல் நிறுத்தாமல், extract_json ஏன் brace depth-ஐக் கண்காணிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "json.loads needs the depth value to parse",
+          "A nested object would be cut off at its inner '}'",
+          "The first '}' is always inside a code fence",
+          "Depth tracking makes the scan run faster"
+        ],
+        "ta": [
+          "பார்ஸ் செய்ய json.loads-க்கு depth மதிப்பு தேவை",
+          "nested object உள்ளே உள்ள '}' இல் பாதியில் வெட்டப்படும்",
+          "முதல் '}' எப்போதும் code fence-க்குள் இருக்கும்",
+          "Depth கண்காணிப்பு ஸ்கேனை வேகமாக்கும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\ns = 'Hi {\"a\": 1}'\nprint(s.index('{'))",
+        "ta": "இது என்ன அச்சிடும்?\ns = 'Hi {\"a\": 1}'\nprint(s.index('{'))"
+      },
+      "options": {
+        "en": [
+          "0",
+          "3",
+          "4",
+          "2"
+        ],
+        "ta": [
+          "0",
+          "3",
+          "4",
+          "2"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When depth hits 0 at index i, this code returns reply[start:i]. What is the bug?",
+        "ta": "index i-இல் depth 0 ஆகும்போது, இந்தக் குறியீடு reply[start:i] ஐத் திருப்புகிறது. பிழை என்ன?"
+      },
+      "options": {
+        "en": [
+          "It returns the last JSON object, not the first",
+          "The opening '{' is left out of the result",
+          "The closing '}' is left out of the result",
+          "Nothing; slicing already includes index i"
+        ],
+        "ta": [
+          "முதல் JSON object-க்குப் பதில் கடைசியைத் திருப்புகிறது",
+          "தொடக்க '{' முடிவில் விடுபடுகிறது",
+          "மூடும் '}' முடிவில் விடுபடுகிறது",
+          "பிழை இல்லை; slicing ஏற்கனவே index i-ஐ சேர்க்கும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Scanning '{\"a\": {\"b\": 1}' from its first '{' (+1 on '{', -1 on '}'), what is the depth after the last character?",
+        "ta": "'{\"a\": {\"b\": 1}' ஐ அதன் முதல் '{' இலிருந்து ஸ்கேன் செய்தால் ('{' க்கு +1, '}' க்கு -1), கடைசி எழுத்துக்குப் பின் depth என்ன?"
+      },
+      "options": {
+        "en": [
+          "1",
+          "-1",
+          "0",
+          "2"
+        ],
+        "ta": [
+          "1",
+          "-1",
+          "0",
+          "2"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

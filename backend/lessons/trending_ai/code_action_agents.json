@@ -142,5 +142,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why do code-action agents often beat JSON tool-call agents?",
+        "ta": "JSON tool-call agents-ஐ விட code-action agents ஏன் பெரும்பாலும் சிறப்பாகச் செயல்படுகின்றன?"
+      },
+      "options": {
+        "en": [
+          "One code block can call several tools, loop and branch",
+          "JSON can't be parsed reliably by Python",
+          "Code actions skip running tools entirely",
+          "Models can't write valid JSON at all"
+        ],
+        "ta": [
+          "ஒரே code block பல tools-ஐ அழைக்கவும், loop மற்றும் branch செய்யவும் முடியும்",
+          "Python-ஆல் JSON-ஐ நம்பகமாக parse செய்ய முடியாது",
+          "Code actions tools-ஐ இயக்குவதையே முழுமையாகத் தவிர்க்கின்றன",
+          "Models-ஆல் சரியான JSON-ஐ எழுதவே முடியாது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\ns = \"ab```py\\nx=1\\n```\"\nprint(s.index('```py') + len('```py'))",
+        "ta": "இது என்ன அச்சிடும்?\ns = \"ab```py\\nx=1\\n```\"\nprint(s.index('```py') + len('```py'))"
+      },
+      "options": {
+        "en": [
+          "2",
+          "7",
+          "5",
+          "8"
+        ],
+        "ta": [
+          "2",
+          "7",
+          "5",
+          "8"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Bug? start = r.index('```py') + 5\nend = r.index('```')\ncode = r[start:end].strip()",
+        "ta": "பிழை என்ன? start = r.index('```py') + 5\nend = r.index('```')\ncode = r[start:end].strip()"
+      },
+      "options": {
+        "en": [
+          "The slice needs end + 1 to include the code",
+          "+5 should be +3 to skip only the backticks",
+          "end finds the opening fence, so the slice is empty",
+          "index() can't search for backtick characters"
+        ],
+        "ta": [
+          "Code-ஐ சேர்க்க slice-க்கு end + 1 தேவை",
+          "Backticks-ஐ மட்டும் தாண்ட +5 என்பது +3 ஆக இருக்க வேண்டும்",
+          "end திறக்கும் fence-ஐயே கண்டுபிடிப்பதால் slice காலியாகிறது",
+          "index() backtick எழுத்துகளைத் தேட முடியாது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nr = \"A\\n```py\\nx = 2\\n```\"; s = r.index('```py') + 5\nprint(repr(r[s:r.index('```', s)]))",
+        "ta": "இது என்ன அச்சிடும்?\nr = \"A\\n```py\\nx = 2\\n```\"; s = r.index('```py') + 5\nprint(repr(r[s:r.index('```', s)]))"
+      },
+      "options": {
+        "en": [
+          "'x = 2'",
+          "'```py\\nx = 2\\n'",
+          "''",
+          "'\\nx = 2\\n'"
+        ],
+        "ta": [
+          "'x = 2'",
+          "'```py\\nx = 2\\n'",
+          "''",
+          "'\\nx = 2\\n'"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

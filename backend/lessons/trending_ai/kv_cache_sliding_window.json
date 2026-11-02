@@ -136,5 +136,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nc = [10, 20, 30, 40]\nprint(c[-2:])",
+        "ta": "இது என்ன அச்சிடும்?\nc = [10, 20, 30, 40]\nprint(c[-2:])"
+      },
+      "options": {
+        "en": [
+          "[30, 40]",
+          "[40]",
+          "[10, 20]",
+          "[20, 30, 40]"
+        ],
+        "ta": [
+          "[30, 40]",
+          "[40]",
+          "[10, 20]",
+          "[20, 30, 40]"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What is the main benefit of a sliding-window KV cache in a very long conversation?",
+        "ta": "மிக நீண்ட உரையாடலில் sliding-window KV cache-இன் முக்கிய நன்மை என்ன?"
+      },
+      "options": {
+        "en": [
+          "Memory grows more slowly but never stops",
+          "Older tokens get compressed instead of dropped",
+          "The model remembers every token more accurately",
+          "Memory stays flat at a limit you chose"
+        ],
+        "ta": [
+          "நினைவகம் மெதுவாக வளரும், ஆனால் நிற்காது",
+          "பழைய டோக்கன்கள் நீக்கப்படாமல் சுருக்கப்படும்",
+          "மாதிரி ஒவ்வொரு டோக்கனையும் இன்னும் துல்லியமாக நினைவில் கொள்ளும்",
+          "நீங்கள் தேர்ந்தெடுத்த வரம்பில் நினைவகம் நிலையாக இருக்கும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What is the real tradeoff of using a sliding-window cache?",
+        "ta": "Sliding-window cache-ஐப் பயன்படுத்துவதன் உண்மையான விலை (tradeoff) என்ன?"
+      },
+      "options": {
+        "en": [
+          "The newest tokens are evicted first",
+          "It is a bug that drops tokens at random",
+          "GPU memory use keeps rising over time",
+          "The model can't attend to tokens older than the window"
+        ],
+        "ta": [
+          "புதிய டோக்கன்கள் முதலில் நீக்கப்படும்",
+          "இது டோக்கன்களைத் தற்செயலாக நீக்கும் ஒரு பிழை",
+          "GPU நினைவகப் பயன்பாடு காலப்போக்கில் அதிகரித்துக்கொண்டே இருக்கும்",
+          "window-ஐ விடப் பழைய டோக்கன்களை மாதிரி கவனிக்க முடியாது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: an eviction step uses return cache[:window] on an oldest-first cache. What goes wrong?",
+        "ta": "பிழையைக் கண்டறியவும்: பழையது-முதலில் உள்ள cache-இல் return cache[:window] பயன்படுத்தப்படுகிறது. என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "Nothing; it keeps the most recent entries",
+          "It keeps the oldest entries and drops the newest",
+          "It raises an IndexError when cache is too long",
+          "It returns an empty list"
+        ],
+        "ta": [
+          "தவறில்லை; இது சமீபத்திய உள்ளீடுகளை வைக்கிறது",
+          "இது பழைய உள்ளீடுகளை வைத்து, புதியவற்றை நீக்குகிறது",
+          "cache மிக நீளமாக இருந்தால் IndexError எழுப்பும்",
+          "இது காலியான list-ஐத் திருப்பும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

@@ -148,5 +148,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nv = [[2.0], [4.0], [9.0]]; m = [1, 1, 0]\nprint(sum(x[0]*k for x, k in zip(v, m)) / sum(m))",
+        "ta": "இது என்ன அச்சிடும்?\nv = [[2.0], [4.0], [9.0]]; m = [1, 1, 0]\nprint(sum(x[0]*k for x, k in zip(v, m)) / sum(m))"
+      },
+      "options": {
+        "en": [
+          "3.0",
+          "6.0",
+          "5.0",
+          "2.0"
+        ],
+        "ta": [
+          "3.0",
+          "6.0",
+          "5.0",
+          "2.0"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does the transformer inside all-MiniLM-L6-v2 output for a sentence, before pooling?",
+        "ta": "Pooling-க்கு முன், all-MiniLM-L6-v2 உள்ளே உள்ள transformer ஒரு வாக்கியத்திற்கு என்ன வெளியிடுகிறது?"
+      },
+      "options": {
+        "en": [
+          "One 384-dim vector per real token only",
+          "A single 384-dim sentence vector",
+          "One number per token giving its importance",
+          "One 384-dim vector per token, padding included"
+        ],
+        "ta": [
+          "உண்மையான token-களுக்கு மட்டும் ஒரு 384-dim vector",
+          "ஒரே ஒரு 384-dim வாக்கிய vector",
+          "ஒவ்வொரு token-இன் முக்கியத்துவத்தைக் காட்டும் ஒரு எண்",
+          "ஒவ்வொரு token-க்கும் ஒரு 384-dim vector, padding உட்பட"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why must padding vectors be excluded when mean pooling?",
+        "ta": "Mean pooling செய்யும்போது padding vectors-ஐ ஏன் விலக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Padding makes the embedding longer than 384 dims",
+          "A sentence's embedding would depend on its batch partners",
+          "Padding vectors are always zero, so they cause division errors",
+          "The model refuses to output vectors for padding"
+        ],
+        "ta": [
+          "Padding embedding-ஐ 384 dims-ஐ விட நீளமாக்கும்",
+          "ஒரு வாக்கியத்தின் embedding அதனுடன் batch-இல் உள்ளவற்றைப் பொறுத்து மாறும்",
+          "Padding vectors எப்போதும் பூஜ்ஜியம், அதனால் வகுத்தல் பிழை வரும்",
+          "Padding-க்கு model vectors வெளியிட மறுக்கிறது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You run MiniLM via ONNX and use the CLS token (position 0) instead of mean pooling. What happens?",
+        "ta": "MiniLM-ஐ ONNX வழியாக இயக்கி, mean pooling-க்கு பதிலாக CLS token (position 0)-ஐப் பயன்படுத்துகிறீர்கள். என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Embeddings become more accurate for similarity search",
+          "The model raises a shape error at inference",
+          "Similarity scores quietly get worse; no error is raised",
+          "Results are identical, since pooling is just a preference"
+        ],
+        "ta": [
+          "Similarity தேடலுக்கு embeddings மேலும் துல்லியமாகும்",
+          "Inference-இல் model ஒரு shape பிழையை எழுப்பும்",
+          "Similarity மதிப்பெண்கள் சத்தமின்றி மோசமாகும்; பிழை எதுவும் வராது",
+          "Pooling ஒரு விருப்பம் மட்டுமே, எனவே முடிவுகள் ஒன்றே"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

@@ -157,5 +157,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Using the lesson's rotate_pair, what does print(rotate_pair(0.0, 1.0, 0.0)) print?",
+        "ta": "பாடத்தில் உள்ள rotate_pair-ஐப் பயன்படுத்தினால், print(rotate_pair(0.0, 1.0, 0.0)) என்ன அச்சிடும்?"
+      },
+      "options": {
+        "en": [
+          "(-1.0, 0.0)",
+          "(1.0, 0.0)",
+          "(0.0, -1.0)",
+          "(0.0, 1.0)"
+        ],
+        "ta": [
+          "(-1.0, 0.0)",
+          "(1.0, 0.0)",
+          "(0.0, -1.0)",
+          "(0.0, 1.0)"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In RoPE, the dot product of a rotated query pair and rotated key pair depends on what?",
+        "ta": "RoPE-இல், சுழற்றப்பட்ட query ஜோடிக்கும் key ஜோடிக்கும் இடையிலான dot product எதைப் பொறுத்தது?"
+      },
+      "options": {
+        "en": [
+          "Only the gap pos_k - pos_q",
+          "Only the query's absolute position pos_q",
+          "Both absolute positions separately",
+          "The sum pos_q + pos_k"
+        ],
+        "ta": [
+          "இடைவெளி pos_k - pos_q-ஐ மட்டும்",
+          "query-யின் முழுமையான நிலை pos_q-ஐ மட்டும்",
+          "இரண்டு முழுமையான நிலைகளையும் தனித்தனியாக",
+          "கூட்டுத்தொகை pos_q + pos_k-ஐ"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "rope_dot_product(1.0, 0.0, 0.6, 0.8, 3, 1, 0.5) is 0.9974. Which (pos_q, pos_k) is guaranteed to give 0.9974 too?",
+        "ta": "rope_dot_product(1.0, 0.0, 0.6, 0.8, 3, 1, 0.5) = 0.9974. எந்த (pos_q, pos_k) கண்டிப்பாக 0.9974-ஐயே தரும்?"
+      },
+      "options": {
+        "en": [
+          "(3, 3)",
+          "(12, 10)",
+          "(1, 3)",
+          "(6, 2)"
+        ],
+        "ta": [
+          "(3, 3)",
+          "(12, 10)",
+          "(1, 3)",
+          "(6, 2)"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Bug: a student rotates both the query and key pairs by pos_q * theta. What goes wrong with the score?",
+        "ta": "பிழை: ஒரு மாணவர் query, key இரண்டு ஜோடிகளையும் pos_q * theta அளவுக்குச் சுழற்றுகிறார். score-இல் என்ன தவறு நேரும்?"
+      },
+      "options": {
+        "en": [
+          "It doubles the score for every position",
+          "It works fine, since only the query needs rotating",
+          "It raises an error because the angles are equal",
+          "It ignores pos_k and always equals the raw dot product"
+        ],
+        "ta": [
+          "ஒவ்வொரு நிலைக்கும் score இரட்டிப்பாகும்",
+          "query-ஐ மட்டும் சுழற்றினால் போதும் என்பதால் சரியாக வேலை செய்யும்",
+          "கோணங்கள் சமமாக இருப்பதால் பிழை எழும்",
+          "pos_k-ஐப் புறக்கணித்து, எப்போதும் சுழற்றாத dot product-க்குச் சமமாகும்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

@@ -230,5 +230,91 @@
       "trending_ai"
     ]
   },
-  "generated": true
+  "generated": true,
+  "quiz": [
+    {
+      "q": {
+        "en": "Using parameters × bytes per parameter, roughly how much RAM do Qwen3-0.6B's weights need in bf16 (2 bytes each)?",
+        "ta": "parameters × bytes per parameter விதிப்படி, bf16 (ஒவ்வொன்றும் 2 bytes) இல் Qwen3-0.6B weights-க்கு தோராயமாக எவ்வளவு RAM தேவை?"
+      },
+      "options": {
+        "en": [
+          "About 0.6 GB",
+          "About 9.6 GB",
+          "About 1.2 GB",
+          "About 0.3 GB"
+        ],
+        "ta": [
+          "சுமார் 0.6 GB",
+          "சுமார் 9.6 GB",
+          "சுமார் 1.2 GB",
+          "சுமார் 0.3 GB"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does passing enable_thinking=True to Qwen3's apply_chat_template do?",
+        "ta": "Qwen3-இன் apply_chat_template-க்கு enable_thinking=True கொடுத்தால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Model reasons inside <think> tags first, then answers (slower)",
+          "Turns on GPU acceleration for faster generation",
+          "Hides all reasoning and gives a short, fast answer",
+          "Loads a larger reasoning model instead of the 0.6B one"
+        ],
+        "ta": [
+          "மாடல் முதலில் <think> tags-க்குள் யோசித்து, பிறகு பதில் தரும் (மெதுவாக)",
+          "வேகமான generation-க்கு GPU acceleration-ஐ இயக்கும்",
+          "எல்லா reasoning-ஐயும் மறைத்து குறுகிய, வேகமான பதில் தரும்",
+          "0.6B மாடலுக்குப் பதிலாக பெரிய reasoning மாடலை load செய்யும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nprint(round(0.6e9 * 4 / 8 / 1024**3, 2))",
+        "ta": "இது என்ன print செய்யும்?\nprint(round(0.6e9 * 4 / 8 / 1024**3, 2))"
+      },
+      "options": {
+        "en": [
+          "0.4",
+          "0.3",
+          "0.28",
+          "2.4"
+        ],
+        "ta": [
+          "0.4",
+          "0.3",
+          "0.28",
+          "2.4"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "A student's format_chat returns only the joined '<|im_start|>role\\ncontent<|im_end|>\\n' blocks. What is wrong?",
+        "ta": "ஒரு மாணவரின் format_chat, இணைக்கப்பட்ட '<|im_start|>role\\ncontent<|im_end|>\\n' blocks-ஐ மட்டுமே return செய்கிறது. என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "Blocks must be joined with ', ' instead of ''",
+          "The system message must always come last",
+          "Nothing; generate() adds the assistant tag by itself",
+          "Missing '<|im_start|>assistant\\n', so the model won't know to reply"
+        ],
+        "ta": [
+          "Blocks-ஐ '' அல்ல, ', ' கொண்டு இணைக்க வேண்டும்",
+          "system message எப்போதும் கடைசியில் வர வேண்டும்",
+          "தவறு இல்லை; generate() தானே assistant tag-ஐச் சேர்க்கும்",
+          "'<|im_start|>assistant\\n' இல்லை, அதனால் பதில் சொல்ல வேண்டும் என மாடலுக்குத் தெரியாது"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

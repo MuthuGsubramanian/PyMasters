@@ -156,5 +156,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nprint(round(10000 ** (-(2 * 0) / 128), 6))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(round(10000 ** (-(2 * 0) / 128), 6))"
+      },
+      "options": {
+        "en": [
+          "0.01",
+          "1.0",
+          "0.0",
+          "10000.0"
+        ],
+        "ta": [
+          "0.01",
+          "1.0",
+          "0.0",
+          "10000.0"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "How does RoPE give attention information about a token's position?",
+        "ta": "ஒரு டோக்கனின் நிலை பற்றிய தகவலை RoPE attention-க்கு எப்படி வழங்குகிறது?"
+      },
+      "options": {
+        "en": [
+          "It appends the position number as an extra dimension",
+          "It multiplies the value vectors by the position",
+          "It rotates query and key vectors by a position-dependent angle",
+          "It adds a sinusoidal vector to the token embedding"
+        ],
+        "ta": [
+          "நிலை எண்ணை கூடுதல் பரிமாணமாகச் சேர்க்கிறது",
+          "value வெக்டர்களை நிலை எண்ணால் பெருக்குகிறது",
+          "query, key வெக்டர்களை நிலையைப் பொறுத்த கோணத்தில் சுழற்றுகிறது",
+          "டோக்கன் embedding-உடன் ஒரு sinusoidal வெக்டரைக் கூட்டுகிறது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "For a head with head_dim = 128, how many dimension pairs does RoPE rotate, each with its own frequency?",
+        "ta": "head_dim = 128 உள்ள ஒரு head-இல், RoPE தனித்தனி அதிர்வெண்ணுடன் எத்தனை பரிமாண ஜோடிகளைச் சுழற்றுகிறது?"
+      },
+      "options": {
+        "en": [
+          "1",
+          "64",
+          "128",
+          "256"
+        ],
+        "ta": [
+          "1",
+          "64",
+          "128",
+          "256"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this rope_theta body:\nreturn round(base ** ((2 * i) / head_dim), 6)",
+        "ta": "இந்த rope_theta உடலில் உள்ள தவறைக் கண்டுபிடிக்கவும்:\nreturn round(base ** ((2 * i) / head_dim), 6)"
+      },
+      "options": {
+        "en": [
+          "It should divide by head_dim / 2 instead of head_dim",
+          "round should keep 4 decimals, not 6",
+          "It should use 2 * i + 1 instead of 2 * i",
+          "The minus sign is missing, so theta grows instead of shrinking"
+        ],
+        "ta": [
+          "head_dim-க்குப் பதில் head_dim / 2-ஆல் வகுக்க வேண்டும்",
+          "round 6 அல்ல, 4 தசம இடங்களை வைக்க வேண்டும்",
+          "2 * i-க்குப் பதில் 2 * i + 1 பயன்படுத்த வேண்டும்",
+          "கழித்தல் குறி இல்லை, அதனால் theta குறைவதற்குப் பதில் கூடுகிறது"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

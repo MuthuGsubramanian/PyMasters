@@ -156,5 +156,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ndot = sum(b * a for b, a in zip([1, 2], [3, 4]))\nprint(round(dot * (8 / 2), 4))",
+        "ta": "இது என்ன அச்சிடும்?\ndot = sum(b * a for b, a in zip([1, 2], [3, 4]))\nprint(round(dot * (8 / 2), 4))"
+      },
+      "options": {
+        "en": [
+          "11",
+          "44.0",
+          "44",
+          "2.75"
+        ],
+        "ta": [
+          "11",
+          "44.0",
+          "44",
+          "2.75"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does LoRA scale B @ A by alpha / r instead of adding it raw?",
+        "ta": "LoRA ஏன் B @ A-ஐ நேரடியாகக் கூட்டாமல் alpha / r ஆல் அளவிடுகிறது?"
+      },
+      "options": {
+        "en": [
+          "To keep the frozen weight W from changing at all",
+          "So changing r doesn't silently change the update's strength",
+          "To make B @ A the same shape as W",
+          "To make the dot product always positive"
+        ],
+        "ta": [
+          "உறைந்த எடை W சிறிதும் மாறாமல் இருக்க",
+          "r-ஐ மாற்றினால் update-இன் வலிமை தானாக மாறாமல் இருக்க",
+          "B @ A-ஐ W-இன் அதே வடிவத்தில் ஆக்க",
+          "dot product எப்போதும் நேர்மறையாக இருக்க"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this delta function body:\ndot = sum(b * a for b, a in zip(b_row, a_row))\nreturn round(dot * (r / alpha), 4)",
+        "ta": "இந்த delta function-இல் உள்ள தவறைக் கண்டறியவும்:\ndot = sum(b * a for b, a in zip(b_row, a_row))\nreturn round(dot * (r / alpha), 4)"
+      },
+      "options": {
+        "en": [
+          "round must come before multiplying by the scale",
+          "zip should be replaced with a + between the lists",
+          "The frozen weight w must be added inside delta",
+          "The scale is inverted; it should be alpha / r"
+        ],
+        "ta": [
+          "அளவால் பெருக்கும் முன் round செய்ய வேண்டும்",
+          "zip-க்குப் பதிலாக பட்டியல்களை + ஆல் இணைக்க வேண்டும்",
+          "உறைந்த எடை w-ஐ delta-க்குள் கூட்ட வேண்டும்",
+          "அளவுக் காரணி தலைகீழாக உள்ளது; alpha / r ஆக இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Using the lesson's lora_merge_weight, what does lora_merge_weight(1.0, [0.5], [0.2], 4, 2) return?",
+        "ta": "பாடத்தின் lora_merge_weight-ஐப் பயன்படுத்தினால், lora_merge_weight(1.0, [0.5], [0.2], 4, 2) என்ன திருப்பித் தரும்?"
+      },
+      "options": {
+        "en": [
+          "0.2",
+          "1.05",
+          "1.1",
+          "1.2"
+        ],
+        "ta": [
+          "0.2",
+          "1.05",
+          "1.1",
+          "1.2"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

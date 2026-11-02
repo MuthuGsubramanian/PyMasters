@@ -147,5 +147,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nprint(round(0.27 - (-0.27), 4))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(round(0.27 - (-0.27), 4))"
+      },
+      "options": {
+        "en": [
+          "-0.54",
+          "0.27",
+          "0.54",
+          "0.0"
+        ],
+        "ta": [
+          "-0.54",
+          "0.27",
+          "0.54",
+          "0.0"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport math\nprint(round(1 / (1 + math.exp(-0)), 4))",
+        "ta": "இது என்ன அச்சிடும்?\nimport math\nprint(round(1 / (1 + math.exp(-0)), 4))"
+      },
+      "options": {
+        "en": [
+          "0.0",
+          "1.0",
+          "0.6318",
+          "0.5"
+        ],
+        "ta": [
+          "0.0",
+          "1.0",
+          "0.6318",
+          "0.5"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why does r_chosen = 0.27 on its own say almost nothing in DPO?",
+        "ta": "DPO-வில் r_chosen = 0.27 என்பது தனியாக ஏன் கிட்டத்தட்ட எதையும் சொல்லாது?"
+      },
+      "options": {
+        "en": [
+          "It must be above 1.0 to count",
+          "It only means something compared with r_rejected",
+          "It must first be multiplied by 100",
+          "Rewards are only valid when they are negative"
+        ],
+        "ta": [
+          "கணக்கில் எடுக்க அது 1.0-ஐ விட அதிகமாக இருக்க வேண்டும்",
+          "r_rejected உடன் ஒப்பிடும்போது மட்டுமே அதற்குப் பொருள் உண்டு",
+          "முதலில் அதை 100 ஆல் பெருக்க வேண்டும்",
+          "rewards எதிர்மறையாக இருந்தால் மட்டுமே செல்லுபடியாகும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this sigmoid of the margin:\nreturn round(1 / (1 + math.exp(margin)), 4)",
+        "ta": "margin-இன் இந்த sigmoid-இல் உள்ள தவறைக் கண்டுபிடிக்கவும்:\nreturn round(1 / (1 + math.exp(margin)), 4)"
+      },
+      "options": {
+        "en": [
+          "It should be math.exp(-margin)",
+          "math.exp should be math.log",
+          "round should use 2 digits, not 4",
+          "The 1 + should be 1 -"
+        ],
+        "ta": [
+          "அது math.exp(-margin) ஆக இருக்க வேண்டும்",
+          "math.exp என்பது math.log ஆக இருக்க வேண்டும்",
+          "round 4 அல்ல, 2 இலக்கங்களைப் பயன்படுத்த வேண்டும்",
+          "1 + என்பது 1 - ஆக இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

@@ -150,5 +150,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "When trimming chat history to fit a token budget, which messages does the lesson say to keep first?",
+        "ta": "டோக்கன் பட்ஜெட்டுக்குள் பொருந்த உரையாடல் வரலாற்றைக் குறைக்கும்போது, எந்த செய்திகளை முதலில் வைத்திருக்க வேண்டும் என்று பாடம் சொல்கிறது?"
+      },
+      "options": {
+        "en": [
+          "The longest messages, since they carry the most info",
+          "The oldest messages, since they set up the chat",
+          "The shortest messages, so that more of them fit",
+          "The newest messages, since they matter most"
+        ],
+        "ta": [
+          "மிக நீளமான செய்திகள், ஏனெனில் அவற்றில் அதிக தகவல் உள்ளது",
+          "மிகப் பழைய செய்திகள், ஏனெனில் அவை உரையாடலைத் தொடங்குகின்றன",
+          "மிகச் சிறிய செய்திகள், அதனால் அதிக செய்திகள் பொருந்தும்",
+          "மிகச் சமீபத்திய செய்திகள், ஏனெனில் அவையே மிக முக்கியம்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: a trimmer loops `for text, cost in messages:` and adds messages while they fit. What goes wrong?",
+        "ta": "தவறைக் கண்டுபிடி: ஒரு trimmer `for text, cost in messages:` என்று சுற்றி, பொருந்தும் வரை செய்திகளைச் சேர்க்கிறது. என்ன தவறு நடக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It returns the kept texts in reverse order",
+          "It keeps the oldest messages instead of the newest",
+          "Its total can go over the budget",
+          "It crashes because tuples can't be unpacked in a loop"
+        ],
+        "ta": [
+          "வைத்த texts-ஐ தலைகீழ் வரிசையில் திருப்பித் தரும்",
+          "புதிய செய்திகளுக்குப் பதிலாக பழைய செய்திகளை வைத்திருக்கும்",
+          "மொத்தம் பட்ஜெட்டைத் தாண்டிவிடலாம்",
+          "loop-இல் tuple-களைப் பிரிக்க முடியாததால் அது crash ஆகும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A trimmer collects texts newest-first but forgets list(reversed(kept)). What does it return for the lesson's example (budget 60)?",
+        "ta": "ஒரு trimmer புதியதிலிருந்து தொடங்கி texts-ஐச் சேகரிக்கிறது, ஆனால் list(reversed(kept)) செய்ய மறந்துவிடுகிறது. பாடத்தின் உதாரணத்துக்கு (budget 60) அது என்ன திருப்பித் தரும்?"
+      },
+      "options": {
+        "en": [
+          "['m1', 'm2']",
+          "['m4', 'm3']",
+          "['m3', 'm4']",
+          "['m2', 'm3', 'm4']"
+        ],
+        "ta": [
+          "['m1', 'm2']",
+          "['m4', 'm3']",
+          "['m3', 'm4']",
+          "['m2', 'm3', 'm4']"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "According to the lesson, what can happen if an app sends an unbounded chat history to an LLM?",
+        "ta": "பாடத்தின்படி, ஒரு ஆப் வரம்பில்லாத உரையாடல் வரலாற்றை LLM-க்கு அனுப்பினால் என்ன நடக்கலாம்?"
+      },
+      "options": {
+        "en": [
+          "The model safely summarizes the old part by itself",
+          "It only runs slower, but the model still sees everything",
+          "An error, or a prompt that gets silently truncated",
+          "Nothing, because 2026 models have unlimited context"
+        ],
+        "ta": [
+          "மாடல் தானாகவே பழைய பகுதியைப் பாதுகாப்பாகச் சுருக்கும்",
+          "வேகம் மட்டும் குறையும், ஆனால் மாடல் எல்லாவற்றையும் பார்க்கும்",
+          "ஒரு பிழை, அல்லது அமைதியாக வெட்டப்பட்ட prompt",
+          "ஒன்றும் நடக்காது, ஏனெனில் 2026 மாடல்களுக்கு வரம்பற்ற context உள்ளது"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

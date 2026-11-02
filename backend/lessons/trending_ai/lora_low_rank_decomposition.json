@@ -155,5 +155,91 @@
       "trending_ai"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print? d, k, r = 4096, 4096, 8; print(r * (d + k))",
+        "ta": "இது என்ன அச்சிடும்? d, k, r = 4096, 4096, 8; print(r * (d + k))"
+      },
+      "options": {
+        "en": [
+          "16777216",
+          "65536",
+          "262144",
+          "32768"
+        ],
+        "ta": [
+          "16777216",
+          "65536",
+          "262144",
+          "32768"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In LoRA, what happens to the original weight matrix W during fine-tuning?",
+        "ta": "LoRA-வில், fine-tuning நடக்கும்போது அசல் weight matrix W-க்கு என்ன ஆகிறது?"
+      },
+      "options": {
+        "en": [
+          "It is shrunk to shape r x r",
+          "It is replaced by the product B @ A",
+          "It is updated along with B and A",
+          "It stays frozen; only B and A are trained"
+        ],
+        "ta": [
+          "அது r x r வடிவத்துக்குச் சுருக்கப்படும்",
+          "அது B @ A என்ற பெருக்கற்பலனால் மாற்றப்படும்",
+          "அது B, A உடன் சேர்ந்து update செய்யப்படும்",
+          "அது frozen ஆக இருக்கும்; B, A மட்டுமே பயிற்றுவிக்கப்படும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "W has shape d x k. With LoRA rank r, which shapes must B and A have so that B @ A can be added to W?",
+        "ta": "W-இன் வடிவம் d x k. LoRA rank r எனில், B @ A-ஐ W-உடன் கூட்ட B, A எந்த வடிவங்களில் இருக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "B is d x r, A is r x k",
+          "B is r x r, A is d x k",
+          "B is d x k, A is k x r",
+          "B is r x d, A is k x r"
+        ],
+        "ta": [
+          "B என்பது d x r, A என்பது r x k",
+          "B என்பது r x r, A என்பது d x k",
+          "B என்பது d x k, A என்பது k x r",
+          "B என்பது r x d, A என்பது k x r"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: a learner computes LoRA's trainable count as lora_params = r * d * k. What's wrong?",
+        "ta": "தவறைக் கண்டுபிடி: ஒரு மாணவர் LoRA-வின் பயிற்றுவிக்கக்கூடிய எண்ணிக்கையை lora_params = r * d * k என கணக்கிடுகிறார். என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "It should be r * r, since only the rank is trained",
+          "Nothing; that is the correct LoRA count",
+          "It should be d * k, since B @ A has shape d x k",
+          "It should be r * (d + k): B has d*r, A has r*k"
+        ],
+        "ta": [
+          "rank மட்டுமே பயிற்றுவிக்கப்படுவதால் r * r ஆக இருக்க வேண்டும்",
+          "எதுவும் இல்லை; அதுதான் சரியான LoRA எண்ணிக்கை",
+          "B @ A-இன் வடிவம் d x k என்பதால் d * k ஆக இருக்க வேண்டும்",
+          "r * (d + k) ஆக இருக்க வேண்டும்: B-இல் d*r, A-இல் r*k"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }
