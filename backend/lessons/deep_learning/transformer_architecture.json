@@ -380,5 +380,91 @@
     ],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "Which model sees only the left context through a causal mask and is trained to predict the next token?",
+        "ta": "எந்த மாடல் causal mask மூலம் இடது பக்க context-ஐ மட்டும் பார்க்கிறது, அடுத்த token-ஐக் கணிக்கப் பயிற்சி பெறுகிறது?"
+      },
+      "options": {
+        "en": [
+          "T5, because it is encoder-only",
+          "The original Transformer's encoder",
+          "GPT",
+          "BERT, because it reads the sentence word by word"
+        ],
+        "ta": [
+          "T5, ஏனெனில் அது encoder மட்டும் கொண்டது",
+          "அசல் Transformer-இன் encoder",
+          "GPT",
+          "BERT, ஏனெனில் அது வாக்கியத்தை ஒவ்வொரு சொல்லாகப் படிக்கிறது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport numpy as np\nx = np.array([[1.0, 2.0, 3.0]])\nprint(x.mean(axis=-1, keepdims=True).shape)",
+        "ta": "இது என்ன அச்சிடும்?\nimport numpy as np\nx = np.array([[1.0, 2.0, 3.0]])\nprint(x.mean(axis=-1, keepdims=True).shape)"
+      },
+      "options": {
+        "en": [
+          "(1, 1)",
+          "(1,)",
+          "(1, 3)",
+          "(3,)"
+        ],
+        "ta": [
+          "(1, 1)",
+          "(1,)",
+          "(1, 3)",
+          "(3,)"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: a learner writes mean = x.mean(axis=0, keepdims=True) in layer_norm for a (tokens, features) array. What goes wrong?",
+        "ta": "தவறைக் கண்டறியுங்கள்: (tokens, features) array-க்கான layer_norm-இல் ஒருவர் mean = x.mean(axis=0, keepdims=True) என எழுதுகிறார். என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "It averages across tokens, not each token's features",
+          "axis=0 raises an error on 2D arrays",
+          "keepdims must be False when axis=0",
+          "Nothing: axis=0 and axis=-1 are the same for 2D"
+        ],
+        "ta": [
+          "அது ஒவ்வொரு token-இன் features-ஐ அல்ல, tokens முழுவதும் சராசரி எடுக்கிறது",
+          "2D array-களில் axis=0 பிழையை எழுப்பும்",
+          "axis=0 எனில் keepdims False ஆக இருக்க வேண்டும்",
+          "தவறில்லை: 2D-க்கு axis=0-உம் axis=-1-உம் ஒன்றே"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why do Transformers use layer norm instead of batch norm?",
+        "ta": "Transformer-கள் batch norm-க்குப் பதிலாக layer norm-ஐ ஏன் பயன்படுத்துகின்றன?"
+      },
+      "options": {
+        "en": [
+          "It normalises each feature across the whole batch",
+          "It normalises each token on its own, whatever the batch size",
+          "It is only needed in the decoder, not the encoder",
+          "It removes the need for residual connections"
+        ],
+        "ta": [
+          "அது ஒவ்வொரு feature-ஐயும் முழு batch முழுவதும் normalise செய்கிறது",
+          "batch அளவு எதுவானாலும் அது ஒவ்வொரு token-ஐயும் தனித்தனியாக normalise செய்கிறது",
+          "அது decoder-இல் மட்டுமே தேவை, encoder-இல் அல்ல",
+          "அது residual connection-களின் தேவையை நீக்குகிறது"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

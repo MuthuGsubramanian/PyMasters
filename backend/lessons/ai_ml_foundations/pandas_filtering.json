@@ -228,5 +228,91 @@
     "real_world_application": [],
     "category": "data_science",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "Using the lesson's df (scores 88, 45, 92, 67), what does this print?\nprint(len(df[df['score'] > 70]))",
+        "ta": "பாடத்தின் df-ஐப் பயன்படுத்தினால் (scores 88, 45, 92, 67), இது என்ன அச்சிடும்?\nprint(len(df[df['score'] > 70]))"
+      },
+      "options": {
+        "en": [
+          "2",
+          "4",
+          "3",
+          "An error, because len() can't take a DataFrame"
+        ],
+        "ta": [
+          "2",
+          "4",
+          "3",
+          "பிழை, ஏனெனில் len() ஒரு DataFrame-ஐ ஏற்காது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does df['score'] > 70 return on its own, without wrapping it in df[...]?",
+        "ta": "df[...] க்குள் வைக்காமல் df['score'] > 70 தனியாக எதைத் தரும்?"
+      },
+      "options": {
+        "en": [
+          "A Series of True/False values, one per row",
+          "A new DataFrame with only the matching rows",
+          "A list of the scores that are above 70",
+          "A single True or False for the whole column"
+        ],
+        "ta": [
+          "ஒவ்வொரு வரிசைக்கும் ஒன்றாக True/False மதிப்புகளின் Series",
+          "பொருந்தும் வரிசைகள் மட்டும் உள்ள புதிய DataFrame",
+          "70-ஐ விட அதிகமான scores-இன் பட்டியல்",
+          "முழு column-க்கும் ஒரே ஒரு True அல்லது False"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: df[df['score'] > 50 & df['passed'] == True]",
+        "ta": "தவறைக் கண்டுபிடிக்கவும்: df[df['score'] > 50 & df['passed'] == True]"
+      },
+      "options": {
+        "en": [
+          "Multiple conditions only work inside .query()",
+          "== True is not allowed in boolean indexing",
+          "& should be replaced with the word and",
+          "Each condition must be wrapped in its own parentheses"
+        ],
+        "ta": [
+          "பல நிபந்தனைகள் .query() க்குள் மட்டுமே வேலை செய்யும்",
+          "boolean indexing-இல் == True அனுமதிக்கப்படாது",
+          "& க்குப் பதிலாக and என்ற சொல்லைப் பயன்படுத்த வேண்டும்",
+          "ஒவ்வொரு நிபந்தனையும் தனித்தனி அடைப்புக்குறிக்குள் இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "After running high = df[df['score'] > 85], what is true about df?",
+        "ta": "high = df[df['score'] > 85] இயக்கிய பிறகு, df பற்றி எது சரி?"
+      },
+      "options": {
+        "en": [
+          "df is unchanged; high is a new filtered DataFrame",
+          "df and high are the same object, so editing one changes both",
+          "df now holds only rows with score above 85",
+          "df's rows with score of 85 or below are now empty"
+        ],
+        "ta": [
+          "df மாறாமல் இருக்கும்; high ஒரு புதிய வடிகட்டிய DataFrame",
+          "df-ம் high-ம் ஒரே பொருள், ஒன்றை மாற்றினால் இரண்டும் மாறும்",
+          "df-இல் இப்போது score 85-க்கு மேல் உள்ள வரிசைகள் மட்டுமே உள்ளன",
+          "score 85 அல்லது குறைவான df வரிசைகள் இப்போது காலியாக உள்ளன"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

@@ -176,5 +176,91 @@
       "ai_agents"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "In the lesson's loop, how does the model find out the result of a tool it asked for?",
+        "ta": "பாடத்தின் loop-இல், மாடல் கேட்ட tool-இன் முடிவை அது எப்படி அறிந்துகொள்கிறது?"
+      },
+      "options": {
+        "en": [
+          "The loop appends a tool message the model reads on its next turn",
+          "The model remembers it from earlier runs automatically",
+          "The model runs the tool itself and reads its return value",
+          "The dispatcher sends the result straight to the user"
+        ],
+        "ta": [
+          "Loop ஒரு tool செய்தியைச் சேர்க்கிறது; அடுத்த turn-இல் மாடல் அதைப் படிக்கிறது",
+          "முந்தைய இயக்கங்களிலிருந்து மாடல் தானாக நினைவில் வைத்திருக்கிறது",
+          "மாடலே tool-ஐ இயக்கி அதன் return மதிப்பைப் படிக்கிறது",
+          "Dispatcher முடிவை நேரடியாகப் பயனருக்கு அனுப்புகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Using the lesson's dispatch, what does this print?\nprint(dispatch({\"name\": \"mul\", \"args\": {}}))",
+        "ta": "பாடத்தின் dispatch-ஐப் பயன்படுத்தினால், இது என்ன அச்சிடும்?\nprint(dispatch({\"name\": \"mul\", \"args\": {}}))"
+      },
+      "options": {
+        "en": [
+          "TypeError: 'NoneType' object is not callable",
+          "None",
+          "KeyError: 'mul'",
+          "error: unknown tool mul"
+        ],
+        "ta": [
+          "TypeError: 'NoneType' object is not callable",
+          "None",
+          "KeyError: 'mul'",
+          "error: unknown tool mul"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: a dispatcher uses fn = TOOLS[call[\"name\"]] instead of TOOLS.get(...). What goes wrong?",
+        "ta": "தவறைக் கண்டுபிடி: ஒரு dispatcher, TOOLS.get(...) க்குப் பதிலாக fn = TOOLS[call[\"name\"]] பயன்படுத்துகிறது. என்ன தவறு நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "An unknown name raises KeyError instead of returning an error string",
+          "It returns None for unknown names, which the model can't read",
+          "It calls the tool right away, before the args are passed",
+          "Nothing; it behaves the same as TOOLS.get(call[\"name\"])"
+        ],
+        "ta": [
+          "தெரியாத பெயருக்கு error string தராமல் KeyError எழுப்புகிறது",
+          "தெரியாத பெயருக்கு None தருகிறது; அதை மாடலால் படிக்க முடியாது",
+          "Args அனுப்பப்படும் முன்பே அது tool-ஐ உடனே அழைக்கிறது",
+          "ஒன்றுமில்லை; இது TOOLS.get(call[\"name\"]) போலவே நடக்கும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "max_steps=2 and the model only ever returns tool_call turns. What answer does run_agent return?",
+        "ta": "max_steps=2; மாடல் எப்போதும் tool_call turn-களை மட்டுமே தருகிறது. run_agent எந்தப் பதிலைத் திருப்பித் தரும்?"
+      },
+      "options": {
+        "en": [
+          "The result of the last tool call",
+          "\"stopped: step limit reached\"",
+          "It keeps looping until the model finally answers",
+          "None, since no final_answer was ever produced"
+        ],
+        "ta": [
+          "கடைசி tool call-இன் முடிவு",
+          "\"stopped: step limit reached\"",
+          "மாடல் இறுதியாகப் பதில் சொல்லும் வரை loop தொடர்ந்து ஓடும்",
+          "None, ஏனெனில் final_answer ஒருபோதும் வரவில்லை"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

@@ -328,5 +328,91 @@
     "real_world_application": [],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print? (numpy imported as np)\nz = np.array([-2.0, 0.0, 3.0])\nprint(np.maximum(0, z))",
+        "ta": "இது என்ன அச்சிடும்? (numpy, np ஆக import செய்யப்பட்டுள்ளது)\nz = np.array([-2.0, 0.0, 3.0])\nprint(np.maximum(0, z))"
+      },
+      "options": {
+        "en": [
+          "[0. 0. 3.]",
+          "[-2.  0.  3.]",
+          "3.0",
+          "[2. 0. 3.]"
+        ],
+        "ta": [
+          "[0. 0. 3.]",
+          "[-2.  0.  3.]",
+          "3.0",
+          "[2. 0. 3.]"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "With batch size N, x has shape (N, 3) and layer 1 has 4 neurons. What shape does z1 have?",
+        "ta": "batch size N எனில், x-இன் shape (N, 3), layer 1-இல் 4 neurons உள்ளன. z1-இன் shape என்ன?"
+      },
+      "options": {
+        "en": [
+          "(N, 4)",
+          "(4, 3)",
+          "(4,)",
+          "(N, 3)"
+        ],
+        "ta": [
+          "(N, 4)",
+          "(4, 3)",
+          "(4,)",
+          "(N, 3)"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "A student computes a layer with z = W * x + b using NumPy arrays. What is the mistake?",
+        "ta": "ஒரு மாணவர் NumPy arrays கொண்டு z = W * x + b என layer-ஐக் கணக்கிடுகிறார். இதில் உள்ள தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "Nothing; * and @ do the same thing in NumPy",
+          "b must be added before multiplying by W",
+          "* is element-wise; matrix multiplication needs @",
+          "The order must be x * W instead of W * x"
+        ],
+        "ta": [
+          "தவறு எதுவும் இல்லை; NumPy-இல் * மற்றும் @ ஒன்றே",
+          "W-ஆல் பெருக்கும் முன்பே b-ஐக் கூட்ட வேண்டும்",
+          "* என்பது element-wise; matrix multiplication-க்கு @ தேவை",
+          "W * x அல்ல, x * W என்ற வரிசையில் இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print? (numpy imported as np)\nW = np.array([[1, 2], [3, 4]])\nx = np.array([1, 1])\nprint(W @ x)",
+        "ta": "இது என்ன அச்சிடும்? (numpy, np ஆக import செய்யப்பட்டுள்ளது)\nW = np.array([[1, 2], [3, 4]])\nx = np.array([1, 1])\nprint(W @ x)"
+      },
+      "options": {
+        "en": [
+          "[4 6]",
+          "[3 7]",
+          "10",
+          "[[1 2]\n [3 4]]"
+        ],
+        "ta": [
+          "[4 6]",
+          "[3 7]",
+          "10",
+          "[[1 2]\n [3 4]]"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

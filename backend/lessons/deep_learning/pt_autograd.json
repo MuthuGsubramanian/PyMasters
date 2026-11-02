@@ -235,5 +235,91 @@
     "real_world_application": [],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nx = torch.tensor(4.0, requires_grad=True)\n(x ** 2).backward()\nprint(x.grad)",
+        "ta": "இது என்ன அச்சிடும்?\nx = torch.tensor(4.0, requires_grad=True)\n(x ** 2).backward()\nprint(x.grad)"
+      },
+      "options": {
+        "en": [
+          "tensor(4.)",
+          "tensor(8.)",
+          "tensor(16.)",
+          "None"
+        ],
+        "ta": [
+          "tensor(4.)",
+          "tensor(8.)",
+          "tensor(16.)",
+          "None"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nx = torch.tensor(2.0, requires_grad=True)\n(x * 3).backward(); (x * 3).backward()\nprint(x.grad)",
+        "ta": "இது என்ன அச்சிடும்?\nx = torch.tensor(2.0, requires_grad=True)\n(x * 3).backward(); (x * 3).backward()\nprint(x.grad)"
+      },
+      "options": {
+        "en": [
+          "tensor(6.)",
+          "tensor(3.)",
+          "tensor(12.)",
+          "An error: backward() can only be called once"
+        ],
+        "ta": [
+          "tensor(6.)",
+          "tensor(3.)",
+          "tensor(12.)",
+          "பிழை: backward() ஒருமுறை மட்டுமே அழைக்க முடியும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why should optimizer.zero_grad() be called at the start of each training step?",
+        "ta": "ஒவ்வொரு பயிற்சி படியின் தொடக்கத்திலும் optimizer.zero_grad() ஏன் அழைக்கப்பட வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "It deletes the computation graph to free memory",
+          "backward() fails unless .grad is empty",
+          "It resets the model's weights to zero",
+          "PyTorch adds new gradients to old ones by default"
+        ],
+        "ta": [
+          "நினைவகத்தை விடுவிக்க computation graph-ஐ நீக்குகிறது",
+          ".grad காலியாக இல்லாவிட்டால் backward() தோல்வியடையும்",
+          "அது மாடலின் weight-களை பூஜ்ஜியமாக மாற்றுகிறது",
+          "இயல்பாக PyTorch புதிய gradient-களை பழையவற்றுடன் கூட்டுகிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: w = torch.tensor(2.0) and x = torch.tensor(4.0, requires_grad=True). After L.backward(), why is w.grad None?",
+        "ta": "தவறைக் கண்டறிக: w = torch.tensor(2.0), x = torch.tensor(4.0, requires_grad=True). L.backward()-க்குப் பிறகு w.grad ஏன் None?"
+      },
+      "options": {
+        "en": [
+          "backward() must be called on w, not L",
+          "w needs to be an integer tensor",
+          "w.grad only fills after optimizer.step()",
+          "requires_grad=True was set on x instead of w"
+        ],
+        "ta": [
+          "backward()-ஐ L-இல் அல்ல, w-இல் அழைக்க வேண்டும்",
+          "w ஒரு integer tensor ஆக இருக்க வேண்டும்",
+          "optimizer.step()-க்குப் பிறகுதான் w.grad நிரம்பும்",
+          "requires_grad=True என்பது w-க்கு பதிலாக x-க்கு அமைக்கப்பட்டது"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

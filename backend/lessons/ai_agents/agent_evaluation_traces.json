@@ -177,5 +177,91 @@
       "ai_agents"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nt = [{\"tool\": \"search\"}, {\"tool\": \"calculate\"}]\nprint(not any(s[\"tool\"] in {\"delete_file\"} for s in t))",
+        "ta": "இது என்ன அச்சிடும்?\nt = [{\"tool\": \"search\"}, {\"tool\": \"calculate\"}]\nprint(not any(s[\"tool\"] in {\"delete_file\"} for s in t))"
+      },
+      "options": {
+        "en": [
+          "KeyError",
+          "True",
+          "False",
+          "None"
+        ],
+        "ta": [
+          "KeyError",
+          "True",
+          "False",
+          "None"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "For two tool calls, FakeClock gets deltas [0.0, 0.0124, 0.0, 0.0008]. Why are there four deltas?",
+        "ta": "இரண்டு tool அழைப்புகளுக்கு FakeClock-க்கு [0.0, 0.0124, 0.0, 0.0008] என்ற deltas தரப்படுகின்றன. ஏன் நான்கு deltas?"
+      },
+      "options": {
+        "en": [
+          "The clock is read before and after each call",
+          "One delta per argument and one per result",
+          "Two extra readings store the total latency",
+          "Each tool is run twice and the times averaged"
+        ],
+        "ta": [
+          "ஒவ்வொரு அழைப்புக்கு முன்னும் பின்னும் clock படிக்கப்படுகிறது",
+          "ஒவ்வொரு argument-க்கும் ஒன்று, ஒவ்வொரு result-க்கும் ஒன்று",
+          "மொத்த latency-ஐச் சேமிக்க இரண்டு கூடுதல் அளவீடுகள்",
+          "ஒவ்வொரு tool-உம் இருமுறை இயக்கப்பட்டு நேரம் சராசரியாக்கப்படுகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\nt = [{\"latency_ms\": 12.4}, {\"latency_ms\": 0.8}]\nprint(sum(s[\"latency_ms\"] for s in t) <= 10)",
+        "ta": "இது என்ன அச்சிடும்?\nt = [{\"latency_ms\": 12.4}, {\"latency_ms\": 0.8}]\nprint(sum(s[\"latency_ms\"] for s in t) <= 10)"
+      },
+      "options": {
+        "en": [
+          "True",
+          "False",
+          "13.2",
+          "TypeError"
+        ],
+        "ta": [
+          "True",
+          "False",
+          "13.2",
+          "TypeError"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the bug:\ndef never_called(t, f): return any(s[\"tool\"] not in f for s in t)",
+        "ta": "பிழையைக் கண்டறியவும்:\ndef never_called(t, f): return any(s[\"tool\"] not in f for s in t)"
+      },
+      "options": {
+        "en": [
+          "It should use all() with `in` instead of any()",
+          "It crashes: `not in` cannot be used with a set",
+          "True if any step is allowed, even if delete_file also ran",
+          "No bug; it equals not any(s[\"tool\"] in f for s in t)"
+        ],
+        "ta": [
+          "any()-க்குப் பதிலாக `in` உடன் all() பயன்படுத்த வேண்டும்",
+          "இது crash ஆகும்: set உடன் `not in` பயன்படுத்த முடியாது",
+          "delete_file இயங்கியிருந்தாலும், அனுமதிக்கப்பட்ட step ஏதேனும் இருந்தால் True",
+          "பிழை இல்லை; இது not any(s[\"tool\"] in f for s in t)-க்குச் சமம்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

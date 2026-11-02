@@ -198,5 +198,91 @@
     "real_world_application": [],
     "category": "data_science",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print? (pd = pandas)\na = pd.DataFrame({'x': [1, 2]})\nb = pd.DataFrame({'x': [3, 4]})\nprint(len(pd.concat([a, b])))",
+        "ta": "இது என்ன அச்சிடும்? (pd = pandas)\na = pd.DataFrame({'x': [1, 2]})\nb = pd.DataFrame({'x': [3, 4]})\nprint(len(pd.concat([a, b])))"
+      },
+      "options": {
+        "en": [
+          "An error, because the index labels repeat",
+          "8",
+          "2",
+          "4"
+        ],
+        "ta": [
+          "index லேபிள்கள் மீண்டும் வருவதால் பிழை ஏற்படும்",
+          "8",
+          "2",
+          "4"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In pd.merge, which rows does how='inner' keep?",
+        "ta": "pd.merge-இல், how='inner' எந்த வரிசைகளை வைத்திருக்கும்?"
+      },
+      "options": {
+        "en": [
+          "All rows from the left DataFrame",
+          "All rows from both, with NaN where there is no match",
+          "Only rows whose key matches in both DataFrames",
+          "All rows from the right DataFrame"
+        ],
+        "ta": [
+          "இடது DataFrame-இன் அனைத்து வரிசைகளும்",
+          "இரண்டின் அனைத்து வரிசைகளும், பொருந்தாத இடங்களில் NaN உடன்",
+          "இரண்டு DataFrame-களிலும் key பொருந்தும் வரிசைகள் மட்டும்",
+          "வலது DataFrame-இன் அனைத்து வரிசைகளும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "orders has 3 rows (cust_id 10, 11, 10); customers has cust_id 10, 11, 12. How many rows does a how='left' merge on cust_id give?",
+        "ta": "orders-இல் 3 வரிசைகள் (cust_id 10, 11, 10); customers-இல் cust_id 10, 11, 12. cust_id மீது how='left' merge எத்தனை வரிசைகளைத் தரும்?"
+      },
+      "options": {
+        "en": [
+          "2, because the repeated cust_id 10 is collapsed",
+          "6",
+          "4, because customer 12 is added with NaN",
+          "3"
+        ],
+        "ta": [
+          "2, ஏனெனில் மீண்டும் வரும் cust_id 10 ஒன்றாக்கப்படும்",
+          "6",
+          "4, ஏனெனில் வாடிக்கையாளர் 12 NaN உடன் சேர்க்கப்படுவார்",
+          "3"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "pd.concat([df1, df2]) gives a result with index 0, 1, 0, 1. What change gives a clean index 0, 1, 2, 3?",
+        "ta": "pd.concat([df1, df2]) இன் முடிவில் index 0, 1, 0, 1 என வருகிறது. 0, 1, 2, 3 என சுத்தமான index பெற என்ன மாற்றம் தேவை?"
+      },
+      "options": {
+        "en": [
+          "Use pd.merge instead of pd.concat",
+          "Use how='outer'",
+          "Swap the order to [df2, df1]",
+          "Add ignore_index=True"
+        ],
+        "ta": [
+          "pd.concat-க்கு பதிலாக pd.merge பயன்படுத்தவும்",
+          "how='outer' பயன்படுத்தவும்",
+          "வரிசையை [df2, df1] என மாற்றவும்",
+          "ignore_index=True சேர்க்கவும்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

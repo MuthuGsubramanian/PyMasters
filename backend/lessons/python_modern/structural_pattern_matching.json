@@ -126,5 +126,91 @@
       "python_modern"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Using the lesson's area(), what does area({'type': 'square', 'side': 3, 'color': 'red'}) return?",
+        "ta": "பாடத்தின் area() ஐப் பயன்படுத்தினால், area({'type': 'square', 'side': 3, 'color': 'red'}) எதைத் திருப்பும்?"
+      },
+      "options": {
+        "en": [
+          "None — no case matches exactly",
+          "A KeyError is raised because of 'color'",
+          "0.0 — the extra 'color' key makes the pattern fail",
+          "9 — extra keys don't stop a mapping pattern matching"
+        ],
+        "ta": [
+          "None — எந்த case-உம் சரியாகப் பொருந்தவில்லை",
+          "'color' காரணமாக KeyError எழும்",
+          "0.0 — கூடுதல் 'color' key காரணமாக pattern தோல்வியடையும்",
+          "9 — கூடுதல் keys mapping pattern பொருந்துவதைத் தடுக்காது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In case {'type': 'circle', 'r': r}:, what happens to the name r when a dict matches?",
+        "ta": "case {'type': 'circle', 'r': r}: இல், ஒரு dict பொருந்தும்போது r என்ற பெயருக்கு என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "The dict's value is compared to an existing variable r",
+          "r becomes the string 'r'",
+          "r is bound to the value stored under the 'r' key",
+          "r is bound to the whole dict"
+        ],
+        "ta": [
+          "dict-இன் மதிப்பு ஏற்கனவே உள்ள r மாறியுடன் ஒப்பிடப்படும்",
+          "r என்பது 'r' என்ற string ஆகிவிடும்",
+          "'r' key-இன் கீழ் உள்ள மதிப்புடன் r இணைக்கப்படும்",
+          "முழு dict-உம் r உடன் இணைக்கப்படும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "A learner calls area({'type': 'circle', 'radius': 2}) and gets 0.0. Why?",
+        "ta": "ஒரு மாணவர் area({'type': 'circle', 'radius': 2}) ஐ அழைத்து 0.0 பெறுகிறார். ஏன்?"
+      },
+      "options": {
+        "en": [
+          "round() turns the area into 0.0",
+          "'type' must be the last key in the dict",
+          "match can't read ints, so it skips to case _",
+          "The pattern needs an 'r' key, so it falls to case _"
+        ],
+        "ta": [
+          "round() பரப்பளவை 0.0 ஆக மாற்றுகிறது",
+          "dict-இல் 'type' கடைசி key ஆக இருக்க வேண்டும்",
+          "match ஆல் int-ஐப் படிக்க முடியாது, அதனால் case _ க்குச் செல்கிறது",
+          "pattern-க்கு 'r' key தேவை, அதனால் case _ க்குச் செல்கிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does case _: do in a match statement?",
+        "ta": "match கூற்றில் case _: என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It matches only an empty dict {}",
+          "It matches only the value None",
+          "It matches a variable literally named _",
+          "It's a catch-all that matches anything left over"
+        ],
+        "ta": [
+          "வெற்று dict {} ஐ மட்டுமே பொருத்தும்",
+          "None மதிப்பை மட்டுமே பொருத்தும்",
+          "_ என்று பெயரிடப்பட்ட மாறியை மட்டுமே பொருத்தும்",
+          "மீதமுள்ள எதையும் பொருத்தும் catch-all ஆகும்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

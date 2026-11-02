@@ -66,5 +66,91 @@
       "hints": ["Collect string parts and parameter values separately", "Replace each Interpolation with '?'", "Return the joined query and a tuple of params"],
       "test_code": "uid = 42\nq, p = sql_safe(t'SELECT * FROM users WHERE id = {uid}')\nassert q == 'SELECT * FROM users WHERE id = ?'\nassert p == (42,)"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In Python 3.14, what does this print?\nname = 'Ana'\ntpl = t'Hi {name}'\nprint(type(tpl).__name__)",
+        "ta": "Python 3.14-இல், இது என்ன அச்சிடும்?\nname = 'Ana'\ntpl = t'Hi {name}'\nprint(type(tpl).__name__)"
+      },
+      "options": {
+        "en": [
+          "Template",
+          "str",
+          "Interpolation",
+          "tuple"
+        ],
+        "ta": [
+          "Template",
+          "str",
+          "Interpolation",
+          "tuple"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In Python 3.14, what does this print?\nx = 5\ntpl = t'a{x}b'\nprint(tpl.strings)",
+        "ta": "Python 3.14-இல், இது என்ன அச்சிடும்?\nx = 5\ntpl = t'a{x}b'\nprint(tpl.strings)"
+      },
+      "options": {
+        "en": [
+          "('a', 5, 'b')",
+          "('a', 'b')",
+          "(5,)",
+          "'a5b'"
+        ],
+        "ta": [
+          "('a', 5, 'b')",
+          "('a', 'b')",
+          "(5,)",
+          "'a5b'"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the lesson's sql_query processor, why is each interpolation replaced by '?' with its value added to params?",
+        "ta": "பாடத்தின் sql_query செயலியில், ஒவ்வொரு interpolation-ம் ஏன் '?' ஆக மாற்றப்பட்டு, அதன் மதிப்பு params-இல் சேர்க்கப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "To make the query string shorter so it runs faster",
+          "So values travel separately and are never pasted into SQL text",
+          "Because t-strings cannot contain numbers like 42",
+          "Because Interpolation objects have no .value attribute"
+        ],
+        "ta": [
+          "query சரத்தைச் சுருக்கி வேகமாக இயங்கச் செய்ய",
+          "மதிப்புகள் தனியாகச் செல்லும், SQL உரையில் ஒருபோதும் ஒட்டப்படாது என்பதற்காக",
+          "t-strings-இல் 42 போன்ற எண்கள் இருக்க முடியாது என்பதால்",
+          "Interpolation பொருட்களுக்கு .value பண்பு இல்லாததால்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: a render_upper attempt does parts.append(item.upper()) when isinstance(item, str), else appends str(item.value).",
+        "ta": "தவறைக் கண்டறியுங்கள்: ஒரு render_upper முயற்சி isinstance(item, str) எனில் parts.append(item.upper()) செய்கிறது, இல்லையெனில் str(item.value) சேர்க்கிறது."
+      },
+      "options": {
+        "en": [
+          "Iterating a Template yields only Interpolations, never str",
+          "item.value must never be passed to str()",
+          "isinstance() can't be used on items from a Template",
+          "It uppercases the static text instead of the interpolated values"
+        ],
+        "ta": [
+          "Template-ஐ iterate செய்தால் Interpolation-கள் மட்டுமே வரும், str வராது",
+          "item.value-ஐ ஒருபோதும் str()-க்கு அனுப்பக்கூடாது",
+          "Template உருப்படிகளில் isinstance() பயன்படுத்த முடியாது",
+          "இது interpolate செய்யப்பட்ட மதிப்புகளுக்குப் பதிலாக நிலையான உரையைப் பெரிய எழுத்தாக்குகிறது"
+        ]
+      },
+      "correct": 3
+    }
   ]
 }

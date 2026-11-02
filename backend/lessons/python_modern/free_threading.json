@@ -65,5 +65,91 @@
       "hints": ["Import sys", "Call sys._is_gil_enabled() -- returns True if GIL is active", "This function exists in Python 3.13+"],
       "test_code": "import sys\nresult = sys._is_gil_enabled()\nassert isinstance(result, bool)"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In GIL-enabled CPython, why did two CPU-bound threads take about as long as running the work sequentially?",
+        "ta": "GIL உள்ள CPython-இல், இரண்டு CPU-சார்ந்த threads வேலையை வரிசையாக இயக்குவதற்கு ஆகும் அதே அளவு நேரத்தை ஏன் எடுத்தன?"
+      },
+      "options": {
+        "en": [
+          "threading.Thread runs targets one after another by default",
+          "Only one thread could execute Python bytecode at a time",
+          "join() stops the second thread from starting",
+          "Python threads always share one single OS thread"
+        ],
+        "ta": [
+          "threading.Thread இயல்பாக targets-ஐ ஒன்றன்பின் ஒன்றாக இயக்கும்",
+          "ஒரே நேரத்தில் ஒரு thread மட்டுமே Python bytecode-ஐ இயக்க முடிந்தது",
+          "join() இரண்டாவது thread தொடங்குவதைத் தடுக்கிறது",
+          "Python threads எப்போதும் ஒரே ஒரு OS thread-ஐப் பகிர்ந்துகொள்கின்றன"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "On a free-threaded build such as python3.14t, what does sys._is_gil_enabled() return?",
+        "ta": "python3.14t போன்ற free-threaded build-இல், sys._is_gil_enabled() எதைத் திருப்பி அனுப்பும்?"
+      },
+      "options": {
+        "en": [
+          "None",
+          "It raises AttributeError",
+          "False",
+          "True"
+        ],
+        "ta": [
+          "None",
+          "அது AttributeError-ஐ எழுப்பும்",
+          "False",
+          "True"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "On a free-threaded build, 4 threads each run `counter += 1` a million times with no lock. What's the mistake?",
+        "ta": "free-threaded build-இல், 4 threads ஒவ்வொன்றும் lock இல்லாமல் `counter += 1`-ஐ பத்து லட்சம் முறை இயக்குகின்றன. இதில் உள்ள தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "Only list.append() may be called from threads",
+          "Threads are not allowed to modify global variables",
+          "None; += on an int is one atomic step",
+          "counter += 1 isn't atomic, so updates can be lost"
+        ],
+        "ta": [
+          "Threads-இலிருந்து list.append()-ஐ மட்டுமே அழைக்கலாம்",
+          "Threads global variables-ஐ மாற்ற அனுமதி இல்லை",
+          "தவறு இல்லை; int மீது += ஒரே atomic படி",
+          "counter += 1 atomic அல்ல, அதனால் சில updates இழக்கப்படலாம்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport threading\nt = threading.Thread(target=print, args=(\"hi\",))\nt.start(); t.join()",
+        "ta": "இது என்ன அச்சிடும்?\nimport threading\nt = threading.Thread(target=print, args=(\"hi\",))\nt.start(); t.join()"
+      },
+      "options": {
+        "en": [
+          "hi",
+          "TypeError: args must be a list",
+          "Nothing; start() doesn't call the target",
+          "('hi',)"
+        ],
+        "ta": [
+          "hi",
+          "TypeError: args ஒரு list ஆக இருக்க வேண்டும்",
+          "எதுவும் இல்லை; start() target-ஐ அழைக்காது",
+          "('hi',)"
+        ]
+      },
+      "correct": 0
+    }
   ]
 }

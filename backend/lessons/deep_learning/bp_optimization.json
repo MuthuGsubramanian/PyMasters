@@ -283,5 +283,91 @@
     "real_world_application": [],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nv = 0.0; g = 2.0\nv = 0.9 * v + 0.1 * g\nprint(v)",
+        "ta": "இது என்ன அச்சிடும்?\nv = 0.0; g = 2.0\nv = 0.9 * v + 0.1 * g\nprint(v)"
+      },
+      "options": {
+        "en": [
+          "0.0",
+          "2.0",
+          "1.8",
+          "0.2"
+        ],
+        "ta": [
+          "0.0",
+          "2.0",
+          "1.8",
+          "0.2"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "According to the lesson, which two ideas does Adam combine?",
+        "ta": "பாடத்தின்படி, Adam எந்த இரண்டு கருத்துகளை இணைக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Momentum (first moment) and RMSProp (second moment)",
+          "Vanilla SGD and a fixed learning rate schedule",
+          "Momentum and a larger fixed learning rate",
+          "RMSProp and weight decay only"
+        ],
+        "ta": [
+          "Momentum (முதல் moment) மற்றும் RMSProp (இரண்டாம் moment)",
+          "சாதாரண SGD மற்றும் நிலையான learning rate அட்டவணை",
+          "Momentum மற்றும் பெரிய நிலையான learning rate",
+          "RMSProp மற்றும் weight decay மட்டும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In the lesson's adam_update, which line has a mistake in the weight update?",
+        "ta": "பாடத்தின் adam_update-இல், weight புதுப்பிப்பில் எந்த வரியில் தவறு உள்ளது?"
+      },
+      "options": {
+        "en": [
+          "eps should be added to the numerator",
+          "m_hat should not divide by (1 - b1**t)",
+          "It divides by v**0.5 instead of v_hat**0.5",
+          "g**2 should be just g in the second moment"
+        ],
+        "ta": [
+          "eps-ஐ தொகுதியில் (numerator) சேர்க்க வேண்டும்",
+          "m_hat-ஐ (1 - b1**t)-ஆல் வகுக்கக் கூடாது",
+          "v_hat**0.5-க்கு பதிலாக v**0.5-ஆல் வகுக்கிறது",
+          "இரண்டாம் moment-இல் g**2 வெறும் g ஆக இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "With momentum v ← β·v − η·∇L and w ← w + v, what happens if β = 0?",
+        "ta": "Momentum v ← β·v − η·∇L, w ← w + v இல் β = 0 என்றால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "It becomes the same as Adam",
+          "Velocity grows without limit",
+          "It becomes plain gradient descent",
+          "The weights stop updating entirely"
+        ],
+        "ta": [
+          "அது Adam-க்கு சமமாகிவிடும்",
+          "Velocity எல்லையின்றி வளரும்",
+          "அது சாதாரண gradient descent ஆகிவிடும்",
+          "Weights முழுவதுமாக புதுப்பிக்கப்படுவது நின்றுவிடும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

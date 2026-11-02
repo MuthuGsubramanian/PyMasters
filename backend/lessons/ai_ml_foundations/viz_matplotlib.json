@@ -259,5 +259,91 @@
     "real_world_application": [],
     "category": "data_science",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nfig, axes = plt.subplots(1, 2)\nprint(len(axes))",
+        "ta": "இது என்ன அச்சிடும்?\nfig, axes = plt.subplots(1, 2)\nprint(len(axes))"
+      },
+      "options": {
+        "en": [
+          "2",
+          "4",
+          "(1, 2)",
+          "1"
+        ],
+        "ta": [
+          "2",
+          "4",
+          "(1, 2)",
+          "1"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "When is the OO style fig, ax = plt.subplots() the better choice?",
+        "ta": "OO முறை fig, ax = plt.subplots() எப்போது சிறந்த தேர்வு?"
+      },
+      "options": {
+        "en": [
+          "When you don't need axis labels",
+          "Quick one-off plots of a single line",
+          "Complex layouts and reusing chart objects",
+          "Only when saving charts to a file"
+        ],
+        "ta": [
+          "அச்சு லேபிள்கள் தேவையில்லாதபோது",
+          "ஒரே கோடு கொண்ட விரைவான ஒருமுறை வரைபடங்களுக்கு",
+          "சிக்கலான அமைப்புகள் மற்றும் chart பொருட்களை மீண்டும் பயன்படுத்த",
+          "chart-ஐ கோப்பில் சேமிக்கும்போது மட்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake:\nfig, axes = plt.subplots(1, 2)\naxes[0].title('Sine')",
+        "ta": "தவறைக் கண்டறியவும்:\nfig, axes = plt.subplots(1, 2)\naxes[0].title('Sine')"
+      },
+      "options": {
+        "en": [
+          "subplots() needs figsize to work",
+          "Axes objects use set_title(), not title()",
+          "Titles can only be set with plt.title()",
+          "axes must be indexed from 1, not 0"
+        ],
+        "ta": [
+          "subplots() வேலை செய்ய figsize தேவை",
+          "Axes பொருட்கள் title() அல்ல, set_title() பயன்படுத்தும்",
+          "தலைப்பை plt.title() மூலம் மட்டுமே அமைக்க முடியும்",
+          "axes-ஐ 0 அல்ல, 1-இலிருந்து குறியிட வேண்டும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "You call plt.plot(x, y, label='sin(x)') but no legend appears. What is missing?",
+        "ta": "plt.plot(x, y, label='sin(x)') அழைத்தும் legend தெரியவில்லை. எது விடுபட்டுள்ளது?"
+      },
+      "options": {
+        "en": [
+          "plt.tight_layout()",
+          "plt.legend()",
+          "plt.title('sin(x)')",
+          "plt.grid(True)"
+        ],
+        "ta": [
+          "plt.tight_layout()",
+          "plt.legend()",
+          "plt.title('sin(x)')",
+          "plt.grid(True)"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

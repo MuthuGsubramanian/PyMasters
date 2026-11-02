@@ -159,5 +159,91 @@
       "ai_agents"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nprint([0.5 * 2 ** i for i in range(3)])",
+        "ta": "இது என்ன அச்சிடும்?\nprint([0.5 * 2 ** i for i in range(3)])"
+      },
+      "options": {
+        "en": [
+          "[1.0, 2.0, 4.0]",
+          "[0.5, 1.0, 2.0, 4.0]",
+          "[0.5, 1.0, 2.0]",
+          "[0.5, 1.0, 1.5]"
+        ],
+        "ta": [
+          "[1.0, 2.0, 4.0]",
+          "[0.5, 1.0, 2.0, 4.0]",
+          "[0.5, 1.0, 2.0]",
+          "[0.5, 1.0, 1.5]"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In the double-charge example, why did Asha end up paying 998 instead of 499?",
+        "ta": "இருமுறை கட்டண உதாரணத்தில், ஆஷா 499-க்குப் பதிலாக 998 ஏன் செலுத்த நேர்ந்தது?"
+      },
+      "options": {
+        "en": [
+          "The retry loop called charge twice in every attempt",
+          "The charge worked but its reply was lost, so the retry charged again",
+          "Backoff waited too long, so the server timed out twice",
+          "The ledger sum counted one single charge twice"
+        ],
+        "ta": [
+          "retry சுழற்சி ஒவ்வொரு முயற்சியிலும் charge-ஐ இருமுறை அழைத்தது",
+          "கட்டணம் வெற்றிபெற்றது, ஆனால் பதில் தொலைந்ததால் retry மீண்டும் வசூலித்தது",
+          "backoff அதிக நேரம் காத்திருந்ததால் சர்வர் இருமுறை timeout ஆனது",
+          "ledger கூட்டல் ஒரே கட்டணத்தை இருமுறை கணக்கிட்டது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the bug (new_key() returns a fresh unique string per call):\nretry(lambda: charge(\"asha\", 499, new_key()))",
+        "ta": "பிழையைக் கண்டறியவும் (new_key() ஒவ்வொரு அழைப்பிலும் புதிய தனித்த string தரும்):\nretry(lambda: charge(\"asha\", 499, new_key()))"
+      },
+      "options": {
+        "en": [
+          "Idempotency keys must be integers, not strings",
+          "Nothing; any unique key prevents duplicate charges",
+          "The lambda runs only once, so no retry ever happens",
+          "Each attempt gets a new key, so a retry can still charge twice"
+        ],
+        "ta": [
+          "idempotency key-கள் string அல்ல, integer ஆக இருக்க வேண்டும்",
+          "பிழை இல்லை; எந்த தனித்த key-யும் இரட்டைக் கட்டணத்தைத் தடுக்கும்",
+          "lambda ஒருமுறை மட்டுமே இயங்கும், அதனால் retry நடக்காது",
+          "ஒவ்வொரு முயற்சிக்கும் புதிய key கிடைப்பதால், retry இன்னும் இருமுறை வசூலிக்கலாம்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Which of these errors is it reasonable to retry?",
+        "ta": "இவற்றில் எந்தப் பிழையை மீண்டும் முயற்சிப்பது (retry) பொருத்தமானது?"
+      },
+      "options": {
+        "en": [
+          "A 400 Bad Request caused by malformed input",
+          "A 404 because the endpoint name is misspelled",
+          "A 503 Service Unavailable from an overloaded server",
+          "A validation error: amount must be positive"
+        ],
+        "ta": [
+          "தவறான உள்ளீட்டால் வந்த 400 Bad Request",
+          "endpoint பெயர் தவறாக எழுதப்பட்டதால் 404",
+          "அதிகச் சுமையில் உள்ள சர்வரிடமிருந்து 503 Service Unavailable",
+          "சரிபார்ப்புப் பிழை: amount நேர்மறையாக இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

@@ -280,5 +280,91 @@
     "real_world_application": [],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "A 32×32 input uses a 3×3 kernel with stride=1 and padding=1. What is the output size?",
+        "ta": "32×32 உள்ளீட்டில் 3×3 kernel, stride=1, padding=1 பயன்படுத்தப்படுகிறது. வெளியீட்டின் அளவு என்ன?"
+      },
+      "options": {
+        "en": [
+          "31×31",
+          "32×32",
+          "30×30",
+          "34×34"
+        ],
+        "ta": [
+          "31×31",
+          "32×32",
+          "30×30",
+          "34×34"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print? (numpy imported as np)\na = np.array([[1, 2], [3, 4]])\nk = np.array([[1, 0], [0, -1]])\nprint(np.sum(a * k))",
+        "ta": "இது என்ன அச்சிடும்? (numpy, np ஆக import செய்யப்பட்டுள்ளது)\na = np.array([[1, 2], [3, 4]])\nk = np.array([[1, 0], [0, -1]])\nprint(np.sum(a * k))"
+      },
+      "options": {
+        "en": [
+          "[[1 0] [0 -4]]",
+          "5",
+          "-3",
+          "3"
+        ],
+        "ta": [
+          "[[1 0] [0 -4]]",
+          "5",
+          "-3",
+          "3"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why can a CNN recognise a cat whether it is on the left or the right of an image?",
+        "ta": "பூனை படத்தின் இடப்பக்கம் இருந்தாலும் வலப்பக்கம் இருந்தாலும் CNN ஏன் அதை அடையாளம் காண முடிகிறது?"
+      },
+      "options": {
+        "en": [
+          "The same filter is applied at every position (weight sharing)",
+          "A large stride skips over the empty parts of the image",
+          "Padding adds zeros so the cat is always centred",
+          "Each pixel position has its own separate filter"
+        ],
+        "ta": [
+          "ஒரே filter ஒவ்வொரு நிலையிலும் பயன்படுத்தப்படுகிறது (weight sharing)",
+          "பெரிய stride படத்தின் காலியான பகுதிகளைத் தாண்டிவிடுகிறது",
+          "Padding பூஜ்யங்களைச் சேர்ப்பதால் பூனை எப்போதும் நடுவில் இருக்கும்",
+          "ஒவ்வொரு pixel நிலைக்கும் தனி filter உள்ளது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In convolve2d someone wrote oh = image.shape[0] - kh (no + 1). What happens?",
+        "ta": "convolve2d-இல் ஒருவர் oh = image.shape[0] - kh என்று (+ 1 இல்லாமல்) எழுதினார். என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Nothing changes; NumPy adjusts the size automatically",
+          "Output has one extra row filled with garbage values",
+          "It raises an IndexError when slicing the image",
+          "Output has one row too few; the last valid position is skipped"
+        ],
+        "ta": [
+          "எதுவும் மாறாது; NumPy தானாக அளவைச் சரிசெய்யும்",
+          "வெளியீட்டில் தவறான மதிப்புகளுடன் ஒரு கூடுதல் வரிசை இருக்கும்",
+          "படத்தை slice செய்யும்போது IndexError ஏற்படும்",
+          "வெளியீட்டில் ஒரு வரிசை குறைவு; கடைசி சரியான நிலை விடுபடும்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

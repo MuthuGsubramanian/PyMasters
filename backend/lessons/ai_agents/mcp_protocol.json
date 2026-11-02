@@ -64,5 +64,91 @@
       ],
       "test_code": "assert mcp_server['name'] == 'file_manager'\nassert len(mcp_server['tools']) == 3\nassert mcp_server['transport'] == 'stdio'"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What are the three core concepts of MCP?",
+        "ta": "MCP-யின் மூன்று முக்கியக் கருத்துகள் எவை?"
+      },
+      "options": {
+        "en": [
+          "Clients, Servers, Hosts",
+          "Requests, Responses, Errors",
+          "Tools, Resources, Prompts",
+          "Functions, Classes, Modules"
+        ],
+        "ta": [
+          "Clients, Servers, Hosts",
+          "Requests, Responses, Errors",
+          "Tools, Resources, Prompts",
+          "Functions, Classes, Modules"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\ns = {\"name\": \"fm\", \"tools\": [\"a\", \"b\"]}\nprint(f\"{s['name']}: {len(s['tools'])} tools\")",
+        "ta": "இது என்ன அச்சிடும்?\ns = {\"name\": \"fm\", \"tools\": [\"a\", \"b\"]}\nprint(f\"{s['name']}: {len(s['tools'])} tools\")"
+      },
+      "options": {
+        "en": [
+          "name: 2 tools",
+          "fm: 2 tools",
+          "fm: ['a', 'b'] tools",
+          "s['name']: 2 tools"
+        ],
+        "ta": [
+          "name: 2 tools",
+          "fm: 2 tools",
+          "fm: ['a', 'b'] tools",
+          "s['name']: 2 tools"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which MCP transport runs the server as a subprocess, the usual choice for local CLI agents?",
+        "ta": "உள்ளூர் CLI ஏஜென்ட்களுக்கு வழக்கமாகப் பயன்படும், சர்வரை subprocess ஆக இயக்கும் MCP transport எது?"
+      },
+      "options": {
+        "en": [
+          "An HTTP endpoint on port 8080",
+          "SSE (HTTP)",
+          "The Claude Desktop config file",
+          "stdio"
+        ],
+        "ta": [
+          "port 8080-இல் உள்ள HTTP endpoint",
+          "SSE (HTTP)",
+          "Claude Desktop config கோப்பு",
+          "stdio"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "A FastMCP server defines def add(a: float, b: float) -> float: but agents can't discover it. Most likely mistake?",
+        "ta": "ஒரு FastMCP சர்வரில் def add(a: float, b: float) -> float: உள்ளது, ஆனால் ஏஜென்ட்களால் அதைக் கண்டறிய முடியவில்லை. பெரும்பாலும் என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "It must be defined inside a class",
+          "It must return a str, not a float",
+          "It is missing the @mcp.tool() decorator",
+          "Its name must start with tool_"
+        ],
+        "ta": [
+          "அது ஒரு class-க்குள் வரையறுக்கப்பட வேண்டும்",
+          "அது float அல்ல, str திருப்ப வேண்டும்",
+          "அதற்கு @mcp.tool() decorator இல்லை",
+          "அதன் பெயர் tool_ என்று தொடங்க வேண்டும்"
+        ]
+      },
+      "correct": 2
+    }
   ]
 }

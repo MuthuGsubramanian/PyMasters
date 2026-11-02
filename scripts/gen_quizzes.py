@@ -109,6 +109,18 @@ def make_quiz(d: dict) -> tuple[list, str]:
     return [shuffled(q) for q in kept[:WANT]], note
 
 
+def with_quiz(text: str, quiz: list) -> str:
+    """Append "quiz" as the last key by text insertion so the rest of the file keeps its formatting."""
+    body = text.rstrip()
+    assert body.endswith("}")
+    block = json.dumps(quiz, ensure_ascii=False, indent=2).replace("\n", "\n  ")
+    out = body[:-1].rstrip() + ',\n  "quiz": ' + block + "\n}" + text[len(body):]
+    expected = json.loads(text)
+    expected["quiz"] = quiz
+    assert json.loads(out) == expected
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("ids", nargs="*")
@@ -141,8 +153,7 @@ def main():
         if a.dry_run:
             print(json.dumps(quiz, ensure_ascii=False, indent=1))
             continue
-        d["quiz"] = quiz
-        f.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")  # matches existing files
+        f.write_text(with_quiz(f.read_text(encoding="utf-8"), quiz), encoding="utf-8")
 
 
 if __name__ == "__main__":

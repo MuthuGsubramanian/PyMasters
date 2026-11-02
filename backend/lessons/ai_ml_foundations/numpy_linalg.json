@@ -255,5 +255,91 @@
     "real_world_application": [],
     "category": "data_science",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "With import numpy as np, what does print(np.array([1, 2]) @ np.array([3, 4])) print?",
+        "ta": "import numpy as np உடன், print(np.array([1, 2]) @ np.array([3, 4])) என்ன அச்சிடும்?"
+      },
+      "options": {
+        "en": [
+          "10",
+          "11",
+          "[3 8]",
+          "[4 6]"
+        ],
+        "ta": [
+          "10",
+          "11",
+          "[3 8]",
+          "[4 6]"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Given A = np.array([[1, 2], [3, 4]]), what does print((A @ A)[0, 0]) print?",
+        "ta": "A = np.array([[1, 2], [3, 4]]) எனில், print((A @ A)[0, 0]) என்ன அச்சிடும்?"
+      },
+      "options": {
+        "en": [
+          "7",
+          "5",
+          "10",
+          "1"
+        ],
+        "ta": [
+          "7",
+          "5",
+          "10",
+          "1"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does A.T give you for a NumPy matrix A?",
+        "ta": "NumPy அணி A-க்கு A.T என்ன தரும்?"
+      },
+      "options": {
+        "en": [
+          "A with its rows and columns flipped",
+          "The determinant of A",
+          "The inverse of A",
+          "A with each row sorted"
+        ],
+        "ta": [
+          "வரிசைகளும் நெடுவரிசைகளும் இடம் மாற்றப்பட்ட A",
+          "A-யின் அணிக்கோவை (determinant)",
+          "A-யின் தலைகீழ் அணி (inverse)",
+          "ஒவ்வொரு வரிசையும் வரிசைப்படுத்தப்பட்ட A"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "To solve Ax = b, a student writes x = np.linalg.solve(b, A). What is the mistake?",
+        "ta": "Ax = b-ஐத் தீர்க்க, ஒரு மாணவர் x = np.linalg.solve(b, A) என்று எழுதுகிறார். தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "It should be A * b instead of solve",
+          "The arguments are swapped; it should be solve(A, b)",
+          "solve only accepts Python lists, not arrays",
+          "Nothing; the argument order doesn't matter"
+        ],
+        "ta": [
+          "solve-க்குப் பதிலாக A * b இருக்க வேண்டும்",
+          "arguments இடம் மாறியுள்ளன; solve(A, b) என இருக்க வேண்டும்",
+          "solve, Python பட்டியல்களை மட்டுமே ஏற்கும், arrays-ஐ அல்ல",
+          "தவறு இல்லை; arguments வரிசை முக்கியமில்லை"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

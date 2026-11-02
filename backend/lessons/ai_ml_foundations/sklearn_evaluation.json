@@ -282,5 +282,91 @@
     "real_world_application": [],
     "category": "data_science",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does k-fold cross-validation give a more honest score than a single train-test split?",
+        "ta": "ஒரே ஒரு train-test பிரிப்பை விட k-fold cross-validation ஏன் நம்பகமான மதிப்பெண்ணைத் தருகிறது?"
+      },
+      "options": {
+        "en": [
+          "It trains on the test set, so the score is higher",
+          "It removes the need for any test data",
+          "It averages scores over several splits, reducing luck",
+          "It uses all data for training and testing at once"
+        ],
+        "ta": [
+          "அது test set-இல் பயிற்சி செய்வதால் மதிப்பெண் அதிகமாகிறது",
+          "test தரவின் தேவையையே முழுமையாக நீக்குகிறது",
+          "பல பிரிப்புகளின் மதிப்பெண்களைச் சராசரி எடுப்பதால் அதிர்ஷ்டத்தின் தாக்கம் குறைகிறது",
+          "எல்லா தரவையும் ஒரே நேரத்தில் பயிற்சிக்கும் சோதனைக்கும் பயன்படுத்துகிறது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "With cross_val_score(clf, X, y, cv=5), how is the model trained and tested?",
+        "ta": "cross_val_score(clf, X, y, cv=5) பயன்படுத்தும்போது மாடல் எப்படிப் பயிற்சி பெற்று சோதிக்கப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "5 times, each on 4 folds, tested on the remaining fold",
+          "Once, on 5% of the data held out for testing",
+          "5 times on all data, then tested on all data",
+          "Once on 4 folds, then tested on all 5 folds"
+        ],
+        "ta": [
+          "5 முறை, ஒவ்வொரு முறையும் 4 folds-இல் பயிற்சி, மீதமுள்ள fold-இல் சோதனை",
+          "ஒருமுறை மட்டும், 5% தரவு சோதனைக்காக ஒதுக்கப்படும்",
+          "எல்லா தரவிலும் 5 முறை பயிற்சி, பின் எல்லா தரவிலும் சோதனை",
+          "4 folds-இல் ஒருமுறை பயிற்சி, பின் 5 folds-இலும் சோதனை"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print (precision)? tp, fp, fn = 6, 2, 4; print(tp / (tp + fp))",
+        "ta": "இது என்ன அச்சிடும் (precision)? tp, fp, fn = 6, 2, 4; print(tp / (tp + fp))"
+      },
+      "options": {
+        "en": [
+          "0.6",
+          "0.25",
+          "0.75",
+          "0.4"
+        ],
+        "ta": [
+          "0.6",
+          "0.25",
+          "0.75",
+          "0.4"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "A disease-screening model must not miss sick patients (false negatives are costly). Which metric should you focus on?",
+        "ta": "நோய் கண்டறியும் மாடல் நோயாளிகளைத் தவறவிடக்கூடாது (false negatives விலை அதிகம்). எந்த அளவீட்டில் கவனம் செலுத்த வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Training score",
+          "Accuracy",
+          "Precision",
+          "Recall"
+        ],
+        "ta": [
+          "Training score",
+          "Accuracy",
+          "Precision",
+          "Recall"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

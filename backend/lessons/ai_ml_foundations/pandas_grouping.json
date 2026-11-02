@@ -268,5 +268,91 @@
     "real_world_application": [],
     "category": "data_science",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ndf = pd.DataFrame({'k': ['a','b','a'], 'v': [1, 2, 3]})\nprint(df.groupby('k')['v'].sum()['a'])",
+        "ta": "இது என்ன அச்சிடும்?\ndf = pd.DataFrame({'k': ['a','b','a'], 'v': [1, 2, 3]})\nprint(df.groupby('k')['v'].sum()['a'])"
+      },
+      "options": {
+        "en": [
+          "[1, 3]",
+          "1",
+          "2.0",
+          "4"
+        ],
+        "ta": [
+          "[1, 3]",
+          "1",
+          "2.0",
+          "4"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In the split-apply-combine pattern, what happens in the APPLY step?",
+        "ta": "split-apply-combine முறையில், APPLY படியில் என்ன நடக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "A function like mean is computed within each group",
+          "Rows are grouped by a column's values",
+          "Results are collected back into a DataFrame",
+          "Rows with missing values are removed"
+        ],
+        "ta": [
+          "ஒவ்வொரு குழுவிற்குள்ளும் mean போன்ற ஒரு செயல்பாடு கணக்கிடப்படுகிறது",
+          "ஒரு நெடுவரிசையின் மதிப்புகளின்படி வரிசைகள் குழுவாக்கப்படுகின்றன",
+          "முடிவுகள் மீண்டும் ஒரு DataFrame-ஆக சேகரிக்கப்படுகின்றன",
+          "காணாமல் போன மதிப்புகள் உள்ள வரிசைகள் நீக்கப்படுகின்றன"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Which call correctly creates an avg_salary column holding the mean salary per dept?",
+        "ta": "ஒவ்வொரு dept-க்கும் சராசரி salary கொண்ட avg_salary நெடுவரிசையை எந்த அழைப்பு சரியாக உருவாக்கும்?"
+      },
+      "options": {
+        "en": [
+          "df.groupby('dept').agg(avg_salary=('salary', 'mean'))",
+          "df.groupby('dept').agg(avg_salary=['salary', 'mean'])",
+          "df.groupby('dept').agg('avg_salary', 'salary', 'mean')",
+          "df.groupby('dept').agg(avg_salary='salary', 'mean')"
+        ],
+        "ta": [
+          "df.groupby('dept').agg(avg_salary=('salary', 'mean'))",
+          "df.groupby('dept').agg(avg_salary=['salary', 'mean'])",
+          "df.groupby('dept').agg('avg_salary', 'salary', 'mean')",
+          "df.groupby('dept').agg(avg_salary='salary', 'mean')"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does df.groupby('dept')['salary'].agg(['mean', 'min', 'max', 'count']) return?",
+        "ta": "df.groupby('dept')['salary'].agg(['mean', 'min', 'max', 'count']) எதைத் தரும்?"
+      },
+      "options": {
+        "en": [
+          "A single number: the mean of all salaries",
+          "Four separate Series inside a Python list",
+          "The original df with four new columns added",
+          "A DataFrame: one row per dept, one column per function"
+        ],
+        "ta": [
+          "ஒரே ஒரு எண்: எல்லா சம்பளங்களின் சராசரி",
+          "ஒரு Python list-இல் நான்கு தனி Series",
+          "நான்கு புதிய நெடுவரிசைகள் சேர்க்கப்பட்ட அசல் df",
+          "ஒரு DataFrame: ஒவ்வொரு dept-க்கும் ஒரு வரிசை, ஒவ்வொரு செயல்பாட்டுக்கும் ஒரு நெடுவரிசை"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

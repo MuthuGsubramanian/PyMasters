@@ -235,5 +235,91 @@
     "real_world_application": [],
     "category": "data_science",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ndf = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})\nprint(df.shape)",
+        "ta": "இது என்ன அச்சிடும்?\ndf = pd.DataFrame({'a': [1, 2, 3], 'b': [4, 5, 6]})\nprint(df.shape)"
+      },
+      "options": {
+        "en": [
+          "(2, 3)",
+          "6",
+          "(3, 2)",
+          "(3,)"
+        ],
+        "ta": [
+          "(2, 3)",
+          "6",
+          "(3, 2)",
+          "(3,)"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What type of object does df[['name', 'age']] return?",
+        "ta": "df[['name', 'age']] எந்த வகைப் பொருளைத் திருப்பித் தரும்?"
+      },
+      "options": {
+        "en": [
+          "A dict",
+          "A DataFrame",
+          "A Series",
+          "A list of Series"
+        ],
+        "ta": [
+          "ஒரு dict",
+          "ஒரு DataFrame",
+          "ஒரு Series",
+          "Series-களின் ஒரு list"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\ndf = pd.DataFrame({'x': [10, 20, 30]}, index=[2, 1, 0])\nprint(df.loc[0, 'x'])",
+        "ta": "இது என்ன அச்சிடும்?\ndf = pd.DataFrame({'x': [10, 20, 30]}, index=[2, 1, 0])\nprint(df.loc[0, 'x'])"
+      },
+      "options": {
+        "en": [
+          "30",
+          "KeyError",
+          "10",
+          "20"
+        ],
+        "ta": [
+          "30",
+          "KeyError",
+          "10",
+          "20"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "To get the cell at row 0, column 'score', a learner writes df.iloc[0, 'score']. What's the mistake?",
+        "ta": "வரிசை 0, நெடுவரிசை 'score' உள்ள கலத்தைப் பெற ஒருவர் df.iloc[0, 'score'] என எழுதுகிறார். தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "Rows start at 1, so it should be iloc[1, 'score']",
+          ".iloc needs integer positions, not labels like 'score'",
+          "Column names must use double quotes",
+          ".iloc needs parentheses: iloc(0, 'score')"
+        ],
+        "ta": [
+          "வரிசைகள் 1-இல் தொடங்கும், எனவே iloc[1, 'score'] என இருக்க வேண்டும்",
+          ".iloc-க்கு முழு எண் நிலைகள் தேவை, 'score' போன்ற லேபிள்கள் அல்ல",
+          "நெடுவரிசைப் பெயர்கள் இரட்டை மேற்கோள்களில் இருக்க வேண்டும்",
+          ".iloc-க்கு அடைப்புக்குறிகள் தேவை: iloc(0, 'score')"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

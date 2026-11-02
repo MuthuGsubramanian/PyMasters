@@ -278,5 +278,91 @@
     "real_world_application": [],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "In C_t = f_t ⊙ C_{t-1} + i_t ⊙ C̃_t, if f_t is all 1s and i_t is all 0s, what is C_t?",
+        "ta": "C_t = f_t ⊙ C_{t-1} + i_t ⊙ C̃_t இல், f_t முழுவதும் 1 ஆகவும் i_t முழுவதும் 0 ஆகவும் இருந்தால், C_t என்ன?"
+      },
+      "options": {
+        "en": [
+          "C_{t-1} + C̃_t",
+          "C_{t-1}, unchanged",
+          "All zeros, because the memory is erased",
+          "The candidate C̃_t only"
+        ],
+        "ta": [
+          "C_{t-1} + C̃_t",
+          "மாற்றமில்லாத C_{t-1}",
+          "நினைவகம் அழிக்கப்படுவதால் அனைத்தும் பூஜ்ஜியம்",
+          "candidate C̃_t மட்டும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport numpy as np\nh, x = np.zeros(2), np.ones(3)\nprint(np.concatenate([h, x]).shape)",
+        "ta": "இது என்ன அச்சிடும்?\nimport numpy as np\nh, x = np.zeros(2), np.ones(3)\nprint(np.concatenate([h, x]).shape)"
+      },
+      "options": {
+        "en": [
+          "(3,)",
+          "(5,)",
+          "(2, 3)",
+          "(2,)"
+        ],
+        "ta": [
+          "(3,)",
+          "(5,)",
+          "(2, 3)",
+          "(2,)"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport numpy as np\nprint(1 / (1 + np.exp(-0.0)))",
+        "ta": "இது என்ன அச்சிடும்?\nimport numpy as np\nprint(1 / (1 + np.exp(-0.0)))"
+      },
+      "options": {
+        "en": [
+          "0.5",
+          "-1.0",
+          "0.0",
+          "1.0"
+        ],
+        "ta": [
+          "0.5",
+          "-1.0",
+          "0.0",
+          "1.0"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in this forget gate:\nz = W_f @ np.concatenate([h_prev, x_t]) + b_f\nreturn np.tanh(z)",
+        "ta": "இந்த forget gate இல் உள்ள தவறைக் கண்டறியவும்:\nz = W_f @ np.concatenate([h_prev, x_t]) + b_f\nreturn np.tanh(z)"
+      },
+      "options": {
+        "en": [
+          "b_f should be multiplied with z, not added",
+          "tanh gives values in [-1, 1]; a gate needs sigmoid's [0, 1]",
+          "h_prev and x_t should be added, not concatenated",
+          "W_f should be applied after the activation"
+        ],
+        "ta": [
+          "b_f ஐ கூட்டாமல் z உடன் பெருக்க வேண்டும்",
+          "tanh [-1, 1] மதிப்புகளைத் தரும்; gate க்கு sigmoid இன் [0, 1] தேவை",
+          "h_prev மற்றும் x_t ஐ இணைக்காமல் கூட்ட வேண்டும்",
+          "activation க்குப் பிறகு W_f ஐப் பயன்படுத்த வேண்டும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

@@ -317,5 +317,91 @@
     ],
     "category": "data_science",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "In the scikit-learn pattern, which call trains the model on data?",
+        "ta": "scikit-learn முறையில், தரவைக் கொண்டு மாதிரியைப் பயிற்றுவிக்கும் அழைப்பு எது?"
+      },
+      "options": {
+        "en": [
+          "train_test_split(X, y)",
+          "model.train(X_train)",
+          "model.fit(X_train, y_train)",
+          "model.predict(X_test)"
+        ],
+        "ta": [
+          "train_test_split(X, y)",
+          "model.train(X_train)",
+          "model.fit(X_train, y_train)",
+          "model.predict(X_test)"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In train_test_split(X, y, test_size=0.2), what does test_size=0.2 do?",
+        "ta": "train_test_split(X, y, test_size=0.2) இல் test_size=0.2 என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Uses 20% of the data for training",
+          "Sets the target accuracy to 0.2",
+          "Limits the tree depth to 0.2",
+          "Keeps 20% of the data aside for testing"
+        ],
+        "ta": [
+          "தரவின் 20% ஐப் பயிற்சிக்குப் பயன்படுத்துகிறது",
+          "இலக்கு துல்லியத்தை 0.2 ஆக அமைக்கிறது",
+          "மரத்தின் ஆழத்தை 0.2 ஆகக் கட்டுப்படுத்துகிறது",
+          "தரவின் 20% ஐச் சோதனைக்காகத் தனியே வைக்கிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nfrom sklearn.metrics import accuracy_score\nprint(accuracy_score([0, 1, 1, 0], [0, 1, 0, 0]))",
+        "ta": "இது என்ன அச்சிடும்?\nfrom sklearn.metrics import accuracy_score\nprint(accuracy_score([0, 1, 1, 0], [0, 1, 0, 0]))"
+      },
+      "options": {
+        "en": [
+          "0.25",
+          "3",
+          "0.5",
+          "0.75"
+        ],
+        "ta": [
+          "0.25",
+          "3",
+          "0.5",
+          "0.75"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What is wrong with this evaluation?\nclf.fit(X_train, y_train)\nprint(accuracy_score(y_train, clf.predict(X_train)))",
+        "ta": "இந்த மதிப்பீட்டில் உள்ள தவறு என்ன?\nclf.fit(X_train, y_train)\nprint(accuracy_score(y_train, clf.predict(X_train)))"
+      },
+      "options": {
+        "en": [
+          "accuracy_score needs (preds, y_train) in that order",
+          "Nothing; this is the right way to evaluate",
+          "It scores on training data, so the score is unrealistically high",
+          "predict() must be called before fit()"
+        ],
+        "ta": [
+          "accuracy_score க்கு (preds, y_train) என்ற வரிசை தேவை",
+          "எதுவும் இல்லை; இதுவே சரியான மதிப்பீட்டு முறை",
+          "பயிற்சித் தரவிலேயே மதிப்பிடுவதால் மதிப்பெண் போலியாக உயரும்",
+          "fit() க்கு முன் predict() அழைக்கப்பட வேண்டும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

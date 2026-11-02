@@ -160,5 +160,91 @@
       "ai_agents"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nfrom graphlib import TopologicalSorter\nprint(list(TopologicalSorter({\"b\": [\"a\"], \"a\": []}).static_order()))",
+        "ta": "இது என்ன அச்சிடும்?\nfrom graphlib import TopologicalSorter\nprint(list(TopologicalSorter({\"b\": [\"a\"], \"a\": []}).static_order()))"
+      },
+      "options": {
+        "en": [
+          "['b', 'a']",
+          "['a', 'b']",
+          "CycleError",
+          "['a']"
+        ],
+        "ta": [
+          "['b', 'a']",
+          "['a', 'b']",
+          "CycleError",
+          "['a']"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the dict passed to TopologicalSorter, what does each key's list hold?",
+        "ta": "TopologicalSorter-க்கு அனுப்பும் dict-இல், ஒவ்வொரு key-இன் பட்டியலிலும் என்ன இருக்கும்?"
+      },
+      "options": {
+        "en": [
+          "The steps that key depends on",
+          "The steps that depend on that key",
+          "The steps that run in the same wave",
+          "The tool arguments for that step"
+        ],
+        "ta": [
+          "அந்த key சார்ந்திருக்கும் படிகள்",
+          "அந்த key-ஐச் சார்ந்திருக்கும் படிகள்",
+          "அதே wave-இல் இயங்கும் படிகள்",
+          "அந்தப் படிக்கான tool arguments"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why validate a plan with TopologicalSorter before calling any tool?",
+        "ta": "எந்த tool-ஐயும் அழைக்கும் முன் plan-ஐ TopologicalSorter மூலம் ஏன் சரிபார்க்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "It makes each tool call run faster",
+          "A cyclic plan raises CycleError instead of looping forever",
+          "It picks the best tool for each step",
+          "It retries failed steps automatically"
+        ],
+        "ta": [
+          "ஒவ்வொரு tool அழைப்பும் வேகமாக இயங்கும்",
+          "சுழற்சி plan முடிவில்லாமல் சுழலாமல் CycleError எழுப்பும்",
+          "ஒவ்வொரு படிக்கும் சிறந்த tool-ஐத் தேர்ந்தெடுக்கும்",
+          "தோல்வியடைந்த படிகளைத் தானாக மீண்டும் முயலும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does this fail?\nts = TopologicalSorter({\"a\": []})\nprint(ts.static_order()[0])",
+        "ta": "இது ஏன் தோல்வியடைகிறது?\nts = TopologicalSorter({\"a\": []})\nprint(ts.static_order()[0])"
+      },
+      "options": {
+        "en": [
+          "static_order() returns an iterator; wrap it in list()",
+          "The graph needs at least two nodes",
+          "The first item is at index 1",
+          "You must call prepare() first"
+        ],
+        "ta": [
+          "static_order() ஒரு iterator தரும்; அதை list()-இல் சுற்றவும்",
+          "graph-இல் குறைந்தது இரண்டு nodes வேண்டும்",
+          "முதல் உருப்படி index 1-இல் உள்ளது",
+          "முதலில் prepare()-ஐ அழைக்க வேண்டும்"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

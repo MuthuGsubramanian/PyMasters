@@ -178,5 +178,91 @@
       "ai_agents"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nprint(max(1, len(\"Hi\") // 4))",
+        "ta": "இது என்ன அச்சிடும்?\nprint(max(1, len(\"Hi\") // 4))"
+      },
+      "options": {
+        "en": [
+          "2",
+          "0.5",
+          "0",
+          "1"
+        ],
+        "ta": [
+          "2",
+          "0.5",
+          "0",
+          "1"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Using the lesson's keywords() and STOPWORDS, what does this print?\nprint(sorted(keywords(\"How do I sort a dict?\")))",
+        "ta": "பாடத்தின் keywords() மற்றும் STOPWORDS-ஐப் பயன்படுத்தினால், இது என்ன அச்சிடும்?\nprint(sorted(keywords(\"How do I sort a dict?\")))"
+      },
+      "options": {
+        "en": [
+          "['dict?', 'sort']",
+          "['dict', 'how', 'sort']",
+          "['dict', 'sort']",
+          "['a', 'dict', 'do', 'how', 'i', 'sort']"
+        ],
+        "ta": [
+          "['dict?', 'sort']",
+          "['dict', 'how', 'sort']",
+          "['dict', 'sort']",
+          "['a', 'dict', 'do', 'how', 'i', 'sort']"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Someone's trim_to_budget leaves out the kept.reverse() line. What goes wrong?",
+        "ta": "ஒருவரின் trim_to_budget-இல் kept.reverse() வரி விடுபட்டுள்ளது. என்ன தவறு நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Kept turns come out newest-first, not in time order",
+          "The oldest turns are kept instead of the newest",
+          "The system message gets dropped",
+          "The token budget gets exceeded"
+        ],
+        "ta": [
+          "வைத்துக்கொண்ட உரையாடல்கள் கால வரிசையில் இல்லாமல், புதியவை முதலில் வரும்",
+          "புதியவைக்குப் பதிலாகப் பழைய உரையாடல்கள் வைக்கப்படும்",
+          "system செய்தி நீக்கப்படும்",
+          "டோக்கன் வரம்பு மீறப்படும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In build_prompt, why do the retrieved facts go into a second system message that is added before trimming?",
+        "ta": "build_prompt-இல், மீட்டெடுத்த தகவல்கள் ஏன் trimming-க்கு முன் சேர்க்கப்படும் இரண்டாவது system செய்தியில் வைக்கப்படுகின்றன?"
+      },
+      "options": {
+        "en": [
+          "So the model treats them as user questions",
+          "System messages cost fewer tokens",
+          "So recall can search them on the next turn",
+          "So trimming can never drop them"
+        ],
+        "ta": [
+          "மாடல் அவற்றைப் பயனர் கேள்விகளாகக் கருத",
+          "system செய்திகளுக்குக் குறைவான டோக்கன்கள் ஆகும்",
+          "அடுத்த முறை recall அவற்றைத் தேட",
+          "trimming அவற்றை ஒருபோதும் நீக்காமல் இருக்க"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

@@ -64,5 +64,91 @@
       "hints": ["Create a thread for each value", "In each thread, create a subinterpreter, prepare_main with the value, exec the code", "Join all threads and print the completion message"],
       "test_code": "# This tests the structure, not the output since subinterpreters are isolated\nimport threading\nassert callable(parallel_compute)"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Given interp = interpreters.create(), what does this print?\ninterp.prepare_main(n=10)\ninterp.exec('import math; print(math.factorial(n))')",
+        "ta": "interp = interpreters.create() எனக் கொடுக்கப்பட்டால், இது என்ன அச்சிடும்?\ninterp.prepare_main(n=10)\ninterp.exec('import math; print(math.factorial(n))')"
+      },
+      "options": {
+        "en": [
+          "NameError: n is not defined",
+          "10",
+          "3628800",
+          "Nothing: subinterpreters can't print"
+        ],
+        "ta": [
+          "NameError: n is not defined",
+          "10",
+          "3628800",
+          "எதுவும் இல்லை: subinterpreter-களால் அச்சிட முடியாது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why can four subinterpreters run CPU-bound work truly in parallel, unlike four regular threads?",
+        "ta": "நான்கு சாதாரண threads போலல்லாமல், நான்கு subinterpreter-கள் CPU-சார்ந்த வேலையை ஏன் உண்மையில் இணையாக இயக்க முடிகிறது?"
+      },
+      "options": {
+        "en": [
+          "Each one runs in its own separate OS process",
+          "They remove the GIL by turning on free-threading",
+          "They share one GIL but release it more often",
+          "Each subinterpreter has its own GIL"
+        ],
+        "ta": [
+          "ஒவ்வொன்றும் தனி OS process-இல் இயங்குகிறது",
+          "free-threading-ஐ இயக்கி அவை GIL-ஐ நீக்குகின்றன",
+          "அவை ஒரே GIL-ஐப் பகிர்ந்து, அதை அடிக்கடி விடுவிக்கின்றன",
+          "ஒவ்வொரு subinterpreter-க்கும் தனி GIL உள்ளது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Goal: print 10! from a subinterpreter. What's wrong?\ninterp.prepare_main(n=10)\ninterp.exec('import math; result = math.factorial(n)')",
+        "ta": "இலக்கு: subinterpreter-இலிருந்து 10! ஐ அச்சிடுவது. இதில் என்ன தவறு?\ninterp.prepare_main(n=10)\ninterp.exec('import math; result = math.factorial(n)')"
+      },
+      "options": {
+        "en": [
+          "math can't be imported inside a subinterpreter",
+          "n must be sent as a string, not an int",
+          "It computes result but never prints it",
+          "prepare_main must be called after exec"
+        ],
+        "ta": [
+          "subinterpreter-க்குள் math-ஐ import செய்ய முடியாது",
+          "n-ஐ int ஆக அல்ல, string ஆக அனுப்ப வேண்டும்",
+          "result கணக்கிடப்படுகிறது, ஆனால் அச்சிடப்படவில்லை",
+          "prepare_main-ஐ exec-க்குப் பிறகு அழைக்க வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Given interp = interpreters.create(), what happens here?\nx = 5\ninterp.exec('print(x)')",
+        "ta": "interp = interpreters.create() எனக் கொடுக்கப்பட்டால், இங்கு என்ன நடக்கும்?\nx = 5\ninterp.exec('print(x)')"
+      },
+      "options": {
+        "en": [
+          "It prints 5",
+          "It prints None",
+          "It prints x",
+          "It fails: x isn't defined in the subinterpreter"
+        ],
+        "ta": [
+          "5 அச்சிடப்படும்",
+          "None அச்சிடப்படும்",
+          "x என்று அச்சிடப்படும்",
+          "பிழை: subinterpreter-இல் x வரையறுக்கப்படவில்லை"
+        ]
+      },
+      "correct": 3
+    }
   ]
 }
