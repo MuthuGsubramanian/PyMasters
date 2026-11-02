@@ -461,11 +461,12 @@ CHALLENGES: List[dict] = [
         "title": "Async Web Scraper Pattern",
         "description": (
             "Write an async function `fetch_all(urls, max_concurrent=5)` that:\n"
-            "1. Fetches multiple URLs concurrently using aiohttp\n"
+            "1. Fetches multiple URLs concurrently via `fetch_url(url, timeout)` (aiohttp in real code)\n"
             "2. Limits concurrency with asyncio.Semaphore\n"
             "3. Returns a dict mapping each URL to its response text or error message\n"
             "4. Has a configurable timeout per request (default 10s)\n"
-            "Handle errors gracefully -- never let one failure abort the batch."
+            "Handle errors gracefully -- never let one failure abort the batch.\n"
+            "The grader runs offline (no network), so a failed fetch must come back as an error string."
         ),
         "difficulty": "hard",
         "category": "Async Programming",
@@ -669,9 +670,9 @@ CHALLENGES: List[dict] = [
         "description": (
             "Implement context managers for common patterns:\n"
             "1. `Timer()` - measures and prints elapsed time of a block\n"
-            "2. `TempDirectory()` - creates a temp dir, yields path, cleans up\n"
+            "2. `temp_directory()` - creates a temp dir, yields path, cleans up\n"
             "3. `DatabaseTransaction(conn)` - auto-commit on success, rollback on error\n"
-            "4. `Suppress(*exceptions)` - silently suppresses listed exception types\n"
+            "4. `suppress(*exceptions)` - silently suppresses listed exception types\n"
             "Implement using both class-based (__enter__/__exit__) and "
             "@contextmanager decorator approaches."
         ),
