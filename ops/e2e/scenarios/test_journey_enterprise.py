@@ -7,7 +7,7 @@ approves an org's plan request.
 """
 import time
 
-from conftest import BASE, api, create_user, db
+from conftest import BASE, api, create_user, db, wait_semantic_ready
 
 ENTERPRISE_TRACKS = {"azure_enterprise", "azure_ai_foundry", "aws_enterprise", "gcp_vertex_ai",
                      "cross_cloud_architecture", "frontier_ai_platforms"}
@@ -49,9 +49,10 @@ def test_enterprise_tracks_hidden_from_individual():
     u = create_user()
     s = api(u["ip"], u["token"])
     assert not (ENTERPRISE_TRACKS & _tracks(u))
+    wait_semantic_ready()
     hits = s.get(f"{BASE}/api/semantic/search", params={"q": "AWS IAM organizations azure"}, timeout=60).json()
-    found = {h.get("track") for h in hits.get("results", hits if isinstance(hits, list) else [])}
-    assert not (ENTERPRISE_TRACKS & found), found
+    found = {h.get("track") for h in hits["results"]}
+    assert hits["results"] and not (ENTERPRISE_TRACKS & found), found
     assert s.get(f"{BASE}/api/classroom/lesson/{AWS_LESSON}", timeout=30).status_code == 403
 
 

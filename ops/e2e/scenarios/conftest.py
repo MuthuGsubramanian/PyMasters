@@ -12,7 +12,9 @@ per-IP signup/login limits behave as they would for real, separate visitors.
 import itertools
 import json
 import os
+import re
 import subprocess
+import time
 import uuid
 from pathlib import Path
 
@@ -23,6 +25,9 @@ BASE = os.getenv("PM_E2E_BASE", "http://127.0.0.1:8080").rstrip("/")
 CONTAINER = os.getenv("PM_E2E_CONTAINER", "pm-e2e")
 DOCKER = os.getenv("PM_E2E_DOCKER", "docker")
 SOLUTIONS = Path(__file__).resolve().parents[1] / "solutions"
+_RELEASE_NOTES = Path(__file__).resolve().parents[3] / "frontend" / "src" / "components" / "ReleaseNotes.jsx"
+# The "what's new" dialog opens unless pm_release_seen equals the newest version exactly.
+RELEASE_VERSION = re.search(r"version:\s*'([^']+)'", _RELEASE_NOTES.read_text()).group(1)
 PASSWORD = "Scenario-Pass-2026!"
 _ip_counter = itertools.count(1)
 
@@ -121,6 +126,18 @@ def onboard_learner_ui(page) -> None:
     page.wait_for_url("**/dashboard**", timeout=30000)
 
 
+def wait_semantic_ready(timeout: int = 300) -> None:
+    """Block until the semantic lesson index has finished building (it starts with the container)."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        st = api().get(f"{BASE}/api/semantic/status", timeout=30).json()
+        if st.get("ready"):
+            return
+        assert not st.get("error"), st
+        time.sleep(3)
+    raise AssertionError(f"semantic index not ready after {timeout}s: {st}")
+
+
 def dismiss_release_notes(page) -> None:
     """New accounts see a "what's new" dialog on first dashboard visit; a real user closes it."""
     btn = page.get_by_role("button", name="Close release notes")
@@ -137,8 +154,8 @@ def signed_in_context(browser, user: dict, width: int = 1366, height: int = 850)
                               extra_http_headers={"X-Forwarded-For": user.get("ip") or fake_ip()})
     page = ctx.new_page()
     page.goto(f"{BASE}/login", wait_until="domcontentloaded")
-    page.evaluate("u => { localStorage.setItem('pm_user', JSON.stringify(u)); localStorage.setItem('pm_release_seen', '9.9.9'); }",
-                  session_payload(user))
+    page.evaluate("([u, v]) => { localStorage.setItem('pm_user', JSON.stringify(u)); localStorage.setItem('pm_release_seen', v); }",
+                  [session_payload(user), RELEASE_VERSION])
     return ctx, page
 
 
@@ -189,10 +206,10 @@ def logged_in_page(browser):
         page.on("response", lambda r: page.problems.append(f"http {r.status} {r.url[:120]}")
                 if r.status >= 400 and "/api/" in r.url else None)
         page.goto(f"{BASE}/login", wait_until="domcontentloaded")
-        page.evaluate("([u, dark]) => { localStorage.setItem('pm_user', JSON.stringify(u));"
-                      " localStorage.setItem('pm_release_seen', '9.9.9');"
+        page.evaluate("([u, dark, v]) => { localStorage.setItem('pm_user', JSON.stringify(u));"
+                      " localStorage.setItem('pm_release_seen', v);"
                       " localStorage.setItem('pm_dark_mode', dark ? '1' : '0'); }",
-                      [session_payload(user), dark])
+                      [session_payload(user), dark, RELEASE_VERSION])
         page.problems.clear()
         return page
 
