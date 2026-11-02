@@ -30,7 +30,7 @@ from fastapi.responses import RedirectResponse
 
 import jwt
 from jwt import PyJWTError as JWTError   # PyJWT (python-jose had an unfixed advisory; 2026-11-02)
-from auth import create_access_token, JWT_SECRET, JWT_ALG
+from auth import create_access_token, JWT_SECRET, JWT_ALG, _is_blocked
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
@@ -171,6 +171,8 @@ def linkedin_callback(code: str = Query(None), state: str = Query(None), error: 
 
     ensure_oauth_tables()
     user_id, is_new, username, onboarding = _upsert_linkedin_user(sub, email, name, picture)
+    if _is_blocked(user_id):
+        return _bounce(li_error="This account has been suspended. Contact support.")
 
     # Issue our own session JWT (same mechanism as password login).
     conn = sqlite3.connect(DB_PATH)

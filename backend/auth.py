@@ -75,10 +75,25 @@ def _current_token_version(user_id: str):
         return 0
 
 
-def create_access_token(user_id: str, username: str = None, token_version: int = 0) -> str:
+def _is_blocked(user_id: str) -> bool:
+    """True if an admin has blocked this account. Checked on every authenticated request so a block also
+    ends sessions minted by GitHub/LinkedIn sign-in (only password login checked it before, 2026-11-03)."""
+    try:
+        conn = sqlite3.connect(_get_db_path())
+        try:
+            row = conn.execute("SELECT COALESCE(is_blocked, 0) FROM users WHERE id = ?", [user_id]).fetchone()
+        finally:
+            conn.close()
+        return bool(row and row[0])
+    except Exception:
+        return False
+
+
+def create_access_token(user_id: str, username: str = None, token_version: int = 0,
+                        ttl_seconds: int = None) -> str:
     now = int(time.time())
     payload = {"sub": str(user_id), "username": username, "tv": int(token_version or 0),
-               "iat": now, "exp": now + JWT_TTL_SECONDS}
+               "iat": now, "exp": now + int(ttl_seconds or JWT_TTL_SECONDS)}
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
 
 
@@ -102,6 +117,8 @@ def _extract(authorization: str) -> str:
         raise HTTPException(status_code=401, detail="Account no longer exists.")
     if int(payload.get("tv") or 0) != current:
         raise HTTPException(status_code=401, detail="Session ended. Please sign in again.")
+    if _is_blocked(sub):
+        raise HTTPException(status_code=403, detail="This account has been suspended. Contact support.")
     return sub
 
 

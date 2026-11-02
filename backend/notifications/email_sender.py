@@ -1,5 +1,6 @@
 """Email notification sender using SMTP."""
 
+from html import escape as _esc
 import os
 import smtplib
 from email.mime.text import MIMEText
@@ -72,8 +73,8 @@ def build_lesson_ready_email(title: str, topic: str, reason: str, link: str) -> 
         </div>
         <div style="background: white; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
             <p style="color: #334155; font-size: 16px;">Vanakkam!</p>
-            <p style="color: #475569;">Your custom lesson <strong>"{title}"</strong> is ready.</p>
-            <p style="color: #64748b; font-size: 14px;">{reason}</p>
+            <p style="color: #475569;">Your custom lesson <strong>"{_esc(title)}"</strong> is ready.</p>
+            <p style="color: #64748b; font-size: 14px;">{_esc(reason)}</p>
             <a href="{link}" style="display: inline-block; background: #7c3aed; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;">Start Learning</a>
         </div>
     </div>
@@ -96,7 +97,7 @@ def build_reset_email(name: str, reset_link: str) -> tuple:
             <p style="margin: 4px 0 0; opacity: 0.9; font-size: 14px;">Password reset</p>
         </div>
         <div style="background: white; padding: 26px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
-            <p style="color: #334155; font-size: 16px;">{greeting}</p>
+            <p style="color: #334155; font-size: 16px;">{_esc(greeting)}</p>
             <p style="color: #475569;">We received a request to reset your PyMasters password.</p>
             <a href="{reset_link}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 13px 26px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 12px;">Reset Password</a>
             <p style="color: #94a3b8; font-size: 12px; margin-top: 18px;">This link expires in 1 hour. If you didn't request it, ignore this email.<br><span style="color:#475569;">{reset_link}</span></p>
@@ -109,8 +110,8 @@ def build_reset_email(name: str, reset_link: str) -> tuple:
 def _admin_card(header_sub: str, title: str, rows: list, footer: str = "") -> str:
     """Shared inline-styled HTML card for owner/admin notification emails."""
     row_html = "".join(
-        f'<tr><td style="padding:4px 10px 4px 0; color:#64748b; font-size:13px; vertical-align:top; white-space:nowrap;">{k}</td>'
-        f'<td style="padding:4px 0; color:#334155; font-size:13px;">{v}</td></tr>'
+        f'<tr><td style="padding:4px 10px 4px 0; color:#64748b; font-size:13px; vertical-align:top; white-space:nowrap;">{_esc(str(k))}</td>'
+        f'<td style="padding:4px 0; color:#334155; font-size:13px;">{_esc(str(v))}</td></tr>'
         for k, v in rows if v
     )
     return f"""
@@ -120,7 +121,7 @@ def _admin_card(header_sub: str, title: str, rows: list, footer: str = "") -> st
             <p style="margin: 4px 0 0; opacity: 0.9; font-size: 14px;">{header_sub}</p>
         </div>
         <div style="background: white; padding: 26px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
-            <p style="color: #334155; font-size: 16px; margin-top: 0;"><strong>{title}</strong></p>
+            <p style="color: #334155; font-size: 16px; margin-top: 0;"><strong>{_esc(title)}</strong></p>
             <table style="border-collapse: collapse;">{row_html}</table>
             {f'<p style="color: #94a3b8; font-size: 12px; margin-top: 18px;">{footer}</p>' if footer else ''}
         </div>
@@ -142,7 +143,7 @@ def build_support_notification_email(kind: str, name: str, email: str, message: 
     )
     html = _admin_card(
         "Support", label,
-        [("From", f"{name or '-'} &lt;{email}&gt;"), ("Details", extra), ("Message", message or "-")],
+        [("From", f"{name or '-'} <{email}>"), ("Details", extra), ("Message", message or "-")],
         f'Review and act in the <a href="{admin_link}" style="color:#7c3aed;">Super Admin console</a>.',
     )
     return text, html
@@ -161,7 +162,7 @@ def build_tutor_session_email(name: str, email: str, topic: str, preferred_at: s
     )
     html = _admin_card(
         "Live tutor sessions", "New session request",
-        [("From", f"{name or '-'} &lt;{email}&gt;"), ("Topic", topic), ("When", when),
+        [("From", f"{name or '-'} <{email}>"), ("Topic", topic), ("When", when),
          ("Duration", f"{duration} min"), ("Notes", notes or "-")],
         f'Confirm or decline in the <a href="{admin_link}" style="color:#7c3aed;">Super Admin console</a>.',
     )
@@ -261,7 +262,7 @@ def build_invite_email(org_name: str, role: str, invite_link: str, inviter: str 
         </div>
         <div style="background: white; padding: 26px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
             <p style="color: #334155; font-size: 16px;">Vanakkam!</p>
-            <p style="color: #475569;">{who} to join <strong>{org_name}</strong> on PyMasters as a <strong>{role}</strong>.</p>
+            <p style="color: #475569;">{_esc(who)} to join <strong>{_esc(org_name)}</strong> on PyMasters as a <strong>{_esc(role)}</strong>.</p>
             <p style="color: #64748b; font-size: 14px;">PyMasters is an AI-powered platform to master Python and AI, guided by your personal tutor Vaathiyaar.</p>
             <a href="{invite_link}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 13px 26px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;">Accept Invite &amp; Join</a>
             <p style="color: #94a3b8; font-size: 12px; margin-top: 18px;">This invitation link expires in 7 days. If the button doesn't work, paste this into your browser:<br><span style="color:#475569;">{invite_link}</span></p>
