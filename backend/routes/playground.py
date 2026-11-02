@@ -585,6 +585,23 @@ def execute_code(request: dict = Body(...), user_id: str = Depends(get_current_u
     }
 
 
+@router.post("/trace")
+def trace_code_endpoint(request: dict = Body(...), user_id: str = Depends(get_current_user_id)):
+    """Time-travel visualizer: run the learner's code under a tracer in the same sandbox as /execute and
+    return every step (line, function, call depth, variables, output so far). Same auth, paywall and
+    rate limit as /execute."""
+    from vaathiyaar.tracer import trace_code
+    from access import assert_learning_access
+    assert_learning_access(_get_db_path(), user_id)
+    if not _execute_limiter.allow(user_id):
+        wait = _execute_limiter.retry_after(user_id)
+        raise HTTPException(status_code=429, detail=f"Rate limit reached. Try again in {wait}s.")
+    code = request.get("code", "")
+    if not isinstance(code, str) or not code.strip():
+        raise HTTPException(status_code=400, detail="No code provided.")
+    return trace_code(code)
+
+
 # Packages the Playground advertises. These are meant to be BAKED INTO THE IMAGE
 # (requirements.txt), not installed at request time. The endpoint below reports
 # which are actually importable in the running interpreter.

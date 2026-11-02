@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import PythonEditor from '../components/PythonEditor';
 import OutputPanel from '../components/OutputPanel';
+import TraceViewer from '../components/TraceViewer';
 import VoiceTutor from '../components/VoiceTutor';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import api, {
@@ -11,7 +12,7 @@ import api, {
 import { safeErrorMsg } from '../utils/errorUtils';
 import {
     Sparkles, Zap, Play, Trash2, Send, Terminal, Loader2, Mic,
-    Save, FolderOpen, FilePlus2, Pencil, Check, X,
+    Save, FolderOpen, FilePlus2, Pencil, Check, X, History,
 } from 'lucide-react';
 import { Button, Badge, Modal, Drawer, Input } from '../components/ui';
 
@@ -34,6 +35,8 @@ export default function Playground() {
     const [code, setCode] = useState('');
     const [output, setOutput] = useState('');
     const [running, setRunning] = useState(false);
+    const [trace, setTrace] = useState(null);
+    const [tracing, setTracing] = useState(false);
     const [executionTime, setExecutionTime] = useState(null);
 
     // CodeMirror defers external `value` updates behind a typing latch driven by
@@ -276,6 +279,20 @@ export default function Playground() {
     executeRef.current = executeCode;
     const handleRunCode = () => executeCode(code);
 
+    // Time-travel visualizer: same sandbox as Run, but records every step.
+    const handleVisualize = async () => {
+        if (!code.trim() || tracing) return;
+        setTracing(true);
+        try {
+            const res = await api.post('/playground/trace', { user_id: user?.id, code });
+            setTrace(res.data);
+        } catch (err) {
+            setOutput(`Visualizer error: ${safeErrorMsg(err, 'Unknown error')}`);
+        } finally {
+            setTracing(false);
+        }
+    };
+
     const handleAskAIForHelp = (failedCode, errorText) => {
         askVaathiyaar(
             `My code produced this error. Help me fix it:\n\n\`\`\`python\n${failedCode}\n\`\`\`\n\nError:\n\`\`\`\n${errorText}\n\`\`\``
@@ -491,6 +508,15 @@ export default function Playground() {
                                 </button>
                                 <span className="text-[10px] text-code-foreground/50 font-mono hidden sm:inline">Ctrl+Enter</span>
                                 <button
+                                    onClick={handleVisualize}
+                                    disabled={tracing || !code.trim()}
+                                    title="Step through your code line by line and watch the variables change"
+                                    className="flex items-center gap-1.5 text-xs font-bold text-cyan-200 bg-cyan-500/10 border border-cyan-400/30 rounded-xl px-3 py-2 hover:bg-cyan-500/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                                >
+                                    {tracing ? <Loader2 size={13} className="animate-spin" /> : <History size={13} />}
+                                    <span className="hidden sm:inline">{tracing ? 'Tracing...' : 'Visualize'}</span>
+                                </button>
+                                <button
                                     onClick={handleClearTerminal}
                                     className="flex items-center gap-1.5 text-xs font-medium text-code-foreground/70 bg-white/5 border border-white/10 rounded-xl px-3 py-2 hover:bg-white/10 hover:text-code-foreground transition-all duration-200"
                                 >
@@ -546,6 +572,8 @@ export default function Playground() {
                     </div>
                 </div>
             </div>
+
+            {trace && <TraceViewer code={code} trace={trace} onClose={() => setTrace(null)} />}
 
             {/* ── Save as… modal ──────────────────────────────────────────── */}
             <Modal open={saveAsOpen} onClose={() => setSaveAsOpen(false)} title="Save file as">
