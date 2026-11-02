@@ -41,6 +41,18 @@ sec "Production VM"
 timeout 90 gcloud compute ssh pymasters-vm --project $APP --zone us-central1-a --quiet --tunnel-through-iap --command \
  'echo "- $(uptime -p), load $(cut -d" " -f1-3 /proc/loadavg)"; free -m | awk "/Mem/{print \"- RAM used \"\$3\"/\"\$2\" MB\"} /Swap/{print \"- swap used \"\$3\" MB\"}"; df -h / | awk "NR==2{print \"- disk \"\$5\" used\"}"; sudo docker ps --format "- container {{.Names}}: {{.Status}}"; systemctl is-failed pymasters-update.service pymasters-learn.service | paste -sd" " | sed "s/^/- timers update\/learn: /"' 2>/dev/null || echo "- SSH to VM failed"
 
+sec "AI tutor (Vaathiyaar) and nightly content job"
+# Read-only: last nightly content-job result + how often learners saw the "breather" (all AI providers failed) in 24 h.
+timeout 90 gcloud compute ssh pymasters-vm --project $APP --zone us-central1-a --quiet --tunnel-through-iap --command \
+ 'sudo docker exec pymasters-app python3 -c "
+import sqlite3,os,json
+c=sqlite3.connect(\"file:\"+os.environ[\"DB_PATH\"]+\"?mode=ro\",uri=True)
+r=c.execute(\"select window,result from job_runs where job=\x27content\x27 order by id desc limit 1\").fetchone()
+if r:
+    d=json.loads(r[1]); print(\"- content job\",r[0],\"published\" if d.get(\"published\") else \"NOT published: \"+str(d.get(\"reason\",\"\"))[:220])
+q=c.execute(\"select status,count(*) from content_queue group by 1\").fetchall(); print(\"- content queue\",dict(q))
+"; echo "- AI provider failures shown to learners (24h): $(sudo docker logs pymasters-app --since 24h 2>&1 | grep -ciE "usage limit|status code: 429|401 Client Error|all providers")"' 2>/dev/null || echo "- SSH to VM failed"
+
 sec "Backups"
 echo "- Litestream replica (gs://pymasters-app-db/vm): last write $(gcloud storage ls -l -r gs://pymasters-app-db/vm/ 2>/dev/null | grep -v TOTAL | sort -k2 | tail -1 | awk '{print $2}')"
 
