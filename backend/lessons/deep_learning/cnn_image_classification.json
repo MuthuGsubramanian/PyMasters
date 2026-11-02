@@ -297,5 +297,91 @@
     ],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ndef f(i, o, k): return (k*k*i + 1) * o\nprint(f(1, 32, 3))",
+        "ta": "இது என்ன அச்சிடும்?\ndef f(i, o, k): return (k*k*i + 1) * o\nprint(f(1, 32, 3))"
+      },
+      "options": {
+        "en": [
+          "320",
+          "96",
+          "288",
+          "64"
+        ],
+        "ta": [
+          "320",
+          "96",
+          "288",
+          "64"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In SimpleCNN, why does the first Linear layer take 64 * 5 * 5 inputs?",
+        "ta": "SimpleCNN-இல் முதல் Linear அடுக்கு ஏன் 64 * 5 * 5 உள்ளீடுகளை எடுக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "After the second pool there are 64 maps of 5×5, then flattened",
+          "It equals the number of parameters in the second Conv2d",
+          "64 is the batch size and 5×5 is the kernel size",
+          "Each 28×28 image is cut into 64 patches of 5×5"
+        ],
+        "ta": [
+          "இரண்டாம் pool-க்குப் பின் 5×5 அளவுள்ள 64 வரைபடங்கள், பின்னர் flatten",
+          "இது இரண்டாம் Conv2d-இன் அளவுருக்களின் எண்ணிக்கைக்குச் சமம்",
+          "64 என்பது batch அளவு, 5×5 என்பது kernel அளவு",
+          "ஒவ்வொரு 28×28 படமும் 5×5 அளவுள்ள 64 துண்டுகளாகப் பிரிக்கப்படுகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "A MaxPool2d(2) layer receives an 11×11 feature map. What size comes out?",
+        "ta": "ஒரு MaxPool2d(2) அடுக்கு 11×11 feature map-ஐப் பெறுகிறது. வெளியீட்டின் அளவு என்ன?"
+      },
+      "options": {
+        "en": [
+          "22×22",
+          "9×9",
+          "5×5",
+          "6×6"
+        ],
+        "ta": [
+          "22×22",
+          "9×9",
+          "5×5",
+          "6×6"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: a loop calls loss.backward() then optimizer.step() every batch but never optimizer.zero_grad(). What happens?",
+        "ta": "தவறைக் கண்டறியுங்கள்: ஒரு loop ஒவ்வொரு batch-இலும் loss.backward(), பின் optimizer.step() அழைக்கிறது, ஆனால் optimizer.zero_grad() இல்லை. என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Python raises an error on the second batch",
+          "Nothing; step() clears the gradients automatically",
+          "The weights are never updated at all",
+          "Gradients pile up across batches, giving wrong updates"
+        ],
+        "ta": [
+          "இரண்டாம் batch-இல் Python பிழையை எழுப்பும்",
+          "ஒன்றுமில்லை; step() தானாகவே gradient-களை அழிக்கும்",
+          "எடைகள் (weights) ஒருபோதும் புதுப்பிக்கப்படாது",
+          "Gradient-கள் batch-களுக்கு இடையே குவிந்து, தவறான புதுப்பிப்புகளைத் தரும்"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

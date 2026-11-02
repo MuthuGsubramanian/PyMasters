@@ -263,5 +263,91 @@
     ],
     "category": "data_science",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "Why is clustering called an unsupervised learning task?",
+        "ta": "கிளஸ்டரிங் ஏன் மேற்பார்வையற்ற (unsupervised) கற்றல் பணி என்று அழைக்கப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "Because it only works on randomly generated data",
+          "Because you must always give the number of groups",
+          "Because the model needs no fit() call",
+          "Because the data has no labels; groups are found on their own"
+        ],
+        "ta": [
+          "ஏனெனில் இது சீரற்ற முறையில் உருவாக்கிய தரவில் மட்டுமே வேலை செய்யும்",
+          "ஏனெனில் குழுக்களின் எண்ணிக்கையை எப்போதும் கொடுக்க வேண்டும்",
+          "ஏனெனில் மாடலுக்கு fit() அழைப்பு தேவையில்லை",
+          "ஏனெனில் தரவில் லேபிள்கள் இல்லை; குழுக்கள் தானாகவே கண்டறியப்படுகின்றன"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "X has 300 samples with 2 features. What does this print?\nkm = KMeans(n_clusters=4, n_init=10).fit(X)\nprint(len(km.cluster_centers_))",
+        "ta": "X-இல் 2 அம்சங்களுடன் 300 மாதிரிகள் உள்ளன. இது என்ன அச்சிடும்?\nkm = KMeans(n_clusters=4, n_init=10).fit(X)\nprint(len(km.cluster_centers_))"
+      },
+      "options": {
+        "en": [
+          "300",
+          "1",
+          "4",
+          "2"
+        ],
+        "ta": [
+          "300",
+          "1",
+          "4",
+          "2"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "In the elbow method, how do you choose K from the inertia plot?",
+        "ta": "எல்போ முறையில், inertia வரைபடத்திலிருந்து K-ஐ எப்படித் தேர்ந்தெடுப்பது?"
+      },
+      "options": {
+        "en": [
+          "Pick the K where the improvement starts to diminish",
+          "Pick the K with the lowest inertia",
+          "Pick the K with the highest inertia",
+          "Always pick the largest K you tried"
+        ],
+        "ta": [
+          "முன்னேற்றம் குறையத் தொடங்கும் K-ஐத் தேர்ந்தெடுக்கவும்",
+          "மிகக் குறைந்த inertia உள்ள K-ஐத் தேர்ந்தெடுக்கவும்",
+          "மிக அதிக inertia உள்ள K-ஐத் தேர்ந்தெடுக்கவும்",
+          "நீங்கள் முயற்சித்த மிகப்பெரிய K-ஐ எப்போதும் தேர்ந்தெடுக்கவும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake:\ndb = DBSCAN(n_clusters=3, eps=0.5)",
+        "ta": "தவறைக் கண்டுபிடிக்கவும்:\ndb = DBSCAN(n_clusters=3, eps=0.5)"
+      },
+      "options": {
+        "en": [
+          "eps must be a whole number",
+          "DBSCAN does not take K; it finds the clusters itself",
+          "DBSCAN must be imported from sklearn.datasets",
+          "n_clusters must be at least 4"
+        ],
+        "ta": [
+          "eps ஒரு முழு எண்ணாக இருக்க வேண்டும்",
+          "DBSCAN-க்கு K தேவையில்லை; அது கிளஸ்டர்களைத் தானே கண்டறியும்",
+          "DBSCAN-ஐ sklearn.datasets-இலிருந்து import செய்ய வேண்டும்",
+          "n_clusters குறைந்தது 4 ஆக இருக்க வேண்டும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

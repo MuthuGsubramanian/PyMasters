@@ -229,5 +229,91 @@
     "real_world_application": [],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "A has shape (3, 4) and B has shape (4, 2). What is the shape of A @ B?",
+        "ta": "A-இன் வடிவம் (3, 4), B-இன் வடிவம் (4, 2). A @ B-இன் வடிவம் என்ன?"
+      },
+      "options": {
+        "en": [
+          "(3, 4)",
+          "It raises an error: shapes differ",
+          "(3, 2)",
+          "(4, 4)"
+        ],
+        "ta": [
+          "(3, 4)",
+          "பிழை ஏற்படும்: வடிவங்கள் வேறுபடுகின்றன",
+          "(3, 2)",
+          "(4, 4)"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\na = torch.tensor([1.0, 2.0])\nprint(a * a)",
+        "ta": "இது என்ன அச்சிடும்?\na = torch.tensor([1.0, 2.0])\nprint(a * a)"
+      },
+      "options": {
+        "en": [
+          "tensor(5.)",
+          "tensor([2., 4.])",
+          "tensor([1., 4.])",
+          "An error: use @ to multiply tensors"
+        ],
+        "ta": [
+          "tensor(5.)",
+          "tensor([2., 4.])",
+          "tensor([1., 4.])",
+          "பிழை: tensor-களைப் பெருக்க @ பயன்படுத்த வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What is wrong here?\nA = torch.randn(3, 4)\nB = torch.randn(3, 2)\nC = A @ B",
+        "ta": "இதில் என்ன தவறு?\nA = torch.randn(3, 4)\nB = torch.randn(3, 2)\nC = A @ B"
+      },
+      "options": {
+        "en": [
+          "randn needs a tuple, like randn((3, 4))",
+          "@ only works on GPU tensors",
+          "A's columns (4) must match B's rows, but B has 3",
+          "Nothing; C will have shape (3, 2)"
+        ],
+        "ta": [
+          "randn-க்கு randn((3, 4)) போல tuple வேண்டும்",
+          "@ GPU tensor-களில் மட்டுமே வேலை செய்யும்",
+          "A-இன் நெடுவரிசைகள் (4) B-இன் வரிசைகளுக்குச் சமமாக வேண்டும், ஆனால் B-இல் 3",
+          "தவறு இல்லை; C-இன் வடிவம் (3, 2) ஆக இருக்கும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "C has shape (3, 2). What does total = C.sum() give you?",
+        "ta": "C-இன் வடிவம் (3, 2). total = C.sum() என்ன தரும்?"
+      },
+      "options": {
+        "en": [
+          "A scalar tensor with shape torch.Size([])",
+          "A plain Python list of sums",
+          "A tensor of row sums with shape (3,)",
+          "A tensor of column sums with shape (2,)"
+        ],
+        "ta": [
+          "torch.Size([]) வடிவம் கொண்ட ஒரு scalar tensor",
+          "கூட்டுத்தொகைகளின் சாதாரண Python list",
+          "(3,) வடிவம் கொண்ட வரிசைக் கூட்டுத்தொகை tensor",
+          "(2,) வடிவம் கொண்ட நெடுவரிசைக் கூட்டுத்தொகை tensor"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

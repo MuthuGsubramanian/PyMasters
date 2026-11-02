@@ -67,5 +67,91 @@
       ],
       "test_code": "assert len(graph_dict['nodes']) == 3\nassert len(graph_dict['edges']) == 2\nassert ('start', 'process') in graph_dict['edges']"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ne = [('start', 'process'), ('process', 'end')]\nprint(len(e))",
+        "ta": "இது என்ன அச்சிடும்?\ne = [('start', 'process'), ('process', 'end')]\nprint(len(e))"
+      },
+      "options": {
+        "en": [
+          "1",
+          "3",
+          "4",
+          "2"
+        ],
+        "ta": [
+          "1",
+          "3",
+          "4",
+          "2"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In a LangGraph state, what does messages: Annotated[list[str], add] do?",
+        "ta": "LangGraph state-இல் messages: Annotated[list[str], add] என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "It only checks that messages is a list of strings",
+          "New returned messages replace the existing list",
+          "It adds up the numbers stored in the list",
+          "New returned messages are appended to the existing list"
+        ],
+        "ta": [
+          "messages ஒரு strings பட்டியலா என்று மட்டும் சரிபார்க்கிறது",
+          "திருப்பப்படும் புதிய messages ஏற்கனவே உள்ள பட்டியலை மாற்றிவிடும்",
+          "பட்டியலில் உள்ள எண்களைக் கூட்டுகிறது",
+          "திருப்பப்படும் புதிய messages ஏற்கனவே உள்ள பட்டியலுடன் சேர்க்கப்படும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "A reviewer rejects a draft and the graph sends it back to the writer. Which LangGraph feature makes this loop possible?",
+        "ta": "Reviewer ஒரு draft-ஐ நிராகரித்தால், graph அதை மீண்டும் writer-க்கு அனுப்புகிறது. இந்த loop-ஐ சாத்தியமாக்கும் LangGraph அம்சம் எது?"
+      },
+      "options": {
+        "en": [
+          "Conditional edges that pick a path based on state",
+          "Running the nodes as a simple linear chain",
+          "A plain add_edge from START to END",
+          "Compiling the graph a second time"
+        ],
+        "ta": [
+          "State-ஐப் பொறுத்து பாதையைத் தேர்ந்தெடுக்கும் conditional edges",
+          "Nodes-ஐ ஒரு எளிய நேரியல் chain ஆக இயக்குவது",
+          "START-இலிருந்து END-க்கு ஒரு சாதாரண add_edge",
+          "Graph-ஐ இரண்டாவது முறை compile செய்வது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "A run paused at an interrupt with thread_id '1'. The dev resumes with app.invoke(None, config={'configurable': {'thread_id': '2'}}). What's wrong?",
+        "ta": "thread_id '1' உடன் ஒரு run interrupt-இல் நின்றது. Dev app.invoke(None, config={'configurable': {'thread_id': '2'}}) மூலம் தொடர்கிறார். என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "None can't be passed to invoke; input data is required",
+          "interrupt_before must list the reviewer node instead",
+          "Different thread_id, so it won't resume the paused run",
+          "The graph must be recompiled before resuming"
+        ],
+        "ta": [
+          "invoke-க்கு None அனுப்ப முடியாது; input data தேவை",
+          "interrupt_before-இல் reviewer node-ஐத்தான் குறிப்பிட வேண்டும்",
+          "thread_id வேறு, எனவே நின்ற run தொடராது",
+          "தொடர்வதற்கு முன் graph-ஐ மீண்டும் compile செய்ய வேண்டும்"
+        ]
+      },
+      "correct": 2
+    }
   ]
 }

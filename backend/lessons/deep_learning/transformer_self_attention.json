@@ -304,5 +304,91 @@
     "real_world_application": [],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nimport numpy as np\nm = np.tril(np.ones((3, 3), dtype=bool))\nprint(m.sum())",
+        "ta": "இது என்ன அச்சிடும்?\nimport numpy as np\nm = np.tril(np.ones((3, 3), dtype=bool))\nprint(m.sum())"
+      },
+      "options": {
+        "en": [
+          "6",
+          "9",
+          "3",
+          "True"
+        ],
+        "ta": [
+          "6",
+          "9",
+          "3",
+          "True"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In self-attention, where do the queries, keys and values come from?",
+        "ta": "self-attention-இல் queries, keys, values எங்கிருந்து வருகின்றன?"
+      },
+      "options": {
+        "en": [
+          "All three come from the same input sequence",
+          "Only the previous token's embedding",
+          "Queries from the input, keys and values from the encoder",
+          "Q, K, V are fixed random matrices, not tied to the input"
+        ],
+        "ta": [
+          "மூன்றும் ஒரே உள்ளீட்டு வரிசையிலிருந்து வருகின்றன",
+          "முந்தைய token-இன் embedding மட்டும்",
+          "Queries உள்ளீட்டிலிருந்து, keys மற்றும் values encoder-இலிருந்து",
+          "Q, K, V உள்ளீட்டுடன் தொடர்பில்லாத நிலையான random அணிகள்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "X has shape (10, 512) and W_Q has shape (512, 64). What is the shape of Q = X @ W_Q?",
+        "ta": "X-இன் வடிவம் (10, 512), W_Q-இன் வடிவம் (512, 64). Q = X @ W_Q-இன் வடிவம் என்ன?"
+      },
+      "options": {
+        "en": [
+          "(64, 10)",
+          "(10, 512)",
+          "(10, 64)",
+          "(512, 64)"
+        ],
+        "ta": [
+          "(64, 10)",
+          "(10, 512)",
+          "(10, 64)",
+          "(512, 64)"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "A causal mask is written as mask = np.triu(np.ones((n, n), dtype=bool)). What is the mistake?",
+        "ta": "ஒரு causal mask இவ்வாறு எழுதப்பட்டது: mask = np.triu(np.ones((n, n), dtype=bool)). இதில் உள்ள பிழை என்ன?"
+      },
+      "options": {
+        "en": [
+          "dtype=bool is not allowed with np.ones",
+          "The shape should be (n, n+1) to include the current token",
+          "triu keeps the upper triangle, so tokens see future positions",
+          "No mistake: triu and tril give the same causal mask"
+        ],
+        "ta": [
+          "np.ones உடன் dtype=bool அனுமதிக்கப்படாது",
+          "தற்போதைய token-ஐ சேர்க்க வடிவம் (n, n+1) ஆக இருக்க வேண்டும்",
+          "triu மேல் முக்கோணத்தை வைக்கிறது, அதனால் tokens எதிர்கால நிலைகளைப் பார்க்கும்",
+          "பிழை இல்லை: triu, tril இரண்டும் ஒரே causal mask தரும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

@@ -67,5 +67,91 @@
       ],
       "test_code": "assert len(filtered_docs) == 2\nassert all(d['relevance_score'] >= 0.7 for d in filtered_docs)"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ndocs = [{'s': 0.9}, {'s': 0.1}, {'s': 0.7}]\nkept = [d for d in docs if d['s'] >= 0.7]\nprint(len(kept))",
+        "ta": "இது என்ன அச்சிடும்?\ndocs = [{'s': 0.9}, {'s': 0.1}, {'s': 0.7}]\nkept = [d for d in docs if d['s'] >= 0.7]\nprint(len(kept))"
+      },
+      "options": {
+        "en": [
+          "1",
+          "[0.9, 0.7]",
+          "3",
+          "2"
+        ],
+        "ta": [
+          "1",
+          "[0.9, 0.7]",
+          "3",
+          "2"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: docs is a list of dicts, and the code is kept = [d for d in docs if d.relevance_score >= 0.7]",
+        "ta": "தவறைக் கண்டுபிடிக்கவும்: docs என்பது dict-களின் பட்டியல், குறியீடு: kept = [d for d in docs if d.relevance_score >= 0.7]"
+      },
+      "options": {
+        "en": [
+          "A list comprehension cannot contain an if clause",
+          "You must use a for loop with append() instead",
+          "Dict values need d['relevance_score'], not dot access",
+          "The operator should be written => instead of >="
+        ],
+        "ta": [
+          "List comprehension-இல் if பகுதி இருக்க முடியாது",
+          "அதற்கு பதிலாக append() உடன் for loop பயன்படுத்த வேண்டும்",
+          "Dict மதிப்புகளுக்கு dot அணுகல் அல்ல, d['relevance_score'] தேவை",
+          "Operator-ஐ >= என்பதற்கு பதிலாக => என எழுத வேண்டும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nscore = 'yes, it is relevant'\nprint('YES' in score.upper())",
+        "ta": "இது என்ன அச்சிடும்?\nscore = 'yes, it is relevant'\nprint('YES' in score.upper())"
+      },
+      "options": {
+        "en": [
+          "False",
+          "A TypeError",
+          "YES",
+          "True"
+        ],
+        "ta": [
+          "False",
+          "ஒரு TypeError",
+          "YES",
+          "True"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "In the lesson's graph, what happens after 'grade' when is_sufficient is False?",
+        "ta": "பாடத்தின் graph-இல், 'grade'-க்குப் பிறகு is_sufficient False ஆக இருந்தால் என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "It loops back to decompose immediately",
+          "It goes straight to END with no answer",
+          "It goes to web_search, then on to generate",
+          "It goes to generate using the ungraded documents"
+        ],
+        "ta": [
+          "உடனே decompose-க்குத் திரும்பிச் செல்லும்",
+          "பதில் இல்லாமல் நேரடியாக END-க்குச் செல்லும்",
+          "web_search-க்குச் சென்று, பின் generate-க்குச் செல்லும்",
+          "தரம் பிரிக்கப்படாத ஆவணங்களுடன் generate-க்குச் செல்லும்"
+        ]
+      },
+      "correct": 2
+    }
   ]
 }

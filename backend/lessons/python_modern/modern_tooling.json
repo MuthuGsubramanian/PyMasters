@@ -63,5 +63,91 @@
       "hints": ["Start with # /// script block", "Use polars.read_csv('data.csv')", "Use rich.print() or rich.console.Console().print()"],
       "test_code": "# Manual review: check PEP 723 header format and correct library usage"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Which command adds `requests` to your uv project and updates pyproject.toml?",
+        "ta": "உங்கள் uv திட்டத்தில் `requests`-ஐச் சேர்த்து pyproject.toml-ஐப் புதுப்பிக்கும் கட்டளை எது?"
+      },
+      "options": {
+        "en": [
+          "uv sync requests",
+          "uv lock requests",
+          "uv add requests",
+          "pip install requests"
+        ],
+        "ta": [
+          "uv sync requests",
+          "uv lock requests",
+          "uv add requests",
+          "pip install requests"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "You ran `uv lock`. Which command makes your environment match the lockfile?",
+        "ta": "நீங்கள் `uv lock` இயக்கிவிட்டீர்கள். உங்கள் சூழலை lockfile-க்குப் பொருந்தும்படி மாற்றும் கட்டளை எது?"
+      },
+      "options": {
+        "en": [
+          "uv lock --install",
+          "uv sync",
+          "pip install -r uv.lock",
+          "uv init"
+        ],
+        "ta": [
+          "uv lock --install",
+          "uv sync",
+          "pip install -r uv.lock",
+          "uv init"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A script starts with a `# /// script` block listing dependencies. What does `uv run script.py` do?",
+        "ta": "ஒரு script சார்புகளைப் பட்டியலிடும் `# /// script` பகுதியுடன் தொடங்குகிறது. `uv run script.py` என்ன செய்யும்?"
+      },
+      "options": {
+        "en": [
+          "Installs them in an ephemeral env, then runs the script",
+          "Installs them globally into the system Python",
+          "Ignores the block, since lines starting with # are comments",
+          "Fails unless you first create and activate a venv"
+        ],
+        "ta": [
+          "அவற்றைத் தற்காலிகச் சூழலில் நிறுவி, பிறகு script-ஐ இயக்கும்",
+          "அவற்றை system Python-இல் global-ஆக நிறுவும்",
+          "# இல் தொடங்கும் வரிகள் comments என்பதால் அந்தப் பகுதியைப் புறக்கணிக்கும்",
+          "முதலில் venv உருவாக்கிச் செயல்படுத்தாவிட்டால் தோல்வியடையும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: a config puts `select = [\"E\", \"F\"]` under [tool.ruff.format]. Where should it go?",
+        "ta": "தவறைக் கண்டறியுங்கள்: ஒரு config-இல் `select = [\"E\", \"F\"]` என்பது [tool.ruff.format]-இன் கீழ் உள்ளது. அது எங்கு இருக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "[project.dependencies]",
+          "[tool.black]",
+          "[tool.ruff.lint]",
+          "[tool.ruff.select]"
+        ],
+        "ta": [
+          "[project.dependencies]",
+          "[tool.black]",
+          "[tool.ruff.lint]",
+          "[tool.ruff.select]"
+        ]
+      },
+      "correct": 2
+    }
   ]
 }

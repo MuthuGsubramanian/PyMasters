@@ -160,5 +160,91 @@
       "ai_agents"
     ]
   },
-  "generated": false
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Why does detect_loop build the signature as (tool, tuple(sorted(args.items())))?",
+        "ta": "detect_loop ஏன் signature-ஐ (tool, tuple(sorted(args.items()))) என உருவாக்குகிறது?"
+      },
+      "options": {
+        "en": [
+          "Sorting removes duplicate arguments from the call",
+          "Counter can only count strings and tuples of strings",
+          "It makes the loop message print in alphabetical order",
+          "Dicts are unhashable, so they can't be Counter keys"
+        ],
+        "ta": [
+          "Sort செய்வது அழைப்பிலுள்ள நகல் arguments-ஐ நீக்குகிறது",
+          "Counter string-களையும் string tuple-களையும் மட்டுமே எண்ணும்",
+          "Loop செய்தி அகர வரிசையில் அச்சாக இது உதவுகிறது",
+          "Dict-கள் hashable அல்ல, அதனால் அவை Counter key-களாக இருக்க முடியாது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: a budget loop does `spent += cost` and then `if spent > limit: break`. What goes wrong?",
+        "ta": "தவறைக் கண்டறியுங்கள்: ஒரு budget loop முதலில் `spent += cost` செய்து பின் `if spent > limit: break` சோதிக்கிறது. என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "It stops one call too early",
+          "Nothing; it behaves the same as checking first",
+          "spent can end above the limit, counting a refused call",
+          "It raises an error when spent equals limit"
+        ],
+        "ta": [
+          "அது ஒரு அழைப்பு முன்னதாகவே நின்றுவிடும்",
+          "எதுவும் இல்லை; முதலில் சோதிப்பது போலவே நடக்கும்",
+          "மறுக்கப்பட்ட அழைப்பையும் எண்ணி, spent வரம்பை மீறிவிடலாம்",
+          "spent, limit-க்கு சமமாகும்போது பிழை எழுப்பும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "With max_cents=8, the lesson's budget guard let the delete call run. What does this show?",
+        "ta": "max_cents=8 உடன், பாடத்தின் budget guard delete அழைப்பை இயங்க விட்டது. இது எதைக் காட்டுகிறது?"
+      },
+      "options": {
+        "en": [
+          "The loop detector should have blocked delete",
+          "Budgets limit cost and steps, not risk; that needs an approval gate",
+          "delete was cheap, so the budget judged it low-risk",
+          "The budget was set too high to be safe"
+        ],
+        "ta": [
+          "Loop detector delete-ஐத் தடுத்திருக்க வேண்டும்",
+          "Budget செலவையும் படிகளையும் மட்டுமே கட்டுப்படுத்தும்; அபாயத்துக்கு approval gate தேவை",
+          "delete மலிவானது, அதனால் budget அதைக் குறைந்த அபாயம் என மதிப்பிட்டது",
+          "Budget பாதுகாப்பற்ற அளவுக்கு அதிகமாக அமைக்கப்பட்டது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which agent behaviour slips past the lesson's exact-match loop detector?",
+        "ta": "பாடத்தின் exact-match loop detector-ஐ எந்த agent நடத்தை தப்பிவிடும்?"
+      },
+      "options": {
+        "en": [
+          "Repeating a call with the same args in a different key order",
+          "Calling read on the same document three times",
+          "Calling search with the same query three times",
+          "Searching 'refund policy', then 'refund policies', then 'refunds'"
+        ],
+        "ta": [
+          "அதே args-ஐ வேறு key வரிசையில் வைத்து அழைப்பை மீண்டும் செய்வது",
+          "ஒரே ஆவணத்தில் read-ஐ மூன்று முறை அழைப்பது",
+          "ஒரே query-உடன் search-ஐ மூன்று முறை அழைப்பது",
+          "'refund policy', பின் 'refund policies', பின் 'refunds' எனத் தேடுவது"
+        ]
+      },
+      "correct": 3
+    }
+  ]
 }

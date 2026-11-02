@@ -218,5 +218,91 @@
     "real_world_application": [],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "Using the lesson's mse function, what does print(mse([2, 4], [1, 2])) output?",
+        "ta": "பாடத்தில் உள்ள mse செயல்பாட்டைப் பயன்படுத்தினால், print(mse([2, 4], [1, 2])) என்ன வெளியிடும்?"
+      },
+      "options": {
+        "en": [
+          "1.5",
+          "2.25",
+          "5.0",
+          "2.5"
+        ],
+        "ta": [
+          "1.5",
+          "2.25",
+          "5.0",
+          "2.5"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "You are predicting a house's price (a continuous value). Which loss function does the lesson recommend?",
+        "ta": "நீங்கள் ஒரு வீட்டின் விலையை (தொடர் மதிப்பு) கணிக்கிறீர்கள். பாடம் எந்த loss function-ஐப் பரிந்துரைக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Accuracy (fraction of correct predictions)",
+          "Binary Cross-Entropy",
+          "Categorical Cross-Entropy",
+          "Mean Squared Error (MSE)"
+        ],
+        "ta": [
+          "Accuracy (சரியான கணிப்புகளின் விகிதம்)",
+          "Binary Cross-Entropy",
+          "Categorical Cross-Entropy",
+          "Mean Squared Error (MSE)"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why does binary_cross_entropy add eps = 1e-15 inside math.log?",
+        "ta": "binary_cross_entropy-இல் math.log-க்குள் ஏன் eps = 1e-15 சேர்க்கப்படுகிறது?"
+      },
+      "options": {
+        "en": [
+          "To avoid log(0) when a prediction is exactly 0 or 1",
+          "To make the loss slightly larger as a penalty",
+          "To speed up the math.log calculation",
+          "To round predictions to 15 decimal places"
+        ],
+        "ta": [
+          "கணிப்பு சரியாக 0 அல்லது 1 ஆக இருக்கும்போது log(0) வருவதைத் தவிர்க்க",
+          "தண்டனையாக loss-ஐ சற்று அதிகரிக்க",
+          "math.log கணக்கீட்டை வேகப்படுத்த",
+          "கணிப்புகளை 15 தசம இடங்களுக்கு முழுமையாக்க"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Bug: mse returns sum((yt - yp) for yt, yp in zip(y_true, y_pred)) / n. What goes wrong?",
+        "ta": "பிழை: mse ஆனது sum((yt - yp) for yt, yp in zip(y_true, y_pred)) / n என்று திருப்புகிறது. என்ன தவறு நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Large mistakes get penalised even more heavily",
+          "Positive and negative errors cancel, hiding real mistakes",
+          "Nothing; squaring only changes the units",
+          "zip raises a TypeError on the two lists"
+        ],
+        "ta": [
+          "பெரிய தவறுகள் இன்னும் அதிகமாகத் தண்டிக்கப்படும்",
+          "நேர் மற்றும் எதிர் பிழைகள் ஒன்றையொன்று ரத்து செய்து உண்மையான தவறுகளை மறைக்கும்",
+          "எதுவும் இல்லை; வர்க்கப்படுத்துதல் அலகுகளை மட்டுமே மாற்றும்",
+          "இரண்டு பட்டியல்களிலும் zip ஒரு TypeError-ஐ எழுப்பும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

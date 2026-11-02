@@ -328,5 +328,91 @@
     "real_world_application": [],
     "category": "data_science",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print? (numpy imported as np)\na = np.array([1, 2, 3])\nprint(a * 2)",
+        "ta": "இது என்ன அச்சிடும்? (numpy, np ஆக இறக்குமதி செய்யப்பட்டுள்ளது)\na = np.array([1, 2, 3])\nprint(a * 2)"
+      },
+      "options": {
+        "en": [
+          "[1 2 3 1 2 3]",
+          "[2 4 6]",
+          "[2 2 2]",
+          "TypeError: cannot multiply an array by an int"
+        ],
+        "ta": [
+          "[1 2 3 1 2 3]",
+          "[2 4 6]",
+          "[2 2 2]",
+          "TypeError: array-ஐ int-ஆல் பெருக்க முடியாது"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When adding shape (3,) to shape (2, 3), what shape does NumPy first treat the (3,) array as?",
+        "ta": "shape (3,) உடைய array-ஐ shape (2, 3) உடன் கூட்டும்போது, NumPy முதலில் (3,) array-ஐ எந்த shape ஆகக் கருதுகிறது?"
+      },
+      "options": {
+        "en": [
+          "(3, 1)",
+          "(1, 3)",
+          "(3, 3)",
+          "(2, 3), made by copying the data in memory"
+        ],
+        "ta": [
+          "(3, 1)",
+          "(1, 3)",
+          "(3, 3)",
+          "(2, 3), நினைவகத்தில் தரவை நகலெடுத்து உருவாக்கப்படும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "m has shape (2, 3). Why does m + np.array([1, 2]) raise an error?",
+        "ta": "m-இன் shape (2, 3). m + np.array([1, 2]) ஏன் பிழை தருகிறது?"
+      },
+      "options": {
+        "en": [
+          "Only scalars can be broadcast, not arrays",
+          "A 1-D array can never be added to a 2-D array",
+          "Both arrays must have the same number of dimensions",
+          "Last dimensions 3 and 2 differ and neither is 1"
+        ],
+        "ta": [
+          "scalar-களை மட்டுமே broadcast செய்ய முடியும், array-களை அல்ல",
+          "1-D array-ஐ 2-D array-உடன் ஒருபோதும் கூட்ட முடியாது",
+          "இரண்டு array-களும் ஒரே எண்ணிக்கை பரிமாணங்கள் கொண்டிருக்க வேண்டும்",
+          "கடைசி பரிமாணங்கள் 3, 2 வேறுபடுகின்றன; எதுவும் 1 இல்லை"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "x has shape (3, 1) and y has shape (4,). What is the shape of x + y?",
+        "ta": "x-இன் shape (3, 1), y-இன் shape (4,). x + y-இன் shape என்ன?"
+      },
+      "options": {
+        "en": [
+          "Error: 3 and 4 differ",
+          "(3, 4)",
+          "(3, 1)",
+          "(4, 3)"
+        ],
+        "ta": [
+          "பிழை: 3, 4 வேறுபடுகின்றன",
+          "(3, 4)",
+          "(3, 1)",
+          "(4, 3)"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

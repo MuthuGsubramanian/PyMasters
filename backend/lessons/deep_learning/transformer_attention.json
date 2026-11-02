@@ -327,5 +327,91 @@
     "real_world_application": [],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "In attention, what does the query (Q) represent?",
+        "ta": "Attention-இல் query (Q) எதைக் குறிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "The information each position carries",
+          "What each position offers to be matched against",
+          "What the current position is looking for",
+          "The final weighted average output"
+        ],
+        "ta": [
+          "ஒவ்வொரு நிலையும் கொண்டிருக்கும் தகவல்",
+          "பொருத்திப் பார்க்க ஒவ்வொரு நிலையும் வழங்குவது",
+          "தற்போதைய நிலை எதைத் தேடுகிறது என்பது",
+          "இறுதி weighted average வெளியீடு"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why are the scores divided by √d_k before softmax?",
+        "ta": "softmax-க்கு முன் scores ஏன் √d_k ஆல் வகுக்கப்படுகின்றன?"
+      },
+      "options": {
+        "en": [
+          "To make the attention weights sum to 1",
+          "To turn negative scores into positive ones",
+          "To shrink the output to d_k columns",
+          "To stop large dot products pushing softmax to near-zero gradients"
+        ],
+        "ta": [
+          "attention weights-இன் கூட்டுத்தொகை 1 ஆக வர",
+          "எதிர்மறை scores-ஐ நேர்மறையாக மாற்ற",
+          "வெளியீட்டை d_k நெடுவரிசைகளாகச் சுருக்க",
+          "பெரிய dot products softmax-ஐ பூஜ்ஜியம் அருகிலான gradients-க்கு தள்ளாமல் தடுக்க"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nK = np.zeros((5, 16))\nprint(np.sqrt(K.shape[-1]))",
+        "ta": "இது என்ன அச்சிடும்?\nK = np.zeros((5, 16))\nprint(np.sqrt(K.shape[-1]))"
+      },
+      "options": {
+        "en": [
+          "8.94427190999916",
+          "16",
+          "4.0",
+          "2.23606797749979"
+        ],
+        "ta": [
+          "8.94427190999916",
+          "16",
+          "4.0",
+          "2.23606797749979"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Q and K are both shape (3, 4). What is wrong with: scores = Q @ K / np.sqrt(d_k)",
+        "ta": "Q, K இரண்டும் (3, 4) வடிவம். scores = Q @ K / np.sqrt(d_k) இதில் என்ன தவறு?"
+      },
+      "options": {
+        "en": [
+          "It should divide by d_k, not its square root",
+          "K must be transposed: Q @ K.T",
+          "softmax must be applied before dividing",
+          "Nothing; it gives a (3, 3) score matrix"
+        ],
+        "ta": [
+          "square root அல்ல, d_k ஆல் வகுக்க வேண்டும்",
+          "K-ஐ transpose செய்ய வேண்டும்: Q @ K.T",
+          "வகுப்பதற்கு முன் softmax செய்ய வேண்டும்",
+          "தவறில்லை; இது (3, 3) score matrix தரும்"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

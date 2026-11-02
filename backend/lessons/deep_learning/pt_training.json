@@ -368,5 +368,91 @@
     "real_world_application": [],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nlayer = nn.Linear(4, 8)\nprint(sum(p.numel() for p in layer.parameters()))",
+        "ta": "இது என்ன அச்சிடும்?\nlayer = nn.Linear(4, 8)\nprint(sum(p.numel() for p in layer.parameters()))"
+      },
+      "options": {
+        "en": [
+          "32",
+          "36",
+          "12",
+          "40"
+        ],
+        "ta": [
+          "32",
+          "36",
+          "12",
+          "40"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "A loop calls loss.backward() and optimizer.step() each epoch but never optimizer.zero_grad(). What goes wrong?",
+        "ta": "ஒரு லூப் ஒவ்வொரு epoch-இலும் loss.backward(), optimizer.step() அழைக்கிறது, ஆனால் optimizer.zero_grad() அழைப்பதில்லை. என்ன தவறு நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "loss.backward() raises an error on the second epoch",
+          "The learning rate slowly drops to zero",
+          "The weights reset to zero every epoch",
+          "Gradients from earlier epochs keep adding up"
+        ],
+        "ta": [
+          "இரண்டாவது epoch-இல் loss.backward() பிழை எழுப்பும்",
+          "learning rate மெதுவாகப் பூஜ்ஜியத்துக்குக் குறையும்",
+          "ஒவ்வொரு epoch-இலும் weights பூஜ்ஜியமாக reset ஆகும்",
+          "முந்தைய epoch-களின் gradients தொடர்ந்து கூடிக்கொண்டே போகும்"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why should you call model.eval() before making predictions?",
+        "ta": "கணிப்புகள் செய்வதற்கு முன் model.eval() ஏன் அழைக்க வேண்டும்?"
+      },
+      "options": {
+        "en": [
+          "Dropout/BatchNorm switch to inference mode for consistent output",
+          "It freezes the weights so optimizer.step() can't change them",
+          "It turns off gradient tracking, just like torch.no_grad()",
+          "It saves the model's current weights to disk"
+        ],
+        "ta": [
+          "Dropout/BatchNorm நிலையான வெளியீட்டுக்காக inference முறைக்கு மாறும்",
+          "optimizer.step() மாற்ற முடியாதபடி weights-ஐ உறைய வைக்கிறது",
+          "torch.no_grad() போலவே gradient கண்காணிப்பை நிறுத்துகிறது",
+          "மாடலின் தற்போதைய weights-ஐ disk-இல் சேமிக்கிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "After torch.save(model.state_dict(), 'model.pt'), why do you create MLP(10, 64, 1) before loading?",
+        "ta": "torch.save(model.state_dict(), 'model.pt') செய்த பிறகு, load செய்வதற்கு முன் MLP(10, 64, 1) ஏன் உருவாக்குகிறோம்?"
+      },
+      "options": {
+        "en": [
+          "load_state_dict retrains the new model using the saved data",
+          "torch.load can't open a file unless a model already exists",
+          "The file holds only the weights, not the model's architecture",
+          "Loading needs the model to run one forward pass first"
+        ],
+        "ta": [
+          "சேமித்த தரவைக் கொண்டு load_state_dict புதிய மாடலை மீண்டும் பயிற்றுவிக்கிறது",
+          "ஒரு மாடல் ஏற்கனவே இல்லாமல் torch.load கோப்பைத் திறக்க முடியாது",
+          "கோப்பில் weights மட்டுமே உள்ளன, மாடலின் அமைப்பு (architecture) இல்லை",
+          "load செய்ய மாடல் முதலில் ஒரு forward pass ஓட்ட வேண்டும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

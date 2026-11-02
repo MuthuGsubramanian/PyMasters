@@ -65,5 +65,91 @@
       ],
       "test_code": "assert agent_config['name'] == 'WeatherBot'\nassert len(agent_config['tools']) == 2\nassert agent_config['max_steps'] == 5"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What is the key difference between a plain LLM call and an AI agent?",
+        "ta": "சாதாரண LLM அழைப்புக்கும் AI ஏஜென்டுக்கும் உள்ள முக்கிய வேறுபாடு என்ன?"
+      },
+      "options": {
+        "en": [
+          "The agent can act by calling tools, APIs and other agents",
+          "The agent only gives advice on how to do the task",
+          "The agent uses a bigger model, so its answers are longer",
+          "The agent works without any LLM at all"
+        ],
+        "ta": [
+          "ஏஜென்ட் கருவிகள், API-கள், பிற ஏஜென்டுகளை அழைத்துச் செயல்பட முடியும்",
+          "ஏஜென்ட் பணியை எப்படிச் செய்வது என்று ஆலோசனை மட்டுமே தரும்",
+          "ஏஜென்ட் பெரிய மாடலைப் பயன்படுத்துவதால் அதன் பதில்கள் நீளமாக இருக்கும்",
+          "ஏஜென்ட் எந்த LLM-உம் இல்லாமல் இயங்குகிறது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In each pass of the agent loop, in what order do the steps happen?",
+        "ta": "ஏஜென்ட் லூப்பின் ஒவ்வொரு சுற்றிலும் படிகள் எந்த வரிசையில் நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Perceive, reason, act, then update memory",
+          "Perceive, then act, then reason",
+          "Act, then reason, then perceive",
+          "Reason, then perceive, then act"
+        ],
+        "ta": [
+          "உணர்தல், சிந்தித்தல், செயல், பின் நினைவகத்தைப் புதுப்பித்தல்",
+          "உணர்தல், பின் செயல், பின் சிந்தித்தல்",
+          "செயல், பின் சிந்தித்தல், பின் உணர்தல்",
+          "சிந்தித்தல், பின் உணர்தல், பின் செயல்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\ncfg = {'tools': ['get_weather', 'get_forecast']}\nprint(len(cfg['tools']))",
+        "ta": "இது என்ன அச்சிடும்?\ncfg = {'tools': ['get_weather', 'get_forecast']}\nprint(len(cfg['tools']))"
+      },
+      "options": {
+        "en": [
+          "TypeError",
+          "1",
+          "11",
+          "2"
+        ],
+        "ta": [
+          "TypeError",
+          "1",
+          "11",
+          "2"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake:\ncfg = {'tools': ['get_weather']}\nprint(len(cfg[tools]))",
+        "ta": "பிழையைக் கண்டுபிடிக்கவும்:\ncfg = {'tools': ['get_weather']}\nprint(len(cfg[tools]))"
+      },
+      "options": {
+        "en": [
+          "len() cannot be used on a list",
+          "The key must be a string: cfg['tools']",
+          "Use dot access instead: cfg.tools",
+          "A list needs at least two items for len() to work"
+        ],
+        "ta": [
+          "len() ஐ பட்டியலில் பயன்படுத்த முடியாது",
+          "திறவுகோல் சரமாக இருக்க வேண்டும்: cfg['tools']",
+          "புள்ளி அணுகலைப் பயன்படுத்த வேண்டும்: cfg.tools",
+          "len() வேலை செய்ய பட்டியலில் குறைந்தது இரண்டு உருப்படிகள் வேண்டும்"
+        ]
+      },
+      "correct": 1
+    }
   ]
 }

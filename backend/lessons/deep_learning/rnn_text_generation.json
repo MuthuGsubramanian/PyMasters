@@ -302,5 +302,91 @@
     ],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\nvocab = sorted(set(\"hello\"))\nprint(vocab)",
+        "ta": "இது என்ன அச்சிடும்?\nvocab = sorted(set(\"hello\"))\nprint(vocab)"
+      },
+      "options": {
+        "en": [
+          "['h', 'e', 'l', 'l', 'o']",
+          "['h', 'e', 'l', 'o']",
+          "['e', 'h', 'l', 'l', 'o']",
+          "['e', 'h', 'l', 'o']"
+        ],
+        "ta": [
+          "['h', 'e', 'l', 'l', 'o']",
+          "['h', 'e', 'l', 'o']",
+          "['e', 'h', 'l', 'l', 'o']",
+          "['e', 'h', 'l', 'o']"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\ntext = \"hello world\"\nprint(len(sorted(set(text))))",
+        "ta": "இது என்ன அச்சிடும்?\ntext = \"hello world\"\nprint(len(sorted(set(text))))"
+      },
+      "options": {
+        "en": [
+          "10",
+          "11",
+          "7",
+          "8"
+        ],
+        "ta": [
+          "10",
+          "11",
+          "7",
+          "8"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the mistake in: char2idx = {i: c for i, c in enumerate(vocab)}",
+        "ta": "இதில் உள்ள தவறைக் கண்டறியவும்: char2idx = {i: c for i, c in enumerate(vocab)}"
+      },
+      "options": {
+        "en": [
+          "enumerate starts at 1, so indices are off by one",
+          "Nothing is wrong; it maps char to index",
+          "vocab must be a set, not a list",
+          "It maps index to char, not char to index"
+        ],
+        "ta": [
+          "enumerate 1-இல் தொடங்குவதால் எண்கள் ஒன்று விலகுகின்றன",
+          "தவறு எதுவும் இல்லை; இது எழுத்தை எண்ணுக்கு மாற்றுகிறது",
+          "vocab ஒரு list அல்ல, set ஆக இருக்க வேண்டும்",
+          "இது எழுத்தை எண்ணுக்கு அல்ல, எண்ணை எழுத்துக்கு மாற்றுகிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Why is X built from text[:-1] and Y from text[1:]?",
+        "ta": "X ஏன் text[:-1] இலிருந்தும் Y ஏன் text[1:] இலிருந்தும் உருவாக்கப்படுகின்றன?"
+      },
+      "options": {
+        "en": [
+          "To remove spaces from the training text",
+          "So each target is the next character after its input",
+          "To make the text shorter so training is faster",
+          "So X and Y contain different characters"
+        ],
+        "ta": [
+          "பயிற்சி உரையிலிருந்து இடைவெளிகளை நீக்க",
+          "ஒவ்வொரு இலக்கும் அதன் உள்ளீட்டுக்கு அடுத்த எழுத்தாக இருக்க",
+          "பயிற்சி வேகமாக இருக்க உரையைச் சுருக்க",
+          "X மற்றும் Y வெவ்வேறு எழுத்துகளைக் கொண்டிருக்க"
+        ]
+      },
+      "correct": 1
+    }
+  ]
 }

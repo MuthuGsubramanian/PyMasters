@@ -253,5 +253,91 @@
     "real_world_application": [],
     "category": "data_science",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\na = np.array([1, 2])\nb = np.array([10, 20])\nprint(a + b)",
+        "ta": "இது என்ன அச்சிடும்?\na = np.array([1, 2])\nb = np.array([10, 20])\nprint(a + b)"
+      },
+      "options": {
+        "en": [
+          "[1 2 10 20]",
+          "33",
+          "TypeError: arrays can't be added",
+          "[11 22]"
+        ],
+        "ta": [
+          "[1 2 10 20]",
+          "33",
+          "TypeError: array-களைக் கூட்ட முடியாது",
+          "[11 22]"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does this print?\nm = np.array([[1, 2], [3, 4]])\nprint(m.sum(axis=0))",
+        "ta": "இது என்ன அச்சிடும்?\nm = np.array([[1, 2], [3, 4]])\nprint(m.sum(axis=0))"
+      },
+      "options": {
+        "en": [
+          "[3 7]",
+          "[4 6]",
+          "[1 2 3 4]",
+          "10"
+        ],
+        "ta": [
+          "[3 7]",
+          "[4 6]",
+          "[1 2 3 4]",
+          "10"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In NumPy, what does 'vectorisation' mean?",
+        "ta": "NumPy-இல் 'vectorisation' என்றால் என்ன?"
+      },
+      "options": {
+        "en": [
+          "Applying an operation to every element at once, without a for loop",
+          "Running a for loop over the array faster",
+          "Converting a Python list into a 1D array",
+          "Reducing every array to a single number"
+        ],
+        "ta": [
+          "for loop இல்லாமல், எல்லா உறுப்புகளின் மீதும் ஒரே நேரத்தில் செயல்பாட்டைச் செய்வது",
+          "array மீது for loop-ஐ வேகமாக இயக்குவது",
+          "Python list-ஐ 1D array-ஆக மாற்றுவது",
+          "ஒவ்வொரு array-யையும் ஒரே எண்ணாகச் சுருக்குவது"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "A student wants each row's total of 2D array m and writes m.sum(axis=0). What's the mistake?",
+        "ta": "2D array m-இன் ஒவ்வொரு வரிசையின் கூட்டுத்தொகையும் வேண்டும் என்று மாணவர் m.sum(axis=0) என எழுதுகிறார். தவறு என்ன?"
+      },
+      "options": {
+        "en": [
+          "axis=0 is right; it collapses columns into row totals",
+          "sum() can't take an axis argument",
+          "axis=0 gives per-column totals; per-row needs axis=1",
+          "They must loop over rows; sum() only works on 1D arrays"
+        ],
+        "ta": [
+          "axis=0 சரிதான்; அது நெடுவரிசைகளைச் சுருக்கி வரிசைக் கூட்டுத்தொகைகளைத் தரும்",
+          "sum()-க்கு axis argument கொடுக்க முடியாது",
+          "axis=0 ஒவ்வொரு நெடுவரிசைக்குமான கூட்டுத்தொகையைத் தரும்; வரிசைக்கு axis=1 வேண்டும்",
+          "வரிசைகள் மீது loop செய்ய வேண்டும்; sum() 1D array-களில் மட்டுமே வேலை செய்யும்"
+        ]
+      },
+      "correct": 2
+    }
+  ]
 }

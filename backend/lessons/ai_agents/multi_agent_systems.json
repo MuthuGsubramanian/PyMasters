@@ -66,5 +66,91 @@
       ],
       "test_code": "assert len(crew) == 3\nassert crew[0]['role'] == 'Researcher'\nassert crew[1]['role'] == 'Writer'\nassert crew[2]['role'] == 'Editor'"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\ncrew = [{'role': 'Researcher'}, {'role': 'Writer'}]\nprint(crew[1]['role'])",
+        "ta": "இது என்ன அச்சிடும்?\ncrew = [{'role': 'Researcher'}, {'role': 'Writer'}]\nprint(crew[1]['role'])"
+      },
+      "options": {
+        "en": [
+          "Writer",
+          "KeyError",
+          "{'role': 'Writer'}",
+          "Researcher"
+        ],
+        "ta": [
+          "Writer",
+          "KeyError",
+          "{'role': 'Writer'}",
+          "Researcher"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "In CrewAI, what does context=[research_task] on writing_task do?",
+        "ta": "CrewAI-இல், writing_task-இல் உள்ள context=[research_task] என்ன செய்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Gives the writer the researcher's tools",
+          "Runs research_task again inside writing_task",
+          "Passes research_task's output to the writer's task",
+          "Makes research_task wait until writing_task finishes"
+        ],
+        "ta": [
+          "ஆய்வாளரின் கருவிகளை எழுத்தாளருக்குக் கொடுக்கிறது",
+          "writing_task-க்குள் research_task-ஐ மீண்டும் இயக்குகிறது",
+          "research_task-இன் வெளியீட்டை எழுத்தாளரின் பணிக்கு அனுப்புகிறது",
+          "writing_task முடியும் வரை research_task-ஐக் காத்திருக்க வைக்கிறது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "With which Process does CrewAI create a manager agent that decides which agent handles each task?",
+        "ta": "எந்த Process-இல், ஒவ்வொரு பணியையும் எந்த agent கையாள வேண்டும் என்று முடிவு செய்யும் manager agent-ஐ CrewAI உருவாக்குகிறது?"
+      },
+      "options": {
+        "en": [
+          "Process.sequential",
+          "Process.parallel",
+          "Neither; you must always write the manager yourself",
+          "Process.hierarchical"
+        ],
+        "ta": [
+          "Process.sequential",
+          "Process.parallel",
+          "எதுவும் இல்லை; manager-ஐ எப்போதும் நீங்களே எழுத வேண்டும்",
+          "Process.hierarchical"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "What does allow_delegation=True let an agent do?",
+        "ta": "allow_delegation=True ஒரு agent-ஐ என்ன செய்ய அனுமதிக்கிறது?"
+      },
+      "options": {
+        "en": [
+          "Ask another agent for help with sub-tasks",
+          "Skip tasks it is not assigned to",
+          "Run its tasks in parallel with every other agent",
+          "Use any tool belonging to the crew"
+        ],
+        "ta": [
+          "துணைப் பணிகளுக்கு மற்றொரு agent-இடம் உதவி கேட்க",
+          "தனக்கு ஒதுக்கப்படாத பணிகளைத் தவிர்க்க",
+          "மற்ற எல்லா agent-களுடனும் இணையாகத் தன் பணிகளை இயக்க",
+          "crew-இல் உள்ள எந்தக் கருவியையும் பயன்படுத்த"
+        ]
+      },
+      "correct": 0
+    }
   ]
 }

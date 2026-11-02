@@ -308,5 +308,91 @@
     "real_world_application": [],
     "category": "deep_learning",
     "path_memberships": []
-  }
+  },
+  "quiz": [
+    {
+      "q": {
+        "en": "In an RNN, what is the role of the hidden state h_t?",
+        "ta": "RNN-இல் மறைநிலை (hidden state) h_t-இன் பங்கு என்ன?"
+      },
+      "options": {
+        "en": [
+          "It stores only the final output label",
+          "It holds a fresh copy of the current input x_t",
+          "It carries context from earlier inputs to later steps",
+          "It is reset to zeros at every time step"
+        ],
+        "ta": [
+          "இறுதி வெளியீட்டு லேபிளை மட்டும் சேமிக்கிறது",
+          "தற்போதைய உள்ளீடு x_t-இன் புதிய நகலை வைத்திருக்கிறது",
+          "முந்தைய உள்ளீடுகளின் சூழலை அடுத்த படிகளுக்குக் கொண்டு செல்கிறது",
+          "ஒவ்வொரு நேரப் படியிலும் பூஜ்ஜியங்களாக மீட்டமைக்கப்படுகிறது"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does this print?\nimport numpy as np\nprint(np.tanh(0.0))",
+        "ta": "இது என்ன அச்சிடும்?\nimport numpy as np\nprint(np.tanh(0.0))"
+      },
+      "options": {
+        "en": [
+          "0.5",
+          "1.0",
+          "-1.0",
+          "0.0"
+        ],
+        "ta": [
+          "0.5",
+          "1.0",
+          "-1.0",
+          "0.0"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Spot the bug:\nfor x_t in seq:\n    h = np.tanh(W_h @ h0 + W_x @ x_t + b)",
+        "ta": "பிழையைக் கண்டறியவும்:\nfor x_t in seq:\n    h = np.tanh(W_h @ h0 + W_x @ x_t + b)"
+      },
+      "options": {
+        "en": [
+          "It uses h0 every step, so memory never carries forward",
+          "b must be added outside np.tanh",
+          "W_x @ x_t should be removed from the update",
+          "np.tanh must be applied before the matrix multiply"
+        ],
+        "ta": [
+          "ஒவ்வொரு படியிலும் h0 பயன்படுத்தப்படுவதால் நினைவு முன்னே செல்வதில்லை",
+          "b ஆனது np.tanh-க்கு வெளியே கூட்டப்பட வேண்டும்",
+          "புதுப்பிப்பிலிருந்து W_x @ x_t நீக்கப்பட வேண்டும்",
+          "அணி பெருக்கலுக்கு முன்பே np.tanh பயன்படுத்தப்பட வேண்டும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "An RNN unrolled over 5 time steps is like a 5-layer network. How are the weights used across those layers?",
+        "ta": "5 நேரப் படிகளுக்கு விரிக்கப்பட்ட RNN ஒரு 5-அடுக்கு நெட்வொர்க் போன்றது. அந்த அடுக்குகளில் எடைகள் எப்படிப் பயன்படுகின்றன?"
+      },
+      "options": {
+        "en": [
+          "All layers share the same W_h, W_x and b",
+          "Each layer learns its own separate weights",
+          "Only the first layer has weights",
+          "Weights are re-initialised randomly at each step"
+        ],
+        "ta": [
+          "எல்லா அடுக்குகளும் அதே W_h, W_x, b-ஐப் பகிர்கின்றன",
+          "ஒவ்வொரு அடுக்கும் தனித்தனி எடைகளைக் கற்கிறது",
+          "முதல் அடுக்குக்கு மட்டுமே எடைகள் உள்ளன",
+          "ஒவ்வொரு படியிலும் எடைகள் சீரற்ற முறையில் மீண்டும் தொடக்கப்படுகின்றன"
+        ]
+      },
+      "correct": 0
+    }
+  ]
 }

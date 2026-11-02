@@ -65,5 +65,91 @@
       ],
       "test_code": "assert isinstance(book, BookRecommendation)\nassert book.title == 'Dune'\nassert book.rating == 4.8"
     }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print? (BaseModel imported from pydantic)\nclass Book(BaseModel): rating: float\nb = Book(rating=4.8)\nprint(b.rating)",
+        "ta": "இது என்ன அச்சிடும்? (BaseModel, pydantic-இலிருந்து import செய்யப்பட்டது)\nclass Book(BaseModel): rating: float\nb = Book(rating=4.8)\nprint(b.rating)"
+      },
+      "options": {
+        "en": [
+          "'4.8'",
+          "4.8",
+          "Book(rating=4.8)",
+          "rating=4.8"
+        ],
+        "ta": [
+          "'4.8'",
+          "4.8",
+          "Book(rating=4.8)",
+          "rating=4.8"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "With @agent.tool, how does the LLM know which parameters to pass to your function?",
+        "ta": "@agent.tool பயன்படுத்தும்போது, உங்கள் function-க்கு எந்த parameters அனுப்ப வேண்டும் என்று LLM-க்கு எப்படித் தெரியும்?"
+      },
+      "options": {
+        "en": [
+          "You must write the JSON schema by hand",
+          "Only the docstring is sent; type hints are ignored",
+          "The LLM guesses from the function name only",
+          "PydanticAI builds a JSON schema from the type hints"
+        ],
+        "ta": [
+          "JSON schema-வை நீங்களே கையால் எழுத வேண்டும்",
+          "docstring மட்டுமே அனுப்பப்படும்; type hints புறக்கணிக்கப்படும்",
+          "function பெயரை மட்டும் வைத்து LLM ஊகிக்கிறது",
+          "type hints-இலிருந்து PydanticAI ஒரு JSON schema-வை உருவாக்குகிறது"
+        ]
+      },
+      "correct": 3
+    },
+    {
+      "q": {
+        "en": "Inside a tool declared as get_forecast(ctx: RunContext[WeatherDeps], days: int), how do you read the injected api_key?",
+        "ta": "get_forecast(ctx: RunContext[WeatherDeps], days: int) என அறிவிக்கப்பட்ட tool-க்குள், inject செய்யப்பட்ட api_key-ஐ எப்படிப் படிப்பீர்கள்?"
+      },
+      "options": {
+        "en": [
+          "WeatherDeps.api_key",
+          "ctx.deps.api_key",
+          "agent.deps.api_key",
+          "ctx.api_key"
+        ],
+        "ta": [
+          "WeatherDeps.api_key",
+          "ctx.deps.api_key",
+          "agent.deps.api_key",
+          "ctx.api_key"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Spot the mistake: the agent has deps_type=WeatherDeps, and you call await agent.run('3-day forecast?'). What is missing?",
+        "ta": "தவறைக் கண்டுபிடி: agent-க்கு deps_type=WeatherDeps உள்ளது, நீங்கள் await agent.run('3-day forecast?') என்று அழைக்கிறீர்கள். எது விடுபட்டுள்ளது?"
+      },
+      "options": {
+        "en": [
+          "Passing deps=WeatherDeps(...) to agent.run",
+          "deps_type must be a dict, not a dataclass",
+          "result_type must be set to WeatherDeps",
+          "The tool must be declared without async"
+        ],
+        "ta": [
+          "agent.run-க்கு deps=WeatherDeps(...) அனுப்புவது",
+          "deps_type ஒரு dataclass அல்ல, dict ஆக இருக்க வேண்டும்",
+          "result_type-ஐ WeatherDeps என அமைக்க வேண்டும்",
+          "tool-ஐ async இல்லாமல் அறிவிக்க வேண்டும்"
+        ]
+      },
+      "correct": 0
+    }
   ]
 }
