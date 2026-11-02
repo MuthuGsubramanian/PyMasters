@@ -1,0 +1,11 @@
+{
+  "lesson_id": "pandas_merging",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import pandas as pd\n\nemployees = pd.DataFrame({\n    \"emp_id\": [1, 2, 3, 4],\n    \"name\": [\"Alice\", \"Bob\", \"Charlie\", \"Diana\"],\n})\n\nsalaries = pd.DataFrame({\n    \"emp_id\": [1, 2, 3, 5],\n    \"salary\": [70000, 65000, 80000, 90000],\n})\n\nmerged = pd.merge(employees, salaries, on=\"emp_id\", how=\"inner\")\nprint(merged)\n",
+      "verified_output": "emp_id     name  salary\n0       1    Alice   70000\n1       2      Bob   65000\n2       3  Charlie   80000",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

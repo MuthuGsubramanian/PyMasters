@@ -1,0 +1,11 @@
+{
+  "lesson_id": "pandas_filtering",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import pandas as pd\n\ndf = pd.DataFrame({\n    'product': ['Laptop', 'Mouse', 'Keyboard', 'Monitor', 'Cable'],\n    'price': [999.99, 25.50, 79.00, 249.00, 9.99],\n    'in_stock': [True, True, False, True, True],\n})\n\naffordable = df[(df['price'] < 100) & (df['in_stock'] == True)]\nprint(affordable)\n",
+      "verified_output": "product  price  in_stock\n1   Mouse  25.50      True\n4   Cable   9.99      True",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

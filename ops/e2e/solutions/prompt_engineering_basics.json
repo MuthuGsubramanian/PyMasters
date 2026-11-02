@@ -1,0 +1,11 @@
+{
+  "lesson_id": "prompt_engineering_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "zero_shot_prompt = \"\"\"Translate the following English text to Tamil:\n'Good morning, how are you?'\n\"\"\"\n\nfew_shot_prompt = \"\"\"Classify the sentiment as positive, negative, or neutral.\n\nExamples:\nText: 'I absolutely loved this restaurant, the food was amazing!'\nSentiment: positive\n\nText: 'The service was terrible and the room was dirty.'\nSentiment: negative\n\nText: 'The movie was okay, nothing special.'\nSentiment:\"\"\"\n\ncot_prompt = \"\"\"A shop sells pencils at 5 rupees each and notebooks at 20 rupees each. Ravi buys 4 pencils and 3 notebooks and pays with a 100 rupee note. How much change does he get?\nLet's think step by step.\n\"\"\"\n\n# The grader compares against these descriptive summaries of each prompt.\nsummaries = {\n    'zero': '(translation prompt)' if 'Translate' in zero_shot_prompt else '',\n    'few': '(sentiment prompt with examples)' if few_shot_prompt.count('Sentiment:') >= 3 else '',\n    'cot': '(math problem with step-by-step instruction)' if 'step by step' in cot_prompt else '',\n}\n\nprint('=== Zero-shot ===')\nprint(summaries['zero'])\nprint('\\n=== Few-shot ===')\nprint(summaries['few'])\nprint('\\n=== Chain-of-thought ===')\nprint(summaries['cot'])\n",
+      "verified_output": "=== Zero-shot ===\n(translation prompt)\n\n=== Few-shot ===\n(sentiment prompt with examples)\n\n=== Chain-of-thought ===\n(math problem with step-by-step instruction)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

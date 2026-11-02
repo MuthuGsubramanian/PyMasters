@@ -1,0 +1,11 @@
+{
+  "lesson_id": "model_deployment",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import joblib\nimport numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.datasets import load_wine\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.pipeline import Pipeline\n\nX, y = load_wine(return_X_y=True)\n\n# Build pipeline\npipeline = Pipeline([\n    ('scaler', StandardScaler()),\n    ('clf', LogisticRegression(max_iter=10000, random_state=42))\n])\npipeline.fit(X, y)\n\n# Save\njoblib.dump(pipeline, 'wine_pipeline.joblib')\n\n# Load and verify\nloaded = joblib.load('wine_pipeline.joblib')\nsample = X[:3]\nassert np.array_equal(pipeline.predict(sample), loaded.predict(sample))\nprint('Predictions match!')\nprint(f'Sample predictions: {loaded.predict(sample)}')\n\n# FastAPI endpoint (conceptual)\ndef predict_wine(features: list):\n    arr = np.array([features])\n    pred = loaded.predict(arr)[0]\n    proba = loaded.predict_proba(arr)[0].max()\n    return {'class': int(pred), 'confidence': round(float(proba), 3)}\n\nprint(predict_wine(X[0].tolist()))\n",
+      "verified_output": "Predictions match!\nSample predictions: [0 0 0]\n{'class': 0, 'confidence': 1.0}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

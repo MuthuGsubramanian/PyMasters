@@ -1,0 +1,11 @@
+{
+  "lesson_id": "ml_workflow",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from sklearn.datasets import load_iris\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import RandomForestClassifier\n\n# Load data\niris = load_iris()\nX, y = iris.data, iris.target\n\n# Split data\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\n# Train model\nmodel = RandomForestClassifier(n_estimators=100, random_state=42)\nmodel.fit(X_train, y_train)\n\n# Evaluate\naccuracy = model.score(X_test, y_test)\nprint(f'Iris Accuracy: {accuracy:.2f}')\n",
+      "verified_output": "Iris Accuracy: 1.00",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

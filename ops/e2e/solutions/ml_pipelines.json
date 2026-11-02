@@ -1,0 +1,11 @@
+{
+  "lesson_id": "ml_pipelines",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import pandas as pd\nimport numpy as np\nfrom sklearn.pipeline import Pipeline\nfrom sklearn.compose import ColumnTransformer\nfrom sklearn.preprocessing import StandardScaler, OneHotEncoder\nfrom sklearn.impute import SimpleImputer\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import cross_val_score\n\ndf = pd.DataFrame({\n    'age': [22, 38, 26, np.nan, 35, np.nan, 54, 2, 27, 14],\n    'fare': [7.25, 71.28, 7.92, 53.1, 8.05, 8.46, 51.86, 21.08, 11.13, 30.07],\n    'sex': ['male', 'female', 'female', 'female', 'male', 'male', 'male', 'male', 'female', 'female'],\n    'embarked': ['S', 'C', 'S', 'S', 'S', None, 'S', 'S', 'S', 'C'],\n    'survived': [0, 1, 1, 1, 0, 0, 0, 0, 1, 1]\n})\n\nX = df.drop('survived', axis=1)\ny = df['survived']\n\nnum_transformer = Pipeline([('imputer', SimpleImputer(strategy='median')), ('scaler', StandardScaler())])\ncat_transformer = Pipeline([('imputer', SimpleImputer(strategy='most_frequent')), ('onehot', OneHotEncoder(handle_unknown='ignore'))])\n\npreprocessor = ColumnTransformer([\n    ('num', num_transformer, ['age', 'fare']),\n    ('cat', cat_transformer, ['sex', 'embarked'])\n])\n\npipeline = Pipeline([('prep', preprocessor), ('clf', LogisticRegression(random_state=42))])\nscores = cross_val_score(pipeline, X, y, cv=5)\nprint(f'CV Accuracy: {scores.mean():.3f}')\n",
+      "verified_output": "CV Accuracy: 0.800",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

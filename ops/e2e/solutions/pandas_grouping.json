@@ -1,0 +1,11 @@
+{
+  "lesson_id": "pandas_grouping",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import pandas as pd\n\nsales = pd.DataFrame({\n    \"region\": [\"North\", \"South\", \"North\", \"East\", \"South\", \"East\"],\n    \"product\": [\"Widget\", \"Gadget\", \"Gadget\", \"Widget\", \"Widget\", \"Gadget\"],\n    \"revenue\": [1200.0, 850.5, 430.0, 990.0, 600.0, 1100.0],\n})\n\nregional_totals = sales.groupby(\"region\")[\"revenue\"].sum()\nprint(regional_totals)\n",
+      "verified_output": "region\nEast     2090.0\nNorth    1630.0\nSouth    1450.5\nName: revenue, dtype: float64",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}
