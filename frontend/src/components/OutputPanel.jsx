@@ -1,3 +1,4 @@
+import ErrorExplainer from './ErrorExplainer';
 import { useEffect, useRef, useState } from 'react';
 import { Trash2, Sparkles, Loader2 } from 'lucide-react';
 
@@ -95,6 +96,7 @@ export default function OutputPanel({
                         <pre className={`whitespace-pre-wrap break-words ${hasError ? 'text-red-400' : 'text-green-400'}`}>
                             {displayText}
                         </pre>
+                        {hasError && <ErrorExplainer text={displayText} />}
                         {hasError && onAskAI && (
                             <button
                                 onClick={() => onAskAI(code, displayText)}

@@ -365,15 +365,15 @@ RUN_QUEUE_WAIT_S = 25
 MAX_OUTPUT_BYTES = 64 * 1024     # returned to the caller per stream; the files are capped at 10 MB by RLIMIT_FSIZE
 
 
-def _read_capped(path: str) -> str:
+def _read_capped(path: str, limit: int = MAX_OUTPUT_BYTES) -> str:
     try:
         with open(path, "rb") as fh:
-            data = fh.read(MAX_OUTPUT_BYTES + 1)
+            data = fh.read(limit + 1)
     except OSError:
         return ""
-    text = data[:MAX_OUTPUT_BYTES].decode("utf-8", errors="replace")
-    if len(data) > MAX_OUTPUT_BYTES:
-        text += "\n... [output truncated at 64 KB]"
+    text = data[:limit].decode("utf-8", errors="replace")
+    if len(data) > limit:
+        text += f"\n... [output truncated at {limit // 1024} KB]"
     return text
 
 
@@ -416,7 +416,8 @@ def _clean_uid_files(uid: int) -> None:
                 pass
 
 
-def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = None) -> dict:
+def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = None,
+                        max_output: int = MAX_OUTPUT_BYTES) -> dict:
     """
     Execute Python code in a hardened, isolated subprocess.
 
@@ -484,7 +485,7 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
             err_fh.close()
         try:
             proc.wait(timeout=timeout)
-            return {"output": _read_capped(out_path), "error": _read_capped(err_path),
+            return {"output": _read_capped(out_path, max_output), "error": _read_capped(err_path),
                     "exit_code": proc.returncode}
         except subprocess.TimeoutExpired:
             _kill_process_tree(proc)
