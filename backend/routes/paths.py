@@ -296,8 +296,10 @@ def get_progress(path_id: str, user_id: str = Query(...), caller: str = Depends(
     ).fetchone()
 
     if not ulp:
+        # Not having started a path is a normal state, not an error: the Paths page renders its "Start" view
+        # for a null body (a 404 here logged a console error for every learner browsing paths).
         conn.close()
-        raise HTTPException(status_code=404, detail="User has not started this path.")
+        return None
 
     ulp_dict = _row_to_dict(ulp)
 
