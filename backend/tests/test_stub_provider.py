@@ -29,6 +29,13 @@ def test_stub_complete_returns_tutor_json(monkeypatch):
     assert e.parse_vaathiyaar_response(out)["message"] == "Stub tutor reply."
 
 
+def test_stub_reply_satisfies_explainer_contract(monkeypatch):
+    e = _engine(monkeypatch)
+    from routes.classroom import _sanitize_explain
+    data = _sanitize_explain(json.loads(e.complete(MSG, {})), "lists")
+    assert data["title"] and len(data["steps"]) >= 3
+
+
 def test_stub_stream_yields_multiple_chunks(monkeypatch):
     e = _engine(monkeypatch)
     chunks = list(e.stream(MSG, {}))

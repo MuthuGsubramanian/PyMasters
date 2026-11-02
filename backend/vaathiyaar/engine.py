@@ -521,7 +521,15 @@ def _stub_guard() -> None:
 
 def _stub_complete(messages: list, options: dict) -> str:
     _stub_guard()
-    return json.dumps({"message": STUB_REPLY, "phase": "feedback", "animation": None})
+    # One object carrying the keys each AI feature reads: tutor replies (message/phase/animation) and the
+    # explainer (title/subtitle/steps/takeaway). Callers pick the keys they need.
+    return json.dumps({
+        "message": STUB_REPLY, "phase": "feedback", "animation": None,
+        "title": "Stub explanation", "subtitle": "A deterministic explanation used by the scenario tests.",
+        "steps": [{"title": f"Step {i}", "body": f"Stub explanation step {i} for the scenario tests."}
+                  for i in (1, 2, 3)],
+        "takeaway": "Stub takeaway.",
+    })
 
 
 def _stub_stream(messages: list, options: dict):
