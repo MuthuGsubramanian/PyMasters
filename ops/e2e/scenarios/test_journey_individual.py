@@ -5,7 +5,7 @@ XP and streak update → warm-up has questions → profile stats show the comple
 """
 import uuid
 
-from conftest import BASE, PASSWORD, api, fake_ip, solution_for
+from conftest import BASE, PASSWORD, api, dismiss_release_notes, fake_ip, onboard_learner_ui, solution_for
 
 LESSON = "variables_intro"
 
@@ -17,15 +17,6 @@ def _signup(page, username, email):
     page.get_by_placeholder("you@example.com").fill(email)
     page.get_by_placeholder("Enter your password").fill(PASSWORD)
     page.get_by_role("button", name="Create Account").click()
-    page.wait_for_url("**/onboarding", timeout=30000)
-
-
-def _onboard(page):
-    for label in ("I'm a Student", "College / University Student", "Total Beginner",
-                  "Visual — Charts & Diagrams", "AI / Machine Learning", "30 minutes", "Skip for now"):
-        page.get_by_text(label, exact=False).first.click()
-    page.get_by_role("button", name="Finish & Start Learning").click()
-    page.wait_for_url("**/dashboard**", timeout=30000)
 
 
 def test_individual_learner_journey(browser):
@@ -37,7 +28,7 @@ def test_individual_learner_journey(browser):
     page.on("pageerror", lambda e: errors.append(str(e)[:200]))
 
     _signup(page, username, email)
-    _onboard(page)
+    onboard_learner_ui(page)
 
     session = page.evaluate("JSON.parse(localStorage.getItem('pm_user'))")
     uid, token = session["id"], session["token"]
@@ -47,9 +38,7 @@ def test_individual_learner_journey(browser):
 
     # Lesson: intro renders, chat answers, practice is solved through the real grader.
     page.goto(f"{BASE}/dashboard/classroom/{LESSON}", wait_until="networkidle")
-    close_notes = page.get_by_role("button", name="Close release notes")
-    if close_notes.count():                       # first visit shows "what's new"; a learner dismisses it
-        close_notes.first.click()
+    dismiss_release_notes(page)
     page.get_by_role("button", name="Open Vaathiyaar chat").click()
     page.get_by_placeholder("Ask Vaathiyaar anything...").fill("What is a variable?")
     page.keyboard.press("Enter")

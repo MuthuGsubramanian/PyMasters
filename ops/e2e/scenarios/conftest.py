@@ -99,6 +99,49 @@ def solution_for(lesson_id: str, index: int, expected_output: str) -> str:
     return f"print({expected_output.strip()!r})"   # the grader compares stripped stdout
 
 
+def complete_lesson(user: dict, lesson_id: str = "variables_intro") -> dict:
+    """Solve a lesson's first practice challenge through the real grader; returns /classroom/evaluate's JSON."""
+    s = api(user["ip"], user["token"])
+    lesson = s.get(f"{BASE}/api/classroom/lesson/{lesson_id}", timeout=30).json()
+    ch = lesson["practice_challenges"][0]
+    r = s.post(f"{BASE}/api/classroom/evaluate", timeout=90, json={
+        "user_id": user["id"], "lesson_id": lesson_id, "expected_output": ch.get("expected_output", ""),
+        "code": solution_for(lesson_id, 0, ch.get("expected_output", ""))})
+    assert r.status_code == 200, r.text[:300]
+    return r.json()
+
+
+def onboard_learner_ui(page) -> None:
+    """Answer the learner onboarding questionnaire through the UI and land on the dashboard."""
+    page.wait_for_url("**/onboarding", timeout=30000)
+    for label in ("I'm a Student", "College / University Student", "Total Beginner",
+                  "Visual — Charts & Diagrams", "AI / Machine Learning", "30 minutes", "Skip for now"):
+        page.get_by_text(label, exact=False).first.click()
+    page.get_by_role("button", name="Finish & Start Learning").click()
+    page.wait_for_url("**/dashboard**", timeout=30000)
+
+
+def dismiss_release_notes(page) -> None:
+    """New accounts see a "what's new" dialog on first dashboard visit; a real user closes it."""
+    btn = page.get_by_role("button", name="Close release notes")
+    try:
+        btn.first.wait_for(state="visible", timeout=3000)
+        btn.first.click()
+    except Exception:  # noqa: BLE001 — not shown (already seen) is fine
+        pass
+
+
+def signed_in_context(browser, user: dict, width: int = 1366, height: int = 850):
+    """A browser context whose localStorage holds `user`'s session (no UI login)."""
+    ctx = browser.new_context(viewport={"width": width, "height": height},
+                              extra_http_headers={"X-Forwarded-For": user.get("ip") or fake_ip()})
+    page = ctx.new_page()
+    page.goto(f"{BASE}/login", wait_until="domcontentloaded")
+    page.evaluate("u => { localStorage.setItem('pm_user', JSON.stringify(u)); localStorage.setItem('pm_release_seen', '9.9.9'); }",
+                  session_payload(user))
+    return ctx, page
+
+
 # ---- fixtures ------------------------------------------------------------------------------------------
 
 @pytest.fixture(scope="session")
