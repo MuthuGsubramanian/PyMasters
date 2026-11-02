@@ -11,7 +11,8 @@ import sqlite3
 import time
 
 from fastapi import Header, HTTPException
-from jose import jwt, JWTError
+import jwt
+from jwt import PyJWTError as JWTError   # PyJWT (python-jose had an unfixed advisory; 2026-11-02)
 
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-insecure-secret-change-me")
 JWT_ALG = "HS256"

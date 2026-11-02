@@ -29,7 +29,8 @@ import requests
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import RedirectResponse
 
-from jose import jwt, JWTError
+import jwt
+from jwt import PyJWTError as JWTError   # PyJWT (python-jose had an unfixed advisory; 2026-11-02)
 from auth import create_access_token, JWT_SECRET, JWT_ALG
 
 # Shared identity table (provider, provider_user_id, user_id, ...)

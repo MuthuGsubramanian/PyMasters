@@ -28,7 +28,8 @@ import requests
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import RedirectResponse
 
-from jose import jwt, JWTError
+import jwt
+from jwt import PyJWTError as JWTError   # PyJWT (python-jose had an unfixed advisory; 2026-11-02)
 from auth import create_access_token, JWT_SECRET, JWT_ALG
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
