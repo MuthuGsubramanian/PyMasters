@@ -1508,6 +1508,7 @@ export default function Classroom() {
 
     const chatEndRef = useRef(null);
     const streamControllerRef = useRef(null);
+    const openingLessonRef = useRef(null);
 
     useEffect(() => {
         return () => {
@@ -1557,7 +1558,7 @@ export default function Classroom() {
                 user_id: user?.id,
                 signal_type: 'lesson_viewed',
                 topic: lesson.id,
-                value: { lesson_id: lesson.id, track: lesson.track || '' },
+                value: { lesson_id: lesson.id, track: lesson.track || data?.track || '' },
             }).catch(() => {});
             setPhase('intro');
             setChatMessages([]);
@@ -1608,20 +1609,23 @@ export default function Classroom() {
     // between lessons via the back/forward buttons, and closing back to the selector
     // all flow through here so the URL is always the source of truth (F3).
     useEffect(() => {
-        if (lessonsLoading) return;
-
         // 1. Lesson route segment /dashboard/classroom/:lessonId — open/switch to it.
-        //    Prefer the catalogue entry (has track/metadata); otherwise open by id
-        //    directly so a deep-link to any valid lesson works even when it isn't in
-        //    the loaded catalogue. handleSelectLesson surfaces a graceful notice on a
-        //    real 404 (unknown id) rather than crashing.
+        //    Opened by id straight away, WITHOUT waiting for the catalogue: the
+        //    catalogue is ~320 KB and on slow mobile connections it took seconds
+        //    before the lesson request even started. The catalogue entry is used if
+        //    it has already loaded (track metadata); handleSelectLesson surfaces a
+        //    graceful notice on a real 404 (unknown id) rather than crashing.
         if (routeLessonId) {
-            if (currentLesson?.id === routeLessonId) return; // already open
+            if (currentLesson?.id === routeLessonId || openingLessonRef.current === routeLessonId) return;
             const match = lessons.find((l) => l.id === routeLessonId || l.topic === routeLessonId);
             setLessonNotFound(null);
-            handleSelectLesson(match || { id: routeLessonId, track: '' }, { fromUrl: true });
+            openingLessonRef.current = routeLessonId; // the catalogue arriving mid-fetch must not refetch
+            handleSelectLesson(match || { id: routeLessonId, track: '' }, { fromUrl: true }).finally(() => {
+                if (openingLessonRef.current === routeLessonId) openingLessonRef.current = null;
+            });
             return; // route lesson takes priority
         }
+        if (lessonsLoading) return;
         // No lesson id in the URL. If one is open (e.g. browser Back out of a lesson),
         // close it back to the selector.
         if (currentLesson) {
