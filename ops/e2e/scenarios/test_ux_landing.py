@@ -38,8 +38,11 @@ def test_audience_links_reach_their_sections(phone):
         switch.get_by_role("link", name=label).click()
         target = phone.get_by_role("heading", name=heading, exact=True)
         target.wait_for(timeout=10000)
-        phone.wait_for_timeout(800)   # smooth scroll
-        box = target.bounding_box()
+        for _ in range(40):           # smooth scroll takes a variable time on a loaded runner: poll, don't sleep
+            box = target.bounding_box()
+            if 0 <= box["y"] < 844:
+                break
+            phone.wait_for_timeout(100)
         assert 0 <= box["y"] < 844, f"{label} did not bring '{heading}' into view: {box}"
         phone.evaluate("window.scrollTo(0, 0)")
     assert not phone.problems, phone.problems[:3]
