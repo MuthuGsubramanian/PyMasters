@@ -63,11 +63,18 @@ export default function LiveTutor() {
             setError(t('tutor.pick_time', 'Please pick a date and a time.'));
             return;
         }
+        // The picked slot is in the learner's own timezone; send it as an absolute instant so the server
+        // (UTC) neither accepts a slot that has already passed nor shows the tutor a shifted time.
+        const when = new Date(`${date}T${time}`);
+        if (Number.isNaN(when.getTime()) || when.getTime() <= Date.now()) {
+            setError(t('tutor.pick_future', 'Please pick a future date and time.'));
+            return;
+        }
         setBusy(true);
         try {
             const r = await createTutorSession({
                 topic: topic.trim(),
-                preferred_at: `${date}T${time}`,
+                preferred_at: when.toISOString(),
                 timezone: tz,
                 duration_minutes: Number(duration),
                 notes: notes.trim(),
@@ -90,7 +97,9 @@ export default function LiveTutor() {
         finally { setCancelBusy(null); }
     };
 
-    const todayStr = new Date().toISOString().slice(0, 10);
+    // Local calendar date (toISOString() is UTC: in India it showed yesterday until 05:30).
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
     return (
         <div className="space-y-5 max-w-3xl">
@@ -126,8 +135,8 @@ export default function LiveTutor() {
                             )}
                         </FormField>
                     </div>
-                    <FormField label={t('tutor.email', 'Email for coordination')} hint={t('tutor.email_hint', 'We confirm the session at this address.')}>
-                        {(id) => <Input id={id} type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />}
+                    <FormField label={t('tutor.email', 'Email for coordination')} hint={t('tutor.email_hint_optional', 'We confirm the session at this address. Leave blank to use your account email.')}>
+                        {(id) => <Input id={id} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />}
                     </FormField>
                     <FormField label={t('tutor.notes', 'Notes (optional)')}>
                         {(id) => <textarea id={id} value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} maxLength={2000} className="input-neo resize-y" placeholder={t('tutor.notes_ph', 'Anything that helps us prepare — your level, specific errors, goals')} />}
