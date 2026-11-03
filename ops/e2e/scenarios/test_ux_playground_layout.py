@@ -1,0 +1,47 @@
+"""UX: the Playground works on a phone and its buttons do not wrap on a laptop (redesign "Later" I9, 2026-11-03).
+
+At 390px the Save button sat on top of the file name, the pip Install button was cut off at the right edge and
+the editor was ~150-200px tall; at 1440px "Run Code" and "Send to Vaathiyaar" wrapped onto two lines."""
+import pytest
+
+from conftest import BASE, create_user
+
+
+def _open(logged_in_page, width, height):
+    page = logged_in_page(create_user(), width=width, height=height)
+    page.goto(f"{BASE}/dashboard/playground", wait_until="networkidle")
+    page.locator(".cm-content").first.wait_for(timeout=30000)
+    return page
+
+
+def _overlap(a, b):
+    return not (a["x"] + a["width"] <= b["x"] or b["x"] + b["width"] <= a["x"]
+                or a["y"] + a["height"] <= b["y"] or b["y"] + b["height"] <= a["y"])
+
+
+@pytest.mark.parametrize("dark", [False, True])
+def test_playground_fits_a_phone(logged_in_page, dark):
+    page = logged_in_page(create_user(), width=390, height=844, dark=dark)
+    page.goto(f"{BASE}/dashboard/playground", wait_until="networkidle")
+    editor = page.locator(".cm-editor").first
+    editor.wait_for(timeout=30000)
+
+    assert editor.bounding_box()["height"] >= 300, f"editor is only {editor.bounding_box()['height']:.0f}px tall"
+    name = page.get_by_text("code.py", exact=True).first.bounding_box()
+    save = page.get_by_role("button", name="Save", exact=True).bounding_box()
+    assert not _overlap(name, save), (name, save)
+
+    install = page.get_by_role("button", name="Install", exact=True)
+    install.scroll_into_view_if_needed()
+    box = install.bounding_box()
+    assert box["x"] >= 0 and box["x"] + box["width"] <= 390, f"Install button is cut off: {box}"
+    page.get_by_label("Package name to install").fill("rich")
+    assert install.is_enabled()
+    assert page.evaluate("document.documentElement.scrollWidth") <= 390
+
+
+def test_playground_actions_stay_on_one_line_on_a_laptop(logged_in_page):
+    page = _open(logged_in_page, 1440, 900)
+    for name in ("Run Code", "Send to Vaathiyaar", "Visualize"):
+        b = page.get_by_role("button", name=name).first
+        assert b.bounding_box()["height"] <= 44, f"'{name}' wraps onto two lines ({b.bounding_box()['height']:.0f}px tall)"
