@@ -1,0 +1,174 @@
+{
+  "id": "logging_for_debugging",
+  "topic": "logging_for_debugging",
+  "track": "debugging_mastery",
+  "module": "technique",
+  "order": 4,
+  "title": {
+    "en": "Logging: Print Statements That Grow Up"
+  },
+  "description": {
+    "en": "print() is great for a first look, but it can't be turned down, filtered, or left in safely. Learn Python's logging module: levels, named loggers, one-line configuration, and why logs beat scattered prints once a program is bigger than a page."
+  },
+  "xp_reward": 95,
+  "next_unlock": "regression_test_first",
+  "story_variants": {
+    "en": "## Print, But With a Volume Knob\n\nYou already know `print()` debugging: drop a line in, see the real value, move on. It works. The trouble starts when you *keep* those lines. Ship them and your users see noise; delete them and the next bug sends you back to re-type them.\n\nPython's built-in `logging` module is `print` with three upgrades: every message has a **severity level**, you can **turn the volume** up or down in one place, and you can say **where** the messages go (screen, file, anywhere) without touching the code that produces them.\n\n> **Key idea:** Write log calls once, at the right level. Decide *later*, with one setting, how much of it you want to see.\n\n## The five levels\n\n| Level | Use it for |\n|---|---|\n| `DEBUG` | Fine detail you only want while hunting a bug (\"adding 5\") |\n| `INFO` | Normal milestones (\"order 7 received\") |\n| `WARNING` | Something odd but survivable (\"stock low\") |\n| `ERROR` | An operation failed |\n| `CRITICAL` | The program may not continue |\n\nSetting `level=logging.INFO` means: show INFO and everything more severe, hide DEBUG. Flip it to `DEBUG` when you are investigating, back to `INFO` when you are done. No code edits, no forgotten prints.\n\n## Setting it up\n\n```python\nimport logging, sys\nlogging.basicConfig(stream=sys.stdout, level=logging.INFO,\n                    format=\"%(levelname)s:%(name)s:%(message)s\")\nlog = logging.getLogger(\"orders\")\nlog.info(\"order 7 received\")\n```\n\n`getLogger(\"orders\")` gives you a **named logger**, so in a big program you can tell *which part* spoke. The `format` string chooses what each line shows; real programs usually add `%(asctime)s` for a timestamp (we leave it out here so the output is always identical).\n\n## Why not just print?\n\n- **Filtering:** hide the chatty DEBUG lines in production, show them in a bug hunt.\n- **Context for free:** level, logger name, time, even file and line number via the format string.\n- **Tracebacks:** `log.exception(\"payment failed\")` inside an `except` block records the message *and* the full traceback.\n- **Destinations:** the same call can write to the console, a file, or a log service.\n\n## Honest caveats\n\n- `basicConfig` only takes effect the first time (unless you pass `force=True`, as we do here so lessons re-run cleanly).\n- Prefer `log.info(\"x=%s\", x)` over an f-string in hot code: the `%s` form skips the formatting work if the level is hidden. For learning, f-strings are fine.\n- Never log secrets (passwords, tokens). Logs get copied around.\n\n## Where it fits in the track\n\nUse `print` for the quick first look, a **log** for anything you want to keep, and a **test** (next lesson) for anything you never want to break again."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "magnifier",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "compare",
+      "left": {
+        "label": "print() everywhere: can't be silenced, mixed into real output, deleted and re-typed for every bug",
+        "result": false
+      },
+      "right": {
+        "label": "logging: one call per event, filtered by level from a single setting",
+        "result": true
+      },
+      "description": {
+        "en": "Both report the same facts. With logging you decide how much to see by changing one level, instead of editing every line."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "demo",
+      "code": "import logging, sys\nlogging.basicConfig(stream=sys.stdout, level=logging.INFO,\n                    format=\"%(levelname)s:%(name)s:%(message)s\", force=True)\nlog = logging.getLogger(\"orders\")\nlog.debug(\"raw payload: {...}\")\nlog.info(\"order 7 received\")\nlog.warning(\"stock low for sku A1\")",
+      "executionSteps": [
+        {
+          "line": 5,
+          "variables": {
+            "level": "INFO"
+          },
+          "output": "",
+          "description": "DEBUG message is below the INFO threshold, so nothing is printed. Same call, hidden by one setting."
+        },
+        {
+          "line": 6,
+          "variables": {
+            "level": "INFO"
+          },
+          "output": "INFO:orders:order 7 received",
+          "description": "INFO passes the threshold and prints with the format we chose."
+        },
+        {
+          "line": 7,
+          "variables": {
+            "level": "INFO"
+          },
+          "output": "WARNING:orders:stock low for sku A1",
+          "description": "WARNING is more severe than INFO, so it shows too."
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Add logging to total(). Skip negative prices with a WARNING 'skipping negative price <p>' (and continue), log a DEBUG 'adding <p>' for each accepted price, and finish with an INFO 'total=<s>'. The logger is set to INFO, so the DEBUG lines stay hidden. Expected output:\nWARNING:skipping negative price -2\nINFO:total=12"
+      },
+      "starter_code": "import logging, sys\nlogging.basicConfig(stream=sys.stdout, level=logging.INFO,\n                    format=\"%(levelname)s:%(message)s\", force=True)\nlog = logging.getLogger(\"shop\")\n\ndef total(prices):\n    s = 0\n    for p in prices:\n        # TODO 1: if p is negative, log a WARNING \"skipping negative price <p>\" and continue\n        # TODO 2: log a DEBUG \"adding <p>\" (it stays hidden at INFO level - that is the point!)\n        s += p\n    # TODO 3: log an INFO \"total=<s>\"\n    return s\n\ntotal([5, -2, 7])",
+      "expected_output": "WARNING:skipping negative price -2\nINFO:total=12",
+      "hints": {
+        "en": [
+          "Each TODO is one call on the logger `log`: log.warning(...), log.debug(...), log.info(...).",
+          "For the negative case use `continue` after the warning so the price is not added.",
+          "The DEBUG line produces no output at INFO level - that is expected.",
+          "Total of 5 and 7 (skipping -2) is 12."
+        ]
+      },
+      "test_code": "import logging\nlogging.disable(logging.CRITICAL)\nassert total([1, 2]) == 3\nassert total([4, -1]) == 4\nassert total([]) == 0"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Which setting hides DEBUG messages but still shows WARNING?"
+      },
+      "options": {
+        "en": [
+          "level=logging.INFO",
+          "level=logging.DEBUG",
+          "level=logging.NOTSET and no handlers",
+          "There is no way to hide them"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does getLogger('orders') give you?"
+      },
+      "options": {
+        "en": [
+          "A new file on disk",
+          "A named logger so you can tell which part of the program wrote a message",
+          "A faster print",
+          "A way to catch exceptions"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which call inside an except block records the message AND the traceback?"
+      },
+      "options": {
+        "en": [
+          "log.info()",
+          "log.debug()",
+          "log.exception()",
+          "print()"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why is logging usually better than leaving print() calls in shipped code?"
+      },
+      "options": {
+        "en": [
+          "Logging is always faster",
+          "You can filter or redirect it with one setting instead of editing every line",
+          "print() is deprecated",
+          "Logging prevents all bugs"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "logging",
+      "log_levels",
+      "getLogger",
+      "basicConfig",
+      "debugging_tools"
+    ],
+    "concepts_required": [
+      "defensive_programming"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "category": "debugging",
+    "estimated_minutes": 20,
+    "path_memberships": []
+  },
+  "generated": false
+}

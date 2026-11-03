@@ -1,0 +1,174 @@
+{
+  "id": "regression_test_first",
+  "topic": "regression_test_first",
+  "track": "debugging_mastery",
+  "module": "technique",
+  "order": 5,
+  "title": {
+    "en": "Write the Failing Test First: Make Every Bug Stay Dead"
+  },
+  "description": {
+    "en": "Fixing a bug without a test means it can come back. Learn the reproduce-assert-fix-keep loop: turn a bug report into a tiny failing assert, fix the code until it passes, and keep the assert forever as a regression test."
+  },
+  "xp_reward": 95,
+  "next_unlock": "traceback_module_toolkit",
+  "story_variants": {
+    "en": "## A Fixed Bug Is Only Fixed Until Someone Touches the Code\n\nYou find a bug, fix it, and move on. Three months later a teammate refactors that function and the exact same bug returns - nobody noticed because nothing checks for it. Bugs love to come back.\n\nThe cure is a habit: **before you fix a bug, capture it as a test that fails.** Then fix the code until the test passes, and *keep the test*. It is now a **regression test** - a permanent guard against that specific failure.\n\n> **Key idea:** A bug report is just a test you haven't written yet. Reproduce it as a failing assert, fix it, and keep the assert.\n\n## The four-step loop\n\n1. **Reproduce** the bug with the smallest input you can find.\n2. **Assert** what the *correct* answer should be. Run it - it must **fail**. (If it passes, you haven't reproduced the bug yet.)\n3. **Fix** the code, changing as little as possible.\n4. **Keep** the test. Run it again - now it passes, and it keeps running forever.\n\n## A real example\n\nBug report: \"median of `[4, 1, 3, 2]` is wrong.\" The buggy code returned `s[len(s)//2]`, which is `3` - the upper-middle value. The correct median of an even-length list is the average of the two middle values, `2.5`.\n\nStep 2, the failing test:\n\n```python\nassert median([4, 1, 3, 2]) == 2.5\n```\n\nRun it: `AssertionError`. Good - we have caught the bug in a cage. Now fix:\n\n```python\nif len(s) % 2 == 1:\n    return s[mid]\nreturn (s[mid - 1] + s[mid]) / 2\n```\n\nRun the assert again: silence means pass.\n\n## Why \"must fail first\" matters\n\nA test you've never seen fail might not test anything. Watching it go red and then green proves the test really detects *this* bug and that your fix is what turned it green.\n\n## Beyond bare asserts\n\nPlain `assert` is enough to start. As projects grow you will use a test runner such as `unittest` (built in) or `pytest`, which collect many tests, run them all, and report which failed. The habit is identical.\n\n## Honest caveats\n\n- A regression test covers the bug you found, not every bug. Also test the edges (empty list, one item) as you go.\n- Keep tests small and specific; one clear assert beats a clever sprawling one.\n- `assert` statements are removed under `python -O`, so real test suites use a test runner, not production asserts.\n\n## Closing the loop\n\nMindset, tracebacks, narrowing, inspecting, logging... and now a test that makes sure the bug you just killed stays dead."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "magnifier",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "compare",
+      "left": {
+        "label": "Fix the bug, move on: no record, so a later refactor quietly brings it back",
+        "result": false
+      },
+      "right": {
+        "label": "Failing assert first, then fix, then keep the assert: the bug can never return unnoticed",
+        "result": true
+      },
+      "description": {
+        "en": "Both fix the code today. Only the second leaves behind a guard that protects it tomorrow."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "demo",
+      "code": "def median(nums):\n    s = sorted(nums)\n    mid = len(s) // 2\n    if len(s) % 2 == 1:\n        return s[mid]\n    return (s[mid - 1] + s[mid]) / 2\n\nprint(median([3, 1, 2]))\nprint(median([4, 1, 3, 2]))\nassert median([4, 1, 3, 2]) == 2.5",
+      "executionSteps": [
+        {
+          "line": 8,
+          "variables": {
+            "nums": "[3, 1, 2]"
+          },
+          "output": "2",
+          "description": "Odd count: the single middle value of the sorted list [1, 2, 3]."
+        },
+        {
+          "line": 9,
+          "variables": {
+            "nums": "[4, 1, 3, 2]"
+          },
+          "output": "2.5",
+          "description": "Even count: average the two middle values (2 and 3) of the sorted list."
+        },
+        {
+          "line": 10,
+          "variables": {
+            "result": "2.5"
+          },
+          "output": "",
+          "description": "The regression assert passes silently. If anyone breaks median() later, this line fails loudly."
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "median() is buggy for even-length lists, and the assert below it encodes the bug report - it fails right now. Fix median() so even-length lists average the two middle values while odd-length lists still return the middle one. Expected output:\nmedian([1, 2, 3, 4]) = 2.5\nmedian([5]) = 5"
+      },
+      "starter_code": "def median(nums):\n    s = sorted(nums)\n    mid = len(s) // 2\n    # BUG: for an even count this returns the upper-middle value only\n    return s[mid]\n\n# Regression test: this assert encodes the bug report \"median of [1,2,3,4] should be 2.5\".\n# It FAILS right now. Fix median() so it passes, then the prints below run.\nassert median([1, 2, 3, 4]) == 2.5, \"even-length median wrong\"\nprint(\"median([1, 2, 3, 4]) =\", median([1, 2, 3, 4]))\nprint(\"median([5]) =\", median([5]))",
+      "expected_output": "median([1, 2, 3, 4]) = 2.5\nmedian([5]) = 5",
+      "hints": {
+        "en": [
+          "Run it first: the AssertionError is the test doing its job.",
+          "Sort first (already done). The middle index is len(s) // 2.",
+          "Odd length: return s[mid]. Even length: return (s[mid - 1] + s[mid]) / 2.",
+          "median([1,2,3,4]) averages 2 and 3, giving 2.5."
+        ]
+      },
+      "test_code": "assert median([1, 2, 3, 4]) == 2.5\nassert median([5]) == 5\nassert median([3, 1, 2]) == 2\nassert median([10, 20]) == 15"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What should happen the first time you run a new regression test, before fixing the bug?"
+      },
+      "options": {
+        "en": [
+          "It should pass",
+          "It should fail, proving it reproduces the bug",
+          "Nothing - tests only run in production",
+          "It should be deleted"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why keep the test after the bug is fixed?"
+      },
+      "options": {
+        "en": [
+          "To make the file longer",
+          "So the same bug cannot silently come back after a later change",
+          "Python requires it",
+          "To slow the program down"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which is the best first step when you get a bug report?"
+      },
+      "options": {
+        "en": [
+          "Rewrite the whole function",
+          "Reproduce it with the smallest input and assert the correct answer",
+          "Add try/except: pass",
+          "Ignore it until it recurs"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why is a test you have never seen fail suspicious?"
+      },
+      "options": {
+        "en": [
+          "It might not actually detect the bug it claims to guard",
+          "Passing tests are always wrong",
+          "It runs too fast",
+          "It uses too much memory"
+        ]
+      },
+      "correct": 0
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "regression_tests",
+      "assert",
+      "reproduce_first",
+      "test_driven_fix",
+      "debugging_workflow"
+    ],
+    "concepts_required": [
+      "logging_for_debugging"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "category": "debugging",
+    "estimated_minutes": 20,
+    "path_memberships": []
+  },
+  "generated": false
+}

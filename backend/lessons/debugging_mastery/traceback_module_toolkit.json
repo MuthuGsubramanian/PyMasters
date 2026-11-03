@@ -1,0 +1,176 @@
+{
+  "id": "traceback_module_toolkit",
+  "topic": "traceback_module_toolkit",
+  "track": "debugging_mastery",
+  "module": "technique",
+  "order": 6,
+  "title": {
+    "en": "The traceback Module: Make Errors Tell You Everything"
+  },
+  "description": {
+    "en": "A traceback is just data. Learn to catch an exception and pull out its type, message, and call chain with the standard traceback module, so you can log failures properly instead of losing the story."
+  },
+  "xp_reward": 95,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## A Traceback Is a List of Frames\n\nEarlier you learned to *read* a traceback. Now you'll learn to *use* one in code. When an exception happens, Python records the chain of function calls that led to it. That record is a plain data structure you can inspect, store, and log.\n\n> **Key idea:** `e.__traceback__` holds the call chain. The `traceback` module turns it into friendly pieces: frames, formatted text, and the final error line.\n\n## The pieces\n\n```python\nimport traceback\n\ntry:\n    run()\nexcept Exception as e:\n    frames = traceback.extract_tb(e.__traceback__)\n```\n\n`frames` is a list ordered **outermost first**: the line where the `try` is, then each function deeper, ending with the function where the error was actually raised. So `frames[-1]` is where it blew up, and each frame has `.name`, `.lineno`, `.filename` and `.line` (the source text).\n\n## Handy functions\n\n| Call | Gives you |\n|---|---|\n| `traceback.format_exc()` | The full traceback as a string (use inside `except`) |\n| `traceback.print_exc()` | Prints that traceback to stderr |\n| `traceback.extract_tb(tb)` | The frames as a list you can loop over |\n| `traceback.format_exception_only(type, e)` | Just the last line, e.g. `ZeroDivisionError: division by zero` |\n\n## Why this matters\n\n- **Don't lose the story.** `except Exception: print(\"failed\")` throws away exactly what you need. `log.error(traceback.format_exc())` keeps it.\n- **Summaries.** An error dashboard might group failures by `frames[-1].name`, the innermost function.\n- **Chains.** If you raise one error from another (`raise X from e`), the original is on `e.__cause__`, and format functions show both.\n\n## Worked example\n\n`run()` calls `ratio(1, 0)`. The frames, outermost to innermost, are `<module>`, `run`, `ratio`. Reversed, that reads `ratio <- run <- <module>`: who failed, then who called it, then who called that. The exception type is `ZeroDivisionError` and the message line is `ZeroDivisionError: division by zero`.\n\n## Honest caveats\n\n- Catching `Exception` broadly is fine at the very top of a program where you log and exit, but not deep inside code - narrow it there.\n- Line numbers shift when you edit a file, so group errors by function name and message rather than line number.\n- Frame order is outermost-first; reversing is a common source of off-by-one confusion.\n\n## End of the track\n\nYou can now find bugs (mindset, tracebacks, narrowing, inspecting), keep evidence (logging, tracebacks as data), prevent them (guards), and pin them down (regression tests). That is a complete debugging toolkit."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "magnifier",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "compare",
+      "left": {
+        "label": "except Exception: print('failed') - the type, the message and the call chain are all lost",
+        "result": false
+      },
+      "right": {
+        "label": "Capture e.__traceback__ with the traceback module - the full story is saved for later",
+        "result": true
+      },
+      "description": {
+        "en": "Both catch the same error, but only the second keeps the evidence you need to fix it."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "demo",
+      "code": "import traceback\n\ndef ratio(a, b):\n    return a / b\n\ndef run():\n    return ratio(1, 0)\n\ntry:\n    run()\nexcept Exception as e:\n    frames = traceback.extract_tb(e.__traceback__)\n    print(type(e).__name__)\n    print(\" <- \".join(f.name for f in reversed(frames)))\n    print(traceback.format_exception_only(type(e), e)[0].strip())",
+      "executionSteps": [
+        {
+          "line": 11,
+          "variables": {
+            "frames": "['<module>', 'run', 'ratio']"
+          },
+          "output": "",
+          "description": "extract_tb gives the frames outermost-first: the try block, run, then ratio where it failed."
+        },
+        {
+          "line": 13,
+          "variables": {},
+          "output": "ZeroDivisionError",
+          "description": "The exception type."
+        },
+        {
+          "line": 14,
+          "variables": {},
+          "output": "ratio <- run <- <module>",
+          "description": "Reversed, the chain reads innermost-first: where it failed, who called it, and so on."
+        },
+        {
+          "line": 15,
+          "variables": {},
+          "output": "ZeroDivisionError: division by zero",
+          "description": "format_exception_only gives the familiar final line."
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "The program catches a ZeroDivisionError and extracts the frames. Print two lines: the exception name and the innermost function (format 'ZeroDivisionError in ratio'), then the call chain innermost-first joined by ' <- '. Expected output:\nZeroDivisionError in ratio\nratio <- run <- <module>"
+      },
+      "starter_code": "import traceback\n\ndef ratio(a, b):\n    return a / b\n\ndef run():\n    return ratio(1, 0)\n\ntry:\n    run()\nexcept Exception as e:\n    frames = traceback.extract_tb(e.__traceback__)\n    # TODO: print \"<ExceptionName> in <innermost function name>\"\n    # TODO: print the call chain, innermost first, joined by \" <- \"\n    pass",
+      "expected_output": "ZeroDivisionError in ratio\nratio <- run <- <module>",
+      "hints": {
+        "en": [
+          "frames is outermost-first, so frames[-1] is the innermost frame.",
+          "Each frame has a .name attribute (the function name).",
+          "type(e).__name__ gives the exception class name.",
+          "Use reversed(frames) and ' <- '.join(...) for the chain."
+        ]
+      },
+      "test_code": "assert frames[-1].name == 'ratio'\nassert [f.name for f in frames] == ['<module>', 'run', 'ratio']"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "In traceback.extract_tb(e.__traceback__), which frame is where the error was raised?"
+      },
+      "options": {
+        "en": [
+          "frames[0]",
+          "frames[-1]",
+          "The middle frame",
+          "It varies randomly"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which call returns the full traceback as a string, for logging?"
+      },
+      "options": {
+        "en": [
+          "traceback.format_exc()",
+          "print(e)",
+          "traceback.stop()",
+          "e.line"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why is 'except Exception: print(\"failed\")' a poor habit?"
+      },
+      "options": {
+        "en": [
+          "It is a syntax error",
+          "It throws away the error type, message and call chain you need to debug",
+          "It makes the code faster",
+          "It only works for ValueError"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why group errors by function name rather than line number?"
+      },
+      "options": {
+        "en": [
+          "Line numbers move whenever the file is edited",
+          "Function names are always unique",
+          "Python hides line numbers",
+          "Line numbers are random"
+        ]
+      },
+      "correct": 0
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "traceback_module",
+      "extract_tb",
+      "format_exc",
+      "exception_chain",
+      "error_reporting"
+    ],
+    "concepts_required": [
+      "regression_test_first"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "category": "debugging",
+    "estimated_minutes": 20,
+    "path_memberships": []
+  },
+  "generated": false
+}
