@@ -8,9 +8,9 @@ import { getLearnerNotes, deleteLearnerNote } from '../api';
 // removed; a removed note is never shown to the tutor again.
 
 const LEVEL_COPY = {
-    high: { label: 'Extra support', tone: 'text-amber-700 bg-amber-50 border-amber-200', blurb: 'Vaathiyaar is teaching in smaller steps right now.' },
-    medium: { label: 'Standard pacing', tone: 'text-sky-700 bg-sky-50 border-sky-200', blurb: 'Explain, show one example, then you try.' },
-    low: { label: 'Stretch mode', tone: 'text-emerald-700 bg-emerald-50 border-emerald-200', blurb: 'You are doing well, so answers stay concise and challenge-forward.' },
+    high: { label: 'Extra support', tone: 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-500/10 dark:border-amber-500/30', blurb: 'Vaathiyaar is teaching in smaller steps right now.' },
+    medium: { label: 'Standard pacing', tone: 'text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-300 dark:bg-sky-500/10 dark:border-sky-500/30', blurb: 'Explain, show one example, then you try.' },
+    low: { label: 'Stretch mode', tone: 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-500/10 dark:border-emerald-500/30', blurb: 'You are doing well, so answers stay concise and challenge-forward.' },
 };
 
 const KIND_LABEL = { misconception: 'Watch out', preference: 'Preference', strength: 'Strength', context: 'Context' };
@@ -60,7 +60,7 @@ export default function VaathiyaarMemoryCard({ userId, Card, Heading }) {
                 <ul className="divide-y divide-border">
                     {state.notes.map((n) => (
                         <li key={n.id} className="flex items-start gap-3 py-2.5">
-                            <span className="mt-0.5 shrink-0 rounded-md bg-surface-alt px-2 py-0.5 text-[11px] font-medium text-text-muted">
+                            <span className="mt-0.5 shrink-0 rounded-md bg-surface-alt px-2 py-0.5 text-xs font-medium text-text-muted">
                                 {KIND_LABEL[n.kind] || n.kind}
                             </span>
                             <span className="flex-1 min-w-0 text-sm text-text-primary">{n.note}</span>
