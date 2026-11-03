@@ -88,7 +88,7 @@ jobs:
     name: Build image + scenario gate + wait for VM rollout
     needs: [test, frontend-test]
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60   # build + Chromium + Tier 1 (~15) + rollout wait (≤15)
     permissions:
       contents: read
       id-token: write
@@ -147,7 +147,23 @@ jobs:
           PM_E2E_PYTHON: python
         run: ops/e2e/run_scenarios.sh tier1
 
-      - name: Upload scenario artifacts (junit, container log)
+      - name: Scenario totals and flaky tests (job summary)
+        if: always()
+        run: |
+          [ -s ops/e2e/out/junit-tier1.xml ] || exit 0
+          python ops/e2e/scenarios/report.py ops/e2e/out/junit-tier1.xml --image "${{ github.sha }}" > ops/e2e/out/tier1-report.json
+          python - >> "$GITHUB_STEP_SUMMARY" <<'PY'
+          import json, xml.etree.ElementTree as ET
+          r = json.load(open("ops/e2e/out/tier1-report.json")); t = r["totals"]
+          print(f"### Tier-1 scenarios: {t['passed']} passed, {t['failed']} failed, {t['flaky']} flaky")
+          for c in ET.parse("ops/e2e/out/junit-tier1.xml").getroot().iter("testcase"):
+              if c.find("rerunFailure") is not None and c.find("failure") is None:
+                  print(f"- flaky (passed on retry, fix within a day): `{c.get('classname')}::{c.get('name')}`")
+          for f in r["failures"]:
+              print(f"- FAILED `{f['test']}`: {f['message'][:200]}")
+          PY
+
+      - name: Upload scenario artifacts (junit, screenshots, container log)
         if: failure()
         uses: actions/upload-artifact@v4
         with:

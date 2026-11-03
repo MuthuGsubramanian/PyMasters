@@ -48,7 +48,11 @@ def test_page_health(route, vp, users, logged_in_page, browser):
         assert users["explain_id"], "could not generate an explainer to view"
         url = url.format(explain_id=users["explain_id"])
     page.goto(f"{BASE}{url}", wait_until="networkidle", timeout=45000)
-    page.wait_for_timeout(500)
+    # Wait on content, not the clock: lazy route chunks can land after networkidle on a busy runner.
+    try:
+        page.wait_for_function("document.body.innerText.trim().length > 40", timeout=15000)
+    except Exception:  # noqa: BLE001 — the assertion below reports the near-empty page
+        pass
     sw, cw = page.evaluate("[document.documentElement.scrollWidth, document.documentElement.clientWidth]")
     text = page.evaluate("document.body.innerText.length")
     allowed = {f"http {s}" for s in route.allow_status}

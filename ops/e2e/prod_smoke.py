@@ -3,7 +3,7 @@
   PYMASTERS_OPS_TOKEN=... python ops/e2e/prod_smoke.py [--json] [--base https://pymasters.net]
 
 Signs in as the ops QA account (ops/pm_admin.py service login; the token is never printed) and checks:
-health + live build == origin/main, 8 key pages render with no console errors, the catalogue has ≥ 400 lessons,
+health + live build among the last 5 commits on main, 8 key pages render with no console errors, the catalogue has ≥ 400 lessons,
 a lesson loads, semantic search answers, and the real AI tutor streams a non-empty reply within 60 s.
 Writes ~/pymasters-ops/reports/prod-smoke-<date>.json; exits 1 when any check fails.
 """
@@ -27,10 +27,14 @@ PAGES = ["/", "/pricing", "/login", "/dashboard", "/dashboard/classroom", "/dash
 REPORTS = Path.home() / "pymasters-ops" / "reports"
 
 
-def _main_sha() -> str:
-    out = subprocess.run(["git", "-C", str(ROOT), "ls-remote", "origin", "refs/heads/main"],
+RECENT_BUILDS = 5   # pushes land every ~30 min and a gated deploy takes ~20: the tip may still be rolling out
+
+
+def _recent_main_shas() -> list:
+    subprocess.run(["git", "-C", str(ROOT), "fetch", "-q", "origin", "main"], capture_output=True, timeout=120)
+    out = subprocess.run(["git", "-C", str(ROOT), "rev-list", "-n", str(RECENT_BUILDS), "origin/main"],
                          capture_output=True, text=True, timeout=60)
-    return out.stdout.split()[0] if out.stdout.strip() else ""
+    return out.stdout.split()
 
 
 def run(base: str) -> dict:
@@ -53,10 +57,12 @@ def run(base: str) -> dict:
 
     def health():
         h = requests.get(f"{base}/health", timeout=30).json()
-        main = _main_sha()
+        recent = _recent_main_shas()
         assert h.get("status") == "ok" or h.get("ok") is True, h
-        assert not main or h.get("build") == main, f"live build {h.get('build')} != main {main}"
-        return f"build {str(h.get('build'))[:7]}"
+        assert not recent or h.get("build") in recent, \
+            f"live build {str(h.get('build'))[:7]} is not among the last {RECENT_BUILDS} commits on main"
+        lag = recent.index(h["build"]) if h.get("build") in recent else 0
+        return f"build {str(h.get('build'))[:7]}" + (f" ({lag} behind main, deploy in flight)" if lag else "")
 
     def catalogue():
         n = len(s.get(f"{base}/api/classroom/lessons", params={"user_id": user["id"]}, timeout=60).json()["lessons"])

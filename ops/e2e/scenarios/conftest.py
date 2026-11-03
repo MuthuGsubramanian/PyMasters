@@ -182,6 +182,30 @@ def signed_in_context(browser, user: dict, width: int = 1366, height: int = 850)
     return ctx, page
 
 
+# ---- failure artifacts ----------------------------------------------------------------------------------
+
+SCREENS = Path(__file__).resolve().parents[1] / "out" / "screens"
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """On a failed test, screenshot every page still open in the session browser (uploaded by CI)."""
+    outcome = yield
+    rep = outcome.get_result()
+    if rep.when != "call" or not rep.failed:
+        return
+    b = item.funcargs.get("browser")
+    if b is None:
+        return
+    SCREENS.mkdir(parents=True, exist_ok=True)
+    stem = re.sub(r"[^A-Za-z0-9_.-]+", "_", item.nodeid)[-150:]
+    for i, page in enumerate(p for ctx in b.contexts for p in ctx.pages):
+        try:
+            page.screenshot(path=str(SCREENS / f"{stem}-{i}.png"), full_page=True, timeout=10000)
+        except Exception:  # noqa: BLE001 — a closed/crashed page must not mask the real failure
+            pass
+
+
 # ---- fixtures ------------------------------------------------------------------------------------------
 
 @pytest.fixture(scope="session")
