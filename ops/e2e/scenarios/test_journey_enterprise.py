@@ -63,7 +63,7 @@ def test_training_centre_curriculum_published_to_batch():
     s = api(admin["ip"], admin["token"])
     trainee = _join(admin, org_id)
     other = _join(admin, org_id)
-    assert s.put(f"{BASE}/api/org/{org_id}/members/{trainee["id"]}/groups", json={"groups": ["Batch A"],
+    assert s.put(f"{BASE}/api/org/{org_id}/members/{trainee['id']}/groups", json={"groups": ["Batch A"],
                   "user_id": admin["id"]}, timeout=30).status_code == 200
 
     branding = s.get(f"{BASE}/api/org/{org_id}/branding", timeout=30).json()

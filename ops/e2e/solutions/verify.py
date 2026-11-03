@@ -16,6 +16,23 @@ from pathlib import Path
 sys.path.insert(0, "/app/backend")
 os.chdir("/app/backend")
 
+
+def _inherit_sandbox_firewall_flag() -> None:
+    """start.sh verifies the sandbox-uid iptables rule and exports SANDBOX_NET_FIREWALL=1 to the app (PID 1's
+    tree); a `docker exec` process does not inherit it. The rule lives in the container's network namespace, so
+    it applies to this process too: adopt the flag only if the entrypoint really set it."""
+    if os.environ.get("SANDBOX_NET_FIREWALL"):
+        return
+    try:
+        env = dict(kv.split("=", 1) for kv in open("/proc/1/environ").read().split("\0") if "=" in kv)
+    except OSError:
+        return
+    if env.get("SANDBOX_NET_FIREWALL") == "1":
+        os.environ["SANDBOX_NET_FIREWALL"] = "1"
+
+
+_inherit_sandbox_firewall_flag()
+
 from routes.classroom import _load_lesson_from_dir          # noqa: E402
 from vaathiyaar.engine import _output_matches               # noqa: E402
 from vaathiyaar.execution import check_lesson_safety, run_code_subprocess  # noqa: E402
