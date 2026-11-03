@@ -200,11 +200,11 @@ function HeroREPL({ reduced }) {
                         <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
                         <span className="w-3 h-3 rounded-full bg-[#28c840]" />
                     </div>
-                    <span className="ml-3 text-[11px] text-slate-400 font-mono flex items-center gap-1.5">
+                    <span className="ml-3 text-xs text-slate-400 font-mono flex items-center gap-1.5">
                         <Terminal size={12} aria-hidden="true" />
                         python3 — PyMasters
                     </span>
-                    <span className="ml-auto inline-flex items-center gap-1.5 text-[10px] text-emerald-400">
+                    <span className="ml-auto inline-flex items-center gap-1.5 text-xs text-emerald-400">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                         live
                     </span>
@@ -247,13 +247,13 @@ function TrackCard({ track, delay, reduced }) {
                     <h3 className="text-white font-bold text-xl font-display leading-tight flex items-center gap-2 flex-wrap">
                         {track.name}
                         {track.badge && (
-                            <span className="text-[9px] font-extrabold tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-400 text-slate-900 uppercase">
+                            <span className="text-xs font-extrabold tracking-wider px-1.5 py-0.5 rounded-md bg-emerald-400 text-slate-900 uppercase">
                                 {track.badge}
                             </span>
                         )}
                     </h3>
                     <span
-                        className="shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full"
+                        className="shrink-0 text-xs font-bold px-2.5 py-1 rounded-full"
                         style={{ background: `${track.accent}1f`, color: track.accent, border: `1px solid ${track.accent}40` }}
                     >
                         {track.lessons} Lessons
@@ -262,7 +262,7 @@ function TrackCard({ track, delay, reduced }) {
                 <p className="text-slate-400 text-sm leading-relaxed mb-5">{track.desc}</p>
                 <div className="flex flex-wrap gap-1.5">
                     {track.topics.map(t => (
-                        <span key={t} className="text-[11px] px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/10 text-slate-300">
+                        <span key={t} className="text-xs px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/10 text-slate-300">
                             {t}
                         </span>
                     ))}
@@ -301,6 +301,7 @@ export default function Home() {
     const ctaTarget = user ? '/dashboard/classroom' : '/login?mode=signup';
     const navRef = useRef(null);
     const [scrolled, setScrolled] = useState(false);
+    const [pastHero, setPastHero] = useState(false);
     const [stats, setStats] = useState(FALLBACK_STATS);
 
     useEffect(() => {
@@ -317,7 +318,7 @@ export default function Home() {
     useEffect(() => { document.title = 'PyMasters — Learn Python with AI'; }, []);
 
     useEffect(() => {
-        const onScroll = () => setScrolled(window.scrollY > 24);
+        const onScroll = () => { setScrolled(window.scrollY > 24); setPastHero(window.scrollY > 600); };
         onScroll();
         window.addEventListener('scroll', onScroll, { passive: true });
         return () => window.removeEventListener('scroll', onScroll);
@@ -339,7 +340,7 @@ export default function Home() {
                     <div className="hidden sm:flex items-center gap-6">
                         <a href="#curriculum" className="text-sm text-slate-300 hover:text-white transition-colors">Curriculum</a>
                         <a href="#features" className="text-sm text-slate-300 hover:text-white transition-colors">Features</a>
-                        <a href="#organizations" className="text-sm text-slate-300 hover:text-white transition-colors">For Schools</a>
+                        <a href="#organizations" className="text-sm text-slate-300 hover:text-white transition-colors">For organisations</a>
                         <button onClick={() => openSupport('issue')} className="text-sm text-slate-300 hover:text-white transition-colors">Support</button>
                         <Link to="/pricing" className="text-sm text-slate-300 hover:text-white transition-colors">Pricing</Link>
                         {user ? (
@@ -349,7 +350,7 @@ export default function Home() {
                         )}
                         <Link
                             to={ctaTarget}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-purple-900/40"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white bg-purple-600 hover:bg-purple-500 transition-colors"
                         >
                             {user ? 'Continue' : 'Get Started'}
                             <ArrowRight size={14} />
@@ -389,7 +390,7 @@ export default function Home() {
                     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
                         <Link
                             to={ctaTarget}
-                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-base font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.03] active:scale-[0.98] transition-transform shadow-xl shadow-purple-900/40 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-slate-950"
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl text-base font-bold text-white bg-purple-600 hover:bg-purple-500 transition-colors focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-slate-950"
                         >
                             <GraduationCap size={18} aria-hidden="true" />
                             {user ? 'Continue Learning' : 'Start Free'}
@@ -403,6 +404,19 @@ export default function Home() {
                             Explore Curriculum
                         </button>
                     </div>
+
+                    <nav aria-label="Who PyMasters is for" className="mt-8 flex flex-wrap justify-center gap-2 text-sm">
+                        {[
+                            ['#curriculum', 'For learners'],
+                            ['#for-schools', 'For schools & colleges'],
+                            ['#for-teams', 'For teams & training centres'],
+                        ].map(([href, label]) => (
+                            <a key={href} href={href}
+                                className="rounded-full border border-white/15 px-4 py-2 text-slate-200 hover:border-white/30 hover:bg-white/[0.05] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400">
+                                {label}
+                            </a>
+                        ))}
+                    </nav>
 
                     <HeroREPL reduced={reduced} />
                 </div>
@@ -436,13 +450,13 @@ export default function Home() {
             <section id="features" className="relative py-24 px-4 sm:px-6">
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-14">
-                        <span className="inline-flex items-center gap-2 px-3 py-1 mb-5 rounded-full text-[11px] font-semibold tracking-wider uppercase text-cyan-300 bg-cyan-500/10 border border-cyan-500/30">
+                        <span className="inline-flex items-center gap-2 px-3 py-1 mb-5 rounded-full text-xs font-semibold tracking-wider uppercase text-cyan-300 bg-cyan-500/10 border border-cyan-500/30">
                             <Sparkles size={12} aria-hidden="true" />
                             Why PyMasters
                         </span>
                         <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">
                             A different kind of{' '}
-                            <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #06b6d4, #a855f7)' }}>
+                            <span>
                                 learning experience
                             </span>
                         </h2>
@@ -462,13 +476,13 @@ export default function Home() {
             <section id="curriculum" className="relative py-24 px-4 sm:px-6 bg-gradient-to-b from-transparent via-purple-950/10 to-transparent">
                 <div className="max-w-6xl mx-auto">
                     <div className="text-center mb-14">
-                        <span className="inline-flex items-center gap-2 px-3 py-1 mb-5 rounded-full text-[11px] font-semibold tracking-wider uppercase text-purple-200 bg-purple-500/10 border border-purple-500/30">
+                        <span className="inline-flex items-center gap-2 px-3 py-1 mb-5 rounded-full text-xs font-semibold tracking-wider uppercase text-purple-200 bg-purple-500/10 border border-purple-500/30">
                             <Layers size={12} aria-hidden="true" />
                             {stats.tracks} Tracks · {roundedDown(stats.lessons)} Lessons
                         </span>
                         <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">
                             Your complete{' '}
-                            <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #a855f7, #f59e0b)' }}>
+                            <span>
                                 learning path
                             </span>
                         </h2>
@@ -493,13 +507,13 @@ export default function Home() {
                     <div className="rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-sm p-8 sm:p-12 lg:p-16">
                         <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
                             <div>
-                                <span className="inline-flex items-center gap-2 px-3 py-1 mb-5 rounded-full text-[11px] font-semibold tracking-wider uppercase text-purple-200 bg-purple-500/10 border border-purple-500/30">
+                                <span className="inline-flex items-center gap-2 px-3 py-1 mb-5 rounded-full text-xs font-semibold tracking-wider uppercase text-purple-200 bg-purple-500/10 border border-purple-500/30">
                                     <MessageSquare size={12} aria-hidden="true" />
                                     Meet Your Teacher
                                 </span>
                                 <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-5">
                                     Say hello to{' '}
-                                    <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #a855f7, #06b6d4)' }}>
+                                    <span>
                                         Vaathiyaar
                                     </span>
                                 </h2>
@@ -531,7 +545,7 @@ export default function Home() {
                                             <img src={PymastersGlyph} alt="" className="w-3.5 h-3.5" />
                                         </div>
                                         <span className="text-white text-sm font-semibold font-display">Vaathiyaar</span>
-                                        <span className="ml-auto text-[11px] text-emerald-400 flex items-center gap-1.5">
+                                        <span className="ml-auto text-xs text-emerald-400 flex items-center gap-1.5">
                                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                                             Online
                                         </span>
@@ -575,13 +589,13 @@ export default function Home() {
                         )}
                         <div className="relative grid lg:grid-cols-2 gap-10 items-center">
                             <div>
-                                <span className="inline-flex items-center gap-2 px-3 py-1 mb-5 rounded-full text-[11px] font-semibold tracking-wider uppercase text-cyan-300 bg-cyan-500/10 border border-cyan-500/30">
+                                <span className="inline-flex items-center gap-2 px-3 py-1 mb-5 rounded-full text-xs font-semibold tracking-wider uppercase text-cyan-300 bg-cyan-500/10 border border-cyan-500/30">
                                     <Building2 size={12} aria-hidden="true" />
                                     For Schools, Universities & Enterprise
                                 </span>
                                 <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-5">
                                     Bring PyMasters to your{' '}
-                                    <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #06b6d4, #a855f7)' }}>
+                                    <span>
                                         organization
                                     </span>
                                 </h2>
@@ -603,10 +617,26 @@ export default function Home() {
                                         Custom learning paths aligned to your syllabus
                                     </li>
                                 </ul>
+                                <div className="grid sm:grid-cols-2 gap-3 mb-8">
+                                    <div id="for-schools" className="scroll-mt-24 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                                        <h3 className="text-white font-semibold mb-1">Schools &amp; colleges</h3>
+                                        <p className="text-sm text-slate-300">
+                                            Classes and courses with their own teachers. A class console shows who is at risk
+                                            or idle this week, so you know whom to help first.
+                                        </p>
+                                    </div>
+                                    <div id="for-teams" className="scroll-mt-24 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                                        <h3 className="text-white font-semibold mb-1">Teams &amp; training centres</h3>
+                                        <p className="text-sm text-slate-300">
+                                            Batches or teams with managers, your own branding and assigned learning paths,
+                                            plus private challenges and leaderboards.
+                                        </p>
+                                    </div>
+                                </div>
                                 <div className="flex flex-col sm:flex-row gap-3">
                                     <a
                                         href="mailto:muthu@pymasters.net?subject=PyMasters%20for%20Organizations"
-                                        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] transition-transform shadow-lg shadow-purple-900/40"
+                                        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-500 transition-colors"
                                     >
                                         <Mail size={16} aria-hidden="true" />
                                         Talk to Sales
@@ -629,7 +659,7 @@ export default function Home() {
                                 ].map(s => (
                                     <div key={s.l} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
                                         <div className="text-3xl sm:text-4xl font-bold font-display text-white mb-1">{s.v}</div>
-                                        <div className="text-[11px] uppercase tracking-widest text-slate-400 font-bold">{s.l}</div>
+                                        <div className="text-xs uppercase tracking-widest text-slate-400 font-bold">{s.l}</div>
                                     </div>
                                 ))}
                             </div>
@@ -643,13 +673,13 @@ export default function Home() {
                 <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-5">
                     {/* Free student access */}
                     <div className="rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-950/30 via-slate-900/40 to-transparent p-8 sm:p-10 flex flex-col">
-                        <span className="inline-flex w-fit items-center gap-2 px-3 py-1 mb-5 rounded-full text-[11px] font-semibold tracking-wider uppercase text-emerald-300 bg-emerald-500/10 border border-emerald-500/30">
+                        <span className="inline-flex w-fit items-center gap-2 px-3 py-1 mb-5 rounded-full text-xs font-semibold tracking-wider uppercase text-emerald-300 bg-emerald-500/10 border border-emerald-500/30">
                             <BadgeCheck size={12} aria-hidden="true" />
                             For Students
                         </span>
                         <h2 className="text-white text-2xl sm:text-3xl font-bold font-display leading-tight mb-3">
                             Are you a student?{' '}
-                            <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #10b981, #06b6d4)' }}>
+                            <span>
                                 It's free.
                             </span>
                         </h2>
@@ -659,7 +689,7 @@ export default function Home() {
                         </p>
                         <button
                             onClick={() => openSupport('access')}
-                            className="mt-auto w-fit inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-emerald-600 to-cyan-500 hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-emerald-900/40"
+                            className="mt-auto w-fit inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors"
                         >
                             <GraduationCap size={16} aria-hidden="true" />
                             Get free student access
@@ -668,13 +698,13 @@ export default function Home() {
 
                     {/* Live tutor sessions */}
                     <div className="rounded-3xl border border-purple-500/20 bg-gradient-to-br from-purple-950/30 via-slate-900/40 to-transparent p-8 sm:p-10 flex flex-col">
-                        <span className="inline-flex w-fit items-center gap-2 px-3 py-1 mb-5 rounded-full text-[11px] font-semibold tracking-wider uppercase text-purple-200 bg-purple-500/10 border border-purple-500/30">
+                        <span className="inline-flex w-fit items-center gap-2 px-3 py-1 mb-5 rounded-full text-xs font-semibold tracking-wider uppercase text-purple-200 bg-purple-500/10 border border-purple-500/30">
                             <CalendarClock size={12} aria-hidden="true" />
                             Live Tutoring
                         </span>
                         <h2 className="text-white text-2xl sm:text-3xl font-bold font-display leading-tight mb-3">
                             Prefer a{' '}
-                            <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #a855f7, #06b6d4)' }}>
+                            <span>
                                 human touch?
                             </span>
                         </h2>
@@ -684,7 +714,7 @@ export default function Home() {
                         </p>
                         <Link
                             to="/dashboard/live-tutor"
-                            className="mt-auto w-fit inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg shadow-purple-900/40"
+                            className="mt-auto w-fit inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-500 transition-colors"
                         >
                             <CalendarClock size={16} aria-hidden="true" />
                             Schedule a live session
@@ -704,7 +734,7 @@ export default function Home() {
                     />
                     <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">
                         Ready to start your{' '}
-                        <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #a855f7, #06b6d4)' }}>
+                        <span>
                             Python journey?
                         </span>
                     </h2>
@@ -713,7 +743,7 @@ export default function Home() {
                     </p>
                     <Link
                         to={ctaTarget}
-                        className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.03] active:scale-[0.98] transition-transform shadow-xl shadow-purple-900/40"
+                        className="inline-flex items-center gap-2 px-8 py-4 rounded-xl text-base font-bold text-white bg-purple-600 hover:bg-purple-500 transition-colors"
                     >
                         <GraduationCap size={18} aria-hidden="true" />
                         {user ? 'Continue Learning' : 'Begin for Free'}
@@ -754,7 +784,7 @@ export default function Home() {
                 <button
                     onClick={() => openSupport('access')}
                     aria-label="Open support"
-                    className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 pl-3.5 pr-4 py-3 rounded-full text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-cyan-500 shadow-xl shadow-purple-900/50 hover:scale-[1.04] active:scale-[0.97] transition-transform"
+                    className={`fixed bottom-5 right-5 z-40 ${pastHero ? 'inline-flex' : 'hidden sm:inline-flex'} items-center gap-2 pl-3.5 pr-4 py-3 rounded-full text-sm font-bold text-white bg-purple-600 hover:bg-purple-500 shadow-lg transition-colors`}
                 >
                     <LifeBuoy size={17} aria-hidden="true" />
                     Support
