@@ -15,7 +15,7 @@ export function Tabs({ tabs, active, onChange, className = '' }) {
     <div
       role="tablist"
       onKeyDown={onKey}
-      className={cn('flex gap-1 bg-bg-surface rounded-xl p-1 border border-border-default w-fit', className)}
+      className={cn('flex gap-1 bg-bg-surface rounded-xl p-1 border border-border-default w-fit max-w-full overflow-x-auto', className)}
     >
       {tabs.map((t) => {
         const selected = t.key === active;
@@ -27,7 +27,7 @@ export function Tabs({ tabs, active, onChange, className = '' }) {
             tabIndex={selected ? 0 : -1}
             onClick={() => onChange(t.key)}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+              'flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-medium transition-colors',
               selected
                 ? 'bg-gradient-primary text-white shadow-glow'
                 : 'text-text-muted hover:text-text-secondary',

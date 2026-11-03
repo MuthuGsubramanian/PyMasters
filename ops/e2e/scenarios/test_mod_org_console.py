@@ -70,3 +70,55 @@ def test_branding_shows_in_learner_shell(logged_in_page):
     page = logged_in_page(with_org(member))
     page.goto(f"{BASE}/dashboard", wait_until="networkidle")
     page.get_by_text("Scenario Academy").filter(visible=True).first.wait_for(timeout=15000)
+
+
+def _struggle(student, times=4):
+    """Fail a challenge the way a learner does: each wrong run after the first adds one struggle."""
+    s = api(student["ip"], student["token"])
+    for _ in range(times):
+        r = s.post(f"{BASE}/api/classroom/evaluate", timeout=120, json={
+            "user_id": student["id"], "lesson_id": "variables_intro", "topic": "variables_intro",
+            "code": "print('not the answer')\n"})
+        assert r.status_code == 200 and r.json()["success"] is False, r.text[:200]
+
+
+def test_overview_lists_who_needs_attention_and_opens_their_detail(logged_in_page):
+    """Redesign PR 4: the teacher's first screen answers "who needs help"; deleting the org is not on it."""
+    admin = create_user(kind="organization", org_type="school")
+    db("grandfather-org", admin["org_id"])
+    struggling = _member(admin, admin["org_id"], "member")
+    _member(admin, admin["org_id"], "member")
+    _struggle(struggling)
+
+    page = logged_in_page(admin)
+    page.goto(f"{BASE}/dashboard/org", wait_until="networkidle")
+    attention = page.get_by_role("list", name="Needs attention")
+    attention.wait_for(timeout=30000)
+    row = attention.get_by_role("button", name=f"Open {struggling['name']} detail")
+    assert "At risk" in row.inner_text(), row.inner_text()
+    assert page.get_by_role("button", name="Delete Organization").count() == 0, "delete is still on Overview"
+    row.click()
+    page.get_by_role("dialog").first.wait_for(timeout=15000)
+    page.keyboard.press("Escape")
+
+    page.get_by_role("tab", name="Branding").click()
+    page.get_by_role("button", name="Delete Organization").wait_for(timeout=15000)
+    assert page.get_by_text("Owner", exact=True).count() >= 1
+    assert page.get_by_text("Super Admin", exact=True).count() == 0
+    assert not [p for p in page.problems if "pageerror" in p or p.startswith("http 5")], page.problems[:3]
+
+
+def test_console_tabs_fit_a_phone(logged_in_page):
+    admin = create_user(kind="organization", org_type="enterprise")
+    db("grandfather-org", admin["org_id"])
+    page = logged_in_page(admin, width=390, height=844)
+    page.goto(f"{BASE}/dashboard/org", wait_until="networkidle")
+    tablist = page.get_by_role("tablist").first
+    tablist.wait_for(timeout=30000)
+    assert page.evaluate("document.documentElement.scrollWidth") <= 390, "console scrolls the whole page sideways"
+    box = tablist.bounding_box()
+    assert box["x"] >= 0 and box["x"] + box["width"] <= 390 + 1, box
+    last = page.get_by_role("tab").last
+    last.scroll_into_view_if_needed()
+    last.click()
+    assert last.get_attribute("aria-selected") == "true"
