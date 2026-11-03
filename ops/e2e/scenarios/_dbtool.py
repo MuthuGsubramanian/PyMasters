@@ -11,6 +11,7 @@ Commands (result printed to stdout):
   grandfather-org <org_id>           mark an org grandfathered (full access, like approved schools)
   seed-order <user_id> <plan>        insert a pending Razorpay order row; prints its order id
   seed-completions <user_id> <lesson_id>...  record lessons as completed (boss-battle unlock)
+  age-completions <user_id> <days>           move completions/practice back (reviews come due)
   seed-notification <user_id> <title>        an unread in-app notification
   seed-vmessage <user_id> <text>             a pending Vaathiyaar message
 """
@@ -78,6 +79,11 @@ def main(argv):
             _write("INSERT OR IGNORE INTO lesson_completions (user_id, lesson_id, xp_awarded) VALUES (?, ?, 0)",
                    [args[0], lesson_id])
         return "ok"
+    if cmd == "age-completions":
+        _write("UPDATE lesson_completions SET completed_at = datetime('now', ?) WHERE user_id = ?",
+               [f"-{int(args[1])} days", args[0]])
+        return _write("UPDATE user_mastery SET last_practiced = datetime('now', ?) WHERE user_id = ?",
+                      [f"-{int(args[1])} days", args[0]])
     if cmd == "seed-notification":
         return _write("INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, 'system', ?, ?, '')",
                       [args[0], args[1], f"{args[1]} (scenario test)"])
