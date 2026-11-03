@@ -46,6 +46,25 @@ def test_lesson_imports_exist_in_the_sandbox():
     assert not missing, {m: needed[m][:5] for m in sorted(missing)}
 
 
+def test_every_practice_challenge_has_a_stored_solution():
+    """A lesson ships only with a verified solution for each of its challenges (ops/e2e/solutions/generate.py
+    --only <id>), so an unsolvable challenge fails this gate instead of surfacing in the nightly run."""
+    have = {(s["lesson_id"], c["index"]) for f in SOLUTIONS.glob("*.json")
+            for s in [json.loads(f.read_text())] for c in s["challenges"]}
+    missing = []
+    for f in LESSONS.rglob("*.json"):
+        try:
+            d = json.loads(f.read_text())
+        except Exception:  # noqa: BLE001 — non-lesson JSON
+            continue
+        if not isinstance(d, dict):
+            continue
+        for i, ch in enumerate(d.get("practice_challenges") or []):
+            if isinstance(ch, dict) and (d.get("id") or f.stem, i) not in have:
+                missing.append(f"{d.get('id') or f.stem}#{i}")
+    assert not missing, f"no verified solution for {sorted(missing)[:20]} — run ops/e2e/solutions/generate.py --only <ids>"
+
+
 def _verify(lesson_id: str, code: str) -> dict:
     out = subprocess.run([DOCKER, "exec", "-i", CONTAINER, "python", "/app/ops_e2e/verify.py", "one", lesson_id],
                          input=code, capture_output=True, text=True, timeout=120)

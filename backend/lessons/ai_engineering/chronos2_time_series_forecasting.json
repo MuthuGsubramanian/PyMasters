@@ -101,7 +101,7 @@
           "Coverage = count of points where low[i] <= actual[i] <= high[i], divided by total points"
         ]
       },
-      "test_code": "e = ForecastEvaluator()\nassert e.mae([10, 20, 30], [10, 20, 30]) == 0.0\nassert e.mae([10, 20], [12, 18]) == 2.0\nassert abs(e.mape([100, 200], [110, 190]) - 5.5) < 0.01\nassert e.mape([0, 100], [5, 110]) == 10.0\nassert e.coverage([5, 15, 25], [0, 10, 20], [10, 20, 30]) == 1.0\nassert e.coverage([5, 15, 25], [10, 10, 20], [20, 20, 30]) == 2/3"
+      "test_code": "e = ForecastEvaluator()\nassert e.mae([10, 20, 30], [10, 20, 30]) == 0.0\nassert e.mae([10, 20], [12, 18]) == 2.0\nassert abs(e.mape([100, 200], [110, 190]) - 7.5) < 0.01\nassert e.mape([0, 100], [5, 110]) == 10.0\nassert e.coverage([5, 15, 25], [0, 10, 20], [10, 20, 30]) == 1.0\nassert e.coverage([5, 15, 25], [10, 10, 20], [20, 20, 30]) == 2/3"
     }
   ],
   "tags": {

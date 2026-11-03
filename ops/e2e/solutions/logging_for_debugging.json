@@ -1,0 +1,11 @@
+{
+  "lesson_id": "logging_for_debugging",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import logging, sys\nlogging.basicConfig(stream=sys.stdout, level=logging.INFO,\n                    format=\"%(levelname)s:%(message)s\", force=True)\nlog = logging.getLogger(\"shop\")\n\ndef total(prices):\n    s = 0\n    for p in prices:\n        if p < 0:\n            log.warning(\"skipping negative price %s\", p)\n            continue\n        log.debug(\"adding %s\", p)\n        s += p\n    log.info(\"total=%s\", s)\n    return s\n\ntotal([5, -2, 7])\n",
+      "verified_output": "WARNING:skipping negative price -2\nINFO:total=12",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}
