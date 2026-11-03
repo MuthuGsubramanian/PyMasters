@@ -1,0 +1,4 @@
+#!/bin/bash
+# Run a heavy ops job inside pymasters-heavy.slice (CPU-capped; frozen by the thermal guard when hot).
+#   heavy <command> [args...]
+exec systemd-run --user --scope --quiet --slice=pymasters-heavy.slice -- "$@"

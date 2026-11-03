@@ -17,7 +17,10 @@ fi
 rnd() { python3 -c "import secrets;print(secrets.token_urlsafe($1))"; }
 export PM_E2E_OPS_TOKEN="$(rnd 24)" PM_E2E_BASE="http://127.0.0.1:$PORT" PM_E2E_CONTAINER="$NAME" PM_E2E_DOCKER="$DOCKER"
 "$DOCKER" rm -f "$NAME" >/dev/null 2>&1 || true
+# PM_E2E_CGROUP_PARENT (ops laptop: pymasters-heavy.slice) keeps the container inside the CPU-capped slice that
+# the thermal guard freezes when the laptop runs hot.
 "$DOCKER" run -d --name "$NAME" --cap-add NET_ADMIN -p "127.0.0.1:$PORT:8080" \
+  ${PM_E2E_CGROUP_PARENT:+--cgroup-parent "$PM_E2E_CGROUP_PARENT"} \
   -e DB_PATH=/app/data/e2e.db -e PYMASTERS_ENV=ci -e VAATHIYAAR_PROVIDERS=stub -e PYMASTERS_JOBS=0 \
   -e JWT_SECRET="$(rnd 48)" -e OPS_ADMIN_TOKEN="$PM_E2E_OPS_TOKEN" -e EXPORT_TOKEN="$(rnd 24)" \
   -e RAZORPAY_KEY_ID=rzp_test_ci -e RAZORPAY_KEY_SECRET="${PM_E2E_RZP_SECRET:=$(rnd 24)}" \

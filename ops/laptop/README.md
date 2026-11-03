@@ -7,8 +7,9 @@ survives a dead disk. No secrets here (OAuth tokens live in `~/.config/pymasters
 |---|---|
 | `collect_status.sh` | Read-only facts: site health, CI, commits, VM, backups, GCP cost guards, laptop heat, social bot, GCP spend, open reminders |
 | `daily_report.sh` + `pymasters-daily-report.{service,timer}` | 09:00 IST: headless Claude turns the facts into the owner's status email (Gmail send tool only) |
-| `thermal_guard.py` + `pymasters-thermal-guard.service` | Pauses (SIGSTOP) the heavy units above 82 C, resumes below 68 C after >= 2 min; logs `thermal.{log,csv}`. Added after a 100 C hardware power-off on 2026-11-02 |
+| `thermal_guard.py` + `pymasters-thermal-guard.service` | Freezes (cgroup.freeze) `pymasters-heavy.slice` and the social bot above 80 C, thaws below 68 C after >= 90 s, alerts >= 90 C with the top CPU users; logs `thermal.{log,csv}`. Added after 100 C hardware power-offs on 2026-11-02 and 2026-11-03 |
+| `pymasters-heavy.slice` + `heavy` | Every heavy ops job (image builds, scenario runs, headless browsers, solution generators, social renders) runs in this slice, capped at 2 of 8 CPUs in total: `~/pymasters-ops/heavy <cmd>`; scenario containers join it via `PM_E2E_CGROUP_PARENT=pymasters-heavy.slice`. One heavy job at a time. `heavy_selftest.sh` proves the cap and the freezer; `temps.py` prints temperatures, load and top CPU users |
 
 Restore: copy the scripts to `~/pymasters-ops/`, the units to `~/.config/systemd/user/`, then
-`systemctl --user daemon-reload && systemctl --user enable --now pymasters-daily-report.timer pymasters-thermal-guard.service pymasters-social.timer`
+`systemctl --user daemon-reload && systemctl --user enable --now pymasters-daily-report.timer pymasters-thermal-guard.service pymasters-social.timer` (copy `pymasters-heavy.slice` too)
 and `sudo loginctl enable-linger $USER`. The social bot itself lives in `socialbot/` (see its README).
