@@ -297,6 +297,60 @@ def check_challenge_safety(code: str) -> str | None:
     return None
 
 
+# Classroom grading gate (2026-11-03). Lessons TEACH asyncio, threading, files, sqlite3, os/sys and descriptors,
+# so the strict check_code_safety refused correct answers in ~58 lessons. The security boundary is the sandbox
+# (own uid, verified network isolation, rlimits, secret-free env); this gate blocks only the escape surface.
+_LESSON_BLOCKED_MODULES = {
+    "subprocess", "socket", "ctypes", "multiprocessing", "importlib", "builtins", "gc", "resource", "signal",
+    "mmap", "fcntl", "pty", "termios", "select", "ssl", "marshal", "pickle", "shelve", "dbm",
+    "ftplib", "smtplib", "webbrowser",
+}
+_LESSON_BLOCKED_NAMES = {"eval", "exec", "compile", "__import__", "breakpoint", "memoryview"}
+
+
+def _used_names(tree) -> set:
+    """Module roots, bare names and attributes a piece of code uses."""
+    used = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            used |= {a.name.split(".")[0] for a in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            used.add(node.module.split(".")[0])
+        elif isinstance(node, ast.Name):
+            used.add(node.id)
+        elif isinstance(node, ast.Attribute):
+            used.add(node.attr)
+    return used
+
+
+def check_lesson_safety(code: str, lesson_code: str = "", allowed_open_files=None) -> str | None:
+    """Gate for graded lesson code. ``lesson_code`` is the lesson's own server-authored starter + test code:
+    anything it uses (e.g. importlib in a lesson about imports, __dict__ in one about descriptors) is allowed
+    for that lesson only. ``allowed_open_files`` is kept for callers; open() is allowed (sandbox cwd only)."""
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return None  # the same interpreter raises the real SyntaxError downstream
+    try:
+        granted = _used_names(ast.parse(lesson_code or ""))
+    except SyntaxError:
+        granted = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            roots = ([a.name.split(".")[0] for a in node.names] if isinstance(node, ast.Import)
+                     else [(node.module or "").split(".")[0]])
+            for root in roots:
+                if root in _LESSON_BLOCKED_MODULES and root not in granted:
+                    return f"import of module '{root}' is not allowed here"
+        elif isinstance(node, ast.Name):
+            if node.id in _LESSON_BLOCKED_NAMES and node.id not in granted:
+                return f"use of '{node.id}' is not allowed here"
+        elif isinstance(node, ast.Attribute):
+            if node.attr in _BLOCKED_DUNDERS and node.attr not in granted:
+                return f"access to '{node.attr}' is not allowed here"
+    return None
+
+
 def _minimal_env(python_cmd: str, work_dir: str | None = None) -> dict:
     """Build a secret-free environment sufficient to start the interpreter."""
     env = {

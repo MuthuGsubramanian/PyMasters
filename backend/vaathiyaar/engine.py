@@ -943,6 +943,7 @@ def evaluate_code(
     attempt_count: int = 0,
     test_code: Optional[str] = None,
     sandbox_files: Optional[dict] = None,
+    lesson_code: str = "",
 ) -> dict:
     """
     Safely execute student-submitted code, compare output with expected, then
@@ -971,14 +972,13 @@ def evaluate_code(
         - error (str): Captured stderr / exception message, or "".
         - feedback (dict): Parsed Vaathiyaar response dict.
     """
-    from vaathiyaar.execution import run_code_subprocess, check_code_safety
+    from vaathiyaar.execution import run_code_subprocess, check_lesson_safety
 
-    # sandbox_files (2026-07-02): server-authored fixture files a file-I/O lesson
-    # seeds into the sandbox cwd. Their names double as the whitelist of literal
-    # filenames the student may open(); absent (all other lessons) → behaviour
-    # is byte-identical to before.
-    blocked = check_code_safety(
+    # Gate (2026-11-03): only the sandbox-escape surface is refused; the lesson's own server-authored
+    # starter/test code (lesson_code) grants what that lesson teaches. sandbox_files are seeded fixtures.
+    blocked = check_lesson_safety(
         student_code,
+        lesson_code=lesson_code,
         allowed_open_files=set(sandbox_files) if sandbox_files else None,
     )
     if blocked:

@@ -18,7 +18,7 @@ os.chdir("/app/backend")
 
 from routes.classroom import _load_lesson_from_dir          # noqa: E402
 from vaathiyaar.engine import _output_matches               # noqa: E402
-from vaathiyaar.execution import run_code_subprocess        # noqa: E402
+from vaathiyaar.execution import check_lesson_safety, run_code_subprocess  # noqa: E402
 
 
 def _sandbox_files(lesson: dict):
@@ -36,6 +36,10 @@ def verify(lesson_id: str, code: str) -> dict:
     ch = lesson["practice_challenges"][0]
     files = _sandbox_files(lesson)
     test_code = ch.get("test_code") if isinstance(ch.get("test_code"), str) and ch["test_code"].strip() else None
+    lesson_code = "\n".join(c for c in (ch.get("starter_code"), ch.get("test_code")) if isinstance(c, str))
+    blocked = check_lesson_safety(code, lesson_code=lesson_code, allowed_open_files=set(files) if files else None)
+    if blocked:      # the same gate /api/classroom/evaluate applies before running anything
+        return {"ok": False, "output": "", "error": f"Forbidden: {blocked}"}
     if test_code:
         res = run_code_subprocess(code + "\n\n" + test_code, seed_files=files)
         return {"ok": res["exit_code"] == 0, "output": res["output"], "error": res["error"]}
