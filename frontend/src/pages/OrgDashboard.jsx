@@ -82,7 +82,7 @@ function studentStatus(s) {
 }
 
 const ROLE_BADGES = {
-  super_admin: { label: 'Super Admin', variant: 'warning', icon: Crown },
+  super_admin: { label: 'Owner', variant: 'warning', icon: Crown },
   admin: { label: 'Admin', variant: 'primary', icon: Shield },
   manager: { label: 'Manager', variant: 'info', icon: Shield },
   member: { label: 'Member', variant: 'neutral', icon: Users },
@@ -740,6 +740,12 @@ export default function OrgDashboard() {
     ? analytics.lessons_completed
     : safeMembers.reduce((a, m) => a + (Number(m.lessons_completed) || 0), 0);
 
+  // Who needs the teacher/manager today: at-risk first, then idle, from the progress already loaded.
+  const needsAttention = (progress || [])
+    .map((s) => ({ s, st: studentStatus(s) }))
+    .filter(({ st }) => st.label === 'At risk' || st.label === 'Idle')
+    .sort((a, b) => (a.st.label === b.st.label ? 0 : a.st.label === 'At risk' ? -1 : 1));
+
   /* ================================================================ */
   /*  Main dashboard render                                            */
   /* ================================================================ */
@@ -761,7 +767,7 @@ export default function OrgDashboard() {
               <Badge variant={TYPE_BADGES[orgType] || TYPE_BADGES.other} className="uppercase">
                 {orgType.replace(/_/g, ' ')}
               </Badge>
-              {org?.plan && (
+              {org?.plan && String(org.plan).toLowerCase() !== orgType.toLowerCase() && (
                 <Badge variant="warning" className="uppercase">
                   {String(org.plan)}
                 </Badge>
@@ -816,7 +822,51 @@ export default function OrgDashboard() {
                 />
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {canViewProgress && (
+                <Card className="p-4">
+                  <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                    <h3 className="text-sm font-bold text-text-primary">Needs attention</h3>
+                    <span className="text-xs text-text-muted">At risk: struggling on 3+ challenges · Idle: no activity this week</span>
+                  </div>
+                  {progress === null ? (
+                    <p className="text-sm text-text-muted" role="status">Loading {learnerLabel.toLowerCase()}…</p>
+                  ) : needsAttention.length === 0 ? (
+                    <p className="text-sm text-text-secondary">
+                      {!progress?.length
+                        ? `No ${learnerLabel.toLowerCase()} yet: invite them from the Members tab.`
+                        : `Everyone is on track: no ${learnerLabel.toLowerCase()} at risk or idle this week.`}
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-border-default" aria-label="Needs attention">
+                      {needsAttention.slice(0, 8).map(({ s, st }) => {
+                        const name = String(s.name || s.username || '—');
+                        return (
+                          <li key={s.id}>
+                            <button type="button" onClick={() => setOpenStudentId(s.id)} aria-label={`Open ${name} detail`}
+                              className="flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left hover:bg-bg-elevated focus:outline-none focus-visible:ring-2 focus-visible:ring-border-focus">
+                              <Avatar name={name} size="sm" />
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm font-semibold text-text-primary">{name}</span>
+                                <span className="block text-xs text-text-muted">
+                                  {st.label === 'At risk' ? `Struggling on ${s.struggle_count} challenges` : `Last active ${relTime(s.last_active)}`}
+                                </span>
+                              </span>
+                              <Badge variant={st.variant}>{st.label}</Badge>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                  {needsAttention.length > 8 && (
+                    <Button variant="link" size="sm" className="mt-2 px-0" onClick={() => setTab('students')}>
+                      See all {needsAttention.length} in {learnerLabel}
+                    </Button>
+                  )}
+                </Card>
+              )}
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <StatCard icon={Users} label="Total Members" value={memberCount} />
                 <StatCard icon={Zap} label="Avg XP" value={avgXp} />
                 <StatCard icon={TrendingUp} label="Active Learners (7d)" value={activeLearners} />
@@ -860,31 +910,6 @@ export default function OrgDashboard() {
                 </Card>
               )}
 
-              {activeOrg?.role === 'super_admin' && (
-                <div className="border-t border-border-default pt-4 mt-4">
-                  <Button
-                    onClick={() => setShowDeleteOrg(true)}
-                    variant="link"
-                    size="sm"
-                    className="text-xs text-red-500 hover:text-red-600 px-0"
-                  >
-                    Delete Organization
-                  </Button>
-                </div>
-              )}
-
-              {showDeleteOrg && (
-                <DeleteOrgModal
-                  orgName={getOrgName(org, activeOrg)}
-                  orgId={getOrgId(activeOrg)}
-                  userId={user?.id}
-                  onDeleted={() => {
-                    setOrg(null);
-                    navigate('/dashboard');
-                  }}
-                  onClose={() => setShowDeleteOrg(false)}
-                />
-              )}
             </div>
           )}
 
@@ -1271,17 +1296,6 @@ export default function OrgDashboard() {
                   </Card>
                 </>
               )}
-              {openStudentId && (
-                <StudentDrawer
-                  orgId={getOrgId(activeOrg)}
-                  userId={user?.id}
-                  studentId={openStudentId}
-                  canEdit={isAdmin}
-                  groupLabel={groupLabel}
-                  onClose={() => setOpenStudentId(null)}
-                  onGroupsChanged={() => { loadGroups(); setRefreshTick((t) => t + 1); }}
-                />
-              )}
             </div>
           )}
 
@@ -1351,15 +1365,53 @@ export default function OrgDashboard() {
           )}
 
           {tab === 'branding' && isAdmin && (
-            <OrgBrandingPanel
-              orgId={orgId}
-              orgName={orgName}
-              userName={user?.name || user?.username || ''}
-              onSaved={(b) => { if (b?.group_label) setGroupLabel(b.group_label); loadGroups(); }}
-            />
+            <div className="space-y-4">
+              <OrgBrandingPanel
+                orgId={orgId}
+                orgName={orgName}
+                userName={user?.name || user?.username || ''}
+                onSaved={(b) => { if (b?.group_label) setGroupLabel(b.group_label); loadGroups(); }}
+              />
+              {activeOrg?.role === 'super_admin' && (
+                <div className="border-t border-border-default pt-4 mt-4">
+                  <Button
+                    onClick={() => setShowDeleteOrg(true)}
+                    variant="link"
+                    size="sm"
+                    className="text-xs text-red-500 hover:text-red-600 px-0"
+                  >
+                    Delete Organization
+                  </Button>
+                </div>
+              )}
+
+              {showDeleteOrg && (
+                <DeleteOrgModal
+                  orgName={getOrgName(org, activeOrg)}
+                  orgId={getOrgId(activeOrg)}
+                  userId={user?.id}
+                  onDeleted={() => {
+                    setOrg(null);
+                    navigate('/dashboard');
+                  }}
+                  onClose={() => setShowDeleteOrg(false)}
+                />
+              )}
+            </div>
           )}
         </motion.div>
       </AnimatePresence>
+      {openStudentId && (
+        <StudentDrawer
+          orgId={getOrgId(activeOrg)}
+          userId={user?.id}
+          studentId={openStudentId}
+          canEdit={isAdmin}
+          groupLabel={groupLabel}
+          onClose={() => setOpenStudentId(null)}
+          onGroupsChanged={() => { loadGroups(); setRefreshTick((t) => t + 1); }}
+        />
+      )}
     </div>
   );
 }
