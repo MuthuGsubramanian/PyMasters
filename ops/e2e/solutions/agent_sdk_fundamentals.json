@@ -6,6 +6,12 @@
       "code": "def call_tool(name, args, registry):\n    \"\"\"Dispatch a tool call by name; return an error string for unknown tools.\"\"\"\n    if name not in registry:\n        return f\"error: unknown tool '{name}'\"\n    return registry[name](**args)\n\nregistry = {\"add\": lambda a, b: a + b}\nprint(call_tool(\"add\", {\"a\": 6, \"b\": 7}, registry))\n",
       "verified_output": "13",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def run_agent(plan_fn, call_tool_fn, question, max_turns=5):\n    \"\"\"Run the plan -> act -> observe loop until the model gives a final answer.\"\"\"\n    history = [{\"role\": \"user\", \"content\": question}]\n    for _ in range(max_turns):\n        response = plan_fn(history)\n        if response[\"type\"] == \"final_answer\":\n            return response[\"content\"]\n        observation = call_tool_fn(response[\"name\"], response[\"args\"])\n        history.append({\"role\": \"tool\", \"content\": observation})\n    return \"error: max turns reached\"\n\ndef fake_plan(history):\n    if len(history) < 3:\n        return {\"type\": \"tool_call\", \"name\": \"add\", \"args\": {\"a\": 6, \"b\": 7}}\n    return {\"type\": \"final_answer\", \"content\": \"13\"}\n\ndef fake_call_tool(name, args):\n    return args[\"a\"] + args[\"b\"]\n\nprint(run_agent(fake_plan, fake_call_tool, \"What is 6 + 7?\"))\n",
+      "verified_output": "13",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

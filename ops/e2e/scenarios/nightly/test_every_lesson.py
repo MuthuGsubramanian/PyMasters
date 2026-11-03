@@ -56,13 +56,15 @@ def test_every_lesson(lesson, browser):
         ctx.close()
         assert not problems, (lang, problems[:3])
 
+    # Every practice challenge (not just the first) has a verified solution that the real grader accepts.
     sol_file = SOLUTIONS / f"{lesson['id']}.json"
     assert sol_file.exists(), f"no verified solution — content defect, see ops/e2e/out/unsolved.json"
-    code = json.loads(sol_file.read_text())["challenges"][0]["code"]
-    ch = full["practice_challenges"][0]
-    r = s.post(f"{BASE}/api/classroom/evaluate", timeout=120, json={
-        "user_id": u["id"], "lesson_id": lesson["id"], "expected_output": ch.get("expected_output", ""), "code": code})
-    assert r.status_code == 200 and r.json()["success"] is True, r.text[:300]
+    stored = {c["index"]: c["code"] for c in json.loads(sol_file.read_text())["challenges"]}
+    for index, _ch in enumerate(full["practice_challenges"]):
+        assert index in stored, f"challenge {index} has no verified solution — content defect"
+        r = s.post(f"{BASE}/api/classroom/evaluate", timeout=120, json={
+            "user_id": u["id"], "lesson_id": lesson["id"], "challenge_index": index, "code": stored[index]})
+        assert r.status_code == 200 and r.json()["success"] is True, (index, r.text[:300])
     assert s.get(f"{BASE}/api/profile/{u['id']}/stats", timeout=30).json()["total_xp"] > 0
 
     for i, item in enumerate(full.get("quiz") or []):

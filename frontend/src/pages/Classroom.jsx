@@ -1068,8 +1068,11 @@ function PracticePhase({
     chatMessages,
     executionTime,
     onClearOutput,
+    challengeIndex = 0,
+    onSelectChallenge,
 }) {
-    const challenge = lesson?.practice_challenges?.[0] ?? null;
+    const challenges = lesson?.practice_challenges || [];
+    const challenge = challenges[challengeIndex] ?? null;
     const hints = hintList(challenge, language);
     const instruction = challenge
         ? resolveText(challenge?.instruction, language)
@@ -1084,9 +1087,31 @@ function PracticePhase({
                     {'\u{1F9D1}\u200D\u{1F3EB}'}
                 </div>
                 <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2">
-                        <p className="text-xs font-bold uppercase tracking-widest text-purple-500">Challenge</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-xs font-bold uppercase tracking-widest text-purple-500">
+                            {challenges.length > 1 ? `Challenge ${challengeIndex + 1} of ${challenges.length}` : 'Challenge'}
+                        </p>
                         <Zap size={12} className="text-amber-400" />
+                        {challenges.length > 1 && onSelectChallenge && (
+                            <div role="group" aria-label="Practice challenges" className="ml-auto flex gap-1">
+                                {challenges.map((_, i) => (
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => onSelectChallenge(i)}
+                                        aria-pressed={i === challengeIndex}
+                                        aria-label={`Challenge ${i + 1}`}
+                                        className={`min-w-9 h-9 rounded-lg text-xs font-semibold border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60 ${
+                                            i === challengeIndex
+                                                ? 'bg-accent-primary border-accent-primary text-white'
+                                                : 'border-border-default text-text-secondary hover:border-accent-primary/50'
+                                        }`}
+                                    >
+                                        {i + 1}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                     <p className="text-text-secondary leading-relaxed">{instruction}</p>
                     {/* The grader compares stdout exactly — show the target so a
@@ -1224,7 +1249,7 @@ function RelatedLessons({ lessonId, language, onOpen }) {
     );
 }
 
-function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0, lessonId, onOpenRelated, nextLesson = null, onNext }) {
+function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0, lessonId, onOpenRelated, nextLesson = null, onNext, nextChallenge = null, onNextChallenge }) {
     const success = evalResult?.passed ?? evalResult?.success ?? false;
     // Backend flags `struggling` after repeated failures; fall back to a local
     // count so the supportive UI still appears even without the signal.
@@ -1356,6 +1381,14 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount
                         </p>
                     )}
                     <div className="flex flex-wrap gap-3 pt-2">
+                        {success && nextChallenge != null && onNextChallenge && (
+                            <button
+                                onClick={onNextChallenge}
+                                className="btn-neo btn-neo-primary flex items-center gap-2 py-2.5"
+                            >
+                                Next challenge ({nextChallenge + 1}) <ChevronRight size={16} />
+                            </button>
+                        )}
                         {success ? (
                             nextLesson ? (
                                 <>
@@ -1475,6 +1508,8 @@ export default function Classroom() {
     const [executionTime, setExecutionTime] = useState(null);
     const [running, setRunning] = useState(false);
     const [hintIndex, setHintIndex] = useState(0);
+    // Which of the lesson's practice_challenges the learner is on (most lessons have one; 149 have more).
+    const [challengeIndex, setChallengeIndex] = useState(0);
     const [evalResult, setEvalResult] = useState(null);
     const [attemptCount, setAttemptCount] = useState(0);
     const [completedLessons, setCompletedLessons] = useState(new Set());
@@ -1571,6 +1606,7 @@ export default function Classroom() {
             setCode('');
             setOutput('');
             setHintIndex(0);
+            setChallengeIndex(0);
             setEvalResult(null);
             setAttemptCount(0);
             // Reflect the open lesson in the URL so it can be bookmarked / shared /
@@ -1642,6 +1678,7 @@ export default function Classroom() {
             setOutput('');
             setEvalResult(null);
             setHintIndex(0);
+            setChallengeIndex(0);
         }
         setLessonNotFound(null);
         if (phase !== 'select') return;
@@ -1720,8 +1757,22 @@ export default function Classroom() {
         // opened BLANK. Guarded on an empty editor (!code.trim()) so a returning
         // learner's in-progress code is never clobbered; lessons with no starter_code
         // are unaffected (editor stays as-is). resolveText/language already in scope.
-        const starter = currentLesson?.practice_challenges?.[0]?.starter_code;
+        const starter = currentLesson?.practice_challenges?.[challengeIndex]?.starter_code;
         if (starter && !code.trim()) setCode(resolveText(starter, language));
+        setPhase('practice');
+    };
+
+    // Move to another of the lesson's practice challenges. Each is a different task, so the editor gets that
+    // challenge's own starter code.
+    const handleSelectChallenge = (idx) => {
+        const pcs = currentLesson?.practice_challenges || [];
+        if (idx < 0 || idx >= pcs.length) return;
+        setChallengeIndex(idx);
+        setHintIndex(0);
+        setOutput('');
+        setEvalResult(null);
+        setAttemptCount(0);
+        setCode(resolveText(pcs[idx]?.starter_code, language) || '');
         setPhase('practice');
     };
 
@@ -1732,7 +1783,7 @@ export default function Classroom() {
         setExecutionTime(null);
         const startTime = performance.now();
         try {
-            const challenge = currentLesson?.practice_challenges?.[0] ?? {};
+            const challenge = currentLesson?.practice_challenges?.[challengeIndex] ?? {};
             const res = await api.post('/classroom/evaluate', {
                 code,
                 expected_output: challenge.expected_output ?? '',
@@ -1745,6 +1796,7 @@ export default function Classroom() {
                 // EvaluateRequest already accepts lesson_id; this makes XP award
                 // per-lesson and uses the lesson's true xp_reward.
                 lesson_id: currentLesson?.id ?? null,
+                challenge_index: challengeIndex,
                 topic: currentLesson?.topic ?? currentLesson?.id ?? '',
                 user_id: user?.id,
                 language,
@@ -1799,7 +1851,7 @@ export default function Classroom() {
     };
 
     const handleHint = () => {
-        const hints = hintList(currentLesson?.practice_challenges?.[0], language);
+        const hints = hintList(currentLesson?.practice_challenges?.[challengeIndex], language);
         if (hints.length === 0) return;
         const idx = hintIndex % hints.length;
         const hintText = resolveText(hints[idx], language);
@@ -1932,6 +1984,7 @@ export default function Classroom() {
         setOutput('');
         setEvalResult(null);
         setHintIndex(0);
+        setChallengeIndex(0);
         if (routeLessonId) navigate('/dashboard/classroom'); // clear the lesson from the URL (F3)
     };
 
@@ -1974,6 +2027,7 @@ export default function Classroom() {
         setOutput('');
         setEvalResult(null);
         setHintIndex(0);
+        setChallengeIndex(0);
         if (routeLessonId) navigate('/dashboard/classroom'); // clear the lesson from the URL (F3)
     };
 
@@ -2165,6 +2219,8 @@ export default function Classroom() {
                                 chatMessages={chatMessages}
                                 executionTime={executionTime}
                                 onClearOutput={() => { setOutput(''); setExecutionTime(null); }}
+                                challengeIndex={challengeIndex}
+                                onSelectChallenge={handleSelectChallenge}
                             /></ErrorBoundary>
                         </motion.div>
                     )}
@@ -2186,6 +2242,8 @@ export default function Classroom() {
                                 onRetry={handleRetry}
                                 nextLesson={nextLesson}
                                 onNext={handleNextLesson}
+                                nextChallenge={challengeIndex + 1 < (currentLesson?.practice_challenges?.length || 0) ? challengeIndex + 1 : null}
+                                onNextChallenge={() => handleSelectChallenge(challengeIndex + 1)}
                                 lessonId={currentLesson?.id}
                                 onOpenRelated={handleSelectLesson}
                             /></ErrorBoundary>

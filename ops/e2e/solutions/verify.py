@@ -1,12 +1,12 @@
 """Check reference solutions with the production grading rules. Runs INSIDE the test container
 (copied to /app/ops_e2e/verify.py by run_scenarios.sh; cwd /app/backend so the backend imports resolve).
 
-  python /app/ops_e2e/verify.py one <lesson_id>  < code      → {"ok", "output", "error"}
-  python /app/ops_e2e/verify.py all <dir>                    → {"checked", "failed": [{lesson_id, output, error}]}
+  python /app/ops_e2e/verify.py one <lesson_id> [index]  < code  → {"ok", "output", "error"}
+  python /app/ops_e2e/verify.py all <dir>       → {"checked", "failed": [{lesson_id, index, output, error}]}
 
-The rules are the ones /api/classroom/evaluate applies to practice_challenges[0] (the only challenge a learner
-can reach): with a server-authored test_code harness, the code + harness must exit cleanly; otherwise stdout
-must satisfy _output_matches (exact after strip, <placeholder> tokens as wildcards).
+The rules are the ones /api/classroom/evaluate applies to practice_challenges[index]: with a server-authored
+test_code harness, the code + harness must exit cleanly; otherwise stdout must satisfy _output_matches (exact
+after strip, <placeholder> tokens as wildcards).
 """
 import json
 import os
@@ -46,11 +46,12 @@ def _sandbox_files(lesson: dict):
             and os.path.basename(k) == k and k != "main.py" and len(v) <= 65536}
 
 
-def verify(lesson_id: str, code: str) -> dict:
+def verify(lesson_id: str, code: str, index: int = 0) -> dict:
     lesson = _load_lesson_from_dir(lesson_id)
-    if not lesson or not lesson.get("practice_challenges"):
-        return {"ok": False, "output": "", "error": f"no lesson/challenge for {lesson_id}"}
-    ch = lesson["practice_challenges"][0]
+    pcs = (lesson or {}).get("practice_challenges") or []
+    if not 0 <= index < len(pcs):
+        return {"ok": False, "output": "", "error": f"no challenge {index} in lesson {lesson_id}"}
+    ch = pcs[index]
     files = _sandbox_files(lesson)
     test_code = ch.get("test_code") if isinstance(ch.get("test_code"), str) and ch["test_code"].strip() else None
     lesson_code = "\n".join(c for c in (ch.get("starter_code"), ch.get("test_code")) if isinstance(c, str))
@@ -67,20 +68,19 @@ def verify(lesson_id: str, code: str) -> dict:
 
 
 def main(argv) -> int:
-    if argv[:1] == ["one"] and len(argv) == 2:
-        print(json.dumps(verify(argv[1], sys.stdin.read())))
+    if argv[:1] == ["one"] and len(argv) in (2, 3):
+        print(json.dumps(verify(argv[1], sys.stdin.read(), int(argv[2]) if len(argv) == 3 else 0)))
         return 0
     if argv[:1] == ["all"] and len(argv) == 2:
         failed, checked = [], 0
         for f in sorted(Path(argv[1]).glob("*.json")):
             sol = json.loads(f.read_text())
             for ch in sol.get("challenges", []):
-                if ch.get("index") != 0:
-                    continue
                 checked += 1
-                r = verify(sol["lesson_id"], ch["code"])
+                r = verify(sol["lesson_id"], ch["code"], ch.get("index", 0))
                 if not r["ok"]:
-                    failed.append({"lesson_id": sol["lesson_id"], "output": r["output"][-400:], "error": r["error"][-400:]})
+                    failed.append({"lesson_id": sol["lesson_id"], "index": ch.get("index", 0),
+                                   "output": r["output"][-400:], "error": r["error"][-400:]})
         print(json.dumps({"checked": checked, "failed": failed}))
         return 1 if failed else 0
     print(__doc__, file=sys.stderr)

@@ -6,6 +6,12 @@
       "code": "def crop_example(image: list, mask: list, top: int, left: int, h: int, w: int) -> tuple:\n    \"\"\"Crop image AND mask with one set of coordinates -> (image, mask).\"\"\"\n    def crop(grid):\n        return [row[left:left + w] for row in grid[top:top + h]]\n    return (crop(image), crop(mask))\n\nprint(crop_example([[0, 1, 2, 3], [10, 11, 12, 13], [20, 21, 22, 23], [30, 31, 32, 33]], [[0, 0, 0, 0], [0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 0]], 1, 1, 2, 2))\n",
       "verified_output": "([[11, 12], [21, 22]], [[1, 1], [1, 1]])\nAll tests passed!",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def hflip_example(image: list, boxes: list) -> tuple:\n    \"\"\"Flip image left-right and remap boxes with the same W -> (image, boxes).\"\"\"\n    W = len(image[0]) if image else 0\n    flipped_image = [row[::-1] for row in image]\n    flipped_boxes = [[W - x_max, y_min, W - x_min, y_max] for x_min, y_min, x_max, y_max in boxes]\n    return flipped_image, flipped_boxes\n\nprint(hflip_example([[1, 2, 3], [4, 5, 6]], [[0, 0, 1, 2]]))\n\nfi, fb = hflip_example([[1, 2, 3], [4, 5, 6]], [[0, 0, 1, 2]])\nassert fi == [[3, 2, 1], [6, 5, 4]], f\"wrong pixel flip: {fi}\"\nassert fb == [[2, 0, 3, 2]], f\"wrong box remap: {fb}\"\nfi2, fb2 = hflip_example([[7, 8], [9, 0]], [[0, 0, 2, 2], [1, 0, 2, 1]])\nassert fb2 == [[0, 0, 2, 2], [0, 0, 1, 1]], f\"full-width box must map to itself; right-half box must become left-half: {fb2}\"\nfor b in fb2:\n    assert b[0] <= b[2], f\"x_min must stay <= x_max after the flip: {b}\"\n_, fb3 = hflip_example([[1, 2, 3, 4]], [[3, 0, 4, 1]])\nassert fb3 == [[0, 0, 1, 1]], f\"rightmost box must land at the left edge: {fb3}\"\nprint(\"All tests passed!\")\n",
+      "verified_output": "([[3, 2, 1], [6, 5, 4]], [[2, 0, 3, 2]])\nAll tests passed!\nAll tests passed!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }
