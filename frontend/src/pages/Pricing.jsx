@@ -2,8 +2,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, ArrowRight, GraduationCap, Building2, Sparkles, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getPaymentConfig } from '../api';
+import api, { getPaymentConfig } from '../api';
+import SupportModal from '../components/SupportModal';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
+
+// Same live figures as the landing page ("432" -> "430+"); the fallback never overstates them.
+const FALLBACK_STATS = { lessons: 430, tracks: 24 };
+const roundedDown = (n) => (n >= 20 ? `${Math.floor(n / 10) * 10}+` : String(n));
 
 /**
  * Pricing — public marketing page (dark-always, matches the landing style).
@@ -30,7 +35,7 @@ const TIERS = [
     icon: GraduationCap,
     blurb: 'Try everything PyMasters offers — no card required.',
     features: [
-      'Full curriculum — 25 tracks, 340+ lessons',
+      'Full curriculum — {tracks} tracks, {lessons} lessons',
       'Vaathiyaar, your AI tutor (chat + voice)',
       'Live Knowledge Map of what you know',
       'Code Playground with real execution',
@@ -41,7 +46,7 @@ const TIERS = [
   },
   {
     name: 'Beginner',
-    tag: 'Most popular',
+    tag: 'Monthly',
     price: '₹299',
     period: 'per month',
     icon: GraduationCap,
@@ -67,7 +72,6 @@ const TIERS = [
       'Everything in Beginner',
       'Priority Vaathiyaar responses (chat + voice)',
       'Advanced progress analytics & Knowledge Map insights',
-      'Completion certificates',
       'Early access to new tracks',
     ],
     planKey: 'pro',
@@ -85,7 +89,7 @@ const TIERS = [
       'Admin console with roles & cohort dashboards',
       'Custom learning paths for your program',
       'Org challenges & private leaderboards',
-      'SSO & priority support',
+      'Organization roles, audit log & priority support',
       'Pilot programs available',
     ],
     cta: { label: 'Talk to Sales', kind: 'ghost', mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20for%20Organizations' },
@@ -108,6 +112,17 @@ export default function Pricing() {
       .catch(() => {});
     return () => { cancelled = true; };
   }, []);
+
+  const [stats, setStats] = useState(FALLBACK_STATS);
+  useEffect(() => {
+    let alive = true;
+    api.get('/classroom/catalog-stats')
+      .then(({ data }) => { if (alive && data?.lessons > 0 && data?.tracks > 0) setStats(data); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const fill = (f) => f.replace('{tracks}', String(stats.tracks)).replace('{lessons}', roundedDown(stats.lessons));
+  const [studentOpen, setStudentOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#0a0a14] text-slate-100 font-sans selection:bg-purple-500/30 selection:text-white">
@@ -156,7 +171,7 @@ export default function Pricing() {
                 <span className="inline-flex items-center gap-2 text-white font-display font-semibold text-lg">
                   <Icon size={18} className="text-cyan-400" aria-hidden="true" /> {name}
                 </span>
-                <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/15 text-slate-300">
+                <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/15 text-slate-300">
                   {tag}
                 </span>
               </div>
@@ -169,7 +184,7 @@ export default function Pricing() {
                 {features.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm text-slate-300">
                     <Check size={15} className="mt-0.5 shrink-0 text-emerald-400" aria-hidden="true" />
-                    {f}
+                    {fill(f)}
                   </li>
                 ))}
               </ul>
@@ -204,7 +219,17 @@ export default function Pricing() {
             </div>
           ))}
         </div>
-        <p className="max-w-7xl mx-auto mt-6 text-center text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-4">
+          <p className="flex items-start gap-2 text-sm text-slate-300">
+            <GraduationCap size={18} className="mt-0.5 shrink-0 text-cyan-400" aria-hidden="true" />
+            <span><span className="font-semibold text-white">Student?</span> PyMasters is free for 3 months with a valid student ID. We check it by hand and reply by email, usually within a day.</span>
+          </p>
+          <button onClick={() => setStudentOpen(true)}
+            className="shrink-0 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-100 border border-white/20 hover:bg-white/[0.06] transition-colors">
+            Request student access <ArrowRight size={14} aria-hidden="true" />
+          </button>
+        </div>
+        <p className="max-w-7xl mx-auto mt-6 text-center text-xs text-slate-400">
           {payEnabled
             ? 'Secure online payments powered by Razorpay — your plan activates instantly after checkout.'
             : 'Online payments are launching soon — until then, plans are enabled on your account by the PyMasters team within a day of your request.'}{' '}
@@ -242,6 +267,7 @@ export default function Pricing() {
           <a href="mailto:legal@pymasters.net" className="hover:text-cyan-400 transition-colors">Contact</a>
         </p>
       </footer>
+      <SupportModal open={studentOpen} onClose={() => setStudentOpen(false)} initialTab="access" user={user} />
     </div>
   );
 }

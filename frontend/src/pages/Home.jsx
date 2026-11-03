@@ -592,7 +592,7 @@ export default function Home() {
                                 <ul className="space-y-2.5 mb-8 text-sm text-slate-200">
                                     <li className="flex items-start gap-2.5">
                                         <ShieldCheck size={16} className="mt-0.5 shrink-0 text-cyan-400" />
-                                        SSO, organization roles, and audit logs
+                                        Organization roles and an audit log
                                     </li>
                                     <li className="flex items-start gap-2.5">
                                         <ShieldCheck size={16} className="mt-0.5 shrink-0 text-cyan-400" />
@@ -624,7 +624,7 @@ export default function Home() {
                                 {[
                                     { v: roundedDown(stats.lessons), l: 'Lessons' },
                                     { v: String(stats.tracks), l: 'Tracks' },
-                                    { v: '∞', l: 'AI Modules' },
+                                    { v: 'Any topic', l: 'AI-built lessons' },
                                     { v: 'EN/TA', l: 'Languages' },
                                 ].map(s => (
                                     <div key={s.l} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
