@@ -1,6 +1,7 @@
 """Reference solutions are checked with the production grading rules (ops/e2e/solutions/verify.py), and every
 library a lesson's practice challenge imports must exist in the production sandbox."""
 import ast
+import re
 import json
 import subprocess
 from pathlib import Path
@@ -91,3 +92,30 @@ def test_harness_graded_lesson_uses_its_test_code():
     real = ("import re\n\ndef extract_capitalized(text):\n    return re.findall(r\"\\b[A-Z][a-zA-Z]*\", text)\n\n"
             "demo = \"The Python re module powers Search and Replace in PyMasters.\"\nprint(extract_capitalized(demo))\n")
     assert _verify(lesson, real)["ok"] is True
+
+
+_PLACEHOLDER = re.compile(r"_{2,}|\bTODO\b|^\s*pass\s*$|\.\.\.\s*$", re.M)
+
+
+def test_no_practice_starter_passes_untouched():
+    """A learner must write something: a starter that already passes teaches nothing and hands out XP. The live
+    audit of 2026-11-04 found 20 (e.g. collections_module's starter WAS the answer; names_scopes_closures' harness
+    redefined `funcs` itself, so any code passed). Starters with ___/TODO placeholders are skipped (cannot pass)."""
+    giveaways = []
+    for f in LESSONS.rglob("*.json"):
+        try:
+            d = json.loads(f.read_text())
+        except Exception:  # noqa: BLE001 — non-lesson JSON
+            continue
+        if not isinstance(d, dict):
+            continue
+        for i, ch in enumerate(d.get("practice_challenges") or []):
+            starter = ch.get("starter_code") or "" if isinstance(ch, dict) else ""
+            if not starter.strip() or _PLACEHOLDER.search(starter):
+                continue
+            out = subprocess.run([DOCKER, "exec", "-i", CONTAINER, "python", "/app/ops_e2e/verify.py", "one",
+                                  d.get("id") or f.stem, str(i)], input=starter, capture_output=True, text=True,
+                                 timeout=120)
+            if out.returncode == 0 and json.loads(out.stdout.strip().splitlines()[-1])["ok"]:
+                giveaways.append(f"{d.get('id') or f.stem}#{i}")
+    assert not giveaways, f"starter code already passes (nothing to write): {sorted(giveaways)}"

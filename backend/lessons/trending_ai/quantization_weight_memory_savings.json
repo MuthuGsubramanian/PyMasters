@@ -116,7 +116,7 @@
       "instruction": {
         "en": "Reuse `quantized_size_gb` to compare precisions for the same 7-billion-parameter model. Print its size in bf16 (`bytes_per_param=2`), then int8 (`bytes_per_param=1`), then int4 (`bytes_per_param=0.5`), one per line, in that order."
       },
-      "starter_code": "def quantized_size_gb(num_params: int, bytes_per_param: float) -> float:\n    total_bytes = num_params * bytes_per_param\n    return round(total_bytes / 1e9, 2)\n\n# print the 7B model's size in bf16, then int8, then int4\nprint(quantized_size_gb(7_000_000_000, 2))\nprint(quantized_size_gb(7_000_000_000, 1))\nprint(quantized_size_gb(7_000_000_000, 0.5))",
+      "starter_code": "def quantized_size_gb(num_params: int, bytes_per_param: float) -> float:\n    # TODO: multiply num_params by bytes_per_param to get the total bytes\n    total_bytes = ___\n    # TODO: convert bytes to GB (divide by 1e9) and round to 2 decimals\n    return ___\n\n# print the 7B model's size in bf16, then int8, then int4\n# TODO: call quantized_size_gb(7_000_000_000, ...) with 2 bytes per param (bf16) and print it\n___\n# TODO: same call with 1 byte per param (int8), printed\n___\n# TODO: same call with 0.5 bytes per param (int4), printed\n___\n",
       "hints": {
         "en": [
           "Call quantized_size_gb three times, once per precision",
