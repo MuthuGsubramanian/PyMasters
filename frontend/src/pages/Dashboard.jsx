@@ -33,6 +33,7 @@ import { API_URL } from '../api';
 import ReviewQueue from '../components/ReviewQueue';
 import WarmUp from '../components/WarmUp';
 import MisconceptionRadar from '../components/MisconceptionRadar';
+import useAudience from '../hooks/useAudience';
 import { Badge, Card, Button } from '../components/ui';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -278,6 +279,7 @@ function rankProgressPct(xp) {
 // ─── Overview ──────────────────────────────────────────────────────────────
 export function Overview() {
     const { user } = useAuth();
+    const audience = useAudience();
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
@@ -399,16 +401,24 @@ export function Overview() {
                 <Card className="relative overflow-hidden shadow-sm">
                 <div className="relative p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 text-xs text-text-secondary mb-2">
-                            <Calendar size={12} />
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-text-secondary mb-2">
+                            <Calendar size={12} aria-hidden="true" />
                             <span>{formatDate()}</span>
+                            {audience.orgName && (
+                                <span className="font-semibold text-text-primary" data-testid="org-identity">&middot; {audience.orgName}</span>
+                            )}
                         </div>
                         <h1 className="text-2xl sm:text-3xl font-bold font-display text-text-primary mb-2">
                             {getGreeting()}, {user.name || user.username}
                         </h1>
-                        <p className="text-sm text-text-secondary italic max-w-lg">
-                            &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-text-secondary">&mdash; {dailyQuote.author}</span>
-                        </p>
+                        {audience.welcome ? (
+                            // The organisation's own welcome (Console -> Branding), in place of a generic quote.
+                            <p className="text-sm text-text-secondary max-w-lg" data-testid="org-welcome">{audience.welcome}</p>
+                        ) : audience.mode !== 'professional' && (
+                            <p className="text-sm text-text-secondary italic max-w-lg">
+                                &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-text-secondary">&mdash; {dailyQuote.author}</span>
+                            </p>
+                        )}
                     </div>
 
                     {/* Streak badge */}
