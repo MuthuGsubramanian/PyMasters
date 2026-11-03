@@ -4,6 +4,7 @@ import { Sparkles, GraduationCap, Building2, Check, ArrowRight, Clock, Loader2 }
 import { useAuth } from '../context/AuthContext';
 import { getAccessStatus, getPaymentConfig, createPaymentOrder, verifyPayment } from '../api';
 import { loadRazorpay } from '../lib/razorpay';
+import SupportModal from '../components/SupportModal';
 
 /**
  * Upgrade — shown when an individual learner's 7-day trial has lapsed (or when
@@ -33,7 +34,7 @@ const PLANS = [
     period: 'per month',
     icon: Sparkles,
     highlight: true,
-    features: ['Everything in Beginner', 'Priority Vaathiyaar responses', 'Advanced analytics & Knowledge Map insights', 'Completion certificates', 'Early access to new tracks'],
+    features: ['Everything in Beginner', 'Priority Vaathiyaar responses', 'Advanced analytics & Knowledge Map insights', 'Early access to new tracks'],
     mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20Pro%20plan',
   },
   {
@@ -42,7 +43,7 @@ const PLANS = [
     price: 'Custom',
     period: 'schools · universities · enterprise',
     icon: Building2,
-    features: ['Everything in Pro, every seat', 'Admin console & cohort dashboards', 'Custom learning paths', 'SSO & priority support'],
+    features: ['Everything in Pro, every seat', 'Admin console & cohort dashboards', 'Custom learning paths', 'Organization roles, audit log & priority support'],
     mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20for%20Organizations',
   },
 ];
@@ -55,6 +56,7 @@ export default function Upgrade() {
   const [busyPlan, setBusyPlan] = useState(null); // plan key currently checking out
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [studentOpen, setStudentOpen] = useState(false);
 
   useEffect(() => {
     document.title = 'Upgrade — PyMasters';
@@ -210,6 +212,16 @@ export default function Upgrade() {
         })}
       </div>
 
+      <div className="flex flex-col gap-3 rounded-2xl border border-border-default bg-bg-surface px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="flex items-start gap-2 text-sm text-text-secondary">
+          <GraduationCap className="mt-0.5 shrink-0 text-accent-primary" size={18} aria-hidden="true" />
+          <span><span className="font-semibold text-text-primary">Student?</span> Get 3 months free with a valid student ID. We check it by hand and reply by email, usually within a day.</span>
+        </p>
+        <button type="button" onClick={() => setStudentOpen(true)} className="btn-neo shrink-0 justify-center">
+          Request student access <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" />
+        </button>
+      </div>
+
       <p className="text-center text-xs text-text-muted">
         {payEnabled
           ? 'Secure payments powered by Razorpay. Your plan activates instantly after payment.'
@@ -218,6 +230,7 @@ export default function Upgrade() {
           Full pricing details
         </button>
       </p>
+      <SupportModal open={studentOpen} onClose={() => setStudentOpen(false)} initialTab="access" user={user} />
     </div>
   );
 }
