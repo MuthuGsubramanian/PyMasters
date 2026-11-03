@@ -999,16 +999,17 @@ def list_groups(org_id: str, caller: str = Depends(get_current_user_id)):
             "SELECT COUNT(DISTINCT user_id) FROM org_member_groups WHERE org_id = ?", [org_id]
         ).fetchone()[0]
         settings_row = conn.execute(
-            "SELECT settings FROM organizations WHERE id = ?", [org_id]
+            "SELECT settings, type FROM organizations WHERE id = ?", [org_id]
         ).fetchone()
     finally:
         conn.close()
-    label = "Group"
-    if settings_row and settings_row[0]:
-        try:
-            label = (json.loads(settings_row[0]) or {}).get("group_label") or "Group"
-        except Exception:
-            label = "Group"
+    # Same effective label the branding endpoint reports: org-type preset (School → Class, Training
+    # centre → Batch, ...) overlaid with any saved override. It used to fall back to "Group" for every org.
+    try:
+        settings = json.loads(settings_row[0]) if settings_row and settings_row[0] else {}
+    except Exception:
+        settings = {}
+    label = _effective_branding((settings_row[1] if settings_row else None) or "other", settings)["group_label"]
     return {
         "groups": [{"name": r[0], "count": r[1]} for r in rows],
         "ungrouped": max(0, total - tagged),
