@@ -38,13 +38,15 @@ def test_audience_links_reach_their_sections(phone):
         switch.get_by_role("link", name=label).click()
         target = phone.get_by_role("heading", name=heading, exact=True)
         target.wait_for(timeout=10000)
-        for _ in range(40):           # smooth scroll takes a variable time on a loaded runner: poll, don't sleep
+        for _ in range(40):           # smooth scroll + settle take a variable time on a loaded runner: poll
             box = target.bounding_box()
             if 0 <= box["y"] < 844:
                 break
             phone.wait_for_timeout(100)
         assert 0 <= box["y"] < 844, f"{label} did not bring '{heading}' into view: {box}"
-        phone.evaluate("window.scrollTo(0, 0)")
+        phone.wait_for_timeout(1600)  # let the link's settle re-checks finish before going back up
+        phone.evaluate("window.scrollTo({ top: 0, behavior: 'instant' })")
+        phone.wait_for_function("window.scrollY === 0")
     assert not phone.problems, phone.problems[:3]
 
 

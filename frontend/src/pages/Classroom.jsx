@@ -723,6 +723,7 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
 
 function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
     const reducedMotion = useReducedMotion();
+    const [starting, setStarting] = useState(false);   // the press registers visibly at once
     const storyContent =
         lesson.active_story || resolveText(lesson.story_variants, language);
 
@@ -1042,11 +1043,13 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
 
             {/* ── Start Practice button ── */}
             <button
-                onClick={onComplete}
-                className="btn-neo btn-neo-primary flex-shrink-0 flex items-center gap-2 w-full justify-center py-3 text-base"
+                onClick={() => { setStarting(true); onComplete(); }}
+                disabled={starting}
+                aria-busy={starting}
+                className="btn-neo btn-neo-primary flex-shrink-0 flex items-center gap-2 w-full justify-center py-3 text-base disabled:opacity-80"
             >
                 <Play size={18} fill="currentColor" />
-                Start Practice
+                {starting ? 'Opening practice…' : 'Start Practice'}
             </button>
         </div>
     );
@@ -2154,7 +2157,9 @@ export default function Classroom() {
                             variants={pageVariants}
                             initial="initial"
                             animate="animate"
-                            exit="exit"
+                            // Leave instantly: with mode="wait" the practice screen mounts only after this exit
+                            // finishes, and fading out a long intro (debugger, scrolly sections) took 1.8-8 s live.
+                            exit={{ opacity: 0, transition: { duration: 0 } }}
                             transition={{ duration: 0.3, ease: 'easeOut' }}
                         >
                             {/* F5: this lesson isn't in the learner's language yet — say so

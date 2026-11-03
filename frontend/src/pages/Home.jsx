@@ -412,6 +412,21 @@ export default function Home() {
                             ['#for-teams', 'For teams & training centres'],
                         ].map(([href, label]) => (
                             <a key={href} href={href}
+                                onClick={(e) => {
+                                    // Content above can still shift while the page settles (hero demo, sections
+                                    // animating in), so a plain anchor jump sometimes stopped short of the
+                                    // section. Scroll to it, then re-check once things settle.
+                                    const el = document.getElementById(href.slice(1));
+                                    if (!el) return;
+                                    e.preventDefault();
+                                    history.replaceState(null, '', href);
+                                    const go = () => el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+                                    go();
+                                    [700, 1400].forEach((ms) => setTimeout(() => {
+                                        const r = el.getBoundingClientRect();
+                                        if (r.top < 0 || r.top > window.innerHeight * 0.5) go();
+                                    }, ms));
+                                }}
                                 className="rounded-full border border-white/15 px-4 py-2 text-slate-200 hover:border-white/30 hover:bg-white/[0.05] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400">
                                 {label}
                             </a>
