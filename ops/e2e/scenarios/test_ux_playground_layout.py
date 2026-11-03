@@ -45,3 +45,22 @@ def test_playground_actions_stay_on_one_line_on_a_laptop(logged_in_page):
     for name in ("Run Code", "Send to Vaathiyaar", "Visualize"):
         b = page.get_by_role("button", name=name).first
         assert b.bounding_box()["height"] <= 44, f"'{name}' wraps onto two lines ({b.bounding_box()['height']:.0f}px tall)"
+
+
+_CONTRAST = r"""e => { const cv = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+  const rgba = c => { cv.clearRect(0, 0, 1, 1); cv.fillStyle = '#000'; cv.fillStyle = c; cv.fillRect(0, 0, 1, 1); return [...cv.getImageData(0, 0, 1, 1).data]; };
+  const lum = ([r, g, b]) => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+  let bg = [255, 255, 255]; for (let n = e; n; n = n.parentElement) { const c = rgba(getComputedStyle(n).backgroundColor); if (c[3] >= 200) { bg = c; break; } }
+  const a = lum(rgba(getComputedStyle(e).color)), b = lum(bg); return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05); }"""
+
+
+@pytest.mark.parametrize("dark", [False, True])
+def test_send_to_vaathiyaar_is_readable_on_the_code_panel(logged_in_page, dark):
+    # Live light-mode check 2026-11-04: the theme accent (dark violet in light mode) sat on the always-dark code
+    # panel at 3.6:1.
+    page = logged_in_page(create_user(), width=1440, height=900, dark=dark)
+    page.goto(f"{BASE}/dashboard/playground", wait_until="networkidle")
+    label = page.get_by_role("button", name="Send to Vaathiyaar").locator("span").first
+    label.wait_for(timeout=30000)
+    ratio = label.evaluate(_CONTRAST)
+    assert ratio >= 4.5, f"'Send to Vaathiyaar' contrast {ratio:.1f}:1 on the code panel"
