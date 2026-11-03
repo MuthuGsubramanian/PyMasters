@@ -336,23 +336,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Build a DCGAN for generating 32x32 grayscale images. Train on synthetic data (random shapes: circles, squares). Implement label smoothing (real labels = 0.9 instead of 1.0) to stabilize training.",
-        "ta": "32x32 grayscale படங்களை உருவாக்கும் DCGAN உருவாக்குங்கள். பயிற்சியை நிலைப்படுத்த label smoothing செயல்படுத்துங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Write four DCGAN pieces (a `bce` helper is provided): `transposed_conv_output_size(n, kernel, stride=1, padding=0)` = (n - 1) * stride - 2 * padding + kernel (how ConvTranspose2d upsamples 4 -> 8 -> 16 -> 32); `smooth_real_labels(n, smoothing=0.1)` returns n labels equal to 1 - smoothing (0.9 instead of 1.0); `discriminator_loss(d_real, d_fake, smoothing=0.1)` = bce(d_real, smoothed real labels) + bce(d_fake, zeros); and `to_pixels(x)` turns the generator's tanh output in [-1, 1] into uint8 pixels: round((x + 1) * 127.5), clipped to 0..255.",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. நான்கு DCGAN பகுதிகளை எழுதுங்கள் (`bce` helper கொடுக்கப்பட்டுள்ளது): `transposed_conv_output_size(n, kernel, stride=1, padding=0)` = (n - 1) * stride - 2 * padding + kernel (ConvTranspose2d 4 -> 8 -> 16 -> 32 என எப்படி upsample செய்கிறது); `smooth_real_labels(n, smoothing=0.1)` 1 - smoothing மதிப்புள்ள n labels-ஐத் திருப்புகிறது (1.0-க்குப் பதில் 0.9); `discriminator_loss(d_real, d_fake, smoothing=0.1)` = bce(d_real, smoothed real labels) + bce(d_fake, zeros); `to_pixels(x)` generator-இன் [-1, 1] tanh output-ஐ uint8 pixels ஆக மாற்றுகிறது: round((x + 1) * 127.5), 0..255-க்குள் clip செய்து."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\n\n# Synthetic data: simple shapes\ndef generate_shapes(n=1000):\n    images = torch.zeros(n, 1, 32, 32)\n    for i in range(n):\n        cx, cy = torch.randint(8, 24, (2,))\n        r = torch.randint(3, 8, (1,)).item()\n        for x in range(32):\n            for y in range(32):\n                if (x-cx)**2 + (y-cy)**2 < r**2:\n                    images[i, 0, x, y] = 1.0\n    return images * 2 - 1  # normalize to [-1, 1]\n\nreal_data = generate_shapes(1000)\n\n# TODO: Use the DCGenerator and DCDiscriminator from the lesson\n# TODO: Implement label smoothing: real_labels = 0.9, fake_labels = 0.0\n# TODO: Train for 100 epochs, print losses every 20 epochs\n",
-      "expected_output": "Epoch 100: D_loss=0.65, G_loss=0.82, D(real)=0.62, D(fake)=0.41",
+      "starter_code": "import numpy as np\n\n\ndef bce(pred, target):\n    p = np.clip(pred, 1e-7, 1 - 1e-7)\n    return -np.mean(target * np.log(p) + (1 - target) * np.log(1 - p))\n\n\ndef transposed_conv_output_size(n, kernel, stride=1, padding=0):\n    # (n - 1) * stride - 2 * padding + kernel\n    pass\n\n\ndef smooth_real_labels(n, smoothing=0.1):\n    # an array of n labels, each 1 - smoothing\n    pass\n\n\ndef discriminator_loss(d_real, d_fake, smoothing=0.1):\n    # bce against the smoothed real labels + bce of the fakes against zeros\n    pass\n\n\ndef to_pixels(x):\n    # [-1, 1] -> [0, 255] as np.uint8\n    pass\n\n\nsize = 4\nprint(\"generator upsampling:\", size, end=\"\")\nfor _ in range(3):\n    size = transposed_conv_output_size(size, kernel=4, stride=2, padding=1)\n    print(\" ->\", size, end=\"\")\nprint()\nprint(\"smoothed real labels:\", smooth_real_labels(3))\nd_real, d_fake = np.array([0.9, 0.85, 0.95]), np.array([0.1, 0.2, 0.05])\nloss = discriminator_loss(d_real, d_fake)\nprint(\"D loss with label smoothing:\", None if loss is None else round(float(loss), 4))\nprint(\"pixels:\", to_pixels(np.array([-1.0, 0.0, 1.0])))\n",
+      "expected_output": "generator upsampling: 4 -> 8 -> 16 -> 32\nsmoothed real labels: [0.9 0.9 0.9]\nD loss with label smoothing: 0.4622\npixels: [  0 128 255]",
       "hints": {
         "en": [
-          "Label smoothing: real_labels = torch.full((batch,1), 0.9)",
-          "This prevents D from becoming overconfident",
-          "Use DataLoader to batch the shape images",
-          "Generate samples every 20 epochs to visually check progress"
+          "transposed_conv_output_size: return (n - 1) * stride - 2 * padding + kernel",
+          "smooth_real_labels: np.full(n, 1.0 - smoothing)",
+          "discriminator_loss: bce(d_real, smooth_real_labels(len(d_real), smoothing)) + bce(d_fake, np.zeros(len(d_fake)))",
+          "to_pixels: np.clip(np.round((x + 1) * 127.5), 0, 255).astype(np.uint8)"
         ],
         "ta": [
-          "Label smoothing: real_labels = torch.full((batch,1), 0.9)",
-          "இது D-ஐ அதிக நம்பிக்கையாகாமல் தடுக்கிறது"
+          "transposed_conv_output_size: (n - 1) * stride - 2 * padding + kernel திருப்புங்கள்",
+          "smooth_real_labels: np.full(n, 1.0 - smoothing)",
+          "discriminator_loss: bce(d_real, smooth_real_labels(len(d_real), smoothing)) + bce(d_fake, np.zeros(len(d_fake)))",
+          "to_pixels: np.clip(np.round((x + 1) * 127.5), 0, 255).astype(np.uint8)"
         ]
-      }
+      },
+      "test_code": "import numpy as np\nassert transposed_conv_output_size(4, 4, stride=2, padding=1) == 8, \"kernel 4, stride 2, padding 1 doubles 4 to 8\"\nassert transposed_conv_output_size(16, 4, stride=2, padding=1) == 32, \"kernel 4, stride 2, padding 1 doubles 16 to 32\"\nassert transposed_conv_output_size(1, 4, stride=1, padding=0) == 4, \"a 1x1 latent with kernel 4, stride 1 becomes 4x4\"\n_l = smooth_real_labels(4)\nassert _l is not None and np.shape(_l) == (4,) and np.allclose(_l, 0.9), \"smooth_real_labels(4) must be four labels of 0.9\"\nassert np.allclose(smooth_real_labels(2, smoothing=0.2), 0.8), \"smooth_real_labels must use its smoothing argument\"\n_dr, _df = np.array([0.8, 0.7]), np.array([0.2, 0.1])\nassert discriminator_loss(_dr, _df) is not None and np.isclose(discriminator_loss(_dr, _df), bce(_dr, np.full(2, 0.9)) + bce(_df, np.zeros(2))), \"discriminator_loss = bce(d_real, smoothed labels) + bce(d_fake, zeros)\"\nassert np.isclose(discriminator_loss(_dr, _df, smoothing=0.0), bce(_dr, np.ones(2)) + bce(_df, np.zeros(2))), \"with smoothing=0 the real labels must be 1.0\"\nassert discriminator_loss(np.array([0.9]), np.array([0.1])) < discriminator_loss(np.array([0.9999]), np.array([0.1])), \"with label smoothing an over-confident D (0.9999) must be penalised more than one at 0.9\"\n_px = to_pixels(np.array([-1.0, 0.0, 1.0, 1.5]))\nassert _px is not None and _px.dtype == np.uint8, \"to_pixels must return a np.uint8 array\"\nassert list(_px) == [0, 128, 255, 255], \"to_pixels must map -1 -> 0, 0 -> 128, 1 -> 255 and clip values above 1\"\nprint(\"All DCGAN tests passed!\")\n"
     }
   ],
   "quiz": [

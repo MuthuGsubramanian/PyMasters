@@ -1,0 +1,11 @@
+{
+  "lesson_id": "prompt_engineering_advanced",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "# Build the messages list for a Python tutor AI\nsystem_prompt = \"\"\"You are a friendly Python tutor.\nRules:\n1. Explain every error in simple terms a beginner can understand.\n2. Always give the corrected code.\n3. Respond only in JSON format with the keys: error_explanation, corrected_code, tip.\n\"\"\"\n\ntemperature = 0.3\n\nmessages = [\n    {'role': 'system', 'content': system_prompt},\n    {'role': 'user', 'content': 'Why does this fail? print(Hello)'}\n]\n\n# Print the configuration\nprint(f'System prompt: {system_prompt}')\nprint(f'Temperature: {temperature}')\nprint(f'Messages: {messages}')\n",
+      "verified_output": "System prompt: You are a friendly Python tutor.\nRules:\n1. Explain every error in simple terms a beginner can understand.\n2. Always give the corrected code.\n3. Respond only in JSON format with the keys: error_explanation, corrected_code, tip.\n\nTemperature: 0.3\nMessages: [{'role': 'system', 'content': 'You are a friendly Python tutor.\\nRules:\\n1. Explain every error in simple terms a beginner can understand.\\n2. Always give the corrected code.\\n3. Respond only in JSON format with the keys: error_explanation, corrected_code, tip.\\n'}, {'role': 'user', 'content': 'Why does this fail? print(Hello)'}]",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

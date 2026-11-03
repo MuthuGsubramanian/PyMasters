@@ -1,0 +1,11 @@
+{
+  "lesson_id": "linear_regression",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\nfrom sklearn.linear_model import LinearRegression\n\nnp.random.seed(42)\nX = np.random.rand(200, 2) * 10\ny = 5 * X[:, 0] - 2 * X[:, 1] + 10 + np.random.randn(200)\n\nmodel = LinearRegression()\nmodel.fit(X, y)\n\nprint(f'Coefficients: {model.coef_.round(2)}')\nprint(f'Intercept: {model.intercept_:.2f}')\nprint(f'R² Score: {model.score(X, y):.4f}')\n",
+      "verified_output": "Coefficients: [ 4.99 -2.01]\nIntercept: 10.08\nR² Score: 0.9961",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

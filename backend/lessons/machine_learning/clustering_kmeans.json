@@ -268,11 +268,11 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Generate blob data with 4 centers. Use the elbow method (K=2 to 7) to find the optimal K. Print inertia and silhouette score for each K, then fit the best model and print cluster sizes.",
-        "ta": "4 மையங்களுடன் blob தரவை உருவாக்குங்கள். உகந்த K ஐ கண்டறிய எல்போ முறை (K=2 முதல் 7) பயன்படுத்துங்கள். ஒவ்வொரு K க்கும் inertia மற்றும் silhouette score அச்சிடுங்கள்."
+        "en": "Generate blob data with 4 centers and store it in `X`. Use the elbow method (K=2 to 7): for each K print the inertia and silhouette score, and keep the K with the highest silhouette score in `best_k`. Then fit the final model `final = KMeans(n_clusters=best_k, ...)` on X and print its cluster sizes. Your numbers may differ from the sample output; the checker verifies that `best_k` really has the best silhouette score and that `final` is fitted with `best_k` clusters.",
+        "ta": "4 மையங்களுடன் blob தரவை உருவாக்கி `X`-இல் சேமியுங்கள். எல்போ முறையைப் (K=2 முதல் 7 வரை) பயன்படுத்துங்கள்: ஒவ்வொரு K-க்கும் inertia மற்றும் silhouette score-ஐ அச்சிட்டு, அதிகபட்ச silhouette score கொண்ட K-ஐ `best_k`-இல் வைத்திருங்கள். பின்னர் இறுதி மாடலை `final = KMeans(n_clusters=best_k, ...)` என X-இல் பொருத்தி, அதன் கிளஸ்டர் அளவுகளை அச்சிடுங்கள். உங்கள் எண்கள் மாதிரி வெளியீட்டிலிருந்து வேறுபடலாம்; `best_k` உண்மையிலேயே சிறந்த silhouette score கொண்டதா, `final` `best_k` கிளஸ்டர்களுடன் பொருத்தப்பட்டதா என்பதைச் சரிபார்ப்பான் சோதிக்கும்."
       },
       "starter_code": "from sklearn.cluster import KMeans\nfrom sklearn.datasets import make_blobs\nfrom sklearn.metrics import silhouette_score\nimport numpy as np\n\nX, _ = make_blobs(n_samples=400, centers=4, cluster_std=0.8, random_state=42)\n\nbest_k, best_sil = 2, -1\nfor k in range(2, 8):\n    km = KMeans(n_clusters=k, random_state=42, n_init=10)\n    km.fit(X)\n    sil = silhouette_score(X, km.___)\n    print(f'K={k}: Inertia={km.inertia_:.0f}, Silhouette={sil:.3f}')\n    if sil > best_sil:\n        best_k, best_sil = k, sil\n\nprint(f'\\nOptimal K={best_k}')\nfinal = KMeans(n_clusters=best_k, random_state=42, n_init=10)\nfinal.fit(X)\nprint(f'Cluster sizes: {np.bincount(final.labels_)}')",
-      "expected_output": "K=2: Inertia=1453, Silhouette=0.516\nK=3: Inertia=763, Silhouette=0.571\nK=4: Inertia=291, Silhouette=0.728\nK=5: Inertia=252, Silhouette=0.633\n\nOptimal K=4\nCluster sizes: [100 100 100 100]",
+      "expected_output": "K=2: Inertia=12509, Silhouette=0.604\nK=3: Inertia=2616, Silhouette=0.779\nK=4: Inertia=491, Silhouette=0.835\nK=5: Inertia=442, Silhouette=0.724\nK=6: Inertia=400, Silhouette=0.584\nK=7: Inertia=355, Silhouette=0.454\n\nOptimal K=4\nCluster sizes: [100 100 100 100]",
       "hints": {
         "en": [
           "Use km.labels_ for the cluster assignments",
@@ -284,7 +284,8 @@
           "சில்ஹவுட் மதிப்பெண் உண்மையான கிளஸ்டர் எண்ணிக்கையில் உச்சமடைகிறது",
           "K=4 அதிகபட்ச சில்ஹவுட் மதிப்பெண் கொண்டிருக்க வேண்டும்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\nfrom sklearn.cluster import KMeans as _KMeans\nfrom sklearn.metrics import silhouette_score as _sil_score\nassert np.ndim(X) == 2 and len(X) > 0, 'Store your blob data in a 2-D array called X.'\nassert int(best_k) in range(2, 8), 'best_k must be the K between 2 and 7 with the highest silhouette score.'\nassert isinstance(final, _KMeans) and hasattr(final, 'labels_'), 'Fit the final KMeans model and store it in final.'\nassert final.n_clusters == best_k, 'final must be KMeans(n_clusters=best_k).'\nassert len(final.labels_) == len(X), 'final must be fitted on X.'\n_sil = {k: _sil_score(X, _KMeans(n_clusters=k, random_state=0, n_init=3).fit_predict(X)) for k in range(2, 8) if k != int(best_k)}\n_sil[int(best_k)] = _sil_score(X, final.labels_)\nassert _sil[int(best_k)] >= max(_sil.values()) - 0.02, f'best_k={best_k} does not have the highest silhouette score (K={max(_sil, key=_sil.get)} scores higher).'\n"
     }
   ],
   "quiz": [

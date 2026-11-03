@@ -344,23 +344,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Build a GAN that generates 2D points from a specific distribution. Train a generator to produce points that look like they come from a circle (x^2 + y^2 = 1 with noise). Visualize real vs generated points.",
-        "ta": "குறிப்பிட்ட விநியோகத்திலிருந்து 2D புள்ளிகளை உருவாக்கும் GAN-ஐ உருவாக்குங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Write the core of a GAN's training objective: `generator(z, W, b)` maps noise to points (z @ W + b); `bce(pred, target)` is binary cross-entropy, the mean of -(target*log(p) + (1-target)*log(1-p)) with p clipped to [1e-7, 1-1e-7]; `discriminator_loss(d_real, d_fake)` = bce(d_real, ones) + bce(d_fake, zeros) (D wants real -> 1, fake -> 0); `generator_loss(d_fake)` = bce(d_fake, ones) (G wants D to call its fakes real).",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. GAN பயிற்சி இலக்கின் மையத்தை எழுதுங்கள்: `generator(z, W, b)` noise-ஐப் புள்ளிகளாக மாற்றுகிறது (z @ W + b); `bce(pred, target)` binary cross-entropy - p-ஐ [1e-7, 1-1e-7]-க்குள் clip செய்து -(target*log(p) + (1-target)*log(1-p))-இன் சராசரி; `discriminator_loss(d_real, d_fake)` = bce(d_real, ones) + bce(d_fake, zeros) (D உண்மையானவற்றை 1, போலியானவற்றை 0 என்று சொல்ல விரும்புகிறது); `generator_loss(d_fake)` = bce(d_fake, ones) (G தன் போலிகளை D உண்மை என்று நம்ப வேண்டும் என விரும்புகிறது)."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\nimport math\n\n# Real data: points on a noisy circle\ndef sample_circle(n=256):\n    angles = torch.rand(n) * 2 * math.pi\n    r = 1.0 + torch.randn(n) * 0.05  # small noise\n    x = r * torch.cos(angles)\n    y = r * torch.sin(angles)\n    return torch.stack([x, y], dim=1)\n\nlatent_dim = 8\n\nclass Generator(nn.Module):\n    def __init__(self):\n        super().__init__()\n        # TODO: noise (8) -> hidden -> 2D points\n        pass\n    def forward(self, z): pass\n\nclass Discriminator(nn.Module):\n    def __init__(self):\n        super().__init__()\n        # TODO: 2D points -> real/fake probability\n        pass\n    def forward(self, x): pass\n\n# TODO: Train GAN and print D(real), D(fake) every 100 epochs\n",
-      "expected_output": "Epoch 500: D(real)=0.55, D(fake)=0.48 (nearly fooled!)",
+      "starter_code": "import numpy as np\n\n\ndef generator(z, W, b):\n    # map noise vectors to 2D points: z @ W + b\n    pass\n\n\ndef bce(pred, target):\n    # clip pred to [1e-7, 1 - 1e-7], then mean of -(target*log(p) + (1-target)*log(1-p))\n    pass\n\n\ndef discriminator_loss(d_real, d_fake):\n    # real samples should be scored 1, fake samples 0\n    pass\n\n\ndef generator_loss(d_fake):\n    # the generator wants its fakes to be scored 1\n    pass\n\n\nrng = np.random.default_rng(0)\nz = rng.standard_normal((5, 2))                       # 5 noise vectors\nW, b = rng.standard_normal((2, 2)), np.zeros(2)\nfake_points = generator(z, W, b)\nprint(\"fake points shape:\", np.shape(fake_points))\n\nd_real = np.array([0.9, 0.8, 0.95])    # D's belief that real points are real\nd_fake = np.array([0.1, 0.2, 0.05])    # D's belief that fake points are real\nprint(\"D loss:\", None if discriminator_loss(d_real, d_fake) is None else round(float(discriminator_loss(d_real, d_fake)), 4))\nprint(\"G loss:\", None if generator_loss(d_fake) is None else round(float(generator_loss(d_fake)), 4))\n",
+      "expected_output": "fake points shape: (5, 2)\nD loss: 0.2532\nG loss: 2.3026",
       "hints": {
         "en": [
-          "Generator: Linear(8,64) -> ReLU -> Linear(64,2)",
-          "Discriminator: Linear(2,64) -> LeakyReLU -> Linear(64,1) -> Sigmoid",
-          "Use BCELoss and Adam with lr=0.001",
-          "After training, plot G(z) to see if points form a circle"
+          "generator: return z @ W + b",
+          "bce: p = np.clip(pred, 1e-7, 1 - 1e-7); return -np.mean(target * np.log(p) + (1 - target) * np.log(1 - p))",
+          "discriminator_loss: bce(d_real, np.ones_like(d_real)) + bce(d_fake, np.zeros_like(d_fake))",
+          "generator_loss: bce(d_fake, np.ones_like(d_fake))"
         ],
         "ta": [
-          "Generator: Linear(8,64) -> ReLU -> Linear(64,2)",
-          "பயிற்சிக்குப் பிறகு, புள்ளிகள் வட்டம் உருவாக்குகின்றனவா என்று பாருங்கள்"
+          "generator: z @ W + b திருப்புங்கள்",
+          "bce: p = np.clip(pred, 1e-7, 1 - 1e-7); பிறகு -np.mean(target * np.log(p) + (1 - target) * np.log(1 - p)) திருப்புங்கள்",
+          "discriminator_loss: bce(d_real, np.ones_like(d_real)) + bce(d_fake, np.zeros_like(d_fake))",
+          "generator_loss: bce(d_fake, np.ones_like(d_fake))"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_rng = np.random.default_rng(1)\n_z = _rng.standard_normal((4, 3)); _W = _rng.standard_normal((3, 2)); _b = _rng.standard_normal(2)\n_g = generator(_z, _W, _b)\nassert _g is not None and np.allclose(_g, _z @ _W + _b), \"generator must return z @ W + b\"\nassert bce(np.array([0.5]), np.array([1.0])) is not None and np.isclose(bce(np.array([0.5]), np.array([1.0])), np.log(2)), \"bce(0.5, 1) must be log(2)\"\nassert np.isclose(bce(np.array([0.9, 0.2]), np.array([1.0, 0.0])), -np.mean([np.log(0.9), np.log(0.8)])), \"bce must average -(t*log(p) + (1-t)*log(1-p))\"\nassert np.isfinite(bce(np.array([0.0, 1.0]), np.array([1.0, 0.0]))), \"clip predictions so bce never takes log(0)\"\n_dr, _df = np.array([0.7, 0.6]), np.array([0.3, 0.4])\nassert np.isclose(discriminator_loss(_dr, _df), bce(_dr, np.ones(2)) + bce(_df, np.zeros(2))), \"discriminator_loss = bce(d_real, ones) + bce(d_fake, zeros)\"\nassert discriminator_loss(np.array([0.999]), np.array([0.001])) < 0.01, \"a discriminator that is always right must have a tiny loss\"\nassert np.isclose(generator_loss(_df), bce(_df, np.ones(2))), \"generator_loss = bce(d_fake, ones)\"\nassert generator_loss(np.array([0.01])) > generator_loss(np.array([0.99])), \"the generator's loss must be high when D catches its fakes and low when D is fooled\"\nprint(\"All GAN loss tests passed!\")\n"
     }
   ],
   "quiz": [

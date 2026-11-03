@@ -1,0 +1,11 @@
+{
+  "lesson_id": "clustering_kmeans",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from sklearn.cluster import KMeans\nfrom sklearn.datasets import make_blobs\nfrom sklearn.metrics import silhouette_score\nimport numpy as np\n\nX, _ = make_blobs(n_samples=400, centers=4, cluster_std=0.8, random_state=42)\n\nbest_k, best_sil = 2, -1\nfor k in range(2, 8):\n    km = KMeans(n_clusters=k, random_state=42, n_init=10)\n    km.fit(X)\n    sil = silhouette_score(X, km.labels_)\n    print(f'K={k}: Inertia={km.inertia_:.0f}, Silhouette={sil:.3f}')\n    if sil > best_sil:\n        best_k, best_sil = k, sil\n\nprint(f'\\nOptimal K={best_k}')\nfinal = KMeans(n_clusters=best_k, random_state=42, n_init=10)\nfinal.fit(X)\nprint(f'Cluster sizes: {np.bincount(final.labels_)}')\n",
+      "verified_output": "K=2: Inertia=12509, Silhouette=0.604\nK=3: Inertia=2616, Silhouette=0.779\nK=4: Inertia=491, Silhouette=0.835\nK=5: Inertia=442, Silhouette=0.724\nK=6: Inertia=400, Silhouette=0.584\nK=7: Inertia=355, Silhouette=0.454\n\nOptimal K=4\nCluster sizes: [100 100 100 100]",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

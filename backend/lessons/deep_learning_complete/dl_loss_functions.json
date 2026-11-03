@@ -272,22 +272,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Implement a custom weighted loss function that gives 3x penalty for under-predicting (prediction < target) vs over-predicting. Train a simple regression network using your custom loss on synthetic data.",
-        "ta": "குறைவாக கணிப்பதற்கு 3 மடங்கு அபராதம் அளிக்கும் தனிப்பயன் எடையிடப்பட்ட இழப்பு செயல்பாட்டை செயல்படுத்துங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Implement the lesson's loss functions: `mse(pred, target)`, `mae(pred, target)`, `binary_cross_entropy(p, y)` (clip p to [1e-7, 1-1e-7] first), `cross_entropy(logits, target_index)` for one sample (-log of the softmax probability of the correct class, computed stably by subtracting the max logit) and a custom `asymmetric_mse(pred, target, under_weight=3.0)` that weights the squared error 3x wherever the prediction is below the target.",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. பாடத்தில் உள்ள loss functions-ஐ எழுதுங்கள்: `mse(pred, target)`, `mae(pred, target)`, `binary_cross_entropy(p, y)` (முதலில் p-ஐ [1e-7, 1-1e-7]-க்குள் clip செய்யுங்கள்), ஒரு sample-க்கான `cross_entropy(logits, target_index)` (சரியான class-இன் softmax probability-இன் -log; max logit-ஐக் கழித்து நிலையாகக் கணக்கிடுங்கள்), மற்றும் prediction target-ஐ விடக் குறைவாக இருக்கும் இடங்களில் squared error-க்கு 3 மடங்கு எடை தரும் custom `asymmetric_mse(pred, target, under_weight=3.0)`."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\n\ndef asymmetric_loss(predictions, targets):\n    diff = predictions - targets\n    # TODO: Apply 3x weight when prediction < target (under-prediction)\n    # Hint: use torch.where(condition, value_if_true, value_if_false)\n    pass\n\n# Synthetic data\ntorch.manual_seed(42)\nX = torch.linspace(0, 10, 100).unsqueeze(1)\ny = 2 * X + 1 + torch.randn_like(X) * 0.5\n\nmodel = nn.Linear(1, 1)\noptimizer = torch.optim.SGD(model.parameters(), lr=0.01)\n\n# TODO: Train with your custom loss for 500 epochs\n",
-      "expected_output": "Epoch 500 - Custom Loss: 0.32, Predictions tend to over-predict (conservative)",
+      "starter_code": "import numpy as np\n\n\ndef mse(pred, target):\n    # mean of squared differences\n    pass\n\n\ndef mae(pred, target):\n    # mean of absolute differences\n    pass\n\n\ndef binary_cross_entropy(p, y):\n    # clip p, then mean of -(y*log(p) + (1-y)*log(1-p))\n    pass\n\n\ndef cross_entropy(logits, target_index):\n    # -log(softmax(logits)[target_index]); subtract max(logits) for stability\n    pass\n\n\ndef asymmetric_mse(pred, target, under_weight=3.0):\n    # squared error, multiplied by under_weight where pred < target\n    pass\n\n\ndef show(label, value):\n    print(label, None if value is None else np.round(value, 4))\n\n\npred, target = np.array([2.5, 0.0, 2.0]), np.array([3.0, -0.5, 2.0])\nshow(\"MSE:\", mse(pred, target))\nshow(\"MAE:\", mae(pred, target))\nshow(\"BCE:\", binary_cross_entropy(np.array([0.9, 0.2]), np.array([1.0, 0.0])))\nshow(\"Cross-entropy:\", cross_entropy(np.array([2.0, 1.0, 0.1]), 0))\nshow(\"Asymmetric (under-predicts):\", asymmetric_mse(np.array([1.0]), np.array([2.0])))\nshow(\"Asymmetric (over-predicts):\", asymmetric_mse(np.array([3.0]), np.array([2.0])))\n",
+      "expected_output": "MSE: 0.1667\nMAE: 0.3333\nBCE: 0.1643\nCross-entropy: 0.417\nAsymmetric (under-predicts): 3.0\nAsymmetric (over-predicts): 1.0",
       "hints": {
         "en": [
-          "weight = torch.where(diff < 0, torch.tensor(3.0), torch.tensor(1.0))",
-          "loss = (weight * diff ** 2).mean()",
-          "The model will learn to slightly over-predict to avoid the heavier penalty"
+          "mse: np.mean((pred - target) ** 2); mae: np.mean(np.abs(pred - target))",
+          "binary_cross_entropy: p = np.clip(p, 1e-7, 1 - 1e-7); return -np.mean(y * np.log(p) + (1 - y) * np.log(1 - p))",
+          "cross_entropy: shifted = logits - np.max(logits); log_probs = shifted - np.log(np.sum(np.exp(shifted))); return -log_probs[target_index]",
+          "asymmetric_mse: weights = np.where(pred < target, under_weight, 1.0); return np.mean(weights * (pred - target) ** 2)"
         ],
         "ta": [
-          "weight = torch.where(diff < 0, torch.tensor(3.0), torch.tensor(1.0))",
-          "loss = (weight * diff ** 2).mean()"
+          "mse: np.mean((pred - target) ** 2); mae: np.mean(np.abs(pred - target))",
+          "binary_cross_entropy: p = np.clip(p, 1e-7, 1 - 1e-7); பிறகு -np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)) திருப்புங்கள்",
+          "cross_entropy: shifted = logits - np.max(logits); log_probs = shifted - np.log(np.sum(np.exp(shifted))); பிறகு -log_probs[target_index] திருப்புங்கள்",
+          "asymmetric_mse: weights = np.where(pred < target, under_weight, 1.0); பிறகு np.mean(weights * (pred - target) ** 2) திருப்புங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_p, _t = np.array([1.0, 2.0, 4.0]), np.array([1.0, 3.0, 2.0])\nassert mse(_p, _t) is not None and np.isclose(mse(_p, _t), 5 / 3), \"mse([1,2,4], [1,3,2]) must be (0 + 1 + 4) / 3\"\nassert mae(_p, _t) is not None and np.isclose(mae(_p, _t), 1.0), \"mae([1,2,4], [1,3,2]) must be (0 + 1 + 2) / 3\"\nassert binary_cross_entropy(np.array([0.5]), np.array([1.0])) is not None and np.isclose(binary_cross_entropy(np.array([0.5]), np.array([1.0])), np.log(2)), \"BCE of p=0.5 for a positive label must be log(2)\"\nassert np.isfinite(binary_cross_entropy(np.array([0.0, 1.0]), np.array([1.0, 0.0]))), \"clip p so binary_cross_entropy never takes log(0)\"\nassert cross_entropy(np.array([1.0, 1.0, 1.0]), 2) is not None and np.isclose(cross_entropy(np.array([1.0, 1.0, 1.0]), 2), np.log(3)), \"equal logits over 3 classes give cross-entropy log(3)\"\n_lg = np.array([2.0, 1.0, 0.1])\nassert np.isclose(cross_entropy(_lg, 0), -np.log(np.exp(2.0) / np.exp(_lg).sum())), \"cross_entropy must be -log(softmax(logits)[target_index])\"\nassert np.isfinite(cross_entropy(np.array([1000.0, 0.0]), 1)), \"cross_entropy must stay finite for large logits - subtract the max\"\nassert asymmetric_mse(np.array([1.0]), np.array([2.0])) is not None and np.isclose(asymmetric_mse(np.array([1.0]), np.array([2.0])), 3.0), \"under-predicting by 1 must cost 3\"\nassert np.isclose(asymmetric_mse(np.array([3.0]), np.array([2.0])), 1.0), \"over-predicting by 1 must cost 1\"\nassert np.isclose(asymmetric_mse(np.array([1.0, 3.0]), np.array([2.0, 2.0]), under_weight=5.0), 3.0), \"asymmetric_mse must use under_weight and average over samples\"\nprint(\"All loss function tests passed!\")\n"
     }
   ],
   "quiz": [

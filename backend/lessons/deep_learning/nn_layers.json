@@ -235,7 +235,7 @@
           "en": "The biases count equals n_out for each layer"
         }
       ],
-      "test_code": "assert count_params([2, 3]) == 9, '2*3 weights + 3 biases = 9'\nassert count_params([784, 256, 128, 10]) == 200960 + 256 + 32768 + 128 + 1280 + 10, 'MNIST MLP params'\nassert count_params([3, 3, 1]) == (3*3+3) + (3*1+1), 'two-layer network'"
+      "test_code": "assert count_params([2, 3]) == 9, '2*3 weights + 3 biases = 9'\nassert count_params([784, 256, 128, 10]) == 784*256 + 256 + 256*128 + 128 + 128*10 + 10, 'The MNIST MLP [784, 256, 128, 10] has 235,146 parameters (weights + biases)'\nassert count_params([3, 3, 1]) == (3*3+3) + (3*1+1), 'two-layer network [3, 3, 1] has 16 parameters'\n"
     }
   ],
   "generated": false,

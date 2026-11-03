@@ -1,0 +1,11 @@
+{
+  "lesson_id": "nn_layers",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def count_params(layer_sizes):\n    total = 0\n    for n_in, n_out in zip(layer_sizes, layer_sizes[1:]):\n        total += n_in * n_out + n_out\n    return total\n\nprint(count_params([784, 256, 128, 10]))\n",
+      "verified_output": "235146",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

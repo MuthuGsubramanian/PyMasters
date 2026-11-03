@@ -275,23 +275,24 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Write a function that takes a list of sentences and a query, embeds all of them, calculates cosine similarity between the query and each sentence, and returns the sentences ranked by similarity. Test with 5 sentences and a query.",
-        "ta": "வாக்கியங்களின் பட்டியல் மற்றும் query எடுத்து, அனைத்தையும் embed செய்து, query-க்கும் ஒவ்வொரு வாக்கியத்திற்கும் cosine similarity கணக்கிட்டு, similarity-ன் படி வரிசைப்படுத்தி திருப்பி அனுப்பும் function எழுதுங்கள்."
+        "en": "Write semantic search over embeddings. The sandbox has no network, so `embed(text)` stands in for an embeddings API and returns a unit-length vector; `cosine_similarity(a, b)` is provided. Complete `semantic_search(sentences, query, top_k=3)`: embed the query and every sentence, score each sentence with cosine similarity, and return the `top_k` best as a list of (score, sentence) tuples sorted from highest to lowest score.",
+        "ta": "Embeddings மீது semantic search எழுதுங்கள். Sandbox-ல் network இல்லாததால், embeddings API-க்குப் பதிலாக `embed(text)` unit-length vector-ஐத் திருப்புகிறது; `cosine_similarity(a, b)` கொடுக்கப்பட்டுள்ளது. `semantic_search(sentences, query, top_k=3)`-ஐ நிறைவு செய்யுங்கள்: query-ஐயும் ஒவ்வொரு sentence-ஐயும் embed செய்து, ஒவ்வொரு sentence-க்கும் cosine similarity score கணக்கிட்டு, சிறந்த `top_k`-ஐ அதிக score முதல் குறைந்தது வரை வரிசைப்படுத்திய (score, sentence) tuples list ஆகத் திருப்புங்கள்."
       },
-      "starter_code": "from openai import OpenAI\nimport numpy as np\n\nclient = OpenAI()\n\ndef cosine_similarity(a, b):\n    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))\n\ndef semantic_search(sentences, query, top_k=3):\n    # Embed all sentences + query\n    # Calculate similarity\n    # Return top_k ranked results\n    pass\n\nsentences = [\n    'How to train a machine learning model',\n    'Best restaurants in Chennai',\n    'Deep learning neural network tutorial',\n    'Cricket World Cup 2026 schedule',\n    'Introduction to artificial intelligence'\n]\n\nresults = semantic_search(sentences, 'AI and ML tutorials', top_k=3)\nfor score, text in results:\n    print(f'{score:.4f}: {text}')",
-      "expected_output": "0.8921: Introduction to artificial intelligence\n0.8456: How to train a machine learning model\n0.8234: Deep learning neural network tutorial",
+      "starter_code": "import re\nimport numpy as np\n\n# The sandbox has no network, so embed() stands in for client.embeddings.create(...).\n# Like a real embedding model it returns a unit-length vector, and texts about the\n# same topic point in similar directions.\nTOPIC_WORDS = {\n    0: {\"ai\", \"artificial\", \"intelligence\", \"ml\", \"machine\", \"learning\", \"deep\", \"neural\", \"network\", \"model\", \"train\"},\n    1: {\"restaurants\", \"restaurant\", \"food\", \"chennai\", \"dinner\", \"eat\", \"best\"},\n    2: {\"cricket\", \"cup\", \"world\", \"schedule\", \"match\", \"sports\"},\n    3: {\"tutorial\", \"tutorials\", \"introduction\", \"how\", \"guide\", \"learn\"},\n}\n\n\ndef embed(text):\n    vec = np.full(5, 0.05)\n    for word in re.findall(r\"[a-z0-9]+\", text.lower()):\n        for dim, words in TOPIC_WORDS.items():\n            if word in words:\n                vec[dim] += 1.0\n                break\n        else:\n            vec[4] += 0.2\n    return vec / np.linalg.norm(vec)\n\n\ndef cosine_similarity(a, b):\n    return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))\n\n\ndef semantic_search(sentences, query, top_k=3):\n    \"\"\"Return the top_k (score, sentence) pairs, highest score first.\"\"\"\n    # 1. Embed the query and every sentence\n    # 2. Score each sentence with cosine_similarity\n    # 3. Sort by score (highest first) and return the first top_k pairs\n    pass\n\n\nsentences = [\n    \"How to train a machine learning model\",\n    \"Best restaurants in Chennai\",\n    \"Deep learning neural network tutorial\",\n    \"Cricket World Cup 2026 schedule\",\n    \"Introduction to artificial intelligence\",\n]\nresults = semantic_search(sentences, \"AI and ML tutorials\", top_k=3)\nif results is None:\n    print(\"semantic_search() returned None\")\nelse:\n    for score, text in results:\n        print(f\"{score:.4f}: {text}\")\n",
+      "expected_output": "1.0000: Introduction to artificial intelligence\n0.9762: How to train a machine learning model\n0.9714: Deep learning neural network tutorial",
       "hints": {
         "en": [
-          "Embed sentences + [query] together in one API call",
-          "The query embedding is the last one in the list",
-          "Use sorted() with key=lambda x: x[0], reverse=True to rank"
+          "q = embed(query), then score every sentence: [(cosine_similarity(q, embed(s)), s) for s in sentences]",
+          "Sort the list with .sort(key=lambda pair: pair[0], reverse=True)",
+          "Return the first top_k items: scored[:top_k]"
         ],
         "ta": [
-          "sentences + [query] ஒரே API call-ல் embed செய்யுங்கள்",
-          "Query embedding பட்டியலில் கடைசியாக இருக்கும்",
-          "sorted() உடன் key=lambda x: x[0], reverse=True பயன்படுத்துங்கள்"
+          "q = embed(query), பிறகு ஒவ்வொரு sentence-க்கும் score: [(cosine_similarity(q, embed(s)), s) for s in sentences]",
+          "List-ஐ .sort(key=lambda pair: pair[0], reverse=True) மூலம் வரிசைப்படுத்துங்கள்",
+          "முதல் top_k items-ஐத் திருப்புங்கள்: scored[:top_k]"
         ]
-      }
+      },
+      "test_code": "_sents = [\"Best restaurants in Chennai\", \"Deep learning neural network tutorial\",\n          \"Cricket World Cup 2026 schedule\", \"Introduction to artificial intelligence\"]\n_r = semantic_search(_sents, \"cricket match schedule\", top_k=2)\nassert isinstance(_r, list), \"semantic_search must return a list\"\nassert len(_r) == 2, \"with top_k=2 return exactly 2 results\"\nassert all(isinstance(_p, tuple) and len(_p) == 2 for _p in _r), \"each result must be a (score, sentence) tuple\"\nassert _r[0][1] == \"Cricket World Cup 2026 schedule\", \"the cricket sentence must rank first for a cricket query\"\nassert _r[0][0] >= _r[1][0], \"results must be sorted from highest to lowest score\"\nassert abs(_r[0][0] - cosine_similarity(embed(\"cricket match schedule\"), embed(_r[0][1]))) < 1e-9, \"the score must be the cosine similarity between the query and the sentence\"\n_all = semantic_search(_sents, \"where to eat dinner\", top_k=4)\nassert [_p[1] for _p in _all][0] == \"Best restaurants in Chennai\", \"a food query must rank the restaurant sentence first\"\nassert [_p[0] for _p in _all] == sorted([_p[0] for _p in _all], reverse=True), \"all results must be sorted best first\"\nprint(\"All semantic search tests passed!\")\n"
     }
   ],
   "quiz": [

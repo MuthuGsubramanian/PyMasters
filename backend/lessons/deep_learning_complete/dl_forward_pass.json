@@ -344,23 +344,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Implement a manual forward pass (no nn.Module) for a 3-layer network: input(4) -> hidden(8) -> hidden(4) -> output(2). Use ReLU for hidden layers and softmax for output. Track and print shapes at every step.",
-        "ta": "3-அடுக்கு நெட்வொர்க்கிற்கு கைமுறை ஃபார்வர்ட் பாஸ் செயல்படுத்துங்கள். ஒவ்வொரு படியிலும் வடிவங்களைக் கண்காணியுங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Implement a manual forward pass (no nn.Module) for input(4) -> hidden(8) -> hidden(4) -> output(2). Write `linear(x, W, b)` = x @ W + b, `relu(x)`, `softmax(z)` (row-wise, subtract each row's max) and `forward(x, params)`: apply linear + relu for every layer except the last, linear + softmax for the last, and return (probs, shapes) where shapes lists x's shape at the input and after every layer, e.g. [(5, 4), (5, 8), (5, 4), (5, 2)] for a batch of 5.",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. input(4) -> hidden(8) -> hidden(4) -> output(2) network-க்கு கையால் forward pass எழுதுங்கள் (nn.Module இல்லாமல்). `linear(x, W, b)` = x @ W + b, `relu(x)`, `softmax(z)` (வரிசை வாரியாக, ஒவ்வொரு வரிசையின் max-ஐக் கழித்து), மற்றும் `forward(x, params)` எழுதுங்கள்: கடைசி layer தவிர ஒவ்வொரு layer-க்கும் linear + relu, கடைசிக்கு linear + softmax பயன்படுத்தி, (probs, shapes) திருப்புங்கள் - shapes என்பது input-லும் ஒவ்வொரு layer-க்குப் பின்னும் x-இன் வடிவம், எ.கா. 5 கொண்ட batch-க்கு [(5, 4), (5, 8), (5, 4), (5, 2)]."
       },
-      "starter_code": "import torch\nimport torch.nn.functional as F\n\ntorch.manual_seed(0)\nX = torch.randn(5, 4)  # 5 samples, 4 features\n\n# Initialize weights and biases\nW1 = torch.randn(4, 8) * 0.1\nb1 = torch.zeros(8)\nW2 = torch.randn(8, 4) * 0.1\nb2 = torch.zeros(4)\nW3 = torch.randn(4, 2) * 0.1\nb3 = torch.zeros(2)\n\n# TODO: Forward pass - compute z1, a1, z2, a2, z3, output\n# TODO: Print shape at each step\n",
-      "expected_output": "X: [5, 4] -> z1: [5, 8] -> a1: [5, 8] -> z2: [5, 4] -> a2: [5, 4] -> z3: [5, 2] -> output: [5, 2]",
+      "starter_code": "import numpy as np\n\nrng = np.random.default_rng(0)\nparams = [\n    (rng.standard_normal((4, 8)) * 0.5, np.zeros(8)),   # input(4) -> hidden(8)\n    (rng.standard_normal((8, 4)) * 0.5, np.zeros(4)),   # hidden(8) -> hidden(4)\n    (rng.standard_normal((4, 2)) * 0.5, np.zeros(2)),   # hidden(4) -> output(2)\n]\n\n\ndef linear(x, W, b):\n    pass\n\n\ndef relu(x):\n    pass\n\n\ndef softmax(z):\n    # row-wise and numerically stable\n    pass\n\n\ndef forward(x, params):\n    shapes = [x.shape]\n    # hidden layers: linear + relu; last layer: linear + softmax\n    # append x.shape after every layer, return (probs, shapes)\n    pass\n\n\nx = rng.standard_normal((5, 4))      # a batch of 5 samples\nresult = forward(x, params)\nif result is None:\n    print(\"forward() returned None\")\nelse:\n    probs, shapes = result\n    print(\"shapes:\", shapes)\n    print(\"probabilities:\")\n    print(np.round(probs, 3))\n",
+      "expected_output": "shapes: [(5, 4), (5, 8), (5, 4), (5, 2)]\nprobabilities:\n[[0.897 0.103]\n [0.51  0.49 ]\n [0.754 0.246]\n [0.498 0.502]\n [0.505 0.495]]",
       "hints": {
         "en": [
-          "z1 = X @ W1 + b1, then a1 = F.relu(z1)",
-          "z2 = a1 @ W2 + b2, then a2 = F.relu(z2)",
-          "z3 = a2 @ W3 + b3, then output = F.softmax(z3, dim=1)",
-          "Use .shape to print dimensions at each step"
+          "linear: return x @ W + b; relu: return np.maximum(0, x)",
+          "softmax: e = np.exp(z - z.max(axis=1, keepdims=True)); return e / e.sum(axis=1, keepdims=True)",
+          "forward: for W, b in params[:-1]: x = relu(linear(x, W, b)); shapes.append(x.shape)",
+          "Last layer: W, b = params[-1]; probs = softmax(linear(x, W, b)); shapes.append(probs.shape); return probs, shapes"
         ],
         "ta": [
-          "z1 = X @ W1 + b1, பிறகு a1 = F.relu(z1)",
-          "ஒவ்வொரு படியிலும் .shape பயன்படுத்தி அளவுகளை அச்சிடுங்கள்"
+          "linear: x @ W + b திருப்புங்கள்; relu: np.maximum(0, x) திருப்புங்கள்",
+          "softmax: e = np.exp(z - z.max(axis=1, keepdims=True)); பிறகு e / e.sum(axis=1, keepdims=True) திருப்புங்கள்",
+          "forward: for W, b in params[:-1]: x = relu(linear(x, W, b)); shapes.append(x.shape)",
+          "கடைசி layer: W, b = params[-1]; probs = softmax(linear(x, W, b)); shapes.append(probs.shape); பிறகு probs, shapes திருப்புங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_r = np.random.default_rng(3)\n_x = _r.standard_normal((7, 4))\n_W, _b = _r.standard_normal((4, 3)), _r.standard_normal(3)\nassert linear(_x, _W, _b) is not None and np.allclose(linear(_x, _W, _b), _x @ _W + _b), \"linear must be x @ W + b\"\nassert relu(np.array([-1.0, 2.0])) is not None and np.array_equal(relu(np.array([-1.0, 2.0])), [0.0, 2.0]), \"relu must zero out negatives\"\n_sm = softmax(np.array([[1.0, 2.0], [1000.0, 1000.0]]))\nassert _sm is not None and np.allclose(_sm.sum(axis=1), 1.0) and np.allclose(_sm[1], 0.5), \"softmax must work row by row and stay stable for large values\"\n_res = forward(_x, params)\nassert isinstance(_res, tuple) and len(_res) == 2, \"forward must return (probs, shapes)\"\n_probs, _shapes = _res\nassert [tuple(s) for s in _shapes] == [(7, 4), (7, 8), (7, 4), (7, 2)], \"shapes must be recorded at the input and after every layer, got \" + repr(_shapes)\n_h = _x\nfor _Wl, _bl in params[:-1]:\n    _h = np.maximum(0, _h @ _Wl + _bl)\n_z = _h @ params[-1][0] + params[-1][1]\n_ref = np.exp(_z - _z.max(axis=1, keepdims=True)); _ref /= _ref.sum(axis=1, keepdims=True)\nassert np.allclose(_probs, _ref), \"forward must use ReLU on hidden layers and softmax on the output layer\"\nprint(\"All forward-pass tests passed!\")\n"
     }
   ],
   "quiz": [

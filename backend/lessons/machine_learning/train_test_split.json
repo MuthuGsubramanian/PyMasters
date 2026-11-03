@@ -259,11 +259,11 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Load the wine dataset, perform a stratified 70/30 split, train a DecisionTreeClassifier, and compare training accuracy vs test accuracy to check for overfitting. Then run 5-fold cross-validation.",
-        "ta": "wine தரவுத்தொகுப்பை ஏற்றி, stratified 70/30 பிரிப்பு செய்து, DecisionTreeClassifier பயிற்சி அளித்து, overfitting சரிபார்க்க பயிற்சி துல்லியத்தை சோதனை துல்லியத்துடன் ஒப்பிடுங்கள். பின்னர் 5-fold cross-validation இயக்குங்கள்."
+        "en": "Load the wine dataset and perform a stratified 70/30 split (X_train, X_test, y_train, y_test). Train a DecisionTreeClassifier `model` on the training set, compute `train_acc` and `test_acc` and print them with the overfitting gap. Then run 5-fold cross-validation on the full data and store the fold scores in `scores`. Your numbers may differ slightly from the sample output; the checker tests the split, `model`, the two accuracies and `scores`.",
+        "ta": "wine தரவுத்தொகுப்பை ஏற்றி, stratified 70/30 பிரிப்பு செய்யுங்கள் (X_train, X_test, y_train, y_test). பயிற்சித் தொகுப்பில் DecisionTreeClassifier `model`-ஐப் பயிற்றுவித்து, `train_acc`, `test_acc` ஆகியவற்றைக் கணக்கிட்டு, overfitting இடைவெளியுடன் அச்சிடுங்கள். பின்னர் முழுத் தரவில் 5-fold cross-validation இயக்கி, மதிப்பெண்களை `scores`-இல் சேமியுங்கள். உங்கள் எண்கள் மாதிரி வெளியீட்டிலிருந்து சற்று வேறுபடலாம்; சரிபார்ப்பான் பிரிப்பு, `model`, இரு துல்லியங்கள், `scores` ஆகியவற்றைச் சோதிக்கும்."
       },
       "starter_code": "from sklearn.datasets import load_wine\nfrom sklearn.model_selection import train_test_split, cross_val_score\nfrom sklearn.tree import DecisionTreeClassifier\n\nX, y = load_wine(return_X_y=True)\n\n# Stratified split\nX_train, X_test, y_train, y_test = train_test_split(\n    X, y, test_size=___, random_state=42, stratify=___\n)\n\n# Train and evaluate\nmodel = DecisionTreeClassifier(random_state=42)\nmodel.fit(___, ___)\ntrain_acc = model.score(X_train, y_train)\ntest_acc = model.score(___, ___)\nprint(f'Train accuracy: {train_acc:.3f}')\nprint(f'Test accuracy: {test_acc:.3f}')\nprint(f'Overfitting gap: {train_acc - test_acc:.3f}')\n\n# Cross-validation\nscores = cross_val_score(model, X, y, cv=___)\nprint(f'CV Mean: {scores.mean():.3f}')",
-      "expected_output": "Train accuracy: 1.000\nTest accuracy: 0.889\nOverfitting gap: 0.111\nCV Mean: 0.871",
+      "expected_output": "Train accuracy: 1.000\nTest accuracy: 0.963\nOverfitting gap: 0.037\nCV Mean: 0.865",
       "hints": {
         "en": [
           "test_size=0.3 for 70/30 split",
@@ -275,7 +275,8 @@
           "வகுப்பு விநியோகத்தை பாதுகாக்க stratify=y",
           "5-fold cross-validation க்கு cv=5 பயன்படுத்துங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\nfrom sklearn.tree import DecisionTreeClassifier as _DTC\nassert abs(len(X_test) / (len(X_train) + len(X_test)) - 0.3) < 0.02, 'Use a 70/30 split: test_size=0.3.'\n_all = np.bincount(np.concatenate([np.asarray(y_train), np.asarray(y_test)]))\n_te = np.bincount(np.asarray(y_test), minlength=len(_all))\nassert np.all(np.abs(_te - _all * len(y_test) / _all.sum()) <= 1), 'Stratify the split (stratify=y) so every class keeps its share in the test set.'\nassert isinstance(model, _DTC) and hasattr(model, 'tree_'), 'model must be a DecisionTreeClassifier fitted on X_train, y_train.'\nassert abs(train_acc - model.score(X_train, y_train)) < 1e-9, 'train_acc must be model.score(X_train, y_train).'\nassert abs(test_acc - model.score(X_test, y_test)) < 1e-9, 'test_acc must be model.score(X_test, y_test).'\nassert len(scores) == 5, 'Run 5-fold cross-validation: scores = cross_val_score(model, X, y, cv=5).'\n"
     }
   ],
   "quiz": [

@@ -269,22 +269,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create a comparison: build two identical networks (2 hidden layers of 16 neurons) — one using sigmoid activations throughout, one using ReLU. Train both on the same dataset and compare convergence speed.",
-        "ta": "ஒப்பீடு உருவாக்குங்கள்: sigmoid மற்றும் ReLU செயல்பாடுகளுடன் இரண்டு நெட்வொர்க்குகளை உருவாக்கி, ஒன்றிணைவு வேகத்தை ஒப்பிடுங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Implement the lesson's activation functions as numpy functions that work element-wise on arrays: `sigmoid(x)`, `relu(x)`, `leaky_relu(x, alpha=0.01)`, `softmax(x)` (subtract the max before exponentiating so large inputs do not overflow) and `sigmoid_derivative(x) = sigmoid(x) * (1 - sigmoid(x))`. The sigmoid derivative peaks at only 0.25 - that is why deep sigmoid networks suffer from vanishing gradients and ReLU networks train faster.",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. பாடத்தில் உள்ள activation functions-ஐ arrays மீது element-wise ஆக வேலை செய்யும் numpy functions ஆக எழுதுங்கள்: `sigmoid(x)`, `relu(x)`, `leaky_relu(x, alpha=0.01)`, `softmax(x)` (பெரிய மதிப்புகள் overflow ஆகாமல் இருக்க exponent எடுப்பதற்கு முன் max-ஐக் கழியுங்கள்), மற்றும் `sigmoid_derivative(x) = sigmoid(x) * (1 - sigmoid(x))`. Sigmoid derivative அதிகபட்சம் 0.25 மட்டுமே - அதனால்தான் ஆழமான sigmoid networks-ல் vanishing gradient பிரச்சனை வருகிறது, ReLU networks வேகமாகக் கற்கின்றன."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\n\ntorch.manual_seed(42)\nX = torch.randn(500, 4)\ny = (X.sum(dim=1) > 0).float().unsqueeze(1)\n\nclass SigmoidNet(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.net = nn.Sequential(\n            nn.Linear(4, 16), nn.Sigmoid(),\n            nn.Linear(16, 16), nn.Sigmoid(),\n            nn.Linear(16, 1), nn.Sigmoid()\n        )\n    def forward(self, x): return self.net(x)\n\nclass ReLUNet(nn.Module):\n    def __init__(self):\n        super().__init__()\n        # TODO: Same architecture but with ReLU in hidden layers\n        pass\n    def forward(self, x): return self.net(x)\n\n# TODO: Train both for 200 epochs and compare loss curves\n",
-      "expected_output": "Epoch 200 - Sigmoid Loss: 0.42, ReLU Loss: 0.08",
+      "starter_code": "import numpy as np\n\n\ndef sigmoid(x):\n    # 1 / (1 + e^(-x))\n    pass\n\n\ndef relu(x):\n    # 0 for negative values, x itself for positive values\n    pass\n\n\ndef leaky_relu(x, alpha=0.01):\n    # x where x > 0, alpha * x elsewhere\n    pass\n\n\ndef softmax(x):\n    # subtract np.max(x), exponentiate, then divide by the sum\n    pass\n\n\ndef sigmoid_derivative(x):\n    # sigmoid(x) * (1 - sigmoid(x))\n    pass\n\n\ndef show(label, value):\n    print(label, None if value is None else np.round(value, 4))\n\n\nx = np.array([-2.0, 0.0, 2.0])\nshow(\"sigmoid:\", sigmoid(x))\nshow(\"relu:\", relu(x))\nshow(\"leaky_relu:\", leaky_relu(x))\nshow(\"softmax:\", softmax(x))\nshow(\"sigmoid_derivative:\", sigmoid_derivative(x))\n",
+      "expected_output": "sigmoid: [0.1192 0.5    0.8808]\nrelu: [0. 0. 2.]\nleaky_relu: [-0.02  0.    2.  ]\nsoftmax: [0.0159 0.1173 0.8668]\nsigmoid_derivative: [0.105 0.25  0.105]",
       "hints": {
         "en": [
-          "Replace nn.Sigmoid() with nn.ReLU() in hidden layers only",
-          "Keep nn.Sigmoid() for the output layer in both networks",
-          "ReLU should converge much faster than sigmoid in hidden layers"
+          "sigmoid: 1 / (1 + np.exp(-x)); relu: np.maximum(0, x)",
+          "leaky_relu: np.where(x > 0, x, alpha * x)",
+          "softmax: e = np.exp(x - np.max(x)); return e / e.sum()",
+          "sigmoid_derivative: s = sigmoid(x); return s * (1 - s)"
         ],
         "ta": [
-          "மறைந்த அடுக்குகளில் மட்டும் nn.Sigmoid()-ஐ nn.ReLU()-ஆக மாற்றுங்கள்",
-          "இரண்டு நெட்வொர்க்குகளிலும் வெளியீட்டு அடுக்கிற்கு nn.Sigmoid() வைக்கவும்"
+          "sigmoid: 1 / (1 + np.exp(-x)); relu: np.maximum(0, x)",
+          "leaky_relu: np.where(x > 0, x, alpha * x)",
+          "softmax: e = np.exp(x - np.max(x)); பிறகு e / e.sum() திருப்புங்கள்",
+          "sigmoid_derivative: s = sigmoid(x); பிறகு s * (1 - s) திருப்புங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_x = np.array([-3.0, -0.5, 0.0, 0.5, 3.0])\nfor _name, _f in [(\"sigmoid\", sigmoid), (\"relu\", relu), (\"leaky_relu\", leaky_relu),\n                  (\"softmax\", softmax), (\"sigmoid_derivative\", sigmoid_derivative)]:\n    assert _f(_x) is not None, f\"{_name} returned None - did you forget the return statement?\"\nassert np.allclose(sigmoid(_x), 1 / (1 + np.exp(-_x))), \"sigmoid(x) must be 1 / (1 + np.exp(-x))\"\nassert np.allclose(relu(_x), [0, 0, 0, 0.5, 3]), \"relu must turn negatives into 0 and keep positives\"\nassert np.allclose(leaky_relu(_x), [-0.03, -0.005, 0, 0.5, 3]), \"leaky_relu must multiply negatives by alpha (0.01)\"\nassert np.allclose(leaky_relu(_x, alpha=0.2), [-0.6, -0.1, 0, 0.5, 3]), \"leaky_relu must use its alpha argument\"\n_s = softmax(np.array([1.0, 2.0, 3.0]))\nassert np.allclose(_s, np.exp([1.0, 2.0, 3.0]) / np.exp([1.0, 2.0, 3.0]).sum()), \"softmax must be exp(x) / sum(exp(x))\"\n_big = softmax(np.array([1000.0, 1001.0]))\nassert np.all(np.isfinite(_big)) and np.isclose(np.sum(_big), 1.0), \"softmax must stay finite for large inputs - subtract np.max(x) before np.exp\"\nassert np.isclose(sigmoid_derivative(np.array([0.0]))[0], 0.25), \"the sigmoid derivative peaks at 0.25 when x = 0\"\nassert sigmoid_derivative(np.array([10.0]))[0] < 1e-4, \"for large x the sigmoid derivative must vanish (the vanishing gradient problem)\"\nprint(\"All activation tests passed!\")\n"
     }
   ],
   "quiz": [

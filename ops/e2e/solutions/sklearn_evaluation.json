@@ -1,0 +1,11 @@
+{
+  "lesson_id": "sklearn_evaluation",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from sklearn.datasets import load_breast_cancer\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.model_selection import cross_val_score\n\nX, y = load_breast_cancer(return_X_y=True)\nrf = RandomForestClassifier(n_estimators=100, random_state=42)\ncv_scores = cross_val_score(rf, X, y, cv=10)\nmean_cv = cv_scores.mean()\nprint(f'CV scores: {cv_scores.round(3)}')\nprint(f'Mean CV accuracy: {mean_cv:.3f}')\n",
+      "verified_output": "CV scores: [0.982 0.895 0.947 0.947 1.    0.982 0.947 0.982 0.947 1.   ]\nMean CV accuracy: 0.963",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

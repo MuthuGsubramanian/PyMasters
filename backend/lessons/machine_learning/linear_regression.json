@@ -270,11 +270,11 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Generate data following y = 5x1 - 2x2 + 10 with noise. Fit a LinearRegression with 2 features, print the coefficients, and verify they are close to [5, -2] with intercept ~10.",
-        "ta": "y = 5x1 - 2x2 + 10 முறையைப் பின்பற்றும் தரவை நாய்ஸுடன் உருவாக்குங்கள். 2 அம்சங்களுடன் LinearRegression பொருத்தி, குணகங்களை அச்சிட்டு, அவை [5, -2] மற்றும் intercept ~10 க்கு நெருக்கமாக உள்ளதா சரிபார்க்கவும்."
+        "en": "Generate data following y = 5x1 - 2x2 + 10 with noise (`X` with 2 features, `y`). Fit a LinearRegression called `model`, print the coefficients, intercept and R² score, and check they are close to [5, -2] with intercept ~10. Your exact decimals may differ from the sample output; the checker tests that `model.coef_` is within 0.2 of [5, -2] and `model.intercept_` within 1 of 10.",
+        "ta": "நாய்ஸுடன் y = 5x1 - 2x2 + 10 முறையைப் பின்பற்றும் தரவை உருவாக்குங்கள் (2 அம்சங்கள் கொண்ட `X`, `y`). `model` என்ற LinearRegression-ஐப் பொருத்தி, குணகங்கள், intercept, R² மதிப்பெண் ஆகியவற்றை அச்சிட்டு, அவை [5, -2] மற்றும் intercept ~10-க்கு நெருக்கமாக உள்ளனவா எனப் பாருங்கள். உங்கள் தசம எண்கள் மாதிரி வெளியீட்டிலிருந்து வேறுபடலாம்; `model.coef_` [5, -2]-இலிருந்து 0.2-க்குள்ளும், `model.intercept_` 10-இலிருந்து 1-க்குள்ளும் உள்ளதா என்பதைச் சரிபார்ப்பான் சோதிக்கும்."
       },
       "starter_code": "import numpy as np\nfrom sklearn.linear_model import LinearRegression\n\nnp.random.seed(42)\nX = np.random.rand(200, 2) * 10\ny = 5 * X[:, 0] - 2 * X[:, 1] + 10 + np.random.randn(200)\n\nmodel = LinearRegression()\nmodel.___(X, y)\n\nprint(f'Coefficients: {model.___}')\nprint(f'Intercept: {model.___:.2f}')\nprint(f'R² Score: {model.score(X, y):.4f}')",
-      "expected_output": "Coefficients: [ 4.99 -2.01]\nIntercept: 10.12\nR² Score: 0.9965",
+      "expected_output": "Coefficients: [ 4.99 -2.01]\nIntercept: 10.08\nR² Score: 0.9961",
       "hints": {
         "en": [
           "Use model.fit(X, y) to train",
@@ -286,7 +286,8 @@
           "குணகங்கள் model.coef_ -ல் உள்ளன",
           "இடைமறிப்பு model.intercept_ ஆகும்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\nfrom sklearn.linear_model import LinearRegression as _LR\nassert isinstance(model, _LR) and hasattr(model, 'coef_'), 'model must be a fitted LinearRegression (call model.fit(X, y)).'\nassert np.shape(model.coef_) == (2,), 'Fit the model on both features: X must have 2 columns.'\nassert np.allclose(model.coef_, [5, -2], atol=0.2), f'The coefficients should be close to [5, -2]; got {np.round(model.coef_, 2)}.'\nassert abs(model.intercept_ - 10) < 1, f'The intercept should be close to 10; got {model.intercept_:.2f}.'\nassert model.score(X, y) > 0.95, 'R² should be above 0.95 for this nearly linear data.'\n"
     }
   ],
   "quiz": [

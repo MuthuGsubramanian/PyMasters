@@ -1,0 +1,11 @@
+{
+  "lesson_id": "model_evaluation",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score\nfrom sklearn.datasets import make_classification\n\nX, y = make_classification(n_samples=1000, n_features=10, weights=[0.95, 0.05], random_state=42)\nprint(f'Class distribution: {np.bincount(y)}')\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nmodel = LogisticRegression(random_state=42)\nmodel.fit(X_train, y_train)\ny_pred = model.predict(X_test)\n\nprint(f'Accuracy:  {accuracy_score(y_test, y_pred):.3f}')\nprint(f'Precision: {precision_score(y_test, y_pred, zero_division=0):.3f}')\nprint(f'Recall:    {recall_score(y_test, y_pred):.3f}')\nprint(f'F1:        {f1_score(y_test, y_pred):.3f}')\nprint('\\nNotice: High accuracy but low recall — the model misses most minority class samples!')\n",
+      "verified_output": "Class distribution: [947  53]\nAccuracy:  0.945\nPrecision: 0.667\nRecall:    0.167\nF1:        0.267\n\nNotice: High accuracy but low recall — the model misses most minority class samples!",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

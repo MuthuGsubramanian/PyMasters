@@ -431,23 +431,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Build a complete training pipeline for a regression task: predict house prices from 5 features. Implement custom Dataset, DataLoader with batching, training with validation, and print loss curves.",
-        "ta": "ரிக்ரெஷன் பணிக்கான முழுமையான பயிற்சி குழாய்வழியை உருவாக்குங்கள்: 5 அம்சங்களிலிருந்து வீட்டு விலைகளை கணிக்கவும்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Write a complete mini-batch training loop for house-price regression (5 features, data provided). `iterate_minibatches(X, y, batch_size)` is your DataLoader: a generator that yields (X_batch, y_batch) slices in order, with a smaller last batch if needed. `train(X_train, y_train, X_val, y_val, epochs=50, lr=0.05, batch_size=16)` starts with w = zeros(5) and b = 0.0; for every batch it predicts Xb @ w + b, computes the MSE gradients grad_w = 2 * Xb.T @ err / len(yb) and grad_b = 2 * mean(err) (err = pred - yb) and updates w and b; after each epoch it appends (train MSE, validation MSE) to `history`. Return (w, b, history).",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. வீட்டு விலை regression-க்கு (5 features, data கொடுக்கப்பட்டுள்ளது) முழுமையான mini-batch training loop எழுதுங்கள். `iterate_minibatches(X, y, batch_size)` உங்கள் DataLoader: (X_batch, y_batch) பகுதிகளை வரிசையாக yield செய்யும் generator; தேவைப்பட்டால் கடைசி batch சிறியதாக இருக்கலாம். `train(X_train, y_train, X_val, y_val, epochs=50, lr=0.05, batch_size=16)` w = zeros(5), b = 0.0 என்று தொடங்குகிறது; ஒவ்வொரு batch-க்கும் Xb @ w + b கணித்து, MSE gradients grad_w = 2 * Xb.T @ err / len(yb), grad_b = 2 * mean(err) (err = pred - yb) கணக்கிட்டு w, b-ஐ update செய்கிறது; ஒவ்வொரு epoch-க்குப் பிறகும் (train MSE, validation MSE)-ஐ `history`-ல் சேர்க்கிறது. (w, b, history) திருப்புங்கள்."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\nfrom torch.utils.data import Dataset, DataLoader, random_split\n\ntorch.manual_seed(42)\n\nclass HouseDataset(Dataset):\n    def __init__(self, n=500):\n        self.X = torch.randn(n, 5)\n        # Price = 3*sqft + 2*bedrooms - 1*age + 0.5*location + noise\n        self.y = (3*self.X[:,0] + 2*self.X[:,1] - self.X[:,2] + 0.5*self.X[:,3] + torch.randn(n)*0.1).unsqueeze(1)\n    \n    def __len__(self): return len(self.X)\n    def __getitem__(self, idx): return self.X[idx], self.y[idx]\n\n# TODO: Split data, create DataLoaders\n# TODO: Define model, criterion (MSELoss), optimizer\n# TODO: Training loop with validation, print every 20 epochs\n",
-      "expected_output": "Epoch 0: Train Loss=14.23, Val Loss=13.89\nEpoch 80: Train Loss=0.01, Val Loss=0.01",
+      "starter_code": "import numpy as np\n\n\ndef mse(pred, target):\n    return np.mean((pred - target) ** 2)\n\n\n# Synthetic house prices: 5 features, a known linear rule plus a little noise\nrng = np.random.default_rng(0)\nX = rng.standard_normal((120, 5))\ntrue_w = np.array([3.0, -2.0, 0.5, 1.5, 4.0])\ny = X @ true_w + 10.0 + 0.1 * rng.standard_normal(120)\nX_train, y_train, X_val, y_val = X[:100], y[:100], X[100:], y[100:]\n\n\ndef iterate_minibatches(X, y, batch_size):\n    # yield (X[start:start + batch_size], y[start:start + batch_size]) for start = 0, batch_size, ...\n    pass\n\n\ndef train(X_train, y_train, X_val, y_val, epochs=50, lr=0.05, batch_size=16):\n    w = np.zeros(X_train.shape[1])\n    b = 0.0\n    history = []\n    # for each epoch:\n    #   for each mini-batch: forward pass, gradients, update w and b\n    #   append (train MSE, validation MSE) to history\n    # Your code here\n    pass\n\n\nresult = train(X_train, y_train, X_val, y_val)\nif result is None:\n    print(\"train() returned None\")\nelse:\n    w, b, history = result\n    for epoch in (1, 10, 50):\n        train_loss, val_loss = history[epoch - 1]\n        print(f\"Epoch {epoch}: train={train_loss:.4f} val={val_loss:.4f}\")\n    print(\"learned weights:\", np.round(w, 2), \"bias:\", round(float(b), 2))\n",
+      "expected_output": "Epoch 1: train=29.9674 val=33.8647\nEpoch 10: train=0.0120 val=0.0104\nEpoch 50: train=0.0099 val=0.0097\nlearned weights: [ 3.01 -2.01  0.5   1.52  4.  ] bias: 10.0",
       "hints": {
         "en": [
-          "Split: random_split(dataset, [400, 100])",
-          "Use batch_size=32 for both loaders",
-          "Model: Linear(5,32) -> ReLU -> Linear(32,1)",
-          "Use nn.MSELoss() for regression"
+          "iterate_minibatches: for start in range(0, len(X), batch_size): yield X[start:start + batch_size], y[start:start + batch_size]",
+          "Per batch: err = Xb @ w + b - yb; w -= lr * 2 * Xb.T @ err / len(yb); b -= lr * 2 * err.mean()",
+          "After each epoch: history.append((mse(X_train @ w + b, y_train), mse(X_val @ w + b, y_val)))",
+          "Finish with return w, b, history"
         ],
         "ta": [
-          "Split: random_split(dataset, [400, 100])",
-          "regression-க்கு nn.MSELoss() பயன்படுத்துங்கள்"
+          "iterate_minibatches: for start in range(0, len(X), batch_size): yield X[start:start + batch_size], y[start:start + batch_size]",
+          "ஒவ்வொரு batch-க்கும்: err = Xb @ w + b - yb; w -= lr * 2 * Xb.T @ err / len(yb); b -= lr * 2 * err.mean()",
+          "ஒவ்வொரு epoch-க்குப் பிறகும்: history.append((mse(X_train @ w + b, y_train), mse(X_val @ w + b, y_val)))",
+          "இறுதியில் w, b, history திருப்புங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_Xs = np.arange(20).reshape(10, 2); _ys = np.arange(10)\n_batches = list(iterate_minibatches(_Xs, _ys, 4)) if iterate_minibatches(_Xs, _ys, 4) is not None else None\nassert _batches is not None, \"iterate_minibatches must yield batches (use a for loop with yield)\"\nassert [len(_b[1]) for _b in _batches] == [4, 4, 2], \"10 samples with batch_size 4 must give batches of 4, 4 and 2\"\nassert np.array_equal(np.concatenate([_b[0] for _b in _batches]), _Xs), \"the batches must cover every sample once, in order\"\nassert np.array_equal(_batches[1][1], [4, 5, 6, 7]), \"each X batch must stay paired with its y batch\"\n_res = train(X_train, y_train, X_val, y_val, epochs=30)\nassert isinstance(_res, tuple) and len(_res) == 3, \"train must return (w, b, history)\"\n_w, _b, _hist = _res\nassert len(_hist) == 30, \"history must have one (train_loss, val_loss) entry per epoch\"\nassert np.isclose(_hist[-1][1], np.mean((X_val @ _w + _b - y_val) ** 2)), \"each history entry must be (train MSE, validation MSE) of the current model\"\nassert _hist[-1][1] < _hist[0][1], \"validation loss must go down during training\"\nassert _hist[-1][1] < 0.05, \"after training, validation MSE should be below 0.05\"\nassert np.allclose(_w, [3.0, -2.0, 0.5, 1.5, 4.0], atol=0.1) and abs(_b - 10.0) < 0.1, \"the model should recover the true weights and the bias of 10\"\nprint(\"All training-loop tests passed!\")\n"
     }
   ],
   "quiz": [

@@ -319,23 +319,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Compare SGD, SGD+Momentum, and Adam on fitting a sine wave. Train each for 1000 epochs and plot their loss curves to see which converges fastest.",
-        "ta": "SGD, SGD+Momentum, மற்றும் Adam ஆகியவற்றை சைன் அலையை பொருத்துவதில் ஒப்பிடுங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Write the update rules of three optimizers, then the program uses each to minimise f(w) = (w - 3)^2. `sgd_step(w, grad, lr)` returns w - lr * grad. `momentum_step(w, grad, velocity, lr, beta=0.9)` sets velocity = beta * velocity + grad and returns (w - lr * velocity, velocity). `adam_step(w, grad, m, v, t, lr=0.1, beta1=0.9, beta2=0.999, eps=1e-8)` updates m = beta1*m + (1-beta1)*grad and v = beta2*v + (1-beta2)*grad**2, bias-corrects them (m_hat = m / (1 - beta1**t), v_hat = v / (1 - beta2**t)) and returns (w - lr * m_hat / (sqrt(v_hat) + eps), m, v).",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. மூன்று optimizers-இன் update rules-ஐ எழுதுங்கள்; பிறகு program ஒவ்வொன்றையும் பயன்படுத்தி f(w) = (w - 3)^2-ஐக் குறைக்கிறது. `sgd_step(w, grad, lr)` w - lr * grad திருப்புகிறது. `momentum_step(w, grad, velocity, lr, beta=0.9)` velocity = beta * velocity + grad என அமைத்து (w - lr * velocity, velocity) திருப்புகிறது. `adam_step(w, grad, m, v, t, lr=0.1, beta1=0.9, beta2=0.999, eps=1e-8)` m = beta1*m + (1-beta1)*grad, v = beta2*v + (1-beta2)*grad**2 என update செய்து, bias correction செய்து (m_hat = m / (1 - beta1**t), v_hat = v / (1 - beta2**t)), (w - lr * m_hat / (sqrt(v_hat) + eps), m, v) திருப்புகிறது."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\n\ntorch.manual_seed(42)\nX = torch.linspace(0, 6.28, 200).unsqueeze(1)\ny = torch.sin(X)\n\ndef make_model():\n    return nn.Sequential(nn.Linear(1, 32), nn.ReLU(), nn.Linear(32, 32), nn.ReLU(), nn.Linear(32, 1))\n\ncriterion = nn.MSELoss()\nresults = {}\n\nfor name, opt_fn in [('SGD', lambda p: torch.optim.SGD(p, lr=0.01)),\n                      ('SGD+Mom', lambda p: torch.optim.SGD(p, lr=0.01, momentum=0.9)),\n                      ('Adam', lambda p: torch.optim.Adam(p, lr=0.001))]:\n    model = make_model()\n    optimizer = opt_fn(model.parameters())\n    losses = []\n    # TODO: Train for 1000 epochs, record loss each epoch\n    results[name] = losses\n\n# TODO: Print final losses for each optimizer\n",
-      "expected_output": "SGD final loss: 0.15\nSGD+Mom final loss: 0.02\nAdam final loss: 0.001",
+      "starter_code": "import numpy as np\n\n\ndef sgd_step(w, grad, lr):\n    # plain gradient descent\n    pass\n\n\ndef momentum_step(w, grad, velocity, lr, beta=0.9):\n    # velocity = beta * velocity + grad; then step against the velocity\n    # return (new_w, new_velocity)\n    pass\n\n\ndef adam_step(w, grad, m, v, t, lr=0.1, beta1=0.9, beta2=0.999, eps=1e-8):\n    # update the moving averages m and v, bias-correct them with t, then step\n    # return (new_w, new_m, new_v)\n    pass\n\n\ndef grad_f(w):\n    return 2 * (w - 3)          # f(w) = (w - 3)^2 has its minimum at w = 3\n\n\nw = 0.0\nfor _ in range(200):\n    w = sgd_step(w, grad_f(w), lr=0.1)\nprint(\"SGD:      w =\", round(w, 4))\n\nw, velocity = 0.0, 0.0\nfor _ in range(200):\n    w, velocity = momentum_step(w, grad_f(w), velocity, lr=0.05)\nprint(\"Momentum: w =\", round(w, 4))\n\nw, m, v = 0.0, 0.0, 0.0\nfor t in range(1, 201):\n    w, m, v = adam_step(w, grad_f(w), m, v, t, lr=0.1)\nprint(\"Adam:     w =\", round(w, 4))\n",
+      "expected_output": "SGD:      w = 3.0\nMomentum: w = 3.0\nAdam:     w = 3.0001",
       "hints": {
         "en": [
-          "Standard loop: pred = model(X), loss = criterion(pred, y)",
-          "optimizer.zero_grad(), loss.backward(), optimizer.step()",
-          "losses.append(loss.item())",
-          "Adam will typically converge fastest"
+          "sgd_step: return w - lr * grad",
+          "momentum_step: velocity = beta * velocity + grad; return w - lr * velocity, velocity",
+          "adam_step: m = beta1 * m + (1 - beta1) * grad; v = beta2 * v + (1 - beta2) * grad ** 2",
+          "adam_step: m_hat = m / (1 - beta1 ** t); v_hat = v / (1 - beta2 ** t); return w - lr * m_hat / (np.sqrt(v_hat) + eps), m, v"
         ],
         "ta": [
-          "நிலையான loop: pred = model(X), loss = criterion(pred, y)",
-          "Adam பொதுவாக வேகமாக ஒருங்கிணையும்"
+          "sgd_step: w - lr * grad திருப்புங்கள்",
+          "momentum_step: velocity = beta * velocity + grad; பிறகு w - lr * velocity, velocity திருப்புங்கள்",
+          "adam_step: m = beta1 * m + (1 - beta1) * grad; v = beta2 * v + (1 - beta2) * grad ** 2",
+          "adam_step: m_hat = m / (1 - beta1 ** t); v_hat = v / (1 - beta2 ** t); பிறகு w - lr * m_hat / (np.sqrt(v_hat) + eps), m, v திருப்புங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\nassert sgd_step(1.0, 2.0, 0.1) is not None and np.isclose(sgd_step(1.0, 2.0, 0.1), 0.8), \"sgd_step(1.0, grad=2.0, lr=0.1) must be 0.8\"\n_r = momentum_step(1.0, 2.0, 1.0, 0.1, beta=0.9)\nassert isinstance(_r, tuple) and len(_r) == 2, \"momentum_step must return (new_w, new_velocity)\"\nassert np.isclose(_r[1], 2.9) and np.isclose(_r[0], 0.71), \"momentum: velocity = 0.9*1.0 + 2.0 = 2.9 and w = 1.0 - 0.1*2.9 = 0.71\"\n_r = adam_step(0.0, 2.0, 0.0, 0.0, 1, lr=0.1)\nassert isinstance(_r, tuple) and len(_r) == 3, \"adam_step must return (new_w, new_m, new_v)\"\nassert np.isclose(_r[1], 0.2) and np.isclose(_r[2], 0.004), \"adam: m = 0.1*grad and v = 0.001*grad**2 after the first step\"\nassert np.isclose(_r[0], -0.1, atol=1e-6), \"adam's bias-corrected first step must move w by exactly lr (0.0 -> -0.1)\"\n_grad = lambda w: 2 * (w - 3)\n_w = 0.0\nfor _ in range(200):\n    _w = sgd_step(_w, _grad(_w), 0.1)\nassert abs(_w - 3) < 1e-3, \"SGD must reach the minimum w = 3\"\n_w, _vel = 0.0, 0.0\nfor _ in range(200):\n    _w, _vel = momentum_step(_w, _grad(_w), _vel, 0.05)\nassert abs(_w - 3) < 1e-2, \"momentum must reach the minimum w = 3\"\n_w, _m, _v = 0.0, 0.0, 0.0\nfor _t in range(1, 401):\n    _w, _m, _v = adam_step(_w, _grad(_w), _m, _v, _t, lr=0.1)\nassert abs(_w - 3) < 0.1, \"Adam must reach the minimum w = 3\"\nprint(\"All optimizer tests passed!\")\n"
     }
   ],
   "quiz": [

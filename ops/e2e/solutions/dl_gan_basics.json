@@ -1,0 +1,11 @@
+{
+  "lesson_id": "dl_gan_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\n\ndef generator(z, W, b):\n    return z @ W + b\n\n\ndef bce(pred, target):\n    p = np.clip(pred, 1e-7, 1 - 1e-7)\n    return -np.mean(target * np.log(p) + (1 - target) * np.log(1 - p))\n\n\ndef discriminator_loss(d_real, d_fake):\n    return bce(d_real, np.ones_like(d_real)) + bce(d_fake, np.zeros_like(d_fake))\n\n\ndef generator_loss(d_fake):\n    return bce(d_fake, np.ones_like(d_fake))\n\n\nrng = np.random.default_rng(0)\nz = rng.standard_normal((5, 2))                       # 5 noise vectors\nW, b = rng.standard_normal((2, 2)), np.zeros(2)\nfake_points = generator(z, W, b)\nprint(\"fake points shape:\", np.shape(fake_points))\n\nd_real = np.array([0.9, 0.8, 0.95])    # D's belief that real points are real\nd_fake = np.array([0.1, 0.2, 0.05])    # D's belief that fake points are real\nprint(\"D loss:\", None if discriminator_loss(d_real, d_fake) is None else round(float(discriminator_loss(d_real, d_fake)), 4))\nprint(\"G loss:\", None if generator_loss(d_fake) is None else round(float(generator_loss(d_fake)), 4))\n",
+      "verified_output": "fake points shape: (5, 2)\nD loss: 0.2532\nG loss: 2.3026\nAll GAN loss tests passed!",
+      "source": "hand-verified 2026-11-03 (sandbox rewrite)"
+    }
+  ]
+}

@@ -371,23 +371,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Build a simple CNN for MNIST-like digit classification: Conv2d -> ReLU -> MaxPool -> Conv2d -> ReLU -> MaxPool -> Flatten -> Linear. Pass a random 28x28 image through it and print shapes at every layer.",
-        "ta": "MNIST போன்ற இலக்க வகைப்பாட்டிற்கான எளிய CNN உருவாக்குங்கள். ஒவ்வொரு அடுக்கிலும் வடிவங்களை அச்சிடுங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Build a tiny CNN by hand. 1) `conv2d(image, kernel)`: slide the kernel over the image with no padding and stride 1; each output value is the sum of the element-wise product of the kernel and the patch under it (output size: H - kh + 1 by W - kw + 1). 2) `max_pool(x, size=2)`: the max of every non-overlapping size x size block; leftover rows/columns are dropped (13x13 -> 6x6). 3) `cnn_forward(image, k1, k2, W, b)`: conv(k1) -> relu -> pool -> conv(k2) -> relu -> pool -> flatten -> linear (x @ W + b); return (logits, shapes), where shapes is a list of (name, shape) for 'input', 'conv1', 'pool1', 'conv2', 'pool2', 'flatten' and 'linear'.",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. ஒரு சிறிய CNN-ஐ கையால் உருவாக்குங்கள். 1) `conv2d(image, kernel)`: padding இல்லாமல் stride 1 உடன் kernel-ஐ image மீது நகர்த்துங்கள்; ஒவ்வொரு output மதிப்பும் kernel மற்றும் அதன் கீழ் உள்ள பகுதியின் element-wise பெருக்கல்களின் கூட்டுத்தொகை (output அளவு: H - kh + 1 x W - kw + 1). 2) `max_pool(x, size=2)`: ஒன்றுடன் ஒன்று மேற்பொருந்தாத ஒவ்வொரு size x size block-இன் max; மீதமுள்ள வரிசைகள்/நெடுவரிசைகள் விடப்படும் (13x13 -> 6x6). 3) `cnn_forward(image, k1, k2, W, b)`: conv(k1) -> relu -> pool -> conv(k2) -> relu -> pool -> flatten -> linear (x @ W + b); (logits, shapes) திருப்புங்கள் - shapes என்பது 'input', 'conv1', 'pool1', 'conv2', 'pool2', 'flatten', 'linear' ஆகியவற்றுக்கான (name, shape) list."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\n\nclass SimpleCNN(nn.Module):\n    def __init__(self):\n        super().__init__()\n        # TODO: conv1: Conv2d(1, 32, 3, padding=1)\n        # TODO: conv2: Conv2d(32, 64, 3, padding=1)\n        # TODO: pool: MaxPool2d(2, 2)\n        # TODO: fc: Linear(64 * 7 * 7, 10)\n        pass\n    \n    def forward(self, x):\n        # TODO: conv1 -> relu -> pool -> conv2 -> relu -> pool -> flatten -> fc\n        pass\n\nmodel = SimpleCNN()\nX = torch.randn(4, 1, 28, 28)  # batch of 4 images\noutput = model(X)\nprint(f'Output shape: {output.shape}')  # should be [4, 10]\n",
-      "expected_output": "Output shape: torch.Size([4, 10])",
+      "starter_code": "import numpy as np\n\n\ndef relu(x):\n    return np.maximum(0, x)\n\n\ndef conv2d(image, kernel):\n    # valid convolution (no padding, stride 1)\n    pass\n\n\ndef max_pool(x, size=2):\n    # max of each size x size block; drop leftover rows/columns\n    pass\n\n\ndef cnn_forward(image, k1, k2, W, b):\n    # conv -> relu -> pool -> conv -> relu -> pool -> flatten -> linear\n    # record (name, shape) after input, conv1, pool1, conv2, pool2, flatten, linear\n    pass\n\n\nrng = np.random.default_rng(0)\nimage = rng.random((28, 28))                    # an MNIST-sized grayscale image\nk1, k2 = rng.standard_normal((3, 3)), rng.standard_normal((3, 3))\nW, b = rng.standard_normal((25, 10)) * 0.1, np.zeros(10)\nresult = cnn_forward(image, k1, k2, W, b)\nif result is None:\n    print(\"cnn_forward() returned None\")\nelse:\n    logits, shapes = result\n    for name, shape in shapes:\n        print(f\"{name:>8}: {shape}\")\n",
+      "expected_output": "input: (28, 28)\n   conv1: (26, 26)\n   pool1: (13, 13)\n   conv2: (11, 11)\n   pool2: (5, 5)\n flatten: (25,)\n  linear: (10,)",
       "hints": {
         "en": [
-          "After conv1+pool: [4, 32, 14, 14]",
-          "After conv2+pool: [4, 64, 7, 7]",
-          "Flatten: x = x.view(x.size(0), -1) gives [4, 3136]",
-          "FC: Linear(3136, 10) maps to 10 digit classes"
+          "conv2d: out[i, j] = np.sum(image[i:i + kh, j:j + kw] * kernel) for every i, j of the (H - kh + 1, W - kw + 1) output",
+          "max_pool: h, w = x.shape[0] // size, x.shape[1] // size; x[:h * size, :w * size].reshape(h, size, w, size).max(axis=(1, 3))",
+          "cnn_forward: shapes = [('input', image.shape)], then append (name, x.shape) after every stage",
+          "flatten with x.flatten(), then logits = x @ W + b"
         ],
         "ta": [
-          "conv1+pool பிறகு: [4, 32, 14, 14]",
-          "Flatten: x = x.view(x.size(0), -1) [4, 3136] கொடுக்கிறது"
+          "conv2d: (H - kh + 1, W - kw + 1) output-இன் ஒவ்வொரு i, j-க்கும் out[i, j] = np.sum(image[i:i + kh, j:j + kw] * kernel)",
+          "max_pool: h, w = x.shape[0] // size, x.shape[1] // size; x[:h * size, :w * size].reshape(h, size, w, size).max(axis=(1, 3))",
+          "cnn_forward: shapes = [('input', image.shape)], பிறகு ஒவ்வொரு கட்டத்துக்குப் பின்னும் (name, x.shape) append செய்யுங்கள்",
+          "x.flatten() மூலம் flatten செய்து, பிறகு logits = x @ W + b"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_img = np.arange(16, dtype=float).reshape(4, 4)\n_k = np.array([[1.0, 0.0], [0.0, -1.0]])\n_c = conv2d(_img, _k)\nassert _c is not None and np.shape(_c) == (3, 3), \"a 2x2 kernel on a 4x4 image gives a 3x3 output\"\nassert np.allclose(_c, -5.0), \"each output must be sum(patch * kernel): here every value is x[i,j] - x[i+1,j+1] = -5\"\n_rng = np.random.default_rng(4)\n_im, _kk = _rng.standard_normal((6, 5)), _rng.standard_normal((3, 2))\n_ref = np.array([[np.sum(_im[i:i + 3, j:j + 2] * _kk) for j in range(4)] for i in range(4)])\nassert np.allclose(conv2d(_im, _kk), _ref), \"conv2d must slide the kernel without flipping it (cross-correlation, like PyTorch)\"\n_mp = max_pool(np.arange(25).reshape(5, 5))\nassert _mp is not None and np.array_equal(_mp, [[6, 8], [16, 18]]), \"max_pool must take the max of each 2x2 block and drop the leftover row/column\"\n_W, _b = _rng.standard_normal((25, 10)), _rng.standard_normal(10)\n_res = cnn_forward(_rng.random((28, 28)), _rng.standard_normal((3, 3)), _rng.standard_normal((3, 3)), _W, _b)\nassert isinstance(_res, tuple) and len(_res) == 2, \"cnn_forward must return (logits, shapes)\"\n_logits, _shapes = _res\nassert [tuple(s) for _, s in _shapes] == [(28, 28), (26, 26), (13, 13), (11, 11), (5, 5), (25,), (10,)], \"wrong shapes: \" + repr(_shapes)\nassert [n for n, _ in _shapes] == [\"input\", \"conv1\", \"pool1\", \"conv2\", \"pool2\", \"flatten\", \"linear\"], \"name the stages input, conv1, pool1, conv2, pool2, flatten, linear\"\nassert np.shape(_logits) == (10,), \"the linear layer must output 10 logits\"\nprint(\"All CNN tests passed!\")\n"
     }
   ],
   "quiz": [

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "dl_pytorch_training",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\n\ndef mse(pred, target):\n    return np.mean((pred - target) ** 2)\n\n\n# Synthetic house prices: 5 features, a known linear rule plus a little noise\nrng = np.random.default_rng(0)\nX = rng.standard_normal((120, 5))\ntrue_w = np.array([3.0, -2.0, 0.5, 1.5, 4.0])\ny = X @ true_w + 10.0 + 0.1 * rng.standard_normal(120)\nX_train, y_train, X_val, y_val = X[:100], y[:100], X[100:], y[100:]\n\n\ndef iterate_minibatches(X, y, batch_size):\n    for start in range(0, len(X), batch_size):\n        yield X[start:start + batch_size], y[start:start + batch_size]\n\n\ndef train(X_train, y_train, X_val, y_val, epochs=50, lr=0.05, batch_size=16):\n    w = np.zeros(X_train.shape[1])\n    b = 0.0\n    history = []\n    for epoch in range(epochs):\n        for Xb, yb in iterate_minibatches(X_train, y_train, batch_size):\n            err = Xb @ w + b - yb\n            w -= lr * 2 * Xb.T @ err / len(yb)\n            b -= lr * 2 * err.mean()\n        history.append((mse(X_train @ w + b, y_train), mse(X_val @ w + b, y_val)))\n    return w, b, history\n\n\nresult = train(X_train, y_train, X_val, y_val)\nif result is None:\n    print(\"train() returned None\")\nelse:\n    w, b, history = result\n    for epoch in (1, 10, 50):\n        train_loss, val_loss = history[epoch - 1]\n        print(f\"Epoch {epoch}: train={train_loss:.4f} val={val_loss:.4f}\")\n    print(\"learned weights:\", np.round(w, 2), \"bias:\", round(float(b), 2))\n",
+      "verified_output": "Epoch 1: train=29.9674 val=33.8647\nEpoch 10: train=0.0120 val=0.0104\nEpoch 50: train=0.0099 val=0.0097\nlearned weights: [ 3.01 -2.01  0.5   1.52  4.  ] bias: 10.0\nAll training-loop tests passed!",
+      "source": "hand-verified 2026-11-03 (sandbox rewrite)"
+    }
+  ]
+}

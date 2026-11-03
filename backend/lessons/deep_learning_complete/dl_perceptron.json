@@ -379,24 +379,24 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Build a perceptron that learns the AND gate. Train it on all four input combinations (0,0), (0,1), (1,0), (1,1) with expected outputs 0, 0, 0, 1. Use BCELoss and SGD optimizer.",
-        "ta": "AND கேட்டைக் கற்கும் பெர்செப்ட்ரானை உருவாக்குங்கள். நான்கு உள்ளீட்டு சேர்க்கைகளில் பயிற்சி அளியுங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Train a single neuron to learn the AND gate. `predict_proba(X, w, b)` returns sigmoid(X @ w + b). `train(X, y, lr=1.0, epochs=2000)` starts with w = zeros(2) and b = 0.0 and, every epoch, computes p = predict_proba(X, w, b) and the BCE gradients grad_w = X.T @ (p - y) / len(y) and grad_b = mean(p - y), then updates w -= lr * grad_w and b -= lr * grad_b (what BCELoss + loss.backward() + optimizer.step() do in PyTorch). Return (w, b). Rounded predictions for the four inputs must be [0 0 0 1].",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. AND gate-ஐக் கற்க ஒரு neuron-ஐப் பயிற்றுவியுங்கள். `predict_proba(X, w, b)` sigmoid(X @ w + b) திருப்புகிறது. `train(X, y, lr=1.0, epochs=2000)` w = zeros(2), b = 0.0 என்று தொடங்கி, ஒவ்வொரு epoch-லும் p = predict_proba(X, w, b) மற்றும் BCE gradients grad_w = X.T @ (p - y) / len(y), grad_b = mean(p - y) கணக்கிட்டு, w -= lr * grad_w, b -= lr * grad_b என update செய்கிறது (PyTorch-ல் BCELoss + loss.backward() + optimizer.step() செய்வது இதுவே). (w, b) திருப்புங்கள். நான்கு inputs-க்கான rounded predictions [0 0 0 1] ஆக இருக்க வேண்டும்."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\n\nclass Perceptron(nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.linear = nn.Linear(2, 1)\n    \n    def forward(self, x):\n        return torch.sigmoid(self.linear(x))\n\n# Training data: AND gate\nX = torch.tensor([[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]])\ny = torch.tensor([[0.0], [0.0], [0.0], [1.0]])\n\nmodel = Perceptron()\ncriterion = nn.BCELoss()\noptimizer = torch.optim.SGD(model.parameters(), lr=0.5)\n\n# TODO: Train for 1000 epochs and print final predictions\n",
-      "expected_output": "Predictions after training:\n[0, 0] -> 0.03\n[0, 1] -> 0.12\n[1, 0] -> 0.12\n[1, 1] -> 0.85",
+      "starter_code": "import numpy as np\n\n\ndef sigmoid(x):\n    return 1 / (1 + np.exp(-x))\n\n\ndef predict_proba(X, w, b):\n    # sigmoid of the weighted sum\n    pass\n\n\ndef train(X, y, lr=1.0, epochs=2000):\n    w = np.zeros(X.shape[1])\n    b = 0.0\n    # for each epoch: forward pass, BCE gradients, gradient-descent update\n    # Your code here\n    pass\n\n\nX = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=float)\ny_and = np.array([0, 0, 0, 1], dtype=float)\n\nresult = train(X, y_and)\nif result is None:\n    print(\"train() returned None\")\nelse:\n    w, b = result\n    preds = (predict_proba(X, w, b) >= 0.5).astype(int)\n    print(\"Predictions:\", preds)\n",
+      "expected_output": "Predictions: [0 0 0 1]",
       "hints": {
         "en": [
-          "Use a for loop: for epoch in range(1000):",
-          "Inside the loop: output = model(X), loss = criterion(output, y)",
-          "Call optimizer.zero_grad(), loss.backward(), optimizer.step()",
-          "After training, run model(X) to see predictions"
+          "predict_proba: return sigmoid(X @ w + b)",
+          "Inside the loop: p = predict_proba(X, w, b); error = p - y",
+          "Update: w -= lr * X.T @ error / len(y) and b -= lr * error.mean(); after the loop return w, b"
         ],
         "ta": [
-          "for loop பயன்படுத்துங்கள்: for epoch in range(1000):",
-          "Loop உள்: output = model(X), loss = criterion(output, y)",
-          "optimizer.zero_grad(), loss.backward(), optimizer.step() அழையுங்கள்"
+          "predict_proba: sigmoid(X @ w + b) திருப்புங்கள்",
+          "Loop-க்குள்: p = predict_proba(X, w, b); error = p - y",
+          "Update: w -= lr * X.T @ error / len(y) மற்றும் b -= lr * error.mean(); loop முடிந்ததும் w, b திருப்புங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]], dtype=float)\nassert predict_proba(_X, np.zeros(2), 0.0) is not None and np.allclose(predict_proba(_X, np.zeros(2), 0.0), 0.5), \"with zero weights every probability must be 0.5\"\nassert np.allclose(predict_proba(_X, np.array([1.0, 2.0]), -1.0), 1 / (1 + np.exp(-(_X @ np.array([1.0, 2.0]) - 1.0)))), \"predict_proba must be sigmoid(X @ w + b)\"\n_res = train(_X, np.array([0, 0, 0, 1], dtype=float))\nassert isinstance(_res, tuple) and len(_res) == 2, \"train must return (w, b)\"\n_w, _b = _res\n_p = predict_proba(_X, _w, _b)\nassert list((_p >= 0.5).astype(int)) == [0, 0, 0, 1], \"the trained neuron must output [0, 0, 0, 1] for the AND gate\"\nassert _p[3] > 0.7 and _p[0] < 0.3, \"after 2000 epochs the neuron should be confident about (1, 1) and (0, 0)\"\n_w2, _b2 = train(_X, np.array([0, 1, 1, 1], dtype=float))\nassert list((predict_proba(_X, _w2, _b2) >= 0.5).astype(int)) == [0, 1, 1, 1], \"train must learn any linearly separable gate - the OR gate failed\"\nprint(\"All perceptron tests passed!\")\n"
     }
   ],
   "quiz": [

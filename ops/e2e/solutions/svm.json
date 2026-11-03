@@ -1,0 +1,11 @@
+{
+  "lesson_id": "svm",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from sklearn.svm import SVC\nfrom sklearn.datasets import make_circles\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\n\nX, y = make_circles(n_samples=300, noise=0.1, factor=0.5, random_state=42)\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nscaler = StandardScaler()\nX_train_s = scaler.fit_transform(X_train)\nX_test_s = scaler.transform(X_test)\n\n# Linear SVM\nlinear = SVC(kernel='linear', C=1.0)\nlinear.fit(X_train_s, y_train)\nprint(f'Linear: {linear.score(X_test_s, y_test):.3f}')\n\n# RBF SVM\nrbf = SVC(kernel='rbf', C=1.0, gamma='scale')\nrbf.fit(X_train_s, y_train)\nprint(f'RBF: {rbf.score(X_test_s, y_test):.3f}')\nprint(f'Support vectors: linear={linear.n_support_.sum()}, rbf={rbf.n_support_.sum()}')\n",
+      "verified_output": "Linear: 0.433\nRBF: 1.000\nSupport vectors: linear=234, rbf=55",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

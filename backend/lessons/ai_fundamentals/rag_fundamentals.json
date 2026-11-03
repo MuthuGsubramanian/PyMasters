@@ -350,23 +350,24 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Build a mini RAG system: Create a list of 5 facts about any topic, embed them using FAISS, then write a function that takes a question, retrieves the 2 most relevant facts, and formats them as context for an LLM prompt.",
-        "ta": "Mini RAG system உருவாக்குங்கள்: எந்த தலைப்பிலும் 5 உண்மைகளின் பட்டியலை உருவாக்கி, FAISS-ல் embed செய்து, கேள்வியை எடுத்து 2 தொடர்புடைய உண்மைகளை retrieve செய்யும் function எழுதுங்கள்."
+        "en": "Build a mini RAG system over 5 facts about Python. The sandbox has no network, so `embed(text)` stands in for an embeddings API, and a numpy matrix plays the role of the FAISS index. 1) `build_index(facts)` returns a 2D array with one embedding per row. 2) `search(index, question, k=2)` embeds the question, scores every row with a dot product (cosine similarity for unit vectors) and returns the indexes of the k best rows, best first. 3) `ask(question, facts, index, k=2)` returns the LLM prompt: \"Context:\\n- <fact>\\n- <fact>\\n\\nQuestion: <question>\".",
+        "ta": "Python பற்றிய 5 உண்மைகள் மீது ஒரு சிறிய RAG system உருவாக்குங்கள். Sandbox-ல் network இல்லாததால், embeddings API-க்குப் பதிலாக `embed(text)` உள்ளது; FAISS index-இன் பங்கை ஒரு numpy matrix ஏற்கிறது. 1) `build_index(facts)` ஒவ்வொரு வரிசையிலும் ஒரு embedding கொண்ட 2D array-ஐத் திருப்புகிறது. 2) `search(index, question, k=2)` கேள்வியை embed செய்து, ஒவ்வொரு வரிசைக்கும் dot product மூலம் score கணக்கிட்டு (unit vectors-க்கு இதுவே cosine similarity), சிறந்த k வரிசைகளின் indexes-ஐ, சிறந்தது முதலில் என்ற வரிசையில் திருப்புகிறது. 3) `ask(question, facts, index, k=2)` LLM prompt-ஐத் திருப்புகிறது: \"Context:\\n- <fact>\\n- <fact>\\n\\nQuestion: <question>\"."
       },
-      "starter_code": "from langchain_openai import OpenAIEmbeddings\nfrom langchain_community.vectorstores import FAISS\n\n# Create 5 facts about a topic\nfacts = [\n    # Add your facts here\n]\n\n# Embed and store\nembeddings = OpenAIEmbeddings()\nvectorstore = FAISS.from_texts(facts, embeddings)\n\ndef ask(question: str) -> str:\n    \"\"\"Retrieve relevant facts and format as LLM context.\"\"\"\n    # Your code here\n    pass\n\nprint(ask('Your question here'))",
-      "expected_output": "(Formatted context with relevant facts for the question)",
+      "starter_code": "import re\nimport numpy as np\n\n# The sandbox has no network, so embed() stands in for an embeddings API (OpenAIEmbeddings)\n# and a numpy matrix plays the role of the FAISS index. embed() returns unit-length\n# vectors, so a dot product is the cosine similarity.\nTOPIC_WORDS = {\n    0: {\"created\", \"creator\", \"guido\", \"rossum\", \"who\", \"invented\", \"made\", \"create\"},\n    1: {\"released\", \"release\", \"2008\", \"version\", \"when\", \"year\"},\n    2: {\"zen\", \"principles\", \"guiding\", \"philosophy\", \"aphorisms\"},\n    3: {\"pip\", \"install\", \"installs\", \"packages\", \"package\", \"index\", \"library\", \"libraries\"},\n    4: {\"indentation\", \"blocks\", \"block\", \"whitespace\", \"spaces\", \"indent\"},\n}\n\n\ndef embed(text):\n    vec = np.full(6, 0.01)\n    for word in re.findall(r\"[a-z0-9]+\", text.lower()):\n        for dim, words in TOPIC_WORDS.items():\n            if word in words:\n                vec[dim] += 1.0\n                break\n        else:\n            vec[5] += 0.1\n    return vec / np.linalg.norm(vec)\n\n\nfacts = [\n    \"Python was created by Guido van Rossum.\",\n    \"Python 3.0 was released in 2008.\",\n    \"The Zen of Python lists 19 guiding principles.\",\n    \"pip installs packages from the Python Package Index.\",\n    \"Python uses indentation to define code blocks.\",\n]\n\n\ndef build_index(facts):\n    \"\"\"Return a 2D numpy array: one embedding per fact (like FAISS.from_texts).\"\"\"\n    # Your code here\n    pass\n\n\ndef search(index, question, k=2):\n    \"\"\"Return the row indexes of the k facts most similar to the question, best first.\"\"\"\n    # Your code here\n    pass\n\n\ndef ask(question, facts, index, k=2):\n    \"\"\"Retrieve the relevant facts and format them as context for an LLM prompt.\"\"\"\n    # Your code here\n    pass\n\n\nindex = build_index(facts)\nprint(ask(\"Who created Python?\", facts, index))\n",
+      "expected_output": "Context:\n- Python was created by Guido van Rossum.\n- Python 3.0 was released in 2008.\n\nQuestion: Who created Python?",
       "hints": {
         "en": [
-          "Use vectorstore.similarity_search(question, k=2) to retrieve",
-          "Format as: 'Context:\\n{fact1}\\n{fact2}\\nQuestion: {question}'",
-          "The function returns the formatted prompt, not the LLM answer"
+          "build_index: np.array([embed(f) for f in facts])",
+          "search: scores = index @ embed(question); np.argsort(-scores)[:k] gives the best rows first",
+          "ask: context = '\\n'.join('- ' + facts[i] for i in search(index, question, k)); return f'Context:\\n{context}\\n\\nQuestion: {question}'"
         ],
         "ta": [
-          "vectorstore.similarity_search(question, k=2) பயன்படுத்தி retrieve செய்யுங்கள்",
-          "'Context:\\n{fact1}\\n{fact2}\\nQuestion: {question}' என வடிவமைக்கவும்",
-          "function வடிவமைக்கப்பட்ட prompt-ஐ திருப்பி அனுப்புகிறது"
+          "build_index: np.array([embed(f) for f in facts])",
+          "search: scores = index @ embed(question); np.argsort(-scores)[:k] சிறந்த வரிசைகளை முதலில் தருகிறது",
+          "ask: context = '\\n'.join('- ' + facts[i] for i in search(index, question, k)); பிறகு f'Context:\\n{context}\\n\\nQuestion: {question}' திருப்புங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_idx = build_index(facts)\nassert _idx is not None and np.shape(_idx) == (5, 6), \"build_index must return one embedding row per fact: shape (5, 6)\"\nassert np.allclose(_idx[2], embed(facts[2])), \"row i of the index must be embed(facts[i])\"\n_s = search(_idx, \"When was version 3 released?\", k=2)\nassert _s is not None and len(_s) == 2, \"search must return k indexes\"\nassert _s[0] == 1, \"the release fact (index 1) must rank first for a release question\"\nassert search(_idx, \"How do I install a package?\", k=1) == [3], \"the pip fact must rank first for an install question\"\nassert search(_idx, \"Who invented Python?\", k=5)[0] == 0 and sorted(search(_idx, \"Who invented Python?\", k=5)) == [0, 1, 2, 3, 4], \"with k=5 every fact comes back once, best first\"\n_p = ask(\"Why does indentation matter?\", facts, _idx, k=1)\nassert _p == \"Context:\\n- Python uses indentation to define code blocks.\\n\\nQuestion: Why does indentation matter?\", \"ask must return exactly the prompt format from the instructions, got: \" + repr(_p)\nprint(\"All RAG tests passed!\")\n"
     }
   ],
   "quiz": [

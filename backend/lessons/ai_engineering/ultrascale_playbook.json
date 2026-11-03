@@ -88,18 +88,18 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Simulate a simplified gradient AllReduce. Write a function `all_reduce_avg(gradients)` that takes a list of gradient tensors (one per simulated GPU) and returns a list of tensors where each is the element-wise average of all inputs. This is the core operation behind Data Parallel training."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Simulate a gradient AllReduce, the core operation of Data Parallel training. Write `all_reduce_avg(gradients)`: it takes a list of numpy gradient arrays (one per simulated GPU) and returns a list of the same length where every element is the element-wise average of all inputs. Each GPU must get its own copy, so changing one result must not change the others."
       },
-      "starter_code": "import torch\n\ndef all_reduce_avg(gradients: list[torch.Tensor]) -> list[torch.Tensor]:\n    \"\"\"Simulate AllReduce: average all gradient tensors and return\n    a list where every element is the averaged tensor.\"\"\"\n    # Your code here\n    pass\n\n# Test\ng0 = torch.tensor([1.0, 2.0, 3.0])\ng1 = torch.tensor([3.0, 4.0, 5.0])\nresult = all_reduce_avg([g0, g1])\nprint(result[0])  # tensor([2., 3., 4.])\nprint(result[1])  # tensor([2., 3., 4.])",
-      "expected_output": "tensor([2., 3., 4.])\ntensor([2., 3., 4.])",
+      "starter_code": "import numpy as np\n\n\ndef all_reduce_avg(gradients):\n    \"\"\"Simulate AllReduce: average all gradient arrays and give every GPU its own copy.\"\"\"\n    # Your code here\n    pass\n\n\ng0 = np.array([1.0, 2.0, 3.0])    # gradient computed on GPU 0\ng1 = np.array([3.0, 4.0, 5.0])    # gradient computed on GPU 1\nresult = all_reduce_avg([g0, g1])\nif result is None:\n    print(\"all_reduce_avg() returned None\")\nelse:\n    print(result[0])\n    print(result[1])\n",
+      "expected_output": "[2. 3. 4.]\n[2. 3. 4.]",
       "hints": {
         "en": [
-          "Use torch.stack(gradients) to combine tensors, then .mean(dim=0) to average",
-          "The result list should contain N copies of the same averaged tensor, one per GPU",
-          "Return [avg_tensor.clone() for _ in gradients] to simulate each GPU holding its own copy"
+          "np.stack(gradients) combines the arrays into one with a new first axis (one row per GPU)",
+          "np.mean(..., axis=0) averages across GPUs",
+          "Return [avg.copy() for _ in gradients] so every GPU holds its own copy"
         ]
       },
-      "test_code": "import torch\ng0 = torch.tensor([1.0, 2.0, 3.0])\ng1 = torch.tensor([3.0, 4.0, 5.0])\ng2 = torch.tensor([2.0, 6.0, 1.0])\nresult2 = all_reduce_avg([g0, g1])\nassert len(result2) == 2\nassert torch.allclose(result2[0], torch.tensor([2.0, 3.0, 4.0]))\nassert torch.allclose(result2[1], torch.tensor([2.0, 3.0, 4.0]))\nresult3 = all_reduce_avg([g0, g1, g2])\nassert len(result3) == 3\nassert torch.allclose(result3[0], torch.tensor([2.0, 4.0, 3.0]))\nassert torch.allclose(result3[2], torch.tensor([2.0, 4.0, 3.0]))"
+      "test_code": "import numpy as np\n_g0, _g1, _g2 = np.array([1.0, 2.0, 3.0]), np.array([3.0, 4.0, 5.0]), np.array([2.0, 6.0, 1.0])\n_r2 = all_reduce_avg([_g0, _g1])\nassert _r2 is not None and len(_r2) == 2, \"with 2 GPUs, return a list of 2 arrays\"\nassert np.allclose(_r2[0], [2.0, 3.0, 4.0]) and np.allclose(_r2[1], [2.0, 3.0, 4.0]), \"every GPU must hold the element-wise average [2, 3, 4]\"\n_r3 = all_reduce_avg([_g0, _g1, _g2])\nassert len(_r3) == 3, \"with 3 GPUs, return a list of 3 arrays\"\nassert all(np.allclose(_r, [2.0, 4.0, 3.0]) for _r in _r3), \"the average of 3 gradients must be [2, 4, 3] on every GPU\"\n_r3[0][0] = 99.0\nassert _r3[1][0] == 2.0, \"each GPU needs its own copy - changing one result must not change another (use .copy())\"\nassert np.allclose(_g0, [1.0, 2.0, 3.0]), \"all_reduce_avg must not modify the input gradients\"\n_m = all_reduce_avg([np.ones((2, 2)), np.zeros((2, 2))])\nassert np.allclose(_m[0], 0.5 * np.ones((2, 2))), \"all_reduce_avg must work for gradient matrices too\"\nprint(\"All AllReduce tests passed!\")\n"
     },
     {
       "instruction": {

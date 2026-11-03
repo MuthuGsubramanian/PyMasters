@@ -385,23 +385,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Manually compute gradients for a 2-layer network and verify them against PyTorch autograd. Build forward pass from scratch, compute loss, then compare your manual chain-rule gradients with .grad values.",
-        "ta": "2-அடுக்கு நெட்வொர்க்கிற்கு கைமுறையாக சாய்வுகளை கணக்கிட்டு, PyTorch autograd-உடன் சரிபார்க்கவும்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. The starter code has a 2-layer network: `forward` computes z1 = x @ W1 + b1, h = tanh(z1), y_hat = h @ W2 + b2, and `mse_loss` is mean((y_hat - y)**2). Complete `backward(x, y, W1, b1, W2, b2)` so it applies the chain rule from the loss backwards and returns a dict with the gradients {\"W1\", \"b1\", \"W2\", \"b2\"} - exactly what `loss.backward()` fills into `.grad` in PyTorch. Instead of autograd, the program checks your gradients against a numerical (finite-difference) gradient.",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. Starter code-ல் 2-layer network உள்ளது: `forward` z1 = x @ W1 + b1, h = tanh(z1), y_hat = h @ W2 + b2 ஆகியவற்றைக் கணக்கிடுகிறது, `mse_loss` = mean((y_hat - y)**2). `backward(x, y, W1, b1, W2, b2)`-ஐ நிறைவு செய்யுங்கள்: loss-லிருந்து பின்னோக்கி chain rule-ஐப் பயன்படுத்தி {\"W1\", \"b1\", \"W2\", \"b2\"} gradients கொண்ட dict-ஐத் திருப்ப வேண்டும் - PyTorch-ல் `loss.backward()` `.grad`-ல் நிரப்புவது இதுவே. Autograd-க்குப் பதிலாக, உங்கள் gradients ஒரு numerical (finite-difference) gradient-உடன் ஒப்பிட்டுச் சரிபார்க்கப்படுகின்றன."
       },
-      "starter_code": "import torch\n\ntorch.manual_seed(42)\nx = torch.tensor([1.0, 2.0], requires_grad=True)\nw1 = torch.tensor([[0.5, -0.3], [0.2, 0.8]], requires_grad=True)\nw2 = torch.tensor([[0.4], [-0.6]], requires_grad=True)\ntarget = torch.tensor([1.0])\n\n# Forward pass\nz1 = x @ w1              # [1, 2] @ [2, 2] = [1, 2]\na1 = torch.relu(z1)       # ReLU activation\nz2 = a1 @ w2              # [1, 2] @ [2, 1] = [1, 1]\nloss = (z2 - target) ** 2 # MSE\n\n# TODO: Call backward and print all gradients\n# TODO: Manually compute dL/dw2 using chain rule and compare\n",
-      "expected_output": "Autograd dL/dw2: [[...], [...]]\nManual dL/dw2:   [[...], [...]]\nMatch: True",
+      "starter_code": "import numpy as np\n\nrng = np.random.default_rng(0)\nx = rng.standard_normal((4, 3))     # 4 samples, 3 features\ny = rng.standard_normal((4, 1))     # 4 targets\nW1, b1 = rng.standard_normal((3, 5)) * 0.5, np.zeros(5)\nW2, b2 = rng.standard_normal((5, 1)) * 0.5, np.zeros(1)\n\n\ndef forward(x, W1, b1, W2, b2):\n    z1 = x @ W1 + b1\n    h = np.tanh(z1)\n    y_hat = h @ W2 + b2\n    return z1, h, y_hat\n\n\ndef mse_loss(y_hat, y):\n    return np.mean((y_hat - y) ** 2)\n\n\ndef backward(x, y, W1, b1, W2, b2):\n    \"\"\"Return {\"W1\": dW1, \"b1\": db1, \"W2\": dW2, \"b2\": db2}: gradients of mse_loss for each parameter.\"\"\"\n    z1, h, y_hat = forward(x, W1, b1, W2, b2)\n    # Your code here - walk the chain rule backwards:\n    # 1. gradient of the loss w.r.t. y_hat\n    # 2. gradients of W2 and b2\n    # 3. gradient flowing back into h, then through tanh into z1\n    # 4. gradients of W1 and b1\n    pass\n\n\ndef numerical_gradient(params, name, eps=1e-6):\n    \"\"\"Finite differences: nudge every number in params[name] and watch how the loss changes.\"\"\"\n    grad = np.zeros_like(params[name])\n    for idx in np.ndindex(params[name].shape):\n        old = params[name][idx]\n        params[name][idx] = old + eps\n        plus = mse_loss(forward(x, **params)[2], y)\n        params[name][idx] = old - eps\n        minus = mse_loss(forward(x, **params)[2], y)\n        params[name][idx] = old\n        grad[idx] = (plus - minus) / (2 * eps)\n    return grad\n\n\nparams = {\"W1\": W1, \"b1\": b1, \"W2\": W2, \"b2\": b2}\ngrads = backward(x, y, **params)\nif grads is None:\n    print(\"backward() returned None\")\nelse:\n    for name in params:\n        ok = np.allclose(grads[name], numerical_gradient(params, name), atol=1e-6)\n        print(name, \"gradient matches the numerical check:\", ok)\n",
+      "expected_output": "W1 gradient matches the numerical check: True\nb1 gradient matches the numerical check: True\nW2 gradient matches the numerical check: True\nb2 gradient matches the numerical check: True",
       "hints": {
         "en": [
-          "loss.backward() computes all gradients at once",
-          "dL/dz2 = 2 * (z2 - target)",
-          "dL/dw2 = a1.T @ dL/dz2",
-          "Compare with w2.grad"
+          "Start at the loss: d_yhat = 2 * (y_hat - y) / y.size (the derivative of the mean squared error)",
+          "Output layer: dW2 = h.T @ d_yhat and db2 = d_yhat.sum(axis=0)",
+          "Back into the hidden layer: d_h = d_yhat @ W2.T, then through tanh: d_z1 = d_h * (1 - h ** 2)",
+          "First layer: dW1 = x.T @ d_z1 and db1 = d_z1.sum(axis=0); return them all in a dict"
         ],
         "ta": [
-          "loss.backward() அனைத்து சாய்வுகளையும் ஒரே நேரத்தில் கணக்கிடுகிறது",
-          "dL/dz2 = 2 * (z2 - target)"
+          "Loss-லிருந்து தொடங்குங்கள்: d_yhat = 2 * (y_hat - y) / y.size (mean squared error-இன் derivative)",
+          "Output layer: dW2 = h.T @ d_yhat மற்றும் db2 = d_yhat.sum(axis=0)",
+          "Hidden layer-க்குள்: d_h = d_yhat @ W2.T, பிறகு tanh வழியாக: d_z1 = d_h * (1 - h ** 2)",
+          "முதல் layer: dW1 = x.T @ d_z1 மற்றும் db1 = d_z1.sum(axis=0); அனைத்தையும் ஒரு dict-ல் திருப்புங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_rng = np.random.default_rng(7)\n_x = _rng.standard_normal((6, 2)); _y = _rng.standard_normal((6, 1))\n_p = {\"W1\": _rng.standard_normal((2, 3)), \"b1\": _rng.standard_normal(3),\n      \"W2\": _rng.standard_normal((3, 1)), \"b2\": _rng.standard_normal(1)}\n\n\ndef _loss(p):\n    _h = np.tanh(_x @ p[\"W1\"] + p[\"b1\"])\n    return np.mean((_h @ p[\"W2\"] + p[\"b2\"] - _y) ** 2)\n\n\n_g = backward(_x, _y, **_p)\nassert isinstance(_g, dict), \"backward must return a dict of gradients\"\nfor _name in (\"W1\", \"b1\", \"W2\", \"b2\"):\n    assert _name in _g, f\"the gradient dict is missing '{_name}'\"\n    assert np.shape(_g[_name]) == np.shape(_p[_name]), f\"gradient of {_name} must have the same shape as {_name}\"\n    _num = np.zeros_like(_p[_name])\n    for _i in np.ndindex(_p[_name].shape):\n        _old = _p[_name][_i]\n        _p[_name][_i] = _old + 1e-6; _plus = _loss(_p)\n        _p[_name][_i] = _old - 1e-6; _minus = _loss(_p)\n        _p[_name][_i] = _old\n        _num[_i] = (_plus - _minus) / 2e-6\n    assert np.allclose(_g[_name], _num, atol=1e-5), f\"gradient of {_name} does not match the numerical gradient - check the chain rule\"\n_before = _loss(_p)\n_after = _loss({k: _p[k] - 0.05 * _g[k] for k in _p})\nassert _after < _before, \"a small step against your gradients must lower the loss\"\nprint(\"All backpropagation tests passed!\")\n"
     }
   ],
   "quiz": [

@@ -278,23 +278,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Use a pre-trained ResNet-18 to classify a synthetic dataset of 5 categories. Implement both feature extraction (frozen backbone) and fine-tuning (unfreezing last block). Compare accuracy.",
-        "ta": "5 வகைகளின் synthetic dataset-ஐ வகைப்படுத்த pre-trained ResNet-18 பயன்படுத்துங்கள். Feature extraction மற்றும் fine-tuning இரண்டையும் செயல்படுத்தி, துல்லியத்தை ஒப்பிடுங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Do transfer learning by feature extraction: keep a pre-trained backbone frozen and train only a new classification head (fine-tuning would also update the backbone). The starter code gives you the frozen `W_backbone` and a 5-category dataset. 1) `extract_features(X, W_backbone)` returns relu(X @ W_backbone). 2) `train_head(features, y, num_classes, lr=0.1, epochs=300)` trains a softmax classifier with gradient descent: start W = zeros((n_features, num_classes)), b = zeros(num_classes); each epoch compute p = softmax(features @ W + b), grad = (p - one_hot(y)) / n, then W -= lr * features.T @ grad and b -= lr * grad.sum(axis=0); return (W, b). 3) `predict(features, W, b)` returns the argmax class per row. The backbone must stay unchanged.",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. Feature extraction மூலம் transfer learning செய்யுங்கள்: pre-trained backbone-ஐ frozen ஆக வைத்து, புதிய classification head-ஐ மட்டும் பயிற்றுவியுங்கள் (fine-tuning backbone-ஐயும் update செய்யும்). Starter code-ல் frozen `W_backbone`-உம் 5 வகை dataset-உம் உள்ளன. 1) `extract_features(X, W_backbone)` relu(X @ W_backbone) திருப்புகிறது. 2) `train_head(features, y, num_classes, lr=0.1, epochs=300)` gradient descent மூலம் softmax classifier-ஐப் பயிற்றுவிக்கிறது: W = zeros((n_features, num_classes)), b = zeros(num_classes) என்று தொடங்கி, ஒவ்வொரு epoch-லும் p = softmax(features @ W + b), grad = (p - one_hot(y)) / n கணக்கிட்டு, W -= lr * features.T @ grad, b -= lr * grad.sum(axis=0) செய்யுங்கள்; (W, b) திருப்புங்கள். 3) `predict(features, W, b)` ஒவ்வொரு வரிசைக்கும் argmax class-ஐத் திருப்புகிறது. Backbone மாறாமல் இருக்க வேண்டும்."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\nimport torchvision.models as models\n\n# Synthetic data (simulating small custom dataset)\ntorch.manual_seed(42)\nX_train = torch.randn(200, 3, 224, 224)  # 200 images\ny_train = torch.randint(0, 5, (200,))     # 5 classes\nX_test = torch.randn(50, 3, 224, 224)\ny_test = torch.randint(0, 5, (50,))\n\n# TODO: Load pre-trained ResNet-18\n# TODO: Freeze all parameters\n# TODO: Replace model.fc for 5 classes\n# TODO: Train with feature extraction for 5 epochs\n# TODO: Unfreeze layer4 and fine-tune for 5 more epochs\n# TODO: Compare accuracy at each stage\n",
-      "expected_output": "Feature extraction accuracy: 78%\nAfter fine-tuning accuracy: 92%",
+      "starter_code": "import numpy as np\n\n\ndef relu(x):\n    return np.maximum(0, x)\n\n\ndef softmax(z):\n    e = np.exp(z - z.max(axis=1, keepdims=True))\n    return e / e.sum(axis=1, keepdims=True)\n\n\ndef make_dataset(n, seed):\n    \"\"\"Synthetic 'images' (20 features) from 5 categories.\"\"\"\n    rng = np.random.default_rng(seed)\n    centers = np.random.default_rng(42).standard_normal((5, 20)) * 2\n    y = rng.integers(0, 5, n)\n    return centers[y] + rng.standard_normal((n, 20)) * 0.5, y\n\n\n# Stand-in for a pre-trained ResNet backbone: fixed weights learned \"elsewhere\".\nW_backbone = np.random.default_rng(7).standard_normal((20, 32)) / np.sqrt(20)\n\n\ndef extract_features(X, W_backbone):\n    # frozen backbone: relu(X @ W_backbone)\n    pass\n\n\ndef train_head(features, y, num_classes, lr=0.1, epochs=300):\n    W = np.zeros((features.shape[1], num_classes))\n    b = np.zeros(num_classes)\n    # gradient descent on the softmax cross-entropy - only W and b change\n    # Your code here\n    pass\n\n\ndef predict(features, W, b):\n    # most likely class for every row\n    pass\n\n\nX_train, y_train = make_dataset(300, seed=1)\nX_test, y_test = make_dataset(100, seed=2)\nbackbone_before = W_backbone.copy()\nF_train = extract_features(X_train, W_backbone)\nF_test = extract_features(X_test, W_backbone)\nhead = train_head(F_train, y_train, num_classes=5)\nif head is None:\n    print(\"train_head() returned None\")\nelse:\n    W_head, b_head = head\n    acc = np.mean(predict(F_test, W_head, b_head) == y_test)\n    print(\"trainable parameters (head only):\", W_head.size + b_head.size)\n    print(\"frozen backbone parameters:\", W_backbone.size)\n    print(f\"test accuracy with a frozen backbone: {acc:.2f}\")\n    print(\"backbone unchanged:\", np.array_equal(W_backbone, backbone_before))\n",
+      "expected_output": "trainable parameters (head only): 165\nfrozen backbone parameters: 640\ntest accuracy with a frozen backbone: 1.00\nbackbone unchanged: True",
       "hints": {
         "en": [
-          "model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)",
-          "model.fc = nn.Linear(512, 5) for 5 classes",
-          "Use differential learning rates when fine-tuning",
-          "Create simple DataLoader from tensors using TensorDataset"
+          "extract_features: return relu(X @ W_backbone)",
+          "one_hot = np.eye(num_classes)[y] turns labels into one-hot rows",
+          "Each epoch: p = softmax(features @ W + b); grad = (p - one_hot) / len(y); W -= lr * features.T @ grad; b -= lr * grad.sum(axis=0)",
+          "predict: np.argmax(features @ W + b, axis=1)"
         ],
         "ta": [
-          "model.fc = nn.Linear(512, 5) 5 வகுப்புகளுக்கு",
-          "Fine-tuning செய்யும்போது differential learning rates பயன்படுத்துங்கள்"
+          "extract_features: relu(X @ W_backbone) திருப்புங்கள்",
+          "one_hot = np.eye(num_classes)[y] labels-ஐ one-hot வரிசைகளாக மாற்றுகிறது",
+          "ஒவ்வொரு epoch-லும்: p = softmax(features @ W + b); grad = (p - one_hot) / len(y); W -= lr * features.T @ grad; b -= lr * grad.sum(axis=0)",
+          "predict: np.argmax(features @ W + b, axis=1)"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_Xa, _ya = make_dataset(200, seed=11)\n_Xb, _yb = make_dataset(100, seed=12)\n_Wb = W_backbone.copy()\n_Fa = extract_features(_Xa, _Wb)\nassert _Fa is not None and np.shape(_Fa) == (200, 32), \"features must have shape (n_samples, 32)\"\nassert np.allclose(_Fa, np.maximum(0, _Xa @ _Wb)), \"extract_features must return relu(X @ W_backbone)\"\n_h = train_head(_Fa, _ya, num_classes=5)\nassert isinstance(_h, tuple) and len(_h) == 2, \"train_head must return (W, b)\"\n_W, _bb = _h\nassert np.shape(_W) == (32, 5) and np.shape(_bb) == (5,), \"the head must map 32 features to 5 classes\"\nassert np.array_equal(_Wb, W_backbone), \"the backbone is frozen - training the head must not change it\"\n_pred = predict(extract_features(_Xb, _Wb), _W, _bb)\nassert _pred is not None and np.shape(_pred) == (100,), \"predict must return one class per row\"\nassert np.mean(_pred == _yb) > 0.9, \"the trained head should reach over 90% accuracy on new data\"\n_one = train_head(_Fa, _ya, num_classes=5, epochs=1, lr=0.1)\n_ref_grad = (np.full((200, 5), 0.2) - np.eye(5)[_ya]) / 200\nassert np.allclose(_one[0], -0.1 * _Fa.T @ _ref_grad), \"one epoch must apply W -= lr * features.T @ ((p - one_hot) / n)\"\nprint(\"All transfer-learning tests passed!\")\n"
     }
   ],
   "quiz": [
