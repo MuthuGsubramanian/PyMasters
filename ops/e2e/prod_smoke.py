@@ -109,7 +109,11 @@ def run(base: str) -> dict:
                           " if (v) localStorage.setItem('pm_release_seen', v); }", [user, release])
             for path in PAGES:
                 errors.clear()
-                page.goto(f"{base}{path}", wait_until="networkidle", timeout=60000)
+                # Not "networkidle": on production it never comes (2026-11-04) - Cloudflare's injected bot-detection
+                # script holds a connection open, and headless Chromium leaves a memory-cached font request
+                # unfinished. Real users are unaffected; wait for load, let the app render, then check.
+                page.goto(f"{base}{path}", wait_until="load", timeout=60000)
+                page.wait_for_timeout(3000)
                 if not page.locator("body").inner_text().strip() or errors:
                     bad.append(f"{path}: {errors[:2] or 'blank'}")
             b.close()
