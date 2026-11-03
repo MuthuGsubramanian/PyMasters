@@ -15,6 +15,8 @@ CPUWeight=20
 # Heat: the laptop power-cut itself at 100 C while rendering at full load (2026-11-02). Cap at 1.5 of 8 cores;
 # pymasters-thermal-guard also pauses this unit above 82 C.
 CPUQuota=150%
+# All heavy ops work shares pymasters-heavy.slice (2 of 8 CPUs in total; frozen by the thermal guard >= 80 C).
+Slice=pymasters-heavy.slice
 Environment=OMP_NUM_THREADS=2
 Environment=MKL_NUM_THREADS=2
 Environment=PMSOCIAL_FFMPEG_THREADS=2

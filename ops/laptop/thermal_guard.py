@@ -4,9 +4,15 @@
 The laptop hit `acpitz: critical temperature reached` (trip 100 C) and the kernel did a hardware-protection
 power-off on 2026-11-02 while the social bot rendered video. This guard keeps our own heavy work below that:
 
-  temp >= PAUSE_AT   -> SIGSTOP every process in the heavy systemd units (they freeze, nothing is lost)
-  temp <= RESUME_AT  -> SIGCONT them again (hysteresis)
-  temp >= ALERT_AT   -> desktop notification + log line (something else is heating the machine too)
+  temp >= PAUSE_AT   -> freeze the heavy cgroups (cgroup.freeze: nothing is lost, they just stop)
+  temp <= RESUME_AT  -> thaw them again (hysteresis)
+  temp >= ALERT_AT   -> desktop notification + log line with the top CPU users (something else is heating it)
+
+v2 (2026-11-03, after a second hardware power-off at 100 C): the guard used to signal only the social bot
+service, while builds, test containers, headless browsers and generators ran outside it ("0 processes"
+paused). All heavy ops work now runs in pymasters-heavy.slice (CPUQuota 300% of 8 threads; start jobs with
+~/pymasters-ops/heavy <cmd>; test containers via podman --cgroup-parent), and the guard freezes that whole
+slice plus the social bot, earlier (80 C instead of 84 C).
 
 Logs: ~/pymasters-ops/thermal.log (events) and ~/pymasters-ops/thermal.csv (one sample per minute)."""
 import glob
@@ -16,9 +22,10 @@ import subprocess
 import time
 from datetime import datetime
 
-PAUSE_AT, RESUME_AT, ALERT_AT = 84.0, 70.0, 92.0
+PAUSE_AT, RESUME_AT, ALERT_AT = 80.0, 68.0, 90.0
 MIN_PAUSE_S = 90    # this laptop heats/cools in seconds; short pauses just oscillate
-HEAVY_UNITS = ["pymasters-social.service"]   # the status email is light; never freeze it
+# The status email is light; never freeze it. The slice holds every heavy job started via ~/pymasters-ops/heavy.
+HEAVY_UNITS = ["pymasters-heavy.slice", "pymasters-social.service"]
 LOG = os.path.expanduser("~/pymasters-ops/thermal.log")
 CSV = os.path.expanduser("~/pymasters-ops/thermal.csv")
 UID = os.getuid()
@@ -53,16 +60,56 @@ def unit_pids(unit):
         return []
 
 
-def signal_units(sig):
+def unit_cgroup(unit):
+    try:
+        cg = subprocess.run(["systemctl", "--user", "show", unit, "-p", "ControlGroup", "--value"],
+                            capture_output=True, text=True, timeout=5).stdout.strip()
+        return f"/sys/fs/cgroup{cg}" if cg else None
+    except subprocess.SubprocessError:
+        return None
+
+
+def count_procs(cg):
     n = 0
-    for u in HEAVY_UNITS:
-        for pid in unit_pids(u):
+    for root, _dirs, files in os.walk(cg):
+        if "cgroup.procs" in files:
             try:
-                os.kill(pid, sig)
-                n += 1
-            except ProcessLookupError:
+                n += len(open(os.path.join(root, "cgroup.procs")).read().split())
+            except OSError:
                 pass
     return n
+
+
+def signal_units(sig):
+    """Freeze (SIGSTOP) / thaw (SIGCONT) every heavy unit's whole cgroup subtree via cgroup.freeze, which also
+    catches children spawned later (podman containers placed in the slice, browser renderers, ...)."""
+    n = 0
+    for u in HEAVY_UNITS:
+        cg = unit_cgroup(u)
+        if not cg or not os.path.isdir(cg):
+            continue
+        try:
+            with open(os.path.join(cg, "cgroup.freeze"), "w") as f:
+                f.write("1" if sig == signal.SIGSTOP else "0")
+            n += count_procs(cg)
+        except OSError:   # no freezer here: fall back to signalling the processes directly
+            for pid in unit_pids(u):
+                try:
+                    os.kill(pid, sig)
+                    n += 1
+                except ProcessLookupError:
+                    pass
+    return n
+
+
+def top_cpu(n=5):
+    """The processes using the most CPU right now, for the alert log (what is heating the machine)."""
+    try:
+        out = subprocess.run(["ps", "-eo", "pcpu,comm", "--sort=-pcpu", "--no-headers"],
+                             capture_output=True, text=True, timeout=5).stdout.splitlines()[:n]
+        return ", ".join(" ".join(line.split()[::-1]) + "%" for line in out)
+    except subprocess.SubprocessError:
+        return "?"
 
 
 def log(msg):
@@ -98,7 +145,7 @@ def main():
                 log(f"RESUME heavy work at {hot:.0f}C ({n} processes)")
         if hot >= ALERT_AT and time.time() - last_alert > 120:
             last_alert = time.time()
-            log(f"ALERT {hot:.0f}C (critical trip is 100C) temps={t}")
+            log(f"ALERT {hot:.0f}C (critical trip is 100C) temps={t} top={top_cpu()}")
             notify(f"{hot:.0f}°C — the hardware cuts power at 100°C. Bot work is paused; check vents/airflow.")
         if time.time() - last_csv >= 60:
             last_csv = time.time()
