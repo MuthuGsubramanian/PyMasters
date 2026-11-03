@@ -16,6 +16,8 @@ def client(tmp_path, monkeypatch):
     import main as m
     importlib.reload(m)
     m.init_db()
+    import routes.paths as paths_routes
+    monkeypatch.setattr(paths_routes, "DB_PATH", str(tmp_path / "paths.db"))   # captured at import time
     from fastapi.testclient import TestClient
     return TestClient(m.app)
 
