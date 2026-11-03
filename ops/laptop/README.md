@@ -11,5 +11,5 @@ survives a dead disk. No secrets here (OAuth tokens live in `~/.config/pymasters
 | `pymasters-heavy.slice` + `heavy` | Every heavy ops job (image builds, scenario runs, headless browsers, solution generators, social renders) runs in this slice, capped at 1 of 8 CPUs in total (2 reached 97 C in 20 s): `~/pymasters-ops/heavy <cmd>`; scenario containers join it via `PM_E2E_CGROUP_PARENT=pymasters-heavy.slice`. One heavy job at a time. `heavy_selftest.sh` proves the cap and the freezer; `temps.py` prints temperatures, load and top CPU users |
 
 Restore: copy the scripts to `~/pymasters-ops/`, the units to `~/.config/systemd/user/`, then
-`systemctl --user daemon-reload && systemctl --user enable --now pymasters-daily-report.timer pymasters-thermal-guard.service pymasters-social.timer` (copy `pymasters-heavy.slice` too)
+`systemctl --user daemon-reload && systemctl --user enable --now pymasters-daily-report.timer pymasters-thermal-guard.service pymasters-social.timer pymasters-prod-smoke.timer` (copy `pymasters-heavy.slice` too)
 and `sudo loginctl enable-linger $USER`. The social bot itself lives in `socialbot/` (see its README).
