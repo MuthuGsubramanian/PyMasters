@@ -1,0 +1,11 @@
+{
+  "lesson_id": "dimensionality_reduction",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from sklearn.decomposition import PCA\nfrom sklearn.datasets import load_iris\nfrom sklearn.preprocessing import StandardScaler\n\nX, y = load_iris(return_X_y=True)\nX_scaled = StandardScaler().fit_transform(X)\n\n# PCA to 2D\npca = PCA(n_components=2)\nX_2d = pca.fit_transform(X_scaled)\nprint(f'Explained variance per component: {pca.explained_variance_ratio_.round(3)}')\nprint(f'Total: {pca.explained_variance_ratio_.sum():.3f}')\n\n# PCA for 99% variance\npca_99 = PCA(n_components=0.99)\nX_99 = pca_99.fit_transform(X_scaled)\nprint(f'Components for 99% variance: {pca_99.n_components_}')\n",
+      "verified_output": "Explained variance per component: [0.73  0.229]\nTotal: 0.958\nComponents for 99% variance: 3",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

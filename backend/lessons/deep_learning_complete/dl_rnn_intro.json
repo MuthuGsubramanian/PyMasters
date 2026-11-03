@@ -343,23 +343,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Build an RNN that classifies sequences as 'increasing' or 'decreasing'. Generate 500 sequences of length 10, label them, and train your RNN to classify using the final hidden state.",
-        "ta": "வரிசைகளை 'அதிகரிக்கும்' அல்லது 'குறையும்' என வகைப்படுத்தும் RNN உருவாக்குங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Write the recurrence at the heart of an RNN. `rnn_step(x_t, h_prev, Wx, Wh, b)` returns tanh(x_t @ Wx + h_prev @ Wh + b). `run_rnn(sequence, Wx, Wh, b)` starts from h = zeros(Wh.shape[0]), applies rnn_step to every time step of `sequence` (shape (T, input_size)) and returns all hidden states as an array of shape (T, hidden_size) - the last row is the final state a classifier would use. Also write `label_sequence(seq)` returning \"increasing\" if seq[-1] > seq[0], else \"decreasing\". Because the hidden state carries memory, the same values in reverse order give a different final state.",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. RNN-இன் மையத்தில் உள்ள recurrence-ஐ எழுதுங்கள். `rnn_step(x_t, h_prev, Wx, Wh, b)` tanh(x_t @ Wx + h_prev @ Wh + b) திருப்புகிறது. `run_rnn(sequence, Wx, Wh, b)` h = zeros(Wh.shape[0])-லிருந்து தொடங்கி, `sequence`-இன் (வடிவம் (T, input_size)) ஒவ்வொரு time step-க்கும் rnn_step-ஐப் பயன்படுத்தி, அனைத்து hidden states-ஐயும் (T, hidden_size) வடிவ array ஆகத் திருப்புகிறது - கடைசி வரிசைதான் classifier பயன்படுத்தும் இறுதி state. மேலும் seq[-1] > seq[0] என்றால் \"increasing\", இல்லையெனில் \"decreasing\" திருப்பும் `label_sequence(seq)`-ஐயும் எழுதுங்கள். Hidden state நினைவைச் சுமப்பதால், அதே மதிப்புகள் தலைகீழ் வரிசையில் வேறு இறுதி state-ஐத் தருகின்றன."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\n\ntorch.manual_seed(42)\n\n# Generate sequences\ndef generate_data(n=500, seq_len=10):\n    X, y = [], []\n    for _ in range(n):\n        if torch.rand(1) > 0.5:\n            seq = torch.sort(torch.randn(seq_len))[0]  # increasing\n            X.append(seq); y.append(1)\n        else:\n            seq = torch.sort(torch.randn(seq_len), descending=True)[0]  # decreasing\n            X.append(seq); y.append(0)\n    return torch.stack(X).unsqueeze(-1), torch.tensor(y)\n\nX, y = generate_data()\n\nclass SequenceClassifier(nn.Module):\n    def __init__(self):\n        super().__init__()\n        # TODO: RNN + Linear classifier using final hidden state\n        pass\n    \n    def forward(self, x):\n        pass\n\n# TODO: Train and evaluate accuracy\n",
-      "expected_output": "Epoch 50: Loss=0.02, Accuracy=99.2%",
+      "starter_code": "import numpy as np\n\n\ndef rnn_step(x_t, h_prev, Wx, Wh, b):\n    # tanh(x_t @ Wx + h_prev @ Wh + b)\n    pass\n\n\ndef run_rnn(sequence, Wx, Wh, b):\n    # h starts as zeros; apply rnn_step at every time step; return np.array of all hidden states\n    pass\n\n\ndef label_sequence(seq):\n    # \"increasing\" if the last value is bigger than the first, else \"decreasing\"\n    pass\n\n\nrng = np.random.default_rng(0)\nWx = rng.standard_normal((1, 3)) * 0.5     # input -> hidden\nWh = rng.standard_normal((3, 3)) * 0.5     # hidden -> hidden (the \"memory\" connection)\nb = np.zeros(3)\n\nup = np.array([[0.1], [0.3], [0.5], [0.7], [0.9]])\nstates = run_rnn(up, Wx, Wh, b)\nif states is None:\n    print(\"run_rnn() returned None\")\nelse:\n    print(\"hidden states shape:\", np.shape(states))\n    print(\"final state (increasing):\", np.round(states[-1], 4))\n    print(\"final state (decreasing):\", np.round(run_rnn(up[::-1], Wx, Wh, b)[-1], 4))\nprint(\"labels:\", label_sequence(up.ravel()), label_sequence(up.ravel()[::-1]))\n",
+      "expected_output": "hidden states shape: (5, 3)\nfinal state (increasing): [-0.1795 -0.1591  0.3047]\nfinal state (decreasing): [-0.1272 -0.0236  0.0258]\nlabels: increasing decreasing",
       "hints": {
         "en": [
-          "RNN input: [batch, seq_len=10, features=1]",
-          "Use hidden[-1] (final hidden state) as input to Linear classifier",
-          "nn.Linear(hidden_size, 2) for binary classification",
-          "Use CrossEntropyLoss"
+          "rnn_step: return np.tanh(x_t @ Wx + h_prev @ Wh + b)",
+          "run_rnn: h = np.zeros(Wh.shape[0]); loop for x_t in sequence: h = rnn_step(x_t, h, Wx, Wh, b) and append h to a list",
+          "Return np.array(states) so the result has shape (T, hidden_size)",
+          "label_sequence: return 'increasing' if seq[-1] > seq[0] else 'decreasing'"
         ],
         "ta": [
-          "RNN உள்ளீடு: [batch, seq_len=10, features=1]",
-          "Linear classifier-க்கு hidden[-1] (இறுதி hidden state) பயன்படுத்துங்கள்"
+          "rnn_step: np.tanh(x_t @ Wx + h_prev @ Wh + b) திருப்புங்கள்",
+          "run_rnn: h = np.zeros(Wh.shape[0]); for x_t in sequence: h = rnn_step(x_t, h, Wx, Wh, b), h-ஐ ஒரு list-ல் append செய்யுங்கள்",
+          "முடிவு (T, hidden_size) வடிவில் இருக்க np.array(states) திருப்புங்கள்",
+          "label_sequence: seq[-1] > seq[0] என்றால் 'increasing', இல்லையெனில் 'decreasing' திருப்புங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_rng = np.random.default_rng(9)\n_Wx = _rng.standard_normal((2, 4)); _Wh = _rng.standard_normal((4, 4)); _b = _rng.standard_normal(4)\n_x = _rng.standard_normal(2); _h = _rng.standard_normal(4)\n_s = rnn_step(_x, _h, _Wx, _Wh, _b)\nassert _s is not None and np.allclose(_s, np.tanh(_x @ _Wx + _h @ _Wh + _b)), \"rnn_step must return tanh(x_t @ Wx + h_prev @ Wh + b)\"\n_seq = _rng.standard_normal((6, 2))\n_states = run_rnn(_seq, _Wx, _Wh, _b)\nassert _states is not None and np.shape(_states) == (6, 4), \"run_rnn must return one hidden state per time step: shape (T, hidden_size)\"\n_e = np.zeros(4)\nfor _t in range(6):\n    _e = np.tanh(_seq[_t] @ _Wx + _e @ _Wh + _b)\n    assert np.allclose(_states[_t], _e), f\"hidden state {_t} is wrong - start from zeros and feed each new h into the next step\"\nassert not np.allclose(run_rnn(_seq[::-1], _Wx, _Wh, _b)[-1], _states[-1]), \"order must matter: the reversed sequence must give a different final state\"\nassert label_sequence(np.array([1, 2, 3])) == \"increasing\" and label_sequence(np.array([3, 2, 1])) == \"decreasing\", \"label_sequence must return 'increasing' or 'decreasing'\"\nprint(\"All RNN tests passed!\")\n"
     }
   ],
   "quiz": [

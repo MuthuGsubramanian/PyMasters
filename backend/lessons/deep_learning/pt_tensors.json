@@ -197,21 +197,22 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Using PyTorch, create a tensor `A` of shape (3, 4) filled with random normal values, and `B` of shape (4, 2) also random normal. Compute their matrix product `C = A @ B`. Also compute and store the sum of all elements of C as `total`."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. A PyTorch tensor and a numpy array share the same ideas: shape, random creation, matrix product and reductions. Using the provided `rng`, create `A` of shape (3, 4) and `B` of shape (4, 2) filled with standard-normal random values (`rng.standard_normal`). Compute their matrix product `C = A @ B`, and store the sum of all elements of C as `total`."
       },
-      "expected_output": "",
+      "starter_code": "import numpy as np\n\nrng = np.random.default_rng(42)   # like torch.manual_seed(42): the same \"random\" numbers every run\n\n# A: shape (3, 4), B: shape (4, 2) - standard-normal values (torch.randn in PyTorch)\nA = None\nB = None\n\n# Matrix product (same @ operator as PyTorch)\nC = None\n\n# Sum of all elements of C (C.sum() in both libraries)\ntotal = None\n\nprint(\"C shape:\", None if C is None else C.shape)\nprint(\"total:\", None if total is None else round(float(total), 4))\n",
+      "expected_output": "C shape: (3, 2)\ntotal: -0.6083",
       "hints": [
         {
-          "en": "Use torch.randn(rows, cols) to create random tensors"
+          "en": "rng.standard_normal((rows, cols)) creates a random array - the numpy twin of torch.randn(rows, cols)"
         },
         {
-          "en": "Matrix multiply: C = A @ B"
+          "en": "Matrix multiply: C = A @ B (works the same for tensors and arrays)"
         },
         {
           "en": "Sum all elements: total = C.sum()"
         }
       ],
-      "test_code": "import torch\nassert A.shape == (3, 4), f'A must be (3,4), got {A.shape}'\nassert B.shape == (4, 2), f'B must be (4,2), got {B.shape}'\nassert C.shape == (3, 2), f'C = A@B must be (3,2), got {C.shape}'\nassert total.shape == torch.Size([]), 'total must be a scalar'\nassert torch.allclose(C, A @ B), 'C must equal A @ B'"
+      "test_code": "import numpy as np\nassert A is not None and B is not None, \"create A and B with rng.standard_normal(...)\"\nassert np.shape(A) == (3, 4), f\"A must be (3, 4), got {np.shape(A)}\"\nassert np.shape(B) == (4, 2), f\"B must be (4, 2), got {np.shape(B)}\"\nassert np.asarray(A).std() > 0, \"A must hold random values, not a constant\"\nassert C is not None and np.shape(C) == (3, 2), f\"C = A @ B must be (3, 2), got {np.shape(C)}\"\nassert np.allclose(C, np.asarray(A) @ np.asarray(B)), \"C must equal A @ B\"\nassert total is not None and np.ndim(total) == 0, \"total must be a single number (a scalar)\"\nassert np.isclose(total, np.asarray(C).sum()), \"total must be the sum of all elements of C\"\nprint(\"All tensor tests passed!\")\n"
     }
   ],
   "generated": false,

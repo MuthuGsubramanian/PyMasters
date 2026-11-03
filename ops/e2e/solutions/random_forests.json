@@ -1,0 +1,11 @@
+{
+  "lesson_id": "random_forests",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from sklearn.datasets import load_breast_cancer\nfrom sklearn.tree import DecisionTreeClassifier\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.model_selection import train_test_split\nimport numpy as np\n\ndata = load_breast_cancer()\nX_train, X_test, y_train, y_test = train_test_split(data.data, data.target, test_size=0.2, random_state=42)\n\n# Single tree\ndt = DecisionTreeClassifier(random_state=42)\ndt.fit(X_train, y_train)\nprint(f'Decision Tree: {dt.score(X_test, y_test):.3f}')\n\n# Random forests\nfor n in [50, 100, 200]:\n    rf = RandomForestClassifier(n_estimators=n, random_state=42)\n    rf.fit(X_train, y_train)\n    print(f'RF (n={n}): {rf.score(X_test, y_test):.3f}')\n\n# Top 3 features from RF-200\ntop_idx = np.argsort(rf.feature_importances_)[::-1][:3]\nfor i in top_idx:\n    print(f'{data.feature_names[i]}: {rf.feature_importances_[i]:.4f}')\n",
+      "verified_output": "Decision Tree: 0.947\nRF (n=50): 0.965\nRF (n=100): 0.965\nRF (n=200): 0.965\nworst area: 0.1285\nworst concave points: 0.1283\nworst perimeter: 0.1271",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

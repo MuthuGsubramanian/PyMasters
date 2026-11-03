@@ -335,21 +335,22 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Define a PyTorch `nn.Module` class `TwoLayerNet(in_f, hidden, out_f)` with two Linear layers and a ReLU in between. Then instantiate it with `in_f=4, hidden=8, out_f=1` and verify you can do a forward pass with a batch of 5 samples."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Write a class `TwoLayerNet(in_f, hidden, out_f)` that mirrors an `nn.Module` with Linear -> ReLU -> Linear. In `__init__`, use the provided `rng` to create `W1` (in_f, hidden), `b1` (hidden,), `W2` (hidden, out_f) and `b2` (out_f,) (small random weights, zero biases). `forward(x)` returns `relu(x @ W1 + b1) @ W2 + b2`, `__call__` calls forward (like a module), and `parameters()` returns the list [W1, b1, W2, b2]. Instantiate it as `net = TwoLayerNet(4, 8, 1)` and run a forward pass on a batch of 5 samples."
       },
-      "expected_output": "",
+      "starter_code": "import numpy as np\n\nrng = np.random.default_rng(0)\n\n\ndef relu(x):\n    return np.maximum(0, x)\n\n\nclass TwoLayerNet:\n    \"\"\"numpy version of: nn.Sequential(nn.Linear(in_f, hidden), nn.ReLU(), nn.Linear(hidden, out_f))\"\"\"\n\n    def __init__(self, in_f, hidden, out_f):\n        # Create self.W1 (in_f, hidden), self.b1 (hidden,), self.W2 (hidden, out_f), self.b2 (out_f,)\n        pass\n\n    def forward(self, x):\n        # Linear -> ReLU -> Linear\n        pass\n\n    def __call__(self, x):\n        return self.forward(x)\n\n    def parameters(self):\n        # Return [W1, b1, W2, b2]\n        pass\n\n\nnet = TwoLayerNet(4, 8, 1)\nx = rng.standard_normal((5, 4))   # a batch of 5 samples with 4 features\nout = net(x)\nprint(\"Output shape:\", None if out is None else out.shape)\n",
+      "expected_output": "Output shape: (5, 1)",
       "hints": [
         {
-          "en": "Use nn.Sequential(nn.Linear(in_f, hidden), nn.ReLU(), nn.Linear(hidden, out_f))"
+          "en": "In __init__: self.W1 = rng.standard_normal((in_f, hidden)) * 0.1 and self.b1 = np.zeros(hidden) (same for layer 2)"
         },
         {
-          "en": "Call super().__init__() in __init__"
+          "en": "forward(x): return relu(x @ self.W1 + self.b1) @ self.W2 + self.b2"
         },
         {
-          "en": "forward(x) should just call self.net(x)"
+          "en": "parameters(): return [self.W1, self.b1, self.W2, self.b2] - like module.parameters() in PyTorch"
         }
       ],
-      "test_code": "import torch\nimport torch.nn as nn\nnet = TwoLayerNet(4, 8, 1)\nassert isinstance(net, nn.Module), 'Must be an nn.Module'\nx = torch.randn(5, 4)  # batch of 5 samples, 4 features\nout = net(x)\nassert out.shape == (5, 1), f'Expected (5,1), got {out.shape}'\nparams = sum(p.numel() for p in net.parameters())\nassert params == (4*8+8) + (8*1+1), f'Parameter count wrong: {params}'"
+      "test_code": "import numpy as np\n_net = TwoLayerNet(4, 8, 1)\n_params = _net.parameters()\nassert _params is not None and len(_params) == 4, \"parameters() must return [W1, b1, W2, b2]\"\nassert [np.shape(p) for p in _params] == [(4, 8), (8,), (8, 1), (1,)], f\"wrong parameter shapes: {[np.shape(p) for p in _params]}\"\nassert sum(np.size(p) for p in _params) == (4 * 8 + 8) + (8 * 1 + 1), \"the network must have 49 parameters\"\n_x = np.random.default_rng(1).standard_normal((5, 4))\n_out = _net(_x)\nassert _out is not None and np.shape(_out) == (5, 1), f\"a batch of 5 samples must give output shape (5, 1), got {np.shape(_out)}\"\n_ref = np.maximum(0, _x @ _net.W1 + _net.b1) @ _net.W2 + _net.b2\nassert np.allclose(_out, _ref), \"forward must compute relu(x @ W1 + b1) @ W2 + b2\"\n_net.W1 = -np.abs(_net.W1); _net.b1 = np.zeros(8)\nassert np.allclose(_net(np.abs(_x)), _net.b2), \"the ReLU must zero out negative hidden values\"\nprint(\"All network tests passed!\")\n"
     }
   ],
   "generated": false,

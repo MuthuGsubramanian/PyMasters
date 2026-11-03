@@ -323,11 +323,11 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Train two DecisionTreeClassifiers on the wine dataset — one with no limits and one with max_depth=3. Compare their training and test accuracies. Print the decision rules for the pruned tree.",
-        "ta": "wine தரவுத்தொகுப்பில் இரண்டு DecisionTreeClassifier-களைப் பயிற்சிக்கவும் — ஒன்று வரம்பு இல்லாமல், மற்றொன்று max_depth=3 உடன். அவற்றின் பயிற்சி மற்றும் சோதனை துல்லியங்களை ஒப்பிடுங்கள். கத்தரிக்கப்பட்ட மரத்தின் முடிவு விதிகளை அச்சிடுங்கள்."
+        "en": "Train two DecisionTreeClassifiers on the wine dataset: `full` with no depth limit and `pruned` with max_depth=3, both fitted on X_train/y_train. Compare their training and test accuracies and print the decision rules of the pruned tree with export_text. Your scores may differ slightly from the sample output; the checker tests that both trees are fitted, that `pruned` has max_depth=3 and that `full` fits the training data at least as well as `pruned`.",
+        "ta": "wine தரவுத்தொகுப்பில் இரண்டு DecisionTreeClassifier-களைப் பயிற்றுவியுங்கள்: ஆழ வரம்பு இல்லாத `full`, max_depth=3 கொண்ட `pruned` — இரண்டையும் X_train/y_train-இல் பொருத்துங்கள். அவற்றின் பயிற்சி மற்றும் சோதனைத் துல்லியங்களை ஒப்பிட்டு, கத்தரிக்கப்பட்ட மரத்தின் முடிவு விதிகளை export_text மூலம் அச்சிடுங்கள். உங்கள் மதிப்பெண்கள் மாதிரி வெளியீட்டிலிருந்து சற்று வேறுபடலாம்; இரு மரங்களும் பொருத்தப்பட்டுள்ளனவா, `pruned`-க்கு max_depth=3 உள்ளதா, பயிற்சித் தரவில் `full` குறைந்தது `pruned` அளவுக்காவது பொருந்துகிறதா என்பதைச் சரிபார்ப்பான் சோதிக்கும்."
       },
       "starter_code": "from sklearn.datasets import load_wine\nfrom sklearn.tree import DecisionTreeClassifier, export_text\nfrom sklearn.model_selection import train_test_split\n\nX, y = load_wine(return_X_y=True)\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\n# Full tree\nfull = DecisionTreeClassifier(random_state=42)\nfull.fit(X_train, y_train)\n\n# Pruned tree\npruned = DecisionTreeClassifier(max_depth=___, random_state=42)\npruned.fit(X_train, y_train)\n\nprint(f'Full  — Train: {full.score(X_train, y_train):.3f}, Test: {full.score(X_test, y_test):.3f}')\nprint(f'Pruned — Train: {pruned.score(X_train, y_train):.3f}, Test: {pruned.score(X_test, y_test):.3f}')\nprint(export_text(pruned, feature_names=load_wine().feature_names))",
-      "expected_output": "Full  — Train: 1.000, Test: 0.889\nPruned — Train: 0.965, Test: 0.944",
+      "expected_output": "Full  — Train: 1.000, Test: 0.944\nPruned — Train: 0.993, Test: 0.944\n|--- color_intensity <= 3.82\n|   |--- proline <= 1002.50\n|   |   |--- ash <= 3.07\n|   |   |   |--- class: 1\n|   |   |--- ash >  3.07\n|   |   |   |--- class: 0\n|   |--- proline >  1002.50\n|   |   |--- class: 0\n|--- color_intensity >  3.82\n|   |--- flavanoids <= 1.40\n|   |   |--- class: 2\n|   |--- flavanoids >  1.40\n|   |   |--- proline <= 724.50\n|   |   |   |--- class: 1\n|   |   |--- proline >  724.50\n|   |   |   |--- class: 0",
       "hints": {
         "en": [
           "max_depth=3 for the pruned tree",
@@ -339,7 +339,8 @@
           "முழு மரம் அதிகப்படி பொருந்துகிறது: 100% பயிற்சி ஆனால் குறைவான சோதனை",
           "கத்தரிக்கப்பட்ட மரம் குறைவான பயிற்சி மதிப்பெண் இருந்தாலும் சிறப்பாக பொதுமைப்படுத்துகிறது"
         ]
-      }
+      },
+      "test_code": "from sklearn.tree import DecisionTreeClassifier as _DTC\nassert isinstance(full, _DTC) and hasattr(full, 'tree_'), 'full must be a fitted DecisionTreeClassifier (full.fit(X_train, y_train)).'\nassert isinstance(pruned, _DTC) and hasattr(pruned, 'tree_'), 'pruned must be a fitted DecisionTreeClassifier (pruned.fit(X_train, y_train)).'\nassert full.max_depth is None, 'full must have no depth limit: leave max_depth unset.'\nassert pruned.max_depth == 3, 'pruned must use max_depth=3.'\nassert full.get_depth() > pruned.get_depth(), 'The unlimited tree should grow deeper than the pruned tree.'\nassert full.score(X_train, y_train) >= pruned.score(X_train, y_train), 'The unlimited tree should fit the training data at least as well as the pruned tree.'\nassert pruned.score(X_test, y_test) >= 0.7, 'The pruned tree should reach at least 70% test accuracy on wine.'\n"
     }
   ],
   "quiz": [

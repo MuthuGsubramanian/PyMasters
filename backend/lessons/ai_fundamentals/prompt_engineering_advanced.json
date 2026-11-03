@@ -251,11 +251,11 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Write a system prompt and message list for a Python tutor AI that explains errors in simple terms, always gives corrected code, and responds in JSON format with keys: error_explanation, corrected_code, tip. Set temperature to 0.3.",
-        "ta": "பிழைகளை எளிய சொற்களில் விளக்கும், எப்போதும் திருத்தப்பட்ட குறியீட்டை வழங்கும், JSON வடிவத்தில் பதிலளிக்கும் Python tutor AI க்கு system prompt மற்றும் message list எழுதுங்கள்."
+        "en": "Write a system prompt and message list for a Python tutor AI. Store the prompt in `system_prompt`: it must tell the AI to explain errors in simple terms, always give corrected code, and respond in JSON with the keys error_explanation, corrected_code and tip. Set `temperature = 0.3` and build `messages` as a list whose first item is {'role': 'system', 'content': system_prompt}, followed by a user message. Print all three.",
+        "ta": "Python tutor AI-க்கு system prompt மற்றும் message list எழுதுங்கள். prompt-ஐ `system_prompt`-இல் சேமியுங்கள்: அது பிழைகளை எளிய சொற்களில் விளக்கவும், எப்போதும் திருத்தப்பட்ட குறியீட்டைத் தரவும், error_explanation, corrected_code, tip ஆகிய key-களுடன் JSON வடிவில் பதிலளிக்கவும் AI-க்குச் சொல்ல வேண்டும். `temperature = 0.3` என அமைத்து, முதல் உருப்படி {'role': 'system', 'content': system_prompt} ஆகவும் அதைத் தொடர்ந்து ஒரு user செய்தியும் கொண்ட பட்டியலாக `messages`-ஐ உருவாக்குங்கள். மூன்றையும் அச்சிடுங்கள்."
       },
       "starter_code": "# Build the messages list for a Python tutor AI\nsystem_prompt = \"\"\"You are a friendly Python tutor.\n# Add your rules here\n\"\"\"\n\ntemperature = 0.3\n\nmessages = [\n    {'role': 'system', 'content': system_prompt},\n    {'role': 'user', 'content': 'Why does this fail? print(Hello)'}\n]\n\n# Print the configuration\nprint(f'System prompt: {system_prompt}')\nprint(f'Temperature: {temperature}')\nprint(f'Messages: {messages}')",
-      "expected_output": "(System prompt with rules, temperature 0.3, properly structured messages)",
+      "expected_output": "System prompt: You are a friendly Python tutor.\nRules:\n1. Explain every error in simple terms a beginner can understand.\n2. Always give the corrected code.\n3. Respond only in JSON format with the keys: error_explanation, corrected_code, tip.\n\nTemperature: 0.3\nMessages: [{'role': 'system', 'content': 'You are a friendly Python tutor.\\nRules:\\n1. Explain every error in simple terms a beginner can understand.\\n2. Always give the corrected code.\\n3. Respond only in JSON format with the keys: error_explanation, corrected_code, tip.\\n'}, {'role': 'user', 'content': 'Why does this fail? print(Hello)'}]",
       "hints": {
         "en": [
           "Add rules like: 1) Explain errors in simple terms",
@@ -267,7 +267,8 @@
           "JSON வடிவத்தைக் குறிப்பிடுங்கள்",
           "நிலையான கல்வி உள்ளடக்கத்திற்கு குறைந்த temperature (0.3)"
         ]
-      }
+      },
+      "test_code": "assert isinstance(system_prompt, str) and system_prompt.strip(), 'Store your system prompt text in system_prompt.'\n_p = system_prompt.lower()\nfor _key in ('error_explanation', 'corrected_code', 'tip'):\n    assert _key in system_prompt, f\"The system prompt must name the JSON key '{_key}'.\"\nassert 'json' in _p, 'The system prompt must ask for the answer in JSON format.'\nassert 'simple' in _p or 'beginner' in _p or 'easy' in _p, 'Tell the tutor to explain errors in simple terms.'\nassert 'correct' in _p, 'Tell the tutor to always give corrected code.'\nassert temperature == 0.3, 'Set temperature = 0.3.'\nassert isinstance(messages, list) and len(messages) >= 2, 'messages must be a list with a system message followed by a user message.'\nassert messages[0] == {'role': 'system', 'content': system_prompt}, \"The first message must be {'role': 'system', 'content': system_prompt}.\"\nassert any(isinstance(m, dict) and m.get('role') == 'user' and m.get('content') for m in messages[1:]), 'Add a user message after the system message.'\n"
     }
   ],
   "quiz": [

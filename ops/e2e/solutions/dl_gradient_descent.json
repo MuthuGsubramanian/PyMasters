@@ -1,0 +1,11 @@
+{
+  "lesson_id": "dl_gradient_descent",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\n\ndef sgd_step(w, grad, lr):\n    return w - lr * grad\n\n\ndef momentum_step(w, grad, velocity, lr, beta=0.9):\n    velocity = beta * velocity + grad\n    return w - lr * velocity, velocity\n\n\ndef adam_step(w, grad, m, v, t, lr=0.1, beta1=0.9, beta2=0.999, eps=1e-8):\n    m = beta1 * m + (1 - beta1) * grad\n    v = beta2 * v + (1 - beta2) * grad ** 2\n    m_hat = m / (1 - beta1 ** t)\n    v_hat = v / (1 - beta2 ** t)\n    return w - lr * m_hat / (np.sqrt(v_hat) + eps), m, v\n\n\ndef grad_f(w):\n    return 2 * (w - 3)          # f(w) = (w - 3)^2 has its minimum at w = 3\n\n\nw = 0.0\nfor _ in range(200):\n    w = sgd_step(w, grad_f(w), lr=0.1)\nprint(\"SGD:      w =\", round(w, 4))\n\nw, velocity = 0.0, 0.0\nfor _ in range(200):\n    w, velocity = momentum_step(w, grad_f(w), velocity, lr=0.05)\nprint(\"Momentum: w =\", round(w, 4))\n\nw, m, v = 0.0, 0.0, 0.0\nfor t in range(1, 201):\n    w, m, v = adam_step(w, grad_f(w), m, v, t, lr=0.1)\nprint(\"Adam:     w =\", round(w, 4))\n",
+      "verified_output": "SGD:      w = 3.0\nMomentum: w = 3.0\nAdam:     w = 3.0001\nAll optimizer tests passed!",
+      "source": "hand-verified 2026-11-03 (sandbox rewrite)"
+    }
+  ]
+}

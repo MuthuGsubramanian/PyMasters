@@ -1,0 +1,11 @@
+{
+  "lesson_id": "hyperparameter_tuning",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from sklearn.model_selection import GridSearchCV\nfrom sklearn.svm import SVC\nfrom sklearn.datasets import load_breast_cancer\nfrom sklearn.preprocessing import StandardScaler\n\nX, y = load_breast_cancer(return_X_y=True)\nX_scaled = StandardScaler().fit_transform(X)\n\nparam_grid = {\n    'kernel': ['linear', 'rbf'],\n    'C': [0.1, 1, 10],\n    'gamma': ['scale', 'auto']\n}\n\ngrid = GridSearchCV(\n    SVC(random_state=42), param_grid, cv=5, scoring='accuracy'\n)\ngrid.fit(X_scaled, y)\n\nprint(f'Best params: {grid.best_params_}')\nprint(f'Best CV score: {grid.best_score_:.3f}')\nprint(f'Total combinations tested: {len(grid.cv_results_[\"params\"])}')\n",
+      "verified_output": "Best params: {'C': 10, 'gamma': 'scale', 'kernel': 'rbf'}\nBest CV score: 0.977\nTotal combinations tested: 12",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

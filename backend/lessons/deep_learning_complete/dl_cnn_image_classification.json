@@ -325,23 +325,24 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Extend the CIFAR-10 classifier with: 1) A confusion matrix to see which classes are confused, 2) Per-class accuracy reporting, 3) Save the best model checkpoint based on validation accuracy.",
-        "ta": "CIFAR-10 வகைப்படுத்தியை விரிவாக்குங்கள்: 1) குழப்ப அணி, 2) வகுப்பு வாரியான துல்லியம், 3) சிறந்த மாதிரி checkpoint சேமிப்பு."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Add the evaluation tools of an image-classification pipeline. 1) `confusion_matrix(y_true, y_pred, num_classes)` returns an integer num_classes x num_classes array where cm[t][p] counts samples of true class t predicted as p. 2) `per_class_accuracy(cm)` returns, for every class, correct / total for that row (the diagonal divided by the row sum; 0.0 for a class with no samples). 3) `checkpoint_epochs(val_accuracies)` returns the list of epochs (0-based) at which the validation accuracy beat every earlier epoch - the moments you would save the best checkpoint.",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. Image-classification pipeline-இன் மதிப்பீட்டுக் கருவிகளைச் சேருங்கள். 1) `confusion_matrix(y_true, y_pred, num_classes)` num_classes x num_classes integer array-ஐத் திருப்புகிறது; cm[t][p] உண்மை class t ஆக இருந்து p என்று கணிக்கப்பட்ட samples எண்ணிக்கை. 2) `per_class_accuracy(cm)` ஒவ்வொரு class-க்கும் அந்த வரிசையின் சரி / மொத்தம் திருப்புகிறது (diagonal-ஐ row sum-ஆல் வகுத்தல்; samples இல்லாத class-க்கு 0.0). 3) `checkpoint_epochs(val_accuracies)` validation accuracy முந்தைய அனைத்து epochs-ஐயும் தாண்டிய epochs-இன் (0-இலிருந்து) list-ஐத் திருப்புகிறது - சிறந்த checkpoint-ஐச் சேமிக்கும் தருணங்கள்."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\nfrom collections import defaultdict\n\nclasses = ['airplane', 'automobile', 'bird', 'cat', 'deer',\n           'dog', 'frog', 'horse', 'ship', 'truck']\n\n# Assume model and test_loader exist from the lesson\n# TODO: Build confusion matrix\nconfusion = torch.zeros(10, 10, dtype=torch.long)\nclass_correct = defaultdict(int)\nclass_total = defaultdict(int)\n\nmodel.eval()\nwith torch.no_grad():\n    for images, labels in test_loader:\n        outputs = model(images)\n        _, predicted = outputs.max(1)\n        # TODO: Update confusion matrix and per-class stats\n\n# TODO: Print per-class accuracy and save best model\n",
-      "expected_output": "airplane: 90.2%\nautomobile: 93.1%\nbird: 78.5%\ncat: 72.3%\n...",
+      "starter_code": "import numpy as np\n\n\ndef confusion_matrix(y_true, y_pred, num_classes):\n    # cm[true][pred] += 1 for every sample\n    pass\n\n\ndef per_class_accuracy(cm):\n    # diagonal / row sums (0.0 for empty rows)\n    pass\n\n\ndef checkpoint_epochs(val_accuracies):\n    # epochs where the accuracy is a new best\n    pass\n\n\nclasses = [\"plane\", \"car\", \"bird\"]\ny_true = [0, 0, 1, 1, 1, 2, 2, 2, 2]\ny_pred = [0, 1, 1, 1, 0, 2, 2, 1, 2]\ncm = confusion_matrix(y_true, y_pred, 3)\nprint(\"confusion matrix (rows = true, columns = predicted):\")\nprint(cm)\nacc = per_class_accuracy(cm) if cm is not None else None\nif acc is not None:\n    for name, a in zip(classes, acc):\n        print(f\"{name}: {a:.2f}\")\nprint(\"checkpoints saved at epochs:\", checkpoint_epochs([0.41, 0.55, 0.53, 0.61, 0.60]))\n",
+      "expected_output": "confusion matrix (rows = true, columns = predicted):\n[[1 1 0]\n [1 2 0]\n [0 1 3]]\nplane: 0.50\ncar: 0.67\nbird: 0.75\ncheckpoints saved at epochs: [0, 1, 3]",
       "hints": {
         "en": [
-          "confusion[label][predicted] += 1 for each sample",
-          "Per-class accuracy: class_correct[c] / class_total[c]",
-          "torch.save(model.state_dict(), 'best_cifar10.pth')",
-          "Cats and dogs are often confused — check the confusion matrix!"
+          "confusion_matrix: cm = np.zeros((num_classes, num_classes), dtype=int); for t, p in zip(y_true, y_pred): cm[t][p] += 1",
+          "per_class_accuracy: rows = cm.sum(axis=1); np.where(rows > 0, np.diag(cm) / np.maximum(rows, 1), 0.0)",
+          "checkpoint_epochs: track best = float('-inf'); when acc > best, update best and append the epoch"
         ],
         "ta": [
-          "ஒவ்வொரு மாதிரிக்கும் confusion[label][predicted] += 1",
-          "torch.save(model.state_dict(), 'best_cifar10.pth')"
+          "confusion_matrix: cm = np.zeros((num_classes, num_classes), dtype=int); for t, p in zip(y_true, y_pred): cm[t][p] += 1",
+          "per_class_accuracy: rows = cm.sum(axis=1); np.where(rows > 0, np.diag(cm) / np.maximum(rows, 1), 0.0)",
+          "checkpoint_epochs: best = float('-inf') என வைத்துக்கொள்ளுங்கள்; acc > best ஆனால் best-ஐப் புதுப்பித்து epoch-ஐ append செய்யுங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_cm = confusion_matrix([0, 1, 1, 2, 2, 2], [0, 1, 2, 2, 2, 0], 3)\nassert _cm is not None and np.array_equal(_cm, [[1, 0, 0], [0, 1, 1], [1, 0, 2]]), \"cm[t][p] must count true class t predicted as p, got \" + repr(_cm)\nassert np.issubdtype(np.asarray(_cm).dtype, np.integer), \"the confusion matrix must hold integer counts\"\nassert np.array_equal(confusion_matrix([0], [0], 4).shape, (4, 4)), \"the matrix must be num_classes x num_classes even if some classes are unused\"\n_acc = per_class_accuracy(np.array([[1, 0, 0], [0, 1, 1], [1, 0, 2]]))\nassert _acc is not None and np.allclose(_acc, [1.0, 0.5, 2 / 3]), \"per-class accuracy is the diagonal divided by the row sum\"\nassert np.allclose(per_class_accuracy(np.array([[2, 0], [0, 0]])), [1.0, 0.0]), \"a class with no samples must get 0.0 (no division by zero)\"\nassert checkpoint_epochs([0.41, 0.55, 0.53, 0.61, 0.60]) == [0, 1, 3], \"save at epoch 0 and whenever the accuracy beats every earlier epoch\"\nassert checkpoint_epochs([0.5, 0.5, 0.4]) == [0], \"an equal accuracy is not an improvement\"\nprint(\"All evaluation tests passed!\")\n"
     }
   ],
   "quiz": [

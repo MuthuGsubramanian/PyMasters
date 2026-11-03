@@ -247,23 +247,24 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Build a logistic regression spam classifier: create synthetic data where longer emails with more exclamation marks are spam. Train, predict probabilities, and display the classification report.",
-        "ta": "லாஜிஸ்டிக் ரிக்ரஷன் ஸ்பாம் வகைப்படுத்தியை உருவாக்குங்கள்: அதிக ஆச்சரியக்குறிகள் கொண்ட நீண்ட மின்னஞ்சல்கள் ஸ்பாம் என்று செயற்கை தரவை உருவாக்குங்கள். பயிற்சி செய்து, நிகழ்தகவுகளை கணித்து, வகைப்பாட்டு அறிக்கையைக் காட்டுங்கள்."
+        "en": "Build a logistic regression spam classifier: create synthetic data where longer emails with more exclamation marks are spam. Train `model` on X_train/y_train, store the predicted labels for X_test in `y_pred` and the spam probabilities in `y_proba = model.predict_proba(X_test)[:, 1]`, then print the classification report. Your report numbers may differ from the sample output; the checker tests `model`, `y_pred` and `y_proba`.",
+        "ta": "லாஜிஸ்டிக் ரிக்ரஷன் ஸ்பாம் வகைப்படுத்தியை உருவாக்குங்கள்: அதிக ஆச்சரியக்குறிகள் கொண்ட நீண்ட மின்னஞ்சல்கள் ஸ்பாம் எனும் செயற்கைத் தரவை உருவாக்குங்கள். `model`-ஐ X_train/y_train-இல் பயிற்றுவித்து, X_test-க்கான கணிக்கப்பட்ட லேபிள்களை `y_pred`-இலும், ஸ்பாம் நிகழ்தகவுகளை `y_proba = model.predict_proba(X_test)[:, 1]`-இலும் சேமித்து, வகைப்பாட்டு அறிக்கையை அச்சிடுங்கள். உங்கள் அறிக்கை எண்கள் மாதிரி வெளியீட்டிலிருந்து வேறுபடலாம்; சரிபார்ப்பான் `model`, `y_pred`, `y_proba` ஆகியவற்றைச் சோதிக்கும்."
       },
-      "starter_code": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import classification_report\n\nnp.random.seed(42)\nn = 200\nemail_length = np.random.randint(10, 500, n)\nexclamation_count = np.random.randint(0, 20, n)\nspam = ((email_length > 200) & (exclamation_count > 8)).astype(int)\n\nX = np.column_stack([email_length, exclamation_count])\ny = spam\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nmodel = LogisticRegression(random_state=42)\nmodel.___(X_train, ___)\n\ny_pred = model.predict(___)\nprint(classification_report(y_test, y_pred))",
-      "expected_output": "              precision    recall  f1-score   support\n           0       1.00      1.00      1.00        29\n           1       1.00      1.00      1.00        11\n    accuracy                           1.00        40",
+      "starter_code": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import classification_report\n\nnp.random.seed(42)\nn = 200\nemail_length = np.random.randint(10, 500, n)\nexclamation_count = np.random.randint(0, 20, n)\nspam = ((email_length > 200) & (exclamation_count > 8)).astype(int)\n\nX = np.column_stack([email_length, exclamation_count])\ny = spam\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nmodel = LogisticRegression(random_state=42)\nmodel.___(X_train, ___)\n\ny_pred = model.predict(___)\ny_proba = model.predict_proba(___)[:, 1]\nprint(f'First 5 spam probabilities: {y_proba[:5].round(2)}')\nprint(classification_report(y_test, y_pred))",
+      "expected_output": "First 5 spam probabilities: [0.15 1.   0.8  0.71 0.01]\n              precision    recall  f1-score   support\n\n           0       0.96      0.87      0.92        31\n           1       0.67      0.89      0.76         9\n\n    accuracy                           0.88        40\n   macro avg       0.82      0.88      0.84        40\nweighted avg       0.90      0.88      0.88        40",
       "hints": {
         "en": [
           "model.fit(X_train, y_train) to train",
-          "model.predict(X_test) for predictions",
+          "model.predict(X_test) for labels, model.predict_proba(X_test)[:, 1] for spam probabilities",
           "classification_report shows precision, recall, and F1"
         ],
         "ta": [
           "பயிற்சிக்கு model.fit(X_train, y_train)",
-          "கணிப்புகளுக்கு model.predict(X_test)",
+          "லேபிள்களுக்கு model.predict(X_test), ஸ்பாம் நிகழ்தகவுகளுக்கு model.predict_proba(X_test)[:, 1]",
           "classification_report precision, recall, F1 காட்டுகிறது"
         ]
-      }
+      },
+      "test_code": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression as _LogR\nassert isinstance(model, _LogR) and hasattr(model, 'coef_'), 'model must be a fitted LogisticRegression (model.fit(X_train, y_train)).'\nassert len(y_pred) == len(y_test) and np.array_equal(np.asarray(y_pred), model.predict(X_test)), 'y_pred must be model.predict(X_test).'\nassert np.shape(y_proba) == (len(X_test),), 'y_proba must hold one spam probability per test email: model.predict_proba(X_test)[:, 1].'\nassert np.allclose(y_proba, model.predict_proba(X_test)[:, 1]), 'y_proba must be the probability of spam: model.predict_proba(X_test)[:, 1].'\nassert (np.asarray(y_pred) == np.asarray(y_test)).mean() >= 0.7, 'The classifier should label at least 70% of the test emails correctly.'\n"
     }
   ],
   "quiz": [

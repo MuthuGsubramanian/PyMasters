@@ -1,0 +1,11 @@
+{
+  "lesson_id": "pandas_foundations",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import pandas as pd\n\ndf = pd.DataFrame({\n    'name': ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'],\n    'math_score': [85, 72, 91, 68, 95],\n    'science_score': [78, 88, 82, 75, 90]\n})\n\n# Filter math > 80\nhigh_math = df[df['math_score'] > 80]\n\n# Add total column\nhigh_math = high_math.copy()\nhigh_math['total'] = high_math['math_score'] + high_math['science_score']\n\n# Sort by total descending\nresult = high_math.sort_values('total', ascending=False)\nprint(result)\n",
+      "verified_output": "name  math_score  science_score  total\n4      Eve          95             90    185\n2  Charlie          91             82    173\n0    Alice          85             78    163",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

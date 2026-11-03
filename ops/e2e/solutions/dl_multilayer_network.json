@@ -1,0 +1,11 @@
+{
+  "lesson_id": "dl_multilayer_network",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\n\ndef relu(x):\n    return np.maximum(0, x)\n\n\ndef sigmoid(x):\n    return 1 / (1 + np.exp(-x))\n\n\ndef init_params(layer_sizes, seed=0):\n    \"\"\"One (W, b) pair per layer, like the weights inside nn.Linear.\"\"\"\n    rng = np.random.default_rng(seed)\n    return [(rng.standard_normal((n_in, n_out)) * 0.5, np.zeros(n_out))\n            for n_in, n_out in zip(layer_sizes, layer_sizes[1:])]\n\n\ndef count_params(layer_sizes):\n    return sum(n_in * n_out + n_out for n_in, n_out in zip(layer_sizes, layer_sizes[1:]))\n\n\ndef make_circle_data(n, seed=0):\n    rng = np.random.default_rng(seed)\n    X = rng.uniform(-2, 2, size=(n, 2))\n    y = (np.sum(X ** 2, axis=1) < 1).astype(float)\n    return X, y\n\n\ndef forward(x, params):\n    for W, b in params[:-1]:\n        x = relu(x @ W + b)\n    W, b = params[-1]\n    return sigmoid(x @ W + b)\n\n\nsizes = [2, 8, 4, 1]\nprint(\"parameters in a 2-8-4-1 network:\", count_params(sizes))\ndata = make_circle_data(200)\nif data is not None:\n    X, y = data\n    print(\"points:\", np.shape(X), \"inside the circle:\", int(np.sum(y)))\n    probs = forward(X, init_params(sizes))\n    print(\"output shape:\", np.shape(probs))\n",
+      "verified_output": "parameters in a 2-8-4-1 network: 65\npoints: (200, 2) inside the circle: 33\noutput shape: (200, 1)\nAll multilayer network tests passed!",
+      "source": "hand-verified 2026-11-03 (sandbox rewrite)"
+    }
+  ]
+}

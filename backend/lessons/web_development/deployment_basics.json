@@ -275,25 +275,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Prepare a Flask app for production deployment: create a proper project structure with wsgi.py, configure environment variables for SECRET_KEY and DATABASE_URL, create a requirements.txt, write a Procfile for PaaS deployment, and a Gunicorn command for VPS deployment.",
-        "ta": "உற்பத்தி வரிசைப்படுத்தலுக்கு Flask பயன்பாட்டைத் தயார் செய்யுங்கள்: wsgi.py உடன் சரியான திட்ட கட்டமைப்பை உருவாக்குங்கள்."
+        "en": "Prepare a Flask app for production. 1) Complete the app factory `create_app(env)` (env is a dict like os.environ): set app.config['SECRET_KEY'] from env (default 'dev-key'), app.config['SQLALCHEMY_DATABASE_URI'] from env['DATABASE_URL'] (default 'sqlite:///app.db') and app.config['DEBUG'] to True only when env['DEBUG'] is 'true' in any letter case. 2) `procfile_line()` returns the PaaS Procfile line 'web: gunicorn wsgi:application --bind 0.0.0.0:$PORT'. 3) `gunicorn_command(workers=4, port=8000)` returns 'gunicorn wsgi:application --bind 0.0.0.0:<port> --workers <workers>' for a VPS. 4) `requirements_txt(packages)` turns a {name: version} dict into requirements.txt text: 'name==version' lines sorted by name, joined with newlines.",
+        "ta": "Flask app-ஐ production-க்குத் தயார் செய்யுங்கள். 1) App factory `create_app(env)`-ஐ நிறைவு செய்யுங்கள் (env என்பது os.environ போன்ற dict): app.config['SECRET_KEY']-ஐ env-லிருந்து (default 'dev-key'), app.config['SQLALCHEMY_DATABASE_URI']-ஐ env['DATABASE_URL']-லிருந்து (default 'sqlite:///app.db') அமைத்து, env['DEBUG'] எந்த எழுத்து வடிவிலும் 'true' ஆக இருந்தால் மட்டும் app.config['DEBUG']-ஐ True ஆக்குங்கள். 2) `procfile_line()` PaaS Procfile வரியான 'web: gunicorn wsgi:application --bind 0.0.0.0:$PORT'-ஐத் திருப்புகிறது. 3) `gunicorn_command(workers=4, port=8000)` VPS-க்கான 'gunicorn wsgi:application --bind 0.0.0.0:<port> --workers <workers>'-ஐத் திருப்புகிறது. 4) `requirements_txt(packages)` {name: version} dict-ஐ requirements.txt உரையாக மாற்றுகிறது: பெயர் வரிசைப்படி 'name==version' வரிகள், newline-ஆல் இணைக்கப்பட்டவை."
       },
-      "starter_code": "# wsgi.py\nfrom app import create_app\n\napplication = create_app()\n\n# app/__init__.py\nimport os\nfrom flask import Flask\nfrom dotenv import load_dotenv\n\nload_dotenv()\n\ndef create_app():\n    app = Flask(__name__)\n    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key')\n    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///app.db')\n    app.config['DEBUG'] = os.environ.get('DEBUG', 'False').lower() == 'true'\n\n    @app.route('/')\n    def home():\n        return {'status': 'running', 'debug': app.config['DEBUG']}\n\n    return app\n\n# Procfile\n# web: gunicorn wsgi:application --bind 0.0.0.0:$PORT\n\n# Terminal commands:\n# $ pip freeze > requirements.txt\n# $ gunicorn wsgi:application --bind 0.0.0.0:8000 --workers 4\n# $ export SECRET_KEY='production-secret-key-here'",
-      "expected_output": "Gunicorn starts with 4 workers, serving the app on port 8000",
+      "starter_code": "from flask import Flask\n\n\ndef create_app(env):\n    \"\"\"App factory: read the configuration from env (a dict such as os.environ).\"\"\"\n    app = Flask(__name__)\n    # SECRET_KEY (default 'dev-key'), SQLALCHEMY_DATABASE_URI from DATABASE_URL\n    # (default 'sqlite:///app.db'), DEBUG only when env DEBUG is 'true'\n    # Your code here\n\n    @app.route(\"/\")\n    def home():\n        return {\"status\": \"running\", \"debug\": app.config[\"DEBUG\"]}\n\n    return app\n\n\ndef procfile_line():\n    # the Procfile line for a PaaS such as Heroku or Render\n    pass\n\n\ndef gunicorn_command(workers=4, port=8000):\n    # the command to start Gunicorn on a VPS\n    pass\n\n\ndef requirements_txt(packages):\n    # {\"flask\": \"3.0.3\"} -> \"flask==3.0.3\" lines, sorted by name\n    pass\n\n\n# wsgi.py would contain:  application = create_app(os.environ)\napplication = create_app({\"SECRET_KEY\": \"prod-secret\", \"DATABASE_URL\": \"postgresql://db.example/app\"})\nclient = application.test_client()\nprint(client.get(\"/\").get_json())\nprint(procfile_line())\nprint(gunicorn_command())\nprint(requirements_txt({\"gunicorn\": \"22.0.0\", \"flask\": \"3.0.3\"}))\n",
+      "expected_output": "{'debug': False, 'status': 'running'}\nweb: gunicorn wsgi:application --bind 0.0.0.0:$PORT\ngunicorn wsgi:application --bind 0.0.0.0:8000 --workers 4\nflask==3.0.3\ngunicorn==22.0.0",
       "hints": {
         "en": [
-          "Use os.environ.get() with fallback defaults for all config",
-          "Create wsgi.py as the entry point for Gunicorn",
-          "Use --workers flag to set number of Gunicorn processes",
-          "Never set DEBUG=True in production"
+          "app.config['SECRET_KEY'] = env.get('SECRET_KEY', 'dev-key') - the same pattern works for DATABASE_URL",
+          "app.config['DEBUG'] = env.get('DEBUG', 'False').lower() == 'true'",
+          "f-strings build the commands: f'gunicorn wsgi:application --bind 0.0.0.0:{port} --workers {workers}'",
+          "requirements_txt: '\\n'.join(f'{name}=={version}' for name, version in sorted(packages.items()))"
         ],
         "ta": [
-          "அனைத்து உள்ளமைவிற்கும் இயல்புநிலை பின்னடைவுடன் os.environ.get() பயன்படுத்துங்கள்",
-          "Gunicorn-க்கான நுழைவு புள்ளியாக wsgi.py உருவாக்குங்கள்",
-          "Gunicorn செயல்முறைகளின் எண்ணிக்கையை அமைக்க --workers பயன்படுத்துங்கள்",
-          "உற்பத்தியில் ஒருபோதும் DEBUG=True அமைக்காதீர்கள்"
+          "app.config['SECRET_KEY'] = env.get('SECRET_KEY', 'dev-key') - DATABASE_URL-க்கும் இதே முறை",
+          "app.config['DEBUG'] = env.get('DEBUG', 'False').lower() == 'true'",
+          "f-strings மூலம் commands உருவாக்குங்கள்: f'gunicorn wsgi:application --bind 0.0.0.0:{port} --workers {workers}'",
+          "requirements_txt: '\\n'.join(f'{name}=={version}' for name, version in sorted(packages.items()))"
         ]
-      }
+      },
+      "test_code": "_prod = create_app({\"SECRET_KEY\": \"s3cret\", \"DATABASE_URL\": \"postgresql://x/y\", \"DEBUG\": \"TRUE\"})\nassert _prod.config.get(\"SECRET_KEY\") == \"s3cret\", \"SECRET_KEY must come from env['SECRET_KEY']\"\nassert _prod.config.get(\"SQLALCHEMY_DATABASE_URI\") == \"postgresql://x/y\", \"SQLALCHEMY_DATABASE_URI must come from env['DATABASE_URL']\"\nassert _prod.config.get(\"DEBUG\") is True, \"DEBUG must be True when env['DEBUG'] is 'true' in any case ('TRUE' too)\"\n_dev = create_app({})\nassert _dev.config.get(\"SECRET_KEY\") == \"dev-key\", \"without SECRET_KEY in env, fall back to 'dev-key'\"\nassert _dev.config.get(\"SQLALCHEMY_DATABASE_URI\") == \"sqlite:///app.db\", \"without DATABASE_URL, fall back to 'sqlite:///app.db'\"\nassert _dev.config.get(\"DEBUG\") is False, \"DEBUG must be False unless env says 'true'\"\nassert create_app({\"DEBUG\": \"yes\"}).config.get(\"DEBUG\") is False, \"only 'true' turns DEBUG on\"\nassert _dev.test_client().get(\"/\").get_json() == {\"status\": \"running\", \"debug\": False}, \"the / route must still answer\"\nassert procfile_line() == \"web: gunicorn wsgi:application --bind 0.0.0.0:$PORT\", \"procfile_line returned \" + repr(procfile_line())\nassert gunicorn_command() == \"gunicorn wsgi:application --bind 0.0.0.0:8000 --workers 4\", \"gunicorn_command() returned \" + repr(gunicorn_command())\nassert gunicorn_command(workers=2, port=5000) == \"gunicorn wsgi:application --bind 0.0.0.0:5000 --workers 2\", \"gunicorn_command must use its workers and port arguments\"\nassert requirements_txt({\"gunicorn\": \"22.0.0\", \"flask\": \"3.0.3\"}) == \"flask==3.0.3\\ngunicorn==22.0.0\", \"requirements_txt must give sorted 'name==version' lines\"\nprint(\"All deployment tests passed!\")\n"
     }
   ],
   "quiz": [

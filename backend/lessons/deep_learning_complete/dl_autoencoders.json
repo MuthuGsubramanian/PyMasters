@@ -354,23 +354,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Build a VAE that learns to reconstruct and generate 2D data points from a mixture of 4 Gaussians. Train it, then generate new samples and verify they match the original distribution.",
-        "ta": "4 Gaussians-ன் கலவையிலிருந்து 2D data points-ஐ மீண்டும் உருவாக்கி உருவாக்கும் VAE-ஐ உருவாக்குங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Write the building blocks of an autoencoder and a VAE: `encode(x, W, b)` = tanh(x @ W + b) (compress to the bottleneck), `decode(z, W, b)` = z @ W + b (reconstruct), `reconstruction_loss(x, x_hat)` = mean squared error, `reparameterize(mu, log_var, eps)` = mu + exp(0.5 * log_var) * eps (the VAE sampling trick), and `kl_divergence(mu, log_var)` = -0.5 * sum(1 + log_var - mu**2 - exp(log_var)) (how far the latent distribution is from N(0, 1)).",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. Autoencoder மற்றும் VAE-இன் அடிப்படை பகுதிகளை எழுதுங்கள்: `encode(x, W, b)` = tanh(x @ W + b) (bottleneck-க்கு சுருக்குதல்), `decode(z, W, b)` = z @ W + b (மீண்டும் உருவாக்குதல்), `reconstruction_loss(x, x_hat)` = mean squared error, `reparameterize(mu, log_var, eps)` = mu + exp(0.5 * log_var) * eps (VAE sampling trick), மற்றும் `kl_divergence(mu, log_var)` = -0.5 * sum(1 + log_var - mu**2 - exp(log_var)) (latent distribution N(0, 1)-லிருந்து எவ்வளவு தொலைவில் உள்ளது)."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# 4 Gaussian clusters\ndef generate_data(n=1000):\n    centers = torch.tensor([[2,2],[-2,2],[2,-2],[-2,-2]], dtype=torch.float32)\n    labels = torch.randint(0, 4, (n,))\n    data = centers[labels] + torch.randn(n, 2) * 0.3\n    return data\n\nreal_data = generate_data(2000)\n\nclass VAE2D(nn.Module):\n    def __init__(self, latent_dim=2):\n        super().__init__()\n        # TODO: Encoder -> mu, logvar\n        # TODO: Decoder -> reconstructed 2D points\n        pass\n    \n    def reparameterize(self, mu, logvar):\n        std = torch.exp(0.5 * logvar)\n        return mu + torch.randn_like(std) * std\n    \n    def forward(self, x):\n        pass\n\n# TODO: Train VAE with reconstruction + KL loss\n# TODO: Generate 500 new samples from N(0,1) and compare distribution\n",
-      "expected_output": "Epoch 200: Recon Loss=0.15, KL Loss=2.3\nGenerated samples match the 4-cluster pattern!",
+      "starter_code": "import numpy as np\n\n\ndef encode(x, W, b):\n    # compress: tanh(x @ W + b)\n    pass\n\n\ndef decode(z, W, b):\n    # reconstruct: z @ W + b\n    pass\n\n\ndef reconstruction_loss(x, x_hat):\n    # mean squared error between the input and its reconstruction\n    pass\n\n\ndef reparameterize(mu, log_var, eps):\n    # z = mu + sigma * eps, where sigma = exp(0.5 * log_var)\n    pass\n\n\ndef kl_divergence(mu, log_var):\n    # -0.5 * sum(1 + log_var - mu**2 - exp(log_var))\n    pass\n\n\ndef show(label, value):\n    print(label, None if value is None else np.round(value, 4))\n\n\nrng = np.random.default_rng(0)\nx = rng.standard_normal((4, 6))                 # 4 samples with 6 features\nW_enc, b_enc = rng.standard_normal((6, 2)) * 0.5, np.zeros(2)   # 6 -> 2 bottleneck\nW_dec, b_dec = rng.standard_normal((2, 6)) * 0.5, np.zeros(6)   # 2 -> 6 reconstruction\n\nz = encode(x, W_enc, b_enc)\nx_hat = decode(z, W_dec, b_dec)\nprint(\"latent shape:\", np.shape(z), \"reconstruction shape:\", np.shape(x_hat))\nshow(\"reconstruction loss:\", reconstruction_loss(x, x_hat))\n\nmu, log_var = np.array([0.0, 1.0]), np.array([0.0, 0.0])\nshow(\"sampled z:\", reparameterize(mu, log_var, np.array([1.0, -1.0])))\nshow(\"KL divergence:\", kl_divergence(mu, log_var))\n",
+      "expected_output": "latent shape: (4, 2) reconstruction shape: (4, 6)\nreconstruction loss: 1.0362\nsampled z: [1. 0.]\nKL divergence: 0.5",
       "hints": {
         "en": [
-          "Encoder: Linear(2,64) -> ReLU -> fc_mu(64,2), fc_logvar(64,2)",
-          "Decoder: Linear(2,64) -> ReLU -> Linear(64,2)",
-          "VAE loss = MSE reconstruction + KL divergence",
-          "Sample z from N(0,1) and decode to generate new points"
+          "encode: np.tanh(x @ W + b); decode: z @ W + b",
+          "reconstruction_loss: np.mean((x - x_hat) ** 2)",
+          "reparameterize: mu + np.exp(0.5 * log_var) * eps - the randomness lives in eps, so gradients can flow through mu and log_var",
+          "kl_divergence: -0.5 * np.sum(1 + log_var - mu ** 2 - np.exp(log_var))"
         ],
         "ta": [
-          "Encoder: Linear(2,64) -> ReLU -> fc_mu(64,2), fc_logvar(64,2)",
-          "VAE loss = MSE reconstruction + KL divergence"
+          "encode: np.tanh(x @ W + b); decode: z @ W + b",
+          "reconstruction_loss: np.mean((x - x_hat) ** 2)",
+          "reparameterize: mu + np.exp(0.5 * log_var) * eps - randomness eps-ல் இருப்பதால் gradients mu, log_var வழியாகப் பாய முடியும்",
+          "kl_divergence: -0.5 * np.sum(1 + log_var - mu ** 2 - np.exp(log_var))"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_rng = np.random.default_rng(5)\n_x = _rng.standard_normal((3, 5))\n_We, _be = _rng.standard_normal((5, 2)), _rng.standard_normal(2)\n_Wd, _bd = _rng.standard_normal((2, 5)), _rng.standard_normal(5)\n_z = encode(_x, _We, _be)\nassert _z is not None and np.shape(_z) == (3, 2), \"encode must map (3, 5) inputs to a (3, 2) bottleneck\"\nassert np.allclose(_z, np.tanh(_x @ _We + _be)), \"encode must compute np.tanh(x @ W + b)\"\n_xh = decode(_z, _Wd, _bd)\nassert _xh is not None and np.shape(_xh) == (3, 5), \"decode must map the (3, 2) code back to (3, 5)\"\nassert np.allclose(_xh, _z @ _Wd + _bd), \"decode must compute z @ W + b\"\nassert reconstruction_loss(_x, _x) is not None and np.isclose(reconstruction_loss(_x, _x), 0.0), \"a perfect reconstruction must have loss 0\"\nassert np.isclose(reconstruction_loss(np.array([1.0, 2.0]), np.array([2.0, 4.0])), 2.5), \"reconstruction_loss must be the mean of the squared errors\"\n_mu = np.array([0.5, -1.0])\n_zs = reparameterize(_mu, np.log(np.array([4.0, 9.0])), np.array([1.0, 1.0]))\nassert _zs is not None and np.allclose(_zs, [2.5, 2.0]), \"reparameterize must return mu + exp(0.5 * log_var) * eps\"\nassert kl_divergence(np.zeros(3), np.zeros(3)) is not None and np.isclose(kl_divergence(np.zeros(3), np.zeros(3)), 0.0), \"KL divergence of N(0, 1) from itself must be 0\"\nassert np.isclose(kl_divergence(np.array([1.0, 0.0]), np.zeros(2)), 0.5), \"kl_divergence(mu=[1, 0], log_var=[0, 0]) must be 0.5\"\nassert kl_divergence(np.zeros(2), np.array([1.0, -1.0])) > 0, \"KL divergence must be positive when the variance differs from 1\"\nprint(\"All autoencoder tests passed!\")\n"
     }
   ],
   "quiz": [

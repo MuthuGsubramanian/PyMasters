@@ -1,0 +1,11 @@
+{
+  "lesson_id": "knn",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from sklearn.datasets import load_digits\nfrom sklearn.neighbors import KNeighborsClassifier\nfrom sklearn.model_selection import train_test_split, cross_val_score\nfrom sklearn.preprocessing import StandardScaler\n\nX, y = load_digits(return_X_y=True)\nscaler = StandardScaler()\nX_scaled = scaler.fit_transform(X)\nX_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)\n\nbest_k, best_score = 0, 0\nfor k in [1, 3, 5, 7]:\n    knn = KNeighborsClassifier(n_neighbors=k)\n    scores = cross_val_score(knn, X_train, y_train, cv=5)\n    mean_score = scores.mean()\n    print(f'K={k}: {mean_score:.3f}')\n    if mean_score > best_score:\n        best_k, best_score = k, mean_score\n\nprint(f'Best K={best_k}')\nfinal = KNeighborsClassifier(n_neighbors=best_k)\nfinal.fit(X_train, y_train)\nprint(f'Test Accuracy: {final.score(X_test, y_test):.3f}')\n",
+      "verified_output": "K=1: 0.967\nK=3: 0.974\nK=5: 0.973\nK=7: 0.973\nBest K=3\nTest Accuracy: 0.969",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

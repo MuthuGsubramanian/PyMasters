@@ -273,21 +273,22 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Generate make_moons data. Apply KMeans(2), DBSCAN(eps=0.3), and GaussianMixture(2). Compare which correctly identifies the two moon shapes by printing the cluster assignments for the first 5 points.",
-        "ta": "make_moons தரவை உருவாக்குங்கள். KMeans(2), DBSCAN(eps=0.3), மற்றும் GaussianMixture(2) பயன்படுத்துங்கள். முதல் 5 புள்ளிகளுக்கான கிளஸ்டர் ஒதுக்கீடுகளை அச்சிட்டு ஒப்பிடுங்கள்."
+        "en": "Generate make_moons data and cluster it three ways: KMeans(n_clusters=2), DBSCAN(eps=0.2, min_samples=5) and GaussianMixture(n_components=2). Store the labels in km_labels, db_labels and gmm_labels, put each method's adjusted Rand index (ARI) against y_true into a dict called results ({'KMeans': ..., 'DBSCAN': ..., 'GMM': ...}), and print one line per method. DBSCAN should be the only method that recovers the two moon shapes (ARI close to 1); your exact numbers may differ slightly from the sample.",
+        "ta": "make_moons தரவை உருவாக்கி மூன்று முறைகளில் clustering செய்யுங்கள்: KMeans(n_clusters=2), DBSCAN(eps=0.2, min_samples=5), GaussianMixture(n_components=2). லேபிள்களை km_labels, db_labels, gmm_labels இல் சேமியுங்கள்; ஒவ்வொரு முறையின் adjusted Rand index (ARI) ஐ y_true உடன் ஒப்பிட்டு results என்ற dict இல் ({'KMeans': ..., 'DBSCAN': ..., 'GMM': ...}) வைத்து, ஒவ்வொரு முறைக்கும் ஒரு வரி அச்சிடுங்கள். இரண்டு நிலா வடிவங்களையும் சரியாகக் கண்டறிவது DBSCAN மட்டுமே (ARI 1 க்கு அருகில்); உங்கள் எண்கள் மாதிரியிலிருந்து சிறிது வேறுபடலாம்."
       },
-      "starter_code": "from sklearn.cluster import KMeans, DBSCAN\nfrom sklearn.mixture import GaussianMixture\nfrom sklearn.datasets import make_moons\nfrom sklearn.metrics import adjusted_rand_score\n\nX, y_true = make_moons(n_samples=300, noise=0.1, random_state=42)\n\n# K-Means\nkm_labels = KMeans(n_clusters=2, random_state=42, n_init=10).fit_predict(X)\n\n# DBSCAN\ndb_labels = DBSCAN(eps=___, min_samples=5).fit_predict(X)\n\n# GMM\ngmm_labels = GaussianMixture(n_components=___, random_state=42).fit_predict(X)\n\nfor name, labels in [('KMeans', km_labels), ('DBSCAN', db_labels), ('GMM', gmm_labels)]:\n    ari = adjusted_rand_score(y_true, labels)\n    print(f'{name:12s}: ARI={ari:.3f}')",
-      "expected_output": "KMeans      : ARI=0.456\nDBSCAN      : ARI=0.952\nGMM         : ARI=0.456",
+      "starter_code": "from sklearn.cluster import KMeans, DBSCAN\nfrom sklearn.mixture import GaussianMixture\nfrom sklearn.datasets import make_moons\nfrom sklearn.metrics import adjusted_rand_score\n\nX, y_true = make_moons(n_samples=300, noise=0.1, random_state=42)\n\n# K-Means\nkm_labels = KMeans(n_clusters=2, random_state=42, n_init=10).fit_predict(X)\n\n# DBSCAN (density-based: follows the curved shapes)\ndb_labels = DBSCAN(eps=___, min_samples=5).fit_predict(X)\n\n# Gaussian mixture\ngmm_labels = GaussianMixture(n_components=___, random_state=42).fit_predict(X)\n\nresults = {}\nfor name, labels in [('KMeans', km_labels), ('DBSCAN', db_labels), ('GMM', gmm_labels)]:\n    results[name] = adjusted_rand_score(y_true, labels)\n    print(f'{name:12s}: ARI={results[name]:.3f}')\n",
+      "expected_output": "KMeans      : ARI=0.254\nDBSCAN      : ARI=1.000\nGMM         : ARI=0.498",
+      "test_code": "from sklearn.metrics import adjusted_rand_score as _ari\nassert set(results) == {'KMeans', 'DBSCAN', 'GMM'}, \"results must have the keys 'KMeans', 'DBSCAN' and 'GMM'\"\nfor _name, _labels in [('KMeans', km_labels), ('DBSCAN', db_labels), ('GMM', gmm_labels)]:\n    assert len(_labels) == len(y_true), f'{_name} must label every point'\n    assert abs(results[_name] - _ari(y_true, _labels)) < 1e-9, f\"results['{_name}'] must be the ARI of {_name}'s labels\"\nassert results['DBSCAN'] >= 0.9, 'DBSCAN should recover both moons (ARI close to 1): check eps=0.2 and min_samples=5'\nassert results['KMeans'] < 0.7 and results['GMM'] < 0.7, 'KMeans and GMM assume blob-shaped clusters and should not recover the moons'\nassert len(set(gmm_labels)) == 2, 'GaussianMixture should use n_components=2'\n",
       "hints": {
         "en": [
-          "eps=0.3 works well for the moons data",
+          "eps=0.2 keeps the two moons apart; at eps=0.3 the moons merge into one cluster",
           "n_components=2 for GMM",
-          "DBSCAN should have the highest ARI because moons are non-spherical"
+          "DBSCAN should have the highest ARI because the moons are not round blobs"
         ],
         "ta": [
-          "moons தரவுக்கு eps=0.3 நன்றாக வேலை செய்கிறது",
+          "eps=0.2 இரண்டு நிலாக்களையும் தனித்தனியாக வைக்கிறது; eps=0.3 இல் அவை ஒரே cluster ஆக இணைகின்றன",
           "GMM க்கு n_components=2",
-          "DBSCAN அதிகபட்ச ARI கொண்டிருக்க வேண்டும் ஏனெனில் moons கோள வடிவமற்றவை"
+          "நிலாக்கள் வட்டமான கொத்துகள் அல்ல என்பதால் DBSCAN அதிகபட்ச ARI கொண்டிருக்க வேண்டும்"
         ]
       }
     }

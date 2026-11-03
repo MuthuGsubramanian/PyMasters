@@ -283,23 +283,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create a deliberately overfit model (no regularization) and a regularized model. Train both on a small dataset (50 samples) and show the train/test accuracy gap.",
-        "ta": "வேண்டுமென்றே அதிகமாக பொருத்தப்பட்ட மாதிரி மற்றும் ரெகுலரைஸ் செய்யப்பட்ட மாதிரியை உருவாக்குங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Implement three regularization tools from the lesson. `l2_penalty(weights, lam)` returns lam times the sum of squares of every array in the `weights` list (weight decay). `dropout(x, p, rng, training=True)` is inverted dropout: in training, keep each value where rng.random(x.shape) >= p, zero the rest and divide by (1 - p); in evaluation (training=False) return x unchanged. `early_stopping(val_losses, patience=3)` walks through the validation losses, tracks the best (lowest) epoch and returns (stop_epoch, best_epoch) as soon as `patience` epochs in a row fail to beat the best; if that never happens return (last_epoch, best_epoch).",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. பாடத்தில் உள்ள மூன்று regularization கருவிகளை எழுதுங்கள். `l2_penalty(weights, lam)` `weights` list-ல் உள்ள ஒவ்வொரு array-இன் வர்க்கங்களின் கூட்டுத்தொகையை lam-ஆல் பெருக்கித் திருப்புகிறது (weight decay). `dropout(x, p, rng, training=True)` inverted dropout: training-ல் rng.random(x.shape) >= p உள்ள மதிப்புகளை வைத்து, மற்றவற்றைப் பூஜ்யமாக்கி, (1 - p)-ஆல் வகுக்கவும்; evaluation-ல் (training=False) x-ஐ மாற்றாமல் திருப்பவும். `early_stopping(val_losses, patience=3)` validation losses-ஐ வரிசையாகப் பார்த்து, சிறந்த (மிகக் குறைந்த) epoch-ஐக் கண்காணித்து, தொடர்ந்து `patience` epochs சிறந்ததைத் தாண்டத் தவறியவுடன் (stop_epoch, best_epoch) திருப்புகிறது; அப்படி நடக்கவில்லையெனில் (last_epoch, best_epoch) திருப்புகிறது."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\n\ntorch.manual_seed(42)\n# Small dataset prone to overfitting\nX_train = torch.randn(50, 10)\ny_train = (X_train[:, 0] + X_train[:, 1] > 0).float().unsqueeze(1)\nX_test = torch.randn(200, 10)\ny_test = (X_test[:, 0] + X_test[:, 1] > 0).float().unsqueeze(1)\n\n# TODO: Build OverfitNet (large, no regularization)\n# TODO: Build RegularizedNet (same size + dropout + batch norm + weight_decay)\n# TODO: Train both, compare train/test accuracy\n",
-      "expected_output": "OverfitNet - Train: 100%, Test: 75%\nRegularizedNet - Train: 90%, Test: 88%",
+      "starter_code": "import numpy as np\n\n\ndef l2_penalty(weights, lam):\n    # lam * sum of (w ** 2) over every weight array\n    pass\n\n\ndef dropout(x, p, rng, training=True):\n    # evaluation: return x unchanged\n    # training: mask = rng.random(x.shape) >= p; return x * mask / (1 - p)\n    pass\n\n\ndef early_stopping(val_losses, patience=3):\n    # track the best epoch; stop when `patience` epochs in a row do not improve on it\n    # return (stop_epoch, best_epoch)\n    pass\n\n\nweights = [np.array([[0.5, -1.0], [2.0, 0.0]]), np.array([1.0, -0.5])]\nprint(\"L2 penalty (lambda=0.01):\", l2_penalty(weights, 0.01))\n\nrng = np.random.default_rng(0)\nactivations = np.ones(8)\nprint(\"dropout (training):\", dropout(activations, 0.5, rng, training=True))\nprint(\"dropout (evaluation):\", dropout(activations, 0.5, rng, training=False))\n\nval_losses = [1.0, 0.8, 0.7, 0.72, 0.75, 0.71, 0.9, 0.95]\nprint(\"early stopping (stop epoch, best epoch):\", early_stopping(val_losses, patience=3))\n",
+      "expected_output": "L2 penalty (lambda=0.01): 0.065\ndropout (training): [2. 0. 0. 0. 2. 2. 2. 2.]\ndropout (evaluation): [1. 1. 1. 1. 1. 1. 1. 1.]\nearly stopping (stop epoch, best epoch): (5, 2)",
       "hints": {
         "en": [
-          "Make OverfitNet with large hidden layers (128, 64) and no dropout",
-          "Add nn.Dropout(0.5) and nn.BatchNorm1d() to RegularizedNet",
-          "Use weight_decay=1e-3 in the optimizer for L2 regularization",
-          "Compute accuracy: ((pred > 0.5) == target).float().mean()"
+          "l2_penalty: return lam * sum(np.sum(w ** 2) for w in weights)",
+          "dropout: if not training: return x; mask = rng.random(x.shape) >= p; return x * mask / (1 - p)",
+          "early_stopping: keep best_epoch, best_loss and a 'waited' counter; reset waited to 0 on improvement, otherwise add 1",
+          "Return (epoch, best_epoch) the moment waited == patience; after the loop return (len(val_losses) - 1, best_epoch)"
         ],
         "ta": [
-          "OverfitNet-க்கு பெரிய மறைந்த அடுக்குகள் (128, 64) பயன்படுத்தி dropout இல்லாமல்",
-          "RegularizedNet-க்கு nn.Dropout(0.5) மற்றும் nn.BatchNorm1d() சேர்க்கவும்"
+          "l2_penalty: lam * sum(np.sum(w ** 2) for w in weights) திருப்புங்கள்",
+          "dropout: training இல்லையெனில் x திருப்புங்கள்; mask = rng.random(x.shape) >= p; பிறகு x * mask / (1 - p) திருப்புங்கள்",
+          "early_stopping: best_epoch, best_loss, 'waited' counter வைத்துக்கொள்ளுங்கள்; முன்னேற்றம் இருந்தால் waited-ஐ 0 ஆக்கவும், இல்லையெனில் 1 கூட்டவும்",
+          "waited == patience ஆனவுடன் (epoch, best_epoch) திருப்புங்கள்; loop முடிந்தால் (len(val_losses) - 1, best_epoch) திருப்புங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_pen = l2_penalty([np.array([[1.0, 2.0], [3.0, 4.0]]), np.array([1.0])], 0.01)\nassert _pen is not None and np.isclose(_pen, 0.31), \"l2_penalty must be lam * (1+4+9+16 + 1) = 0.31\"\nassert np.isclose(l2_penalty([np.array([3.0])], 0.5), 4.5), \"l2_penalty must multiply by lam\"\n_x = np.ones(10000)\nassert dropout(_x, 0.5, np.random.default_rng(0), training=False) is not None and np.array_equal(dropout(_x, 0.5, np.random.default_rng(0), training=False), _x), \"in evaluation mode dropout must return x unchanged\"\n_d = dropout(_x, 0.5, np.random.default_rng(0), training=True)\nassert _d is not None and np.shape(_d) == _x.shape, \"dropout must keep the shape of x\"\nassert set(np.unique(_d)) <= {0.0, 2.0}, \"with p=0.5 every value must be either dropped (0) or scaled by 1/(1-p) (2.0)\"\nassert 0.45 < np.mean(_d == 0) < 0.55, \"about half of the values must be dropped when p=0.5\"\nassert abs(np.mean(_d) - 1.0) < 0.05, \"inverted dropout must keep the average activation about the same\"\n_d2 = dropout(np.ones(10000), 0.2, np.random.default_rng(1))\nassert 0.15 < np.mean(_d2 == 0) < 0.25 and np.isclose(_d2.max(), 1.25), \"dropout must use p: with p=0.2 drop ~20% and scale by 1.25\"\n_es = early_stopping([1.0, 0.8, 0.7, 0.72, 0.75, 0.71, 0.9], patience=3)\nassert _es is not None and tuple(_es) == (5, 2), \"best is epoch 2 (0.7); epochs 3, 4, 5 fail to beat it, so stop at epoch 5\"\nassert tuple(early_stopping([3.0, 2.0, 1.0], patience=2)) == (2, 2), \"if the loss keeps improving, return (last_epoch, best_epoch)\"\nassert tuple(early_stopping([1.0, 1.1, 0.9, 1.0, 1.2], patience=2)) == (4, 2), \"an improvement must reset the patience counter\"\nprint(\"All regularization tests passed!\")\n"
     }
   ],
   "quiz": [

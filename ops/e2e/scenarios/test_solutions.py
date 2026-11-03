@@ -8,18 +8,9 @@ from pathlib import Path
 from conftest import CONTAINER, DOCKER, SOLUTIONS
 
 LESSONS = Path(__file__).resolve().parents[3] / "backend" / "lessons"
-# Not installable in the 512 MB / offline sandbox: lessons importing these need a numpy or pure-Python rewrite
-# (sub-project E). Shrinking this set is progress; growing it needs a reason.
-NOT_PROVIDED = {
-    "torch": "PyTorch cannot even import under the sandbox's 512 MB address-space cap",
-    "torchvision": "needs torch", "transformers": "needs torch + model downloads",
-    "sentence_transformers": "needs torch + model downloads",
-    "openai": "needs network + API keys", "anthropic": "needs network + API keys",
-    "langchain": "needs network + API keys", "langchain_openai": "needs network + API keys",
-    "langchain_community": "needs network + API keys", "chromadb": "needs network/model downloads",
-    "tiktoken": "downloads its encodings from the network at first use",
-    "app": "a learner-local module the lesson assumes exists (content defect)",
-}
+# No exceptions any more (2026-11-03): every challenge that imported torch / LLM SDKs / langchain / tiktoken was
+# rewritten to numpy, pure Python or an offline stand-in the sandbox can run. A new lesson needing such a library
+# must do the same — the sandbox has 512 MB and no network.
 
 
 def _imports(src: str) -> set:
@@ -40,17 +31,18 @@ def test_lesson_imports_exist_in_the_sandbox():
     needed = {}
     for f in LESSONS.rglob("*.json"):
         try:
-            ch = (json.loads(f.read_text()).get("practice_challenges") or [None])[0]
+            challenges = json.loads(f.read_text()).get("practice_challenges") or []
         except Exception:  # noqa: BLE001 — non-lesson JSON
             continue
-        if isinstance(ch, dict):
-            for m in _imports(ch.get("starter_code")) | _imports(ch.get("test_code")):
-                needed.setdefault(m, []).append(f.stem)
+        for i, ch in enumerate(challenges):      # every challenge, not just the first
+            if isinstance(ch, dict):
+                for m in _imports(ch.get("starter_code")) | _imports(ch.get("test_code")):
+                    needed.setdefault(m, []).append(f"{f.stem}#{i}")
     probe = ("import importlib.util, json, sys; "
              "print(json.dumps([m for m in sys.argv[1:] if importlib.util.find_spec(m) is None]))")
     out = subprocess.run([DOCKER, "exec", CONTAINER, "python", "-c", probe, *sorted(needed)],
                          capture_output=True, text=True, timeout=120)
-    missing = set(json.loads(out.stdout.strip().splitlines()[-1])) - set(NOT_PROVIDED)
+    missing = set(json.loads(out.stdout.strip().splitlines()[-1]))
     assert not missing, {m: needed[m][:5] for m in sorted(missing)}
 
 

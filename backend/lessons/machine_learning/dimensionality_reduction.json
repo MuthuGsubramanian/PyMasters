@@ -270,11 +270,11 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Load the iris dataset (4 features). Apply PCA to reduce to 2D, print explained variance per component. Then apply PCA with n_components=0.99 and see how many components are kept.",
-        "ta": "iris தரவுத்தொகுப்பை (4 அம்சங்கள்) ஏற்றுங்கள். 2D ஆகக் குறைக்க PCA பயன்படுத்தி, ஒவ்வொரு கூறுக்கும் விளக்கப்பட்ட மாற்றத்தை அச்சிடுங்கள். பின்னர் n_components=0.99 உடன் PCA பயன்படுத்தி எத்தனை கூறுகள் வைக்கப்படுகின்றன என்று பாருங்கள்."
+        "en": "Load the iris dataset (4 features) and standardize it. Apply PCA with n_components=2 (store the model in `pca` and the result in `X_2d`) and print the explained variance per component and its total. Then apply PCA with n_components=0.99 (store it in `pca_99`) and print how many components are kept (`pca_99.n_components_`). The checker tests these variables, not the exact printed decimals.",
+        "ta": "iris தரவுத்தொகுப்பை (4 அம்சங்கள்) ஏற்றி தரநிலைப்படுத்துங்கள் (standardize). n_components=2 உடன் PCA பயன்படுத்துங்கள் (மாடலை `pca`-இலும் முடிவை `X_2d`-இலும் சேமியுங்கள்), ஒவ்வொரு கூறின் விளக்கப்பட்ட மாறுபாட்டையும் (explained variance) அதன் மொத்தத்தையும் அச்சிடுங்கள். பின்னர் n_components=0.99 உடன் PCA பயன்படுத்தி (`pca_99`-இல் சேமியுங்கள்) எத்தனை கூறுகள் வைக்கப்படுகின்றன (`pca_99.n_components_`) என்று அச்சிடுங்கள். சரிபார்ப்பான் இந்த மாறிகளைச் சோதிக்கும், அச்சிடப்பட்ட துல்லியமான தசம எண்களை அல்ல."
       },
       "starter_code": "from sklearn.decomposition import PCA\nfrom sklearn.datasets import load_iris\nfrom sklearn.preprocessing import StandardScaler\n\nX, y = load_iris(return_X_y=True)\nX_scaled = StandardScaler().fit_transform(X)\n\n# PCA to 2D\npca = PCA(n_components=___)\nX_2d = pca.fit_transform(X_scaled)\nprint(f'Explained variance per component: {pca.explained_variance_ratio_.round(3)}')\nprint(f'Total: {pca.explained_variance_ratio_.sum():.3f}')\n\n# PCA for 99% variance\npca_99 = PCA(n_components=___)\nX_99 = pca_99.fit_transform(X_scaled)\nprint(f'Components for 99% variance: {pca_99.n_components_}')",
-      "expected_output": "Explained variance per component: [0.729 0.229]\nTotal: 0.958\nComponents for 99% variance: 3",
+      "expected_output": "Explained variance per component: [0.73  0.229]\nTotal: 0.958\nComponents for 99% variance: 3",
       "hints": {
         "en": [
           "n_components=2 for 2D visualization",
@@ -286,7 +286,8 @@
           "n_components=0.99 தானாகவே கூறுகளைத் தேர்ந்தெடுக்கிறது",
           "Iris-க்கு 99% மாற்றத்திற்கு 4 கூறுகளில் 3 மட்டும் தேவை"
         ]
-      }
+      },
+      "test_code": "import numpy as np\nfrom sklearn.decomposition import PCA as _PCA\nassert isinstance(pca, _PCA) and hasattr(pca, 'components_'), 'pca must be a fitted PCA model.'\nassert pca.n_components_ == 2, 'pca must reduce the data to 2 components (n_components=2).'\nassert np.shape(X_2d) == (150, 2), 'X_2d must be the 150 x 2 result of pca.fit_transform(...).'\nassert isinstance(pca_99, _PCA) and hasattr(pca_99, 'components_'), 'pca_99 must be a fitted PCA model.'\nassert pca_99.n_components == 0.99, 'Create pca_99 with n_components=0.99 so PCA keeps 99% of the variance.'\nassert pca_99.explained_variance_ratio_.sum() >= 0.99, 'pca_99 must keep at least 99% of the variance.'\nassert pca_99.n_components_ == 3, 'For iris, 3 components are needed to keep 99% of the variance.'\n"
     }
   ],
   "quiz": [

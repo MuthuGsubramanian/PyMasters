@@ -1,0 +1,11 @@
+{
+  "lesson_id": "dl_gan_image_generation",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\n\ndef bce(pred, target):\n    p = np.clip(pred, 1e-7, 1 - 1e-7)\n    return -np.mean(target * np.log(p) + (1 - target) * np.log(1 - p))\n\n\ndef transposed_conv_output_size(n, kernel, stride=1, padding=0):\n    return (n - 1) * stride - 2 * padding + kernel\n\n\ndef smooth_real_labels(n, smoothing=0.1):\n    return np.full(n, 1.0 - smoothing)\n\n\ndef discriminator_loss(d_real, d_fake, smoothing=0.1):\n    real_labels = smooth_real_labels(len(d_real), smoothing)\n    return bce(d_real, real_labels) + bce(d_fake, np.zeros(len(d_fake)))\n\n\ndef to_pixels(x):\n    return np.clip(np.round((x + 1) * 127.5), 0, 255).astype(np.uint8)\n\n\nsize = 4\nprint(\"generator upsampling:\", size, end=\"\")\nfor _ in range(3):\n    size = transposed_conv_output_size(size, kernel=4, stride=2, padding=1)\n    print(\" ->\", size, end=\"\")\nprint()\nprint(\"smoothed real labels:\", smooth_real_labels(3))\nd_real, d_fake = np.array([0.9, 0.85, 0.95]), np.array([0.1, 0.2, 0.05])\nloss = discriminator_loss(d_real, d_fake)\nprint(\"D loss with label smoothing:\", None if loss is None else round(float(loss), 4))\nprint(\"pixels:\", to_pixels(np.array([-1.0, 0.0, 1.0])))\n",
+      "verified_output": "generator upsampling: 4 -> 8 -> 16 -> 32\nsmoothed real labels: [0.9 0.9 0.9]\nD loss with label smoothing: 0.4622\npixels: [  0 128 255]\nAll DCGAN tests passed!",
+      "source": "hand-verified 2026-11-03 (sandbox rewrite)"
+    }
+  ]
+}

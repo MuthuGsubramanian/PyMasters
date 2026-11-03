@@ -202,21 +202,22 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Using PyTorch autograd, compute the gradient of `L = (w*x + b - y_true)**2` with respect to `w` and `b`, where `w=2.0`, `b=0.5`, `x=4.0`, `y_true=10.0`. Store gradients in `w.grad` and `b.grad` by calling `L.backward()`."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. The starter code has `Value`, a tiny autograd engine: addition already records its chain-rule step. 1) Fill in the `_backward` functions of `__mul__` (d(a*b)/da = b, d(a*b)/db = a) and `__pow__` (d(x**n)/dx = n * x**(n-1)); remember to multiply by out.grad and to ADD into .grad. 2) With `w = Value(2.0)`, `b = Value(0.5)`, `x = 4.0`, `y_true = 10.0`, build `L = (w * x + b - y_true) ** 2` and call `L.backward()`, so that `w.grad` is -12 and `b.grad` is -3 - exactly what PyTorch's autograd computes."
       },
-      "expected_output": "",
+      "starter_code": "class Value:\n    \"\"\"A tiny autograd scalar - the idea behind a PyTorch tensor with requires_grad=True.\n    Every operation remembers its inputs and a _backward function that applies the chain rule.\"\"\"\n\n    def __init__(self, data, parents=()):\n        self.data = data\n        self.grad = 0.0\n        self._parents = parents\n        self._backward = lambda: None\n\n    def __add__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data + other.data, (self, other))\n\n        def _backward():\n            self.grad += out.grad          # d(a + b)/da = 1\n            other.grad += out.grad         # d(a + b)/db = 1\n        out._backward = _backward\n        return out\n\n    __radd__ = __add__\n\n    def __sub__(self, other):\n        return self + (-1) * other\n\n    def __mul__(self, other):\n        other = other if isinstance(other, Value) else Value(other)\n        out = Value(self.data * other.data, (self, other))\n\n        def _backward():\n            # Your code here: chain rule for a * b\n            pass\n        out._backward = _backward\n        return out\n\n    def __pow__(self, n):              # n is a plain number\n        out = Value(self.data ** n, (self,))\n\n        def _backward():\n            # Your code here: chain rule for x ** n\n            pass\n        out._backward = _backward\n        return out\n\n    __rmul__ = __mul__\n\n    def backward(self):\n        \"\"\"Like L.backward(): visit the graph in reverse order and run every _backward.\"\"\"\n        order, seen = [], set()\n\n        def visit(v):\n            if v not in seen:\n                seen.add(v)\n                for p in v._parents:\n                    visit(p)\n                order.append(v)\n        visit(self)\n        self.grad = 1.0\n        for v in reversed(order):\n            v._backward()\n\n\nw = Value(2.0)       # like torch.tensor(2.0, requires_grad=True)\nb = Value(0.5)\nx = 4.0\ny_true = 10.0\n\n# Build L = (w * x + b - y_true) ** 2 and call L.backward()\n# Your code here\n\nprint(\"w.grad =\", w.grad)\nprint(\"b.grad =\", b.grad)\n",
+      "expected_output": "w.grad = -12.0\nb.grad = -3.0",
       "hints": [
         {
-          "en": "Set requires_grad=True on w and b (not x or y_true)"
+          "en": "In __mul__'s _backward: self.grad += other.data * out.grad and other.grad += self.data * out.grad"
         },
         {
-          "en": "Compute: y_hat = w * x + b, then L = (y_hat - y_true)**2"
+          "en": "In __pow__'s _backward: self.grad += n * self.data ** (n - 1) * out.grad"
         },
         {
-          "en": "Call L.backward() to populate w.grad and b.grad"
+          "en": "Then L = (w * x + b - y_true) ** 2 and L.backward() - w.grad and b.grad are filled in for you"
         }
       ],
-      "test_code": "import torch\nw_val, b_val, x_val, y_val = 2.0, 0.5, 4.0, 10.0\ny_hat_val = w_val * x_val + b_val  # = 8.5\n# dL/dw = 2*(y_hat - y_true)*x = 2*(8.5-10)*4 = -12\n# dL/db = 2*(y_hat - y_true)*1 = 2*(8.5-10) = -3\nassert abs(float(w.grad) - (-12.0)) < 1e-4, f'w.grad should be -12, got {float(w.grad)}'\nassert abs(float(b.grad) - (-3.0)) < 1e-4, f'b.grad should be -3, got {float(b.grad)}'"
+      "test_code": "# y_hat = 2*4 + 0.5 = 8.5; dL/dw = 2*(8.5-10)*4 = -12; dL/db = 2*(8.5-10) = -3\nassert abs(float(w.grad) - (-12.0)) < 1e-9, f\"w.grad should be -12, got {w.grad}\"\nassert abs(float(b.grad) - (-3.0)) < 1e-9, f\"b.grad should be -3, got {b.grad}\"\n_a = Value(3.0)\n_c = _a * _a + _a\n_c.backward()\nassert abs(_a.grad - 7.0) < 1e-9, \"for c = a*a + a at a=3 the gradient is 2*3 + 1 = 7 - add into .grad (+=) so every use of a counts\"\n_p = Value(2.0)\n_q = _p ** 3\n_q.backward()\nassert abs(_p.grad - 12.0) < 1e-9, \"d(p**3)/dp at p=2 must be 3 * 2**2 = 12\"\n_u, _v = Value(-1.5), Value(4.0)\n(_u * _v).backward()\nassert _u.grad == 4.0 and _v.grad == -1.5, \"d(u*v)/du = v and d(u*v)/dv = u\"\nprint(\"All autograd tests passed!\")\n"
     }
   ],
   "generated": false,

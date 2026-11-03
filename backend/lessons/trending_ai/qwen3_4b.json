@@ -179,18 +179,18 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Build the prompt formatting step for a local Qwen3 chat. Complete `build_prompt` so it takes a user question and returns the chat-template string with generation prompt added. Thinking mode should be toggleable via the `thinking` argument."
+        "en": "Build the prompt-formatting step for a local Qwen3 chat. Loading Qwen3's tokenizer needs the transformers library and a download, so write its chat template yourself. `apply_chat_template(messages, add_generation_prompt=True, enable_thinking=True)` turns each message into \"<|im_start|>{role}\\n{content}<|im_end|>\\n\"; when add_generation_prompt is true it appends \"<|im_start|>assistant\\n\", and when enable_thinking is False it also appends an empty thinking block \"<think>\\n\\n</think>\\n\\n\" (that is how Qwen3 switches thinking off). `build_prompt(question, thinking=True)` wraps the question in a one-message list with role 'user' and returns the template string."
       },
-      "starter_code": "from transformers import AutoTokenizer\n\ntok = AutoTokenizer.from_pretrained(\"Qwen/Qwen3-4B\")\n\ndef build_prompt(question: str, thinking: bool = True) -> str:\n    \"\"\"Return the formatted chat-template prompt for a single user turn.\"\"\"\n    # 1. Wrap the question in a messages list ({'role': 'user', 'content': ...})\n    # 2. Call tok.apply_chat_template with tokenize=False, add_generation_prompt=True\n    # 3. Pass enable_thinking=thinking\n    pass\n\nprint(build_prompt(\"Say hello\", thinking=False))",
-      "expected_output": "A formatted prompt string ending with the assistant generation prompt",
+      "starter_code": "def apply_chat_template(messages, add_generation_prompt=True, enable_thinking=True):\n    \"\"\"Format messages with Qwen3's ChatML template and return one string.\"\"\"\n    # 1. For each message: \"<|im_start|>\" + role + \"\\n\" + content + \"<|im_end|>\\n\"\n    # 2. If add_generation_prompt: append \"<|im_start|>assistant\\n\"\n    # 3. If thinking is disabled: also append \"<think>\\n\\n</think>\\n\\n\"\n    pass\n\n\ndef build_prompt(question, thinking=True):\n    \"\"\"Return the formatted chat-template prompt for a single user turn.\"\"\"\n    # Your code here\n    pass\n\n\nprint(build_prompt(\"Say hello\", thinking=False))\n",
+      "expected_output": "<|im_start|>user\nSay hello<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>",
       "hints": {
         "en": [
-          "messages = [{'role': 'user', 'content': question}]",
-          "apply_chat_template returns a string when tokenize=False",
-          "Forward the thinking flag as enable_thinking=thinking"
+          "Loop over messages: text += '<|im_start|>' + m['role'] + '\\n' + m['content'] + '<|im_end|>\\n'",
+          "If add_generation_prompt: text += '<|im_start|>assistant\\n', and if not enable_thinking add '<think>\\n\\n</think>\\n\\n'",
+          "build_prompt: messages = [{'role': 'user', 'content': question}], then return apply_chat_template(messages, True, thinking)"
         ]
       },
-      "test_code": "from transformers import AutoTokenizer\n\n_tok = AutoTokenizer.from_pretrained(\"Qwen/Qwen3-4B\")\n\ndef build_prompt(question, thinking=True):\n    messages = [{\"role\": \"user\", \"content\": question}]\n    return _tok.apply_chat_template(\n        messages, tokenize=False, add_generation_prompt=True, enable_thinking=thinking\n    )\n\np = build_prompt(\"What is 2 + 2?\", thinking=True)\nassert isinstance(p, str) and len(p) > 0\nassert \"What is 2 + 2?\" in p\n# add_generation_prompt should include the assistant turn marker\nassert \"assistant\" in p\nprint(\"Prompt formatting tests passed!\")"
+      "test_code": "_p = build_prompt(\"What is 2 + 2?\", thinking=True)\nassert isinstance(_p, str), \"build_prompt must return the template string\"\nassert _p == \"<|im_start|>user\\nWhat is 2 + 2?<|im_end|>\\n<|im_start|>assistant\\n\", \"with thinking on, the prompt is the user turn plus the assistant generation prompt, got: \" + repr(_p)\n_q = build_prompt(\"What is 2 + 2?\", thinking=False)\nassert _q == _p + \"<think>\\n\\n</think>\\n\\n\", \"with thinking off, append an empty <think></think> block after the assistant marker\"\n_multi = apply_chat_template([{\"role\": \"system\", \"content\": \"Be brief.\"}, {\"role\": \"user\", \"content\": \"Hi\"}], add_generation_prompt=False)\nassert _multi == \"<|im_start|>system\\nBe brief.<|im_end|>\\n<|im_start|>user\\nHi<|im_end|>\\n\", \"every message must become <|im_start|>role\\\\ncontent<|im_end|>\\\\n, and no assistant marker without add_generation_prompt\"\nprint(\"Prompt formatting tests passed!\")\n"
     },
     {
       "instruction": {

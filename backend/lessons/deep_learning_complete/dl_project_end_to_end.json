@@ -404,23 +404,24 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Extend the Fashion classifier project: 1) Add a confusion matrix visualization, 2) Implement inference function that takes a single image and returns top-3 predictions with confidence scores, 3) Add model versioning with timestamp.",
-        "ta": "Fashion classifier திட்டத்தை விரிவாக்குங்கள்: 1) குழப்ப அணி, 2) ஒற்றை படத்திற்கு top-3 கணிப்புகள், 3) timestamp உடன் மாதிரி பதிப்பாக்கம்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Finish the Fashion classifier project with three pieces. 1) `top_k_predictions(logits, class_names, k=3)`: turn one image's logits into probabilities with the provided softmax and return the k most likely classes as (class_name, probability) tuples, highest first. 2) `confusion_matrix(y_true, y_pred, num_classes)`: integer matrix where cm[t][p] counts true class t predicted as p. 3) `version_name(model_name, when)`: a versioned checkpoint file name with a timestamp, e.g. version_name('fashion_cnn', datetime(2026, 11, 3, 14, 25, 0)) -> 'fashion_cnn_v20261103_142500.npz'.",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. Fashion classifier project-ஐ மூன்று பகுதிகளுடன் முடியுங்கள். 1) `top_k_predictions(logits, class_names, k=3)`: ஒரு படத்தின் logits-ஐ கொடுக்கப்பட்ட softmax மூலம் probabilities ஆக மாற்றி, அதிக சாத்தியமுள்ள k classes-ஐ (class_name, probability) tuples ஆக, அதிகமானது முதலில் என்ற வரிசையில் திருப்புங்கள். 2) `confusion_matrix(y_true, y_pred, num_classes)`: cm[t][p] உண்மை class t ஆக இருந்து p என்று கணிக்கப்பட்டவற்றை எண்ணும் integer matrix. 3) `version_name(model_name, when)`: timestamp கொண்ட versioned checkpoint கோப்புப் பெயர், எ.கா. version_name('fashion_cnn', datetime(2026, 11, 3, 14, 25, 0)) -> 'fashion_cnn_v20261103_142500.npz'."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\nfrom datetime import datetime\n\nclasses = ['T-shirt', 'Trouser', 'Pullover', 'Dress', 'Coat',\n           'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']\n\n# Assume model is trained and loaded\n\ndef predict_single(model, image):\n    \"\"\"Predict top-3 classes for a single 28x28 image\"\"\"\n    # TODO: Preprocess, forward pass, get top-3 with scores\n    pass\n\ndef build_confusion_matrix(model, test_loader, device):\n    \"\"\"Build 10x10 confusion matrix\"\"\"\n    # TODO: Return confusion matrix tensor\n    pass\n\ndef save_versioned_model(model, accuracy, path='models/'):\n    \"\"\"Save model with timestamp and accuracy in filename\"\"\"\n    # TODO: e.g., fashion_v20260327_acc923.pth\n    pass\n\n# TODO: Run all three functions and print results\n",
-      "expected_output": "Top-3: Sneaker (92.3%), Ankle boot (5.1%), Sandal (1.8%)\nSaved: models/fashion_v20260327_acc923.pth",
+      "starter_code": "import numpy as np\nfrom datetime import datetime\n\nCLASSES = [\"T-shirt\", \"Trouser\", \"Pullover\", \"Dress\", \"Coat\",\n           \"Sandal\", \"Shirt\", \"Sneaker\", \"Bag\", \"Ankle boot\"]\n\n\ndef softmax(z):\n    e = np.exp(z - np.max(z))\n    return e / e.sum()\n\n\ndef top_k_predictions(logits, class_names, k=3):\n    # softmax -> probabilities; return the k best (class_name, probability) pairs, highest first\n    pass\n\n\ndef confusion_matrix(y_true, y_pred, num_classes):\n    # cm[true][pred] += 1 for every sample\n    pass\n\n\ndef version_name(model_name, when):\n    # \"<model_name>_v<YYYYmmdd_HHMMSS>.npz\"\n    pass\n\n\nlogits = np.array([0.1, 0.2, 2.5, 0.3, 1.9, -1.0, 1.2, -0.5, 0.0, -2.0])   # model output for one image\ntop3 = top_k_predictions(logits, CLASSES, k=3)\nif top3 is not None:\n    for name, confidence in top3:\n        print(f\"{name}: {confidence:.3f}\")\nprint(confusion_matrix([0, 2, 2, 4, 4], [0, 2, 4, 4, 2], 5))\nprint(version_name(\"fashion_cnn\", datetime(2026, 11, 3, 14, 25, 0)))\n",
+      "expected_output": "Pullover: 0.435\nCoat: 0.239\nShirt: 0.119\n[[1 0 0 0 0]\n [0 0 0 0 0]\n [0 0 1 0 1]\n [0 0 0 0 0]\n [0 0 1 0 1]]\nfashion_cnn_v20261103_142500.npz",
       "hints": {
         "en": [
-          "predict_single: unsqueeze(0) for batch dim, F.softmax(output, dim=1) for probs",
-          "torch.topk(probs, 3) returns top-3 values and indices",
-          "Confusion matrix: cm[true_label][predicted_label] += 1",
-          "Use datetime.now().strftime('%Y%m%d') for timestamp"
+          "top_k_predictions: probs = softmax(logits); best = np.argsort(probs)[::-1][:k]; return [(class_names[i], float(probs[i])) for i in best]",
+          "confusion_matrix: cm = np.zeros((num_classes, num_classes), dtype=int); for t, p in zip(y_true, y_pred): cm[t][p] += 1",
+          "version_name: f'{model_name}_v{when:%Y%m%d_%H%M%S}.npz' - datetime supports strftime codes inside f-strings"
         ],
         "ta": [
-          "predict_single: batch dim-க்கு unsqueeze(0), probs-க்கு F.softmax(output, dim=1)",
-          "torch.topk(probs, 3) top-3 மதிப்புகள் மற்றும் indices திருப்பி அனுப்புகிறது"
+          "top_k_predictions: probs = softmax(logits); best = np.argsort(probs)[::-1][:k]; பிறகு [(class_names[i], float(probs[i])) for i in best] திருப்புங்கள்",
+          "confusion_matrix: cm = np.zeros((num_classes, num_classes), dtype=int); for t, p in zip(y_true, y_pred): cm[t][p] += 1",
+          "version_name: f'{model_name}_v{when:%Y%m%d_%H%M%S}.npz' - f-strings-க்குள் datetime strftime codes வேலை செய்யும்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\nfrom datetime import datetime\n_lg = np.array([1.0, 3.0, 0.5, 2.0])\n_top = top_k_predictions(_lg, [\"a\", \"b\", \"c\", \"d\"], k=3)\nassert isinstance(_top, list) and len(_top) == 3, \"top_k_predictions must return a list of k (name, probability) pairs\"\nassert [n for n, _ in _top] == [\"b\", \"d\", \"a\"], \"classes must be ordered from most to least likely\"\n_pr = np.exp(_lg) / np.exp(_lg).sum()\nassert np.allclose([p for _, p in _top], [_pr[1], _pr[3], _pr[0]]), \"the confidences must be softmax probabilities\"\nassert len(top_k_predictions(_lg, [\"a\", \"b\", \"c\", \"d\"], k=1)) == 1, \"use the k argument\"\n_cm = confusion_matrix([0, 1, 1, 2], [0, 1, 0, 2], 3)\nassert _cm is not None and np.array_equal(_cm, [[1, 0, 0], [1, 1, 0], [0, 0, 1]]), \"cm[t][p] must count true class t predicted as p\"\nassert version_name(\"fashion_cnn\", datetime(2026, 11, 3, 14, 25, 0)) == \"fashion_cnn_v20261103_142500.npz\", \"version_name must be <model>_v<YYYYmmdd_HHMMSS>.npz\"\nassert version_name(\"m\", datetime(2025, 1, 2, 3, 4, 5)) == \"m_v20250102_030405.npz\", \"zero-pad every part of the timestamp\"\nprint(\"All project tests passed!\")\n"
     }
   ],
   "quiz": [

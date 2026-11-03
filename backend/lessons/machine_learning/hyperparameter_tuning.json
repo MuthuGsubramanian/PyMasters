@@ -276,11 +276,11 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Use GridSearchCV to tune an SVC on the breast cancer dataset. Search over kernel=['linear','rbf'], C=[0.1,1,10], gamma=['scale','auto']. Print the best parameters and score.",
-        "ta": "மார்பக புற்றுநோய் தரவுத்தொகுப்பில் SVC ஐ டியூன் செய்ய GridSearchCV பயன்படுத்துங்கள். kernel, C, gamma மீது தேடி சிறந்த அளவுருக்கள் மற்றும் மதிப்பெண்ணை அச்சிடுங்கள்."
+        "en": "Use GridSearchCV (5-fold, accuracy) to tune an SVC on the standardized breast cancer dataset. Search over kernel=['linear','rbf'], C=[0.1,1,10], gamma=['scale','auto'], store the fitted search in `grid`, and print the best parameters, the best CV score and the number of combinations tested (12). Your best score may differ slightly from the sample output; the checker tests the fitted `grid`.",
+        "ta": "தரநிலைப்படுத்தப்பட்ட மார்பகப் புற்றுநோய் (breast cancer) தரவுத்தொகுப்பில் SVC-ஐ டியூன் செய்ய GridSearchCV (5-fold, accuracy) பயன்படுத்துங்கள். kernel=['linear','rbf'], C=[0.1,1,10], gamma=['scale','auto'] மீது தேடி, பொருத்தப்பட்ட தேடலை `grid`-இல் சேமித்து, சிறந்த அளவுருக்கள், சிறந்த CV மதிப்பெண், சோதிக்கப்பட்ட சேர்க்கைகளின் எண்ணிக்கை (12) ஆகியவற்றை அச்சிடுங்கள். உங்கள் சிறந்த மதிப்பெண் மாதிரி வெளியீட்டிலிருந்து சற்று வேறுபடலாம்; சரிபார்ப்பான் பொருத்தப்பட்ட `grid`-ஐச் சோதிக்கும்."
       },
-      "starter_code": "from sklearn.model_selection import GridSearchCV\nfrom sklearn.svm import SVC\nfrom sklearn.datasets import load_breast_cancer\nfrom sklearn.preprocessing import StandardScaler\n\nX, y = load_breast_cancer(return_X_y=True)\nX_scaled = StandardScaler().fit_transform(X)\n\nparam_grid = {\n    'kernel': ['linear', 'rbf'],\n    'C': [0.1, 1, 10],\n    'gamma': ['scale', 'auto']\n}\n\ngrid = GridSearchCV(\n    SVC(random_state=42), param_grid, cv=5, scoring='accuracy', n_jobs=-1\n)\ngrid.fit(___, ___)\n\nprint(f'Best params: {grid.___}')\nprint(f'Best CV score: {grid.___:.3f}')\nprint(f'Total combinations tested: {len(grid.cv_results_[\"params\"])}')",
-      "expected_output": "Best params: {'C': 10, 'gamma': 'scale', 'kernel': 'rbf'}\nBest CV score: 0.979\nTotal combinations tested: 12",
+      "starter_code": "from sklearn.model_selection import GridSearchCV\nfrom sklearn.svm import SVC\nfrom sklearn.datasets import load_breast_cancer\nfrom sklearn.preprocessing import StandardScaler\n\nX, y = load_breast_cancer(return_X_y=True)\nX_scaled = StandardScaler().fit_transform(X)\n\nparam_grid = {\n    'kernel': ['linear', 'rbf'],\n    'C': [0.1, 1, 10],\n    'gamma': ['scale', 'auto']\n}\n\ngrid = GridSearchCV(\n    SVC(random_state=42), param_grid, cv=5, scoring='accuracy'\n)\ngrid.fit(___, ___)\n\nprint(f'Best params: {grid.___}')\nprint(f'Best CV score: {grid.___:.3f}')\nprint(f'Total combinations tested: {len(grid.cv_results_[\"params\"])}')",
+      "expected_output": "Best params: {'C': 10, 'gamma': 'scale', 'kernel': 'rbf'}\nBest CV score: 0.977\nTotal combinations tested: 12",
       "hints": {
         "en": [
           "grid.fit(X_scaled, y) — use scaled features",
@@ -292,7 +292,8 @@
           "சிறந்த அளவுருக்களுக்கு grid.best_params_",
           "சிறந்த CV மதிப்பெண்ணுக்கு grid.best_score_"
         ]
-      }
+      },
+      "test_code": "from sklearn.model_selection import GridSearchCV as _GS\nfrom sklearn.svm import SVC as _SVC\nassert isinstance(grid, _GS) and hasattr(grid, 'best_params_'), 'grid must be a fitted GridSearchCV (call grid.fit(X_scaled, y)).'\nassert isinstance(grid.estimator, _SVC), 'grid must tune an SVC.'\nassert len(grid.cv_results_['params']) == 12, 'Search all 12 combinations: kernel x C x gamma = 2 x 3 x 2.'\n_seen = {(p.get('kernel'), p.get('C'), p.get('gamma')) for p in grid.cv_results_['params']}\n_want = {(k, c, g) for k in ('linear', 'rbf') for c in (0.1, 1, 10) for g in ('scale', 'auto')}\nassert _seen == _want, \"Use exactly kernel=['linear','rbf'], C=[0.1, 1, 10], gamma=['scale','auto'].\"\nassert 0.9 <= grid.best_score_ <= 1.0, 'The best CV accuracy should be above 0.9; fit the search on the scaled features.'\n"
     }
   ],
   "quiz": [

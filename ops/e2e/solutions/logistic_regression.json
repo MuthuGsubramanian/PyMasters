@@ -1,0 +1,11 @@
+{
+  "lesson_id": "logistic_regression",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import classification_report\n\nnp.random.seed(42)\nn = 200\nemail_length = np.random.randint(10, 500, n)\nexclamation_count = np.random.randint(0, 20, n)\nspam = ((email_length > 200) & (exclamation_count > 8)).astype(int)\n\nX = np.column_stack([email_length, exclamation_count])\ny = spam\n\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n\nmodel = LogisticRegression(random_state=42)\nmodel.fit(X_train, y_train)\n\ny_pred = model.predict(X_test)\ny_proba = model.predict_proba(X_test)[:, 1]\nprint(f'First 5 spam probabilities: {y_proba[:5].round(2)}')\nprint(classification_report(y_test, y_pred))\n",
+      "verified_output": "First 5 spam probabilities: [0.15 1.   0.8  0.71 0.01]\n              precision    recall  f1-score   support\n\n           0       0.96      0.87      0.92        31\n           1       0.67      0.89      0.76         9\n\n    accuracy                           0.88        40\n   macro avg       0.82      0.88      0.84        40\nweighted avg       0.90      0.88      0.88        40",
+      "source": "hand-verified 2026-11-03 (content fix)"
+    }
+  ]
+}

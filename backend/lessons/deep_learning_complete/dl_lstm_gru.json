@@ -297,23 +297,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Build a bidirectional LSTM that predicts the next value in a sine wave. Generate a sine wave sequence, use windows of 20 steps to predict the 21st value. Compare LSTM vs GRU performance.",
-        "ta": "சைன் அலையில் அடுத்த மதிப்பை கணிக்கும் bidirectional LSTM உருவாக்குங்கள். LSTM vs GRU செயல்திறனை ஒப்பிடுங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Write one LSTM time step and run it over a sequence. `lstm_cell(x, h_prev, c_prev, W, U, b)`: compute z = x @ W + h_prev @ U + b and split it into 4 equal parts in PyTorch's gate order i, f, g, o; i, f and o go through sigmoid, g through tanh; then c = f * c_prev + i * g and h = o * tanh(c); return (h, c). `run_lstm(sequence, W, U, b)` starts with h and c as zeros (size = U.shape[0]), applies lstm_cell to every time step and returns the final (h, c). The forget gate f is what lets the cell state remember across many steps.",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. ஒரு LSTM time step-ஐ எழுதி அதை ஒரு sequence மீது இயக்குங்கள். `lstm_cell(x, h_prev, c_prev, W, U, b)`: z = x @ W + h_prev @ U + b கணக்கிட்டு, அதை PyTorch-இன் gate வரிசையில் i, f, g, o என 4 சம பகுதிகளாகப் பிரியுங்கள்; i, f, o sigmoid வழியாகவும், g tanh வழியாகவும் செல்லும்; பிறகு c = f * c_prev + i * g, h = o * tanh(c); (h, c) திருப்புங்கள். `run_lstm(sequence, W, U, b)` h, c இரண்டையும் பூஜ்யங்களாகத் (அளவு = U.shape[0]) தொடங்கி, ஒவ்வொரு time step-க்கும் lstm_cell-ஐப் பயன்படுத்தி இறுதி (h, c)-ஐத் திருப்புகிறது. Forget gate f தான் cell state பல steps முழுவதும் நினைவில் வைத்திருக்க உதவுகிறது."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\nimport math\n\n# Generate sine wave data\nt = torch.linspace(0, 8*math.pi, 1000)\nsine = torch.sin(t)\n\n# Create windows: input=20 steps, target=21st step\ndef make_sequences(data, window=20):\n    X, y = [], []\n    for i in range(len(data) - window):\n        X.append(data[i:i+window])\n        y.append(data[i+window])\n    return torch.stack(X).unsqueeze(-1), torch.stack(y).unsqueeze(-1)\n\nX, y = make_sequences(sine)\n\nclass SinePredictor(nn.Module):\n    def __init__(self, use_gru=False):\n        super().__init__()\n        # TODO: LSTM or GRU + Linear\n        pass\n    def forward(self, x):\n        pass\n\n# TODO: Train both LSTM and GRU versions, compare MSE\n",
-      "expected_output": "LSTM MSE: 0.001, GRU MSE: 0.002",
+      "starter_code": "import numpy as np\n\n\ndef sigmoid(x):\n    return 1 / (1 + np.exp(-x))\n\n\ndef lstm_cell(x, h_prev, c_prev, W, U, b):\n    # 1. z = x @ W + h_prev @ U + b\n    # 2. i, f, g, o = np.split(z, 4, axis=-1)   (PyTorch gate order)\n    # 3. sigmoid for i, f, o; tanh for g\n    # 4. c = f * c_prev + i * g;  h = o * tanh(c)\n    pass\n\n\ndef run_lstm(sequence, W, U, b):\n    # start from zero h and c, loop over the time steps, return the final (h, c)\n    pass\n\n\nrng = np.random.default_rng(0)\ninput_size, hidden_size = 1, 4\nW = rng.standard_normal((input_size, 4 * hidden_size)) * 0.5\nU = rng.standard_normal((hidden_size, 4 * hidden_size)) * 0.5\nb = np.zeros(4 * hidden_size)\n\nsequence = np.sin(np.linspace(0, 3, 10)).reshape(10, 1)   # a short sine wave, one value per step\nresult = run_lstm(sequence, W, U, b)\nif result is None:\n    print(\"run_lstm() returned None\")\nelse:\n    h, c = result\n    print(\"final hidden state:\", np.round(h, 4))\n    print(\"final cell state:  \", np.round(c, 4))\n",
+      "expected_output": "final hidden state: [-0.0112 -0.2004 -0.105  -0.0102]\nfinal cell state:   [-0.0244 -0.4037 -0.2619 -0.0236]",
       "hints": {
         "en": [
-          "LSTM: nn.LSTM(1, 32, batch_first=True)",
-          "GRU: nn.GRU(1, 32, batch_first=True)",
-          "Use output[:, -1, :] (last time step) as input to Linear(32, 1)",
-          "MSELoss for regression, Adam optimizer"
+          "z = x @ W + h_prev @ U + b, then i, f, g, o = np.split(z, 4, axis=-1)",
+          "i, f, o = sigmoid(i), sigmoid(f), sigmoid(o) and g = np.tanh(g)",
+          "c = f * c_prev + i * g; h = o * np.tanh(c); return h, c",
+          "run_lstm: h = np.zeros(U.shape[0]); c = np.zeros(U.shape[0]); for x_t in sequence: h, c = lstm_cell(x_t, h, c, W, U, b)"
         ],
         "ta": [
-          "கடைசி நேர படியை பயன்படுத்துங்கள்: output[:, -1, :]",
-          "MSELoss regression-க்கு, Adam optimizer"
+          "z = x @ W + h_prev @ U + b, பிறகு i, f, g, o = np.split(z, 4, axis=-1)",
+          "i, f, o = sigmoid(i), sigmoid(f), sigmoid(o) மற்றும் g = np.tanh(g)",
+          "c = f * c_prev + i * g; h = o * np.tanh(c); h, c திருப்புங்கள்",
+          "run_lstm: h = np.zeros(U.shape[0]); c = np.zeros(U.shape[0]); for x_t in sequence: h, c = lstm_cell(x_t, h, c, W, U, b)"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n\n\ndef _sig(v):\n    return 1 / (1 + np.exp(-v))\n\n\ndef _ref_cell(x, h, c, W, U, b):\n    z = x @ W + h @ U + b\n    H = h.shape[-1]\n    i, f, g, o = _sig(z[..., :H]), _sig(z[..., H:2*H]), np.tanh(z[..., 2*H:3*H]), _sig(z[..., 3*H:])\n    c2 = f * c + i * g\n    return o * np.tanh(c2), c2\n\n\n_rng = np.random.default_rng(11)\n_W = _rng.standard_normal((2, 12)); _U = _rng.standard_normal((3, 12)); _b = _rng.standard_normal(12)\n_x = _rng.standard_normal(2); _h = _rng.standard_normal(3); _c = _rng.standard_normal(3)\n_out = lstm_cell(_x, _h, _c, _W, _U, _b)\nassert isinstance(_out, tuple) and len(_out) == 2, \"lstm_cell must return (h, c)\"\n_rh, _rc = _ref_cell(_x, _h, _c, _W, _U, _b)\nassert np.allclose(_out[1], _rc), \"cell state must be c = f * c_prev + i * g (gate order i, f, g, o)\"\nassert np.allclose(_out[0], _rh), \"hidden state must be h = o * tanh(c)\"\n_bias = np.zeros(12); _bias[0:3] = -20; _bias[3:6] = 20; _bias[9:12] = 20\n_h2, _c2 = lstm_cell(np.zeros(2), np.zeros(3), _c, np.zeros((2, 12)), np.zeros((3, 12)), _bias)\nassert np.allclose(_c2, _c, atol=1e-6), \"with the forget gate open (f=1) and input gate shut (i=0) the cell state must be kept unchanged\"\n_seq = _rng.standard_normal((5, 2))\n_res = run_lstm(_seq, _W, _U, _b)\nassert isinstance(_res, tuple) and len(_res) == 2, \"run_lstm must return the final (h, c)\"\n_eh, _ec = np.zeros(3), np.zeros(3)\nfor _xt in _seq:\n    _eh, _ec = _ref_cell(_xt, _eh, _ec, _W, _U, _b)\nassert np.allclose(_res[0], _eh) and np.allclose(_res[1], _ec), \"run_lstm must start from zeros and apply lstm_cell to every time step in order\"\nprint(\"All LSTM tests passed!\")\n"
     }
   ],
   "quiz": [

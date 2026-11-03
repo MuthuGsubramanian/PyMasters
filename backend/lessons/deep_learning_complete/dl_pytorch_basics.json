@@ -301,21 +301,24 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Build a complete nn.Module that classifies IRIS-like data (4 features, 3 classes). Include batch normalization, dropout, and use nn.Sequential for part of the architecture. Count total parameters.",
-        "ta": "IRIS போன்ற தரவை வகைப்படுத்தும் முழுமையான nn.Module உருவாக்குங்கள் (4 அம்சங்கள், 3 வகுப்புகள்)."
+        "en": "PyTorch cannot run in this sandbox, so build the same IrisClassifier in numpy, the way nn.Linear, nn.BatchNorm1d and nn.ReLU compute it. Write linear(x, W, b) (x @ W + b), batch_norm(x, gamma, beta) (normalise each feature with the batch mean and variance, eps=1e-5, then scale by gamma and shift by beta), relu(x), forward(X, params) for Linear(4,32) -> BatchNorm -> ReLU -> Linear(32,16) -> BatchNorm -> ReLU -> Linear(16,3) (dropout does nothing at inference, so it is skipped), and count_params(params) (the total number of numbers in all parameter arrays). For a batch of 10 flowers the output is (10, 3) and the network has 835 parameters.",
+        "ta": "இந்த sandbox இல் PyTorch இயங்காது; அதனால் அதே IrisClassifier ஐ numpy இல், nn.Linear, nn.BatchNorm1d, nn.ReLU கணக்கிடும் அதே முறையில் உருவாக்குங்கள். linear(x, W, b) (x @ W + b), batch_norm(x, gamma, beta) (ஒவ்வொரு feature ஐயும் batch சராசரி, variance கொண்டு normalise செய்து, eps=1e-5, பின் gamma ஆல் பெருக்கி beta ஐ கூட்டுங்கள்), relu(x), forward(X, params) — Linear(4,32) -> BatchNorm -> ReLU -> Linear(32,16) -> BatchNorm -> ReLU -> Linear(16,3) (inference இல் dropout எதுவும் செய்யாது, அதனால் தவிர்க்கப்படுகிறது), count_params(params) (அனைத்து parameter arrays இலும் உள்ள மொத்த எண்கள்) ஆகியவற்றை எழுதுங்கள். 10 பூக்களின் batch க்கு வெளியீடு (10, 3), network இல் 835 parameters உள்ளன."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\n\nclass IrisClassifier(nn.Module):\n    def __init__(self):\n        super().__init__()\n        # TODO: Build network with:\n        # Linear(4, 32) -> BatchNorm -> ReLU -> Dropout(0.2)\n        # Linear(32, 16) -> BatchNorm -> ReLU -> Dropout(0.2)\n        # Linear(16, 3)\n        pass\n    \n    def forward(self, x):\n        # TODO: Forward pass\n        pass\n\nmodel = IrisClassifier()\n\n# Test with random input\nX = torch.randn(10, 4)\noutput = model(X)\nprint(f'Output shape: {output.shape}')  # should be [10, 3]\nprint(f'Total parameters: {sum(p.numel() for p in model.parameters())}')\n",
-      "expected_output": "Output shape: torch.Size([10, 3])\nTotal parameters: 787",
+      "starter_code": "import numpy as np\n\nrng = np.random.default_rng(0)\n\n\ndef make_params(rng):\n    # Shapes match nn.Linear(4, 32), nn.BatchNorm1d(32), nn.Linear(32, 16), nn.BatchNorm1d(16), nn.Linear(16, 3)\n    return {\n        'W1': rng.standard_normal((4, 32)) * 0.5, 'b1': np.zeros(32),\n        'g1': np.ones(32), 'be1': np.zeros(32),\n        'W2': rng.standard_normal((32, 16)) * 0.5, 'b2': np.zeros(16),\n        'g2': np.ones(16), 'be2': np.zeros(16),\n        'W3': rng.standard_normal((16, 3)) * 0.5, 'b3': np.zeros(3),\n    }\n\n\ndef linear(x, W, b):\n    # TODO: x @ W + b\n    pass\n\n\ndef batch_norm(x, gamma, beta, eps=1e-5):\n    # TODO: per-feature (axis=0) mean and variance of the batch, normalise, then gamma * x_hat + beta\n    pass\n\n\ndef relu(x):\n    # TODO\n    pass\n\n\ndef forward(X, p):\n    # TODO: Linear -> BatchNorm -> ReLU -> Linear -> BatchNorm -> ReLU -> Linear\n    pass\n\n\ndef count_params(p):\n    # TODO: total number of values across all parameter arrays\n    pass\n\n\nparams = make_params(rng)\nX = rng.standard_normal((10, 4))\noutput = forward(X, params)\nprint(f'Output shape: {output.shape}')\nprint(f'Total parameters: {count_params(params)}')\n",
+      "expected_output": "Output shape: (10, 3)\nTotal parameters: 835",
+      "test_code": "import numpy as np\n_rng = np.random.default_rng(7)\n_x = _rng.standard_normal((6, 5))\n_W = _rng.standard_normal((5, 2)); _b = _rng.standard_normal(2)\nassert np.allclose(linear(_x, _W, _b), _x @ _W + _b), 'linear must return x @ W + b'\n_bn = batch_norm(_x * 3 + 7, np.ones(5), np.zeros(5))\nassert np.allclose(_bn.mean(axis=0), 0, atol=1e-6), 'batch_norm must centre each feature (column) on 0'\nassert np.allclose(_bn.std(axis=0), 1, atol=1e-3), 'batch_norm must scale each feature to unit variance'\n_bn2 = batch_norm(_x, np.full(5, 2.0), np.full(5, 1.0))\nassert np.allclose(_bn2.mean(axis=0), 1, atol=1e-6) and np.allclose(_bn2.std(axis=0), 2, atol=1e-3), 'apply gamma (scale) and beta (shift) after normalising'\nassert np.array_equal(relu(np.array([-2.0, 0.0, 3.0])), np.array([0.0, 0.0, 3.0])), 'relu must zero the negatives'\n_p = make_params(np.random.default_rng(1))\n_out = forward(np.random.default_rng(2).standard_normal((10, 4)), _p)\nassert getattr(_out, 'shape', None) == (10, 3), 'forward must return one row of 3 class scores per flower'\n_h = relu(batch_norm(linear(np.random.default_rng(2).standard_normal((10, 4)), _p['W1'], _p['b1']), _p['g1'], _p['be1']))\n_h = relu(batch_norm(linear(_h, _p['W2'], _p['b2']), _p['g2'], _p['be2']))\nassert np.allclose(_out, linear(_h, _p['W3'], _p['b3'])), 'forward must apply the layers in the order Linear -> BatchNorm -> ReLU (twice) -> Linear'\nassert count_params(_p) == 835, 'count_params must add up the sizes of every parameter array (835 for this network)'\n",
       "hints": {
         "en": [
-          "Use nn.Sequential to chain layers together",
-          "nn.BatchNorm1d(32) normalizes the 32 features",
-          "Dropout goes after activation: Linear -> BatchNorm -> ReLU -> Dropout",
-          "No activation after the final Linear layer (CrossEntropyLoss handles softmax)"
+          "batch_norm: mu = x.mean(axis=0), var = x.var(axis=0), x_hat = (x - mu) / np.sqrt(var + eps)",
+          "Dropout only acts during training, so the inference forward pass skips it",
+          "No activation after the final Linear layer: the scores go to softmax/cross-entropy later",
+          "count_params: sum(a.size for a in p.values())"
         ],
         "ta": [
-          "அடுக்குகளை இணைக்க nn.Sequential பயன்படுத்துங்கள்",
-          "இறுதி Linear அடுக்குக்குப் பிறகு activation இல்லை"
+          "batch_norm: mu = x.mean(axis=0), var = x.var(axis=0), x_hat = (x - mu) / np.sqrt(var + eps)",
+          "Dropout பயிற்சியின்போது மட்டுமே செயல்படுகிறது; அதனால் inference forward pass அதைத் தவிர்க்கிறது",
+          "இறுதி Linear அடுக்குக்குப் பிறகு activation இல்லை: scores பின்னர் softmax/cross-entropy க்குச் செல்கின்றன",
+          "count_params: sum(a.size for a in p.values())"
         ]
       }
     }

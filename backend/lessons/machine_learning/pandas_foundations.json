@@ -270,11 +270,11 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create a DataFrame of 5 students with columns 'name', 'math_score', and 'science_score'. Filter students who scored above 80 in math, add a column 'total' that sums both scores, and print the result sorted by total descending.",
-        "ta": "5 மாணவர்களின் DataFrame-ஐ 'name', 'math_score', 'science_score' நெடுவரிசைகளுடன் உருவாக்குங்கள். கணிதத்தில் 80-க்கு மேல் பெற்ற மாணவர்களை வடிகட்டி, இரு மதிப்பெண்களின் கூட்டுத்தொகையாக 'total' நெடுவரிசை சேர்த்து, மொத்தத்தின் இறங்கு வரிசையில் அச்சிடுங்கள்."
+        "en": "Create a DataFrame `df` of 5 students with columns 'name', 'math_score' and 'science_score'. Keep the students who scored above 80 in math, add a column 'total' that sums both scores, sort by total descending and store the final DataFrame in `result`, then print it. The checker tests `result` (its rows, the 'total' column and the order), so the column spacing in your printout doesn't matter.",
+        "ta": "'name', 'math_score', 'science_score' நெடுவரிசைகளுடன் 5 மாணவர்களின் DataFrame `df`-ஐ உருவாக்குங்கள். கணிதத்தில் 80-க்கு மேல் பெற்ற மாணவர்களை வடிகட்டி, இரு மதிப்பெண்களின் கூட்டுத்தொகையாக 'total' நெடுவரிசையைச் சேர்த்து, total-இன் இறங்கு வரிசையில் வரிசைப்படுத்தி, இறுதி DataFrame-ஐ `result`-இல் சேமித்து அச்சிடுங்கள். சரிபார்ப்பான் `result`-ஐ (அதன் வரிசைகள், 'total' நெடுவரிசை, வரிசை முறை) சோதிக்கும், எனவே அச்சில் உள்ள நெடுவரிசை இடைவெளிகள் முக்கியமல்ல."
       },
       "starter_code": "import pandas as pd\n\ndf = pd.DataFrame({\n    'name': ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'],\n    'math_score': [85, 72, 91, 68, 95],\n    'science_score': [78, 88, 82, 75, 90]\n})\n\n# Filter math > 80\nhigh_math = df[df[___] > ___]\n\n# Add total column\nhigh_math = high_math.copy()\nhigh_math['total'] = high_math[___] + high_math[___]\n\n# Sort by total descending\nresult = high_math.sort_values(___, ascending=___)\nprint(result)",
-      "expected_output": "    name  math_score  science_score  total\n4    Eve          95             90    185\n2  Charlie       91             82    173\n0   Alice        85             78    163",
+      "expected_output": "name  math_score  science_score  total\n4      Eve          95             90    185\n2  Charlie          91             82    173\n0    Alice          85             78    163",
       "hints": {
         "en": [
           "Filter with df[df['math_score'] > 80]",
@@ -286,7 +286,8 @@
           "high_math['math_score'] + high_math['science_score'] மூலம் நெடுவரிசை சேர்க்கவும்",
           "sort_values('total', ascending=False) மூலம் வரிசைப்படுத்துங்கள்"
         ]
-      }
+      },
+      "test_code": "import pandas as pd\nassert isinstance(df, pd.DataFrame) and len(df) == 5, 'df must be a DataFrame with 5 students.'\nassert isinstance(result, pd.DataFrame), 'Store the final sorted DataFrame in result.'\nfor _c in ('name', 'math_score', 'science_score', 'total'):\n    assert _c in result.columns, f\"result must have a '{_c}' column.\"\nassert sorted(result['name']) == sorted(df[df['math_score'] > 80]['name']), 'result must contain exactly the students with math_score above 80.'\nassert (result['total'] == result['math_score'] + result['science_score']).all(), 'total must be math_score + science_score.'\nassert list(result['total']) == sorted(result['total'], reverse=True), 'Sort result by total, highest first (ascending=False).'\n"
     }
   ],
   "quiz": [

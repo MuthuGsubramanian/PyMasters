@@ -327,23 +327,24 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Install tiktoken (pip install tiktoken) and write a function that takes a string and returns a dictionary with: token_count, tokens (list of subword strings), and estimated_cost based on $0.15 per million tokens. Test it with 'Python is the best programming language for AI development.'",
-        "ta": "tiktoken நிறுவி, ஒரு சரத்தை எடுத்து token_count, tokens (subword strings பட்டியல்), மற்றும் estimated_cost ஆகியவற்றைக் கொண்ட அகராதியை திருப்பி அளிக்கும் செயல்பாட்டை எழுதுங்கள்."
+        "en": "See how an LLM reads text as tokens. tiktoken cannot be installed in this offline sandbox, so the starter code gives you `ToyTokenizer`, a tiny tokenizer with the same `encode(text) -> ids` and `decode(ids) -> text` methods. Complete `analyze_tokens(text, tokenizer, price_per_million=0.15)` so it returns a dict with \"token_count\" (number of ids), \"tokens\" (each id decoded on its own, as a list of strings) and \"estimated_cost\" (token_count * price_per_million / 1,000,000).",
+        "ta": "ஒரு LLM text-ஐ tokens ஆக எப்படிப் படிக்கிறது என்று பாருங்கள். இந்த offline sandbox-ல் tiktoken-ஐ install செய்ய முடியாது, எனவே starter code-ல் அதே `encode(text) -> ids`, `decode(ids) -> text` methods கொண்ட சிறிய tokenizer ஆன `ToyTokenizer` உள்ளது. `analyze_tokens(text, tokenizer, price_per_million=0.15)`-ஐ நிறைவு செய்யுங்கள்: \"token_count\" (ids எண்ணிக்கை), \"tokens\" (ஒவ்வொரு id-ஐயும் தனியாக decode செய்த strings list), \"estimated_cost\" (token_count * price_per_million / 1,000,000) கொண்ட dict-ஐத் திருப்ப வேண்டும்."
       },
-      "starter_code": "import tiktoken\n\ndef analyze_tokens(text, model='gpt-4o'):\n    encoder = tiktoken.encoding_for_model(model)\n    # Your code here: encode, decode each token, calculate cost\n    pass\n\nresult = analyze_tokens('Python is the best programming language for AI development.')\nprint(f\"Token count: {result['token_count']}\")\nprint(f\"Tokens: {result['tokens']}\")\nprint(f\"Estimated cost: ${result['estimated_cost']:.8f}\")",
-      "expected_output": "Token count: 9\nTokens: ['Python', ' is', ' the', ' best', ' programming', ' language', ' for', ' AI', ' development', '.']\nEstimated cost: $0.00000150",
+      "starter_code": "# tiktoken needs to be installed and downloads its vocabulary, which this sandbox\n# cannot do. ToyTokenizer works the same way on a small scale: it splits text into\n# subword tokens by greedy longest match over a fixed vocabulary, and every token has\n# an integer id. Unknown words fall back to single characters.\nclass ToyTokenizer:\n    PIECES = [\"Python\", \" is\", \" the\", \" best\", \" programming\", \" program\", \"ming\", \" language\",\n              \" for\", \" AI\", \" development\", \" develop\", \"ment\", \".\"]\n\n    def __init__(self):\n        self.vocab = self.PIECES + [chr(i) for i in range(32, 127)]\n        self.ids = {piece: i for i, piece in enumerate(self.vocab)}\n\n    def encode(self, text):\n        ids, i = [], 0\n        while i < len(text):\n            match = max((p for p in self.vocab if text.startswith(p, i)), key=len)\n            ids.append(self.ids[match])\n            i += len(match)\n        return ids\n\n    def decode(self, ids):\n        return \"\".join(self.vocab[i] for i in ids)\n\n\ndef analyze_tokens(text, tokenizer, price_per_million=0.15):\n    \"\"\"Return {\"token_count\": int, \"tokens\": [str, ...], \"estimated_cost\": float}.\"\"\"\n    # 1. ids = tokenizer.encode(text)\n    # 2. Decode every id on its own to see the subword pieces\n    # 3. Cost = number of tokens * price_per_million / 1_000_000\n    pass\n\n\nresult = analyze_tokens(\"Python is the best programming language for AI development.\", ToyTokenizer())\nif result is None:\n    print(\"analyze_tokens() returned None\")\nelse:\n    print(f\"Token count: {result['token_count']}\")\n    print(f\"Tokens: {result['tokens']}\")\n    print(f\"Estimated cost: ${result['estimated_cost']:.8f}\")\n",
+      "expected_output": "Token count: 10\nTokens: ['Python', ' is', ' the', ' best', ' programming', ' language', ' for', ' AI', ' development', '.']\nEstimated cost: $0.00000150",
       "hints": {
         "en": [
-          "Use encoder.encode(text) to get token IDs",
-          "Use encoder.decode([token_id]) for each token to get the text",
-          "Cost = (token_count / 1_000_000) * 0.15"
+          "ids = tokenizer.encode(text) gives the token ids",
+          "tokens = [tokenizer.decode([i]) for i in ids] shows the text piece behind every id",
+          "estimated_cost = len(ids) * price_per_million / 1_000_000"
         ],
         "ta": [
-          "token ID-களைப் பெற encoder.encode(text) பயன்படுத்துங்கள்",
-          "ஒவ்வொரு token-க்கும் encoder.decode([token_id]) பயன்படுத்துங்கள்",
-          "செலவு = (token_count / 1_000_000) * 0.15"
+          "ids = tokenizer.encode(text) token ids-ஐத் தருகிறது",
+          "tokens = [tokenizer.decode([i]) for i in ids] ஒவ்வொரு id-க்கும் பின்னால் உள்ள text பகுதியைக் காட்டுகிறது",
+          "estimated_cost = len(ids) * price_per_million / 1_000_000"
         ]
-      }
+      },
+      "test_code": "_tk = ToyTokenizer()\n_r = analyze_tokens(\"Python is the best programming language for AI development.\", _tk)\nassert isinstance(_r, dict), \"analyze_tokens must return a dict\"\nassert _r.get(\"token_count\") == 10, \"the sentence has 10 tokens\"\nassert _r.get(\"tokens\") == [\"Python\", \" is\", \" the\", \" best\", \" programming\", \" language\", \" for\", \" AI\", \" development\", \".\"], \"tokens must be each id decoded on its own: \" + repr(_r.get(\"tokens\"))\nassert abs(_r.get(\"estimated_cost\", 0) - 10 * 0.15 / 1_000_000) < 1e-15, \"estimated_cost must be token_count * 0.15 / 1,000,000\"\n_r2 = analyze_tokens(\"Rust is\", _tk, price_per_million=2.0)\nassert _r2[\"tokens\"] == [\"R\", \"u\", \"s\", \"t\", \" is\"], \"unknown words split into single characters\"\nassert _r2[\"token_count\"] == 5 and abs(_r2[\"estimated_cost\"] - 5 * 2.0 / 1_000_000) < 1e-15, \"analyze_tokens must use the price_per_million argument\"\nassert \"\".join(_r2[\"tokens\"]) == \"Rust is\", \"joining the tokens must give back the original text\"\nprint(\"All tokenizer tests passed!\")\n"
     }
   ],
   "quiz": [

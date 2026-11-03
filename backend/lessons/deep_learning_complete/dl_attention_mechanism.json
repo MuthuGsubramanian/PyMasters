@@ -391,23 +391,26 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Implement self-attention from scratch (no nn.MultiheadAttention) and visualize the attention weights as a heatmap for the sentence 'the cat sat on the mat'. Show which words attend to which.",
-        "ta": "Self-attention-ஐ scratch-லிருந்து செயல்படுத்தி, 'the cat sat on the mat' வாக்கியத்திற்கான attention weights-ஐ காட்சிப்படுத்துங்கள்."
+        "en": "PyTorch cannot run in this sandbox, so this is the numpy version of what PyTorch does under the hood. Implement self-attention from scratch. `softmax(x, axis=-1)` must be numerically stable (subtract the max). `scaled_dot_product_attention(Q, K, V, mask=None)` computes scores = Q @ K.T / sqrt(d_k) (d_k = K.shape[-1]); where a boolean `mask` is False, set the score to -1e9 so it gets no attention; weights = softmax(scores) over the last axis; return (weights @ V, weights). `self_attention(X, Wq, Wk, Wv)` projects X into Q = X @ Wq, K = X @ Wk, V = X @ Wv and calls it. The program prints the 6x6 attention weights for 'the cat sat on the mat' and which word each word attends to most.",
+        "ta": "இந்த sandbox-ல் PyTorch இயங்காது, எனவே இது PyTorch உள்ளே செய்வதன் numpy பதிப்பு. Self-attention-ஐ புதிதாக எழுதுங்கள். `softmax(x, axis=-1)` எண்ணியல் ரீதியாக நிலையானதாக இருக்க வேண்டும் (max-ஐக் கழியுங்கள்). `scaled_dot_product_attention(Q, K, V, mask=None)` scores = Q @ K.T / sqrt(d_k) (d_k = K.shape[-1]) கணக்கிடுகிறது; boolean `mask` False ஆக உள்ள இடங்களில் score-ஐ -1e9 ஆக்குங்கள், அப்போது அவற்றுக்கு attention கிடைக்காது; weights = கடைசி axis மீது softmax(scores); (weights @ V, weights) திருப்புங்கள். `self_attention(X, Wq, Wk, Wv)` X-ஐ Q = X @ Wq, K = X @ Wk, V = X @ Wv என project செய்து அதை அழைக்கிறது. 'the cat sat on the mat'-க்கான 6x6 attention weights-ஐயும், ஒவ்வொரு சொல்லும் அதிகம் கவனிக்கும் சொல்லையும் program அச்சிடுகிறது."
       },
-      "starter_code": "import torch\nimport torch.nn as nn\nimport torch.nn.functional as F\nimport math\n\n# Simple word embeddings\nwords = ['the', 'cat', 'sat', 'on', 'the', 'mat']\nvocab = {w: i for i, w in enumerate(set(words))}\nembed = nn.Embedding(len(vocab), 16)\n\n# Encode sentence\nindices = torch.tensor([vocab[w] for w in words]).unsqueeze(0)\nx = embed(indices)  # [1, 6, 16]\n\n# TODO: Implement self-attention (Q, K, V projections)\n# TODO: Compute attention weights\n# TODO: Print attention matrix showing which words attend to which\n",
-      "expected_output": "Attention from 'cat': the=0.12, cat=0.25, sat=0.18, on=0.15, the=0.12, mat=0.18",
+      "starter_code": "import numpy as np\n\n\ndef softmax(x, axis=-1):\n    # subtract the max along axis, exponentiate, divide by the sum along axis\n    pass\n\n\ndef scaled_dot_product_attention(Q, K, V, mask=None):\n    # scores = Q @ K.T / sqrt(d_k); masked positions -> -1e9; softmax; return (weights @ V, weights)\n    pass\n\n\ndef self_attention(X, Wq, Wk, Wv):\n    # project X into queries, keys and values, then attend\n    pass\n\n\nwords = [\"the\", \"cat\", \"sat\", \"on\", \"the\", \"mat\"]\nrng = np.random.default_rng(0)\nX = rng.standard_normal((6, 4))                        # one 4-d embedding per word\nWq, Wk, Wv = (rng.standard_normal((4, 4)) * 0.5 for _ in range(3))\nresult = self_attention(X, Wq, Wk, Wv)\nif result is None:\n    print(\"self_attention() returned None\")\nelse:\n    out, weights = result\n    print(\"output shape:\", out.shape, \"weights shape:\", weights.shape)\n    print(np.round(weights, 2))\n    for i, word in enumerate(words):\n        print(f\"{word:>4} attends most to '{words[int(np.argmax(weights[i]))]}'\")\n",
+      "expected_output": "output shape: (6, 4) weights shape: (6, 6)\n[[0.18 0.18 0.14 0.13 0.16 0.2 ]\n [0.13 0.08 0.06 0.05 0.08 0.6 ]\n [0.16 0.13 0.09 0.15 0.1  0.37]\n [0.13 0.08 0.13 0.19 0.09 0.38]\n [0.12 0.07 0.05 0.06 0.06 0.64]\n [0.12 0.11 0.23 0.22 0.17 0.14]]\n the attends most to 'mat'\n cat attends most to 'mat'\n sat attends most to 'mat'\n  on attends most to 'mat'\n the attends most to 'mat'\n mat attends most to 'sat'",
       "hints": {
         "en": [
-          "W_q, W_k, W_v = nn.Linear(16, 16) for each",
-          "scores = Q @ K.T / sqrt(16)",
-          "weights = F.softmax(scores, dim=-1)",
-          "Print weights[0] to see the 6x6 attention matrix"
+          "softmax: e = np.exp(x - np.max(x, axis=axis, keepdims=True)); return e / e.sum(axis=axis, keepdims=True)",
+          "scores = Q @ K.T / np.sqrt(K.shape[-1]); if mask is not None: scores = np.where(mask, scores, -1e9)",
+          "weights = softmax(scores, axis=-1); return weights @ V, weights",
+          "self_attention: return scaled_dot_product_attention(X @ Wq, X @ Wk, X @ Wv)"
         ],
         "ta": [
-          "ஒவ்வொன்றுக்கும் W_q, W_k, W_v = nn.Linear(16, 16)",
-          "6x6 attention matrix-ஐ பார்க்க weights[0] அச்சிடுங்கள்"
+          "softmax: e = np.exp(x - np.max(x, axis=axis, keepdims=True)); பிறகு e / e.sum(axis=axis, keepdims=True) திருப்புங்கள்",
+          "scores = Q @ K.T / np.sqrt(K.shape[-1]); mask None இல்லையெனில்: scores = np.where(mask, scores, -1e9)",
+          "weights = softmax(scores, axis=-1); பிறகு weights @ V, weights திருப்புங்கள்",
+          "self_attention: scaled_dot_product_attention(X @ Wq, X @ Wk, X @ Wv) திருப்புங்கள்"
         ]
-      }
+      },
+      "test_code": "import numpy as np\n_s = softmax(np.array([[1.0, 2.0, 3.0], [1000.0, 1000.0, 1000.0]]))\nassert _s is not None and np.allclose(_s.sum(axis=-1), 1.0), \"softmax rows must sum to 1\"\nassert np.allclose(_s[1], 1 / 3), \"softmax must stay stable for large values - subtract the max\"\n_rng = np.random.default_rng(2)\n_Q, _K, _V = _rng.standard_normal((3, 8)), _rng.standard_normal((5, 8)), _rng.standard_normal((5, 2))\n_res = scaled_dot_product_attention(_Q, _K, _V)\nassert isinstance(_res, tuple) and len(_res) == 2, \"scaled_dot_product_attention must return (output, weights)\"\n_out, _w = _res\nassert np.shape(_w) == (3, 5) and np.shape(_out) == (3, 2), \"weights must be (queries, keys) and output (queries, value_dim)\"\n_sc = _Q @ _K.T / np.sqrt(8)\n_ref = np.exp(_sc - _sc.max(axis=1, keepdims=True)); _ref /= _ref.sum(axis=1, keepdims=True)\nassert np.allclose(_w, _ref), \"weights must be softmax(Q @ K.T / sqrt(d_k)) - remember the sqrt(d_k) scaling\"\nassert np.allclose(_out, _ref @ _V), \"the output must be weights @ V\"\n_X = _rng.standard_normal((4, 3))\n_mask = np.tril(np.ones((4, 4), dtype=bool))\n_o2, _w2 = scaled_dot_product_attention(_X, _X, _X, mask=_mask)\nassert np.allclose(np.triu(_w2, k=1), 0.0) and np.allclose(_w2.sum(axis=1), 1.0), \"where the mask is False the weight must be 0 (and rows still sum to 1)\"\n_W = [_rng.standard_normal((3, 3)) for _ in range(3)]\n_sa = self_attention(_X, *_W)\nassert _sa is not None and np.allclose(_sa[0], scaled_dot_product_attention(_X @ _W[0], _X @ _W[1], _X @ _W[2])[0]), \"self_attention must use Q = X @ Wq, K = X @ Wk, V = X @ Wv\"\nprint(\"All attention tests passed!\")\n"
     }
   ],
   "quiz": [
