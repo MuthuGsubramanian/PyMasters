@@ -136,31 +136,46 @@ export default function Layout() {
     // more hooks than during the previous render", white-screening the app.
     const navItems = useMemo(() => {
         const items = [
-            { icon: LayoutDashboard, label: t('nav.overview', 'Overview'), path: '/dashboard', desc: t('nav.overview.desc', 'Your command center') },
-            { icon: Map, label: t('nav.evolution', 'Evolution'), path: '/dashboard/paths', desc: t('nav.evolution.desc', 'Your AI learning journey') },
-            { icon: Brain, label: t('nav.knowledge', 'Knowledge Map'), path: '/dashboard/knowledge', desc: t('nav.knowledge.desc', 'What you know, mapped live') },
-            { icon: GraduationCap, label: t('nav.classroom', 'Classroom'), path: '/dashboard/classroom', desc: t('nav.classroom.desc', 'AI-guided lessons') },
-            { icon: Sparkles, label: t('nav.playground', 'Playground'), path: '/dashboard/playground', desc: t('nav.playground.desc', 'Free-form chat') },
-            { icon: Gamepad2, label: t('nav.play', 'Play'), path: '/dashboard/play', desc: t('nav.play.desc', 'Learn while you play') },
-            { icon: TrendingUp, label: t('nav.trending', 'Trending'), path: '/dashboard/trending', desc: t('nav.trending.desc', 'AI & Python trends') },
-            { icon: Swords, label: t('nav.challenges', 'Challenges'), path: '/dashboard/challenges', desc: t('nav.challenges.desc', 'Weekly coding battles') },
-            { icon: BookOpen, label: t('nav.reference', 'Reference'), path: '/dashboard/reference', desc: t('nav.reference.desc', 'Quick cheat sheets') },
-            { icon: Lightbulb, label: t('nav.explains', 'Explains'), path: '/dashboard/explains', desc: t('nav.explains.desc', 'Visual concept essays') },
-            { icon: Trophy, label: t('nav.community', 'Community'), path: '/dashboard/community', desc: t('nav.community.desc', 'Rankings & members') },
-            { icon: CalendarClock, label: t('nav.live_tutor', 'Live Tutor'), path: '/dashboard/live-tutor', desc: t('nav.live_tutor.desc', 'Book a 1-on-1 session') },
+            { icon: LayoutDashboard, label: t('nav.overview', 'Overview'), path: '/dashboard', desc: t('nav.overview.desc', 'Your command center') , group: 'learn' },
+            { icon: Map, label: t('nav.evolution', 'Evolution'), path: '/dashboard/paths', desc: t('nav.evolution.desc', 'Your AI learning journey') , group: 'learn' },
+            { icon: Brain, label: t('nav.knowledge', 'Knowledge Map'), path: '/dashboard/knowledge', desc: t('nav.knowledge.desc', 'What you know, mapped live') , group: 'learn' },
+            { icon: GraduationCap, label: t('nav.classroom', 'Classroom'), path: '/dashboard/classroom', desc: t('nav.classroom.desc', 'AI-guided lessons') , group: 'learn' },
+            { icon: Sparkles, label: t('nav.playground', 'Playground'), path: '/dashboard/playground', desc: t('nav.playground.desc', 'Free-form chat') , group: 'learn' },
+            { icon: Gamepad2, label: t('nav.play', 'Play'), path: '/dashboard/play', desc: t('nav.play.desc', 'Learn while you play') , group: 'practice' },
+            { icon: TrendingUp, label: t('nav.trending', 'Trending'), path: '/dashboard/trending', desc: t('nav.trending.desc', 'AI & Python trends') , group: 'explore' },
+            { icon: Swords, label: t('nav.challenges', 'Challenges'), path: '/dashboard/challenges', desc: t('nav.challenges.desc', 'Weekly coding battles') , group: 'practice' },
+            { icon: BookOpen, label: t('nav.reference', 'Reference'), path: '/dashboard/reference', desc: t('nav.reference.desc', 'Quick cheat sheets') , group: 'explore' },
+            { icon: Lightbulb, label: t('nav.explains', 'Explains'), path: '/dashboard/explains', desc: t('nav.explains.desc', 'Visual concept essays') , group: 'explore' },
+            { icon: Trophy, label: t('nav.community', 'Community'), path: '/dashboard/community', desc: t('nav.community.desc', 'Rankings & members') , group: 'explore' },
+            { icon: CalendarClock, label: t('nav.live_tutor', 'Live Tutor'), path: '/dashboard/live-tutor', desc: t('nav.live_tutor.desc', 'Book a 1-on-1 session') , group: 'explore' },
         ];
         if (activeOrg) {
-            items.push({ icon: Swords, label: t('nav.compete', 'Compete'), path: '/dashboard/org-compete', desc: t('nav.compete.desc', 'Org challenges & leaderboard') });
+            items.push({ icon: Swords, label: t('nav.compete', 'Compete'), path: '/dashboard/org-compete', desc: t('nav.compete.desc', 'Org challenges & leaderboard') , group: 'practice' });
         }
-        if (activeOrg && (activeOrg.role === 'super_admin' || activeOrg.role === 'admin')) {
-            items.push({ icon: Building2, label: t('nav.org_admin', 'Admin Console'), path: '/dashboard/org', desc: t('nav.org_admin.desc', 'Members, invites & analytics') });
+        // Managers (the instructor role) open the console too: it grants them the learner and analytics tabs.
+        if (activeOrg && ['super_admin', 'admin', 'manager'].includes(activeOrg.role)) {
+            items.push({
+                icon: Building2,
+                label: t('nav.org_console', '{group} console').replace('{group}', audience.labels.group),
+                path: '/dashboard/org', desc: t('nav.org_admin.desc', 'Members, invites & analytics'), group: 'manage',
+            });
         }
         if (isSuper) {
-            items.push({ icon: Shield, label: t('nav.super_admin', 'Super Admin'), path: '/dashboard/admin', desc: t('nav.super_admin.desc', 'Platform monitoring & control') });
+            items.push({ icon: Shield, label: t('nav.super_admin', 'Super Admin'), path: '/dashboard/admin', desc: t('nav.super_admin.desc', 'Platform monitoring & control'), group: 'manage' });
         }
-        items.push({ icon: User, label: t('nav.profile', 'Profile'), path: '/dashboard/profile', desc: t('nav.profile.desc', 'Your settings') });
+        items.push({ icon: User, label: t('nav.profile', 'Profile'), path: '/dashboard/profile', desc: t('nav.profile.desc', 'Your settings') , group: 'account' });
         return items;
-    }, [activeOrg, isSuper, t]);
+    }, [activeOrg, isSuper, t, audience.labels.group]);
+
+    // Sidebar sections, in reading order; a section with no items (e.g. Manage for a learner) is not shown.
+    const navGroups = useMemo(() => [
+        ['manage', t('nav.group.manage', 'Manage')],
+        ['learn', t('nav.group.learn', 'Learn')],
+        ['practice', t('nav.group.practice', 'Practice')],
+        ['explore', t('nav.group.explore', 'Explore')],
+        ['account', t('nav.group.account', 'Account')],
+    ].map(([key, title]) => ({ key, title, items: navItems.filter((i) => i.group === key) }))
+        .filter((g) => g.items.length > 0), [navItems, t]);
 
     // All hooks above this line run unconditionally on every render.
     if (!user) return <Outlet />;
@@ -278,35 +293,44 @@ export default function Layout() {
                             <ChevronRight size={14} className={clsx("transition-transform", !collapsed && "rotate-180")} />
                         </button>
                     </div>
-                    {navItems.map((item) => {
-                        const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path + '/'));
-                        return (
-                            <button
-                                key={item.path}
-                                onClick={() => { navigate(item.path); setSidebarOpen(false); }}
-                                aria-current={isActive ? 'page' : undefined}
-                                title={item.desc}
-                                className={clsx(
-                                    "w-full flex items-center gap-2.5 py-1.5 rounded-lg text-sm transition-all duration-200 group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60",
-                                    collapsed ? "px-3 lg:px-0 lg:justify-center" : "px-3",
-                                    isActive
-                                        ? "bg-accent-subtle text-accent-primary font-semibold"
-                                        : "hover:bg-bg-elevated text-text-muted hover:text-text-secondary"
-                                )}
-                            >
-                                {isActive && (
-                                    <motion.div
-                                        layoutId="sidebar-active"
-                                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-gradient-primary shadow-[0_0_6px_rgba(124,58,237,0.5)]"
-                                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                                    />
-                                )}
-                                <item.icon size={16} className="transition-transform duration-200 group-hover:scale-110 shrink-0" />
-                                <span className={clsx("text-sm font-medium leading-tight", collapsed && "lg:hidden")}>{item.label}</span>
-                                {isActive && <ChevronRight size={13} className={clsx("text-accent-primary ml-auto", collapsed && "lg:hidden")} />}
-                            </button>
-                        );
-                    })}
+                    {navGroups.map((group, gi) => (
+                        <div key={group.key} role="group" aria-labelledby={`nav-group-${group.key}`} className={clsx(gi > 0 && "pt-2")}>
+                            <h2 id={`nav-group-${group.key}`}
+                                className={clsx("px-3 pt-1 pb-1 text-xs font-semibold uppercase tracking-wider text-text-muted", collapsed && "lg:sr-only")}>
+                                {group.title}
+                            </h2>
+                            {collapsed && gi > 0 && <div className="hidden lg:block mx-3 mb-1 border-t border-border-default" aria-hidden="true" />}
+                            {group.items.map((item) => {
+                                const isActive = location.pathname === item.path || (item.path !== '/dashboard' && location.pathname.startsWith(item.path + '/'));
+                                return (
+                                    <button
+                                        key={item.path}
+                                        onClick={() => { navigate(item.path); setSidebarOpen(false); }}
+                                        aria-current={isActive ? 'page' : undefined}
+                                        title={item.desc}
+                                        className={clsx(
+                                            "w-full flex items-center gap-2.5 py-1.5 rounded-lg text-sm transition-all duration-200 group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60",
+                                            collapsed ? "px-3 lg:px-0 lg:justify-center" : "px-3",
+                                            isActive
+                                                ? "bg-accent-subtle text-accent-primary font-semibold"
+                                                : "hover:bg-bg-elevated text-text-muted hover:text-text-secondary"
+                                        )}
+                                    >
+                                        {isActive && (
+                                            <motion.div
+                                                layoutId="sidebar-active"
+                                                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-gradient-primary shadow-[0_0_6px_rgba(124,58,237,0.5)]"
+                                                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                                            />
+                                        )}
+                                        <item.icon size={16} className="transition-transform duration-200 group-hover:scale-110 shrink-0" />
+                                        <span className={clsx("text-sm font-medium leading-tight", collapsed && "lg:hidden")}>{item.label}</span>
+                                        {isActive && <ChevronRight size={13} className={clsx("text-accent-primary ml-auto", collapsed && "lg:hidden")} />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    ))}
                 </nav>
 
                 {/* Footer */}
