@@ -226,15 +226,13 @@ function StatCard({ label, value, suffix, icon, accent, delay, children }) {
         >
             <Card
                 interactive
-                className="relative p-5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group overflow-hidden"
+                className="relative p-4 sm:p-5 transition-colors duration-200 hover:border-border-strong overflow-hidden"
             >
-                {/* Subtle glow on hover */}
-                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none bg-gradient-to-br from-accent-primary/10 to-transparent" />
-                <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-3">
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">{label}</span>
+                <div className="relative">
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                        <span className="text-xs font-semibold uppercase tracking-wider leading-tight text-text-secondary">{label}</span>
                         <div className={clsx(
-                            'w-10 h-10 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3',
+                            'w-9 h-9 shrink-0 rounded-xl flex items-center justify-center',
                             accent || 'bg-accent-subtle text-accent-primary',
                         )}>
                             {icon}
@@ -399,21 +397,14 @@ export function Overview() {
             {/* ─── Welcome Banner ────────────────────────────────────────── */}
             <motion.div variants={itemVariants}>
                 <Card className="relative overflow-hidden shadow-sm">
-                {/* Top gradient bar */}
-                <div className="h-1.5 bg-gradient-primary" />
-
-                {/* Background decoration */}
-                <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-cyan-200/10 via-blue-200/10 to-purple-200/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-purple-200/10 to-cyan-200/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4 pointer-events-none" />
-
-                <div className="relative z-10 p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="relative p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 text-xs text-text-secondary mb-2">
                             <Calendar size={12} />
                             <span>{formatDate()}</span>
                         </div>
                         <h1 className="text-2xl sm:text-3xl font-bold font-display text-text-primary mb-2">
-                            {getGreeting()}, <span className="text-gradient">{user.name || user.username}</span>!
+                            {getGreeting()}, {user.name || user.username}
                         </h1>
                         <p className="text-sm text-text-secondary italic max-w-lg">
                             &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-text-secondary">&mdash; {dailyQuote.author}</span>
@@ -427,27 +418,73 @@ export function Overview() {
                         transition={{ delay: 0.3, type: 'spring' }}
                         className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-orange-500/12 border border-orange-500/25 shadow-sm self-start"
                     >
-                        <div className="relative">
-                            <span className="text-2xl" role="img" aria-label="fire">&#x1F525;</span>
-                            {streak > 0 && (
-                                <motion.div
-                                    animate={{ scale: [1, 1.2, 1] }}
-                                    transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                                    className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-orange-400/40"
-                                />
-                            )}
-                        </div>
+                        <Flame size={24} aria-hidden="true" className="text-orange-600 dark:text-orange-300" />
                         <div>
                             <div className="text-xl font-bold font-display text-orange-600 dark:text-orange-300">{streak}</div>
-                            <div className="text-[10px] font-bold uppercase tracking-widest text-orange-700 dark:text-orange-400">day streak</div>
+                            <div className="text-xs font-bold uppercase tracking-wider text-orange-700 dark:text-orange-300">day streak</div>
                         </div>
                     </motion.div>
                 </div>
                 </Card>
             </motion.div>
 
+                {/* ─── Daily Recommendation Card ─────────────────────── */}
+                <motion.div variants={itemVariants}>
+                <Card interactive className="relative overflow-hidden shadow-sm group">
+                    <div className="relative p-6 sm:p-8">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-xl bg-accent-subtle flex items-center justify-center">
+                                <Lightbulb size={20} className="text-accent-primary" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-text-primary font-display">Today&apos;s Recommended Lesson</h3>
+                                <p className="text-xs text-text-muted">Personalized for your learning path</p>
+                            </div>
+                            {(recommendation?.trending) && (
+                                <Badge variant="danger" className="ml-auto px-2.5 py-1 uppercase tracking-wider">
+                                    <TrendingUp size={10} />
+                                    Trending
+                                </Badge>
+                            )}
+                        </div>
+
+                        {loading ? (
+                            <div className="space-y-3">
+                                <Skeleton className="h-6 w-3/4" />
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-2/3" />
+                            </div>
+                        ) : (
+                            <>
+                                <h4 className="text-xl font-bold text-text-primary font-display mb-2">
+                                    {recommendation?.title || recommendation?.recommended_lesson?.title || 'Continue in the Classroom'}
+                                </h4>
+                                <p className="text-sm text-text-secondary mb-3 leading-relaxed">
+                                    {recommendation?.description || 'Jump into hands-on lessons across every track in the Classroom.'}
+                                </p>
+                {recommendation?.reason && (
+                                    <div className="flex items-start gap-2 mb-5 p-3 rounded-xl bg-accent-subtle border border-accent-primary/20">
+                                        <Sparkles size={14} className="text-accent-primary mt-0.5 flex-shrink-0" />
+                                        <p className="text-xs text-text-secondary">{recommendation.reason}</p>
+                                    </div>
+                                )}
+                                <Button
+                                    variant="primary"
+                                    onClick={() => navigate(recommendation?.link || '/dashboard/classroom')}
+                                    className="py-2.5 text-sm group/btn"
+                                >
+                                    <Play size={14} />
+                                    Start Learning
+                                    <ArrowRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                </Card>
+                </motion.div>
+
             {/* ─── Stats Row ─────────────────────────────────────────────── */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <StatCard
                     label="Total XP"
                     icon={<Trophy size={20} />}
@@ -479,15 +516,6 @@ export function Overview() {
                     <div className="flex items-center gap-2">
                         <AnimatedNumber value={streak} />
                         <span className="text-text-muted text-lg">days</span>
-                        {streak > 0 && (
-                            <motion.span
-                                animate={{ y: [0, -3, 0] }}
-                                transition={{ repeat: Infinity, duration: 1.5 }}
-                                className="text-lg"
-                            >
-                                &#x1F525;
-                            </motion.span>
-                        )}
                     </div>
                 </StatCard>
                 <StatCard
@@ -507,63 +535,6 @@ export function Overview() {
                 {/* Left Column (2/3) */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Review queue moved to the top of the dashboard (F8). */}
-                    {/* ─── Daily Recommendation Card ─────────────────────── */}
-                    <motion.div variants={itemVariants}>
-                    <Card interactive className="relative overflow-hidden shadow-sm group hover:shadow-xl transition-all duration-500">
-                        <div className="h-1 bg-gradient-primary" />
-                        <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-bl from-cyan-100/20 to-transparent rounded-full blur-3xl pointer-events-none" />
-                        <div className="relative z-10 p-6 sm:p-8">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 rounded-xl bg-accent-subtle flex items-center justify-center">
-                                    <Lightbulb size={20} className="text-accent-primary" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-text-primary font-display">Today&apos;s Recommended Lesson</h3>
-                                    <p className="text-xs text-text-muted">Personalized for your learning path</p>
-                                </div>
-                                {(recommendation?.trending) && (
-                                    <Badge variant="danger" className="ml-auto px-2.5 py-1 uppercase tracking-wider">
-                                        <TrendingUp size={10} />
-                                        Trending
-                                    </Badge>
-                                )}
-                            </div>
-
-                            {loading ? (
-                                <div className="space-y-3">
-                                    <Skeleton className="h-6 w-3/4" />
-                                    <Skeleton className="h-4 w-full" />
-                                    <Skeleton className="h-4 w-2/3" />
-                                </div>
-                            ) : (
-                                <>
-                                    <h4 className="text-xl font-bold text-text-primary font-display mb-2">
-                                        {recommendation?.title || recommendation?.recommended_lesson?.title || 'Continue in the Classroom'}
-                                    </h4>
-                                    <p className="text-sm text-text-secondary mb-3 leading-relaxed">
-                                        {recommendation?.description || 'Jump into hands-on lessons across every track in the Classroom.'}
-                                    </p>
-                    {recommendation?.reason && (
-                                        <div className="flex items-start gap-2 mb-5 p-3 rounded-xl bg-accent-subtle border border-accent-primary/20">
-                                            <Sparkles size={14} className="text-accent-primary mt-0.5 flex-shrink-0" />
-                                            <p className="text-xs text-text-secondary">{recommendation.reason}</p>
-                                        </div>
-                                    )}
-                                    <Button
-                                        variant="primary"
-                                        onClick={() => navigate(recommendation?.link || '/dashboard/classroom')}
-                                        className="py-2.5 text-sm group/btn"
-                                    >
-                                        <Play size={14} />
-                                        Start Learning
-                                        <ArrowRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
-                                    </Button>
-                                </>
-                            )}
-                        </div>
-                    </Card>
-                    </motion.div>
-
                     {/* ─── Trending in AI/Python ──────────────────────────── */}
                     <motion.div variants={itemVariants}>
                         <div className="flex items-center justify-between mb-4">
@@ -638,7 +609,7 @@ export function Overview() {
                                     <ProgressRing progress={progressPct} size={100} strokeWidth={8} color="#06b6d4" />
                                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                                         <span className="text-2xl font-bold text-text-primary font-display">{progressPct}%</span>
-                                        <span className="text-[10px] text-text-secondary uppercase tracking-wider">to next rank</span>
+                                        <span className="text-xs text-text-secondary uppercase tracking-wider">to next rank</span>
                                     </div>
                                 </div>
                             </div>
@@ -647,7 +618,7 @@ export function Overview() {
                             <div className="mb-5 p-3 rounded-xl bg-accent-subtle border border-accent-primary/20">
                                 <div className="flex items-center gap-2 mb-2">
                                     <Rocket size={12} className="text-accent-primary" />
-                                    <span className="text-[10px] font-bold text-accent-primary uppercase tracking-widest">Next Milestone</span>
+                                    <span className="text-xs font-bold text-accent-primary uppercase tracking-widest">Next Milestone</span>
                                 </div>
                                 <p className="text-sm font-bold text-text-secondary font-display">{nextMilestone.label}</p>
                                 <div className="mt-2 h-1.5 bg-bg-inset rounded-full overflow-hidden">
@@ -662,7 +633,7 @@ export function Overview() {
 
                             {/* Recent Activity */}
                             <div>
-                                <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3">Recent Activity</h4>
+                                <h4 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-3">Recent Activity</h4>
                                 {recentActivity.length > 0 ? (
                                     <div className="space-y-3">
                                         {recentActivity.slice(0, 5).map((act, i) => (
@@ -675,7 +646,7 @@ export function Overview() {
                                             >
                                                 <div className="w-1.5 h-1.5 rounded-full bg-accent-primary flex-shrink-0" />
                                                 <span className="text-text-secondary truncate">{act.label || act}</span>
-                                                {act.time && <span className="text-text-muted ml-auto text-[10px] flex-shrink-0">{act.time}</span>}
+                                                {act.time && <span className="text-text-muted ml-auto text-xs flex-shrink-0">{act.time}</span>}
                                             </motion.div>
                                         ))}
                                     </div>
@@ -748,7 +719,7 @@ export function Overview() {
                                     )}>
                                         {action.icon}
                                     </div>
-                    <span className="text-[11px] font-bold leading-tight text-center">{action.label}</span>
+                    <span className="text-xs font-bold leading-tight text-center">{action.label}</span>
                                 </motion.button>
                             ))}
                         </div>
