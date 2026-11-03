@@ -34,6 +34,7 @@ import UnlockToast from '../arcade/UnlockToast';
 import { getAdminCheck, getProfileStats, getAccessStatus } from '../api';
 import useI18n from '../hooks/useI18n';
 import useOrgBranding from '../hooks/useOrgBranding';
+import useAudience from '../hooks/useAudience';
 
 export default function Layout() {
     const { user, logout, activeOrg } = useAuth();
@@ -42,11 +43,17 @@ export default function Layout() {
     // tokens (--accent-primary / --primary / --secondary) for the active org
     // and clears them when activeOrg goes away (logout / org switch).
     const { branding } = useOrgBranding({ applyTheme: true });
-    const portalName = branding?.portal_name?.trim() || 'PYMASTERS';
+    // Org members see their organisation's name (saved portal name, else the org's own name).
+    const audience = useAudience();
+    const portalName = audience.orgName || 'PYMASTERS';
     const portalLogo = branding?.logo_url?.trim() || '';
     const isCustomBrand = portalName !== 'PYMASTERS';
     const navigate = useNavigate();
     const location = useLocation();
+    useEffect(() => {
+        document.documentElement.dataset.audience = audience.mode;
+        return () => { delete document.documentElement.dataset.audience; };
+    }, [audience.mode]);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     // Desktop-only collapsed (icon-rail) state. Default false preserves the full
     // sidebar everywhere; child pages (e.g. Classroom during a lesson) can request
@@ -160,6 +167,9 @@ export default function Layout() {
 
     const points = liveXp != null ? liveXp : (user.points || 0);
     const rank = points > 1000 ? 'ARCHITECT' : points > 500 ? 'ENGINEER' : 'CADET';
+    // Game ranks suit individual learners; schools see levels, companies see neither.
+    const rankLabel = audience.mode === 'education' ? `Level ${{ CADET: 1, ENGINEER: 2, ARCHITECT: 3 }[rank]}` : rank;
+    const displayName = String(user.name || user.username || '');
     const rankColors = {
         CADET: { bg: 'bg-cyan-500/10', text: 'text-cyan-700 dark:text-cyan-300', border: 'border-cyan-500/30' },
         ENGINEER: { bg: 'bg-purple-500/10', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-500/30' },
@@ -207,7 +217,7 @@ export default function Layout() {
                     <span className={clsx("flex flex-col leading-tight min-w-0", collapsed && "lg:hidden")}>
                         <span className="font-display font-bold text-base text-text-primary tracking-tight truncate">{portalName}</span>
                         {isCustomBrand && branding?.show_powered_by !== false && (
-                            <span className="text-[10px] text-text-muted tracking-wide">Powered by PyMasters</span>
+                            <span className="text-xs text-text-muted tracking-wide">Powered by PyMasters</span>
                         )}
                     </span>
                 </div>
@@ -217,21 +227,23 @@ export default function Layout() {
                     <div className={clsx("flex items-center gap-2.5", collapsed && "lg:justify-center lg:gap-0")}>
                         <button type="button" onClick={() => navigate('/dashboard/profile')} aria-label="Your profile" className="relative cursor-pointer">
                             <div className="w-7 h-7 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-500 via-blue-500 to-purple-500">
-                                <div className="w-full h-full rounded-full bg-bg-surface flex items-center justify-center text-text-secondary font-bold text-[10px]">
-                                    {user.username.substring(0, 2).toUpperCase()}
+                                <div className="w-full h-full rounded-full bg-bg-surface flex items-center justify-center text-text-secondary font-bold text-xs">
+                                    {displayName.substring(0, 2).toUpperCase()}
                                 </div>
                             </div>
                             <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-[1.5px] border-bg-surface" aria-hidden="true" />
                         </button>
                         <div className={clsx("flex-1 min-w-0", collapsed && "lg:hidden")}>
-                            <div className="text-text-primary font-bold text-xs truncate">{user.username}</div>
+                            <div className="text-text-primary font-bold text-sm truncate" title={user.username}>{displayName}</div>
                         </div>
-                        <div className={clsx("inline-flex items-center gap-1 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full border", rc.bg, rc.text, rc.border, collapsed && "lg:hidden")}>
-                            <Zap size={7} />
-                            {rank}
-                        </div>
-                        <span className={clsx("text-[10px] font-mono text-text-muted flex items-center gap-0.5", collapsed && "lg:hidden")}>
-                            <Trophy size={9} className="text-amber-500" />
+                        {audience.mode !== 'professional' && (
+                            <div className={clsx("inline-flex items-center gap-1 text-xs uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full border", rc.bg, rc.text, rc.border, collapsed && "lg:hidden")}>
+                                <Zap size={10} aria-hidden="true" />
+                                {rankLabel}
+                            </div>
+                        )}
+                        <span className={clsx("text-xs font-mono text-text-muted flex items-center gap-0.5", collapsed && "lg:hidden")} title="XP">
+                            <Trophy size={11} className="text-amber-500" aria-hidden="true" />
                             {points}
                         </span>
                     </div>
@@ -242,7 +254,7 @@ export default function Layout() {
                             type="button"
                             onClick={() => navigate('/dashboard/upgrade')}
                             className={clsx(
-                                "mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 hover:bg-amber-400/20 transition-colors",
+                                "mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-2 py-1 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 hover:bg-amber-400/20 transition-colors",
                                 collapsed && "lg:hidden"
                             )}
                         >
@@ -255,7 +267,7 @@ export default function Layout() {
                 {/* Navigation */}
                 <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto" aria-label="Primary">
                     <div className={clsx("flex items-center mb-1.5 mt-1", collapsed ? "px-3 lg:px-0 lg:justify-center" : "px-3")}>
-                        <span className={clsx("text-[9px] font-bold text-text-muted uppercase tracking-widest", collapsed && "lg:hidden")}>Navigation</span>
+                        <span className={clsx("text-xs font-bold text-text-muted uppercase tracking-widest", collapsed && "lg:hidden")}>Navigation</span>
                         <button
                             type="button"
                             onClick={() => setCollapsed((c) => !c)}
@@ -310,11 +322,11 @@ export default function Layout() {
                         <DarkModeToggle />
                     </div>
                     <div className={clsx("flex items-center justify-center gap-3", collapsed && "lg:hidden")}>
-                        <Link to="/terms" className="text-[9px] text-text-disabled hover:text-accent-primary transition-colors">Terms</Link>
-                        <span className="text-text-disabled text-[9px]">&middot;</span>
-                        <Link to="/privacy" className="text-[9px] text-text-disabled hover:text-accent-primary transition-colors">Privacy</Link>
-                        <span className="text-text-disabled text-[9px]">&middot;</span>
-                        <Link to="/security" className="text-[9px] text-text-disabled hover:text-accent-primary transition-colors">Security</Link>
+                        <Link to="/terms" className="text-xs text-text-muted hover:text-accent-primary transition-colors">Terms</Link>
+                        <span className="text-text-muted text-xs" aria-hidden="true">&middot;</span>
+                        <Link to="/privacy" className="text-xs text-text-muted hover:text-accent-primary transition-colors">Privacy</Link>
+                        <span className="text-text-muted text-xs" aria-hidden="true">&middot;</span>
+                        <Link to="/security" className="text-xs text-text-muted hover:text-accent-primary transition-colors">Security</Link>
                     </div>
                 </div>
             </aside>
