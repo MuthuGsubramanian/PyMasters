@@ -82,7 +82,7 @@ def test_student_sees_their_school_and_levels(logged_in_page):
     page = logged_in_page(member)
     aside, _ = _sidebar_and_dashboard(page)
     org_name = member["org"].get("org_name") or member["org"].get("name")
-    assert org_name in aside and "Level 1" in aside and "CADET" not in aside, aside[:300]
+    assert org_name in aside and "level 1" in aside.lower() and "CADET" not in aside, aside[:300]   # chip is CSS-uppercased
     assert page.evaluate("document.documentElement.dataset.audience") == "education"
 
 
