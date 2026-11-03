@@ -532,7 +532,7 @@ export default function Playground() {
                                     disabled={!code.trim()}
                                     title="Open Vaathiyaar and ask for a review of this code"
                                     aria-label="Send to Vaathiyaar"
-                                    className="flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-accent-primary bg-accent-primary/10 border border-accent-primary/30 rounded-xl px-3 py-2 hover:bg-accent-primary/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-violet-200 bg-violet-500/15 border border-violet-400/40 rounded-xl px-3 py-2 hover:bg-violet-500/25 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <Send size={13} />
                                     <span className="hidden sm:inline">Send to Vaathiyaar</span>
