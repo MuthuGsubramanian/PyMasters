@@ -96,7 +96,9 @@ const CodeMirrorEditor = lazy(() =>
                         tabSize: 4,
                     }}
                     extensions={[python(), indentUnit.of('    '), runKeymap]}
-                    className="rounded-lg overflow-hidden border border-slate-700/50 text-sm"
+                    // A % height applies to .cm-editor inside the library's own wrapper div; that wrapper must
+                    // fill its parent too, or the editor collapses to its content (47px on a phone, 2026-11-03).
+                    className={`rounded-lg overflow-hidden border border-slate-700/50 text-sm ${String(height).endsWith('%') ? 'h-full' : ''}`}
                 />
             );
         }
