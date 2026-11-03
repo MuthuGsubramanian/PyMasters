@@ -87,7 +87,7 @@
       "instruction": {
         "en": "This common(a, b) returns the sorted list of elements that appear in BOTH lists, but it does it the slow way: an `x in b` scan (O(n)) inside a loop over a (O(n)) — that's accidental O(n²). Rewrite it to be O(n + m) WITHOUT changing the output: build a set from b so each membership test is O(1). The result must still be sorted with no duplicates. With the given data, common([3, 1, 2, 2, 5], [2, 5, 5, 8]) returns [2, 5]. Expected output: [2, 5]"
       },
-      "starter_code": "def common(a, b):\n    # SLOW: 'x in b' scans the list b (O(n)) for every x in a (O(n)) -> O(n*m).\n    # Rewrite using a set so each lookup is O(1), making this O(n + m).\n    # Keep the output identical: sorted, no duplicates.\n    result = []\n    for x in a:\n        if x in b and x not in result:   # O(n) scan + O(n) scan -> quadratic\n            result.append(x)\n    return sorted(result)\n\nprint(common([3, 1, 2, 2, 5], [2, 5, 5, 8]))",
+      "starter_code": "def common(a, b):\n    # SLOW: 'x in b' scans the list b (O(n)) for every x in a (O(n)) -> O(n*m).\n    # Rewrite using a set so each lookup is O(1), making this O(n + m).\n    # Keep the output identical: sorted, no duplicates.\n\n    # TODO: build a set from b so membership tests are O(1)\n    b_set = ___\n\n    # TODO: build a set of the elements of a that are also in b_set\n    # (a set also removes duplicates for you)\n    result = ___\n\n    # TODO: return the result as a sorted list\n    return ___\n\nprint(common([3, 1, 2, 2, 5], [2, 5, 5, 8]))",
       "expected_output": "[2, 5]",
       "hints": {
         "en": [

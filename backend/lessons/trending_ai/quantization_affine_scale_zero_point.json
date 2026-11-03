@@ -130,7 +130,7 @@
       "instruction": {
         "en": "Implement `quantize_dequantize(x, min_val, max_val)` — quantize a float to an 8-bit bucket and immediately dequantize it back, returning the approximation (rounded to 4 decimals). Reuse the scale/zero_point formula from the previous challenge (use the *unrounded* scale internally for accuracy): `q = round(x / scale + zero_point)`, clipped to `[0, 255]`, then `x_approx = (q - zero_point) * scale`. Then print `quantize_dequantize(1.0, -2.0, 6.0)` (expected: `1.0039`)."
       },
-      "starter_code": "def quantize_dequantize(x: float, min_val: float, max_val: float) -> float:\n    qmin, qmax = 0, 255\n    scale = (max_val - min_val) / qmax\n    zero_point = round(qmin - min_val / scale)\n    q = round(x / scale + zero_point)\n    q = max(qmin, min(qmax, q))\n    return round((q - zero_point) * scale, 4)\n\nprint(quantize_dequantize(1.0, -2.0, 6.0))",
+      "starter_code": "def quantize_dequantize(x: float, min_val: float, max_val: float) -> float:\n    qmin, qmax = 0, 255\n    # TODO: scale = the float range divided by qmax (keep it unrounded)\n    scale = ___\n    # TODO: zero_point = round(qmin - min_val / scale)\n    zero_point = ___\n    # TODO: quantize: q = round(x / scale + zero_point)\n    q = ___\n    # TODO: clip q into the range [qmin, qmax]\n    q = ___\n    # TODO: dequantize: (q - zero_point) * scale, rounded to 4 decimals\n    return ___\n\nprint(quantize_dequantize(1.0, -2.0, 6.0))\n",
       "hints": {
         "en": [
           "Use the full-precision scale (not the rounded one) inside this function",

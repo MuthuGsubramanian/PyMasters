@@ -262,7 +262,7 @@
         "it": "Scrivere una funzione merge_dicts che prende due parametri dict[str, int] e restituisce un dict[str, int] fuso dove le chiavi sovrapposte sommano i loro valori. Aggiungere suggerimenti di tipo a tutto.",
         "ko": "두 개의 dict[str, int] 매개 변수를 취하고, 겹치는 키가 값을 합하는 융합된 dict[str, int]을 반환하는 merge_dicts 함수를 작성하십시오. 모든 것에 타입 지시를 추가하십시오."
       },
-      "starter_code": "def merge_dicts(a: dict[str, int], b: dict[str, int]) -> dict[str, int]:\n    result = a.copy()\n    for key, value in b.items():\n        result[key] = result.get(key, 0) + value\n    return result\n\nx: dict[str, int] = {'a': 1, 'b': 2}\ny: dict[str, int] = {'b': 3, 'c': 4}\nprint(merge_dicts(x, y))",
+      "starter_code": "def merge_dicts(a: dict[str, int], b: dict[str, int]) -> dict[str, int]:\n    # TODO: start with a copy of the first dict\n    result: dict[str, int] = ___\n    # TODO: loop over the key/value pairs of b\n    for key, value in ___:\n        # TODO: add value to what result already has for key (use 0 if the key is missing)\n        result[key] = ___\n    # TODO: return the merged dict\n    return ___\n\nx: dict[str, int] = {'a': 1, 'b': 2}\ny: dict[str, int] = {'b': 3, 'c': 4}\nprint(merge_dicts(x, y))\n",
       "expected_output": "{'a': 1, 'b': 5, 'c': 4}",
       "hints": {
         "en": [

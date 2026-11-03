@@ -131,7 +131,7 @@
           "After the fix: funcs = [lambda i=i: i for i in range(3)] gives functions returning 0, 1, 2."
         ]
       },
-      "test_code": "funcs = [lambda i=i: i for i in range(3)]\nassert funcs[0]() == 0\nassert funcs[1]() == 1\nassert funcs[2]() == 2\nassert [f() for f in funcs] == [0, 1, 2]"
+      "test_code": "assert [f() for f in funcs] == [0, 1, 2], \"each function should return its own loop value (0, 1, 2): capture i at definition time, e.g. lambda i=i: i\"\n"
     }
   ],
   "quiz": [

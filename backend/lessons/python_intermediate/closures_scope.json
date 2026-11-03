@@ -417,7 +417,7 @@
         "it": "Crea un chiusura make_accumulator(initial) che restituisce una funzione. Ogni chiamata alla funzione restituita aggiunge il valore dato a un totale in esecuzione. Inizia con 100 e aggiungi 10, 20, 30.",
         "ko": "함수를 반환하는 종료 make_accumulator (start) 를 생성합니다. 반환 함수에 대한 각 호출은 주어진 값을 실행 총에 추가합니다. 100에서 시작하여 10, 20, 30을 추가합니다."
       },
-      "starter_code": "def make_accumulator(initial):\n    total = initial\n    def add(value):\n        nonlocal total\n        total += value\n        return total\n    return add\n\nacc = make_accumulator(100)\nprint(acc(10))   # 110\nprint(acc(20))   # 130\nprint(acc(30))   # 160",
+      "starter_code": "def make_accumulator(initial):\n    # TODO: store the starting value in a variable called total\n    total = ___\n\n    def add(value):\n        # TODO: declare which variable this inner function modifies (hint: nonlocal)\n        ___ total\n        # TODO: add value to the running total\n        total ___ value\n        # TODO: return the updated total\n        return ___\n\n    # TODO: return the inner function (don't call it!)\n    return ___\n\nacc = make_accumulator(100)\nprint(acc(10))   # should print 110\nprint(acc(20))   # should print 130\nprint(acc(30))   # should print 160\n",
       "expected_output": "110\n130\n160",
       "hints": {
         "en": [

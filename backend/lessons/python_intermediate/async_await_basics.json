@@ -422,7 +422,7 @@
         "it": "Crea 3 funzioni di async che simulano il download di file (1s, 2s, 3s ritardi). Utilizzare asyncio.gather per eseguire simultaneamente. Verificare che il tempo totale sia ~3s non 6s.",
         "ko": "파일 다운로드 (1s, 2s, 3s 지연) 를 시뮬레이션하는 3 개의 아싱크 함수를 생성하십시오. asyncio.gather를 사용하여 동시에 실행하십시오. 전체 시간이 6s가 아닌 ~ 3s임을 확인하십시오."
       },
-      "starter_code": "import asyncio\nimport time\n\nasync def download(name, seconds):\n    print(f'Downloading {name}...')\n    await asyncio.sleep(seconds)\n    print(f'{name} done!')\n    return name\n\nasync def main():\n    start = time.time()\n    results = await asyncio.gather(\n        download('file1.txt', 1),\n        download('file2.txt', 2),\n        download('file3.txt', 3)\n    )\n    print(f'All done in {time.time()-start:.1f}s: {results}')\n\nasyncio.run(main())",
+      "starter_code": "import asyncio\nimport time\n\nasync def download(name, seconds):\n    print(f'Downloading {name}...')\n    # TODO: pause without blocking, using await asyncio.sleep(...) for `seconds`\n    ___\n    print(f'{name} done!')\n    return name\n\nasync def main():\n    start = time.time()\n    # TODO: use asyncio.gather to run all 3 downloads concurrently\n    # (file1.txt for 1s, file2.txt for 2s, file3.txt for 3s) and await the result\n    results = ___\n    print(f'All done in {time.time()-start:.1f}s: {results}')\n\n# TODO: start the event loop by running main() with asyncio.run(...)\n___\n",
       "expected_output": "Downloading file1.txt...\nDownloading file2.txt...\nDownloading file3.txt...\nfile1.txt done!\nfile2.txt done!\nfile3.txt done!\nAll done in 3.0s: ['file1.txt', 'file2.txt', 'file3.txt']",
       "hints": {
         "en": [

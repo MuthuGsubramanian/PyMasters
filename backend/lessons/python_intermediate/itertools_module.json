@@ -317,7 +317,7 @@
         "it": "Utilizzare itertools.product per generare tutte le possibili password a 2 caratteri dai caratteri 'abc' e dai numeri '123'.",
         "ko": "itertools.product을 사용하여 가능한 2자 암호를 abc와 123자에서 생성합니다. 전체 수와 첫 5개의 암호를 인쇄합니다."
       },
-      "starter_code": "from itertools import product, islice\n\nchars = 'abc'\ndigits = '123'\npasswords = [''.join(p) for p in product(chars, digits)]\nprint(f'Total: {len(passwords)}')\nprint(f'First 5: {passwords[:5]}')",
+      "starter_code": "from itertools import product, islice\n\nchars = 'abc'\ndigits = '123'\n\n# TODO: use product(chars, digits) to build every 2-character password.\n# Join each pair (a tuple) into a string with ''.join(...)\npasswords = ___\n\n# TODO: print the total number of passwords, like \"Total: 9\"\nprint(___)\n\n# TODO: print the first 5 passwords, like \"First 5: [...]\"\nprint(___)\n",
       "expected_output": "Total: 9\nFirst 5: ['a1', 'a2', 'a3', 'b1', 'b2']",
       "hints": {
         "en": [
