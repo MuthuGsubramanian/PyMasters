@@ -815,18 +815,18 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
         <div className={`animate-fade-in flex flex-col gap-4 mx-auto ${useScrolly ? 'max-w-6xl w-full' : 'max-w-4xl'}`}>
             {/* ── Header (compact, fixed) ── */}
             <header className="flex-shrink-0">
-                <div className="flex items-center gap-2 mb-1">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-purple-300/40 dark:border-accent-primary/30 bg-purple-50 dark:bg-accent-subtle text-purple-600 dark:text-accent-primary text-[10px] font-bold tracking-wider uppercase">
-                        <Sparkles size={10} />
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
+                    <div className="inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 rounded-full border border-purple-300/40 dark:border-accent-primary/30 bg-purple-50 dark:bg-accent-subtle text-purple-600 dark:text-accent-primary text-xs font-bold tracking-wider uppercase">
+                        <Sparkles size={11} aria-hidden="true" />
                         Lesson
                     </div>
                     {lesson.xp_reward && (
-                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-full px-2 py-0.5">
+                        <span className="shrink-0 whitespace-nowrap text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-full px-2 py-0.5">
                             +{lesson.xp_reward} XP
                         </span>
                     )}
                     {headerMeta && (
-                        <span className="text-[11px] text-text-muted font-medium truncate">
+                        <span className="basis-full sm:basis-auto min-w-0 text-xs text-text-muted font-medium">
                             {headerMeta.trackName} · Lesson {headerMeta.position} of {headerMeta.total}
                         </span>
                     )}

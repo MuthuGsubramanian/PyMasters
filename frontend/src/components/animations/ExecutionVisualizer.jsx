@@ -160,25 +160,25 @@ export default function ExecutionVisualizer({
   return (
     <div ref={containerRef} className="rounded-2xl overflow-hidden opacity-0 w-full max-w-full font-mono text-sm shadow-2xl shadow-black/20 border border-white/[0.06]">
       {/* Header */}
-      <div className="surface-code border-b border-white/10 px-4 py-2.5 flex items-center gap-2">
-        <div className="flex items-center gap-1.5">
+      <div className="surface-code border-b border-white/10 px-3 sm:px-4 py-2.5 flex items-center gap-2">
+        <div className="hidden sm:flex items-center gap-1.5" aria-hidden="true">
           <span className="w-3 h-3 rounded-full bg-[#ff5f57] shadow-[0_0_6px_rgba(255,95,87,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)]" />
         </div>
-        <span className="ml-3 text-[11px] text-code-foreground/70 tracking-wide">Visual Debugger</span>
-        <div className="ml-auto flex items-center gap-3">
+        <span className="sm:ml-3 whitespace-nowrap text-xs text-code-foreground/70 tracking-wide">Visual Debugger</span>
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
           {activeStep >= 0 && activeStep < totalSteps - 1 && (
             <div className="flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
               </span>
-              <span className="text-[10px] text-red-400 font-medium tracking-wider uppercase">Running</span>
+              <span className="whitespace-nowrap text-xs text-red-400 font-medium tracking-wider uppercase">Running</span>
             </div>
           )}
           {totalSteps > 0 && (
-            <span className="text-[10px] text-code-foreground/70 tabular-nums">
+            <span className="whitespace-nowrap text-xs text-code-foreground/70 tabular-nums">
               Step {Math.max(activeStep + 1, 0)}/{totalSteps}
             </span>
           )}
