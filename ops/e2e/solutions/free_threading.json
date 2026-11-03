@@ -6,6 +6,12 @@
       "code": "import threading\n\n\ndef parallel_sum(n, num_threads):\n    total = 0\n    lock = threading.Lock()\n    chunk = (n + num_threads - 1) // num_threads\n\n    def worker(start, end):\n        nonlocal total\n        partial = sum(range(start, end))\n        with lock:\n            total += partial\n\n    threads = []\n    for i in range(num_threads):\n        start = i * chunk\n        end = min(start + chunk, n)\n        if start >= end:\n            break\n        t = threading.Thread(target=worker, args=(start, end))\n        threads.append(t)\n        t.start()\n\n    for t in threads:\n        t.join()\n\n    return total\n\n\nprint(parallel_sum(1_000_000, 4))\n",
       "verified_output": "499999500000",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import sys\n\n# sys._is_gil_enabled() only exists on Python 3.13+; older interpreters\n# always have the GIL, so provide a fallback that reports True.\nif not hasattr(sys, \"_is_gil_enabled\"):\n    sys._is_gil_enabled = lambda: True\n\nif sys._is_gil_enabled():\n    print(\"GIL enabled\")\nelse:\n    print(\"GIL disabled\")\n",
+      "verified_output": "GIL enabled",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

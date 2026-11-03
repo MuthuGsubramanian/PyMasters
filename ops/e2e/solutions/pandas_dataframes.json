@@ -6,6 +6,12 @@
       "code": "import pandas as pd\n\nstudents = pd.DataFrame({\n    \"student_id\": [1, 2, 3, 4, 5],\n    \"name\": [\"Alice\", \"Bob\", \"Charlie\", \"Diana\", \"Ethan\"],\n    \"grade\": [88.5, 92.0, 79.5, 95.25, 84.0],\n})\n\nprint(students)\n",
       "verified_output": "student_id     name  grade\n0           1    Alice  88.50\n1           2      Bob  92.00\n2           3  Charlie  79.50\n3           4    Diana  95.25\n4           5    Ethan  84.00",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import pandas as pd\n\nstudents = pd.DataFrame({\n    \"name\": [\"Alice\", \"Bob\", \"Charlie\", \"Diana\"],\n    \"grade\": [88, 92, 79, 95],\n})\n\nnames = students[\"name\"]\nthird_grade = students.iloc[2][\"grade\"]\n\nprint(names)\nprint(third_grade)\n\nimport pandas as pd\nassert isinstance(names, pd.Series), 'names must be a Series'\nassert third_grade == students.iloc[2]['grade'], 'third_grade must be the grade of row index 2'\n",
+      "verified_output": "0      Alice\n1        Bob\n2    Charlie\n3      Diana\nName: name, dtype: str\n79",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

@@ -6,6 +6,12 @@
       "code": "def format_chat(messages: list[dict]) -> str:\n    \"\"\"Convert [{'role': ..., 'content': ...}, ...] into a ChatML prompt string.\n\n    Each message -> '<|im_start|>ROLE\\nCONTENT<|im_end|>\\n'\n    Then append the generation prompt: '<|im_start|>assistant\\n'\n    \"\"\"\n    blocks = [\n        f\"<|im_start|>{m['role']}\\n{m['content']}<|im_end|>\\n\" for m in messages\n    ]\n    return \"\".join(blocks) + \"<|im_start|>assistant\\n\"\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a helpful tutor.\"},\n    {\"role\": \"user\", \"content\": \"What is Python?\"},\n]\nprint(format_chat(messages))\n",
       "verified_output": "<|im_start|>system\nYou are a helpful tutor.<|im_end|>\n<|im_start|>user\nWhat is Python?<|im_end|>\n<|im_start|>assistant\n\nAll chat template tests passed!",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def model_memory_gb(params_billions: float, bits: int) -> float:\n    \"\"\"Return the memory needed for model weights, in GiB, rounded to 2 dp.\n\n    params_billions: model size in billions of parameters (e.g. 0.6)\n    bits: precision per parameter (16 for bf16, 8, or 4 for quantized)\n    \"\"\"\n    bytes_needed = params_billions * 1_000_000_000 * (bits / 8)\n    return round(bytes_needed / 1024**3, 2)\n\nprint(model_memory_gb(0.6, 16))  # Qwen3-0.6B in bf16\nprint(model_memory_gb(0.6, 4))   # Qwen3-0.6B quantized to 4-bit\nprint(model_memory_gb(8, 4))     # Qwen3-8B quantized to 4-bit\n\nassert model_memory_gb(0.6, 4) < 0.5, \"Sub-1B at 4-bit fits on any phone\"\nassert model_memory_gb(8, 16) > 8, \"8B at bf16 does not fit in 8 GB RAM\"\n",
+      "verified_output": "1.12\n0.28\n3.73\nAll memory math tests passed!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

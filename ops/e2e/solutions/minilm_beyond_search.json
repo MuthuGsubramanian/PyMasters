@@ -6,6 +6,12 @@
       "code": "def dot(u, v):\n    return sum(x * y for x, y in zip(u, v))\n\n\ndef classify(vec: list, label_vecs: dict) -> str:\n    \"\"\"Return the label whose embedding is most similar to vec.\n    All vectors are normalized, so dot product == cosine similarity.\"\"\"\n    return max(label_vecs, key=lambda name: dot(vec, label_vecs[name]))\n\n\nlabels = {\"positive\": [1.0, 0.0], \"negative\": [-1.0, 0.0], \"neutral\": [0.0, 1.0]}\nprint(classify([0.8, 0.6], labels))\n",
       "verified_output": "positive\nAll tests passed!",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def dedup(vecs: list, threshold: float) -> list:\n    \"\"\"Greedy dedup: keep a vector only if it is not too similar\n    to anything already kept. Returns the kept indices.\"\"\"\n    kept = []\n    for i, v in enumerate(vecs):\n        if all(sum(a * b for a, b in zip(v, vecs[k])) < threshold for k in kept):\n            kept.append(i)\n    return kept\n\nprint(dedup([[1.0, 0.0], [0.96, 0.28], [0.0, 1.0], [0.28, 0.96]], 0.9))\n",
+      "verified_output": "[0, 2]\nAll tests passed!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

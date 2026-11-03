@@ -6,6 +6,12 @@
       "code": "import math\ndef softmax(row):\n    m = max(row)\n    e = [math.exp(x - m) for x in row]\n    s = sum(e)\n    return [x / s for x in e]\n\ndef causal_mask(scores):\n    return [[v if j <= i else float(\"-inf\") for j, v in enumerate(row)] for i, row in enumerate(scores)]\n\nscores = [[2.0, 1.0, 0.5], [0.5, 2.0, 1.0], [1.0, 0.5, 2.0]]\nw = [softmax(r) for r in causal_mask(scores)]\nprint([[round(x, 4) for x in r] for r in w])\n",
       "verified_output": "[[1.0, 0.0, 0.0], [0.1824, 0.8176, 0.0], [0.2312, 0.1402, 0.6285]]",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import math\ndef softmax(row):\n    m = max(row)\n    e = [math.exp(x - m) for x in row]\n    s = sum(e)\n    return [x / s for x in e]\ndef causal_mask(scores):\n    n = len(scores)\n    return [[scores[i][j] if j <= i else float(\"-inf\") for j in range(n)] for i in range(n)]\nscores = [[2.0, 1.0, 0.5], [0.5, 2.0, 1.0], [1.0, 0.5, 2.0]]\ndef leak(w):\n    total = sum(w[i][j] for i in range(len(w)) for j in range(len(w[i])) if j > i)\n    return round(total, 4)\nunmasked = [softmax(r) for r in scores]\nmasked = [softmax(r) for r in causal_mask(scores)]\nprint(leak(unmasked), leak(masked))\n",
+      "verified_output": "0.6027 0.0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

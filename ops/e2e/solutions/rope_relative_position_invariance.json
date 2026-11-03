@@ -6,6 +6,12 @@
       "code": "import math\n\ndef rotate_pair(x1: float, x2: float, angle: float) -> tuple:\n    \"\"\"Standard 2D rotation of (x1, x2) by angle radians.\"\"\"\n    c, s = math.cos(angle), math.sin(angle)\n    return round(x1 * c - x2 * s, 6), round(x1 * s + x2 * c, 6)\n\nprint(rotate_pair(1.0, 0.0, 0.5))\n",
       "verified_output": "(0.877583, 0.479426)",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import math\n\ndef rotate_pair(x1: float, x2: float, angle: float) -> tuple:\n    c, s = math.cos(angle), math.sin(angle)\n    return round(x1*c - x2*s, 6), round(x1*s + x2*c, 6)\n\ndef rope_dot_product(q1: float, q2: float, k1: float, k2: float, pos_q: int, pos_k: int, theta: float) -> float:\n    \"\"\"Dot product of the RoPE-rotated query and key pairs.\"\"\"\n    rq1, rq2 = rotate_pair(q1, q2, pos_q * theta)\n    rk1, rk2 = rotate_pair(k1, k2, pos_k * theta)\n    return round(rq1*rk1 + rq2*rk2, 4)\n\nprint(rope_dot_product(1.0, 0.0, 0.6, 0.8, 3, 1, 0.5))\nprint(rope_dot_product(1.0, 0.0, 0.6, 0.8, 7, 5, 0.5))\nprint(rope_dot_product(1.0, 0.0, 0.6, 0.8, 10, 8, 0.5))\n",
+      "verified_output": "0.9974\n0.9974\n0.9974",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

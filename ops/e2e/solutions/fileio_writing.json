@@ -6,6 +6,12 @@
       "code": "fruits = ['apple', 'banana', 'cherry']\n\nwith open('fruits.txt', 'w') as f:\n    for fruit in fruits:\n        f.write(fruit + '\\n')\n\nwith open('fruits.txt', 'r') as f:\n    lines = f.readlines()\n\nprint(lines)\nassert [l.strip() for l in lines] == fruits\n",
       "verified_output": "['apple\\n', 'banana\\n', 'cherry\\n']",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import json\n\ndata = {'city': 'Paris', 'pop': 2161000}\n\ntext = json.dumps(data)\nloaded = json.loads(text)\n\nassert loaded['city'] == 'Paris'\nassert loaded['pop'] == 2161000\nassert loaded == data\n\nprint(loaded['city'], loaded['pop'])\n",
+      "verified_output": "Paris 2161000",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

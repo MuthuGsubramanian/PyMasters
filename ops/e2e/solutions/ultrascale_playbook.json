@@ -6,6 +6,12 @@
       "code": "import numpy as np\n\n\ndef all_reduce_avg(gradients):\n    \"\"\"Simulate AllReduce: average all gradient arrays and give every GPU its own copy.\"\"\"\n    avg = np.mean(np.stack(gradients), axis=0)\n    return [avg.copy() for _ in gradients]\n\n\ng0 = np.array([1.0, 2.0, 3.0])    # gradient computed on GPU 0\ng1 = np.array([3.0, 4.0, 5.0])    # gradient computed on GPU 1\nresult = all_reduce_avg([g0, g1])\nif result is None:\n    print(\"all_reduce_avg() returned None\")\nelse:\n    print(result[0])\n    print(result[1])\n",
       "verified_output": "[2. 3. 4.]\n[2. 3. 4.]\nAll AllReduce tests passed!",
       "source": "hand-verified 2026-11-03 (sandbox rewrite)"
+    },
+    {
+      "index": 1,
+      "code": "def partition_layers(layers: list[str], num_stages: int) -> dict[int, list[str]]:\n    \"\"\"Split layers across pipeline stages as evenly as possible.\n    Earlier stages get extra layers if not evenly divisible.\"\"\"\n    base, extra = divmod(len(layers), num_stages)\n    result = {}\n    start = 0\n    for stage in range(num_stages):\n        size = base + (1 if stage < extra else 0)\n        result[stage] = layers[start:start + size]\n        start += size\n    return result\n\n# Test\nlayers = [\"embed\", \"block_0\", \"block_1\", \"block_2\", \"block_3\", \"lm_head\"]\nresult = partition_layers(layers, 3)\nfor stage, assigned in result.items():\n    print(f\"Stage {stage}: {assigned}\")\n",
+      "verified_output": "Stage 0: ['embed', 'block_0']\nStage 1: ['block_1', 'block_2']\nStage 2: ['block_3', 'lm_head']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

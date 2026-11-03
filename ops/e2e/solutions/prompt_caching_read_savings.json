@@ -6,6 +6,12 @@
       "code": "def cached_call_cost(prefix_tokens: int, new_tokens: int, rate_per_million: float) -> float:\n    \"\"\"Cost of one cached-prefix API call: prefix tokens at 0.1x, new tokens at full rate.\"\"\"\n    billed_tokens = prefix_tokens * 0.1 + new_tokens\n    cost = billed_tokens * rate_per_million / 1_000_000\n    return round(cost, 5)\n\nprint(cached_call_cost(20000, 50, 3.0))\n",
       "verified_output": "0.00615",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def cache_savings_percent(prefix_tokens: int, new_tokens: int, rate_per_million: float) -> float:\n    \"\"\"Percent saved on one call when the prefix is a cache hit vs. no caching at all.\"\"\"\n    no_cache_cost = (prefix_tokens + new_tokens) * rate_per_million / 1_000_000\n    cached_cost = (prefix_tokens * 0.1 + new_tokens) * rate_per_million / 1_000_000\n    return round((1 - cached_cost / no_cache_cost) * 100, 1)\n\nprint(cache_savings_percent(20000, 50, 3.0))\n",
+      "verified_output": "89.8",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

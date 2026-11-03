@@ -6,6 +6,12 @@
       "code": "products = [{'name': 'Mouse', 'price': 25}, {'name': 'Laptop', 'price': 999}, {'name': 'USB Hub', 'price': 15}]\n\nmost_expensive = max(products, key=lambda p: p['price'])\nprint(most_expensive['name'])\n",
       "verified_output": "Laptop",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "data = [('Alice', 'A'), ('Bob', 'B'), ('Carol', 'A')]\n\ngroups = {}\nfor name, grade in data:\n    groups.setdefault(grade, []).append(name)\n\nprint(groups)\n",
+      "verified_output": "{'A': ['Alice', 'Carol'], 'B': ['Bob']}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

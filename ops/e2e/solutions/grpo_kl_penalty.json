@@ -6,6 +6,12 @@
       "code": "import math\n\ndef kl_penalty(logp_theta: float, logp_ref: float) -> float:\n    \"\"\"Unbiased per-token KL estimate between the policy and a frozen reference.\"\"\"\n    ratio = math.exp(logp_ref - logp_theta)\n    return round(ratio - math.log(ratio) - 1, 4)\n\nprint(kl_penalty(-2.1, -2.4))\n",
       "verified_output": "0.0408",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import math\n\ndef kl_penalty(logp_theta: float, logp_ref: float) -> float:\n    ratio = math.exp(logp_ref - logp_theta)\n    return round(ratio - math.log(ratio) - 1, 4)\n\ndef grpo_objective(surrogate: float, kl: float, beta: float = 0.04) -> float:\n    \"\"\"GRPO's final objective: clipped surrogate minus a weighted KL penalty.\"\"\"\n    return round(surrogate - beta * kl, 4)\n\nprint(grpo_objective(0.1494, 0.0408))\n",
+      "verified_output": "0.1478",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

@@ -6,6 +6,12 @@
       "code": "months = ['Jan','Feb','Mar','Apr']\nsales = [1200, 1500, 900, 1800]\n\ntitle = 'Monthly Sales'\nxlabel = 'Month'\nylabel = 'Sales'\n\ntry:\n    import matplotlib\n    matplotlib.use('Agg')\n    import matplotlib.pyplot as plt\n\n    fig, ax = plt.subplots()\n    ax.bar(months, sales, color='steelblue')\n    ax.set_title(title)\n    ax.set_xlabel(xlabel)\n    ax.set_ylabel(ylabel)\n    plt.close(fig)\nexcept ImportError:\n    # matplotlib unavailable: render a simple text bar chart instead\n    print(title)\n    print(ylabel + ' by ' + xlabel)\n    for m, s in zip(months, sales):\n        print(f\"{m:>4} | {'#' * (s // 100)} {s}\")\n",
       "verified_output": "Monthly Sales\nSales by Month\n Jan | ############ 1200\n Feb | ############### 1500\n Mar | ######### 900\n Apr | ################## 1800",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nimport numpy as np\n\nx = np.linspace(-5, 5, 100)\n\nfig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))\n\nax1.plot(x, x**2)\nax1.set_title(\"y = x**2\")\n\nax2.plot(x, x**3)\nax2.set_title(\"y = x**3\")\n\nplt.tight_layout()\nplt.show()\n",
+      "verified_output": "",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

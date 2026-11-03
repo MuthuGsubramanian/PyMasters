@@ -6,6 +6,12 @@
       "code": "from collections import Counter\n\ndef majority_vote(answers: list) -> str:\n    \"\"\"Return the most common answer; ties broken by first occurrence in answers.\"\"\"\n    counts = Counter(answers)\n    max_count = max(counts.values())\n    for a in answers:\n        if counts[a] == max_count:\n            return a\n\nprint(majority_vote(['42', '41', '42', '42', '40']))\n",
       "verified_output": "42",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "from collections import Counter\n\ndef majority_vote(answers: list) -> str:\n    counts = Counter(answers)\n    max_count = max(counts.values())\n    for a in answers:\n        if counts[a] == max_count:\n            return a\n\ndef vote_confidence(answers: list) -> float:\n    \"\"\"Percent of samples that agree with the majority answer.\"\"\"\n    winner = majority_vote(answers)\n    counts = Counter(answers)\n    return round(counts[winner] / len(answers) * 100, 1)\n\nprint(vote_confidence(['42', '41', '42', '42', '40']))\n",
+      "verified_output": "60.0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

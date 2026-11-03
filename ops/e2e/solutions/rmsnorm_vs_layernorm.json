@@ -6,6 +6,12 @@
       "code": "import math\ndef layer_norm(x, eps=1e-5):\n    n = len(x)\n    mean = sum(x) / n\n    var = sum((v - mean) ** 2 for v in x) / n\n    denom = math.sqrt(var + eps)\n    return [(v - mean) / denom for v in x]\nx = [4.0, 2.0, 0.0, 6.0]\nprint([round(v, 4) for v in layer_norm(x)])\n",
       "verified_output": "[0.4472, -0.4472, -1.3416, 1.3416]",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import math\ndef layer_norm(x, eps=1e-5):\n    mean = sum(x) / len(x)\n    var = sum((v - mean) ** 2 for v in x) / len(x)\n    return [(v - mean) / math.sqrt(var + eps) for v in x]\ndef rms_norm(x, eps=1e-5):\n    ms = sum(v * v for v in x) / len(x)\n    d = math.sqrt(ms + eps)\n    return [v / d for v in x]\nx = [4.0, 2.0, 0.0, 6.0]\ndef rms(v):\n    return round(math.sqrt(sum(a * a for a in v) / len(v)), 4)\nbig = [10 * v for v in x]\nprint(rms(layer_norm(x)), rms(rms_norm(x)), rms(rms_norm(big)))\n",
+      "verified_output": "1.0 1.0 1.0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

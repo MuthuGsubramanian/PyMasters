@@ -6,6 +6,12 @@
       "code": "def normalize(v: list) -> list:\n    \"\"\"Return v scaled to unit length, each component rounded to 4 dp.\"\"\"\n    norm = sum(x * x for x in v) ** 0.5\n    if norm == 0:\n        return [0.0 for _ in v]\n    return [round(x / norm, 4) for x in v]\n\nprint(normalize([3, 4]))\n",
       "verified_output": "[0.6, 0.8]\nAll tests passed!",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def dot(a: list, b: list) -> float:\n    return sum(x * y for x, y in zip(a, b))\n\ndef top_k(query: list, docs: list, k: int) -> list:\n    \"\"\"Return indices of the k docs most similar to query, best first.\"\"\"\n    scored = [(dot(query, doc), i) for i, doc in enumerate(docs)]\n    scored.sort(key=lambda p: p[0], reverse=True)\n    return [i for _, i in scored[:k]]\n\nprint(top_k([0.6, 0.8], [[1.0, 0.0], [0.8, 0.6], [0.0, 1.0]], 2))\n",
+      "verified_output": "[1, 2]\nAll tests passed!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

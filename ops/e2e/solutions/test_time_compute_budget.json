@@ -6,6 +6,12 @@
       "code": "def samples_within_budget(budget: float, cost_per_sample: float) -> int:\n    \"\"\"How many whole samples the budget buys at the given per-sample cost.\"\"\"\n    return int(budget // cost_per_sample)\n\nprint(samples_within_budget(14.0, 1.0))\n",
       "verified_output": "14",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def samples_within_budget(budget: float, cost_per_sample: float) -> int:\n    return int(budget // cost_per_sample)\n\ndef compute_matched_samples(budget: float, small_cost: float, large_cost: float) -> tuple:\n    \"\"\"(samples the small model gets, samples the large model gets) for the same budget.\"\"\"\n    small_samples = samples_within_budget(budget, small_cost)\n    large_samples = samples_within_budget(budget, large_cost)\n    return (small_samples, large_samples)\n\nprint(compute_matched_samples(14.0, 1.0, 14.0))\n",
+      "verified_output": "(14, 1)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

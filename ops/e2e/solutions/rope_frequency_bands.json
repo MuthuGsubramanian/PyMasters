@@ -6,6 +6,12 @@
       "code": "def rope_theta(i: int, head_dim: int, base: int = 10000) -> float:\n    \"\"\"Fixed rotation frequency for dimension pair i, out of head_dim/2 pairs.\"\"\"\n    return round(base ** (-(2 * i) / head_dim), 6)\n\nprint(rope_theta(32, 128))\n",
       "verified_output": "0.01",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def rope_theta(i: int, head_dim: int, base: int = 10000) -> float:\n    return round(base ** (-(2 * i) / head_dim), 6)\n\ndef rope_angle(pos: int, i: int, head_dim: int, base: int = 10000) -> float:\n    \"\"\"Angle dimension pair i has rotated by, by the time it reaches position pos.\"\"\"\n    theta = rope_theta(i, head_dim, base)\n    return round(pos * theta, 4)\n\nprint(rope_angle(5, 32, 128))\n",
+      "verified_output": "0.05",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

@@ -6,6 +6,12 @@
       "code": "def safe_divide(a, b):\n    try:\n        return a / b\n    except ZeroDivisionError:\n        return None\n\n\nprint(safe_divide(5, 2), safe_divide(1, 0))\n",
       "verified_output": "2.5 None",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "class AgeError(Exception):\n    pass\n\n\ndef validate_age(age):\n    if age < 0 or age > 150:\n        raise AgeError('Invalid age')\n    return age\n\n\ntry:\n    validate_age(-1)\nexcept AgeError:\n    print('AgeError raised')\n",
+      "verified_output": "AgeError raised",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

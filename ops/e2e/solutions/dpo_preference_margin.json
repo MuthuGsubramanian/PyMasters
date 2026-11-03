@@ -6,6 +6,12 @@
       "code": "def preference_margin(r_chosen: float, r_rejected: float) -> float:\n    \"\"\"Gap between the chosen and rejected implicit rewards.\"\"\"\n    return round(r_chosen - r_rejected, 4)\n\nprint(preference_margin(0.27, -0.27))\n",
       "verified_output": "0.54",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import math\n\ndef preference_margin(r_chosen: float, r_rejected: float) -> float:\n    return round(r_chosen - r_rejected, 4)\n\ndef preference_probability(r_chosen: float, r_rejected: float) -> float:\n    \"\"\"Sigmoid of the margin -- probability chosen beats rejected.\"\"\"\n    margin = preference_margin(r_chosen, r_rejected)\n    return round(1 / (1 + math.exp(-margin)), 4)\n\nprint(preference_probability(0.27, -0.27))\n",
+      "verified_output": "0.6318",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

@@ -6,6 +6,12 @@
       "code": "import asyncio\n\nasync def greet_async(name):\n    await asyncio.sleep(0)\n    return f'Hello, {name}'\n\nprint(asyncio.run(greet_async('World')))\n",
       "verified_output": "Hello, World",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import asyncio\n\nasync def task_a():\n    await asyncio.sleep(0)\n    return 'A'\n\nasync def task_b():\n    await asyncio.sleep(0)\n    return 'B'\n\nasync def main():\n    return await asyncio.gather(task_a(), task_b())\n\nresult = asyncio.run(main())\nprint(result)\n",
+      "verified_output": "['A', 'B']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

@@ -6,6 +6,12 @@
       "code": "import pandas as pd\n\ndf = pd.DataFrame({\n    'product': ['Laptop', 'Mouse', 'Keyboard', 'Monitor', 'Cable'],\n    'price': [999.99, 25.50, 79.00, 249.00, 9.99],\n    'in_stock': [True, True, False, True, True],\n})\n\naffordable = df[(df['price'] < 100) & (df['in_stock'] == True)]\nprint(affordable)\n",
       "verified_output": "product  price  in_stock\n1   Mouse  25.50      True\n4   Cable   9.99      True",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import pandas as pd\n\ntry:\n    df\nexcept NameError:\n    df = pd.DataFrame({\n        'product': ['Laptop', 'Mouse', 'Monitor', 'Keyboard', 'Desk'],\n        'price': [999, 25, 250, 80, 350],\n    })\n\nexpensive = df.query('price > 200')\nprint(expensive)\n",
+      "verified_output": "product  price\n0   Laptop    999\n2  Monitor    250\n4     Desk    350",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

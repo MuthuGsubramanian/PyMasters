@@ -6,6 +6,12 @@
       "code": "import math\n\ndef dpo_pair_loss(r_chosen: float, r_rejected: float) -> float:\n    \"\"\"DPO loss for one preference pair: -log(sigmoid(r_chosen - r_rejected)).\"\"\"\n    margin = r_chosen - r_rejected\n    prob = 1 / (1 + math.exp(-margin))\n    return round(-math.log(prob), 4)\n\nprint(dpo_pair_loss(0.27, -0.27))\n",
       "verified_output": "0.4592",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import math\n\ndef dpo_pair_loss(r_chosen: float, r_rejected: float) -> float:\n    margin = r_chosen - r_rejected\n    prob = 1 / (1 + math.exp(-margin))\n    return round(-math.log(prob), 4)\n\ndef dpo_batch_loss(pairs: list) -> float:\n    \"\"\"Average DPO loss across a batch of (r_chosen, r_rejected) pairs.\"\"\"\n    losses = [dpo_pair_loss(c, r) for c, r in pairs]\n    return round(sum(losses) / len(losses), 4)\n\nprint(dpo_batch_loss([(0.27, -0.27), (0.05, 0.4), (0.9, -0.2)]))\n",
+      "verified_output": "0.5433",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

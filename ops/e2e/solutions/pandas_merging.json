@@ -6,6 +6,12 @@
       "code": "import pandas as pd\n\nemployees = pd.DataFrame({\n    \"emp_id\": [1, 2, 3, 4],\n    \"name\": [\"Alice\", \"Bob\", \"Charlie\", \"Diana\"],\n})\n\nsalaries = pd.DataFrame({\n    \"emp_id\": [1, 2, 3, 5],\n    \"salary\": [70000, 65000, 80000, 90000],\n})\n\nmerged = pd.merge(employees, salaries, on=\"emp_id\", how=\"inner\")\nprint(merged)\n",
       "verified_output": "emp_id     name  salary\n0       1    Alice   70000\n1       2      Bob   65000\n2       3  Charlie   80000",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import pandas as pd\n\nq1 = pd.DataFrame({\n    \"product\": [\"Widget\", \"Gadget\", \"Doohickey\"],\n    \"units_sold\": [120, 85, 40],\n})\nq2 = pd.DataFrame({\n    \"product\": [\"Widget\", \"Gadget\", \"Doohickey\"],\n    \"units_sold\": [135, 90, 55],\n})\nq3 = pd.DataFrame({\n    \"product\": [\"Widget\", \"Gadget\", \"Doohickey\"],\n    \"units_sold\": [150, 70, 60],\n})\n\nannual = pd.concat([q1, q2, q3], ignore_index=True)\nprint(annual)\n",
+      "verified_output": "product  units_sold\n0     Widget         120\n1     Gadget          85\n2  Doohickey          40\n3     Widget         135\n4     Gadget          90\n5  Doohickey          55\n6     Widget         150\n7     Gadget          70\n8  Doohickey          60",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

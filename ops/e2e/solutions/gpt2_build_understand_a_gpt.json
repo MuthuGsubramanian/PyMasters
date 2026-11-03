@@ -6,6 +6,12 @@
       "code": "class TinyGPT:\n    def __init__(self):\n        # Map each word -> {next_word: count}\n        self.bigrams = {}\n\n    def train(self, text: str):\n        words = text.lower().split()\n        for a, b in zip(words, words[1:]):\n            nxt = self.bigrams.setdefault(a, {})\n            nxt[b] = nxt.get(b, 0) + 1\n\n    def predict_next(self, word: str):\n        nxt = self.bigrams.get(word)\n        if not nxt:\n            return None\n        best = None\n        best_count = 0\n        for w, c in nxt.items():  # dicts keep insertion order -> ties go to first seen\n            if c > best_count:\n                best, best_count = w, c\n        return best\n\n    def generate(self, start_word: str, n: int = 5) -> list:\n        result = [start_word]\n        while len(result) < n:\n            nxt = self.predict_next(result[-1])\n            if nxt is None:\n                break\n            result.append(nxt)\n        return result\n\n\n# Test it:\ngpt = TinyGPT()\ngpt.train(\"the cat sat on the mat the cat ran\")\n\nprint(gpt.predict_next(\"the\"))   # 'cat' (appears most after 'the')\nprint(gpt.predict_next(\"cat\"))   # 'sat' or 'ran' (tie -> first seen)\nprint(gpt.predict_next(\"zebra\")) # None\nprint(gpt.generate(\"the\", 4))\n",
       "verified_output": "cat\nsat\nNone\n['the', 'cat', 'sat', 'on']",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import math\n\nclass Sampler:\n    def greedy(self, scores: dict) -> str:\n        return max(scores, key=lambda t: scores[t])\n\n    def top_k(self, scores: dict, k: int) -> list:\n        ranked = sorted(scores, key=lambda t: scores[t], reverse=True)\n        return ranked[:max(k, 0)]\n\n    def softmax(self, scores: dict) -> dict:\n        if not scores:\n            return {}\n        m = max(scores.values())\n        exps = {t: math.exp(s - m) for t, s in scores.items()}\n        total = sum(exps.values())\n        return {t: e / total for t, e in exps.items()}\n\n# Test it:\ns = Sampler()\nlogits = {\"Paris\": 5.0, \"London\": 2.0, \"Rome\": 3.0, \"cat\": -1.0}\n\nprint(s.greedy(logits))         # 'Paris'\nprint(s.top_k(logits, 2))       # ['Paris', 'Rome']\nprobs = s.softmax(logits)\nprint(round(sum(probs.values()), 5))  # 1.0\nprint(s.greedy(probs) == \"Paris\")     # True\n",
+      "verified_output": "Paris\n['Paris', 'Rome']\n1.0\nTrue",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

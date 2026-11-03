@@ -6,6 +6,12 @@
       "code": "class Vehicle:\n    def __init__(self, speed):\n        self.speed = speed\n\n\nclass Car(Vehicle):\n    def __init__(self, brand, speed):\n        super().__init__(speed)\n        self.brand = brand\n\n\nc = Car('Tesla', 120)\nprint(c.brand, c.speed)\n",
       "verified_output": "Tesla 120",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "class Employee:\n    def __init__(self, name, salary):\n        self.name = name\n        self.salary = salary\n\n\nclass Manager(Employee):\n    def __init__(self, name, salary, department):\n        super().__init__(name, salary)\n        self.department = department\n\n\nm = Manager('Alice', 90000, 'Engineering')\nprint(m.name, m.department, m.salary)\n",
+      "verified_output": "Alice Engineering 90000",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }
