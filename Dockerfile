@@ -26,8 +26,14 @@ RUN apt-get update && apt-get install -y \
 
 # --- Litestream (continuous SQLite -> GCS replication) ---
 ARG LITESTREAM_VERSION=v0.3.13
-RUN curl -fsSL "https://github.com/benbjohnson/litestream/releases/download/${LITESTREAM_VERSION}/litestream-${LITESTREAM_VERSION}-linux-amd64.tar.gz" \
-      | tar -xz -C /usr/local/bin litestream \
+# Downloaded to a file with retries (a dropped GitHub download piped straight into tar broke a CI build on
+# 2026-11-03) and checked against a pinned SHA-256 (taken 2026-11-03; update it with LITESTREAM_VERSION).
+ARG LITESTREAM_SHA256=eb75a3de5cab03875cdae9f5f539e6aedadd66607003d9b1e7a9077948818ba0
+RUN curl -fsSL --retry 5 --retry-all-errors --retry-delay 3 -o /tmp/litestream.tgz \
+      "https://github.com/benbjohnson/litestream/releases/download/${LITESTREAM_VERSION}/litestream-${LITESTREAM_VERSION}-linux-amd64.tar.gz" \
+    && echo "${LITESTREAM_SHA256}  /tmp/litestream.tgz" | sha256sum -c - \
+    && tar -xzf /tmp/litestream.tgz -C /usr/local/bin litestream \
+    && rm /tmp/litestream.tgz \
     && litestream version
 COPY litestream.yml /etc/litestream.yml
 
