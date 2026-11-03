@@ -39,6 +39,30 @@ def test_bad_tokens_explain_themselves(visitor):
         visitor.get_by_text(BAD_LINK).first.wait_for(timeout=15000)
 
 
+@pytest.mark.parametrize("dark", [False, True])
+def test_home_shows_openedg_education_partnership(browser, dark):
+    """PyMasters is an OpenEDG Python Institute Education Partner (2026): the official badge, unaltered, on a
+    light panel in both themes, with an accurate one-line explanation and the certification-path link."""
+    ctx = browser.new_context(viewport={"width": 1366, "height": 850}, color_scheme="dark" if dark else "light")
+    page = ctx.new_page()
+    page.goto(f"{BASE}/", wait_until="networkidle")
+    badges = page.get_by_role("img", name="OpenEDG Education Partner")
+    assert badges.count() >= 2, "badge missing from the partner strip and/or the footer"
+    first = badges.first
+    first.scroll_into_view_if_needed()
+    first.wait_for(timeout=10000)
+    assert first.evaluate("e => e.complete && e.naturalWidth > 0"), "badge image failed to load"
+    # On a white panel in either theme (the badge's dark lettering must stay readable; never recoloured).
+    bg = first.evaluate("e => { let n = e.parentElement; while (n && getComputedStyle(n).backgroundColor === 'rgba(0, 0, 0, 0)') n = n.parentElement; return n ? getComputedStyle(n).backgroundColor : '' }")
+    assert bg in ("rgb(255, 255, 255)", "rgba(255, 255, 255, 1)"), bg
+    assert first.evaluate("e => getComputedStyle(e).filter") in ("none", ""), "badge must not be filtered/recoloured"
+    page.get_by_text("official OpenEDG Python Institute Education Partner").first.wait_for(timeout=5000)
+    link = page.get_by_role("link", name="Python Institute certification path")
+    assert link.get_attribute("href").startswith("https://pythoninstitute.org")
+    assert "noopener" in (link.get_attribute("rel") or "")
+    ctx.close()
+
+
 def test_pricing_shows_plan_prices(visitor):
     visitor.goto(f"{BASE}/pricing", wait_until="networkidle")
     body = visitor.locator("body").inner_text()
