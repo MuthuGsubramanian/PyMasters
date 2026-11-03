@@ -1,0 +1,11 @@
+{
+  "lesson_id": "docker_compose",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "compose = \"\"\"services:\n  web:\n    build: .\n    ports:\n      - \"8000:8000\"\n    depends_on:\n      - db\n      - cache\n    environment:\n      - DATABASE_URL=postgresql://user:pass@db:5432/app\n\n  db:\n    image: postgres:16\n    volumes:\n      - pgdata:/var/lib/postgresql/data\n    environment:\n      - POSTGRES_PASSWORD=pass\n\n  cache:\n    image: redis:7\n\nvolumes:\n  pgdata:\n\"\"\"\n\ndef count_services(text):\n    in_services = False\n    count = 0\n    for line in text.splitlines():\n        if not line.strip() or line.strip().startswith(\"#\"):\n            continue\n        indent = len(line) - len(line.lstrip())\n        if indent == 0:\n            in_services = line.strip() == \"services:\"\n            continue\n        if in_services and indent == 2 and line.strip().endswith(\":\"):\n            count += 1\n    return count\n\nn = count_services(compose)\nassert n == 3\nassert \"postgres:16\" in compose and \"redis:7\" in compose\nassert \"8000:8000\" in compose and \"pgdata:\" in compose\nprint(f\"Valid docker-compose.yml with {n} services\")\n",
+      "verified_output": "Valid docker-compose.yml with 3 services",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

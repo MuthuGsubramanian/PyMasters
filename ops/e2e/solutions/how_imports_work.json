@@ -1,0 +1,11 @@
+{
+  "lesson_id": "how_imports_work",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import importlib\n\ndef load_and_run(mod_name, func_name, arg):\n    mod = importlib.import_module(mod_name)\n    func = getattr(mod, func_name)\n    return func(arg)\n\n# Dynamically import the stdlib 'math' module and call math.factorial(5).\nprint(load_and_run(\"math\", \"factorial\", 5))\n",
+      "verified_output": "120",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

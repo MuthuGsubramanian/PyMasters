@@ -1,0 +1,11 @@
+{
+  "lesson_id": "self_consistency_majority_vote",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from collections import Counter\n\ndef majority_vote(answers: list) -> str:\n    \"\"\"Return the most common answer; ties broken by first occurrence in answers.\"\"\"\n    counts = Counter(answers)\n    max_count = max(counts.values())\n    for a in answers:\n        if counts[a] == max_count:\n            return a\n\nprint(majority_vote(['42', '41', '42', '42', '40']))\n",
+      "verified_output": "42",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

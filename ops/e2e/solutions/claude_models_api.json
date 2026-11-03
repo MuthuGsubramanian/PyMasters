@@ -1,0 +1,11 @@
+{
+  "lesson_id": "claude_models_api",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def build_request(system, turns):\n    messages = []\n    for i, content in enumerate(turns):\n        role = \"user\" if i % 2 == 0 else \"assistant\"\n        messages.append({\"role\": role, \"content\": content})\n    return {\n        \"model\": \"claude-sonnet-4-5\",\n        \"max_tokens\": 1024,\n        \"system\": system,\n        \"messages\": messages,\n    }\n\nreq = build_request(\"You are terse.\", [\"Ping?\", \"Pong.\"])\n\nprint(\"model=\" + req[\"model\"])\nprint(\"system_len=\" + str(len(req[\"system\"])))\nprint(\"messages=\" + str(len(req[\"messages\"])))\nprint(\"roles=\" + \",\".join(m[\"role\"] for m in req[\"messages\"]))\n",
+      "verified_output": "model=claude-sonnet-4-5\nsystem_len=14\nmessages=2\nroles=user,assistant",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

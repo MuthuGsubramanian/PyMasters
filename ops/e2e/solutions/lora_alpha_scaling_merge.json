@@ -1,0 +1,11 @@
+{
+  "lesson_id": "lora_alpha_scaling_merge",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def lora_delta_weight(b_row: list, a_row: list, alpha: float, r: int) -> float:\n    \"\"\"Alpha-scaled LoRA update for one weight entry: (b_row . a_row) * (alpha / r).\"\"\"\n    dot = sum(b * a for b, a in zip(b_row, a_row))\n    return round(dot * (alpha / r), 4)\n\nprint(lora_delta_weight([0.2, -0.1, 0.3], [0.4, 0.5, -0.2], 16, 3))\n",
+      "verified_output": "-0.16",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

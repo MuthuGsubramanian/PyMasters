@@ -36,6 +36,15 @@ WORKDIR /app/backend
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Learner-facing libraries for the code sandbox (pandas, scikit-learn, Flask, Django, ...): lessons'
+# practice challenges import them. Separate file so the app's own dependency set stays unchanged.
+# The sandbox env is built from scratch (execution._minimal_env sets MPLBACKEND=Agg and a per-run
+# MPLCONFIGDIR); this prebuilt font cache is copied into each run so matplotlib never rebuilds it.
+COPY backend/requirements-sandbox.txt .
+RUN pip install --no-cache-dir -r requirements-sandbox.txt \
+ && MPLCONFIGDIR=/opt/sandbox-mpl MPLBACKEND=Agg python -c "import matplotlib.font_manager" \
+ && chmod -R a+rX /opt/sandbox-mpl
+
 # Pre-download the Whisper STT model into the image so /api/voice/transcribe
 # never fetches from HuggingFace at runtime (avoids HF IP rate-limits + slow
 # cold starts). Must match VOICE_WHISPER_MODEL (default "tiny").

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "numpy_arrays",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\nmatrix = np.arange(1, 10).reshape(3, 3)\nprint(matrix)\nprint(\"Shape:\", matrix.shape)\nprint(\"Dtype:\", matrix.dtype)\n\nimport numpy as np\nassert isinstance(matrix, np.ndarray), 'matrix must be a numpy array'\nassert matrix.shape == (3, 3), 'matrix must be 3x3'\nassert matrix.size == 9, 'matrix must have 9 elements'\n",
+      "verified_output": "[[1 2 3]\n [4 5 6]\n [7 8 9]]\nShape: (3, 3)\nDtype: int64",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

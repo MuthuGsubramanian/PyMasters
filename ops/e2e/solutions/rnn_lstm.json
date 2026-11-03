@@ -1,0 +1,11 @@
+{
+  "lesson_id": "rnn_lstm",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\ndef forget_gate(h_prev, x_t, W_f, b_f):\n    concat = np.concatenate([h_prev, x_t])\n    z = W_f @ concat + b_f\n    return 1 / (1 + np.exp(-z))\n",
+      "verified_output": "",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

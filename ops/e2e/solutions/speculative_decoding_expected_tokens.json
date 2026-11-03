@@ -1,0 +1,11 @@
+{
+  "lesson_id": "speculative_decoding_expected_tokens",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def expected_tokens_per_step(alpha: float, k: int) -> float:\n    \"\"\"Expected tokens per target-model pass: (1 - alpha^(k+1)) / (1 - alpha).\"\"\"\n    numerator = 1 - alpha ** (k + 1)\n    denominator = 1 - alpha\n    return round(numerator / denominator, 2)\n\nprint(expected_tokens_per_step(0.8, 4))\n",
+      "verified_output": "3.36",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

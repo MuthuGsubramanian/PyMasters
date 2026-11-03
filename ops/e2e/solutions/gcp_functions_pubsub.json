@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_functions_pubsub",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "SUBS = {\n    \"audit-all\": None,\n    \"billing-only\": (\"dept\", \"billing\"),\n    \"eu-events\": (\"region\", \"eu\"),\n}\n\nMESSAGES = [\n    {\"dept\": \"billing\", \"region\": \"us\"},\n    {\"dept\": \"eng\", \"region\": \"eu\"},\n    {\"dept\": \"billing\", \"region\": \"eu\"},\n]\n\ndef matches(filter_spec, attrs):\n    if filter_spec is None:\n        return True\n    key, value = filter_spec\n    return key in attrs and attrs[key] == value\n\ndef deliver(subs, messages):\n    counts = {}\n    for name, spec in subs.items():\n        counts[name] = sum(1 for m in messages if matches(spec, m))\n    return counts\n\ncounts = deliver(SUBS, MESSAGES)\nfor name in sorted(counts):\n    print(f\"{name}: {counts[name]} messages\")\nprint(f\"total deliveries: {sum(counts.values())}\")\n",
+      "verified_output": "audit-all: 3 messages\nbilling-only: 2 messages\neu-events: 2 messages\ntotal deliveries: 7",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

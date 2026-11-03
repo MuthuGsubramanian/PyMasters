@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_portability_k8s_terraform",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "PROVIDER_PREFIXES = (\"azurerm_\", \"aws_\", \"google_\")\n\nRESOURCES = [\n    \"kubernetes_deployment\",\n    \"helm_release\",\n    \"aws_dynamodb_table\",\n    \"azurerm_cosmosdb_account\",\n    \"kubernetes_service\",\n    \"google_bigquery_dataset\",\n    \"kubernetes_ingress\",\n]\n\ndef is_portable(resource_type):\n    return not resource_type.startswith(PROVIDER_PREFIXES)\n\nportable_count = 0\nfor r in RESOURCES:\n    if is_portable(r):\n        portable_count += 1\n        print(f\"{r}: PORTABLE\")\n    else:\n        print(f\"{r}: LOCKED\")\n\ntotal = len(RESOURCES)\npct = round(portable_count / total * 100)\nprint(f\"Portability score: {pct}% ({portable_count}/{total})\")\n",
+      "verified_output": "kubernetes_deployment: PORTABLE\nhelm_release: PORTABLE\naws_dynamodb_table: LOCKED\nazurerm_cosmosdb_account: LOCKED\nkubernetes_service: PORTABLE\ngoogle_bigquery_dataset: LOCKED\nkubernetes_ingress: PORTABLE\nPortability score: 57% (4/7)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

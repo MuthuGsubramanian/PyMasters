@@ -1,0 +1,11 @@
+{
+  "lesson_id": "structural_pattern_matching",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def area(shape: dict) -> float:\n    \"\"\"Return the area using match/case on the shape dict.\"\"\"\n    match shape:\n        case {'type': 'circle', 'r': r}:\n            return round(3.14159 * r * r, 2)\n        case {'type': 'square', 'side': s}:\n            return round(s * s, 2)\n        case _:\n            return 0.0\n\nprint(area({'type': 'circle', 'r': 2}))\n",
+      "verified_output": "12.57",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

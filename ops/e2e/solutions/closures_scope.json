@@ -1,0 +1,11 @@
+{
+  "lesson_id": "closures_scope",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def make_accumulator(initial):\n    total = initial\n    def add(value):\n        nonlocal total\n        total += value\n        return total\n    return add\n\nacc = make_accumulator(100)\nprint(acc(10))\nprint(acc(20))\nprint(acc(30))\n",
+      "verified_output": "110\n130\n160",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

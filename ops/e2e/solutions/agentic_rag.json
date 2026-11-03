@@ -1,0 +1,11 @@
+{
+  "lesson_id": "agentic_rag",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "docs = [\n    {'content': 'AI agents overview', 'relevance_score': 0.9},\n    {'content': 'Recipe for pasta', 'relevance_score': 0.1},\n    {'content': 'LLM tool calling', 'relevance_score': 0.85},\n    {'content': 'Weather today', 'relevance_score': 0.3},\n]\n\nfiltered_docs = [d for d in docs if d['relevance_score'] >= 0.7]\n\nprint(len(filtered_docs))\n",
+      "verified_output": "2",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

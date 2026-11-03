@@ -1,0 +1,11 @@
+{
+  "lesson_id": "ci_cd_python",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "workflow = \"\"\"# .github/workflows/python-ci.yml\nname: Python CI\n\non: [push, pull_request]\n\njobs:\n  lint:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: \"3.12\"\n      - name: Install ruff\n        run: pip install ruff\n      - name: Run ruff\n        run: ruff check .\n\n  test:\n    needs: lint\n    runs-on: ubuntu-latest\n    strategy:\n      matrix:\n        python-version: [\"3.11\", \"3.12\"]\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: ${{ matrix.python-version }}\n      - name: Install dependencies\n        run: |\n          python -m pip install --upgrade pip\n          pip install pytest pytest-cov\n      - name: Run tests\n        run: pytest --cov\n\"\"\"\n\nprint(\"Complete CI workflow with lint and matrix test jobs\")\n",
+      "verified_output": "Complete CI workflow with lint and matrix test jobs",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

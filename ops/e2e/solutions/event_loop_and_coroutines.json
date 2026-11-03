@@ -1,0 +1,11 @@
+{
+  "lesson_id": "event_loop_and_coroutines",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import asyncio\n\n# An 'async def' makes a COROUTINE: a pausable function.\n# Calling it returns a coroutine object that does nothing\n# until the event loop runs it.\nasync def compute(n):\n    return n * n\n\n# asyncio.run(...) starts the event loop, runs the coroutine\n# to completion, and returns its value.\nprint(asyncio.run(compute(7)))\n",
+      "verified_output": "49",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

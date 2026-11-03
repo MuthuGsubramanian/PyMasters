@@ -1,0 +1,11 @@
+{
+  "lesson_id": "distillation_temperature_softmax",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\ndef temperature_softmax(logits: list, T: float) -> list:\n    \"\"\"Softmax with temperature: exp(x_i / T) normalized over all i.\"\"\"\n    exps = [math.exp(x / T) for x in logits]\n    s = sum(exps)\n    return [round(e / s, 4) for e in exps]\n\nprint(temperature_softmax([4.0, 2.0, 0.5], 1))\n",
+      "verified_output": "[0.858, 0.1161, 0.0259]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

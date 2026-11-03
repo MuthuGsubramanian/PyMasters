@@ -1,0 +1,11 @@
+{
+  "lesson_id": "foundry_function_calling_tools",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def get_stock(symbol):\n    return {'MSFT': 100.0, 'AAPL': 90.0}[symbol]\n\ndef convert(amount, rate):\n    return amount * rate\n\nREGISTRY = {\n    'get_stock': {'fn': get_stock, 'required': ['symbol']},\n    'convert': {'fn': convert, 'required': ['amount', 'rate']},\n}\n\ndef dispatch(call):\n    tool = REGISTRY[call['name']]\n    args = call['args']\n    for name in tool['required']:\n        if name not in args:\n            return f\"ERROR: missing required arg '{name}'\"\n    return tool['fn'](**args)\n\ncalls = [\n    {'name': 'get_stock', 'args': {'symbol': 'MSFT'}},\n    {'name': 'convert', 'args': {'amount': 100.0, 'rate': 2.0}},\n    {'name': 'get_stock', 'args': {}},\n]\n\nok = 0\nfailed = 0\nfor call in calls:\n    result = dispatch(call)\n    print(f\"{call['name']}({call['args']}) -> {result}\")\n    if isinstance(result, str) and result.startswith('ERROR'):\n        failed += 1\n    else:\n        ok += 1\n\nprint(f'Dispatched: {ok} ok, {failed} failed')\n",
+      "verified_output": "get_stock({'symbol': 'MSFT'}) -> 100.0\nconvert({'amount': 100.0, 'rate': 2.0}) -> 200.0\nget_stock({}) -> ERROR: missing required arg 'symbol'\nDispatched: 2 ok, 1 failed",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

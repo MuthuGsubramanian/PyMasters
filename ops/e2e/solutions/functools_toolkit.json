@@ -1,0 +1,11 @@
+{
+  "lesson_id": "functools_toolkit",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from functools import partial, reduce\n\nDIGITS = \"0123456789ABCDEF\"\n\ndef to_base(n, base):\n    if n == 0:\n        return \"0\"\n    out = []\n    while n > 0:\n        n, r = divmod(n, base)\n        out.append(DIGITS[r])\n    return \"\".join(reversed(out))\n\nto_hex = partial(to_base, base=16)\nto_bin = partial(to_base, base=2)\n\nproduct = reduce(lambda acc, x: acc * x, [1, 2, 3, 4, 5], 1)\n\nprint(f\"to_hex(255)={to_hex(255)} to_bin(5)={to_bin(5)} product={product}\")\n",
+      "verified_output": "to_hex(255)=FF to_bin(5)=101 product=120",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

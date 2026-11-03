@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_rds_dynamodb",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\nITEM_KB = 7\nREADS_PER_SEC = 100\nWRITES_PER_SEC = 20\n\ndef read_rcu(item_kb, strong=True):\n    units = math.ceil(item_kb / 4)\n    return units if strong else math.ceil(units / 2)\n\ndef write_wcu(item_kb):\n    return math.ceil(item_kb / 1)\n\nprint(f\"item_size={ITEM_KB}KB reads={READS_PER_SEC}/s writes={WRITES_PER_SEC}/s\")\nprint(f\"strong_read_rcu={read_rcu(ITEM_KB, True) * READS_PER_SEC}\")\nprint(f\"eventual_read_rcu={read_rcu(ITEM_KB, False) * READS_PER_SEC}\")\nprint(f\"wcu={write_wcu(ITEM_KB) * WRITES_PER_SEC}\")\n",
+      "verified_output": "item_size=7KB reads=100/s writes=20/s\nstrong_read_rcu=200\neventual_read_rcu=100\nwcu=140",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

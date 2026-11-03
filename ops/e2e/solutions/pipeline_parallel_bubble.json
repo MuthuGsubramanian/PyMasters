@@ -1,0 +1,11 @@
+{
+  "lesson_id": "pipeline_parallel_bubble",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def bubble_fraction(stages: int, microbatches: int) -> float:\n    \"\"\"Idle fraction of a naive forward pipeline: (p - 1) / (m + p - 1), rounded to 4 decimals.\"\"\"\n    return round((stages - 1) / (microbatches + stages - 1), 4)\n\nprint(bubble_fraction(4, 4))\nprint(bubble_fraction(4, 16))\nprint(bubble_fraction(8, 32))\n",
+      "verified_output": "0.4286\n0.1579\n0.1795",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

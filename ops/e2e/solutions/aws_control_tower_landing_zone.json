@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_control_tower_landing_zone",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "LEVELS = [\n    {\"name\": \"root\", \"allow\": {\"*\"}, \"deny\": {\"iam:CreateUser\"}},\n    {\"name\": \"ou-workloads\", \"allow\": {\"*\"}, \"deny\": {\"ec2:TerminateInstances\"}},\n    {\"name\": \"account-prod\", \"allow\": {\"*\"}, \"deny\": set()},\n]\n\nREQUESTS = [\n    \"s3:GetObject\",\n    \"ec2:TerminateInstances\",\n    \"iam:CreateUser\",\n]\n\n\ndef resolve(action, levels):\n    for level in levels:\n        allowed = \"*\" in level[\"allow\"] or action in level[\"allow\"]\n        if not allowed or action in level[\"deny\"]:\n            return f\"BLOCKED at {level['name']}\"\n    return \"ALLOWED\"\n\n\nfor action in REQUESTS:\n    print(f\"{action} -> {resolve(action, LEVELS)}\")\n",
+      "verified_output": "s3:GetObject -> ALLOWED\nec2:TerminateInstances -> BLOCKED at ou-workloads\niam:CreateUser -> BLOCKED at root",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

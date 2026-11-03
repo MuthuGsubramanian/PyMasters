@@ -1,0 +1,11 @@
+{
+  "lesson_id": "frontier_model_families",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "CATALOG = {\n    \"anthropic\": {\n        \"deep_reasoning\": \"Claude Opus 4.5\",\n        \"balanced\": \"Claude Sonnet 4.5\",\n        \"fast\": \"Claude Haiku 4.5\",\n    },\n    \"openai\": {\n        \"deep_reasoning\": \"o-series reasoning model\",\n        \"balanced\": \"GPT flagship\",\n        \"fast\": \"GPT mini\",\n    },\n    \"google\": {\n        \"deep_reasoning\": \"Gemini 2.5 Pro\",\n        \"balanced\": \"Gemini 2.5 Flash\",\n        \"fast\": \"Gemini Flash-Lite\",\n    },\n}\n\ndef pick_model(provider, need):\n    tiers = CATALOG.get(provider)\n    if tiers is None:\n        return \"unknown\"\n    return tiers.get(need, \"unknown\")\n\nfor provider, need in [\n    (\"anthropic\", \"deep_reasoning\"),\n    (\"anthropic\", \"fast\"),\n    (\"openai\", \"balanced\"),\n    (\"google\", \"fast\"),\n]:\n    print(f\"{provider}/{need} -> {pick_model(provider, need)}\")\nprint(\"providers=\" + str(len(CATALOG)))\n",
+      "verified_output": "anthropic/deep_reasoning -> Claude Opus 4.5\nanthropic/fast -> Claude Haiku 4.5\nopenai/balanced -> GPT flagship\ngoogle/fast -> Gemini Flash-Lite\nproviders=3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

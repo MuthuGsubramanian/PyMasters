@@ -1,0 +1,11 @@
+{
+  "lesson_id": "foundry_platform_hubs_projects",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def create_hub(name, connections):\n    return {'name': name, 'connections': list(connections)}\n\ndef create_project(hub, name):\n    return {'name': name, 'hub': hub['name'], 'connections': list(hub['connections'])}\n\nhub = create_hub('ml-hub-east', ['azure-openai', 'ai-search'])\nprojects = [create_project(hub, n) for n in ['support-bot', 'doc-summarizer']]\n\nprint(f\"Hub: {hub['name']} | shared connections: {len(hub['connections'])}\")\nfor p in projects:\n    print(f\"Project {p['name']} inherits: {', '.join(p['connections'])}\")\n",
+      "verified_output": "Hub: ml-hub-east | shared connections: 2\nProject support-bot inherits: azure-openai, ai-search\nProject doc-summarizer inherits: azure-openai, ai-search",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

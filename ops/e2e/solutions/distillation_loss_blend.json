@@ -1,0 +1,11 @@
+{
+  "lesson_id": "distillation_loss_blend",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\ndef cross_entropy(true_index: int, probs: list) -> float:\n    \"\"\"Hard-label loss: -log of the student's probability for the true class.\"\"\"\n    return round(-math.log(probs[true_index]), 4)\n\nprint(cross_entropy(0, [0.6652, 0.2447, 0.09]))\n",
+      "verified_output": "0.4077",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

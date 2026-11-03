@@ -1,0 +1,11 @@
+{
+  "lesson_id": "rope_context_extension_scaling",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\ndef rope_wavelength(i: int, head_dim: int, base: int) -> float:\n    \"\"\"Positions needed for dimension pair i to complete one full 2*pi rotation.\"\"\"\n    return round(2 * math.pi * (base ** ((2 * i) / head_dim)), 1)\n\nprint(rope_wavelength(63, 128, 10000))\n",
+      "verified_output": "54410.1",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

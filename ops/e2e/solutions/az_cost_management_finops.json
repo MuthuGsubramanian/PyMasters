@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_cost_management_finops",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "RESOURCES = [\n    {'name': 'vm1', 'cost': 120.0, 'tags': {'costCenter': 'CC-ENG'}},\n    {'name': 'vm2', 'cost': 80.0, 'tags': {'costCenter': 'CC-ENG'}},\n    {'name': 'sql1', 'cost': 200.0, 'tags': {'costCenter': 'CC-DATA'}},\n    {'name': 'st1', 'cost': 40.0, 'tags': {}},\n]\n\ndef showback(resources):\n    totals = {}\n    for r in resources:\n        tags = r.get('tags') or {}\n        center = tags.get('costCenter') or r.get('costCenter') or 'UNTAGGED'\n        totals[center] = totals.get(center, 0.0) + r.get('cost', 0.0)\n    return totals\n\ntotals = showback(RESOURCES)\nfor center, total in sorted(totals.items(), key=lambda kv: (-kv[1], kv[0])):\n    print(f'{center}: ${total:.2f}')\ngrand = sum(totals.values())\npct = (totals.get('UNTAGGED', 0.0) / grand * 100) if grand else 0.0\nprint(f'untagged share: {pct:.1f}%')\n\nt = showback(RESOURCES)\nassert abs(t['CC-ENG'] - 200.0) < 1e-9\nassert abs(t['CC-DATA'] - 200.0) < 1e-9\nassert abs(t['UNTAGGED'] - 40.0) < 1e-9\nassert len(t) == 3\nt2 = showback([{'name': 'x', 'cost': 10.0, 'tags': {'costCenter': 'A'}}])\nassert t2 == {'A': 10.0}\n",
+      "verified_output": "CC-DATA: $200.00\nCC-ENG: $200.00\nUNTAGGED: $40.00\nuntagged share: 9.1%",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

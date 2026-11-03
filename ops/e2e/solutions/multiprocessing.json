@@ -1,0 +1,11 @@
+{
+  "lesson_id": "multiprocessing",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from multiprocessing import Pool\nimport math\n\ndef factorial(n):\n    return math.factorial(n)\n\nif __name__ == '__main__':\n    numbers = [10, 15, 20, 25]\n    with Pool(4) as pool:\n        results = pool.map(factorial, numbers)\n    for n, result in zip(numbers, results):\n        print(f'{n}! = {result}')\n    print(f'Results: {results}')\n",
+      "verified_output": "10! = 3628800\n15! = 1307674368000\n20! = 2432902008176640000\n25! = 15511210043330985984000000\nResults: [3628800, 1307674368000, 2432902008176640000, 15511210043330985984000000]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

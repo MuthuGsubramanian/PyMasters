@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_network_interconnect",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "PATHS = [\n    {\"name\": \"azure-eu-to-aws-eu\", \"hops\": [(\"app-gw\", 2), (\"fabric-crossconnect\", 8), (\"target-lb\", 2)], \"sla_ms\": 20},\n    {\"name\": \"azure-eu-to-gcp-us\", \"hops\": [(\"app-gw\", 2), (\"transatlantic\", 78), (\"target-lb\", 3)], \"sla_ms\": 50},\n    {\"name\": \"aws-us-to-gcp-us\", \"hops\": [(\"nlb\", 1), (\"fabric-crossconnect\", 12), (\"target-lb\", 2)], \"sla_ms\": 25},\n]\n\ndef path_latency(path):\n    return int(sum(ms for _, ms in path[\"hops\"]))\n\ndef verdict(path):\n    return \"OK\" if path_latency(path) <= path[\"sla_ms\"] else \"BREACH\"\n\nbreaches = 0\nfor p in PATHS:\n    v = verdict(p)\n    if v == \"BREACH\":\n        breaches += 1\n    print(f\"{p['name']}: {path_latency(p)}ms (sla {p['sla_ms']}ms) -> {v}\")\nprint(f\"Breaches: {breaches}/{len(PATHS)}\")\n",
+      "verified_output": "azure-eu-to-aws-eu: 12ms (sla 20ms) -> OK\nazure-eu-to-gcp-us: 83ms (sla 50ms) -> BREACH\naws-us-to-gcp-us: 15ms (sla 25ms) -> OK\nBreaches: 1/3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

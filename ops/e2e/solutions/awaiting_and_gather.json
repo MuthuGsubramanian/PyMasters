@@ -1,0 +1,11 @@
+{
+  "lesson_id": "awaiting_and_gather",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import asyncio\n\nasync def square(n):\n    return n * n\n\nasync def main():\n    results = await asyncio.gather(square(1), square(2), square(3))\n    return list(results)\n\nprint(asyncio.run(main()))\n",
+      "verified_output": "[1, 4, 9]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "foundry_model_catalog",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def select_model(task):\n    if task['needs_reasoning'] and task['budget'] == 'high':\n        return 'gpt-4o'\n    if task['latency'] == 'low' and task['budget'] == 'low':\n        return 'phi-4'\n    if task['open_weights']:\n        return 'llama-3.3-70b'\n    return 'gpt-4o-mini'\n\ntasks = [\n    {'name': 'complex-analysis', 'needs_reasoning': True, 'budget': 'high', 'latency': 'normal', 'open_weights': False},\n    {'name': 'edge-chatbot', 'needs_reasoning': False, 'budget': 'low', 'latency': 'low', 'open_weights': False},\n    {'name': 'custom-finetune', 'needs_reasoning': False, 'budget': 'medium', 'latency': 'normal', 'open_weights': True},\n    {'name': 'simple-faq', 'needs_reasoning': False, 'budget': 'low', 'latency': 'normal', 'open_weights': False},\n]\n\nfor t in tasks:\n    print(f\"{t['name']} -> {select_model(t)}\")\n",
+      "verified_output": "complex-analysis -> gpt-4o\nedge-chatbot -> phi-4\ncustom-finetune -> llama-3.3-70b\nsimple-faq -> gpt-4o-mini",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

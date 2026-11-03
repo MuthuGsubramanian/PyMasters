@@ -251,4 +251,6 @@ def test_legacy_group_label_is_honoured_and_mirrored(client):
     # Clearing the branding label removes the legacy mirror -> preset default
     r = client.put(f"/api/org/{org_id}/branding", json={"group_label": ""}, headers=_auth(owner))
     assert r.json()["branding"]["group_label"] == "Course"
-    assert client.get(f"/api/org/{org_id}/groups", headers=_auth(owner)).json()["group_label"] == "Group"
+    # /groups reports the same effective label as /branding (it used to fall back to a generic "Group",
+    # so a university console said "Group" while its branding said "Course" — fixed 2026-11-03).
+    assert client.get(f"/api/org/{org_id}/groups", headers=_auth(owner)).json()["group_label"] == "Course"

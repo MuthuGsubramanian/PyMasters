@@ -1,0 +1,11 @@
+{
+  "lesson_id": "async_await_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import asyncio\nimport time\n\nasync def download(name, seconds):\n    print(f'Downloading {name}...', flush=True)\n    await asyncio.sleep(seconds)\n    print(f'{name} done!', flush=True)\n    return name\n\nasync def main():\n    start = time.perf_counter()\n    results = await asyncio.gather(\n        download('file1.txt', 1),\n        download('file2.txt', 2),\n        download('file3.txt', 3)\n    )\n    elapsed = time.perf_counter() - start\n    print(f'All done in {elapsed:.1f}s: {results}', flush=True)\n\nif __name__ == '__main__':\n    asyncio.run(main())\n",
+      "verified_output": "Downloading file1.txt...\nDownloading file2.txt...\nDownloading file3.txt...\nfile1.txt done!\nfile2.txt done!\nfile3.txt done!\nAll done in 3.0s: ['file1.txt', 'file2.txt', 'file3.txt']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

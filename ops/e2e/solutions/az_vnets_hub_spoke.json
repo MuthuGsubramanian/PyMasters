@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_vnets_hub_spoke",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "RULES = [\n    {'priority': 100, 'port': 443, 'source': '*', 'action': 'Allow'},\n    {'priority': 200, 'port': 22, 'source': '10.0.0.0/8', 'action': 'Allow'},\n    {'priority': 300, 'port': '*', 'source': '*', 'action': 'Deny'},\n]\nPACKETS = [\n    (443, '203.0.113.5'),\n    (22, '10.1.2.3'),\n    (22, '203.0.113.5'),\n    (8080, '10.1.2.3'),\n]\n\ndef matches_source(rule_source, ip):\n    if rule_source == '*':\n        return True\n    if rule_source == '10.0.0.0/8':\n        return ip.startswith('10.')\n    return ip == rule_source\n\ndef evaluate(port, source_ip):\n    for rule in sorted(RULES, key=lambda r: r['priority']):\n        if (rule['port'] == '*' or rule['port'] == port) and matches_source(rule['source'], source_ip):\n            return (rule['action'], rule['priority'])\n    return ('Deny', None)\n\nfor port, ip in PACKETS:\n    action, priority = evaluate(port, ip)\n    print(f'{port} from {ip} -> {action} (rule {priority})')\n",
+      "verified_output": "443 from 203.0.113.5 -> Allow (rule 100)\n22 from 10.1.2.3 -> Allow (rule 200)\n22 from 203.0.113.5 -> Deny (rule 300)\n8080 from 10.1.2.3 -> Deny (rule 300)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

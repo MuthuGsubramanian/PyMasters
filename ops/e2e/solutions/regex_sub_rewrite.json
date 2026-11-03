@@ -1,0 +1,11 @@
+{
+  "lesson_id": "regex_sub_rewrite",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import re\n\ndef mask_digits(text: str) -> str:\n    \"\"\"Replace each run of digits with a single '#'.\"\"\"\n    return re.sub(r'\\d+', '#', text)\n\nprint(mask_digits('Call 555-1234 now'))\n",
+      "verified_output": "Call #-# now",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "type_hints",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def merge_dicts(a: dict[str, int], b: dict[str, int]) -> dict[str, int]:\n    result: dict[str, int] = a.copy()\n    for key, value in b.items():\n        result[key] = result.get(key, 0) + value\n    return result\n\nx: dict[str, int] = {'a': 1, 'b': 2}\ny: dict[str, int] = {'b': 3, 'c': 4}\nprint(merge_dicts(x, y))\n",
+      "verified_output": "{'a': 1, 'b': 5, 'c': 4}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

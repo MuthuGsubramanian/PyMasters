@@ -1,0 +1,11 @@
+{
+  "lesson_id": "prompt_caching_ttl_hit_rate",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def simulate_cache_hits(arrival_times: list, ttl: int) -> list:\n    \"\"\"Hit/miss per call: hit if gap since the previous call is within ttl seconds.\"\"\"\n    results = []\n    last_touch = None\n    for t in arrival_times:\n        hit = last_touch is not None and (t - last_touch) <= ttl\n        results.append(hit)\n        last_touch = t\n    return results\n\nprint(simulate_cache_hits([0, 100, 250, 700, 720], 300))\n",
+      "verified_output": "[False, True, True, False, True]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

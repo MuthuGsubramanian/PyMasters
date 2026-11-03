@@ -1,0 +1,11 @@
+{
+  "lesson_id": "itertools_powerhouse",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from itertools import groupby\n\nwords = [\"apple\", \"banana\", \"cherry\", \"avocado\", \"blueberry\", \"apricot\"]\n\ndef count_by_first_letter(words):\n    key = lambda w: w[0]\n    # groupby only groups CONSECUTIVE items, so sort by the key first:\n    ordered = sorted(words, key=key)\n    counts = {}\n    for letter, group in groupby(ordered, key=key):\n        counts[letter] = sum(1 for _ in group)\n    return counts\n\nresult = count_by_first_letter(words)\nprint(result[\"a\"])\n",
+      "verified_output": "3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

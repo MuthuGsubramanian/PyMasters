@@ -1,0 +1,11 @@
+{
+  "lesson_id": "rag_reranking",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def rerank(candidates: list, scores: list, k: int) -> list:\n    \"\"\"Return the top-k candidates ordered by their rerank score (desc).\"\"\"\n    pairs = zip(candidates, scores)\n    ranked = sorted(pairs, key=lambda p: p[1], reverse=True)\n    return [c for c, _ in ranked[:k]]\n\nprint(rerank([\"doc_a\", \"doc_b\", \"doc_c\"], [0.2, 0.9, 0.5], 2))\n",
+      "verified_output": "['doc_b', 'doc_c']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

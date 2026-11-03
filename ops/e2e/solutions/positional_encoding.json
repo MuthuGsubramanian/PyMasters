@@ -1,0 +1,11 @@
+{
+  "lesson_id": "positional_encoding",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\ndef positional_encoding(pos, d):\n    pe = []\n    for i in range(d):\n        angle = pos / 10000 ** ((2 * (i // 2)) / d)\n        if i % 2 == 0:\n            pe.append(math.sin(angle))\n        else:\n            pe.append(math.cos(angle))\n    return pe\n\n# --- demo (do not change) ---\nprint([round(x, 4) for x in positional_encoding(1, 4)])\n",
+      "verified_output": "[0.8415, 0.5403, 0.01, 1.0]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

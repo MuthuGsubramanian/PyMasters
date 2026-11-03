@@ -1,0 +1,11 @@
+{
+  "lesson_id": "logging_monitoring",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import logging\n\n# Create logger\nlogger = logging.getLogger('myapp')\nlogger.setLevel(logging.DEBUG)\n\n# Create formatter\nformatter = logging.Formatter(\n    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'\n)\n\n# Create console handler (DEBUG level)\nconsole_handler = logging.StreamHandler()\nconsole_handler.setLevel(logging.DEBUG)\nconsole_handler.setFormatter(formatter)\n\n# Create file handler (ERROR level)\nfile_handler = logging.FileHandler('errors.log')\nfile_handler.setLevel(logging.ERROR)\nfile_handler.setFormatter(formatter)\n\n# Add handlers to logger\nlogger.addHandler(console_handler)\nlogger.addHandler(file_handler)\n\n# Log at each level\nlogger.debug('This is a debug message')\nlogger.info('Application started')\nlogger.warning('Disk space low')\nlogger.error('Database connection failed')\nlogger.critical('System shutting down')\n\nprint(\"Console shows all 5 messages, errors.log shows only ERROR and CRITICAL\")\n",
+      "verified_output": "Console shows all 5 messages, errors.log shows only ERROR and CRITICAL",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

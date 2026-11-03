@@ -1,0 +1,11 @@
+{
+  "lesson_id": "claude_enterprise_deployment",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "TEAMS = [\n    (\"team_data\", {\"cloud\": \"aws\"}),\n    (\"team_ml\", {\"cloud\": \"gcp\"}),\n    (\"team_apps\", {\"cloud\": None}),\n]\n\ndef choose_channel(req):\n    cloud = req.get(\"cloud\")\n    if cloud == \"aws\":\n        return \"bedrock\"\n    if cloud == \"gcp\":\n        return \"vertex\"\n    return \"direct_api\"\n\nchannels = []\nfor name, req in TEAMS:\n    channel = choose_channel(req)\n    channels.append(channel)\n    print(f\"{name}: {channel}\")\nprint(f\"channels_used={len(set(channels))}\")\n",
+      "verified_output": "team_data: bedrock\nteam_ml: vertex\nteam_apps: direct_api\nchannels_used=3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

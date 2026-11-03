@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_bedrock_genai",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import re\n\nDENIED_WORDS = [\"password\", \"exploit\"]\n\nPROMPTS = [\n    (\"prompt-1\", \"Summarize the quarterly revenue report for the board\"),\n    (\"prompt-2\", \"My SSN is 123-45-6789 please store it\"),\n    (\"prompt-3\", \"What is the admin password for the database\"),\n]\n\nSSN_PATTERN = r\"\\d{3}-\\d{2}-\\d{4}\"\n\ndef check_prompt(text):\n    if re.search(SSN_PATTERN, text):\n        return \"BLOCKED (pii)\"\n    lowered = text.lower()\n    if any(word in lowered for word in DENIED_WORDS):\n        return \"BLOCKED (denied_topic)\"\n    return \"ALLOWED\"\n\ndef count_tokens(text):\n    return len(text.split())\n\nallowed = 0\nblocked = 0\nfor name, text in PROMPTS:\n    verdict = check_prompt(text)\n    if verdict == \"ALLOWED\":\n        allowed += 1\n        print(f\"{name} -> ALLOWED tokens={count_tokens(text)}\")\n    else:\n        blocked += 1\n        print(f\"{name} -> {verdict}\")\nprint(f\"allowed={allowed} blocked={blocked}\")\n",
+      "verified_output": "prompt-1 -> ALLOWED tokens=8\nprompt-2 -> BLOCKED (pii)\nprompt-3 -> BLOCKED (denied_topic)\nallowed=1 blocked=2",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

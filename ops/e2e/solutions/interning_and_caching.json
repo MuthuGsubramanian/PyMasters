@@ -1,0 +1,11 @@
+{
+  "lesson_id": "interning_and_caching",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "# A module-level cache: results are stored here keyed by n so we never recompute.\n_cache = {}\n\ndef fib(n):\n    if n in _cache:\n        return _cache[n]\n    if n == 0:\n        result = 0\n    elif n == 1:\n        result = 1\n    else:\n        result = fib(n - 1) + fib(n - 2)\n    _cache[n] = result\n    return result\n\nprint(fib(10))\n",
+      "verified_output": "55",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -8,7 +8,8 @@ F=$(~/pymasters-ops/collect_status.sh)
 PROMPT="You are the PyMasters ops owner writing the owner's daily status email. The owner is not a GCP expert.
 FORMAT (htmlBody, simple inline-styled HTML that renders in Gmail; no external CSS, no images):
 1. A one-line overall status at the top: 🟢 All good / 🟡 Needs attention / 🔴 Action required, plus one plain-English sentence.
-2. Table 'Health' with columns Area | Status | Details. Rows: Website, Deploys & CI, Production server, AI tutor & content job, Backups, Laptop (ops machine) heat, YouTube & LinkedIn bot.
+2. Table 'Health' with columns Area | Status | Details. Rows: Website, Deploys & CI, Test health, Production server, AI tutor & content job, Backups, Laptop (ops machine) heat, YouTube & LinkedIn bot.
+   Test health (section '## Test health'): 🔴 if Tier 1 on main is failing or the production smoke FAILED or did not run; 🟡 if the nightly has failures or flaky > 0 (name the first failures in Details); else 🟢.
    Status is 🟢 / 🟡 / 🔴. Details: one short plain-English line each.
 3. Table 'GCP cost (owner ceiling ₹5,000/month)' with columns Item | This month | Free/limit | Status: month-to-date spend in INR vs ₹5,000,
    GCS Class A operations vs 5,000 free, VM outbound traffic vs 1 GB free, Artifact Registry GB vs 0.5 GB free, Secret Manager versions vs 6 free.

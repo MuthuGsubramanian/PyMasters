@@ -1,0 +1,11 @@
+{
+  "lesson_id": "prompting_for_code",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from decimal import Decimal, ROUND_HALF_UP\n\n# PRECISE SPEC: round half-UP to exactly 2 decimal places, return a float.\ndef round_price(amount):\n    # Use the shortest repr of the float (str) so 1.005 is treated as 1.005,\n    # not its binary approximation 1.00499999...\n    d = Decimal(str(amount))\n    return float(d.quantize(Decimal(\"0.01\"), rounding=ROUND_HALF_UP))\n\nprint(round_price(2.675), round_price(1.005), round_price(0.125), round_price(10.0))\n",
+      "verified_output": "2.68 1.01 0.13 10.0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

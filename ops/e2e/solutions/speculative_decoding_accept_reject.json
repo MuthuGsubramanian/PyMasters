@@ -1,0 +1,11 @@
+{
+  "lesson_id": "speculative_decoding_accept_reject",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def speculative_accept(p_draft: float, p_target: float, u: float) -> bool:\n    \"\"\"Accept a drafted token if u < min(1, p_target / p_draft).\"\"\"\n    accept_prob = min(1.0, p_target / p_draft)\n    return u < accept_prob\n\nprint(speculative_accept(0.6, 0.3, 0.42))\n",
+      "verified_output": "True",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

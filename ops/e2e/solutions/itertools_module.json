@@ -1,0 +1,11 @@
+{
+  "lesson_id": "itertools_module",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from itertools import product, islice\n\nchars = 'abc'\ndigits = '123'\npasswords = [''.join(p) for p in product(chars, digits)]\nprint(f'Total: {len(passwords)}')\nprint(f'First 5: {list(islice(passwords, 5))}')\n",
+      "verified_output": "Total: 9\nFirst 5: ['a1', 'a2', 'a3', 'b1', 'b2']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

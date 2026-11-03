@@ -1,0 +1,11 @@
+{
+  "lesson_id": "hash_tables",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class SimpleHashTable:\n    def __init__(self, size=10):\n        self.size = size\n        self.table = [[] for _ in range(size)]\n\n    def _hash(self, key):\n        return hash(key) % self.size\n\n    def put(self, key, value):\n        bucket = self.table[self._hash(key)]\n        for i, (k, _) in enumerate(bucket):\n            if k == key:\n                bucket[i] = (key, value)\n                return\n        bucket.append((key, value))\n\n    def get(self, key):\n        bucket = self.table[self._hash(key)]\n        for k, v in bucket:\n            if k == key:\n                return v\n        raise KeyError(key)\n\n    def delete(self, key):\n        bucket = self.table[self._hash(key)]\n        for i, (k, _) in enumerate(bucket):\n            if k == key:\n                del bucket[i]\n                return True\n        return False\n\n    def keys(self):\n        result = []\n        for bucket in self.table:\n            for k, _ in bucket:\n                result.append(k)\n        return result\n\n\ndef word_count(sentence):\n    ht = SimpleHashTable()\n    for word in sentence.lower().split():\n        try:\n            count = ht.get(word)\n            ht.put(word, count + 1)\n        except KeyError:\n            ht.put(word, 1)\n    return ht\n\n\nresult = word_count('the cat sat on the mat the cat')\nprint(result.get('the'))\nprint(result.get('cat'))\n",
+      "verified_output": "3\n2",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

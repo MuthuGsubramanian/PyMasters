@@ -1,0 +1,11 @@
+{
+  "lesson_id": "oop_magic_methods",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class Book:\n    def __init__(self, title, pages):\n        self.title = title\n        self.pages = pages\n\n    def __str__(self):\n        return f'{self.title} ({self.pages} pages)'\n\n    def __lt__(self, other):\n        return self.pages < other.pages\n\n\nb1 = Book('Python 101', 300)\nb2 = Book('Deep Learning', 800)\nprint(b1)\nassert b1 < b2\n",
+      "verified_output": "Python 101 (300 pages)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

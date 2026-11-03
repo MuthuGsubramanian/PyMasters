@@ -1,0 +1,11 @@
+{
+  "lesson_id": "qwen3_vl_2b_instruct_visual_qa_pipeline",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class VisualQAPipeline:\n    def __init__(self, model_name: str):\n        self.model_name = model_name\n        self.history = []\n\n    def _mock_answer(self, question: str) -> str:\n        q = question.lower()\n        if 'how many' in q:\n            return 'Objects detected: 3 items.'\n        if 'compar' in q:\n            return 'Yes, differences found.'\n        return 'Visual analysis complete.'\n\n    def _record(self, image_path: str, question: str) -> str:\n        entry = {\"image\": image_path, \"question\": question, \"turn\": len(self.history) + 1}\n        answer = self._mock_answer(question)\n        entry[\"answer\"] = answer\n        self.history.append(entry)\n        return answer\n\n    def ask(self, image_path: str, question: str) -> str:\n        return self._record(image_path, question)\n\n    def follow_up(self, question: str) -> str:\n        if not self.history:\n            raise RuntimeError(\"No image context\")\n        return self._record(self.history[-1][\"image\"], question)\n\n    def get_chain(self) -> list:\n        return [(h[\"turn\"], h[\"question\"], h[\"answer\"]) for h in self.history]\n\n\n# Test it:\npipe = VisualQAPipeline(\"Qwen/Qwen3-VL-2B-Instruct\")\na1 = pipe.ask(\"photo.jpg\", \"How many cats are in this image?\")\nprint(a1)\n\na2 = pipe.follow_up(\"What colors are they?\")\nprint(a2)\n\na3 = pipe.follow_up(\"Compare them to typical house cats\")\nprint(a3)\n\nchain = pipe.get_chain()\nfor turn, q, a in chain:\n    print(f\"Turn {turn}: {q[:20]}...\")\n\npipe2 = VisualQAPipeline(\"Qwen/Qwen3-VL-2B-Instruct\")\ntry:\n    pipe2.follow_up(\"test\")\nexcept RuntimeError:\n    print(\"No context\")\n",
+      "verified_output": "Objects detected: 3 items.\nVisual analysis complete.\nYes, differences found.\nTurn 1: How many cats are in...\nTurn 2: What colors are they...\nTurn 3: Compare them to typi...\nNo context",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

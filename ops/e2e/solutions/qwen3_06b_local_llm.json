@@ -1,0 +1,11 @@
+{
+  "lesson_id": "qwen3_06b_local_llm",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class LocalChatbot:\n    def __init__(self):\n        self.messages = []\n\n    def add_system_message(self, content: str):\n        self.messages.append({\"role\": \"system\", \"content\": content})\n\n    def format_prompt(self) -> str:\n        lines = [f\"{m['role']}: {m['content']}\" for m in self.messages]\n        lines.append(\"assistant:\")\n        return \"\\n\".join(lines)\n\n    def generate_response(self, prompt: str) -> str:\n        last_user = \"\"\n        for m in reversed(self.messages):\n            if m[\"role\"] == \"user\":\n                last_user = m[\"content\"].lower()\n                break\n        if \"python\" in last_user:\n            return \"I can help with Python!\"\n        if \"explain\" in last_user:\n            return \"Let me explain that concept.\"\n        return \"Here is my response.\"\n\n    def chat(self, user_message: str) -> str:\n        self.messages.append({\"role\": \"user\", \"content\": user_message})\n        prompt = self.format_prompt()\n        response = self.generate_response(prompt)\n        self.messages.append({\"role\": \"assistant\", \"content\": response})\n        return response\n\n    def get_history(self) -> list:\n        return self.messages\n\n\n# Test it:\nbot = LocalChatbot()\nbot.add_system_message(\"You are a helpful tutor.\")\nresp1 = bot.chat(\"Tell me about Python basics\")\nprint(resp1)\nresp2 = bot.chat(\"Can you explain decorators?\")\nprint(resp2)\nprint(len(bot.get_history()))\n",
+      "verified_output": "I can help with Python!\nLet me explain that concept.\n5",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

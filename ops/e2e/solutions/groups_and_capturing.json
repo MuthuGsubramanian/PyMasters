@@ -1,0 +1,11 @@
+{
+  "lesson_id": "groups_and_capturing",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import re\n\nDATE_RE = re.compile(r\"(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})\")\n\ndef parse_date(s):\n    m = DATE_RE.fullmatch(s)\n    if m is None:\n        return None\n    return m.groupdict()\n\nprint(parse_date(\"2026-06-09\"))\n",
+      "verified_output": "{'year': '2026', 'month': '06', 'day': '09'}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

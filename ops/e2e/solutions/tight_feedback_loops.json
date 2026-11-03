@@ -1,0 +1,11 @@
+{
+  "lesson_id": "tight_feedback_loops",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "# A 3-step pipeline. ONE step has a single-character bug.\n# Don't rewrite everything — isolate the broken step and fix only it.\n\ndef step1_parse(raw):\n    # Correct: split \"10,20,30,40\" into [10, 20, 30, 40].\n    return [int(x) for x in raw.split(\",\")]\n\ndef step2_running_sum(nums):\n    # Should return the cumulative running total:\n    # [10, 20, 30, 40] -> [10, 30, 60, 100]\n    out = []\n    total = 0\n    for n in nums:\n        total += n\n        out.append(total)\n    return out\n\ndef step3_take_last(running):\n    # Correct: the final running total is the last element.\n    return running[-1]\n\ndef pipeline(raw):\n    parsed = step1_parse(raw)\n    running = step2_running_sum(parsed)\n    return step3_take_last(running)\n\nprint(pipeline(\"10,20,30,40\"))\n",
+      "verified_output": "100",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "openai_structured_tools",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "SCHEMA = {\n    \"required\": [\"name\", \"priority\"],\n    \"types\": {\"name\": str, \"priority\": int},\n}\n\nRECORDS = [\n    (\"record_1\", {\"name\": \"reset password\", \"priority\": 2}),\n    (\"record_2\", {\"name\": \"billing question\"}),\n    (\"record_3\", {\"name\": \"api outage\", \"priority\": \"high\"}),\n]\n\ndef validate(record, schema):\n    errors = []\n    for field in schema[\"required\"]:\n        if field not in record:\n            errors.append(f\"missing {field}\")\n        elif not isinstance(record[field], schema[\"types\"][field]):\n            errors.append(f\"wrong type {field}\")\n    return errors\n\nvalid_count = 0\nfor name, record in RECORDS:\n    errors = validate(record, SCHEMA)\n    if errors:\n        print(f\"{name}: {'; '.join(errors)}\")\n    else:\n        valid_count += 1\n        print(f\"{name}: valid\")\nprint(f\"valid_count={valid_count}\")\n",
+      "verified_output": "record_1: valid\nrecord_2: missing priority\nrecord_3: wrong type priority\nvalid_count=1",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_vpc_design",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import ipaddress\nfrom itertools import islice\n\ndef plan_subnets(vpc_cidr, new_prefix, count):\n    vpc = ipaddress.ip_network(vpc_cidr)\n    subnets = islice(vpc.subnets(new_prefix=new_prefix), count)\n    return [(str(s), s.num_addresses - 5) for s in subnets]\n\ndef remaining_blocks(vpc_cidr, new_prefix, count):\n    vpc = ipaddress.ip_network(vpc_cidr)\n    total = 2 ** (new_prefix - vpc.prefixlen)\n    return total - count\n\nplan = plan_subnets(\"10.0.0.0/16\", 20, 4)\nfor cidr, n in plan:\n    print(f\"{cidr} usable={n}\")\nr = remaining_blocks(\"10.0.0.0/16\", 20, 4)\nprint(f\"remaining_/20_blocks={r}\")\n",
+      "verified_output": "10.0.0.0/20 usable=4091\n10.0.16.0/20 usable=4091\n10.0.32.0/20 usable=4091\n10.0.48.0/20 usable=4091\nremaining_/20_blocks=12",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

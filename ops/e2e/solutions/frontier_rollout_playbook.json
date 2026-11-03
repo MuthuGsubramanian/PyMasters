@@ -1,0 +1,11 @@
+{
+  "lesson_id": "frontier_rollout_playbook",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "ATTEMPTS = [False, False, True]\n\ndef simulate(attempts, base):\n    lines = []\n    delay = base\n    total = 0\n    for i, ok in enumerate(attempts, start=1):\n        if ok:\n            lines.append(f\"attempt {i}: success\")\n            break\n        lines.append(f\"attempt {i}: rate_limited (wait {delay}s)\")\n        total += delay\n        delay *= 2\n    return lines, total\n\nlog_lines, total_wait = simulate(ATTEMPTS, 1)\nfor line in log_lines:\n    print(line)\nprint(f\"total_wait={total_wait}s\")\n",
+      "verified_output": "attempt 1: rate_limited (wait 1s)\nattempt 2: rate_limited (wait 2s)\nattempt 3: success\ntotal_wait=3s",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

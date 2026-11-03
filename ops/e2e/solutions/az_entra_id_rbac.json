@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_entra_id_rbac",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from fnmatch import fnmatch\n\nROLES = {\n    'Reader': {'actions': ['*/read'], 'not_actions': []},\n    'Contributor': {'actions': ['*'], 'not_actions': ['Microsoft.Authorization/*']},\n}\nASSIGNMENTS = [\n    {'principal': 'alice', 'role': 'Contributor', 'scope': '/subscriptions/s1'},\n    {'principal': 'bob', 'role': 'Reader', 'scope': '/subscriptions/s1/resourceGroups/rg1'},\n]\nCHECKS = [\n    ('alice', 'Microsoft.Compute/virtualMachines/write', '/subscriptions/s1/resourceGroups/rg1'),\n    ('alice', 'Microsoft.Authorization/roleAssignments/write', '/subscriptions/s1/resourceGroups/rg1'),\n    ('bob', 'Microsoft.Compute/virtualMachines/read', '/subscriptions/s1/resourceGroups/rg1'),\n    ('bob', 'Microsoft.Compute/virtualMachines/read', '/subscriptions/s1'),\n]\n\n\ndef scope_applies(assignment_scope, target):\n    return target == assignment_scope or target.startswith(assignment_scope.rstrip('/') + '/')\n\n\ndef is_authorized(principal, action, scope):\n    for a in ASSIGNMENTS:\n        if a['principal'] != principal or not scope_applies(a['scope'], scope):\n            continue\n        role = ROLES.get(a['role'])\n        if role is None:\n            continue\n        if not any(fnmatch(action, p) for p in role['actions']):\n            continue\n        if any(fnmatch(action, p) for p in role['not_actions']):\n            continue\n        return True\n    return False\n\n\nfor principal, action, scope in CHECKS:\n    result = 'ALLOW' if is_authorized(principal, action, scope) else 'DENY'\n    print(f'{principal} | {action} | {result}')\n",
+      "verified_output": "alice | Microsoft.Compute/virtualMachines/write | ALLOW\nalice | Microsoft.Authorization/roleAssignments/write | DENY\nbob | Microsoft.Compute/virtualMachines/read | ALLOW\nbob | Microsoft.Compute/virtualMachines/read | DENY",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

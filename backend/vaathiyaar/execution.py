@@ -31,6 +31,7 @@ wrap the process in an OS sandbox (gVisor / Firecracker / a locked-down containe
 import ast
 import functools
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -296,7 +297,61 @@ def check_challenge_safety(code: str) -> str | None:
     return None
 
 
-def _minimal_env(python_cmd: str) -> dict:
+# Classroom grading gate (2026-11-03). Lessons TEACH asyncio, threading, files, sqlite3, os/sys and descriptors,
+# so the strict check_code_safety refused correct answers in ~58 lessons. The security boundary is the sandbox
+# (own uid, verified network isolation, rlimits, secret-free env); this gate blocks only the escape surface.
+_LESSON_BLOCKED_MODULES = {
+    "subprocess", "socket", "ctypes", "multiprocessing", "importlib", "builtins", "gc", "resource", "signal",
+    "mmap", "fcntl", "pty", "termios", "select", "ssl", "marshal", "pickle", "shelve", "dbm",
+    "ftplib", "smtplib", "webbrowser",
+}
+_LESSON_BLOCKED_NAMES = {"eval", "exec", "compile", "__import__", "breakpoint", "memoryview"}
+
+
+def _used_names(tree) -> set:
+    """Module roots, bare names and attributes a piece of code uses."""
+    used = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            used |= {a.name.split(".")[0] for a in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            used.add(node.module.split(".")[0])
+        elif isinstance(node, ast.Name):
+            used.add(node.id)
+        elif isinstance(node, ast.Attribute):
+            used.add(node.attr)
+    return used
+
+
+def check_lesson_safety(code: str, lesson_code: str = "", allowed_open_files=None) -> str | None:
+    """Gate for graded lesson code. ``lesson_code`` is the lesson's own server-authored starter + test code:
+    anything it uses (e.g. importlib in a lesson about imports, __dict__ in one about descriptors) is allowed
+    for that lesson only. ``allowed_open_files`` is kept for callers; open() is allowed (sandbox cwd only)."""
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return None  # the same interpreter raises the real SyntaxError downstream
+    try:
+        granted = _used_names(ast.parse(lesson_code or ""))
+    except SyntaxError:
+        granted = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            roots = ([a.name.split(".")[0] for a in node.names] if isinstance(node, ast.Import)
+                     else [(node.module or "").split(".")[0]])
+            for root in roots:
+                if root in _LESSON_BLOCKED_MODULES and root not in granted:
+                    return f"import of module '{root}' is not allowed here"
+        elif isinstance(node, ast.Name):
+            if node.id in _LESSON_BLOCKED_NAMES and node.id not in granted:
+                return f"use of '{node.id}' is not allowed here"
+        elif isinstance(node, ast.Attribute):
+            if node.attr in _BLOCKED_DUNDERS and node.attr not in granted:
+                return f"access to '{node.attr}' is not allowed here"
+    return None
+
+
+def _minimal_env(python_cmd: str, work_dir: str | None = None) -> dict:
     """Build a secret-free environment sufficient to start the interpreter."""
     env = {
         "PYTHONDONTWRITEBYTECODE": "1",
@@ -304,7 +359,13 @@ def _minimal_env(python_cmd: str) -> dict:
         "PYTHONUNBUFFERED": "1",
         # One thread per numeric library: fewer address-space reservations and no thread fan-out.
         "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1",
+        # matplotlib (requirements-sandbox.txt) must never look for a display.
+        "MPLBACKEND": "Agg",
     }
+    if work_dir:
+        # The sandbox user has no home: matplotlib's config/font cache lives in the run's throwaway dir,
+        # pre-seeded from the image's cache (_seed_mpl_cache) so it neither warns nor rebuilds fonts.
+        env["MPLCONFIGDIR"] = os.path.join(work_dir, ".mpl")
     # The interpreter's own directory on PATH so it can locate its runtime DLLs.
     py_dir = os.path.dirname(python_cmd)
     env["PATH"] = py_dir or "/usr/bin:/bin"
@@ -315,6 +376,28 @@ def _minimal_env(python_cmd: str) -> dict:
             if key in os.environ:
                 env[key] = os.environ[key]
     return env
+
+
+MPL_CACHE_DIR = os.getenv("SANDBOX_MPL_CACHE", "/opt/sandbox-mpl")   # built at image time (Dockerfile)
+# Importing pandas / scikit-learn / matplotlib alone takes seconds on a throttled e2-micro.
+HEAVY_IMPORT_TIMEOUT = 25
+_HEAVY_IMPORT = re.compile(r"^\s*(?:import|from)\s+(?:pandas|sklearn|matplotlib|scipy|polars|django|seaborn)\b",
+                           re.MULTILINE)
+
+
+def _effective_timeout(code: str, timeout: int) -> int:
+    return max(timeout, HEAVY_IMPORT_TIMEOUT) if _HEAVY_IMPORT.search(code or "") else timeout
+
+
+def _seed_mpl_cache(work_dir: str) -> str:
+    """Create work_dir/.mpl with the image's prebuilt matplotlib font cache (if any)."""
+    mpl_dir = os.path.join(work_dir, ".mpl")
+    os.makedirs(mpl_dir, exist_ok=True)
+    if os.path.isdir(MPL_CACHE_DIR):
+        for name in os.listdir(MPL_CACHE_DIR):
+            if name.endswith(".json"):
+                shutil.copyfile(os.path.join(MPL_CACHE_DIR, name), os.path.join(mpl_dir, name))
+    return mpl_dir
 
 
 SANDBOX_USER = os.getenv("SANDBOX_USER", "sandbox")
@@ -440,6 +523,7 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
         return {"output": "", "exit_code": 1,
                 "error": "The code runner is busy right now. Please try again in a few seconds."}
     python_cmd = sys.executable or ("python" if os.name == "nt" else "python3")
+    timeout = _effective_timeout(code, timeout)
     work_dir = tempfile.mkdtemp(prefix="pm_sandbox_")
     script_path = os.path.join(work_dir, "main.py")
     out_path = os.path.join(work_dir, ".stdout")
@@ -456,6 +540,7 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
                     continue  # refuse path tricks / clobbering the script
                 with open(os.path.join(work_dir, _name), "w", encoding="utf-8") as sf:
                     sf.write(_content)
+        mpl_dir = _seed_mpl_cache(work_dir)
 
         # Output goes to files (bounded by RLIMIT_FSIZE in the child) instead of pipes, so a print
         # loop can no longer buffer gigabytes in the API process.
@@ -463,7 +548,7 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
         err_fh = open(err_path, "wb")
         popen_kwargs = dict(
             cwd=work_dir,
-            env=_minimal_env(python_cmd),
+            env=_minimal_env(python_cmd, work_dir),
             stdin=subprocess.DEVNULL,
             stdout=out_fh,
             stderr=err_fh,
@@ -476,6 +561,8 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
                 for _fn in os.listdir(work_dir):
                     if _fn not in (".stdout", ".stderr"):
                         os.chown(os.path.join(work_dir, _fn), ids[0], ids[1])
+                for _fn in os.listdir(mpl_dir):
+                    os.chown(os.path.join(mpl_dir, _fn), ids[0], ids[1])
             popen_kwargs["preexec_fn"] = _posix_limits(timeout, ids)
 
         try:

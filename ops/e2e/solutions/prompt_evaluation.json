@@ -1,0 +1,11 @@
+{
+  "lesson_id": "prompt_evaluation",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def evaluate_classifier(outputs, expected):\n    if not outputs or not expected:\n        return 0.0\n    total = min(len(outputs), len(expected))\n    correct = sum(\n        1\n        for o, e in zip(outputs, expected)\n        if str(o).strip().lower() == str(e).strip().lower()\n    )\n    return float(correct / total)\n\n\nif __name__ == \"__main__\":\n    print(evaluate_classifier([\"Positive\", \"negative\"], [\"positive\", \"Negative\"]))\n",
+      "verified_output": "1.0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

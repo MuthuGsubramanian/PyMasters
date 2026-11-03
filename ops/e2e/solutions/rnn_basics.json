@@ -1,0 +1,11 @@
+{
+  "lesson_id": "rnn_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\n\ndef rnn_forward(sequence, W_x, W_h, b, h_init):\n    \"\"\"Run a simple RNN over a sequence and return the final hidden state.\n\n    h_t = tanh(W_x @ x_t + W_h @ h_{t-1} + b)\n    \"\"\"\n    h = np.asarray(h_init, dtype=float)\n    for x in sequence:\n        x = np.asarray(x, dtype=float)\n        h = np.tanh(W_x @ x + W_h @ h + b)\n    return h\n\n\nif __name__ == \"__main__\":\n    seq = [np.array([1.0, 0.0]), np.array([0.0, 1.0])]\n    print(rnn_forward(seq, np.eye(3, 2), np.eye(3), np.zeros(3), np.zeros(3)))\n",
+      "verified_output": "[0.64201499 0.76159416 0.        ]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

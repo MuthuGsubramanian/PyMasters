@@ -1,0 +1,11 @@
+{
+  "lesson_id": "moe_expert_routing",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def route(gate_scores: list, k: int) -> list:\n    \"\"\"Return indices of the top-k experts by gate score, highest first.\"\"\"\n    ranked = sorted(range(len(gate_scores)), key=lambda i: gate_scores[i], reverse=True)\n    return ranked[:k]\n\nprint(route([0.1, 0.7, 0.2, 0.9], 2))\n",
+      "verified_output": "[3, 1]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "dpo_implicit_reward",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def dpo_implicit_reward(logp_policy: float, logp_ref: float, beta: float) -> float:\n    \"\"\"DPO's implicit reward: beta * (logp_policy - logp_ref).\"\"\"\n    drift = logp_policy - logp_ref\n    return round(beta * drift, 4)\n\nprint(dpo_implicit_reward(-12.4, -15.1, 0.1))\n",
+      "verified_output": "0.27",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

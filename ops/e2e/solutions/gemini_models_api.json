@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gemini_models_api",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "PROJECTS = [\n    (\"demo_bot\", {\"stage\": \"prototype\"}),\n    (\"support_rag\", {\"stage\": \"production\"}),\n    (\"batch_pipeline\", {\"stage\": \"production\"}),\n]\n\ndef choose_endpoint(project):\n    if project[\"stage\"] == \"production\":\n        return \"vertex_ai\"\n    return \"ai_studio\"\n\nvertex_count = 0\nfor name, project in PROJECTS:\n    endpoint = choose_endpoint(project)\n    if endpoint == \"vertex_ai\":\n        vertex_count += 1\n    print(f\"{name}: {endpoint}\")\n\nprint(f\"production_ratio={vertex_count}/{len(PROJECTS)}\")\n",
+      "verified_output": "demo_bot: ai_studio\nsupport_rag: vertex_ai\nbatch_pipeline: vertex_ai\nproduction_ratio=2/3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

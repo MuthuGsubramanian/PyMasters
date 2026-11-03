@@ -1,0 +1,11 @@
+{
+  "lesson_id": "tensor_parallel_split_matmul",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def matmul(a: list, b: list) -> list:\n    rows, inner, cols = len(a), len(b), len(b[0])\n    return [[sum(a[i][k] * b[k][j] for k in range(inner)) for j in range(cols)] for i in range(rows)]\n\ndef column_parallel(x: list, W: list, split: int) -> list:\n    \"\"\"Give W columns [:split] to worker 0 and [split:] to worker 1, then concatenate the two output slices.\"\"\"\n    W0 = [row[:split] for row in W]\n    W1 = [row[split:] for row in W]\n    y0 = matmul(x, W0)\n    y1 = matmul(x, W1)\n    return [r0 + r1 for r0, r1 in zip(y0, y1)]\n\nx = [[1, 2, 3], [4, 5, 6]]\nW = [[1, 0, 2, 1], [0, 1, 1, 3], [2, 1, 0, 1]]\nprint(column_parallel(x, W, 2))\nprint(column_parallel(x, W, 2) == matmul(x, W))\n",
+      "verified_output": "[[7, 5, 4, 10], [16, 11, 13, 25]]\nTrue",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

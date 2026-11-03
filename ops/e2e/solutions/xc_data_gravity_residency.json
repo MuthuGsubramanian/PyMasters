@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_data_gravity_residency",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "RULES = {\n    \"pii\": [\"eu-west\", \"eu-central\"],\n    \"financial\": [\"eu-central\"],\n    \"public\": [\"any\"],\n}\n\nPLACEMENTS = [\n    (\"customer-db\", \"pii\", \"eu-west\"),\n    (\"payments-ledger\", \"financial\", \"eu-west\"),\n    (\"blog-assets\", \"public\", \"us-east\"),\n    (\"consent-records\", \"pii\", \"us-east\"),\n]\n\ndef evaluate(classification, region):\n    allowed = RULES[classification]\n    return \"any\" in allowed or region in allowed\n\ndenied = 0\nfor name, classification, region in PLACEMENTS:\n    ok = evaluate(classification, region)\n    if not ok:\n        denied += 1\n    print(f\"{name} [{classification}] -> {region}: {'ALLOW' if ok else 'DENY'}\")\n\nprint(f\"Denied placements: {denied}/{len(PLACEMENTS)}\")\n\nassert evaluate(\"pii\", \"eu-west\") is True\nassert evaluate(\"pii\", \"us-east\") is False\nassert evaluate(\"financial\", \"eu-central\") is True\nassert evaluate(\"financial\", \"eu-west\") is False\nassert evaluate(\"public\", \"ap-south\") is True\n",
+      "verified_output": "customer-db [pii] -> eu-west: ALLOW\npayments-ledger [financial] -> eu-west: DENY\nblog-assets [public] -> us-east: ALLOW\nconsent-records [pii] -> us-east: DENY\nDenied placements: 2/4",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

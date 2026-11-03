@@ -1,0 +1,11 @@
+{
+  "lesson_id": "regex_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import re\n\ntext = 'Call 555-123-4567 or 800-999-8888 for support. Not 12-34.'\nphones = re.findall(r'\\b\\d{3}-\\d{3}-\\d{4}\\b', text)\nprint(phones)\n",
+      "verified_output": "['555-123-4567', '800-999-8888']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

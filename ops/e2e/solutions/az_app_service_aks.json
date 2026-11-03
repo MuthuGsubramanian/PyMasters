@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_app_service_aks",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "WORKLOADS = [\n    {'name': 'marketing-site', 'containers': False, 'k8s_expertise': False},\n    {'name': 'ml-platform', 'containers': True, 'k8s_expertise': True},\n    {'name': 'order-api', 'containers': True, 'k8s_expertise': False},\n]\n\ndef recommend(workload):\n    if not workload['containers']:\n        return 'App Service'\n    if workload['k8s_expertise']:\n        return 'AKS'\n    return 'Container Apps'\n\nfor w in WORKLOADS:\n    print(f\"{w['name']} -> {recommend(w)}\")\n",
+      "verified_output": "marketing-site -> App Service\nml-platform -> AKS\norder-api -> Container Apps",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

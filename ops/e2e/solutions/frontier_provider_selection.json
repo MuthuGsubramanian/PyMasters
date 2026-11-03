@@ -1,0 +1,11 @@
+{
+  "lesson_id": "frontier_provider_selection",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "SCORES = {  # mock workload-fit ratings (1-10) for ONE hypothetical workload\n    \"claude\": {\"reasoning\": 9, \"ecosystem\": 7, \"cost\": 6},\n    \"gpt\": {\"reasoning\": 8, \"ecosystem\": 9, \"cost\": 6},\n    \"gemini\": {\"reasoning\": 8, \"ecosystem\": 8, \"cost\": 8},\n}\n\nWEIGHTS = {\"reasoning\": 0.5, \"ecosystem\": 0.3, \"cost\": 0.2}\n\ndef score(provider_fit, weights):\n    total = sum(provider_fit[axis] * weights[axis] for axis in weights)\n    return round(total, 1)\n\nranked = sorted(SCORES, key=lambda p: score(SCORES[p], WEIGHTS), reverse=True)\nfor provider in ranked:\n    print(f\"{provider}: {score(SCORES[provider], WEIGHTS)}\")\nprint(f\"recommendation={ranked[0]}\")\n",
+      "verified_output": "gemini: 8.0\ngpt: 7.9\nclaude: 7.8\nrecommendation=gemini",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

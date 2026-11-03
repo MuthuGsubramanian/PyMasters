@@ -1107,8 +1107,11 @@ def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id
     lesson_obj = _load_lesson_from_dir(request.lesson_id) if request.lesson_id else None
     test_code = None
     sandbox_files = None
+    lesson_code = ""
     if lesson_obj:
         _pc = (lesson_obj.get("practice_challenges") or [{}])[0]
+        # Server-authored starter + harness: what they use, the learner may use (execution.check_lesson_safety).
+        lesson_code = "\n".join(c for c in (_pc.get("starter_code"), _pc.get("test_code")) if isinstance(c, str))
         _tc = _pc.get("test_code")
         if isinstance(_tc, str) and _tc.strip():
             # Always forward the server-authored harness. When expected_output
@@ -1147,6 +1150,7 @@ def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id
         attempt_count=request.attempt_count or 0,
         test_code=test_code,
         sandbox_files=sandbox_files,
+        lesson_code=lesson_code,
     )
 
     # Record the evaluation as a learning signal

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "async_await",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import asyncio\nimport time\n\nasync def fetch_url(url, delay):\n    \"\"\"Simulate fetching a URL.\"\"\"\n    print(f'Fetching {url}...')\n    await asyncio.sleep(delay)\n    print(f'Done: {url} ({delay}s)')\n    return url\n\nasync def main():\n    urls = [\n        ('https://api.example.com/users', 2),\n        ('https://api.example.com/posts', 1),\n        ('https://api.example.com/comments', 3),\n        ('https://api.example.com/likes', 1),\n        ('https://api.example.com/shares', 2),\n    ]\n    start = time.time()\n    results = await asyncio.gather(*(fetch_url(u, d) for u, d in urls))\n    elapsed = time.time() - start\n    print(f'Total: {elapsed:.1f}s (sequential would be 9s)')\n\nasyncio.run(main())\n",
+      "verified_output": "Fetching https://api.example.com/users...\nFetching https://api.example.com/posts...\nFetching https://api.example.com/comments...\nFetching https://api.example.com/likes...\nFetching https://api.example.com/shares...\nDone: https://api.example.com/posts (1s)\nDone: https://api.example.com/likes (1s)\nDone: https://api.example.com/users (2s)\nDone: https://api.example.com/shares (2s)\nDone: https://api.example.com/comments (3s)\nTotal: 3.0s (sequential would be 9s)\nFetching a...\nFetching b...\nFetching c...\nDone: a (0.1s)\nDone: c (0.15s)\nDone: b (0.2s)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

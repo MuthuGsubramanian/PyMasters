@@ -1,0 +1,11 @@
+{
+  "lesson_id": "foundry_rag_ai_search",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\ndef cosine(a, b):\n    dot = sum(x * y for x, y in zip(a, b))\n    na = math.sqrt(sum(x * x for x in a))\n    nb = math.sqrt(sum(y * y for y in b))\n    if na == 0 or nb == 0:\n        return 0.0\n    return dot / (na * nb)\n\nquery = [1.0, 0.0, 1.0]\nchunks = [\n    ('refund-policy', [1.0, 0.0, 1.0]),\n    ('shipping-info', [0.0, 1.0, 0.0]),\n    ('returns-faq', [1.0, 0.0, 0.0]),\n]\n\nscored = [(name, cosine(query, vec)) for name, vec in chunks]\nscored.sort(key=lambda item: item[1], reverse=True)\n\nfor name, sim in scored:\n    print(f'{name}: {round(sim, 4)}')\n\nbest = scored[0][0]\nprint(f'Top match: {best}')\n",
+      "verified_output": "refund-policy: 1.0\nreturns-faq: 0.7071\nshipping-info: 0.0\nTop match: refund-policy",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

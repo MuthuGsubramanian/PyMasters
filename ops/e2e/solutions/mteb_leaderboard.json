@@ -1,0 +1,11 @@
+{
+  "lesson_id": "mteb_leaderboard",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def mteb_overall(scores: dict) -> float:\n    \"\"\"Mean of per-family means, rounded to 2 decimals.\n    scores maps family name -> list of task scores for that family.\"\"\"\n    family_means = [sum(tasks) / len(tasks) for tasks in scores.values() if tasks]\n    if not family_means:\n        return 0.0\n    overall = sum(family_means) / len(family_means)\n    return round(float(overall), 2)\n\nprint(mteb_overall({\n    \"retrieval\": [50.0, 60.0],\n    \"sts\": [80.0],\n    \"classification\": [70.0, 75.0, 65.0],\n}))\n",
+      "verified_output": "68.33\nAll tests passed!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

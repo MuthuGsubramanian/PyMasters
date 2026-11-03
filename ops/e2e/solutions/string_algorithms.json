@@ -1,0 +1,11 @@
+{
+  "lesson_id": "string_algorithms",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from collections import defaultdict\n\ndef group_anagrams(words):\n    groups = defaultdict(list)\n    for w in words:\n        groups[''.join(sorted(w))].append(w)\n    return list(groups.values())\n\ndef longest_palindrome(s):\n    if not s:\n        return ''\n    best = s[0]\n    for i in range(len(s)):\n        for l, r in ((i, i), (i, i + 1)):\n            while l >= 0 and r < len(s) and s[l] == s[r]:\n                l -= 1\n                r += 1\n            if r - l - 1 > len(best):\n                best = s[l + 1:r]\n    return best\n\ndef is_rotation(s1, s2):\n    return len(s1) == len(s2) and s2 in s1 + s1\n\nprint(group_anagrams(['eat', 'tea', 'tan', 'ate', 'nat', 'bat']))\nprint(longest_palindrome('babad'))\nprint(is_rotation('abcde', 'cdeab'))\nprint(is_rotation('abcde', 'abced'))\n",
+      "verified_output": "[['eat', 'tea', 'ate'], ['tan', 'nat'], ['bat']]\nbab\nTrue\nFalse",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

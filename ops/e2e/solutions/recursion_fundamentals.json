@@ -1,0 +1,11 @@
+{
+  "lesson_id": "recursion_fundamentals",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def power(base, exp):\n    # base^exp using recursion\n    if exp == 0:\n        return 1\n    if exp < 0:\n        return 1 / power(base, -exp)\n    half = power(base, exp // 2)\n    if exp % 2 == 0:\n        return half * half\n    return half * half * base\n\ndef reverse_string(s):\n    # Reverse string recursively\n    if len(s) <= 1:\n        return s\n    return reverse_string(s[1:]) + s[0]\n\ndef is_palindrome(s):\n    # Check palindrome recursively\n    if len(s) <= 1:\n        return True\n    if s[0] != s[-1]:\n        return False\n    return is_palindrome(s[1:-1])\n\nprint(power(2, 10))\nprint(reverse_string('hello'))\nprint(is_palindrome('racecar'))\nprint(is_palindrome('hello'))\n",
+      "verified_output": "1024\nolleh\nTrue\nFalse",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -10,6 +10,10 @@
    bootstrap adds `.dark` iff the OS prefers dark, so class == media query there. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Native controls (date/time pickers, selects, scrollbars) follow the in-app theme: without this their
+   icons stayed dark-on-dark and their popups light in dark mode (Live Tutor picker bug, 2026-11-03). */
+.dark { color-scheme: dark; }
+
 @theme {
   --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
   --font-display: 'Outfit Variable', 'Outfit', sans-serif;

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "testing_tdd",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class Queue:\n    def __init__(self):\n        self._data = []\n\n    def enqueue(self, item):\n        self._data.append(item)\n\n    def dequeue(self):\n        if not self._data:\n            raise IndexError(\"dequeue from empty queue\")\n        return self._data.pop(0)\n\n    def __len__(self):\n        return len(self._data)\n\n\ndef test_enqueue_increases_length():\n    q = Queue()\n    q.enqueue(1)\n    assert len(q) == 1\n    q.enqueue(2)\n    assert len(q) == 2\n\n\ndef test_dequeue_is_fifo():\n    q = Queue()\n    for i in (1, 2, 3):\n        q.enqueue(i)\n    assert q.dequeue() == 1\n    assert q.dequeue() == 2\n    assert q.dequeue() == 3\n    assert len(q) == 0\n\n\ndef test_dequeue_empty_raises():\n    q = Queue()\n    try:\n        q.dequeue()\n    except IndexError:\n        pass\n    else:\n        raise AssertionError(\"expected IndexError\")\n\n\ntest_enqueue_increases_length()\ntest_dequeue_is_fifo()\ntest_dequeue_empty_raises()\nprint(\"All tests pass\")\n",
+      "verified_output": "All tests pass",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

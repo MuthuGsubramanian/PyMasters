@@ -1,0 +1,11 @@
+{
+  "lesson_id": "tool_retry_backoff_idempotency",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def backoff_delays(attempts, base):\n    # n attempts means n-1 waits between them\n    return [base * 2 ** i for i in range(attempts - 1)]\n\ndelays = backoff_delays(5, 0.5)\nprint(delays)\nprint(sum(delays))\nprint(backoff_delays(1, 0.5))\n",
+      "verified_output": "[0.5, 1.0, 2.0, 4.0]\n7.5\n[]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

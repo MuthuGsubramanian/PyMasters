@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_cloud_storage",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "OBJECTS = [\n    (\"logs/app.log\", 45),\n    (\"backups/db.bak\", 400),\n    (\"assets/logo.png\", 10),\n    (\"exports/q1.csv\", 120),\n]\n\ndef target_class(age_days):\n    if age_days >= 365:\n        return \"ARCHIVE\"\n    if age_days >= 90:\n        return \"COLDLINE\"\n    if age_days >= 30:\n        return \"NEARLINE\"\n    return \"STANDARD\"\n\nfor name, age in OBJECTS:\n    target = target_class(age)\n    if target == \"STANDARD\":\n        print(f\"{name} ({age}d): STANDARD (no change)\")\n    else:\n        print(f\"{name} ({age}d): STANDARD -> {target}\")\n",
+      "verified_output": "logs/app.log (45d): STANDARD -> NEARLINE\nbackups/db.bak (400d): STANDARD -> ARCHIVE\nassets/logo.png (10d): STANDARD (no change)\nexports/q1.csv (120d): STANDARD -> COLDLINE",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

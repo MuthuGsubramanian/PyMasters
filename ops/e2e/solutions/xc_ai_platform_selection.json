@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_ai_platform_selection",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "WEIGHTS = {\"model_choice\": 3, \"enterprise_integration\": 2, \"data_residency\": 2, \"cost_flexibility\": 1}\n\nPLATFORMS = {\n    \"foundry\": {\"model_choice\": 4, \"enterprise_integration\": 5, \"data_residency\": 4, \"cost_flexibility\": 3},\n    \"bedrock\": {\"model_choice\": 4, \"enterprise_integration\": 4, \"data_residency\": 4, \"cost_flexibility\": 4},\n    \"vertex\": {\"model_choice\": 4, \"enterprise_integration\": 3, \"data_residency\": 4, \"cost_flexibility\": 4},\n}\n\ndef weighted_score(platform_scores):\n    return sum(WEIGHTS[c] * platform_scores[c] for c in WEIGHTS)\n\ntotals = {name: weighted_score(scores) for name, scores in PLATFORMS.items()}\nranked = sorted(totals.items(), key=lambda kv: kv[1], reverse=True)\nfor name, score in ranked:\n    print(f\"{name}: {score}\")\nprint(f\"Recommended platform: {ranked[0][0]}\")\n",
+      "verified_output": "foundry: 33\nbedrock: 32\nvertex: 30\nRecommended platform: foundry",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

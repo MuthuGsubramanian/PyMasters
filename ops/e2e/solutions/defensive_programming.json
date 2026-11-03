@@ -1,0 +1,11 @@
+{
+  "lesson_id": "defensive_programming",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def safe_average(nums):\n    if not nums:\n        return 0.0\n    return sum(nums) / len(nums)\n\nprint(safe_average([]))\n\nassert safe_average([]) == 0.0, \"empty list must return 0.0, not crash\"\nassert safe_average([2, 4, 6]) == 4.0, \"happy path must be unchanged\"\nassert safe_average([10]) == 10.0, \"single element must average to itself\"\nassert safe_average([-2, 2]) == 0.0, \"negatives must still average correctly\"\n",
+      "verified_output": "0.0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

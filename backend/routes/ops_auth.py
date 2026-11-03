@@ -60,15 +60,21 @@ def _ensure_service_account(conn: sqlite3.Connection) -> sqlite3.Row:
     if row is None:
         from main import hash_pw  # local import: main imports this router
         user_id = str(uuid.uuid4())
+        # OR IGNORE + re-read: two first-ever logins can race here; the loser reuses the winner's row instead
+        # of failing on the username UNIQUE constraint (found by the parallel scenario suite, 2026-11-03).
         conn.execute(
-            "INSERT INTO users (id, username, password_hash, name, email, created_at, points, "
+            "INSERT OR IGNORE INTO users (id, username, password_hash, name, email, created_at, points, "
             "unlocked_modules, preferred_language, onboarding_completed, is_super_admin) "
             "VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?, 'en', 1, 1)",
             [user_id, SERVICE_USERNAME, hash_pw(secrets.token_urlsafe(32)), "PyMasters Ops",
              SERVICE_EMAIL, json.dumps(["module_1"])],
         )
         conn.commit()
-        row = conn.execute("SELECT id, username, 1 AS is_super_admin FROM users WHERE id = ?", [user_id]).fetchone()
+        row = conn.execute("SELECT id, username, COALESCE(is_super_admin,0) AS is_super_admin FROM users "
+                           "WHERE username = ? LIMIT 1", [SERVICE_USERNAME]).fetchone()
+        if int(row["is_super_admin"]) != 1:
+            conn.execute("UPDATE users SET is_super_admin = 1 WHERE id = ?", [row["id"]])
+            conn.commit()
     elif int(row["is_super_admin"]) != 1:
         conn.execute("UPDATE users SET is_super_admin = 1 WHERE id = ?", [row["id"]])
         conn.commit()

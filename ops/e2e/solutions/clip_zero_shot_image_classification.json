@@ -1,0 +1,11 @@
+{
+  "lesson_id": "clip_zero_shot_image_classification",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class CLIPSimulator:\n    def encode_image(self, tags: list[str]) -> set:\n        words = set()\n        for tag in tags:\n            words.update(w.lower() for w in str(tag).split())\n        return words\n\n    def encode_text(self, label: str) -> set:\n        return {w.lower() for w in label.split()}\n\n    def similarity(self, image_tags: list[str], label: str) -> float:\n        img = self.encode_image(image_tags)\n        txt = self.encode_text(label)\n        union = img | txt\n        if not union:\n            return 0.0\n        return len(img & txt) / len(union)\n\n    def classify(self, image_tags: list[str], candidate_labels: list[str]) -> list[dict]:\n        if not candidate_labels:\n            return []\n        sims = [self.similarity(image_tags, lab) for lab in candidate_labels]\n        total = sum(sims)\n        if total == 0:\n            scores = [1.0 / len(candidate_labels)] * len(candidate_labels)\n        else:\n            scores = [s / total for s in sims]\n        results = [{\"label\": lab, \"score\": sc} for lab, sc in zip(candidate_labels, scores)]\n        results.sort(key=lambda r: r[\"score\"], reverse=True)\n        return results\n\n\n# Test it:\nclip = CLIPSimulator()\nimage = [\"dog\", \"playing\", \"fetch\", \"park\", \"grass\"]\nlabels = [\"a dog playing fetch\", \"a cat sleeping\", \"a car on road\"]\n\nresults = clip.classify(image, labels)\nprint(results[0][\"label\"])\nprint(len(results))\nprint(f\"{sum(r['score'] for r in results):.1f}\")\n",
+      "verified_output": "a dog playing fetch\n3\n1.0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

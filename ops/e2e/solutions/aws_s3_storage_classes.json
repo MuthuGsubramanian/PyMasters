@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_s3_storage_classes",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "RATES = {\n    \"STANDARD\": 23.0,\n    \"STANDARD_IA\": 12.5,\n    \"GLACIER_IR\": 4.0,\n    \"DEEP_ARCHIVE\": 1.0,\n}\nDATA_GB = 500\n\n\ndef monthly_cost(gb, storage_class):\n    return gb * RATES[storage_class]\n\n\ncosts = {}\nfor cls in RATES:\n    costs[cls] = monthly_cost(DATA_GB, cls)\n    print(f\"{cls}: {costs[cls]} units/month\")\n\nstandard_cost = costs[\"STANDARD\"]\ndeep_cost = costs[\"DEEP_ARCHIVE\"]\npct = round((standard_cost - deep_cost) / standard_cost * 100, 1)\nprint(f\"Lifecycle saves {pct}% in month 13 vs Standard\")\n",
+      "verified_output": "STANDARD: 11500.0 units/month\nSTANDARD_IA: 6250.0 units/month\nGLACIER_IR: 2000.0 units/month\nDEEP_ARCHIVE: 500.0 units/month\nLifecycle saves 95.7% in month 13 vs Standard",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

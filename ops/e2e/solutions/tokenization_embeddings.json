@@ -1,0 +1,11 @@
+{
+  "lesson_id": "tokenization_embeddings",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def build_vocab(sentences):\n    words = set()\n    for sentence in sentences:\n        words.update(sentence.split())\n    return {word: i for i, word in enumerate(sorted(words))}\n\ndef encode(sentence, vocab):\n    return [vocab.get(word, -1) for word in sentence.split()]\n\n# --- demo (do not change) ---\ncorpus = [\"the cat sat\", \"the dog ran\"]\nvocab = build_vocab(corpus)\nprint(encode(\"the fox sat\", vocab))\n",
+      "verified_output": "[4, -1, 3]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

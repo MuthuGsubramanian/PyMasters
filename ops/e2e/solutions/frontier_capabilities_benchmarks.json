@@ -1,0 +1,11 @@
+{
+  "lesson_id": "frontier_capabilities_benchmarks",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "MODELS = {\n    \"model_a\": {\"reasoning\": 5, \"speed\": 2, \"cost_efficiency\": 2},\n    \"model_b\": {\"reasoning\": 4, \"speed\": 4, \"cost_efficiency\": 3},\n    \"model_c\": {\"reasoning\": 3, \"speed\": 5, \"cost_efficiency\": 5},\n}\n\nWEIGHTS = {\"reasoning\": 0.5, \"speed\": 0.2, \"cost_efficiency\": 0.3}\n\ndef weighted_score(caps, weights):\n    return round(sum(caps[axis] * weights[axis] for axis in weights), 1)\n\nscores = {name: weighted_score(caps, WEIGHTS) for name, caps in MODELS.items()}\nranking = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)\nfor name, score in ranking:\n    print(f\"{name}: {score}\")\nprint(f\"winner={ranking[0][0]}\")\n",
+      "verified_output": "model_c: 4.0\nmodel_b: 3.7\nmodel_a: 3.5\nwinner=model_c",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

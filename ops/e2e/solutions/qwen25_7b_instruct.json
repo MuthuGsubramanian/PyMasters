@@ -1,0 +1,11 @@
+{
+  "lesson_id": "qwen25_7b_instruct",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class LocalLLMRouter:\n    TASK_KEYWORDS = {\n        \"code\": [\"function\", \"class\", \"code\", \"implement\"],\n        \"json\": [\"json\", \"extract\", \"structured\"]\n    }\n\n    CONFIGS = {\n        \"code\": {\"temperature\": 0.2, \"max_tokens\": 512},\n        \"json\": {\"temperature\": 0.1, \"max_tokens\": 256},\n        \"chat\": {\"temperature\": 0.7, \"max_tokens\": 300}\n    }\n\n    SYSTEM_PROMPTS = {\n        \"code\": \"You are a Python code generator. Return only code.\",\n        \"json\": \"You are a JSON extractor. Return only valid JSON.\",\n        \"chat\": \"You are a helpful assistant. Be concise.\"\n    }\n\n    def detect_task(self, prompt: str) -> str:\n        text = prompt.lower()\n        for task_type in (\"code\", \"json\"):\n            if any(kw in text for kw in self.TASK_KEYWORDS[task_type]):\n                return task_type\n        return \"chat\"\n\n    def get_config(self, task_type: str) -> dict:\n        return dict(self.CONFIGS.get(task_type, self.CONFIGS[\"chat\"]))\n\n    def route(self, prompt: str) -> dict:\n        task_type = self.detect_task(prompt)\n        config = self.get_config(task_type)\n        messages = [\n            {\"role\": \"system\", \"content\": self.SYSTEM_PROMPTS[task_type]},\n            {\"role\": \"user\", \"content\": prompt},\n        ]\n        return {\"task_type\": task_type, \"config\": config, \"messages\": messages}\n\n\n# Test it:\nrouter = LocalLLMRouter()\nr1 = router.route(\"Write a function to sort a list\")\nprint(r1[\"task_type\"])\nprint(r1[\"config\"][\"temperature\"])\n\nr2 = router.route(\"Extract JSON from this text\")\nprint(r2[\"task_type\"])\nprint(len(r2[\"messages\"]))\n\nr3 = router.route(\"Hello, how are you?\")\nprint(r3[\"task_type\"])\n",
+      "verified_output": "code\n0.2\njson\n2\nchat",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

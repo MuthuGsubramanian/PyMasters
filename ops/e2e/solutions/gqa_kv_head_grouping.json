@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gqa_kv_head_grouping",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def kv_group_for_query_head(query_head_idx: int, num_query_heads: int, num_kv_heads: int) -> int:\n    \"\"\"Which KV group (0-based) a query head shares, under grouped-query attention.\"\"\"\n    group_size = num_query_heads // num_kv_heads\n    return query_head_idx // group_size\n\nprint(kv_group_for_query_head(5, 8, 2))\n",
+      "verified_output": "1",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

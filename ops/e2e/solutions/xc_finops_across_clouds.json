@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_finops_across_clouds",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "AZURE = [\n    {\"resourceGroup\": \"team-data\", \"costUSD\": 120.50},\n    {\"resourceGroup\": \"team-app\", \"costUSD\": 60.00},\n]\nAWS = [\n    {\"tag_team\": \"team-data\", \"unblended_cost\": 80.25},\n    {\"tag_team\": \"team-ml\", \"unblended_cost\": 210.25},\n]\nGCP = [\n    {\"label_team\": \"team-app\", \"cost\": 45.00},\n    {\"label_team\": \"team-ml\", \"cost\": 39.75},\n]\n\ndef normalize_records():\n    rows = []\n    for r in AZURE:\n        rows.append((r[\"resourceGroup\"], r[\"costUSD\"]))\n    for r in AWS:\n        rows.append((r[\"tag_team\"], r[\"unblended_cost\"]))\n    for r in GCP:\n        rows.append((r[\"label_team\"], r[\"cost\"]))\n    return rows\n\ndef allocate(rows):\n    totals = {}\n    for team, cost in rows:\n        totals[team] = totals.get(team, 0.0) + cost\n    return totals\n\n_rows = normalize_records()\n_totals = allocate(_rows)\nfor _team in sorted(_totals):\n    print(f\"{_team}: ${_totals[_team]:.2f}\")\nprint(f\"Total spend: ${sum(_totals.values()):.2f}\")\n",
+      "verified_output": "team-app: $105.00\nteam-data: $200.75\nteam-ml: $250.00\nTotal spend: $555.75",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

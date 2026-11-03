@@ -1,0 +1,11 @@
+{
+  "lesson_id": "rag_cosine_retrieval",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def cosine_similarity(a: list, b: list) -> float:\n    \"\"\"cos = dot(a,b) / (norm(a) * norm(b)), rounded to 4 dp.\"\"\"\n    dot = sum(x * y for x, y in zip(a, b))\n    norm_a = sum(x * x for x in a) ** 0.5\n    norm_b = sum(y * y for y in b) ** 0.5\n    if norm_a == 0 or norm_b == 0:\n        return 0.0\n    return round(dot / (norm_a * norm_b), 4)\n\nprint(cosine_similarity([1, 0, 1], [1, 0, 0]))\n",
+      "verified_output": "0.7071",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

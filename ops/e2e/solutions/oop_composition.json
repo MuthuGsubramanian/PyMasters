@@ -1,0 +1,11 @@
+{
+  "lesson_id": "oop_composition",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class Battery:\n    def __init__(self, capacity):\n        self.capacity = capacity\n\n\nclass Phone:\n    def __init__(self, brand, battery):\n        self.brand = brand\n        self.battery = battery\n\n    def info(self):\n        return f'Brand: {self.brand}, Battery: {self.battery.capacity}mah'\n\n\np = Phone('Apple', Battery(3000))\nprint(p.info())\n",
+      "verified_output": "Brand: Apple, Battery: 3000mah",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

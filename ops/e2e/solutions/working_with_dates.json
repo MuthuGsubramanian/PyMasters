@@ -1,0 +1,11 @@
+{
+  "lesson_id": "working_with_dates",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from datetime import date\n\ndef days_between(d1, d2):\n    # Parse both ISO strings into real date objects, then subtract.\n    start = date.fromisoformat(d1)\n    end = date.fromisoformat(d2)\n    return (end - start).days\n\n# --- demo (do not change) ---\nprint(days_between(\"2026-01-01\", \"2026-06-09\"))\n",
+      "verified_output": "159",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

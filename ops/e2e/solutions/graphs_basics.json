@@ -1,0 +1,11 @@
+{
+  "lesson_id": "graphs_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from collections import deque\n\ngraph = {\n    'A': ['B', 'C'],\n    'B': ['A', 'D', 'E'],\n    'C': ['A', 'F'],\n    'D': ['B'],\n    'E': ['B', 'F'],\n    'F': ['C', 'E']\n}\n\ndef bfs(graph, start):\n    visited = set()\n    queue = deque([start])\n    visited.add(start)\n    order = []\n    while queue:\n        node = queue.popleft()\n        order.append(node)\n        for neighbor in graph[node]:\n            if neighbor not in visited:\n                visited.add(neighbor)\n                queue.append(neighbor)\n    return order\n\ndef dfs(graph, start, visited=None):\n    if visited is None:\n        visited = set()\n    visited.add(start)\n    order = [start]\n    for neighbor in graph[start]:\n        if neighbor not in visited:\n            order.extend(dfs(graph, neighbor, visited))\n    return order\n\ndef shortest_path(graph, start, end):\n    if start == end:\n        return [start]\n    visited = {start}\n    queue = deque([[start]])\n    while queue:\n        path = queue.popleft()\n        node = path[-1]\n        for neighbor in graph[node]:\n            if neighbor not in visited:\n                new_path = path + [neighbor]\n                if neighbor == end:\n                    return new_path\n                visited.add(neighbor)\n                queue.append(new_path)\n    return None\n\nprint('BFS:', bfs(graph, 'A'))\nprint('DFS:', dfs(graph, 'A'))\nprint('Shortest A→F:', shortest_path(graph, 'A', 'F'))\n",
+      "verified_output": "BFS: ['A', 'B', 'C', 'D', 'E', 'F']\nDFS: ['A', 'B', 'D', 'E', 'F', 'C']\nShortest A→F: ['A', 'C', 'F']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "how_python_objects_work",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def values_match(a, b):\n    # Compare VALUE with ==, not identity\n    return a == b\n\ndef is_same_object(a, b):\n    # Compare IDENTITY with 'is'\n    return a is b\n\n# --- demo (do not change) ---\ntotal_a = 1000\ntotal_b = 500 + 500           # equal value, may be a different object\n\nlist_a = [1, 2, 3]\nlist_b = [1, 2, 3]            # equal value, definitely a different object\nalias = list_a               # same object as list_a\n\nprint(\n    f\"values_match={values_match(total_a, total_b)} \"\n    f\"same_distinct={is_same_object(list_a, list_b)} \"\n    f\"alias={is_same_object(list_a, alias)}\"\n)\n",
+      "verified_output": "values_match=True same_distinct=False alias=True",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

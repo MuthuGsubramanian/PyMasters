@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_cost_optimization_finops",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\nOD_RATE = 10.0\nCOMMIT_RATE = 6.5\nHOURS_PER_MONTH = 730\nSCENARIOS = [100, 60, 30]\n\ndef monthly_costs(utilization_pct):\n    hours = HOURS_PER_MONTH * utilization_pct // 100\n    od = OD_RATE * hours\n    committed = COMMIT_RATE * HOURS_PER_MONTH\n    rec = \"SAVINGS_PLAN\" if committed < od else \"ON_DEMAND\"\n    return od, committed, rec\n\nfor u in SCENARIOS:\n    od, c, rec = monthly_costs(u)\n    print(f\"utilization={u}% on_demand={od} committed={c} -> {rec}\")\n\nprint(f\"break_even_hours={math.ceil(COMMIT_RATE * HOURS_PER_MONTH / OD_RATE)}\")\n",
+      "verified_output": "utilization=100% on_demand=7300.0 committed=4745.0 -> SAVINGS_PLAN\nutilization=60% on_demand=4380.0 committed=4745.0 -> ON_DEMAND\nutilization=30% on_demand=2190.0 committed=4745.0 -> ON_DEMAND\nbreak_even_hours=475",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

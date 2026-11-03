@@ -1,0 +1,11 @@
+{
+  "lesson_id": "frontier_privacy_security",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "CONFIGS = {\n    \"vendor_a\": {\"trains_on_customer_data\": False, \"retention_days\": 30, \"region_pinning\": True},\n    \"vendor_b\": {\"trains_on_customer_data\": False, \"retention_days\": 0, \"region_pinning\": False},\n    \"vendor_c\": {\"trains_on_customer_data\": True, \"retention_days\": 90, \"region_pinning\": True},\n}\n\nPOLICY = {\"max_retention_days\": 30, \"allow_training\": False, \"require_region_pinning\": True}\n\ndef check(cfg, policy):\n    violations = []\n    if cfg[\"trains_on_customer_data\"] is True:\n        violations.append(\"trains on data\")\n    if cfg[\"retention_days\"] > policy[\"max_retention_days\"]:\n        violations.append(\"retention %s>%s\" % (cfg[\"retention_days\"], policy[\"max_retention_days\"]))\n    if cfg[\"region_pinning\"] is False:\n        violations.append(\"no region pinning\")\n    return violations\n\ncompliant_count = 0\nlines = []\nfor vendor in (\"vendor_a\", \"vendor_b\", \"vendor_c\"):\n    found = check(CONFIGS[vendor], POLICY)\n    if found:\n        lines.append(vendor + \": \" + \"; \".join(found))\n    else:\n        lines.append(vendor + \": compliant\")\n        compliant_count += 1\nlines.append(\"compliant=\" + str(compliant_count))\nprint(\"\\n\".join(lines))\n",
+      "verified_output": "vendor_a: compliant\nvendor_b: no region pinning\nvendor_c: trains on data; retention 90>30\ncompliant=1",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

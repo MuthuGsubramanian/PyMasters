@@ -1,0 +1,11 @@
+{
+  "lesson_id": "lora_trainable_parameter_budget",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def lora_total_trainable_params(num_layers: int, d: int, r: int, matrices_per_layer: int) -> int:\n    \"\"\"Total LoRA trainable params across every adapted matrix in every layer.\"\"\"\n    per_matrix = r * (d + d)\n    return num_layers * matrices_per_layer * per_matrix\n\ndef full_finetune_params(num_layers: int, d: int, matrices_per_layer: int) -> int:\n    \"\"\"Params needed to fully fine-tune those same matrices.\"\"\"\n    return num_layers * matrices_per_layer * d * d\n\nprint(lora_total_trainable_params(32, 4096, 8, 4))\nprint(full_finetune_params(32, 4096, 4))\n",
+      "verified_output": "8388608\n2147483648",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

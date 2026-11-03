@@ -1,0 +1,11 @@
+{
+  "lesson_id": "softmax_from_scratch",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\ndef softmax(scores):\n    m = max(scores)\n    exps = [math.exp(s - m) for s in scores]\n    total = sum(exps)\n    return [e / total for e in exps]\n\n# --- demo (do not change) ---\nprint([round(p, 4) for p in softmax([2.0, 1.0, 0.0])])\n",
+      "verified_output": "[0.6652, 0.2447, 0.09]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

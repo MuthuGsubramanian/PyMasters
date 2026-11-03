@@ -1,0 +1,11 @@
+{
+  "lesson_id": "asyncio_queue_workers",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import asyncio\n\nasync def worker(q, results):\n    while True:\n        item = await q.get()\n        if item is None:\n            q.task_done()\n            return\n        index, value = item\n        await asyncio.sleep(0.001)\n        results.append((index, value * value))\n        q.task_done()\n\nasync def process(jobs, n_workers):\n    q = asyncio.Queue()\n    results = []\n    workers = [asyncio.create_task(worker(q, results)) for _ in range(n_workers)]\n    for i, v in enumerate(jobs):\n        await q.put((i, v))\n    for _ in range(n_workers):\n        await q.put(None)\n    await q.join()\n    await asyncio.gather(*workers)\n    return [value for _, value in sorted(results)]\n\nprint(asyncio.run(process([0, 1, 2, 3, 4, 5, 6, 7], 3)))\n",
+      "verified_output": "[0, 1, 4, 9, 16, 25, 36, 49]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

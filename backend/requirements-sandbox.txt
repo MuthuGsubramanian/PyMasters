@@ -1,0 +1,16 @@
+# Libraries learners' code may import in the sandbox (lesson practice challenges, playground).
+# The app itself never imports these. Installed into the production image only (Dockerfile), so the
+# backend unit-test CI job stays lean. Each one was checked to import and run under the sandbox's
+# 512 MB address-space cap (vaathiyaar/execution.py); ops/e2e/scenarios/test_solutions.py
+# ::test_lesson_imports_exist_in_the_sandbox fails if a lesson imports a library missing here.
+pandas==3.1.0
+scikit-learn==1.9.1
+joblib==1.6.0
+matplotlib==3.11.2
+polars==2.1.0
+Flask==3.1.3
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.1.6
+python-jose==3.5.0
+Django==5.2.18
+djangorestframework==3.18.3

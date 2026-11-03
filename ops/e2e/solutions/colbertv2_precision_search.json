@@ -1,0 +1,11 @@
+{
+  "lesson_id": "colbertv2_precision_search",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\nclass PrecisionScorer:\n    def _token_vector(self, token: str) -> list[float]:\n        vec = [0.0] * 26\n        for c in token.lower():\n            if 'a' <= c <= 'z':\n                vec[ord(c) - ord('a')] += 1.0\n        return vec\n\n    def _encode(self, text: str) -> list[list[float]]:\n        return [self._token_vector(w) for w in text.lower().split()]\n\n    def _dot(self, a: list[float], b: list[float]) -> float:\n        return sum(x * y for x, y in zip(a, b))\n\n    def _norm(self, v: list[float]) -> float:\n        return math.sqrt(sum(x * x for x in v))\n\n    def _cosine(self, a: list[float], b: list[float]) -> float:\n        d = self._dot(a, b)\n        na, nb = self._norm(a), self._norm(b)\n        if na == 0 or nb == 0:\n            return 0.0\n        return d / (na * nb)\n\n    def _avg_vector(self, vectors: list[list[float]]) -> list[float]:\n        if not vectors:\n            return [0.0] * 26\n        n = len(vectors)\n        return [sum(col) / n for col in zip(*vectors)]\n\n    def single_vector_score(self, query: str, document: str) -> float:\n        q = self._encode(query)\n        d = self._encode(document)\n        if not q or not d:\n            return 0.0\n        return self._cosine(self._avg_vector(q), self._avg_vector(d))\n\n    def maxsim_score(self, query: str, document: str) -> float:\n        q = self._encode(query)\n        d = self._encode(document)\n        if not q or not d:\n            return 0.0\n        return sum(max(self._dot(qt, dt) for dt in d) for qt in q)\n\n# Test:\nscorer = PrecisionScorer()\n\nsv1 = scorer.single_vector_score(\"reset password\", \"password reset guide\")\nsv2 = scorer.single_vector_score(\"reset password\", \"password policy rules\")\nprint(f\"{sv1:.4f}\")\nprint(f\"{sv2:.4f}\")\nprint(abs(sv1 - sv2) < 0.15)\n\nms1 = scorer.maxsim_score(\"reset password\", \"password reset guide\")\nms2 = scorer.maxsim_score(\"reset password\", \"password policy rules\")\nprint(ms1 > ms2)\n\nprint(scorer.maxsim_score(\"abc\", \"xyz\") == 0.0)\n",
+      "verified_output": "0.9298\n0.7985\nTrue\nTrue\nTrue",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

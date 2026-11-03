@@ -1,0 +1,11 @@
+{
+  "lesson_id": "sklearn_classification",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from sklearn.datasets import load_wine\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.ensemble import RandomForestClassifier\nfrom sklearn.metrics import accuracy_score\n\ndata = load_wine()\nX_train, X_test, y_train, y_test = train_test_split(\n    data.data, data.target, test_size=0.25, random_state=42\n)\n\nmodel = RandomForestClassifier(n_estimators=50, random_state=42)\nmodel.fit(X_train, y_train)\nacc = float(accuracy_score(y_test, model.predict(X_test)))\nprint(acc)\n",
+      "verified_output": "1.0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

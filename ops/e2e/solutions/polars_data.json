@@ -1,0 +1,11 @@
+{
+  "lesson_id": "polars_data",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import os\n\n# The sandbox limits process/thread counts; keep Polars' thread pool minimal.\n# Must be set before polars is imported.\nos.environ[\"POLARS_MAX_THREADS\"] = \"1\"\n\nimport polars as pl\n\ndf = pl.DataFrame({\n    \"product\": [\"Laptop\", \"Mouse\", \"Keyboard\", \"Monitor\", \"Desk\", \"Chair\", \"Notebook\"],\n    \"category\": [\"Electronics\", \"Electronics\", \"Electronics\", \"Electronics\", \"Furniture\", \"Furniture\", \"Stationery\"],\n    \"price\": [999.99, 15.5, 45.0, 199.99, 250.0, 120.5, 4.25],\n})\n\nresult = (\n    df.lazy()\n    .filter(pl.col(\"price\") > 20)\n    .group_by(\"category\")\n    .agg(pl.col(\"price\").mean().alias(\"avg_price\"))\n    .sort(\"category\")\n    .collect()\n)\n\nprint(result)\n",
+      "verified_output": "shape: (2, 2)\n┌─────────────┬────────────┐\n│ category    ┆ avg_price  │\n│ ---         ┆ ---        │\n│ str         ┆ f64        │\n╞═════════════╪════════════╡\n│ Electronics ┆ 414.993333 │\n│ Furniture   ┆ 185.25     │\n└─────────────┴────────────┘",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

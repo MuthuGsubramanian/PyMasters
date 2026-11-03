@@ -1,0 +1,87 @@
+name: Nightly scenarios (Tier 2)
+
+# Every lesson, path, boss battle and org type against the image production runs (:latest), with the stub
+# tutor. Spec: docs/superpowers/specs/2026-11-03-autonomous-scenario-testing-design.md §4. 20:30 UTC = 02:00 IST,
+# the quietest hour. The report artifact is read by the 08:00 IST triage (ops/e2e/triage).
+on:
+  schedule:
+    - cron: '30 20 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-e2e
+  cancel-in-progress: false
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/pymasters:latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation — keyless)
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SA }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Pull the production image
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+          docker pull "$IMAGE"
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: ops/e2e/scenarios/requirements.txt
+
+      - name: Install scenario runner + Chromium
+        run: |
+          pip install -r ops/e2e/scenarios/requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Tier-2 nightly scenarios
+        id: run
+        continue-on-error: true
+        env:
+          PM_E2E_IMAGE: ${{ env.IMAGE }}
+          PM_E2E_PYTHON: python
+        run: ops/e2e/run_scenarios.sh nightly
+
+      - name: Report
+        if: always()
+        run: |
+          DIGEST=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE" 2>/dev/null || echo "$IMAGE")
+          python ops/e2e/scenarios/report.py ops/e2e/out/junit-nightly.xml --image "$DIGEST" \
+            > ops/e2e/out/nightly-report.json
+          python -c "import json; r=json.load(open('ops/e2e/out/nightly-report.json')); print(r['totals'])"
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-report
+          path: |
+            ops/e2e/out/nightly-report.json
+            ops/e2e/out/junit-nightly.xml
+            ops/e2e/out/container.log
+          retention-days: 14
+
+      - name: Fail the run when scenarios failed
+        if: steps.run.outcome == 'failure'
+        run: exit 1

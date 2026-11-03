@@ -1,0 +1,11 @@
+{
+  "lesson_id": "context_managers_and_cleanup",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from contextlib import contextmanager\n\n@contextmanager\ndef managed_resource(log):\n    log.append('open')\n    try:\n        yield log\n    finally:\n        log.append('closed')\n\n# --- demo (do not change) ---\nnormal_log = []\nwith managed_resource(normal_log):\n    pass                              # happy path, no error\n\nerror_log = []\ntry:\n    with managed_resource(error_log):\n        raise ValueError('boom')      # body raises\nexcept ValueError:\n    pass                              # caught outside the with-block\n\nprint(f\"normal={normal_log} error={error_log}\")\n",
+      "verified_output": "normal=['open', 'closed'] error=['open', 'closed']",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

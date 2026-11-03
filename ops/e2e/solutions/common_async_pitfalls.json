@@ -1,0 +1,11 @@
+{
+  "lesson_id": "common_async_pitfalls",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import asyncio\n\nasync def get_value():\n    return 42\n\nasync def main():\n    result = await get_value()\n    return result\n\nprint(asyncio.run(main()))\n",
+      "verified_output": "42",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

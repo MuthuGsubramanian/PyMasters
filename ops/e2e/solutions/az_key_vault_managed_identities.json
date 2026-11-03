@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_key_vault_managed_identities",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class SecretVault:\n    def __init__(self):\n        self._secrets = {}\n\n    def set_secret(self, name, value):\n        versions = self._secrets.setdefault(name, [])\n        version = f'v{len(versions) + 1}'\n        versions.append((version, value))\n        return version\n\n    def get_secret(self, name, version=None):\n        versions = self._secrets.get(name)\n        if not versions:\n            raise KeyError(name)\n        if version is None:\n            ver, value = versions[-1]\n            return value, ver\n        for ver, value in versions:\n            if ver == version:\n                return value, ver\n        raise KeyError(f'{name} {version}')\n\nvault = SecretVault()\nv1 = vault.set_secret('db-password', 'hunter2')\nprint(f'set db-password -> {v1}')\nv2 = vault.set_secret('db-password', 'hunter3')\nprint(f'set db-password -> {v2}')\nvalue, ver = vault.get_secret('db-password')\nprint(f'get db-password -> {value} ({ver})')\nvalue, ver = vault.get_secret('db-password', 'v1')\nprint(f'get db-password v1 -> {value} ({ver})')\n",
+      "verified_output": "set db-password -> v1\nset db-password -> v2\nget db-password -> hunter3 (v2)\nget db-password v1 -> hunter2 (v1)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

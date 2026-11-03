@@ -1,0 +1,11 @@
+{
+  "lesson_id": "agent_tool_loop_from_scratch",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def add(a, b):\n    return a + b\n\ndef shout(text):\n    return text.upper() + \"!\"\n\nTOOLS = {\"add\": add, \"shout\": shout}\n\ndef dispatch(call, tools):\n    \"\"\"Look up call['name'] in tools and call it with call['args'].\"\"\"\n    fn = tools.get(call[\"name\"])\n    if fn is None:\n        return f\"error: unknown tool {call['name']}\"\n    return fn(**call[\"args\"])\n\nprint(dispatch({\"name\": \"add\", \"args\": {\"a\": 4, \"b\": 5}}, TOOLS))\nprint(dispatch({\"name\": \"shout\", \"args\": {\"text\": \"tools\"}}, TOOLS))\nprint(dispatch({\"name\": \"delete_file\", \"args\": {\"path\": \"x\"}}, TOOLS))\n",
+      "verified_output": "9\nTOOLS!\nerror: unknown tool delete_file",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

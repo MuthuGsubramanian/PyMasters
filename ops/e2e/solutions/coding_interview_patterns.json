@@ -1,0 +1,11 @@
+{
+  "lesson_id": "coding_interview_patterns",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def max_area(heights):\n    # Container with most water — two pointers\n    left, right = 0, len(heights) - 1\n    max_water = 0\n    while left < right:\n        width = right - left\n        height = min(heights[left], heights[right])\n        max_water = max(max_water, width * height)\n        if heights[left] < heights[right]:\n            left += 1\n        else:\n            right -= 1\n    return max_water\n\ndef longest_unique_substring(s):\n    # Sliding window — longest substring without repeating chars\n    last = {}\n    start = 0\n    best = 0\n    for i, ch in enumerate(s):\n        if ch in last and last[ch] >= start:\n            start = last[ch] + 1\n        last[ch] = i\n        best = max(best, i - start + 1)\n    return best\n\ndef subarray_sum_equals_k(arr, k):\n    # Prefix sum — count subarrays that sum to k\n    counts = {0: 1}\n    total = 0\n    result = 0\n    for x in arr:\n        total += x\n        result += counts.get(total - k, 0)\n        counts[total] = counts.get(total, 0) + 1\n    return result\n\nprint(max_area([1, 8, 6, 2, 5, 4, 8, 3, 7]))\nprint(longest_unique_substring('abcabcbb'))\nprint(subarray_sum_equals_k([1, 1, 1], 2))\n",
+      "verified_output": "49\n3\n2",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

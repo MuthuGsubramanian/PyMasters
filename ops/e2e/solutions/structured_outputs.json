@@ -1,0 +1,11 @@
+{
+  "lesson_id": "structured_outputs",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from typing import Literal, Optional\nfrom pydantic import BaseModel, Field\n\n\nclass Recipe(BaseModel):\n    name: str = Field(description=\"The name of the recipe\")\n    prep_time_minutes: int = Field(description=\"Preparation time in minutes\")\n    ingredients: list[str] = Field(description=\"List of ingredients required\")\n    difficulty: Literal['easy', 'medium', 'hard'] = Field(\n        description=\"Difficulty level: 'easy', 'medium' or 'hard'\"\n    )\n    vegetarian: Optional[bool] = Field(\n        default=None, description=\"Whether the recipe is vegetarian\"\n    )\n\n\nif __name__ == \"__main__\":\n    r = Recipe(name='Pasta', prep_time_minutes=20, ingredients=['pasta', 'sauce'], difficulty='easy')\n    print(r.model_dump())\n",
+      "verified_output": "{'name': 'Pasta', 'prep_time_minutes': 20, 'ingredients': ['pasta', 'sauce'], 'difficulty': 'easy', 'vegetarian': None}",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

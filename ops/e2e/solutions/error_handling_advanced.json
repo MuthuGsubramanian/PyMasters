@@ -1,0 +1,11 @@
+{
+  "lesson_id": "error_handling_advanced",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class AppError(Exception):\n    pass\n\nclass InsufficientFundsError(AppError):\n    def __init__(self, account, amount, balance):\n        self.account = account\n        self.amount = amount\n        self.balance = balance\n        super().__init__(f'Account {account}: need ${amount}, have ${balance}')\n\ndef withdraw(account, amount, balance):\n    if amount > balance:\n        raise InsufficientFundsError(account, amount, balance)\n    return balance - amount\n\ntry:\n    withdraw('ACC-001', 500, 200)\nexcept InsufficientFundsError as e:\n    print(f'Error: {e}')\n    print(f'Short by: ${e.amount - e.balance}')\n",
+      "verified_output": "Error: Account ACC-001: need $500, have $200\nShort by: $300",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

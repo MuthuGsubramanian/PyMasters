@@ -509,11 +509,40 @@ def _qubrid2_stream(messages: list, options: dict):
             yield token
 
 
+# Deterministic provider for the CI scenario tests (2026-11-03): fixed, well-formed tutor replies so every
+# tutor feature can be exercised without API keys. Never answers real learners — refused in production.
+STUB_REPLY = "Stub tutor reply."
+
+
+def _stub_guard() -> None:
+    if os.getenv("K_SERVICE") or os.getenv("PYMASTERS_ENV") == "production":
+        raise RuntimeError("stub provider disabled in production")
+
+
+def _stub_complete(messages: list, options: dict) -> str:
+    _stub_guard()
+    # One object carrying the keys each AI feature reads: tutor replies (message/phase/animation) and the
+    # explainer (title/subtitle/steps/takeaway). Callers pick the keys they need.
+    return json.dumps({
+        "message": STUB_REPLY, "phase": "feedback", "animation": None,
+        "title": "Stub explanation", "subtitle": "A deterministic explanation used by the scenario tests.",
+        "steps": [{"title": f"Step {i}", "body": f"Stub explanation step {i} for the scenario tests."}
+                  for i in (1, 2, 3)],
+        "takeaway": "Stub takeaway.",
+    })
+
+
+def _stub_stream(messages: list, options: dict):
+    _stub_guard()
+    for word in STUB_REPLY.split(" "):
+        yield word + " "
+
+
 # Registries: provider name → callable. Extend to add fallback providers.
 _PROVIDER_COMPLETE = {"ollama": _ollama_complete, "gemini": _gemini_complete,
-                      "qubrid": _qubrid_complete, "qubrid2": _qubrid2_complete}
+                      "qubrid": _qubrid_complete, "qubrid2": _qubrid2_complete, "stub": _stub_complete}
 _PROVIDER_STREAM = {"ollama": _ollama_stream, "gemini": _gemini_stream,
-                    "qubrid": _qubrid_stream, "qubrid2": _qubrid2_stream}
+                    "qubrid": _qubrid_stream, "qubrid2": _qubrid2_stream, "stub": _stub_stream}
 
 
 def _db_path_for_exemplars() -> str:
@@ -914,6 +943,7 @@ def evaluate_code(
     attempt_count: int = 0,
     test_code: Optional[str] = None,
     sandbox_files: Optional[dict] = None,
+    lesson_code: str = "",
 ) -> dict:
     """
     Safely execute student-submitted code, compare output with expected, then
@@ -942,14 +972,13 @@ def evaluate_code(
         - error (str): Captured stderr / exception message, or "".
         - feedback (dict): Parsed Vaathiyaar response dict.
     """
-    from vaathiyaar.execution import run_code_subprocess, check_code_safety
+    from vaathiyaar.execution import run_code_subprocess, check_lesson_safety
 
-    # sandbox_files (2026-07-02): server-authored fixture files a file-I/O lesson
-    # seeds into the sandbox cwd. Their names double as the whitelist of literal
-    # filenames the student may open(); absent (all other lessons) → behaviour
-    # is byte-identical to before.
-    blocked = check_code_safety(
+    # Gate (2026-11-03): only the sandbox-escape surface is refused; the lesson's own server-authored
+    # starter/test code (lesson_code) grants what that lesson teaches. sandbox_files are seeded fixtures.
+    blocked = check_lesson_safety(
         student_code,
+        lesson_code=lesson_code,
         allowed_open_files=set(sandbox_files) if sandbox_files else None,
     )
     if blocked:

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "xc_identity_federation_sso",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "IDP_SUPPORTS = {\"saml\", \"oidc\"}\n\nAPPS = [\n    {\"name\": \"legacy-hr\", \"protocols\": [\"saml\"]},\n    {\"name\": \"api-portal\", \"protocols\": [\"oidc\"]},\n    {\"name\": \"old-erp\", \"protocols\": [\"ldap\"]},\n    {\"name\": \"data-studio\", \"protocols\": [\"saml\", \"oidc\"]},\n]\n\ndef can_federate(app):\n    return any(p in IDP_SUPPORTS for p in app[\"protocols\"])\n\ndef preferred_protocol(app):\n    return \"oidc\" if \"oidc\" in app[\"protocols\"] else \"saml\"\n\nfederated = 0\nfor app in APPS:\n    if can_federate(app):\n        federated += 1\n        print(f\"{app['name']}: FEDERATED via {preferred_protocol(app)}\")\n    else:\n        print(f\"{app['name']}: NOT_FEDERATED\")\nprint(f\"Coverage: {federated}/{len(APPS)}\")\n",
+      "verified_output": "legacy-hr: FEDERATED via saml\napi-portal: FEDERATED via oidc\nold-erp: NOT_FEDERATED\ndata-studio: FEDERATED via oidc\nCoverage: 3/4",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

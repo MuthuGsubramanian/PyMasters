@@ -1,0 +1,11 @@
+{
+  "lesson_id": "the_transformer_block",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\ndef layer_norm(x, eps=1e-5):\n    \"\"\"Normalize one vector to ~mean 0 / ~std 1.\n    Return (x - mean) / sqrt(variance + eps) for each component.\"\"\"\n    n = len(x)\n    mean = sum(x) / n\n    var = sum((v - mean) ** 2 for v in x) / n\n    std = math.sqrt(var + eps)\n    return [(v - mean) / std for v in x]\n\nvec = [2.0, 4.0, 6.0, 8.0]\nout = layer_norm(vec)\nprint([round(v, 4) for v in out])\n",
+      "verified_output": "[-1.3416, -0.4472, 0.4472, 1.3416]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

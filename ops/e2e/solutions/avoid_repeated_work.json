@@ -1,0 +1,11 @@
+{
+  "lesson_id": "avoid_repeated_work",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "users = [\n    {\"id\": 1, \"active\": True},\n    {\"id\": 2, \"active\": False},\n    {\"id\": 3, \"active\": True},\n    {\"id\": 4, \"active\": True},\n    {\"id\": 5, \"active\": False},\n]\norders = [1, 2, 3, 3, 5]  # user_ids that placed orders\n\ndef count_active_orders(users, orders):\n    # Build the lookup ONCE: set of active user ids\n    active_ids = {u[\"id\"] for u in users if u[\"active\"]}\n    count = 0\n    for uid in orders:\n        # O(1) membership check per order\n        if uid in active_ids:\n            count += 1\n    return count\n\nprint(count_active_orders(users, orders))\n",
+      "verified_output": "3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

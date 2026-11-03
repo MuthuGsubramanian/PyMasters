@@ -1,0 +1,11 @@
+{
+  "lesson_id": "multilingual_minilm_embeddings",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\nclass MultilingualSearchEngine:\n    def __init__(self, documents: list[str], n: int = 3):\n        self.documents = documents\n        self.n = n\n        self.doc_vectors = [self.char_ngrams(doc) for doc in documents]\n\n    def char_ngrams(self, text: str, n: int = None) -> dict:\n        if n is None:\n            n = self.n\n        text = text.lower()\n        counts = {}\n        for i in range(len(text) - n + 1):\n            gram = text[i:i + n]\n            counts[gram] = counts.get(gram, 0) + 1\n        return counts\n\n    def cosine_similarity(self, vec_a: dict, vec_b: dict) -> float:\n        norm_a = math.sqrt(sum(v * v for v in vec_a.values()))\n        norm_b = math.sqrt(sum(v * v for v in vec_b.values()))\n        if norm_a == 0 or norm_b == 0:\n            return 0.0\n        if len(vec_a) > len(vec_b):\n            vec_a, vec_b = vec_b, vec_a\n        dot = sum(v * vec_b.get(k, 0) for k, v in vec_a.items())\n        return dot / (norm_a * norm_b)\n\n    def search(self, query: str, top_k: int = 3) -> list[dict]:\n        q = self.char_ngrams(query)\n        scored = [\n            {\"document\": doc, \"score\": self.cosine_similarity(q, vec)}\n            for doc, vec in zip(self.documents, self.doc_vectors)\n        ]\n        scored.sort(key=lambda r: r[\"score\"], reverse=True)\n        return scored[:top_k]\n\n\n# Test it:\nengine = MultilingualSearchEngine([\n    \"machine learning algorithms\",\n    \"deep neural networks\",\n    \"cooking pasta recipes\",\n    \"machine learning models\"\n])\n\nresults = engine.search(\"machine learning\", top_k=2)\nprint(len(results))\nprint(results[0][\"document\"])\nprint(results[0][\"score\"] > results[1][\"score\"])\n",
+      "verified_output": "2\nmachine learning models\nTrue",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

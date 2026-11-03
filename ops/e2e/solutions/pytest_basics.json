@@ -1,0 +1,11 @@
+{
+  "lesson_id": "pytest_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import pytest\n\n\ndef is_palindrome(s):\n    # Return True if s reads the same forwards and backwards\n    return s == s[::-1]\n\n\n@pytest.mark.parametrize('word,expected', [\n    ('racecar', True),\n    ('hello', False),\n    ('madam', True),\n    ('', True),\n])\ndef test_is_palindrome(word, expected):\n    assert is_palindrome(word) == expected\n\n\ndef _run_parametrized():\n    passed = failed = 0\n    for mark in getattr(test_is_palindrome, \"pytestmark\", []):\n        if mark.name != \"parametrize\":\n            continue\n        for word, expected in mark.args[1]:\n            try:\n                test_is_palindrome(word, expected)\n                passed += 1\n            except AssertionError:\n                failed += 1\n    summary = f\"{passed} passed\"\n    if failed:\n        summary = f\"{failed} failed, \" + summary\n    print(summary)\n\n\n_run_parametrized()\n",
+      "verified_output": "4 passed",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "code_action_agents",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def extract_code(reply: str) -> str:\n    \"\"\"Return the Python inside the first ```py ... ``` block, stripped.\"\"\"\n    fence = \"```py\"\n    start = reply.index(fence) + len(fence)\n    end = reply.index(\"```\", start)\n    return reply[start:end].strip()\n\nreply = \"Sure!\\n```py\\nresult = 6 * 7\\n```\\nDone\"\nprint(extract_code(reply))\n",
+      "verified_output": "result = 6 * 7",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

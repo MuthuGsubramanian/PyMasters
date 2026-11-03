@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_lambda_serverless",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "LIMIT = 5\nARRIVALS = [3, 7, 5, 9]\n\ndef simulate(arrivals, limit):\n    results = []\n    for t, a in enumerate(arrivals):\n        running = min(a, limit)\n        throttled = max(0, a - limit)\n        results.append((t, a, running, throttled))\n    return results\n\nrows = simulate(ARRIVALS, LIMIT)\nfor t, a, r, x in rows:\n    print(f\"t={t} arrivals={a} running={r} throttled={x}\")\ntotal = sum(row[3] for row in rows)\nprint(f\"total_throttled={total}\")\n",
+      "verified_output": "t=0 arrivals=3 running=3 throttled=0\nt=1 arrivals=7 running=5 throttled=2\nt=2 arrivals=5 running=5 throttled=0\nt=3 arrivals=9 running=5 throttled=4\ntotal_throttled=6",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

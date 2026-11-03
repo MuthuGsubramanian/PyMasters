@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Card, Button, Badge, Modal } from '../components/ui';
 import RunnableCode from '../components/RunnableCode';
+import api from '../api';
 
 const CATEGORIES = [
   'All', 'AI Agents', 'LLMs', 'Computer Vision', 'NLP',
@@ -826,8 +827,8 @@ export default function Trending() {
     // list was silently discarded on every load and the daily-rotated catalogue
     // never reached users. Asking for the full set lets the intended freshness
     // feature activate while keeping the same "never show a smaller set" guard.
-    fetch('/api/trending?count=50')
-      .then(res => res.ok ? res.json() : Promise.reject())
+    api.get('/trending', { params: { count: 50 } })
+      .then(res => res.data)
       .then(data => {
         // Backend returns { date, count, topics: [...] }; also tolerate a bare array.
         const rawList = Array.isArray(data)

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "tool_calling_dispatch",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def dispatch(registry: dict, call: dict):\n    \"\"\"Look up call['name'] in registry and call it with call['args'].\"\"\"\n    name = call[\"name\"]\n    if name not in registry:\n        raise ValueError(f\"unknown tool '{name}'\")\n    return registry[name](**call.get(\"args\", {}))\n\nregistry = {\"add\": lambda a, b: a + b, \"mul\": lambda a, b: a * b}\nprint(dispatch(registry, {\"name\": \"add\", \"args\": {\"a\": 2, \"b\": 3}}))\n",
+      "verified_output": "5",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

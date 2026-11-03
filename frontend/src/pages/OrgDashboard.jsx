@@ -45,6 +45,14 @@ function singular(label) {
   return l.length > 3 && /s$/i.test(l) && !/ss$/i.test(l) ? l.slice(0, -1) : l;
 }
 
+/* English plural for org vocabulary: Class → Classes, Batch → Batches, Team → Teams, Faculty → Faculties. */
+export function plural(label) {
+  const l = String(label || '').trim();
+  if (/(s|x|z|ch|sh)$/i.test(l)) return `${l}es`;
+  if (/[^aeiou]y$/i.test(l)) return `${l.slice(0, -1)}ies`;
+  return `${l}s`;
+}
+
 /* Relative time from a UTC-ish timestamp string (SQLite "YYYY-MM-DD HH:MM:SS" or ISO). */
 function relTime(ts) {
   if (!ts) return 'never';
@@ -1213,7 +1221,7 @@ export default function OrgDashboard() {
                         <TH>XP</TH>
                         <TH>Lessons</TH>
                         <TH>Last active</TH>
-                        <TH>{groupLabel}s</TH>
+                        <TH>{plural(groupLabel)}</TH>
                         <TH>Status</TH>
                       </THead>
                       <TBody>

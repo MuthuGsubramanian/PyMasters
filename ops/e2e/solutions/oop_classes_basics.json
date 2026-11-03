@@ -1,0 +1,11 @@
+{
+  "lesson_id": "oop_classes_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class Student:\n    def __init__(self, name, grade):\n        self.name = name\n        self.grade = grade\n\n    def is_passing(self):\n        return self.grade >= 50\n\ns1 = Student('Alice', 75)\ns2 = Student('Bob', 40)\nprint(f'{s1.name}: {s1.is_passing()}')\nprint(f'{s2.name}: {s2.is_passing()}')\n",
+      "verified_output": "Alice: True\nBob: False",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

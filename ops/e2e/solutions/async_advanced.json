@@ -1,0 +1,11 @@
+{
+  "lesson_id": "async_advanced",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import asyncio\n\nasync def square_stream(n):\n    for i in range(1, n + 1):\n        await asyncio.sleep(0.5)\n        yield i ** 2\n\nasync def main():\n    async for square in square_stream(5):\n        print(f'Square: {square}')\n\nasyncio.run(main())\n",
+      "verified_output": "Square: 1\nSquare: 4\nSquare: 9\nSquare: 16\nSquare: 25",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

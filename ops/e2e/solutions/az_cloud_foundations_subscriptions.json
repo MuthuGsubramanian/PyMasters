@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_cloud_foundations_subscriptions",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "HIERARCHY = {\n    'root': ['platform', 'workloads'],\n    'platform': ['sub-identity', 'sub-connectivity'],\n    'workloads': ['corp', 'online'],\n    'corp': ['sub-erp'],\n    'online': ['sub-web'],\n}\nSUBSCRIPTIONS = ['sub-identity', 'sub-connectivity', 'sub-erp', 'sub-web']\n\ndef find_path(target, node='root'):\n    if node == target:\n        return [node]\n    for child in HIERARCHY.get(node, []):\n        sub = find_path(target, child)\n        if sub is not None:\n            return [node] + sub\n    return None\n\nfor sub in SUBSCRIPTIONS:\n    print(f\"{sub}: {' > '.join(find_path(sub))}\")\n",
+      "verified_output": "sub-identity: root > platform > sub-identity\nsub-connectivity: root > platform > sub-connectivity\nsub-erp: root > workloads > corp > sub-erp\nsub-web: root > workloads > online > sub-web",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

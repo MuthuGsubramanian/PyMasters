@@ -1,0 +1,11 @@
+{
+  "lesson_id": "reading_and_writing_files",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import io\n\ndef sum_numbers(text):\n    f = io.StringIO(text)          # an in-memory 'file' you can iterate\n    total = 0\n    for line in f:\n        line = line.strip()\n        if not line:\n            continue\n        total += int(line)\n    return total\n\n# --- demo (do not change) ---\ndata = \"10\\n\\n20\\n  \\n30\\n\"\nprint(sum_numbers(data))\n\nassert sum_numbers(\"10\\n\\n20\\n  \\n30\\n\") == 60\nassert sum_numbers(\"\") == 0\nassert sum_numbers(\"5\") == 5\nassert sum_numbers(\"1\\n2\\n3\\n\") == 6\nassert sum_numbers(\"\\n\\n\\n\") == 0\nassert sum_numbers(\"  7  \\n\\n  3\\n\") == 10\nassert sum_numbers(\"42\\n\") == 42\n",
+      "verified_output": "60",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

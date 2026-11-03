@@ -1,0 +1,11 @@
+{
+  "lesson_id": "decorators_advanced",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import functools\n\ndef validate_type(expected_type):\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            if not isinstance(args[0], expected_type):\n                raise TypeError(f'Expected {expected_type.__name__}')\n            return func(*args, **kwargs)\n        return wrapper\n    return decorator\n\n@validate_type(int)\ndef double(x):\n    return x * 2\n\nprint(double(5))\ntry:\n    print(double('hello'))\nexcept TypeError as e:\n    print(f'Error: {e}')\n",
+      "verified_output": "10\nError: Expected int",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

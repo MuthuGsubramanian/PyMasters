@@ -1,0 +1,11 @@
+{
+  "lesson_id": "bp_loss_functions",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\nEPS = 1e-15\n\n\ndef mse(y_true, y_pred):\n    n = len(y_true)\n    return sum((t - p) ** 2 for t, p in zip(y_true, y_pred)) / n\n\n\ndef binary_cross_entropy(y_true, y_pred):\n    n = len(y_true)\n    total = 0.0\n    for t, p in zip(y_true, y_pred):\n        total += t * math.log(p + EPS) + (1 - t) * math.log(1 - p + EPS)\n    return -total / n\n\n\nif __name__ == \"__main__\":\n    print(mse([1, 0, 1], [1, 0, 1]))\n    print(binary_cross_entropy([1], [0.999]))\n",
+      "verified_output": "0.0\n0.0010005003335825343",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

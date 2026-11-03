@@ -1,0 +1,11 @@
+{
+  "lesson_id": "grpo_clipped_surrogate",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def clipped_surrogate(ratio: float, advantage: float, eps: float = 0.2) -> float:\n    \"\"\"Clipped GRPO/PPO surrogate objective for one sampled completion.\"\"\"\n    unclipped = ratio * advantage\n    clipped_ratio = max(1 - eps, min(1 + eps, ratio))\n    clipped = clipped_ratio * advantage\n    return round(min(unclipped, clipped), 4)\n\nprint(clipped_surrogate(1.35, 1.4017))\n",
+      "verified_output": "1.682",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_bigquery_analytics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "COLUMNS = {\n    \"user_id\": 800,\n    \"event_type\": 400,\n    \"payload\": 6000,\n    \"ts\": 400,\n}\n\ndef scan_mb(columns, table):\n    if columns == [\"*\"]:\n        return sum(table.values())\n    return sum(table[c] for c in columns)\n\nq1 = [\"user_id\", \"event_type\"]\nq2 = [\"*\"]\nq3 = [\"ts\"]\n\nm1 = scan_mb(q1, COLUMNS)\nm2 = scan_mb(q2, COLUMNS)\nm3 = scan_mb(q3, COLUMNS)\n\nprint(f\"q1 scans {m1} MB\")\nprint(f\"q2 scans {m2} MB\")\nprint(f\"q3 scans {m3} MB\")\nprint(f\"SELECT * costs {m2 / m1:.1f}x more than q1\")\n",
+      "verified_output": "q1 scans 1200 MB\nq2 scans 7600 MB\nq3 scans 400 MB\nSELECT * costs 6.3x more than q1",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

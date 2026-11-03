@@ -1,0 +1,11 @@
+{
+  "lesson_id": "the_debugging_mindset",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def average(nums):\n    # EXPECTED average([10, 20, 30]) == 20.0\n    # ACTUAL (buggy) was 30.0 because the divisor was len(nums) - 1\n    # Hypothesis: the divisor should be len(nums). Fixed:\n    return sum(nums) / len(nums)\n\nprint(average([10, 20, 30]))\n",
+      "verified_output": "20.0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

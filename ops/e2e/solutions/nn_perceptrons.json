@@ -1,0 +1,11 @@
+{
+  "lesson_id": "nn_perceptrons",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def perceptron(inputs, weights, bias):\n    total = sum(x * w for x, w in zip(inputs, weights)) + bias\n    return 1 if total >= 0 else 0\n\n\nprint(perceptron([2, 3], [0.5, -0.5], 0))\n",
+      "verified_output": "0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "foundry_sdk_python",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "connections = [\n    {'name': 'aoai-dev', 'type': 'azure_openai', 'is_default': False},\n    {'name': 'aoai-eastus', 'type': 'azure_openai', 'is_default': True},\n    {'name': 'search-prod', 'type': 'ai_search', 'is_default': False},\n]\n\ndef resolve(connections, conn_type):\n    matches = [c for c in connections if c['type'] == conn_type]\n    for c in matches:\n        if c['is_default'] is True:\n            return c\n    return matches[0] if matches else None\n\nfor t in ['azure_openai', 'ai_search']:\n    conn = resolve(connections, t)\n    if conn['is_default']:\n        print(f'Resolved {t} -> {conn[\"name\"]} (default)')\n    else:\n        print(f'Resolved {t} -> {conn[\"name\"]} (first)')\n\nprint('Inference ready: True')\n",
+      "verified_output": "Resolved azure_openai -> aoai-eastus (default)\nResolved ai_search -> search-prod (first)\nInference ready: True",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

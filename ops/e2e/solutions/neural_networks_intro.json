@@ -1,0 +1,11 @@
+{
+  "lesson_id": "neural_networks_intro",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import numpy as np\n\ndef sigmoid(x):\n    return 1 / (1 + np.exp(-x))\n\n# OR gate training data\nX = np.array([[0,0], [0,1], [1,0], [1,1]])\ny = np.array([[0], [1], [1], [1]])\n\nnp.random.seed(42)\nweights = np.random.randn(2, 1)\nbias = np.zeros((1, 1))\n\n# Train for 10000 epochs\nfor _ in range(10000):\n    out = sigmoid(np.dot(X, weights) + bias)\n    err = y - out\n    adj = err * out * (1 - out)\n    weights += 0.5 * np.dot(X.T, adj)\n    bias += 0.5 * np.sum(adj)\n\n# Print predictions\nfor i in range(4):\n    pred = sigmoid(np.dot(X[i], weights) + bias)\n    print(f'{X[i]} -> {pred.item():.3f}')\n",
+      "verified_output": "[0 0] -> 0.023\n[0 1] -> 0.985\n[1 0] -> 0.985\n[1 1] -> 1.000",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "reading_tracebacks",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def order_total(cart):\n    total = 0\n    for item in cart:\n        total += item.get(\"price\", 0)\n    return total\n\ncart = [\n    {\"name\": \"pen\", \"price\": 10},\n    {\"name\": \"free_sample\"},          # no 'price' key!\n    {\"name\": \"mug\", \"price\": 20},\n]\n\nprint(order_total(cart))\n",
+      "verified_output": "30",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

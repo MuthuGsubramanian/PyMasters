@@ -1,0 +1,11 @@
+{
+  "lesson_id": "distillation_kl_divergence_loss",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import math\n\ndef kl_divergence(p: list, q: list) -> float:\n    \"\"\"KL(p || q) = sum_i p_i * log(p_i / q_i), skipping p_i == 0.\"\"\"\n    total = 0.0\n    for pi, qi in zip(p, q):\n        if pi > 0:\n            total += pi * math.log(pi / qi)\n    return round(total, 4)\n\nprint(kl_divergence([0.4942, 0.2998, 0.206], [0.4192, 0.3265, 0.2543]))\n",
+      "verified_output": "0.0124",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

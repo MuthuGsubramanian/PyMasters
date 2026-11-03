@@ -1,0 +1,11 @@
+{
+  "lesson_id": "llm_apis",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import os\n\n\ndef _require_key(name):\n    key = os.environ.get(name)\n    if not key:\n        raise EnvironmentError(f\"Missing environment variable: {name}\")\n    return key\n\n\ndef create_chat_client(provider: str):\n    \"\"\"Return a chat client for 'openai', 'anthropic' or 'google'.\"\"\"\n    if not isinstance(provider, str):\n        raise ValueError(f\"Unknown provider: {provider!r}\")\n    name = provider.strip().lower()\n\n    if name == \"openai\":\n        key = _require_key(\"OPENAI_API_KEY\")\n        from openai import OpenAI\n        return OpenAI(api_key=key)\n\n    if name == \"anthropic\":\n        key = _require_key(\"ANTHROPIC_API_KEY\")\n        import anthropic\n        return anthropic.Anthropic(api_key=key)\n\n    if name == \"google\":\n        key = _require_key(\"GOOGLE_API_KEY\")\n        from google import genai\n        return genai.Client(api_key=key)\n\n    raise ValueError(f\"Unknown provider: {provider!r}. Use 'openai', 'anthropic', or 'google'.\")\n\n\n# Test structure only (no real API keys in tests)\nimport types\nassert callable(create_chat_client)\ntry:\n    create_chat_client('unknown')\n    assert False, 'Should raise ValueError'\nexcept ValueError:\n    pass\n",
+      "verified_output": "",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

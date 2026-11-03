@@ -1,0 +1,11 @@
+{
+  "lesson_id": "ai_agents",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "# Define your tools\ndef add(a, b):\n    return a + b\n\ndef multiply(a, b):\n    return a * b\n\ndef greet(name):\n    return f\"Hello, {name}!\"\n\n# Tool registry\ntools = {\n    'add': add,\n    'multiply': multiply,\n    'greet': greet,\n}\n\n# Dispatcher\ndef dispatch(tool_name, args):\n    if tool_name not in tools:\n        raise ValueError(f\"Unknown tool: {tool_name}\")\n    return tools[tool_name](*args)\n\n# Test\nprint(dispatch('add', [3, 5]))\nprint(dispatch('multiply', [4, 7]))\nprint(dispatch('greet', ['Muthu']))\n",
+      "verified_output": "8\n28\nHello, Muthu!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

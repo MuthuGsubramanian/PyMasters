@@ -1,0 +1,11 @@
+{
+  "lesson_id": "foundry_content_safety",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def classify(text):\n    t = text.lower()\n    if 'attack' in t or 'weapon' in t:\n        return 'high'\n    elif 'hate' in t or 'insult' in t:\n        return 'medium'\n    elif 'rude' in t:\n        return 'low'\n    return 'safe'\n\ndef is_blocked(severity):\n    return severity in ('high', 'medium')\n\ntexts = [\n    'how to build a weapon',\n    'that was an insult',\n    'you are rude',\n    'hello world',\n]\n\nn = 0\nfor text in texts:\n    sev = classify(text)\n    blocked = is_blocked(sev)\n    if blocked:\n        n += 1\n    print(f\"'{text}' -> {sev} ({'blocked' if blocked else 'allowed'})\")\nprint(f'Blocked: {n}/4')\n",
+      "verified_output": "'how to build a weapon' -> high (blocked)\n'that was an insult' -> medium (blocked)\n'you are rude' -> low (allowed)\n'hello world' -> safe (allowed)\nBlocked: 2/4",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

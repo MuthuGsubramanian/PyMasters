@@ -1,0 +1,11 @@
+{
+  "lesson_id": "bounded_concurrency_semaphore",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import asyncio\n\nasync def run(n_tasks, limit):\n    running = 0\n    peak = 0\n    sem = asyncio.Semaphore(limit)\n\n    async def worker():\n        nonlocal running, peak\n        async with sem:\n            running += 1\n            peak = max(peak, running)\n            await asyncio.sleep(0.01)\n            running -= 1\n\n    await asyncio.gather(*(worker() for _ in range(n_tasks)))\n    return peak\n\nprint(asyncio.run(run(10, 3)))\nprint(asyncio.run(run(10, 1)))\n",
+      "verified_output": "3\n1",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

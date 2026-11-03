@@ -11,6 +11,11 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api';
 import SupportModal from '../components/SupportModal';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
+// Official OpenEDG partnership badge (edube.org partner resources), used unaltered per the Python Institute
+// brand guideline: never recoloured or stretched, always on a light panel with clear space around it.
+import OpenEdgEducationBadge from '../assets/openedg-education-partner.png';
+
+const PI_CERT_PATH = 'https://pythoninstitute.org/certification-tracks';
 import PymastersHero from '../assets/pymasters-hero.svg';
 
 /* ─── Tracks ─────────────────────────────────────────────────────────────── */
@@ -403,6 +408,30 @@ export default function Home() {
                 </div>
             </section>
 
+            {/* ── PARTNERSHIP ── */}
+            <section id="partners" aria-labelledby="partners-title" className="relative px-4 sm:px-6 pb-8">
+                <div className="max-w-5xl mx-auto rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-5 sm:gap-8">
+                    <div className="shrink-0 rounded-xl bg-white px-5 py-4">
+                        <img src={OpenEdgEducationBadge} alt="OpenEDG Education Partner" width="689" height="246"
+                            className="h-14 sm:h-16 w-auto" loading="lazy" />
+                    </div>
+                    <div className="text-center sm:text-left">
+                        <h2 id="partners-title" className="text-white text-lg font-semibold">
+                            PyMasters is an official OpenEDG Python Institute Education Partner
+                        </h2>
+                        <p className="text-slate-300/90 text-sm leading-relaxed mt-1">
+                            OpenEDG Python Institute sets the vendor-neutral Python certifications recognised worldwide.
+                            Learn on PyMasters, then take the next step on the{' '}
+                            <a href={PI_CERT_PATH} target="_blank" rel="noopener noreferrer"
+                                className="text-cyan-300 underline underline-offset-4 hover:text-cyan-200">
+                                Python Institute certification path
+                            </a>
+                            {' '}— from PCEP and PCAP to the Data Science, Testing and AI tracks.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
             {/* ── FEATURES ── */}
             <section id="features" className="relative py-24 px-4 sm:px-6">
                 <div className="max-w-6xl mx-auto">
@@ -694,13 +723,17 @@ export default function Home() {
             </section>
 
             {/* ── FOOTER ── */}
-            <footer className="relative border-t border-white/10 bg-[#0a0a14]/80 py-8 px-4 sm:px-6">
+            <footer className="relative border-t border-white/10 bg-[#0a0a14]/80 pt-8 pb-28 sm:pb-8 px-4 sm:px-6">
                 <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2">
                         <img src={PymastersGlyph} alt="" className="w-6 h-6 opacity-80" />
                         <p className="text-xs text-slate-400">
                             &copy; {new Date().getFullYear()} PyMasters &mdash; <a href="https://www.pymasters.net" className="hover:text-cyan-400 transition-colors">www.pymasters.net</a>
                         </p>
+                        <span className="ml-2 rounded-md bg-white px-2 py-1" title="PyMasters is an OpenEDG Python Institute Education Partner">
+                            <img src={OpenEdgEducationBadge} alt="OpenEDG Education Partner" width="689" height="246"
+                                className="h-6 w-auto" loading="lazy" />
+                        </span>
                     </div>
                     <nav className="flex items-center gap-5 text-xs text-slate-400" aria-label="Footer">
                         <Link to="/pricing" className="hover:text-cyan-400 transition-colors">Pricing</Link>

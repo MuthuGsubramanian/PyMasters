@@ -1,0 +1,11 @@
+{
+  "lesson_id": "az_sql_cosmos",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "PARTITION_COUNT = 4\nITEM_KEYS = ['alice', 'bob', 'carol', 'alice', 'alice', 'dave', 'erin', 'alice']\n\ndef partition_for(key):\n    return sum(ord(c) for c in key) % PARTITION_COUNT\n\ndef partition_counts(keys):\n    counts = [0] * PARTITION_COUNT\n    for key in keys:\n        counts[partition_for(key)] += 1\n    return counts\n\ncounts = partition_counts(ITEM_KEYS)\nfor n, count in enumerate(counts):\n    print(f'partition {n}: {count}')\n\nfor n, count in enumerate(counts):\n    if count > len(ITEM_KEYS) / 2:\n        print(f'hot partition: {n}')\n",
+      "verified_output": "partition 0: 1\npartition 1: 1\npartition 2: 5\npartition 3: 1\nhot partition: 2",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

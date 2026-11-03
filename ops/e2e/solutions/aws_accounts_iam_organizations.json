@@ -1,0 +1,11 @@
+{
+  "lesson_id": "aws_accounts_iam_organizations",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "POLICIES = [\n    {\"statements\": [\n        {\"effect\": \"Allow\", \"actions\": [\"s3:GetObject\", \"s3:ListBucket\"], \"resources\": [\"finance-bucket/report.csv\", \"finance-bucket\"]},\n        {\"effect\": \"Allow\", \"actions\": [\"s3:DeleteObject\"], \"resources\": [\"*\"]},\n    ]},\n    {\"statements\": [\n        {\"effect\": \"Deny\", \"actions\": [\"s3:DeleteObject\"], \"resources\": [\"finance-bucket/report.csv\"]},\n    ]},\n]\n\nTESTS = [\n    (\"s3:GetObject\", \"finance-bucket/report.csv\"),\n    (\"s3:DeleteObject\", \"finance-bucket/report.csv\"),\n    (\"ec2:StartInstances\", \"i-0abc123\"),\n]\n\ndef evaluate(policies, action, resource):\n    allowed = False\n    for policy in policies:\n        for stmt in policy.get(\"statements\", []):\n            action_match = \"*\" in stmt[\"actions\"] or action in stmt[\"actions\"]\n            resource_match = \"*\" in stmt[\"resources\"] or resource in stmt[\"resources\"]\n            if action_match and resource_match:\n                if stmt[\"effect\"] == \"Deny\":\n                    return \"DENY (explicit)\"\n                if stmt[\"effect\"] == \"Allow\":\n                    allowed = True\n    return \"ALLOW\" if allowed else \"DENY (implicit)\"\n\nfor action, resource in TESTS:\n    print(f\"{action} on {resource} -> {evaluate(POLICIES, action, resource)}\")\n",
+      "verified_output": "s3:GetObject on finance-bucket/report.csv -> ALLOW\ns3:DeleteObject on finance-bucket/report.csv -> DENY (explicit)\nec2:StartInstances on i-0abc123 -> DENY (implicit)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

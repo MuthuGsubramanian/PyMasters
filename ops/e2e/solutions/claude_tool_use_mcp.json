@@ -1,0 +1,11 @@
+{
+  "lesson_id": "claude_tool_use_mcp",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def get_weather(city):\n    return f\"{city}:sunny\"\n\ndef add(a, b):\n    return a + b\n\nREGISTRY = {\"get_weather\": get_weather, \"add\": add}\n\nCALLS = [\n    {\"name\": \"get_weather\", \"args\": {\"city\": \"Chennai\"}},\n    {\"name\": \"add\", \"args\": {\"a\": 2, \"b\": 3}},\n    {\"name\": \"delete_db\", \"args\": {}},\n]\n\ndef dispatch(calls, registry):\n    results = []\n    for call in calls:\n        name = call[\"name\"]\n        fn = registry.get(name)\n        if fn is None:\n            results.append(f\"error: unknown tool {name}\")\n        else:\n            results.append(str(fn(**call.get(\"args\", {}))))\n    return results\n\nresults = dispatch(CALLS, REGISTRY)\nfor line in results:\n    print(line)\nprint(f\"handled={len(CALLS)}\")\n",
+      "verified_output": "Chennai:sunny\n5\nerror: unknown tool delete_db\nhandled=3",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

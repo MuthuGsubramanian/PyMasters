@@ -1,0 +1,11 @@
+{
+  "lesson_id": "to_thread_blocking_calls",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import asyncio\nimport time\n\nasync def measure(use_thread):\n    stop = asyncio.Event()\n    ticks = 0\n\n    async def heartbeat():\n        nonlocal ticks\n        while not stop.is_set():\n            await asyncio.sleep(0.01)\n            ticks += 1\n\n    hb = asyncio.create_task(heartbeat())\n    await asyncio.sleep(0)          # let the heartbeat start\n    if use_thread:\n        await asyncio.to_thread(time.sleep, 0.1)\n    else:\n        time.sleep(0.1)             # blocks the loop on purpose\n    stop.set()\n    await hb\n    return ticks\n\nprint(asyncio.run(measure(False)) <= 1, asyncio.run(measure(True)) >= 5)\n",
+      "verified_output": "True True",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

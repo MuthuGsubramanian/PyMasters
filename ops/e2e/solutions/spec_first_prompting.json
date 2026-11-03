@@ -1,0 +1,11 @@
+{
+  "lesson_id": "spec_first_prompting",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import re\n\n# SPEC:\n#   slugify(text) -> str\n#   - lowercase, strip outer whitespace\n#   - remove any char that is NOT a letter, digit, space, or hyphen\n#   - collapse runs of spaces/hyphens into a single '-'\n#   - trim leading/trailing '-'\n#   Examples:\n#     'Hello, World!'        -> 'hello-world'\n#     'Python 3.12 Rocks!'   -> 'python-312-rocks'\n#     '  A--B  '             -> 'a-b'\ndef slugify(text):\n    text = text.lower().strip()\n    text = re.sub(r\"[^a-z0-9 \\-]\", \"\", text)\n    text = re.sub(r\"[ \\-]+\", \"-\", text)\n    return text.strip(\"-\")\n\nprint(slugify(\"  Hello, World!  \"))\n\nassert slugify('Hello, World!') == 'hello-world'\nassert slugify('Python 3.12 Rocks!') == 'python-312-rocks'\nassert slugify('  A--B  ') == 'a-b'\nassert slugify('') == ''\n",
+      "verified_output": "hello-world",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

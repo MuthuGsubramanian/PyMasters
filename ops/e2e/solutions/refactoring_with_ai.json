@@ -1,0 +1,11 @@
+{
+  "lesson_id": "refactoring_with_ai",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "FREE_SHIPPING_MIN = 100\nDOMESTIC_FEE = 5\nINTERNATIONAL_FEE = 12\nSMALL_ORDER_LIMIT = 50\nSMALL_ORDER_SURCHARGE = 3\n\n\ndef shipping_fee(total, country):\n    if country == 'US':\n        return 0 if total >= FREE_SHIPPING_MIN else DOMESTIC_FEE\n    fee = INTERNATIONAL_FEE\n    if total < SMALL_ORDER_LIMIT:\n        fee += SMALL_ORDER_SURCHARGE\n    return fee\n\n\n# Characterization tests = your safety net. Keep these GREEN.\nassert shipping_fee(120, 'US') == 0\nassert shipping_fee(99, 'US') == 5\nassert shipping_fee(100, 'US') == 0\nassert shipping_fee(80, 'CA') == 12\nassert shipping_fee(40, 'CA') == 15\nprint(shipping_fee(120, 'US'), shipping_fee(80, 'CA'), shipping_fee(40, 'CA'))\n",
+      "verified_output": "0 12 15",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

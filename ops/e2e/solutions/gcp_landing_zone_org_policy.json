@@ -1,0 +1,11 @@
+{
+  "lesson_id": "gcp_landing_zone_org_policy",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "POLICIES = {\n    \"org\": {\"allowedRegions\": \"us,eu\", \"disableSAKeys\": \"true\"},\n    \"folder:prod\": {\"allowedRegions\": \"eu\"},\n    \"project:api-prod\": {},\n}\nCHAIN = [\"org\", \"folder:prod\", \"project:api-prod\"]\n\ndef effective_policy(chain, policies):\n    result = {}\n    for level in chain:\n        for constraint, value in policies.get(level, {}).items():\n            result[constraint] = (value, level)\n    return result\n\neff = effective_policy(CHAIN, POLICIES)\nprint(\"project:api-prod effective policy:\")\nfor constraint in sorted(eff):\n    value, source = eff[constraint]\n    print(f\"{constraint} = {value} (set at {source})\")\n",
+      "verified_output": "project:api-prod effective policy:\nallowedRegions = eu (set at folder:prod)\ndisableSAKeys = true (set at org)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

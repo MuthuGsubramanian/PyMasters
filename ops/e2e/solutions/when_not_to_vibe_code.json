@@ -1,0 +1,11 @@
+{
+  "lesson_id": "when_not_to_vibe_code",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "# Prices are given in cents (integers) so there is NO float drift.\n# cart: (unit_price_cents, quantity)\ncart = [\n    (1999, 3),   # 3 x $19.99 = $59.97\n    (550, 1),    # 1 x $5.50\n    (1050, -1),  # a $10.50 discount line (negative qty)\n]\n\ndef line_total_cents(unit_price_cents, quantity):\n    return int(unit_price_cents) * int(quantity)\n\ndef order_total_cents(cart):\n    total = 0\n    for unit_price_cents, quantity in cart:\n        total += line_total_cents(unit_price_cents, quantity)\n    return total\n\nprint(order_total_cents(cart))\n\nassert line_total_cents(1999, 3) == 5997\nassert isinstance(line_total_cents(1999, 3), int)\nassert line_total_cents(1050, -1) == -1050\nassert order_total_cents(cart) == 5497\nassert isinstance(order_total_cents(cart), int)\nassert order_total_cents([]) == 0\n",
+      "verified_output": "5497",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

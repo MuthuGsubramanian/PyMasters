@@ -1,0 +1,11 @@
+{
+  "lesson_id": "tdd_workflow",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def fizzbuzz(n):\n    if n % 15 == 0:\n        return 'FizzBuzz'\n    if n % 3 == 0:\n        return 'Fizz'\n    if n % 5 == 0:\n        return 'Buzz'\n    return str(n)\n\ndef test_regular_number():\n    assert fizzbuzz(1) == '1'\n    assert fizzbuzz(7) == '7'\n\ndef test_fizz():\n    assert fizzbuzz(3) == 'Fizz'\n    assert fizzbuzz(6) == 'Fizz'\n\ndef test_buzz():\n    assert fizzbuzz(5) == 'Buzz'\n    assert fizzbuzz(10) == 'Buzz'\n\ndef test_fizzbuzz():\n    assert fizzbuzz(15) == 'FizzBuzz'\n    assert fizzbuzz(30) == 'FizzBuzz'\n\n# Run all tests\nfor test in [test_regular_number, test_fizz, test_buzz, test_fizzbuzz]:\n    test()\n    print(f'{test.__name__} PASSED')\nprint('All TDD tests passed!')\n",
+      "verified_output": "test_regular_number PASSED\ntest_fizz PASSED\ntest_buzz PASSED\ntest_fizzbuzz PASSED\nAll TDD tests passed!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

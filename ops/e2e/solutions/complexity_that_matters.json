@@ -1,0 +1,11 @@
+{
+  "lesson_id": "complexity_that_matters",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def common(a, b):\n    # Build a set from b so each membership test is O(1): O(n + m) overall.\n    b_set = set(b)\n    # Set intersection removes duplicates; sorted gives deterministic order.\n    return sorted(set(a) & b_set)\n\nprint(common([3, 1, 2, 2, 5], [2, 5, 5, 8]))\n",
+      "verified_output": "[2, 5]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

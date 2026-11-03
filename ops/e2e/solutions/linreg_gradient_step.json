@@ -1,0 +1,11 @@
+{
+  "lesson_id": "linreg_gradient_step",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def gd_step(xs: list, ys: list, w: float, lr: float) -> float:\n    \"\"\"Return w after one gradient-descent step for y = w*x (round 3 dp).\"\"\"\n    n = len(xs)\n    grads = [2 * x * (w * x - y) for x, y in zip(xs, ys)]\n    gradient = sum(grads) / n\n    w = w - lr * gradient\n    return round(w, 3)\n\nprint(gd_step([1, 2, 3], [2, 4, 6], 0.0, 0.1))\n",
+      "verified_output": "1.867",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

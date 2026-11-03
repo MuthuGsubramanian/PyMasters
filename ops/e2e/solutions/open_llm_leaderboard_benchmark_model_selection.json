@@ -1,0 +1,11 @@
+{
+  "lesson_id": "open_llm_leaderboard_benchmark_model_selection",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class ModelSelector:\n    def __init__(self):\n        self.models = []\n\n    def add_model(self, name, params_b, avg, quant_bits=16, **benchmarks):\n        entry = {\"name\": name, \"params_b\": params_b, \"avg\": avg, \"quant_bits\": quant_bits}\n        entry.update(benchmarks)\n        self.models.append(entry)\n\n    @staticmethod\n    def estimate_ram(params_b, quant_bits=16):\n        return round(params_b * (quant_bits / 8) * 1.2, 1)\n\n    def select(self, min_avg=0, max_ram_gb=16, task_weights=None):\n        if task_weights is None:\n            task_weights = {\"avg\": 1.0}\n        results = []\n        for m in self.models:\n            ram = self.estimate_ram(m[\"params_b\"], m[\"quant_bits\"])\n            if m[\"avg\"] >= min_avg and ram <= max_ram_gb:\n                score = sum(w * m.get(k, m[\"avg\"]) for k, w in task_weights.items())\n                results.append({\"name\": m[\"name\"], \"ram_gb\": ram, \"weighted\": round(score, 2)})\n        results.sort(key=lambda r: r[\"weighted\"], reverse=True)\n        return results\n\n\nsel = ModelSelector()\nsel.add_model(\"TinyModel\", 0.6, 28.5, 16)\nsel.add_model(\"MidModel\", 8, 55.8, 4, math=45.6, bbh=58.1)\nsel.add_model(\"BigModel\", 72, 72.1, 4, math=68.5, bbh=78.2)\n\npicks = sel.select(min_avg=40, max_ram_gb=16)\nprint(len(picks))\nprint(picks[0][\"name\"])\nprint(picks[0][\"ram_gb\"])\nprint(picks[0][\"weighted\"])\n\nmath_picks = sel.select(min_avg=25, max_ram_gb=50,\n                        task_weights={\"math\": 0.6, \"avg\": 0.4})\nprint(len(math_picks))\nprint(math_picks[0][\"name\"])\n\nprint(ModelSelector.estimate_ram(8, 4))\nprint(ModelSelector.estimate_ram(70, 4))\n",
+      "verified_output": "1\nMidModel\n4.8\n55.8\n3\nBigModel\n4.8\n42.0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

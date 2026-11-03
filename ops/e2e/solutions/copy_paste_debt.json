@@ -1,0 +1,11 @@
+{
+  "lesson_id": "copy_paste_debt",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "TAX = 0.08\n\ndef price(base, discount):\n    discounted = base * (1 - discount)\n    return discounted + discounted * TAX\n\nregular_price = price(60, 0.0)   # 0% discount\nmember_price  = price(60, 0.25)  # 25% discount\nvip_price     = price(60, 0.5)   # 50% discount\n\nprint(round(regular_price, 2), round(member_price, 2), round(vip_price, 2))\n",
+      "verified_output": "64.8 48.6 32.4",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}
