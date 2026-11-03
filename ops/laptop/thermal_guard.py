@@ -80,6 +80,27 @@ def count_procs(cg):
     return n
 
 
+def continue_stopped(cg):
+    """SIGCONT every SIGSTOPped process in the subtree. Thawing a cgroup does not undo a SIGSTOP: on 2026-11-03 the
+    v1 guard (which signalled processes) was replaced mid-pause and left a social-bot tick stopped for 6 hours."""
+    n = 0
+    for root, _dirs, files in os.walk(cg):
+        if "cgroup.procs" not in files:
+            continue
+        try:
+            pids = [int(p) for p in open(os.path.join(root, "cgroup.procs")).read().split()]
+        except (OSError, ValueError):
+            continue
+        for pid in pids:
+            try:
+                if open(f"/proc/{pid}/stat").read().rsplit(")", 1)[1].split()[0] == "T":
+                    os.kill(pid, signal.SIGCONT)
+                    n += 1
+            except (OSError, IndexError):
+                pass
+    return n
+
+
 def signal_units(sig):
     """Freeze (SIGSTOP) / thaw (SIGCONT) every heavy unit's whole cgroup subtree via cgroup.freeze, which also
     catches children spawned later (podman containers placed in the slice, browser renderers, ...)."""
@@ -91,6 +112,8 @@ def signal_units(sig):
         try:
             with open(os.path.join(cg, "cgroup.freeze"), "w") as f:
                 f.write("1" if sig == signal.SIGSTOP else "0")
+            if sig == signal.SIGCONT:
+                continue_stopped(cg)
             n += count_procs(cg)
         except OSError:   # no freezer here: fall back to signalling the processes directly
             for pid in unit_pids(u):
@@ -124,10 +147,32 @@ def notify(msg):
                    capture_output=True, timeout=5)
 
 
+def on_term(_signum, _frame):
+    """A stopped guard must not leave work frozen with nobody watching to thaw it."""
+    signal_units(signal.SIGCONT)
+    log("guard stopping: heavy work thawed")
+    raise SystemExit(0)
+
+
+def start_state():
+    """Thaw work a previous guard instance left frozen, but only if the laptop is already cool; a guard (re)started
+    while hot freezes first. Returns True when starting paused."""
+    t = temps()
+    hot = t.get("acpitz") or t.get("k10temp") or 0
+    if hot > RESUME_AT:
+        signal_units(signal.SIGSTOP)
+        log(f"guard starting hot at {hot:.0f}C: heavy work stays paused")
+        return True
+    signal_units(signal.SIGCONT)
+    return False
+
+
 def main():
-    paused, last_csv, last_alert, paused_at = False, 0, 0, 0
+    last_csv, last_alert = 0, 0
     window = []   # acpitz samples (the zone whose 100 C trip powers the laptop off); k10temp spikes instantly
-    signal_units(signal.SIGCONT)   # never leave work frozen by a previous guard instance
+    signal.signal(signal.SIGTERM, on_term)
+    paused = start_state()
+    paused_at = time.time() if paused else 0
     log(f"guard started (pause >= {PAUSE_AT}C, resume <= {RESUME_AT}C, alert >= {ALERT_AT}C)")
     while True:
         t = temps()
