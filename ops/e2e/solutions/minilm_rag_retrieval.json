@@ -6,6 +6,12 @@
       "code": "def top_k(query_vec: list, chunk_vecs: list, k: int) -> list:\n    \"\"\"Return indices of the k chunks most similar to the query, best first.\"\"\"\n    scored = []\n    for i, chunk in enumerate(chunk_vecs):\n        score = sum(q * c for q, c in zip(query_vec, chunk))\n        scored.append((score, i))\n    scored.sort(key=lambda p: (-p[0], p[1]))\n    return [i for _, i in scored[:k]]\n\nprint(top_k([1.0, 0.0], [[0.0, 1.0], [0.8, 0.6], [1.0, 0.0], [0.6, 0.8]], 2))\n",
       "verified_output": "[2, 1]\nAll tests passed!",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def chunk_words(words: list, size: int, overlap: int) -> list:\n    \"\"\"Sliding-window chunking: windows of `size` words, stepping size - overlap.\"\"\"\n    chunks = []\n    step = size - overlap\n    start = 0\n    while True:\n        chunks.append(\" \".join(words[start:start + size]))\n        if start + size >= len(words):\n            break\n        start += step\n    return chunks\n\nprint(chunk_words([\"RAG\", \"splits\", \"documents\", \"into\", \"overlapping\", \"chunks\", \"first\"], 4, 2))\n",
+      "verified_output": "['RAG splits documents into', 'documents into overlapping chunks', 'overlapping chunks first']\nAll tests passed!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

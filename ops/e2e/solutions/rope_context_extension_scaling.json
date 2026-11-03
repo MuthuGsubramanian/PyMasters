@@ -6,6 +6,12 @@
       "code": "import math\n\ndef rope_wavelength(i: int, head_dim: int, base: int) -> float:\n    \"\"\"Positions needed for dimension pair i to complete one full 2*pi rotation.\"\"\"\n    return round(2 * math.pi * (base ** ((2 * i) / head_dim)), 1)\n\nprint(rope_wavelength(63, 128, 10000))\n",
       "verified_output": "54410.1",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import math\n\ndef rope_wavelength(i: int, head_dim: int, base: int) -> float:\n    return round(2 * math.pi * (base ** ((2 * i) / head_dim)), 1)\n\ndef fits_context(i: int, head_dim: int, base: int, context_len: int) -> bool:\n    \"\"\"Whether dimension pair i's wavelength avoids wrapping within context_len positions.\"\"\"\n    return rope_wavelength(i, head_dim, base) >= context_len\n\nprint(fits_context(63, 128, 10000, 100000))\nprint(fits_context(63, 128, 500000, 100000))\n",
+      "verified_output": "False\nTrue",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

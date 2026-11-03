@@ -6,6 +6,12 @@
       "code": "def estimate_tokens(text):\n    return max(1, len(text) // 4)\n\ndef trim_to_budget(messages, budget):\n    \"\"\"Keep messages[0] (system) plus the newest turns that fit in budget.\"\"\"\n    system, rest = messages[0], messages[1:]\n    used = estimate_tokens(system[\"content\"])\n    kept = []\n    for m in reversed(rest):\n        cost = estimate_tokens(m[\"content\"])\n        if used + cost > budget:\n            break\n        kept.append(m)\n        used += cost\n    kept.reverse()\n    return [system] + kept\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"Be brief.\"},\n    {\"role\": \"user\", \"content\": \"My name is Arun and I live in Madurai.\"},\n    {\"role\": \"assistant\", \"content\": \"Hello Arun.\"},\n    {\"role\": \"user\", \"content\": \"What is a tuple?\"},\n    {\"role\": \"assistant\", \"content\": \"An immutable sequence.\"},\n    {\"role\": \"user\", \"content\": \"And a list?\"},\n]\nfor m in trim_to_budget(messages, budget=16):\n    print(m[\"role\"], \"|\", m[\"content\"])\n",
       "verified_output": "system | Be brief.\nassistant | Hello Arun.\nuser | What is a tuple?\nassistant | An immutable sequence.\nuser | And a list?",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import re\n\nSTOPWORDS = {\"the\", \"a\", \"an\", \"is\", \"are\", \"i\", \"my\", \"me\", \"do\", \"how\", \"what\", \"to\", \"in\", \"of\"}\n\ndef keywords(text):\n    return {w for w in re.findall(r\"[a-z0-9.]+\", text.lower()) if w not in STOPWORDS}\n\ndef recall(notes, query, k=2):\n    \"\"\"Return up to k notes with the most keyword overlap; ties alphabetical.\"\"\"\n    q = keywords(query)\n    scored = [(len(q & keywords(n)), n) for n in notes]\n    scored = [pair for pair in scored if pair[0] > 0]\n    scored.sort(key=lambda pair: (-pair[0], pair[1]))\n    return [n for _, n in scored[:k]]\n\nnotes = [\n    \"User name is Arun, based in Madurai.\",\n    \"User prefers tabs over spaces.\",\n    \"Favourite editor is VS Code.\",\n    \"Arun is learning about tuples and lists.\",\n]\nprint(recall(notes, \"What editor does the user prefer?\"))\nprint(recall(notes, \"Remind me what Arun is learning\"))\nprint(recall(notes, \"Hello there\"))\n",
+      "verified_output": "['Favourite editor is VS Code.', 'User name is Arun, based in Madurai.']\n['Arun is learning about tuples and lists.', 'User name is Arun, based in Madurai.']\n[]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

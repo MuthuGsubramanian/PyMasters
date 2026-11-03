@@ -1,0 +1,11 @@
+{
+  "lesson_id": "regression_test_first",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def median(nums):\n    s = sorted(nums)\n    n = len(s)\n    mid = n // 2\n    if n % 2 == 0:\n        return (s[mid - 1] + s[mid]) / 2\n    return s[mid]\n\n# Regression test: this assert encodes the bug report \"median of [1,2,3,4] should be 2.5\".\nassert median([1, 2, 3, 4]) == 2.5, \"even-length median wrong\"\nprint(\"median([1, 2, 3, 4]) =\", median([1, 2, 3, 4]))\nprint(\"median([5]) =\", median([5]))\n",
+      "verified_output": "median([1, 2, 3, 4]) = 2.5\nmedian([5]) = 5",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

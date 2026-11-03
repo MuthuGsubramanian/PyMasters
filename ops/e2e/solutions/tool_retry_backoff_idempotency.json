@@ -6,6 +6,12 @@
       "code": "def backoff_delays(attempts, base):\n    # n attempts means n-1 waits between them\n    return [base * 2 ** i for i in range(attempts - 1)]\n\ndelays = backoff_delays(5, 0.5)\nprint(delays)\nprint(sum(delays))\nprint(backoff_delays(1, 0.5))\n",
       "verified_output": "[0.5, 1.0, 2.0, 4.0]\n7.5\n[]",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "ledger = []\nseen = set()\n\ndef charge(customer, amount, key):\n    if key in seen:\n        return \"duplicate\"\n    seen.add(key)\n    ledger.append((customer, amount))\n    return \"charged\"\n\nprint(charge(\"asha\", 499, \"k1\"))\nprint(charge(\"asha\", 499, \"k1\"))\nprint(charge(\"asha\", 499, \"k1\"))\nprint(charge(\"ravi\", 201, \"k2\"))\nprint(len(ledger), sum(a for _, a in ledger))\n",
+      "verified_output": "charged\nduplicate\nduplicate\ncharged\n2 700",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

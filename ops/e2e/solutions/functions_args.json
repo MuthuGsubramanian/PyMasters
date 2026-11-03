@@ -6,6 +6,12 @@
       "code": "def multiply_all(*args):\n    result = 1\n    for a in args:\n        result *= a\n    return result\n\nprint(multiply_all(2, 3, 4))\n",
       "verified_output": "24",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def make_tag(tag, **kwargs):\n    attrs = ' '.join(f'{k}={v}' for k, v in kwargs.items())\n    if attrs:\n        return f'<{tag} {attrs}>'\n    return f'<{tag}>'\n\n\nprint(make_tag('a', href='google.com'))\n",
+      "verified_output": "<a href=google.com>",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

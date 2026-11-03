@@ -98,6 +98,7 @@ class EvaluateRequest(BaseModel):
     lesson_id: Optional[str] = None
     topic: Optional[str] = None
     attempt_count: Optional[int] = 0
+    challenge_index: Optional[int] = 0   # which of the lesson's practice_challenges is being attempted
 
 
 class DiagnosticRequest(BaseModel):
@@ -1108,8 +1109,15 @@ def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id
     test_code = None
     sandbox_files = None
     lesson_code = ""
+    _pc = {}
     if lesson_obj:
-        _pc = (lesson_obj.get("practice_challenges") or [{}])[0]
+        # The challenge the learner is on (2026-11-03): 149 lessons ship more than one, and the grader used
+        # to look only at [0], so the later ones could never be passed.
+        _pcs = lesson_obj.get("practice_challenges") or [{}]
+        _idx = request.challenge_index or 0
+        if _idx < 0 or _idx >= len(_pcs):
+            raise HTTPException(status_code=422, detail="This lesson has no such practice challenge.")
+        _pc = _pcs[_idx] or {}
         # Server-authored starter + harness: what they use, the learner may use (execution.check_lesson_safety).
         lesson_code = "\n".join(c for c in (_pc.get("starter_code"), _pc.get("test_code")) if isinstance(c, str))
         _tc = _pc.get("test_code")
@@ -1134,10 +1142,10 @@ def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id
             sandbox_files = _clean or None
 
     # Server-authoritative expected output (security fix 2026-11-02): for a real lesson the client's
-    # expected_output is ignored - it let a script "pass" with print(1)/"1" and farm XP. The client
-    # grades against practice_challenges[0], so the server uses the same challenge.
+    # expected_output is ignored - it let a script "pass" with print(1)/"1" and farm XP. The server grades
+    # against the requested challenge of the lesson on disk.
     if lesson_obj:
-        _exp = ((lesson_obj.get("practice_challenges") or [{}])[0] or {}).get("expected_output")
+        _exp = _pc.get("expected_output")
         expected_for_grading = _exp if isinstance(_exp, str) else ""
     else:
         expected_for_grading = request.expected_output or ""

@@ -1,0 +1,11 @@
+{
+  "lesson_id": "traceback_module_toolkit",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import traceback\n\ndef ratio(a, b):\n    return a / b\n\ndef run():\n    return ratio(1, 0)\n\ntry:\n    run()\nexcept Exception as e:\n    frames = traceback.extract_tb(e.__traceback__)\n    print(f\"{type(e).__name__} in {frames[-1].name}\")\n    print(\" <- \".join(f.name for f in reversed(frames)))\n\nassert frames[-1].name == 'ratio'\nassert [f.name for f in frames] == ['<module>', 'run', 'ratio']\n",
+      "verified_output": "ZeroDivisionError in ratio\nratio <- run <- <module>",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
+    }
+  ]
+}

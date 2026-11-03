@@ -6,6 +6,12 @@
       "code": "def lora_parameter_count(d: int, k: int, r: int) -> tuple:\n    \"\"\"Trainable params for full fine-tuning vs a rank-r LoRA update of a (d, k) matrix.\"\"\"\n    full_params = d * k\n    lora_params = r * (d + k)\n    reduction_factor = round(full_params / lora_params, 2)\n    return full_params, lora_params, reduction_factor\n\nfull_params, lora_params, reduction_factor = lora_parameter_count(4096, 4096, 8)\nprint(full_params)\nprint(lora_params)\nprint(reduction_factor)\n",
       "verified_output": "16777216\n65536\n256.0",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def lora_parameter_count(d: int, k: int, r: int) -> tuple:\n    full_params = d * k\n    lora_params = r * (d + k)\n    reduction_factor = round(full_params / lora_params, 2)\n    return full_params, lora_params, reduction_factor\n\ndef lora_savings_percent(d: int, k: int, r: int) -> float:\n    \"\"\"Percent of full fine-tuning params LoRA avoids training.\"\"\"\n    full_params, lora_params, _ = lora_parameter_count(d, k, r)\n    return round((1 - lora_params / full_params) * 100, 4)\n\nprint(lora_savings_percent(4096, 4096, 8))\n",
+      "verified_output": "99.6094",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

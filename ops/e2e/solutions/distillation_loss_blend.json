@@ -6,6 +6,12 @@
       "code": "import math\n\ndef cross_entropy(true_index: int, probs: list) -> float:\n    \"\"\"Hard-label loss: -log of the student's probability for the true class.\"\"\"\n    return round(-math.log(probs[true_index]), 4)\n\nprint(cross_entropy(0, [0.6652, 0.2447, 0.09]))\n",
       "verified_output": "0.4077",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import math\n\ndef temperature_softmax(logits: list, T: float) -> list:\n    exps = [math.exp(x / T) for x in logits]\n    s = sum(exps)\n    return [round(e / s, 4) for e in exps]\n\ndef kl_divergence(p: list, q: list) -> float:\n    total = 0.0\n    for pi, qi in zip(p, q):\n        if pi > 0:\n            total += pi * math.log(pi / qi)\n    return round(total, 4)\n\ndef soft_target_loss(teacher_logits: list, student_logits: list, T: float) -> float:\n    p = temperature_softmax(teacher_logits, T)\n    q = temperature_softmax(student_logits, T)\n    return round(kl_divergence(p, q) * (T ** 2), 4)\n\ndef cross_entropy(true_index: int, probs: list) -> float:\n    return round(-math.log(probs[true_index]), 4)\n\ndef total_distillation_loss(teacher_logits: list, student_logits: list, true_index: int, T: float, alpha: float) -> float:\n    \"\"\"Blend soft-target loss and hard-label cross-entropy: alpha * soft + (1 - alpha) * hard.\"\"\"\n    soft = soft_target_loss(teacher_logits, student_logits, T)\n    hard = cross_entropy(true_index, temperature_softmax(student_logits, 1))\n    return round(alpha * soft + (1 - alpha) * hard, 4)\n\nprint(total_distillation_loss([4.0, 2.0, 0.5], [3.0, 2.0, 1.0], 0, 4, 0.7))\n",
+      "verified_output": "0.2612",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

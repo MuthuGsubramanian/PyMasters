@@ -6,6 +6,12 @@
       "code": "def simulate_cache_hits(arrival_times: list, ttl: int) -> list:\n    \"\"\"Hit/miss per call: hit if gap since the previous call is within ttl seconds.\"\"\"\n    results = []\n    last_touch = None\n    for t in arrival_times:\n        hit = last_touch is not None and (t - last_touch) <= ttl\n        results.append(hit)\n        last_touch = t\n    return results\n\nprint(simulate_cache_hits([0, 100, 250, 700, 720], 300))\n",
       "verified_output": "[False, True, True, False, True]",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def simulate_cache_hits(arrival_times: list, ttl: int) -> list:\n    results = []\n    last_touch = None\n    for t in arrival_times:\n        hit = last_touch is not None and (t - last_touch) <= ttl\n        results.append(hit)\n        last_touch = t\n    return results\n\ndef cache_hit_rate(arrival_times: list, ttl: int) -> float:\n    \"\"\"Fraction of calls that were cache hits, given a TTL and call arrival times.\"\"\"\n    hits = simulate_cache_hits(arrival_times, ttl)\n    if not hits:\n        return 0.0\n    return round(sum(hits) / len(hits), 2)\n\nprint(cache_hit_rate([0, 100, 250, 700, 720], 300))\n",
+      "verified_output": "0.6",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

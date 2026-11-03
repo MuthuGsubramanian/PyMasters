@@ -6,6 +6,12 @@
       "code": "def clipped_surrogate(ratio: float, advantage: float, eps: float = 0.2) -> float:\n    \"\"\"Clipped GRPO/PPO surrogate objective for one sampled completion.\"\"\"\n    unclipped = ratio * advantage\n    clipped_ratio = max(1 - eps, min(1 + eps, ratio))\n    clipped = clipped_ratio * advantage\n    return round(min(unclipped, clipped), 4)\n\nprint(clipped_surrogate(1.35, 1.4017))\n",
       "verified_output": "1.682",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def clipped_surrogate(ratio: float, advantage: float, eps: float = 0.2) -> float:\n    unclipped = ratio * advantage\n    clipped_ratio = max(1 - eps, min(1 + eps, ratio))\n    return round(min(unclipped, clipped_ratio * advantage), 4)\n\ndef group_surrogate(ratios: list, advantages: list, eps: float = 0.2) -> float:\n    \"\"\"Mean clipped surrogate across every sampled completion in the group.\"\"\"\n    vals = [clipped_surrogate(r, a, eps) for r, a in zip(ratios, advantages)]\n    return round(sum(vals) / len(vals), 4)\n\nprint(group_surrogate([1.35, 1.1, 0.95, 0.6], [1.4017, 0.4123, -0.5772, -1.2368]))\n",
+      "verified_output": "0.1494",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

@@ -6,6 +6,12 @@
       "code": "def affine_scale_zero_point(min_val: float, max_val: float) -> tuple:\n    \"\"\"8-bit affine quantization params: scale and zero_point for range [min_val, max_val].\"\"\"\n    scale = (max_val - min_val) / 255\n    zero_point = round(0 - min_val / scale)\n    return (round(scale, 4), zero_point)\n\nscale, zero_point = affine_scale_zero_point(-2.0, 6.0)\nprint(scale)\nprint(zero_point)\n",
       "verified_output": "0.0314\n64",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def quantize_dequantize(x: float, min_val: float, max_val: float) -> float:\n    qmin, qmax = 0, 255\n    scale = (max_val - min_val) / qmax\n    zero_point = round(qmin - min_val / scale)\n    q = round(x / scale + zero_point)\n    q = max(qmin, min(qmax, q))\n    return round((q - zero_point) * scale, 4)\n\nprint(quantize_dequantize(1.0, -2.0, 6.0))\n",
+      "verified_output": "1.0039",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

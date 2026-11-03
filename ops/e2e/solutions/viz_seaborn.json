@@ -6,6 +6,12 @@
       "code": "import pandas as pd\n\niris_df = pd.DataFrame({\n    \"sepal_length\": [5.1, 4.9, 4.7, 5.0, 5.4,\n                     7.0, 6.4, 6.9, 5.5, 6.5,\n                     6.3, 5.8, 7.1, 6.5, 7.6],\n    \"sepal_width\": [3.5, 3.0, 3.2, 3.6, 3.9,\n                    3.2, 3.2, 3.1, 2.3, 2.8,\n                    3.3, 2.7, 3.0, 3.0, 3.0],\n    \"species\": [\"setosa\"] * 5 + [\"versicolor\"] * 5 + [\"virginica\"] * 5,\n})\n\nprint(iris_df.groupby(\"species\")[\"sepal_length\"].median())\n\ntry:\n    import os\n    os.environ.setdefault(\"MPLCONFIGDIR\", \"/tmp/mplconfig\")\n    import matplotlib\n    matplotlib.use(\"Agg\")\n    import matplotlib.pyplot as plt\n    import seaborn as sns\n\n    fig, ax = plt.subplots()\n    sns.boxplot(data=iris_df, x=\"species\", y=\"sepal_length\", ax=ax)\n    ax.set_title(\"Sepal length by species\")\n    plt.close(fig)\nexcept Exception as exc:\n    print(\"plot skipped:\", type(exc).__name__)\n",
       "verified_output": "species\nsetosa        5.0\nversicolor    6.5\nvirginica     6.5\nName: sepal_length, dtype: float64\nplot skipped: ModuleNotFoundError",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import matplotlib\nmatplotlib.use(\"Agg\")\nimport matplotlib.pyplot as plt\nimport pandas as pd\nfrom sklearn.datasets import load_iris\n\ndata = load_iris()\niris_df = pd.DataFrame(data.data, columns=[\"sepal_length\", \"sepal_width\", \"petal_length\", \"petal_width\"])\niris_df[\"species\"] = pd.Categorical.from_codes(data.target, data.target_names)\n\ntry:\n    import seaborn as sns\n    ax = sns.scatterplot(data=iris_df, x=\"sepal_length\", y=\"sepal_width\", hue=\"species\")\nexcept ImportError:\n    fig, ax = plt.subplots()\n    for name, group in iris_df.groupby(\"species\", observed=True):\n        ax.scatter(group[\"sepal_length\"], group[\"sepal_width\"], label=name)\n    ax.set_xlabel(\"sepal_length\")\n    ax.set_ylabel(\"sepal_width\")\n    ax.legend(title=\"species\")\n",
+      "verified_output": "",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

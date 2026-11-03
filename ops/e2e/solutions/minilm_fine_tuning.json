@@ -6,6 +6,12 @@
       "code": "def mine_pairs(groups: list) -> list:\n    \"\"\"Return every ordered (anchor, positive) tuple of two DIFFERENT\n    texts drawn from the SAME group. A group of n texts yields n*(n-1) pairs.\"\"\"\n    pairs = []\n    for group in groups:\n        for i, anchor in enumerate(group):\n            for j, positive in enumerate(group):\n                if i != j:\n                    pairs.append((anchor, positive))\n    return pairs\n\ngroups = [\n    [\"how do I reset my password\", \"forgot password help\"],\n    [\"cancel my subscription\", \"stop my plan\", \"end my membership\"],\n]\npairs = mine_pairs(groups)\nprint(len(pairs))\n",
       "verified_output": "8\nAll tests passed!",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def in_batch_accuracy(sim: list) -> float:\n    \"\"\"Fraction of rows whose diagonal entry sim[i][i] is strictly\n    greater than every OTHER entry in row i.\"\"\"\n    if not sim:\n        return 0.0\n    correct = 0\n    for i, row in enumerate(sim):\n        if all(row[i] > v for j, v in enumerate(row) if j != i):\n            correct += 1\n    return correct / len(sim)\n\nsim = [\n    [0.9, 0.2, 0.1],   # anchor 0: own positive wins\n    [0.4, 0.3, 0.5],   # anchor 1: fooled by positive 2\n    [0.1, 0.2, 0.8],   # anchor 2: own positive wins\n]\nprint(round(in_batch_accuracy(sim), 2))\n",
+      "verified_output": "0.67\nAll tests passed!",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

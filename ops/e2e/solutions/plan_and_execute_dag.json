@@ -6,6 +6,12 @@
       "code": "from graphlib import TopologicalSorter, CycleError\n\ngood = {\"c\": [\"a\", \"b\"], \"b\": [\"a\"], \"a\": []}\nloop = {\"x\": [\"y\"], \"y\": [\"x\"]}\n\ndef order_of(graph):\n    return list(TopologicalSorter(graph).static_order())\n\ndef has_cycle(graph):\n    try:\n        order_of(graph)\n    except CycleError:\n        return True\n    return False\n\nprint(order_of(good))\nprint(has_cycle(good))\nprint(has_cycle(loop))\n",
       "verified_output": "['a', 'b', 'c']\nFalse\nTrue",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "from graphlib import TopologicalSorter\n\ndiamond = {\"a\": [], \"b\": [\"a\"], \"c\": [\"a\"], \"d\": [\"b\", \"c\"]}\nflat = {\"x\": [], \"y\": [], \"z\": []}\n\ndef count_waves(graph):\n    ts = TopologicalSorter(graph)\n    ts.prepare()\n    waves = 0\n    while ts.is_active():\n        ready = ts.get_ready()\n        waves += 1\n        ts.done(*ready)\n    return waves\n\nprint(count_waves(diamond))\nprint(count_waves(flat))\n",
+      "verified_output": "3\n1",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

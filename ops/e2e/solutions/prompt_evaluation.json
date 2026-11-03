@@ -6,6 +6,12 @@
       "code": "def evaluate_classifier(outputs, expected):\n    if not outputs or not expected:\n        return 0.0\n    total = min(len(outputs), len(expected))\n    correct = sum(\n        1\n        for o, e in zip(outputs, expected)\n        if str(o).strip().lower() == str(e).strip().lower()\n    )\n    return float(correct / total)\n\n\nif __name__ == \"__main__\":\n    print(evaluate_classifier([\"Positive\", \"negative\"], [\"positive\", \"Negative\"]))\n",
       "verified_output": "1.0",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def detect_language(text):\n    t = text.lower()\n    words = set(t.split())\n    if words & {\"hello\", \"the\", \"is\", \"and\", \"you\"}:\n        return \"english\"\n    if words & {\"hola\", \"el\", \"es\", \"y\", \"gracias\"}:\n        return \"spanish\"\n    if words & {\"bonjour\", \"le\", \"est\", \"et\", \"merci\"}:\n        return \"french\"\n    if words & {\"hallo\", \"der\", \"ist\", \"und\", \"danke\"}:\n        return \"german\"\n    return \"unknown\"\n\n\ntest_suite = [\n    (\"Hello how are you\", \"english\"),\n    (\"Hola gracias amigo\", \"spanish\"),\n    (\"Bonjour et merci\", \"french\"),\n    (\"Hallo und danke\", \"german\"),\n    (\"The sky is blue\", \"english\"),\n    (\"El perro es grande\", \"spanish\"),\n    (\"xyzzy plugh\", \"unknown\"),\n]\n\ncorrect = 0\nfor prompt_input, expected_output in test_suite:\n    if detect_language(prompt_input) == expected_output:\n        correct += 1\n\nsuite_accuracy = correct / len(test_suite)\nprint(f\"Accuracy: {suite_accuracy:.2f}\")\n",
+      "verified_output": "Accuracy: 1.00",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

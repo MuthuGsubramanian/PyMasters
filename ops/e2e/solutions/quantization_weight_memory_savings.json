@@ -6,6 +6,12 @@
       "code": "def quantized_size_gb(num_params: int, bytes_per_param: float) -> float:\n    \"\"\"Model weight size in GB: num_params x bytes_per_param, converted to GB.\"\"\"\n    total_bytes = num_params * bytes_per_param\n    return round(total_bytes / 1e9, 2)\n\nprint(quantized_size_gb(7_000_000_000, 2))\n",
       "verified_output": "14.0",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def quantized_size_gb(num_params: int, bytes_per_param: float) -> float:\n    total_bytes = num_params * bytes_per_param\n    return round(total_bytes / 1e9, 2)\n\n# print the 7B model's size in bf16, then int8, then int4\nprint(quantized_size_gb(7_000_000_000, 2))\nprint(quantized_size_gb(7_000_000_000, 1))\nprint(quantized_size_gb(7_000_000_000, 0.5))\n",
+      "verified_output": "14.0\n7.0\n3.5",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

@@ -6,6 +6,12 @@
       "code": "def render_upper(template):\n    parts = []\n    for item in template:\n        if isinstance(item, str):\n            parts.append(item)\n        else:\n            parts.append(str(item.value).upper())\n    return ''.join(parts)\n",
       "verified_output": "",
       "source": "hand-verified 2026-11-03 (content fix)"
+    },
+    {
+      "index": 1,
+      "code": "def sql_safe(template):\n    parts = []\n    params = []\n    for item in template:\n        if isinstance(item, str):\n            parts.append(item)\n        else:\n            parts.append('?')\n            params.append(item.value)\n    return ''.join(parts), tuple(params)\n",
+      "verified_output": "SELECT * FROM users WHERE id = ?\n(42,)",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

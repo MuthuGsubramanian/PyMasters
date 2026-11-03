@@ -6,6 +6,12 @@
       "code": "def group_advantage(reward: float, mean_r: float, std_r: float, eps: float = 1e-4) -> float:\n    \"\"\"Normalize one reward against its group's mean and std.\"\"\"\n    return round((reward - mean_r) / (std_r + eps), 4)\n\nprint(group_advantage(0.9, 0.475, 0.3031))\n",
       "verified_output": "1.4017",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def group_advantage(reward: float, mean_r: float, std_r: float, eps: float = 1e-4) -> float:\n    return round((reward - mean_r) / (std_r + eps), 4)\n\ndef group_advantages(rewards: list, eps: float = 1e-4) -> list:\n    \"\"\"Normalize every reward in the group against the group's own mean/std.\"\"\"\n    n = len(rewards)\n    mean_r = sum(rewards) / n\n    var_r = sum((r - mean_r) ** 2 for r in rewards) / n\n    std_r = var_r ** 0.5\n    return [group_advantage(r, mean_r, std_r, eps) for r in rewards]\n\nprint(group_advantages([0.9, 0.6, 0.3, 0.1]))\n",
+      "verified_output": "[1.4017, 0.4123, -0.5772, -1.2368]",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

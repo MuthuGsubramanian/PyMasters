@@ -6,6 +6,12 @@
       "code": "def bubble_fraction(stages: int, microbatches: int) -> float:\n    \"\"\"Idle fraction of a naive forward pipeline: (p - 1) / (m + p - 1), rounded to 4 decimals.\"\"\"\n    return round((stages - 1) / (microbatches + stages - 1), 4)\n\nprint(bubble_fraction(4, 4))\nprint(bubble_fraction(4, 16))\nprint(bubble_fraction(8, 32))\n",
       "verified_output": "0.4286\n0.1579\n0.1795",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def bubble_fraction(stages: int, microbatches: int) -> float:\n    return round((stages - 1) / (microbatches + stages - 1), 4)\n\ndef schedule(stages: int, microbatches: int) -> list:\n    \"\"\"One string per stage: the micro-batch index at each tick when busy, '.' when idle.\"\"\"\n    total_ticks = microbatches + stages - 1\n    rows = []\n    for s in range(stages):\n        row = \"\".join(str(t - s) if 0 <= t - s < microbatches else \".\" for t in range(total_ticks))\n        rows.append(row)\n    return rows\n\nfor row in schedule(3, 4):\n    print(row)\nprint(\"\".join(schedule(3, 4)).count(\".\"))\n",
+      "verified_output": "0123..\n.0123.\n..0123\n6",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

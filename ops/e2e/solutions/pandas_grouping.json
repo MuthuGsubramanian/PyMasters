@@ -6,6 +6,12 @@
       "code": "import pandas as pd\n\nsales = pd.DataFrame({\n    \"region\": [\"North\", \"South\", \"North\", \"East\", \"South\", \"East\"],\n    \"product\": [\"Widget\", \"Gadget\", \"Gadget\", \"Widget\", \"Widget\", \"Gadget\"],\n    \"revenue\": [1200.0, 850.5, 430.0, 990.0, 600.0, 1100.0],\n})\n\nregional_totals = sales.groupby(\"region\")[\"revenue\"].sum()\nprint(regional_totals)\n",
       "verified_output": "region\nEast     2090.0\nNorth    1630.0\nSouth    1450.5\nName: revenue, dtype: float64",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "import pandas as pd\n\nsales = pd.DataFrame({\n    'region': ['North', 'South', 'East', 'West', 'North', 'South', 'East', 'West'],\n    'product': ['A', 'B', 'A', 'C', 'B', 'A', 'C', 'B'],\n    'revenue': [100, 200, 150, 120, 130, 170, 90, 210],\n})\n\nsummary = sales.groupby('region')['revenue'].agg(total='sum', avg='mean')\nprint(summary)\n",
+      "verified_output": "total    avg\nregion              \nEast      240  120.0\nNorth     230  115.0\nSouth     370  185.0\nWest      330  165.0",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

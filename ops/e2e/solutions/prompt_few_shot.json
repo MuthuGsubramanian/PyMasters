@@ -6,6 +6,12 @@
       "code": "few_shot_prompt = \"\"\"Classify each programming language as 'compiled', 'interpreted', or 'both'.\n\nLanguage: C\nType: compiled\n\nLanguage: JavaScript\nType: interpreted\n\nLanguage: Java\nType: both\n\nLanguage: Go\nType: compiled\n\nLanguage: Python\nType:\"\"\"\n\nprint(few_shot_prompt)\n",
       "verified_output": "Classify each programming language as 'compiled', 'interpreted', or 'both'.\n\nLanguage: C\nType: compiled\n\nLanguage: JavaScript\nType: interpreted\n\nLanguage: Java\nType: both\n\nLanguage: Go\nType: compiled\n\nLanguage: Python\nType:",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "cot_prompt = (\n    \"Question: A train travels at 80 mph. How long does it take to travel 200 miles?\\n\"\n    \"Think step by step:\\n\"\n    \"1. Identify the known values (speed and distance).\\n\"\n    \"2. Use the formula time = distance / speed.\\n\"\n    \"3. Calculate the result and state the answer with units.\"\n)\n\nprint(cot_prompt)\n",
+      "verified_output": "Question: A train travels at 80 mph. How long does it take to travel 200 miles?\nThink step by step:\n1. Identify the known values (speed and distance).\n2. Use the formula time = distance / speed.\n3. Calculate the result and state the answer with units.",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

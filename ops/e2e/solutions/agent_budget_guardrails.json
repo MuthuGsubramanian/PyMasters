@@ -6,6 +6,12 @@
       "code": "def within_budget(costs, limit):\n    spent = 0\n    count = 0\n    for cost in costs:\n        if spent + cost > limit:\n            break\n        spent += cost\n        count += 1\n    return count\n\nprint(within_budget([2, 2, 3, 1], 6))\nprint(within_budget([2, 2, 3, 1], 8))\nprint(within_budget([2, 2, 3, 1], 1))\n",
       "verified_output": "2\n4\n0",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "from collections import Counter\n\ndef first_loop(calls, max_repeats):\n    seen = Counter()\n    for step, call in enumerate(calls, 1):\n        seen[call] += 1\n        if seen[call] > max_repeats:\n            return step\n    return None\n\nstuck = [(\"search\", \"a\"), (\"read\", \"b\"), (\"search\", \"a\"), (\"search\", \"a\"), (\"read\", \"b\")]\nfine = [(\"search\", \"a\"), (\"search\", \"b\"), (\"read\", \"a\")]\nprint(first_loop(stuck, 2))\nprint(first_loop(fine, 2))\n",
+      "verified_output": "4\nNone",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

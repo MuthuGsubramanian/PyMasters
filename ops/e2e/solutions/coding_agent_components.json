@@ -6,6 +6,12 @@
       "code": "import os\n\n\ndef _list_files(path: str = \".\") -> list:\n    return os.listdir(path)\n\n\ndef _read_file(path: str) -> str:\n    with open(path, \"r\") as f:\n        return f.read()\n\n\ndef _count_lines(path: str) -> str:\n    with open(path, \"r\") as f:\n        return str(len(f.read().splitlines()))\n\n\nTOOLS = {\n    \"list_files\": _list_files,\n    \"read_file\": _read_file,\n    \"count_lines\": _count_lines,\n}\n\n\ndef execute_tool(name: str, args: dict) -> str:\n    tool = TOOLS.get(name)\n    if tool is None:\n        return f\"Error: unknown tool '{name}'\"\n    return tool(**args)\n\n\n# Test\ntry:\n    result = execute_tool(\"count_lines\", {\"path\": \"test.txt\"})\nexcept (FileNotFoundError, OSError):\n    result = None\n\nprint(f\"Tool registry with {len(TOOLS)} tools and a working dispatcher\")\n",
       "verified_output": "Tool registry with 3 tools and a working dispatcher",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def agent_step(messages: list, mock_llm, tools: dict):\n    response = mock_llm(messages)\n    if response.get('done'):\n        return response.get('content')\n    call = response['tool_call']\n    name = call['name']\n    args = call.get('args', {})\n    result = tools[name](**args)\n    messages.append({'role': 'assistant', 'content': None, 'tool_call': call})\n    messages.append({'role': 'tool', 'name': name, 'content': result})\n    return None\n\n\nmsgs = [{'role': 'user', 'content': 'test'}]\nmock = lambda m: {'done': False, 'tool_call': {'name': 'echo', 'args': {'text': 'hi'}}}\ntools = {'echo': lambda text: text.upper()}\nresult = agent_step(msgs, mock, tools)\nassert result is None\nassert len(msgs) == 3\nassert msgs[-1]['content'] == 'HI'\nmock_done = lambda m: {'done': True, 'content': 'All done'}\nassert agent_step(msgs, mock_done, tools) == 'All done'\n",
+      "verified_output": "",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

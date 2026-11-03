@@ -6,6 +6,12 @@
       "code": "def add(a, b):\n    return a + b\n\ndef shout(text):\n    return text.upper() + \"!\"\n\nTOOLS = {\"add\": add, \"shout\": shout}\n\ndef dispatch(call, tools):\n    \"\"\"Look up call['name'] in tools and call it with call['args'].\"\"\"\n    fn = tools.get(call[\"name\"])\n    if fn is None:\n        return f\"error: unknown tool {call['name']}\"\n    return fn(**call[\"args\"])\n\nprint(dispatch({\"name\": \"add\", \"args\": {\"a\": 4, \"b\": 5}}, TOOLS))\nprint(dispatch({\"name\": \"shout\", \"args\": {\"text\": \"tools\"}}, TOOLS))\nprint(dispatch({\"name\": \"delete_file\", \"args\": {\"path\": \"x\"}}, TOOLS))\n",
       "verified_output": "9\nTOOLS!\nerror: unknown tool delete_file",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def add(a, b):\n    return a + b\n\ndef shout(text):\n    return text.upper() + \"!\"\n\nTOOLS = {\"add\": add, \"shout\": shout}\n\ndef dispatch(call, tools):\n    fn = tools.get(call[\"name\"])\n    if fn is None:\n        return f\"error: unknown tool {call['name']}\"\n    return fn(**call[\"args\"])\n\nclass ScriptedModel:\n    def __init__(self, turns):\n        self.turns = list(turns)\n    def complete(self, messages):\n        return self.turns.pop(0)\n\ndef run_agent(model, user_text, max_steps=5):\n    \"\"\"Loop: ask the model, dispatch tool calls, stop on final_answer.\"\"\"\n    messages = [{\"role\": \"user\", \"content\": user_text}]\n    for step in range(1, max_steps + 1):\n        turn = model.complete(messages)\n        messages.append({\"role\": \"assistant\", **turn})\n        if \"final_answer\" in turn:\n            return turn[\"final_answer\"], len(messages)\n        result = dispatch(turn[\"tool_call\"], TOOLS)\n        messages.append({\"role\": \"tool\", \"content\": str(result)})\n    return \"stopped: step limit reached\", len(messages)\n\nmodel = ScriptedModel([\n    {\"tool_call\": {\"name\": \"add\", \"args\": {\"a\": 20, \"b\": 22}}},\n    {\"tool_call\": {\"name\": \"shout\", \"args\": {\"text\": \"forty-two\"}}},\n    {\"final_answer\": \"FORTY-TWO!\"},\n])\nanswer, n = run_agent(model, \"Add 20 and 22, then shout it.\")\nprint(answer)\nprint(n)\n",
+      "verified_output": "FORTY-TWO!\n6",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

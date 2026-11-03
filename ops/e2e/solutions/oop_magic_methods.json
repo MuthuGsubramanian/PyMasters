@@ -6,6 +6,12 @@
       "code": "class Book:\n    def __init__(self, title, pages):\n        self.title = title\n        self.pages = pages\n\n    def __str__(self):\n        return f'{self.title} ({self.pages} pages)'\n\n    def __lt__(self, other):\n        return self.pages < other.pages\n\n\nb1 = Book('Python 101', 300)\nb2 = Book('Deep Learning', 800)\nprint(b1)\nassert b1 < b2\n",
       "verified_output": "Python 101 (300 pages)",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "class Bag:\n    def __init__(self):\n        self.items = []\n\n    def add(self, item):\n        self.items.append(item)\n\n    def __len__(self):\n        return len(self.items)\n\n    def __contains__(self, item):\n        return item in self.items\n\n\nb = Bag()\nb.add('apple')\nb.add('banana')\nb.add('cherry')\nprint(len(b), 'banana' in b)\n",
+      "verified_output": "3 True",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }

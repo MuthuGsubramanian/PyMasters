@@ -6,6 +6,12 @@
       "code": "def kv_projections_without_cache(seq_len: int) -> int:\n    \"\"\"Total K/V projections if every step recomputes all prior tokens.\"\"\"\n    return sum(range(1, seq_len + 1))\n\nprint(kv_projections_without_cache(5))\n",
       "verified_output": "15",
       "source": "claude sonnet 2026-11-03, verified by verify.py"
+    },
+    {
+      "index": 1,
+      "code": "def kv_projections_without_cache(seq_len: int) -> int:\n    total = 0\n    for step in range(1, seq_len + 1):\n        total += step\n    return total\n\ndef kv_savings_percent(seq_len: int) -> float:\n    \"\"\"Percent of K/V projection work a cache removes, vs. no caching.\"\"\"\n    with_cache = seq_len\n    without_cache = kv_projections_without_cache(seq_len)\n    return round((1 - with_cache / without_cache) * 100, 1)\n\nprint(kv_savings_percent(5))\n",
+      "verified_output": "66.7",
+      "source": "claude sonnet 2026-11-03, verified by verify.py"
     }
   ]
 }
