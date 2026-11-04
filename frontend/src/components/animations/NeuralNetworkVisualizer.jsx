@@ -185,14 +185,14 @@ export default function NeuralNetworkVisualizer({
       <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center gap-2"
         style={{ background: 'rgba(6,182,212,0.04)' }}>
         <span className="text-base">🧠</span>
-        <span className="text-[11px] font-bold uppercase tracking-widest text-cyan-400">
+        <span className="text-xs font-bold uppercase tracking-widest text-cyan-400">
           Neural Network
         </span>
         <span className="text-slate-500 font-mono text-xs ml-1">
           {stableLayers.join(' → ')}
         </span>
         {completed && (
-          <span className="ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+          <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded-full border border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
             forward pass complete
           </span>
         )}
@@ -235,7 +235,7 @@ export default function NeuralNetworkVisualizer({
                 x={x}
                 y={PADDING_Y - 28}
                 textAnchor="middle"
-                className="text-[10px] font-mono uppercase tracking-wider"
+                className="text-xs font-mono uppercase tracking-wider"
                 fill={isOutput ? COLORS.output : '#64748b'}
                 opacity={0.7}
               >
@@ -314,7 +314,7 @@ export default function NeuralNetworkVisualizer({
                     textAnchor="middle"
                     dominantBaseline="middle"
                     fill="#06b6d4"
-                    className="text-[10px] font-mono"
+                    className="text-xs font-mono"
                   >
                     w={conn.weight}
                   </text>
@@ -377,7 +377,7 @@ export default function NeuralNetworkVisualizer({
                     textAnchor="middle"
                     dominantBaseline="middle"
                     fill={nodeColor}
-                    className="text-[9px] font-mono font-bold"
+                    className="text-xs font-mono font-bold"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.3 * speedMultiplier }}
@@ -393,7 +393,7 @@ export default function NeuralNetworkVisualizer({
                     y={node.y + NODE_RADIUS + 14}
                     textAnchor="middle"
                     fill="#94a3b8"
-                    className="text-[9px] font-mono"
+                    className="text-xs font-mono"
                   >
                     {node.label}
                   </text>
@@ -429,13 +429,13 @@ export default function NeuralNetworkVisualizer({
 
       {/* Footer info */}
       <div className="px-4 py-2 border-t border-white/[0.06] flex items-center gap-3">
-        <span className="text-[10px] text-slate-500 font-mono">
+        <span className="text-xs text-slate-500 font-mono">
           {nodes.length} nodes
         </span>
-        <span className="text-[10px] text-slate-500 font-mono">
+        <span className="text-xs text-slate-500 font-mono">
           {connections.length} connections
         </span>
-        <span className="text-[10px] text-slate-500 font-mono ml-auto">
+        <span className="text-xs text-slate-500 font-mono ml-auto">
           hover connections to see weights
         </span>
       </div>

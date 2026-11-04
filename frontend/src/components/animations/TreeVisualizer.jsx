@@ -394,19 +394,19 @@ export default function TreeVisualizer({
       <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center gap-2"
         style={{ background: 'rgba(99,102,241,0.04)' }}>
         <span className="text-base">🌳</span>
-        <span className="text-[11px] font-bold uppercase tracking-widest text-indigo-400">
+        <span className="text-xs font-bold uppercase tracking-widest text-indigo-400">
           {TYPE_LABELS[type] || type}
         </span>
         <span className="text-slate-500 font-mono text-xs ml-1">
           {layout.nodes.length} nodes
         </span>
         {traversalName && (
-          <span className="ml-2 text-[10px] font-mono px-2 py-0.5 rounded-full border border-cyan-500/30 text-cyan-400 bg-cyan-500/10">
+          <span className="ml-2 text-xs font-mono px-2 py-0.5 rounded-full border border-cyan-500/30 text-cyan-400 bg-cyan-500/10">
             {traversalName}
           </span>
         )}
         {isComplete && (
-          <span className="ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+          <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded-full border border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
             complete
           </span>
         )}
@@ -509,7 +509,7 @@ export default function TreeVisualizer({
                   textAnchor="middle"
                   dominantBaseline="middle"
                   fill={style.text}
-                  className="text-[11px] font-mono font-bold"
+                  className="text-xs font-mono font-bold"
                   style={{ pointerEvents: 'none' }}
                 >
                   {node.value}
@@ -530,7 +530,7 @@ export default function TreeVisualizer({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 8 }}
               transition={{ duration: 0.2 }}
-              className="text-[10px] font-mono text-slate-300"
+              className="text-xs font-mono text-slate-300"
             >
               {statusText}
             </motion.span>
@@ -546,7 +546,7 @@ export default function TreeVisualizer({
           ].map(({ label, color }) => (
             <div key={label} className="flex items-center gap-1">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-              <span className="text-[9px] font-mono text-slate-500">{label}</span>
+              <span className="text-xs font-mono text-slate-500">{label}</span>
             </div>
           ))}
         </div>

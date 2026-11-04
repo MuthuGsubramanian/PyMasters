@@ -412,13 +412,13 @@ export default function AlgorithmVisualizer({
       <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center gap-2"
         style={{ background: 'rgba(6,182,212,0.04)' }}>
         <span className="text-base">{isSearch ? '🔍' : '📊'}</span>
-        <span className="text-[11px] font-bold uppercase tracking-widest text-cyan-400">
+        <span className="text-xs font-bold uppercase tracking-widest text-cyan-400">
           {ALGORITHM_LABELS[algorithm] || algorithm}
         </span>
         <span className="text-slate-500 font-mono text-xs ml-1">
           n={step.arr.length}
         </span>
-        <span className="ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border border-slate-600/30 text-slate-400 bg-slate-700/20">
+        <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded-full border border-slate-600/30 text-slate-400 bg-slate-700/20">
           Step {currentStep + 1}/{steps.length}
         </span>
       </div>
@@ -452,13 +452,13 @@ export default function AlgorithmVisualizer({
               >
                 {/* Value label */}
                 <span
-                  className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold tabular-nums"
+                  className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs font-mono font-bold tabular-nums"
                   style={{ color }}
                 >
                   {val}
                 </span>
                 {/* Index label */}
-                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-mono text-slate-500 tabular-nums">
+                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-xs font-mono text-slate-500 tabular-nums">
                   {idx}
                 </span>
               </motion.div>
@@ -490,7 +490,7 @@ export default function AlgorithmVisualizer({
           ].map(({ label, color }) => (
             <div key={label} className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }} />
-              <span className="text-[9px] font-mono text-slate-500">{label}</span>
+              <span className="text-xs font-mono text-slate-500">{label}</span>
             </div>
           ))}
         </div>
@@ -500,20 +500,20 @@ export default function AlgorithmVisualizer({
       <div className="px-4 py-2.5 border-t border-white/[0.06] flex items-center gap-2">
         <button
           onClick={handleReset}
-          className="text-[10px] font-mono px-3 py-1 rounded-md border border-white/[0.08] text-slate-400 hover:text-white hover:bg-white/[0.05] transition-colors"
+          className="text-xs font-mono px-3 py-1 rounded-md border border-white/[0.08] text-slate-400 hover:text-white hover:bg-white/[0.05] transition-colors"
         >
           Reset
         </button>
         <button
           onClick={handleNextStep}
           disabled={isComplete}
-          className="text-[10px] font-mono px-3 py-1 rounded-md border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-colors disabled:opacity-40"
+          className="text-xs font-mono px-3 py-1 rounded-md border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-colors disabled:opacity-40"
         >
           Next Step
         </button>
         <button
           onClick={handleAutoPlay}
-          className={`text-[10px] font-mono px-3 py-1 rounded-md border transition-colors ${
+          className={`text-xs font-mono px-3 py-1 rounded-md border transition-colors ${
             autoPlay
               ? 'border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10'
               : 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10'
@@ -522,7 +522,7 @@ export default function AlgorithmVisualizer({
           {autoPlay ? 'Pause' : 'Auto Play'}
         </button>
         {isComplete && (
-          <span className="ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
+          <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded-full border border-emerald-500/30 text-emerald-400 bg-emerald-500/10">
             complete
           </span>
         )}

@@ -88,10 +88,10 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
           <span className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)]" />
         </div>
-        <span className="ml-3 text-[11px] text-code-foreground/70 tracking-wide font-mono">python output</span>
+        <span className="ml-3 text-xs text-code-foreground/70 tracking-wide font-mono">python output</span>
         <div className="ml-auto flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-[10px] text-green-400/80">running</span>
+          <span className="text-xs text-green-400/80">running</span>
         </div>
       </div>
 

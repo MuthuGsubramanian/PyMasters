@@ -75,7 +75,7 @@ export default function ConceptMap({ nodes = [], edges = [], duration = 3000, on
       {/* Title */}
       <div className="flex items-center gap-2 mb-4">
         <span className="text-base">🧠</span>
-        <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-widest">Concept Map</span>
+        <span className="text-xs font-bold text-cyan-400 uppercase tracking-widest">Concept Map</span>
       </div>
 
       {/* Nodes */}
@@ -120,7 +120,7 @@ export default function ConceptMap({ nodes = [], edges = [], duration = 3000, on
                     <line x1="0" y1="6" x2="20" y2="6" stroke={`url(#edge-grad-${idx})`} strokeWidth="1.5" />
                     <polygon points="28,6 20,2 20,10" fill="#8b5cf6" />
                   </svg>
-                  {edge.label && <span className="text-[10px] text-slate-500 italic">{edge.label}</span>}
+                  {edge.label && <span className="text-xs text-slate-500 italic">{edge.label}</span>}
                 </div>
                 <span className="text-purple-400 font-medium text-xs bg-purple-500/10 rounded-lg px-2 py-0.5">
                   {toNode?.label ?? edge.to}
