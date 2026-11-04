@@ -153,6 +153,21 @@ def test_trace_larger_than_the_budget_is_served_but_not_cached(client, monkeypat
     assert not classroom._uth_cache
 
 
+def test_lesson_says_whether_it_has_under_the_hood_without_tracing(client, monkeypatch):
+    # The intro shows the button from this flag; the trace itself only runs when a learner opens it, so
+    # a page view never holds the one-at-a-time sandbox (ML lessons need up to 25 s for their imports).
+    import routes.classroom as classroom
+    import vaathiyaar.tracer as tracer
+    calls = []
+    monkeypatch.setattr(tracer, "trace_code", _fake_trace(calls))
+    current = {"code": "a = [1]\nb = a\n"}
+    monkeypatch.setattr(classroom, "_load_lesson_from_dir", lambda lid, *a, **k: _lesson(current["code"]))
+    assert client.get("/api/classroom/lesson/fake", headers=_headers("u1")).json()["has_under_the_hood"] is True
+    current["code"] = None
+    assert client.get("/api/classroom/lesson/fake", headers=_headers("u1")).json()["has_under_the_hood"] is False
+    assert calls == []
+
+
 def test_route_404_without_example_code_or_lesson(client, monkeypatch):
     import routes.classroom as classroom
     monkeypatch.setattr(classroom, "_load_lesson_from_dir", lambda lid, *a, **k: _lesson(None))
