@@ -98,8 +98,12 @@ export function ArcadeGallery({ catalog }) {
           <p className="text-sm text-text-muted">{t('arcade.tagline', 'Real games where the question is a move. Every lesson you finish unlocks more to play.')}</p>
         </div>
         <p className="text-xs text-text-muted" aria-live="polite">
-          {t('arcade.stage', '{completed} lessons done', { completed: catalog.stage?.completed ?? 0 })}
-          {nxt && <> · {t('arcade.stage_next', '{needed} more to unlock {game}', { needed: nxt.needed, game: ARCADE_TITLES[nxt.game] || nxt.game })}</>}
+          {/* The count is lessons that feed the games (drill-backed), not all lessons; once every game is open
+              it stops mattering (super admins get the ladder top, which is not a lesson count at all). */}
+          {nxt
+            ? <>{t('arcade.stage', '{completed} lessons count toward games', { completed: catalog.stage?.completed ?? 0 })}
+                {' · '}{t('arcade.stage_next', '{needed} more to unlock {game}', { needed: nxt.needed, game: ARCADE_TITLES[nxt.game] || nxt.game })}</>
+            : t('arcade.stage_all', 'All games unlocked')}
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

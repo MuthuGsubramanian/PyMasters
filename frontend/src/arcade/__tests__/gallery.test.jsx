@@ -49,8 +49,16 @@ describe('ArcadeGallery', () => {
 
   it('shows the stage line', () => {
     const r = mount(<ArcadeGallery catalog={catalog} />)
-    expect(r.container.textContent).toContain('3 lessons done')
+    expect(r.container.textContent).toContain('3 lessons count toward games')
     expect(r.container.textContent).toContain('3 more to unlock Code Slingshot')
+    r.unmount()
+  })
+
+  it('says every game is unlocked instead of a lesson count once nothing is left to unlock', () => {
+    // 2026-11-04 live audit: super admins saw "16 lessons done" (the ladder top, not their lessons).
+    const r = mount(<ArcadeGallery catalog={{ ...catalog, stage: { completed: 16, next: null } }} />)
+    expect(r.container.textContent).toContain('All games unlocked')
+    expect(r.container.textContent).not.toMatch(/16 lessons/)
     r.unmount()
   })
 })
