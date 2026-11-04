@@ -122,8 +122,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Import 'random' and use random.choice() to pick a random element from ['rock', 'paper', 'scissors'].",
-        "ta": "'random' ஐ இறக்குமதி செய்து, random.choice() ஐப் பயன்படுத்தி ['rock', 'paper', 'scissors'] இலிருந்து ஒரு சீரற்ற உறுப்பைத் தேர்ந்தெடுக்கவும்."
+        "en": "Import 'random' and use random.choice() to pick a random element from ['rock', 'paper', 'scissors']. Store the pick in `pick` and print it.",
+        "ta": "'random' ஐ இறக்குமதி செய்து, random.choice() ஐப் பயன்படுத்தி ['rock', 'paper', 'scissors'] இலிருந்து ஒரு சீரற்ற உறுப்பைத் தேர்ந்தெடுக்கவும். தேர்வை `pick` என்ற மாறியில் சேமித்து அச்சிடுங்கள்."
       },
       "expected_output": "one of: rock, paper, scissors",
       "hints": [
@@ -137,7 +137,7 @@
           "en": "The result is a string from the list"
         }
       ],
-      "test_code": "import random\nchoices = ['rock', 'paper', 'scissors']\nresult = random.choice(choices)\nassert result in choices"
+      "test_code": "assert 'random' in globals(), 'Import the random module'\nassert pick in ['rock', 'paper', 'scissors'], f\"pick should be one of rock, paper, scissors, got {pick!r}\"\n"
     },
     {
       "instruction": {

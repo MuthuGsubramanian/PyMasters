@@ -3,9 +3,11 @@
 
   python /app/ops_e2e/verify.py one <lesson_id> [index]  < code  → {"ok", "output", "error"}
   python /app/ops_e2e/verify.py all <dir>       → {"checked", "failed": [{lesson_id, index, output, error}]}
+  python /app/ops_e2e/verify.py empty <lessons> → {"accepted_empty": ["lesson#i", ...]} (must be [])
 
-The rules are the ones /api/classroom/evaluate applies to practice_challenges[index]: with a server-authored
-test_code harness, the code + harness must exit cleanly; otherwise stdout must satisfy _output_matches (exact
+The rules are the ones /api/classroom/evaluate applies to practice_challenges[index] — the same function,
+vaathiyaar.grading.grade_submission: with a server-authored test_code harness, the code + harness must exit cleanly
+(unless the harness passes on its own, which proves nothing); otherwise stdout must match expected_output (exact
 after strip, <placeholder> tokens as wildcards).
 """
 import json
@@ -34,8 +36,8 @@ def _inherit_sandbox_firewall_flag() -> None:
 _inherit_sandbox_firewall_flag()
 
 from routes.classroom import _load_lesson_from_dir          # noqa: E402
-from vaathiyaar.engine import _output_matches               # noqa: E402
-from vaathiyaar.execution import check_lesson_safety, run_code_subprocess  # noqa: E402
+from vaathiyaar.grading import grade_submission             # noqa: E402
+from vaathiyaar.execution import check_lesson_safety           # noqa: E402
 
 
 def _sandbox_files(lesson: dict):
@@ -58,13 +60,9 @@ def verify(lesson_id: str, code: str, index: int = 0) -> dict:
     blocked = check_lesson_safety(code, lesson_code=lesson_code, allowed_open_files=set(files) if files else None)
     if blocked:      # the same gate /api/classroom/evaluate applies before running anything
         return {"ok": False, "output": "", "error": f"Forbidden: {blocked}"}
-    if test_code:
-        res = run_code_subprocess(code + "\n\n" + test_code, seed_files=files)
-        return {"ok": res["exit_code"] == 0, "output": res["output"], "error": res["error"]}
-    res = run_code_subprocess(code, seed_files=files)
     expected = ch.get("expected_output") if isinstance(ch.get("expected_output"), str) else ""
-    ok = res["exit_code"] == 0 and _output_matches(res["output"], expected)
-    return {"ok": ok, "output": res["output"], "error": res["error"]}
+    r = grade_submission(code, expected, test_code=test_code, sandbox_files=files)
+    return {"ok": r["success"], "output": r["output"], "error": r["error"]}
 
 
 def main(argv) -> int:
@@ -83,9 +81,63 @@ def main(argv) -> int:
                                    "output": r["output"][-400:], "error": r["error"][-400:]})
         print(json.dumps({"checked": checked, "failed": failed}))
         return 1 if failed else 0
+    if argv[:1] == ["empty"] and len(argv) == 2:
+        # Every practice challenge must reject an empty submission (2026-11-04: 61 accepted anything).
+        print(json.dumps({"accepted_empty": accepts_empty(Path(argv[1]))}))
+        return 0
     print(__doc__, file=sys.stderr)
     return 2
 
+
+def _probe_plain(test_code: str, files: dict | None):
+    """grading.probe_harness without the sandbox: True passes alone, False raised, None inconclusive."""
+    import subprocess
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="pm_probe_") as cwd:
+        for name, text in (files or {}).items():
+            Path(cwd, name).write_text(text)
+        try:
+            r = subprocess.run([sys.executable, "-I", "-c", test_code], cwd=cwd, capture_output=True, text=True,
+                               timeout=60, env={"PATH": os.environ.get("PATH", ""), "MPLBACKEND": "Agg",
+                                                "HOME": cwd})
+        except subprocess.TimeoutExpired:
+            return None
+    if r.returncode == 0:
+        return True
+    return False if "Traceback (most recent call last)" in r.stderr else None
+
+
+def accepts_empty(lessons_dir: Path) -> list:
+    """Challenges an empty submission passes under grade_submission. An empty program prints nothing, so: with no
+    harness (or a self-contained one) it passes iff "" matches expected_output; with a real harness, the empty run
+    IS the harness on its own, which fails. The harness is server-authored, so it is probed with a plain python
+    process, NOT the sandbox: after every run the sandbox kills all processes of the sandbox uid and deletes its temp
+    files, so a second process using it in this container kills the app's runs (CI 2026-11-04: a parallel probe
+    counted 9 instead of 61, and a concurrent dashboard test lost its sandbox directory)."""
+    from vaathiyaar.grading import output_matches
+    accepted = []
+    for f in sorted(lessons_dir.rglob("*.json")):
+        try:
+            d = json.loads(f.read_text())
+        except Exception:  # noqa: BLE001 — non-lesson JSON
+            continue
+        if not isinstance(d, dict):
+            continue
+        for i, ch in enumerate(d.get("practice_challenges") or []):
+            if not isinstance(ch, dict):
+                continue
+            tc = ch.get("test_code") if isinstance(ch.get("test_code"), str) and ch["test_code"].strip() else None
+            alone = None
+            for _ in range(3 if tc else 0):      # None = the run said nothing (busy/timeout/killed): try again
+                alone = _probe_plain(tc, _sandbox_files(d))
+                if alone is not None:
+                    break
+            if tc and alone is None:
+                print(f"warning: could not probe {d.get('id') or f.stem}#{i}", file=sys.stderr)
+            expected = ch.get("expected_output") if isinstance(ch.get("expected_output"), str) else ""
+            if (not tc or alone) and output_matches("", expected):
+                accepted.append(f"{d.get('id') or f.stem}#{i}")
+    return accepted
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

@@ -205,7 +205,7 @@
           "Divide by 1e9 to convert bytes to gigabytes"
         ]
       },
-      "test_code": "def vram_gb(num_params, bits_per_weight):\n    bytes_per_weight = bits_per_weight / 8\n    return num_params * bytes_per_weight / 1e9\n\nassert vram_gb(4_000_000_000, 16) == 8.0\nassert vram_gb(4_000_000_000, 4) == 2.0\n# 4-bit should be one quarter of 16-bit\nassert vram_gb(4_000_000_000, 4) == vram_gb(4_000_000_000, 16) / 4\nprint(\"Quantization memory tests passed!\")"
+      "test_code": "assert vram_gb(4_000_000_000, 16) == 8.0, \"4B params at 16-bit should need 8.0 GB\"\nassert vram_gb(4_000_000_000, 4) == 2.0, \"4B params at 4-bit should need 2.0 GB\"\nassert vram_gb(4_000_000_000, 4) == vram_gb(4_000_000_000, 16) / 4, \"4-bit should be one quarter of 16-bit\"\n"
     }
   ],
   "tags": {

@@ -157,8 +157,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create two threads that each append their name to a shared list, then verify both names are in the list after joining.",
-        "ta": "இரண்டு திரைகளை உருவாக்கி, ஒவ்வொரு திரையும் தனது பெயரை பகிர்ந்த பட்டியலில் சேர்க்க, பிறகு சேர்க்கப்பட்ட பெயர்கள் இரண்டும் பட்டியலில் உள்ளதா என சரிபார்க்க, பின்னர் இணைக்கவும்."
+        "en": "Create two threads that each append their name to a shared list, then verify both names are in the list after joining. Name the shared list `results`.",
+        "ta": "இரண்டு திரைகளை உருவாக்கி, ஒவ்வொரு திரையும் தனது பெயரை பகிர்ந்த பட்டியலில் சேர்க்க, பிறகு சேர்க்கப்பட்ட பெயர்கள் இரண்டும் பட்டியலில் உள்ளதா என சரிபார்க்க, பின்னர் இணைக்கவும். பகிரப்பட்ட பட்டியலுக்கு `results` என்று பெயரிடுங்கள்."
       },
       "expected_output": "['thread-1', 'thread-2'] (order may vary)",
       "hints": [
@@ -172,7 +172,7 @@
           "en": "Start both, join both, then check results"
         }
       ],
-      "test_code": "import threading\nresults = []\ndef task(name):\n    results.append(name)\nt1 = threading.Thread(target=task, args=('thread-1',))\nt2 = threading.Thread(target=task, args=('thread-2',))\nt1.start(); t2.start()\nt1.join(); t2.join()\nassert 'thread-1' in results\nassert 'thread-2' in results\nassert len(results) == 2"
+      "test_code": "import threading as _threading\nassert 'threading' in globals(), 'Import the threading module and use threading.Thread'\nassert sorted(results) == ['thread-1', 'thread-2'], f\"results should hold 'thread-1' and 'thread-2' after joining, got {results!r}\"\nassert _threading.active_count() == 1, 'Join both threads before the program ends'\n"
     }
   ],
   "generated": false,

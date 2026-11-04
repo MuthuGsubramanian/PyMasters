@@ -52,16 +52,16 @@
   ],
   "practice_challenges": [
     {
-      "instruction": {"en": "Write a pyproject.toml snippet that configures Ruff to use a line length of 100, target Python 3.14, select rules E, F, I, and UP, and use double quotes with space indentation for formatting."},
+      "instruction": {"en": "Write a pyproject.toml snippet that configures Ruff to use a line length of 100, target Python 3.14, select rules E, F, I, and UP, and use double quotes with space indentation for formatting. Store the TOML text in a string called `config` and print it."},
       "expected_output": "[tool.ruff] configuration with line-length, target-version, lint select, and format settings",
       "hints": ["Use [tool.ruff] for top-level settings", "Use [tool.ruff.lint] for select rules", "Use [tool.ruff.format] for quote-style and indent-style"],
-      "test_code": "# Manual review: check that the TOML has correct sections and values"
+      "test_code": "import tomllib as _toml\n_cfg = _toml.loads(config).get('tool', {}).get('ruff', {})\nassert _cfg.get('line-length') == 100, 'line-length should be 100'\nassert _cfg.get('target-version') == 'py314', 'target-version should be \"py314\"'\nassert _cfg.get('lint', {}).get('select') == ['E', 'F', 'I', 'UP'], 'lint.select should be [\"E\", \"F\", \"I\", \"UP\"]'\nassert _cfg.get('format', {}).get('quote-style') == 'double', 'format.quote-style should be \"double\"'\nassert _cfg.get('format', {}).get('indent-style') == 'space', 'format.indent-style should be \"space\"'\n"
     },
     {
-      "instruction": {"en": "Write a Python script with PEP 723 inline metadata that depends on 'polars' and 'rich', requires Python >=3.12, reads a CSV file called 'data.csv', and prints the first 5 rows using rich's print."},
-      "expected_output": "A script with inline /// script metadata and polars/rich usage",
+      "instruction": {"en": "Write the PEP 723 inline metadata block for a script that depends on 'polars' and 'rich' and requires Python >=3.12: the `# /// script` ... `# ///` comment block that tools like `uv run` read before running a script. Store the block in a string called `header` and print it."},
+      "expected_output": "# /// script\n# requires-python = \">=3.12\"\n# dependencies = [\n#     \"polars\",\n#     \"rich\",\n# ]\n# ///",
       "hints": ["Start with # /// script block", "Use polars.read_csv('data.csv')", "Use rich.print() or rich.console.Console().print()"],
-      "test_code": "# Manual review: check PEP 723 header format and correct library usage"
+      "test_code": "import re as _re, tomllib as _toml\n_m = _re.search(r'(?m)^# /// script$\\s(?P<content>(^#(| .*)$\\s)+)^# ///$', header)\nassert _m, 'header must be a PEP 723 block: a \"# /// script\" line, \"# \"-prefixed TOML lines, then \"# ///\"'\n_meta = _toml.loads(''.join(l[2:] if l.startswith('# ') else l[1:] for l in _m.group('content').splitlines(keepends=True)))\nassert _meta.get('requires-python', '').replace(' ', '') == '>=3.12', 'requires-python should be \">=3.12\"'\nassert {'polars', 'rich'} <= set(_meta.get('dependencies', [])), 'dependencies should list \"polars\" and \"rich\"'\n"
     }
   ],
   "quiz": [

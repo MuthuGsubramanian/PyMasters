@@ -1122,10 +1122,9 @@ def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id
         lesson_code = "\n".join(c for c in (_pc.get("starter_code"), _pc.get("test_code")) if isinstance(c, str))
         _tc = _pc.get("test_code")
         if isinstance(_tc, str) and _tc.strip():
-            # Always forward the server-authored harness. When expected_output
-            # is empty it is the primary grader (unchanged); when expected_output
-            # exists the engine uses it only as a RESCUE on a clean-run stdout
-            # mismatch (2026-07-02), so exact-match passes are unaffected.
+            # Always forward the server-authored harness; vaathiyaar.grading
+            # grades with it unless it passes with no learner code at all
+            # (2026-11-04), in which case expected_output decides.
             test_code = _tc
         # sandbox_files (2026-07-02): optional, server-authored fixture files a
         # file-I/O lesson seeds into the sandbox cwd; their names double as the

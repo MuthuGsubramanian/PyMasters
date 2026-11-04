@@ -173,8 +173,8 @@
   "practice_challenges": [
     {
       "instruction": {
-        "en": "Create a context manager class 'Timer' that records start/end time and prints elapsed seconds on exit.",
-        "ta": "'டைமர்' என்ற சூழல் மேலாளர் வகுப்பை உருவாக்கவும், இது தொடக்க நேரத்தையும் முடிவு நேரத்தையும் பதிவு செய்து, வெளியேறும் போது கழிந்த நொடிகளை அச்சிடும்."
+        "en": "Create a context manager class 'Timer' that records start/end time and prints elapsed seconds on exit. On exit it should print `Elapsed: <seconds>s` (one decimal place).",
+        "ta": "'டைமர்' என்ற சூழல் மேலாளர் வகுப்பை உருவாக்கவும், இது தொடக்க நேரத்தையும் முடிவு நேரத்தையும் பதிவு செய்து, வெளியேறும் போது கழிந்த நொடிகளை அச்சிடும். வெளியேறும்போது `Elapsed: <seconds>s` என்று (ஒரு தசம இடத்துடன்) அச்சிட வேண்டும்."
       },
       "expected_output": "Elapsed: ~0.0s",
       "hints": [
@@ -188,7 +188,7 @@
           "en": "__enter__ should return self; __exit__ returns False"
         }
       ],
-      "test_code": "import time\nclass Timer:\n    def __enter__(self):\n        self.start = time.time()\n        return self\n    def __exit__(self, *args):\n        self.elapsed = time.time() - self.start\n        return False\nwith Timer() as t:\n    pass\nassert t.elapsed >= 0"
+      "test_code": "import contextlib as _cl, io as _io, re as _re, time as _time\nassert 'Timer' in globals(), 'Define a class called Timer'\n_buf = _io.StringIO()\nwith _cl.redirect_stdout(_buf):\n    with Timer():\n        _time.sleep(0.3)\n_m = _re.search(r'Elapsed:\\s*([0-9.]+)', _buf.getvalue())\nassert _m, f\"On exit Timer should print 'Elapsed: <seconds>s'; it printed {_buf.getvalue()!r}\"\nassert 0.2 <= float(_m.group(1)) <= 2.0, f'A 0.3 s block should report about 0.3 s, got {_m.group(1)}'\n"
     }
   ],
   "generated": false,
