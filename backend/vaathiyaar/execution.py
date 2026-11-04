@@ -445,6 +445,30 @@ def _posix_limits(timeout: int, ids=None):
 # One sandbox run at a time on the 1 GB VM; queued callers wait up to RUN_QUEUE_WAIT_S.
 _RUN_LOCK = threading.BoundedSemaphore(1)
 RUN_QUEUE_WAIT_S = 25
+# ...and across processes: every run ends by killing all sandbox-uid processes, so a second process using the
+# sandbox in the same container (e.g. ops/e2e verify.py beside the API) must queue, not run in parallel.
+# The file lives next to this module (not in /tmp), out of the sandbox uid's reach.
+SANDBOX_LOCK_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".sandbox_run.lock")
+
+
+def _acquire_run_slot(deadline: float):
+    """Hold the cross-process sandbox lock; returns the open lock file, or None when the deadline passes."""
+    if os.name == "nt":
+        return open(os.devnull, "a")
+    import fcntl
+    try:
+        fh = open(SANDBOX_LOCK_PATH, "a")
+    except OSError:
+        return open(os.devnull, "a")      # read-only install: fall back to the in-process lock alone
+    while True:
+        try:
+            fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return fh
+        except OSError:
+            if time.monotonic() >= deadline:
+                fh.close()
+                return None
+            time.sleep(0.05)
 MAX_OUTPUT_BYTES = 64 * 1024     # returned to the caller per stream; the files are capped at 10 MB by RLIMIT_FSIZE
 
 
@@ -519,9 +543,23 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
         print("[sandbox][SECURITY] refusing to run code: network isolation not verified")
         return {"output": "", "exit_code": 1,
                 "error": "Code execution is temporarily unavailable while the sandbox is being secured. Please try again shortly."}
+    busy = {"output": "", "exit_code": 1,
+            "error": "The code runner is busy right now. Please try again in a few seconds."}
+    deadline = time.monotonic() + RUN_QUEUE_WAIT_S
     if not _RUN_LOCK.acquire(timeout=RUN_QUEUE_WAIT_S):
-        return {"output": "", "exit_code": 1,
-                "error": "The code runner is busy right now. Please try again in a few seconds."}
+        return busy
+    slot = _acquire_run_slot(deadline)
+    if slot is None:
+        _RUN_LOCK.release()
+        return busy
+    try:
+        return _run_locked(code, timeout, seed_files, max_output, ids)
+    finally:
+        slot.close()                       # closing the file releases the flock
+        _RUN_LOCK.release()
+
+
+def _run_locked(code: str, timeout: int, seed_files: dict | None, max_output: int, ids) -> dict:
     python_cmd = sys.executable or ("python" if os.name == "nt" else "python3")
     timeout = _effective_timeout(code, timeout)
     work_dir = tempfile.mkdtemp(prefix="pm_sandbox_")
@@ -597,7 +635,6 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
             _kill_uid_processes(ids[0])
             _clean_uid_files(ids[0])
         shutil.rmtree(work_dir, ignore_errors=True)
-        _RUN_LOCK.release()
 
 
 def _kill_process_tree(proc: "subprocess.Popen") -> None:
