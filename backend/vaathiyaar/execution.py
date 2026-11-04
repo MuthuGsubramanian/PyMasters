@@ -572,8 +572,13 @@ def run_code_subprocess(code: str, timeout: int = 10, seed_files: dict | None = 
             err_fh.close()
         try:
             proc.wait(timeout=timeout)
-            return {"output": _read_capped(out_path, max_output), "error": _read_capped(err_path),
-                    "exit_code": proc.returncode}
+            err = _read_capped(err_path)
+            if proc.returncode < 0 and not err.strip():
+                # Killed by a signal (OOM killer under memory pressure, or a hard resource limit): the program
+                # wrote nothing, so without this the learner saw a failed run with no explanation.
+                err = ("Your program was stopped before it finished (it ran out of memory or hit a resource "
+                       "limit). Try smaller data or fewer loops, then run it again.")
+            return {"output": _read_capped(out_path, max_output), "error": err, "exit_code": proc.returncode}
         except subprocess.TimeoutExpired:
             _kill_process_tree(proc)
             try:
