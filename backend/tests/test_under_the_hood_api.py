@@ -62,6 +62,7 @@ def client(tmp_path, monkeypatch):
     conn.commit(); conn.close()
     import routes.classroom as classroom
     classroom._uth_cache.clear()
+    classroom._uth_cache_bytes = 0
     classroom._uth_limiter._calls.clear()
     from fastapi.testclient import TestClient
     return TestClient(main_mod.app)
@@ -114,6 +115,42 @@ def test_cache_is_keyed_by_code_and_bounded(client, monkeypatch):
         assert client.get("/api/classroom/lesson/fake/under-the-hood", headers=_headers("u1")).status_code == 200
     assert len(calls) == 4                      # changed code re-runs; oldest entry was evicted
     assert len(classroom._uth_cache) == 2
+
+
+def test_cache_holds_serialized_json_within_a_byte_budget(client, monkeypatch):
+    # A heap trace can be ~1.5 MB of JSON (several MB as a Python dict); 512 of them would exhaust a 1 GB VM.
+    import routes.classroom as classroom
+    import vaathiyaar.tracer as tracer
+
+    def big(code, timeout=10, mode="steps"):
+        return {"steps": [{"line": 1, "frames": [], "objects": {}, "events": [], "pad": "x" * 4000}],
+                "stdout": "", "error": None}
+    monkeypatch.setattr(tracer, "trace_code", big)
+    current = {"code": "x = 0"}
+    monkeypatch.setattr(classroom, "_load_lesson_from_dir", lambda lid, *a, **k: _lesson(current["code"]))
+    monkeypatch.setattr(classroom, "_UTH_CACHE_BYTES", 10_000)
+    bodies = []
+    for n in range(5):
+        current["code"] = f"x = {n}"
+        r = client.get("/api/classroom/lesson/fake/under-the-hood", headers=_headers("u1"))
+        assert r.status_code == 200
+        bodies.append(r.json())
+    assert all(isinstance(v, bytes) for v in classroom._uth_cache.values())
+    assert sum(len(v) for v in classroom._uth_cache.values()) <= 10_000
+    assert len(classroom._uth_cache) == 2            # oldest entries evicted to stay within the budget
+    r = client.get("/api/classroom/lesson/fake/under-the-hood", headers=_headers("u1"))
+    assert r.json() == bodies[-1]                    # served from the cached bytes unchanged
+
+
+def test_trace_larger_than_the_budget_is_served_but_not_cached(client, monkeypatch):
+    import routes.classroom as classroom
+    import vaathiyaar.tracer as tracer
+    calls = []
+    monkeypatch.setattr(tracer, "trace_code", _fake_trace(calls))
+    monkeypatch.setattr(classroom, "_load_lesson_from_dir", lambda lid, *a, **k: _lesson())
+    monkeypatch.setattr(classroom, "_UTH_CACHE_BYTES", 10)
+    assert client.get("/api/classroom/lesson/fake/under-the-hood", headers=_headers("u1")).status_code == 200
+    assert not classroom._uth_cache
 
 
 def test_route_404_without_example_code_or_lesson(client, monkeypatch):

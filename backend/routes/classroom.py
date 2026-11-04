@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Header, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
 from auth import get_current_user_id, optional_user_id
@@ -963,7 +963,11 @@ def catalog_stats():
 
 
 _UTH_CACHE_MAX = 512
-_uth_cache: "OrderedDict[tuple, dict]" = OrderedDict()   # (lesson_id, sha256(code)) -> result; LRU, small on a 1 GB VM
+_UTH_CACHE_BYTES = 32 * 1024 * 1024                       # total JSON bytes kept; one trace can be ~1.5 MB
+# (lesson_id, sha256(code)) -> serialized JSON bytes; LRU bounded by count AND bytes (a 1 GB VM). Bytes, not dicts:
+# a dict costs several times its JSON size, and a hit then needs no re-encoding.
+_uth_cache: "OrderedDict[tuple, bytes]" = OrderedDict()
+_uth_cache_bytes = 0
 _uth_lock = threading.Lock()
 _uth_inflight: dict = {}                                  # key -> [lock, waiters]; single-flight per cache key
 _uth_limiter = SlidingWindowRateLimiter(max_calls=30, window_seconds=60)   # cache MISSES only, per user
@@ -978,6 +982,25 @@ def _uth_get(key):
         if hit is not None:
             _uth_cache.move_to_end(key)
         return hit
+
+
+def _uth_put(key, body: bytes):
+    global _uth_cache_bytes
+    if len(body) > _UTH_CACHE_BYTES:
+        return                                   # too big to keep; served once, re-traced next time
+    with _uth_lock:
+        old = _uth_cache.pop(key, None)
+        if old is not None:
+            _uth_cache_bytes -= len(old)
+        _uth_cache[key] = body
+        _uth_cache_bytes += len(body)
+        while len(_uth_cache) > _UTH_CACHE_MAX or _uth_cache_bytes > _UTH_CACHE_BYTES:
+            _, evicted = _uth_cache.popitem(last=False)
+            _uth_cache_bytes -= len(evicted)
+
+
+def _uth_response(body: bytes) -> Response:
+    return Response(content=body, media_type="application/json")
 
 
 @router.get("/lesson/{lesson_id}/under-the-hood")
@@ -1003,7 +1026,7 @@ def lesson_under_the_hood(lesson_id: str, caller: str = Depends(get_current_user
     key = (lesson_id, hashlib.sha256(code.encode("utf-8")).hexdigest())
     hit = _uth_get(key)
     if hit is not None:
-        return hit
+        return _uth_response(hit)
     with _uth_lock:
         entry = _uth_inflight.setdefault(key, [threading.Lock(), 0])
         entry[1] += 1
@@ -1011,18 +1034,16 @@ def lesson_under_the_hood(lesson_id: str, caller: str = Depends(get_current_user
         with entry[0]:
             hit = _uth_get(key)          # another request may have filled it while we waited
             if hit is not None:
-                return hit
+                return _uth_response(hit)
             if not _uth_limiter.allow(caller):
                 wait = _uth_limiter.retry_after(caller)
                 raise HTTPException(status_code=429, detail=f"Rate limit reached. Try again in {wait}s.")
-            hit = {**trace_code(code, mode="heap"), "code": code}
-            err_type = (hit.get("error") or {}).get("type")
+            result = {**trace_code(code, mode="heap"), "code": code}
+            body = json.dumps(result, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+            err_type = (result.get("error") or {}).get("type")
             if err_type is None or err_type in _UTH_DETERMINISTIC_ERRORS:
-                with _uth_lock:
-                    _uth_cache[key] = hit
-                    while len(_uth_cache) > _UTH_CACHE_MAX:
-                        _uth_cache.popitem(last=False)
-            return hit
+                _uth_put(key, body)
+            return _uth_response(body)
     finally:
         with _uth_lock:
             entry[1] -= 1
