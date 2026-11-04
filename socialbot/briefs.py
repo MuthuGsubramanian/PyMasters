@@ -175,7 +175,9 @@ LESSON MATERIAL:
 {material_block(les)}"""
 
 
-def linkedin_prompt(les, feedback=None, previous=None):
+def linkedin_prompt(les, feedback=None, previous=None, style="jargon"):
+    if style == "fun":
+        return _linkedin_fun_prompt(les, feedback, previous)
     return f"""Write a LinkedIn post for the PyMasters company page in our "jargon, made simple" format: take ONE
 intimidating term or complex task from this lesson and make it genuinely simple for working developers and tech-curious
 professionals, in a way they have not seen before.
@@ -197,6 +199,37 @@ LESSON MATERIAL:
 {material_block(les)}"""
 
 
+def _linkedin_fun_prompt(les, feedback=None, previous=None):
+    return f"""Write a LinkedIn post for the PyMasters company page in our "Fun with Python" format: show the idea from
+this lesson solving a small, playful real-world problem that working professionals and students in India recognise
+from everyday life (splitting a restaurant bill fairly, planning a cricket tournament's fixtures, tracking monsoon
+rainfall, picking a chai rota for the office, packing a trip within a baggage limit...). Pick a scenario that fits the
+lesson's concept naturally; the reader should smile and think "I could use that this week".
+Structure (plain text; LinkedIn has no markdown; short paragraphs; no emoji walls):
+1. Hook (first line, <= 110 chars): the everyday situation, framed as a tiny challenge.
+2. The fun part: 2-3 sentences setting up the scenario with concrete numbers or names.
+3. A short, complete Python snippet (indented 4 spaces, 4-10 lines) that really solves it and prints a result.
+4. One sentence on the Python idea that made it easy, named precisely (this is what the reader learns).
+5. An invitation to try the free interactive lesson: {les['url']}
+Then exactly three relevant hashtags. Length 900-1300 characters in total.
+The code must run as written with the Python standard library and print what the post says it prints.
+The animation must visualise the solution playfully: open on the scenario (reveal), show the data changing step by step
+or the computation flowing (trace / flow / compare / timeline), and close on the result (reveal).
+{_fb(feedback, previous)}
+LESSON MATERIAL:
+{material_block(les)}"""
+
+
+def _linkedin_rule(draft: dict) -> str:
+    if draft.get("style") == "fun":
+        return ("For LinkedIn \"Fun with Python\" posts, demand a playful, concrete scenario from everyday life that a "
+                "working professional or student recognises, solved by short Python that really runs and prints what "
+                "the post claims; a contrived or boring scenario caps overall at 6. Also demand that the animation spec "
+                "visualises the solution.")
+    return ("For LinkedIn posts, demand that the jargon is made genuinely simple with an original, precise analogy (a "
+            "cliche or inaccurate analogy caps overall at 6), and that the animation spec actually visualises the idea.")
+
+
 def critic_prompt(kind: str, draft: dict, les: dict) -> str:
     d = {k: v for k, v in draft.items() if not k.startswith("_")}
     real = draft.get("_real_outputs") or {}
@@ -206,9 +239,7 @@ engineer would be proud of, publishable unchanged; 6 = competent but forgettable
 nitpicks a reasonable expert reader would not raise. Be demanding about real errors, weak hooks and generic writing. Check every technical claim and every line
 of code against the lesson material and your own knowledge. Put a statement in factual_errors ONLY if it is actually
 wrong (would mislead a reader). blocking_issues are only what truly prevents publishing; everything else is polish. Penalise generic phrasing, filler,
-weak hooks, anything that breaks the brand rules, and code that would not run. For LinkedIn posts, demand that the jargon
-is made genuinely simple with an original, precise analogy (a cliche or inaccurate analogy caps overall at 6), and that
-the animation spec actually visualises the idea.
+weak hooks, anything that breaks the brand rules, and code that would not run. {_linkedin_rule(draft)}
 BRAND RULES:
 {BRAND}
 DRAFT:

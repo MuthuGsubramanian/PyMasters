@@ -167,15 +167,13 @@ def publish(item: dict) -> dict:
     d, media = item["draft"], item["media"]
     text = little_text(d["post"], d.get("hashtags") or [])
     title = (d.get("animation") or {}).get("title") or item["topic"]
-    try:
-        urn = _upload_video(media["video"])
-        kind = "video"
-    except LinkedInError as e:
-        log.warning("video path failed (%s); falling back to the animated GIF", e)
-        urn = _upload_image(media["gif"])
-        kind = "gif"
+    # LinkedIn gets the animated GIF (the visualised concept) only; videos and Shorts are for YouTube (owner,
+    # 2026-11-04). No video fallback: a missing GIF fails the post instead of publishing a video.
+    if not media.get("gif"):
+        raise LinkedInError("LinkedIn posts need the animated GIF; none was rendered")
+    urn = _upload_image(media["gif"])
     post_urn = _post(text, urn, title)
-    return {"id": post_urn, "url": f"https://www.linkedin.com/feed/update/{post_urn}/", "media": kind,
+    return {"id": post_urn, "url": f"https://www.linkedin.com/feed/update/{post_urn}/", "media": "gif",
             "as": active_profile()}
 
 
