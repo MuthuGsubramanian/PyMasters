@@ -61,6 +61,19 @@ def test_a_probe_that_fails_for_infrastructure_reasons_is_not_cached(monkeypatch
     assert grading.harness_is_vacuous(SELF_CONTAINED) is True
 
 
+def test_an_inconclusive_probe_never_lets_a_self_contained_harness_pass_any_program(monkeypatch):
+    # 2026-11-04 CI (PR #259): the probe hit "runner busy" while lesson traces held the sandbox, then the harness run
+    # itself got the runner and passed `print("hi")`. Unknown must mean "try again", never "graded by the harness".
+    grading._VACUOUS.clear()
+    busy = {"output": "", "exit_code": 1, "error": "The code runner is busy right now. Please try again in a few seconds."}
+    real = grading.run_code_subprocess
+    monkeypatch.setattr(grading, "run_code_subprocess",
+                        lambda code, **k: busy if code == SELF_CONTAINED else real(code, **k))
+    r = grading.grade_submission('print("hi")\n', EXPECTED, test_code=SELF_CONTAINED)
+    assert r["success"] is False
+    assert "busy" in r["error"]
+
+
 def test_output_matching_keeps_placeholder_wildcards():
     assert grading.output_matches("Name: Ada, Age: 36", "Name: <your_name>, Age: <your_age>")
     assert not grading.output_matches("Name: , Age: 36", "Name: <your_name>, Age: <your_age>")
