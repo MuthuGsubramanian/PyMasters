@@ -35,6 +35,7 @@ import GAUSSIAN_MIXTURE from '../components/explains/essays/gmmEssay';
 import NEURAL_NETWORK from '../components/explains/essays/neuralNetworkEssay';
 import BOOTSTRAP from '../components/explains/essays/bootstrapEssay';
 import AB_TESTING from '../components/explains/essays/abTestEssay';
+import QUANTIZATION from '../components/explains/essays/quantizationEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -367,6 +368,7 @@ export const ESSAYS = [
     NEURAL_NETWORK,
     BOOTSTRAP,
     AB_TESTING,
+    QUANTIZATION,
 ];
 
 // ── Index page ────────────────────────────────────────────────────────────────
