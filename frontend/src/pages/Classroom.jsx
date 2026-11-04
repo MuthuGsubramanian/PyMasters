@@ -38,6 +38,8 @@ import { Badge } from '../components/ui';
 import useReducedMotion from '../hooks/useReducedMotion';
 import useCodeTrace from '../hooks/useCodeTrace';
 import TraceViewer from '../components/TraceViewer';
+import UnderTheHood from '../components/animations/UnderTheHood';
+import { useTranslation } from '../i18n';
 
 // Display labels for the F5 "not available in your language yet" notice.
 const LANG_LABELS = {
@@ -874,6 +876,42 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
         return () => window.removeEventListener('keydown', onKey);
     }, [showFlow]);
 
+    // "Under the hood": the heap trace of the lesson's example code. Fetched in the background once
+    // per lesson (the page never waits on it); the button only appears when a trace came back, so
+    // lessons without example code (404), locked ones (403) or a busy server (429) simply don't show it.
+    const { t } = useTranslation(language);
+    const lessonId = lesson?.id;
+    const [uth, setUth] = useState(null);              // { id, data } for the lesson it belongs to
+    const [showUth, setShowUth] = useState(false);
+    const uthFetchedFor = useRef(null);
+    const uthButtonRef = useRef(null);
+    const uthCloseRef = useRef(null);
+    useEffect(() => {
+        if (!lessonId || uthFetchedFor.current === lessonId) return;
+        uthFetchedFor.current = lessonId;
+        setShowUth(false);
+        api.get(`/classroom/lesson/${encodeURIComponent(lessonId)}/under-the-hood`)
+            .then((res) => {
+                const data = res?.data;
+                if (uthFetchedFor.current === lessonId && Array.isArray(data?.steps) && data.steps.length) {
+                    setUth({ id: lessonId, data });
+                }
+            })
+            .catch(() => { /* hidden: no example code, not entitled, or rate limited */ });
+    }, [lessonId]);
+    const uthTrace = uth && uth.id === lessonId ? uth.data : null;
+    const closeUth = () => {
+        setShowUth(false);
+        uthButtonRef.current?.focus();
+    };
+    useEffect(() => {
+        if (!showUth) return undefined;
+        uthCloseRef.current?.focus();
+        const onKey = (e) => { if (e.key === 'Escape') { setShowUth(false); uthButtonRef.current?.focus(); } };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [showUth]);
+
     // Counts come from the normalised props, the same numbers the step counters show.
     const flowSubtitle = executionViz
         ? `${getStepTotal('ExecutionVisualizer', normalizeProps('ExecutionVisualizer', executionViz, language))} execution steps`
@@ -984,10 +1022,12 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
             )}
 
             {/* ── Launcher card: opens the code execution + flow popup ── */}
+            {(hasVisuals || uthTrace) && (
+            <div className="flex flex-col gap-3 sm:flex-row">
             {hasVisuals && (
                 <button
                     onClick={openFlow}
-                    className="group w-full text-left rounded-2xl surface-code shadow-lg border border-white/[0.08] hover:border-cyan-400/40 transition-all duration-200"
+                    className="group w-full min-w-0 sm:flex-1 text-left rounded-2xl surface-code shadow-lg border border-white/[0.08] hover:border-cyan-400/40 transition-all duration-200"
                 >
                     <div className="flex items-center gap-4 px-5 py-4">
                         <div className="w-11 h-11 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center flex-shrink-0 group-hover:bg-cyan-500/25 transition-colors">
@@ -1006,6 +1046,72 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
                     </div>
                 </button>
             )}
+            {/* ── Launcher: Under the hood (names and objects of the lesson's example code) ── */}
+            {uthTrace && (
+                <button
+                    ref={uthButtonRef}
+                    type="button"
+                    onClick={() => setShowUth(true)}
+                    aria-haspopup="dialog"
+                    className={`group min-h-[44px] w-full min-w-0 text-left rounded-2xl surface-code shadow-lg border border-white/[0.08] hover:border-cyan-400/40 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 ${hasVisuals ? 'sm:w-auto sm:max-w-xs' : ''}`}
+                >
+                    <div className="flex items-center gap-4 px-5 py-4">
+                        <div className="w-11 h-11 rounded-xl bg-cyan-500/15 border border-cyan-400/30 flex items-center justify-center flex-shrink-0 group-hover:bg-cyan-500/25 transition-colors">
+                            <Layers size={20} className="text-cyan-300" aria-hidden="true" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-bold text-white tracking-wide">{t('uth.ui_title', 'Under the hood')}</h3>
+                            <p className="text-xs text-slate-400 mt-0.5">{t('uth.ui_open_hint', 'See the names and objects Python keeps in memory')}</p>
+                        </div>
+                    </div>
+                </button>
+            )}
+            </div>
+            )}
+
+            {/* ── Popup: Under the hood ── */}
+            <AnimatePresence>
+                {showUth && uthTrace && (
+                    <motion.div
+                        className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm"
+                        initial={reducedMotion ? false : { opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={reducedMotion ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0 }}
+                        onClick={closeUth}
+                    >
+                        <motion.div
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label={t('uth.ui_title', 'Under the hood')}
+                            onClick={(e) => e.stopPropagation()}
+                            initial={reducedMotion ? false : { scale: 0.96, opacity: 0, y: 12 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={reducedMotion ? { opacity: 0, transition: { duration: 0 } } : { scale: 0.96, opacity: 0, y: 12 }}
+                            /* `dark`: same dark code surface as Watch It Run; UnderTheHood's tokens resolve dark here. */
+                            className="dark w-full max-w-5xl max-h-[92vh] rounded-2xl surface-code shadow-2xl border border-white/[0.08] overflow-hidden flex flex-col"
+                        >
+                            <div className="flex items-center justify-between gap-3 pl-5 pr-2 py-1 border-b border-white/[0.08] bg-white/[0.02] flex-shrink-0">
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
+                                    <h3 className="text-sm font-bold text-white tracking-wide truncate">{t('uth.ui_title', 'Under the hood')}</h3>
+                                </div>
+                                <button
+                                    ref={uthCloseRef}
+                                    type="button"
+                                    onClick={closeUth}
+                                    aria-label="Close"
+                                    className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-slate-300 hover:bg-white/[0.08] hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+                            <div className="flex-1 min-h-0 min-w-0 overflow-y-auto p-3 sm:p-4 dark-scrollbar">
+                                <UnderTheHood code={uthTrace.code} trace={uthTrace} language={language} />
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             {/* ── Popup: code execution + flow diagram ── */}
             <AnimatePresence>
@@ -1163,7 +1269,7 @@ export function PracticePhase({
     onSelectChallenge,
     userId,
 }) {
-    const { trace, loading: tracing, error: traceError, visualize, close: closeTrace, resetError } = useCodeTrace(userId);
+    const { trace, loading: tracing, error: traceError, visualize, fetchHeap, close: closeTrace, resetError } = useCodeTrace(userId);
     // File-I/O lessons seed sandbox files the tracer doesn't get, so a trace would only end in FileNotFoundError.
     const traceable = !(lesson?.sandbox_files && typeof lesson.sandbox_files === 'object' && Object.keys(lesson.sandbox_files).length > 0);
     useEffect(() => { resetError(); }, [code, resetError]);
@@ -1318,7 +1424,7 @@ export function PracticePhase({
                     </button>
                 </div>
             )}
-            {trace && <TraceViewer code={code} trace={trace} onClose={closeTrace} />}
+            {trace && <TraceViewer code={code} trace={trace} onClose={closeTrace} loadHeap={() => fetchHeap(code)} language={language} />}
         </div>
     );
 }
@@ -1362,7 +1468,7 @@ function RelatedLessons({ lessonId, language, onOpen }) {
 }
 
 export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0, lessonId, onOpenRelated, nextLesson = null, onNext, nextChallenge = null, onNextChallenge, submittedCode = '', userId, traceable = true }) {
-    const { trace, loading: tracing, error: traceError, visualize, close: closeTrace } = useCodeTrace(userId);
+    const { trace, loading: tracing, error: traceError, visualize, fetchHeap, close: closeTrace } = useCodeTrace(userId);
     const success = evalResult?.passed ?? evalResult?.success ?? false;
     // Backend flags `struggling` after repeated failures; fall back to a local
     // count so the supportive UI still appears even without the signal.
@@ -1556,7 +1662,7 @@ export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attem
                     )}
                 </div>
             </motion.div>
-            {trace && <TraceViewer code={submittedCode} trace={trace} onClose={closeTrace} />}
+            {trace && <TraceViewer code={submittedCode} trace={trace} onClose={closeTrace} loadHeap={() => fetchHeap(submittedCode)} language={language} />}
         </div>
     );
 }
