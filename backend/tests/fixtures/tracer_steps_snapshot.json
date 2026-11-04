@@ -1,0 +1,264 @@
+{
+ "code": "def add(a, b):\n    c = a + b\n    return c\n\nnums = [1, 2, 3]\ncopy = nums\ncopy.append(add(2, 2))\nfor n in nums:\n    print(n)\nd = {'k': nums}\nx = 1 / 0\n",
+ "raw": "{\"steps\": [{\"line\": 1, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {}, \"out\": 0}, {\"line\": 5, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\"}, \"out\": 0}, {\"line\": 6, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3]\"}, \"out\": 0}, {\"line\": 7, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3]\", \"copy\": \"[1, 2, 3]\"}, \"out\": 0}, {\"line\": 2, \"event\": \"line\", \"func\": \"add\", \"depth\": 2, \"vars\": {\"a\": \"2\", \"b\": \"2\"}, \"out\": 0}, {\"line\": 3, \"event\": \"line\", \"func\": \"add\", \"depth\": 2, \"vars\": {\"a\": \"2\", \"b\": \"2\", \"c\": \"4\"}, \"out\": 0}, {\"line\": 3, \"event\": \"return\", \"func\": \"add\", \"depth\": 2, \"vars\": {\"a\": \"2\", \"b\": \"2\", \"c\": \"4\"}, \"out\": 0, \"ret\": \"4\"}, {\"line\": 8, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\"}, \"out\": 0}, {\"line\": 9, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\", \"n\": \"1\"}, \"out\": 0}, {\"line\": 8, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\", \"n\": \"1\"}, \"out\": 2}, {\"line\": 9, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\", \"n\": \"2\"}, \"out\": 2}, {\"line\": 8, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\", \"n\": \"2\"}, \"out\": 4}, {\"line\": 9, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\", \"n\": \"3\"}, \"out\": 4}, {\"line\": 8, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\", \"n\": \"3\"}, \"out\": 6}, {\"line\": 9, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\", \"n\": \"4\"}, \"out\": 6}, {\"line\": 8, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\", \"n\": \"4\"}, \"out\": 8}, {\"line\": 10, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\", \"n\": \"4\"}, \"out\": 8}, {\"line\": 11, \"event\": \"line\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\", \"n\": \"4\", \"d\": \"{'k': [1, 2, 3, 4]}\"}, \"out\": 8}, {\"line\": 11, \"event\": \"exception\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\", \"n\": \"4\", \"d\": \"{'k': [1, 2, 3, 4]}\"}, \"out\": 8, \"exc\": \"ZeroDivisionError: ZeroDivisionError('division by zero')\"}, {\"line\": 11, \"event\": \"return\", \"func\": \"<module>\", \"depth\": 1, \"vars\": {\"add\": \"<function add>\", \"nums\": \"[1, 2, 3, 4]\", \"copy\": \"[1, 2, 3, 4]\", \"n\": \"4\", \"d\": \"{'k': [1, 2, 3, 4]}\"}, \"out\": 8, \"ret\": \"None\"}], \"stdout\": \"1\\n2\\n3\\n4\\n\", \"error\": {\"type\": \"ZeroDivisionError\", \"message\": \"division by zero\", \"line\": 11}}",
+ "result": {
+  "error": {
+   "line": 11,
+   "message": "division by zero",
+   "type": "ZeroDivisionError"
+  },
+  "stdout": "1\n2\n3\n4\n",
+  "steps": [
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 1,
+    "out": 0,
+    "vars": {}
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 5,
+    "out": 0,
+    "vars": {
+     "add": "<function add>"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 6,
+    "out": 0,
+    "vars": {
+     "add": "<function add>",
+     "nums": "[1, 2, 3]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 7,
+    "out": 0,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3]",
+     "nums": "[1, 2, 3]"
+    }
+   },
+   {
+    "depth": 2,
+    "event": "line",
+    "func": "add",
+    "line": 2,
+    "out": 0,
+    "vars": {
+     "a": "2",
+     "b": "2"
+    }
+   },
+   {
+    "depth": 2,
+    "event": "line",
+    "func": "add",
+    "line": 3,
+    "out": 0,
+    "vars": {
+     "a": "2",
+     "b": "2",
+     "c": "4"
+    }
+   },
+   {
+    "depth": 2,
+    "event": "return",
+    "func": "add",
+    "line": 3,
+    "out": 0,
+    "ret": "4",
+    "vars": {
+     "a": "2",
+     "b": "2",
+     "c": "4"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 8,
+    "out": 0,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "nums": "[1, 2, 3, 4]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 9,
+    "out": 0,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "n": "1",
+     "nums": "[1, 2, 3, 4]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 8,
+    "out": 2,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "n": "1",
+     "nums": "[1, 2, 3, 4]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 9,
+    "out": 2,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "n": "2",
+     "nums": "[1, 2, 3, 4]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 8,
+    "out": 4,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "n": "2",
+     "nums": "[1, 2, 3, 4]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 9,
+    "out": 4,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "n": "3",
+     "nums": "[1, 2, 3, 4]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 8,
+    "out": 6,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "n": "3",
+     "nums": "[1, 2, 3, 4]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 9,
+    "out": 6,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "n": "4",
+     "nums": "[1, 2, 3, 4]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 8,
+    "out": 8,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "n": "4",
+     "nums": "[1, 2, 3, 4]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 10,
+    "out": 8,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "n": "4",
+     "nums": "[1, 2, 3, 4]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "line",
+    "func": "<module>",
+    "line": 11,
+    "out": 8,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "d": "{'k': [1, 2, 3, 4]}",
+     "n": "4",
+     "nums": "[1, 2, 3, 4]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "exception",
+    "exc": "ZeroDivisionError: ZeroDivisionError('division by zero')",
+    "func": "<module>",
+    "line": 11,
+    "out": 8,
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "d": "{'k': [1, 2, 3, 4]}",
+     "n": "4",
+     "nums": "[1, 2, 3, 4]"
+    }
+   },
+   {
+    "depth": 1,
+    "event": "return",
+    "func": "<module>",
+    "line": 11,
+    "out": 8,
+    "ret": "None",
+    "vars": {
+     "add": "<function add>",
+     "copy": "[1, 2, 3, 4]",
+     "d": "{'k': [1, 2, 3, 4]}",
+     "n": "4",
+     "nums": "[1, 2, 3, 4]"
+    }
+   }
+  ]
+ }
+}
