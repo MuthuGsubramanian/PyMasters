@@ -208,7 +208,7 @@ export default function ExecutionVisualizer({
                 }`}>
                   {isActive ? <span className="inline-block animate-[pulse_1s_ease-in-out_infinite]">▶</span> : ''}
                 </span>
-                <span className={`w-7 text-right select-none mr-4 text-[11px] tabular-nums transition-all duration-300 ${
+                <span className={`w-8 text-right select-none mr-4 text-xs tabular-nums transition-all duration-300 ${
                   isActive ? 'text-cyan-400 font-medium' : 'text-code-foreground/30'
                 }`}>
                   {lineNum}
@@ -228,14 +228,14 @@ export default function ExecutionVisualizer({
           {/* Description */}
           {description && (
             <div className="bg-white/[0.04] rounded-lg p-3 border border-white/10">
-              <p className="text-[10px] text-code-foreground/80 font-semibold uppercase tracking-wider mb-1">What's happening</p>
+              <p className="text-xs text-code-foreground/80 font-semibold uppercase tracking-wider mb-1">What's happening</p>
               <p className="text-xs text-code-foreground/90 leading-relaxed">{description}</p>
             </div>
           )}
 
           {/* Variables */}
           <div className="bg-white/[0.04] rounded-lg p-3 border border-white/10">
-            <p className="text-[10px] text-code-foreground/80 font-semibold uppercase tracking-wider mb-2">Variables</p>
+            <p className="text-xs text-code-foreground/80 font-semibold uppercase tracking-wider mb-2">Variables</p>
             {Object.keys(variables).length > 0 ? (
               <div className="space-y-1.5">
                 {Object.entries(variables).map(([name, value]) => (
@@ -257,7 +257,7 @@ export default function ExecutionVisualizer({
       {/* Output terminal */}
       {outputLines.length > 0 && (
         <div className="surface-code border-t border-white/10 px-4 py-3">
-          <p className="text-[10px] text-code-foreground/80 font-semibold uppercase tracking-wider mb-1.5">Output</p>
+          <p className="text-xs text-code-foreground/80 font-semibold uppercase tracking-wider mb-1.5">Output</p>
           <div className="space-y-0.5 max-h-32 overflow-y-auto">
             {outputLines.map((line, idx) => (
               <div key={idx} className="text-xs text-green-400 font-mono">
@@ -282,7 +282,7 @@ export default function ExecutionVisualizer({
               }}
             />
           </div>
-          <span className="text-[10px] font-mono text-code-foreground/60 tabular-nums">
+          <span className="text-xs font-mono text-code-foreground/60 tabular-nums">
             {activeStep >= 0 ? activeStep + 1 : 0}/{totalSteps}
           </span>
         </div>

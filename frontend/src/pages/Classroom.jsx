@@ -974,7 +974,7 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
                                 <div className="flex items-center gap-2.5 min-w-0">
                                     <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
                                     <h3 className="text-sm font-bold text-white tracking-wide">Watch It Run</h3>
-                                    <span className="text-[11px] text-slate-400 truncate">{flowSubtitle}</span>
+                                    <span className="text-xs text-slate-400 truncate">{flowSubtitle}</span>
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0">
                                     <button
@@ -1005,19 +1005,19 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
                         <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
                         <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
                         <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-                        <span className="ml-2 text-[11px] text-slate-300 font-mono">step-by-step execution</span>
+                        <span className="ml-2 text-xs text-slate-300 font-mono">step-by-step execution</span>
                         <div className="ml-auto flex items-center gap-1.5">
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
                             </span>
-                            <span className="text-[10px] text-green-400">running</span>
+                            <span className="text-xs text-green-400">running</span>
                         </div>
                     </div>
                     <div className="p-5 space-y-4 overflow-y-auto flex-1 dark-scrollbar">
                         {loopViz && (
                             <div>
-                                <div className="text-[10px] text-amber-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <div className="text-xs text-amber-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                                     Loop Iteration
                                 </div>
@@ -1026,7 +1026,7 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
                         )}
                         {executionViz && (
                             <div>
-                                <div className="text-[10px] text-purple-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <div className="text-xs text-purple-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                                     Step-by-Step Execution
                                 </div>
@@ -1053,7 +1053,7 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
                         )}
                         {legacyAnimPrimitives.length > 0 && (
                             <div>
-                                <div className="text-[10px] text-cyan-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <div className="text-xs text-cyan-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                                     Code Walkthrough
                                 </div>

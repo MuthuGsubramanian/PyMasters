@@ -24,7 +24,7 @@ function NodeBox({ node, isActive, isPast }) {
   return (
     <div className={`${baseClasses} ${shapeClasses} ${colorClasses}`}>
       {isDecision && (
-        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px] text-amber-400 uppercase tracking-wider font-medium">
+        <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-xs text-amber-400 uppercase tracking-wider font-medium">
           Decision
         </span>
       )}
@@ -55,7 +55,7 @@ function Arrow({ edge, isActive, isPast }) {
         isActive ? 'border-t-cyan-400/70' : isPast ? 'border-t-white/20' : 'border-t-white/10'
       }`} />
       {label && (
-        <span className={`text-[9px] mt-0.5 transition-all duration-300 ${
+        <span className={`text-xs mt-0.5 transition-all duration-300 ${
           isActive ? 'text-cyan-300' : 'text-code-foreground/50'
         }`}>
           {label}
@@ -183,9 +183,9 @@ export default function FlowDiagram({
           <span className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)]" />
         </div>
-        <span className="ml-3 text-[11px] text-code-foreground/70 tracking-wide">Flow Diagram</span>
+        <span className="ml-3 text-xs text-code-foreground/70 tracking-wide">Flow Diagram</span>
         {totalSteps > 0 && (
-          <span className="ml-auto text-[10px] text-code-foreground/60 tabular-nums">
+          <span className="ml-auto text-xs text-code-foreground/60 tabular-nums">
             {Math.max(activePathIndex + 1, 0)}/{totalSteps}
           </span>
         )}
@@ -220,7 +220,7 @@ export default function FlowDiagram({
                     {stableEdges
                       .filter(e => (e.from === node.id || e.source === node.id) && e.label)
                       .map((e, i) => (
-                        <span key={i} className={`text-[9px] px-1.5 py-0.5 rounded ${
+                        <span key={i} className={`text-xs px-1.5 py-0.5 rounded ${
                           e.label === 'True' ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'
                         }`}>
                           {e.label}
@@ -237,7 +237,7 @@ export default function FlowDiagram({
         {/* Variable sidebar */}
         {Object.keys(variables).length > 0 && (
           <div className="w-48 border-l border-white/10 p-4">
-            <p className="text-[10px] text-code-foreground/60 uppercase tracking-wider mb-2">Variables</p>
+            <p className="text-xs text-code-foreground/60 uppercase tracking-wider mb-2">Variables</p>
             <div className="space-y-1.5">
               {Object.entries(variables).map(([name, value]) => (
                 <div key={name} className="flex items-center justify-between gap-2">
@@ -266,7 +266,7 @@ export default function FlowDiagram({
               }}
             />
           </div>
-          <span className="text-[10px] font-mono text-code-foreground/60 tabular-nums">
+          <span className="text-xs font-mono text-code-foreground/60 tabular-nums">
             {activePathIndex >= 0 ? activePathIndex + 1 : 0}/{totalSteps}
           </span>
         </div>

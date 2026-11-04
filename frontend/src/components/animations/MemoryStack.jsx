@@ -112,17 +112,17 @@ export default function MemoryStack({ frames: initialFrames = [], operations = [
       {/* Header */}
       <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center gap-2 bg-orange-500/5">
         <span className="text-base">🏗️</span>
-        <span className="text-[11px] font-bold text-orange-400 uppercase tracking-widest">
+        <span className="text-xs font-bold text-orange-400 uppercase tracking-widest">
           Call Stack
         </span>
-        <span className="text-[10px] text-slate-500 font-mono ml-auto">
+        <span className="text-xs text-slate-500 font-mono ml-auto">
           depth: {frames.length}
         </span>
       </div>
 
       {/* Operation indicator */}
       {activeOp && (
-        <div className="px-4 py-1.5 bg-orange-500/5 border-b border-white/[0.04] text-[10px] font-mono text-orange-300/70">
+        <div className="px-4 py-1.5 bg-orange-500/5 border-b border-white/[0.04] text-xs font-mono text-orange-300/70">
           {activeOp}
         </div>
       )}
@@ -154,7 +154,7 @@ export default function MemoryStack({ frames: initialFrames = [], operations = [
                   {frame.name}()
                 </span>
                 {idx === 0 && (
-                  <span className="ml-auto text-[9px] text-orange-300/60 uppercase tracking-wider font-bold">
+                  <span className="ml-auto text-xs text-orange-300/60 uppercase tracking-wider font-bold">
                     active
                   </span>
                 )}
@@ -162,7 +162,7 @@ export default function MemoryStack({ frames: initialFrames = [], operations = [
               {frame.variables && Object.entries(frame.variables).length > 0 && (
                 <div className="space-y-1 pl-4 border-l border-white/[0.06]">
                   {Object.entries(frame.variables).map(([k, v]) => (
-                    <div key={k} className="flex justify-between text-[11px] font-mono">
+                    <div key={k} className="flex justify-between text-xs font-mono">
                       <span className="text-slate-400">{k}</span>
                       <span className="text-cyan-300">{String(v)}</span>
                     </div>
@@ -177,7 +177,7 @@ export default function MemoryStack({ frames: initialFrames = [], operations = [
       {/* Stack base */}
       <div className="px-3 pb-3">
         <div className="h-1 w-full bg-gradient-to-r from-orange-500/20 via-orange-400/30 to-orange-500/20 rounded-full" />
-        <div className="text-center text-[10px] text-slate-600 mt-1 font-mono">stack base</div>
+        <div className="text-center text-xs text-slate-600 mt-1 font-mono">stack base</div>
       </div>
     </div>
   );

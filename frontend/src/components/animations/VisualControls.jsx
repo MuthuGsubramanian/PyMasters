@@ -40,14 +40,14 @@ const SPEEDS = [0.5, 1, 2];
 
 const BTN = 'inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg border border-border-default '
   + 'bg-bg-elevated text-text-primary hover:border-border-strong hover:bg-bg-surface transition-colors '
-  + 'disabled:opacity-40 disabled:cursor-not-allowed';
+  + 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus disabled:opacity-40 disabled:cursor-not-allowed';
 
 export default function VisualControls({
   step, total, playing, speed, onPlay, onPause, onNext, onPrev, onRestart, onSpeed,
 }) {
   const nextSpeed = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length];
   return (
-    <div role="group" aria-label="Playback controls" className="flex flex-wrap items-center justify-center gap-2">
+    <div role="group" aria-label="Playback controls" className="flex flex-wrap items-center justify-center gap-2 rounded-xl border border-border-default bg-bg-elevated px-2 py-1.5">
       <button type="button" className={BTN} aria-label="Previous step" onClick={onPrev} disabled={step <= 0}>
         <ChevronLeft size={18} aria-hidden="true" />
       </button>
@@ -73,7 +73,7 @@ export default function VisualControls({
       >
         {speed}x
       </button>
-      <span aria-live="polite" className="text-xs font-medium text-text-secondary px-1">
+      <span aria-live="polite" className="text-xs font-medium text-text-primary px-1">
         {`Step ${Math.min(step + 1, total)} of ${total}`}
       </span>
     </div>
