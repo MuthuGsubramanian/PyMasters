@@ -40,8 +40,11 @@ def _learner_with_a_completed_lesson():
     """The warm-up only appears once a lesson is learned: pass one the way a learner does."""
     u = create_user()
     code = json.loads((SOLUTIONS / "variables_intro.json").read_text())["challenges"][0]["code"]
-    r = api(u["ip"], u["token"]).post(f"{BASE}/api/classroom/evaluate", timeout=120, json={
-        "user_id": u["id"], "lesson_id": "variables_intro", "challenge_index": 0, "code": code})
+    for _ in range(2):   # setup only: under parallel CI load the OS can kill a sandbox run (now explained, see
+        r = api(u["ip"], u["token"]).post(f"{BASE}/api/classroom/evaluate", timeout=120, json={   # test_sandbox_killed_message)
+            "user_id": u["id"], "lesson_id": "variables_intro", "challenge_index": 0, "code": code})
+        if r.status_code == 200 and r.json()["success"] is True:
+            break
     assert r.status_code == 200 and r.json()["success"] is True, r.text[:300]
     return u
 
