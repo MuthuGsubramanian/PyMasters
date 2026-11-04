@@ -231,6 +231,8 @@ function normalizeDataStructure(p) {
     if (p.items != null) p.data = p.items;
     else if (p.initial_state != null) p.data = p.initial_state;
   }
+  if (p.data == null) p.data = [];
+  if (p.labels == null) delete p.labels;
   delete p.items;
   delete p.initial_state;
   // An object (dict / vector tables) shows as key: value entries.

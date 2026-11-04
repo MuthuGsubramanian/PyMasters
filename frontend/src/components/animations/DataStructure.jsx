@@ -168,14 +168,14 @@ export default function DataStructure({
       <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center gap-2"
         style={{ background: `${theme.accent}10` }}>
         <span className="text-base">{theme.icon}</span>
-        <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: theme.accent }}>
+        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: theme.accent }}>
           {theme.label}
         </span>
-        <span className="text-slate-500 font-mono text-xs ml-1">
+        <span className="text-text-muted font-mono text-xs ml-1">
           len={items.length}
         </span>
         {operationLabel && (
-          <span className="ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border"
+          <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded-full border"
             style={{ color: theme.accent, borderColor: `${theme.accent}30`, background: `${theme.accent}10` }}>
             .{operationLabel}
           </span>
@@ -189,7 +189,7 @@ export default function DataStructure({
       {/* Items visualization */}
       <div className="p-4">
         <div className="flex items-center gap-1 mb-2">
-          <span className="text-slate-500 font-mono text-sm font-bold">{theme.open}</span>
+          <span className="text-text-secondary font-mono text-sm font-bold">{theme.open}</span>
         </div>
 
         <div className="flex flex-wrap gap-2 min-h-[3rem] pl-4">
@@ -237,18 +237,18 @@ export default function DataStructure({
               )}
               {/* Comma separator */}
               {idx < items.length - 1 && (
-                <span className="text-slate-600 font-mono text-xs mt-1">,</span>
+                <span className="text-text-muted font-mono text-xs mt-1">,</span>
               )}
             </div>
           ))}
 
           {items.length === 0 && (
-            <span className="text-slate-600 text-sm font-mono italic py-2">empty</span>
+            <span className="text-text-muted text-sm font-mono italic py-2">empty</span>
           )}
         </div>
 
         <div className="flex items-center gap-1 mt-2">
-          <span className="text-slate-500 font-mono text-sm font-bold">{theme.close}</span>
+          <span className="text-text-secondary font-mono text-sm font-bold">{theme.close}</span>
         </div>
       </div>
     </div>

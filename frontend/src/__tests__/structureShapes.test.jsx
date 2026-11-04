@@ -174,3 +174,55 @@ describe('VariableBox shows the fields lessons actually write', () => {
     expect(text(html)).toContain('y');
   });
 });
+
+describe('lesson intro call sites pass the normalised loop fields through', () => {
+  const loop = {
+    type: 'LoopVisualizer',
+    loopVariable: 'n',
+    iterable: [3, 2, 1],
+    expression: 'yield n',
+    result: [3, 2, 1],
+    label: 'countdown(3) yields values on demand',
+    title: 'Generator loop',
+  };
+
+  it('python_fundamentals/adv_generators: LessonFlowVisual (scroll-synced intro) shows Result', async () => {
+    const { LessonFlowVisual } = await import('../pages/Classroom');
+    const html = renderToStaticMarkup(
+      <LessonFlowVisual stepIndex={0} totalSections={3} loopViz={loop} language="en" />,
+    );
+    const t = text(html);
+    expect(t).toContain('Result: [3, 2, 1]');
+    expect(t).toContain('countdown(3) yields values on demand');
+    expect(t).toContain('Generator loop');
+  });
+
+  it('PopupLoopVisual (intro popup) normalises the raw loop: variable, result, caption', async () => {
+    const { PopupLoopVisual } = await import('../pages/Classroom');
+    const html = renderToStaticMarkup(<PopupLoopVisual loopViz={loop} language="en" />);
+    const t = text(html);
+    expect(t).toContain('Result: [3, 2, 1]');
+    expect(html).toMatch(/>n<\/span>/);
+    expect(t).toContain('Generator loop');
+  });
+});
+
+describe('visual text is at least 12px and token coloured', () => {
+  it('no text-[9px] / text-[10px] / text-[11px] in LoopVisualizer, DataStructure or VariableBox', () => {
+    const all = [
+      render({ type: 'LoopVisualizer', iterable: [1, 2], result: [1, 2], condition: 'x', label: 'l', code: 'for i in x:\n  pass', iterations: [{ value: 1, output: 'a', description: 'd' }] }),
+      render({ type: 'DataStructure', structure: 'list', items: [1, 2], label: 'l', labels: ['a', 'b'] }),
+      render({ type: 'DataStructure', structure: 'list', items: [] }),
+      render({ type: 'VariableBox', variable: 'x', value: 1, label: 'lab', data_type: 'int' }),
+      render({ type: 'VariableBox', variables: [{ name: 'a', value: 1 }, { name: 'b', value: 2 }] }),
+    ].join('\n');
+    expect(all).not.toMatch(/text-\[(9|10|11)px\]/);
+    // DataStructure content no longer uses dark-only slate text
+    expect(render({ type: 'DataStructure', structure: 'list', items: [] })).not.toMatch(/text-slate-[56]00/);
+  });
+
+  it('DataStructure normaliser tolerates null data and labels', () => {
+    const html = render({ type: 'DataStructure', structure: 'list', data: null, labels: null });
+    expect(text(html)).toContain('empty');
+  });
+});

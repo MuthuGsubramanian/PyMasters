@@ -661,7 +661,34 @@ function splitStorySections(md) {
 // and drives it from the scroll position (section in view → execution step).
 // Priority: step-by-step execution > loop > flow diagram > code walkthrough >
 // concept map (static). Every catalogue lesson has at least one of these.
-function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, stepper, flowDiagram, conceptMap, language }) {
+// The auto-playing loop in the intro popup. Props go through normalizeProps like
+// every other path, so loopVariable / iterable / result etc. are honoured.
+export function PopupLoopVisual({ loopViz, language, animKey = 0 }) {
+    const p = normalizeProps('LoopVisualizer', loopViz, language);
+    return (
+        <>
+            <VisualCaption title={p.caption?.title} />
+            <LoopVisualizer
+                key={`loop-${animKey}`}
+                loopType={p.loopType || 'for'}
+                collection={p.collection}
+                variable={p.variable || 'i'}
+                rangeStart={p.rangeStart ?? 0}
+                rangeEnd={p.rangeEnd ?? 5}
+                rangeStep={p.rangeStep ?? 1}
+                iterations={p.iterations || []}
+                code={p.code || ''}
+                result={p.result || ''}
+                condition={p.condition || ''}
+                label={p.label || ''}
+                speed={p.speed || 'normal'}
+            />
+            <VisualCaption description={p.caption?.description} />
+        </>
+    );
+}
+
+export function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, stepper, flowDiagram, conceptMap, language }) {
     const frac = totalSections > 1 ? Math.min(1, Math.max(0, stepIndex / (totalSections - 1))) : 1;
     const mapTo = (count) => (count > 0 ? Math.round(frac * (count - 1)) : -1);
 
@@ -692,6 +719,9 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
                 rangeStep={p.rangeStep ?? 1}
                 iterations={p.iterations || []}
                 code={p.code || ''}
+                result={p.result || ''}
+                condition={p.condition || ''}
+                label={p.label || ''}
                 controlledStep={mapTo(count)}
             />
         );
@@ -984,18 +1014,7 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
                                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                                     Loop Iteration
                                 </div>
-                                <LoopVisualizer
-                                    key={`loop-${animKey}`}
-                                    loopType={loopViz.loopType || 'for'}
-                                    collection={loopViz.collection}
-                                    variable={loopViz.variable || 'i'}
-                                    rangeStart={loopViz.rangeStart ?? 0}
-                                    rangeEnd={loopViz.rangeEnd ?? 5}
-                                    rangeStep={loopViz.rangeStep ?? 1}
-                                    iterations={loopViz.iterations || []}
-                                    code={loopViz.code || ''}
-                                    speed={loopViz.speed || 'normal'}
-                                />
+                                <PopupLoopVisual loopViz={loopViz} language={language} animKey={animKey} />
                             </div>
                         )}
                         {executionViz && (
