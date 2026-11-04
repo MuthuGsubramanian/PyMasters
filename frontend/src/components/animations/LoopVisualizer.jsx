@@ -2,6 +2,10 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
 import { loopStepCount } from './normalize';
 
+// Stable defaults: a fresh [] each render would change `items` every render and
+// re-fire the effects that depend on it (controlled mode then loops forever).
+const NO_ITEMS = [];
+
 const SPEED_MAP = { slow: 2.5, normal: 1.8, fast: 1.0, profile_adaptive: 1.8 };
 
 const KEYWORDS = new Set([
@@ -65,12 +69,12 @@ const LOOP_THEMES = {
 
 export default function LoopVisualizer({
   loopType = 'for',
-  collection = [],
+  collection = NO_ITEMS,
   variable = 'item',
   rangeStart = 0,
   rangeEnd = 5,
   rangeStep = 1,
-  iterations = [],
+  iterations = NO_ITEMS,
   code = '',
   speed = 'normal',
   result = '',
