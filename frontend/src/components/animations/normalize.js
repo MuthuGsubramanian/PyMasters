@@ -186,6 +186,12 @@ function normalizeConceptMap(p) {
 
 // ComparisonPanel: left/right -> before/after
 function normalizeComparisonPanel(p) {
+  // Tone: red/green only for a genuine before/after pair (authored before/after
+  // keys, or a side label that says before/after/wrong/right...). Else neutral.
+  const sideLabel = (v) => (v && typeof v === 'object' ? (v.label ?? v.title) : undefined);
+  const labels = [sideLabel(p.before), sideLabel(p.after), sideLabel(p.left), sideLabel(p.right), p.left_label, p.right_label];
+  const BA = /^(before|after|wrong|right|bad|good|incorrect|correct)\b/i;
+  const tone = (p.before || p.after || labels.some((l) => typeof l === 'string' && BA.test(l.trim()))) ? 'before_after' : 'neutral';
   // Lesson JSON has drifted into several author-time shapes (2026-10-26
   // audit: ~55 lessons rendered an EMPTY panel). Coerce each known shape
   // into the component's before/after {label, code} contract.
@@ -227,20 +233,20 @@ function normalizeComparisonPanel(p) {
     p.after = { label: 'Growth', code: p.comparisons.map((c) => `${txt(c.label)}: ${(c.values || []).map(txt).join('  ')}`).join('\n') };
   }
   for (const k of ['left_label', 'right_label', 'left_content', 'right_content', 'items', 'models', 'comparisons', 'x_labels']) delete p[k];
+  const side = (v, fallback) => {
+    const out = { label: v.label || fallback, code: v.code || '' };
+    if (v.result != null) out.result = v.result;
+    return out;
+  };
   if (p.left && !p.before) {
-    p.before = {
-      label: p.left.label || 'Before',
-      code: p.left.result != null ? `Result: ${p.left.result}` : (p.left.code || ''),
-    };
+    p.before = side(p.left, 'Before');
     delete p.left;
   }
   if (p.right && !p.after) {
-    p.after = {
-      label: p.right.label || 'After',
-      code: p.right.result != null ? `Result: ${p.right.result}` : (p.right.code || ''),
-    };
+    p.after = side(p.right, 'After');
     delete p.right;
   }
+  p.tone = tone;
 }
 
 // TerminalOutput: ensure output is always an array

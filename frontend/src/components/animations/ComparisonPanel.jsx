@@ -1,9 +1,42 @@
 import { useEffect, useRef, useMemo } from 'react';
 import gsap from 'gsap';
 
+// Python spellings for booleans; everything else as authored.
+const pyValue = (v) => (v === true ? 'True' : v === false ? 'False' : String(v));
+
+function Side({ side, innerRef, ba, kind }) {
+  const hasCode = side.code != null && side.code !== '';
+  const hasResult = side.result != null;
+  const theme = !ba
+    ? { box: 'border-border-default bg-bg-surface', head: 'border-border-default', dot: 'bg-accent-primary', label: 'text-accent-primary' }
+    : kind === 'before'
+      ? { box: 'border-red-500/20 shadow-lg shadow-red-500/5', head: 'border-red-500/15', dot: 'bg-red-400', label: 'text-red-400' }
+      : { box: 'border-green-500/20 shadow-lg shadow-green-500/5', head: 'border-green-500/15', dot: 'bg-green-400', label: 'text-green-400' };
+  return (
+    <div ref={innerRef} className={`rounded-2xl overflow-hidden border opacity-0 ${theme.box}`}>
+      <div className={`border-b px-4 py-2.5 flex items-start gap-2 ${theme.head}`}>
+        <span className={`w-2.5 h-2.5 mt-1 rounded-full shrink-0 ${theme.dot}`} />
+        <span className={`text-xs font-bold tracking-wide ${theme.label}`}>{side.label}</span>
+      </div>
+      {hasCode && (
+        <pre className="bg-[#0d1117] p-4 font-mono text-sm text-slate-300 overflow-x-auto leading-relaxed whitespace-pre min-h-[80px]">
+          {side.code}
+        </pre>
+      )}
+      {hasResult && hasCode && (
+        <div data-result className="bg-[#0d1117] px-4 pb-4 font-mono text-sm text-emerald-300">{`→ ${pyValue(side.result)}`}</div>
+      )}
+      {hasResult && !hasCode && (
+        <div data-result className="px-4 py-6 font-mono text-3xl font-bold text-text-primary">{pyValue(side.result)}</div>
+      )}
+    </div>
+  );
+}
+
 export default function ComparisonPanel({
   before = { label: 'Before', code: '' },
   after = { label: 'After', code: '' },
+  tone = 'neutral',
   duration = 3000,
   onComplete,
 }) {
@@ -51,44 +84,17 @@ export default function ComparisonPanel({
     return () => { tl.kill(); };
   }, [stableBefore, stableAfter, duration]);
 
+  const ba = tone === 'before_after';
   return (
-    <div ref={containerRef} className="relative grid grid-cols-2 gap-6 max-w-3xl">
+    <div ref={containerRef} data-tone={ba ? 'before_after' : 'neutral'} className="relative grid grid-cols-2 gap-6 max-w-3xl">
       {/* VS badge */}
       <div ref={vsRef} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 opacity-0">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-purple-500/30">
           VS
         </div>
       </div>
-
-      {/* Before */}
-      <div
-        ref={leftRef}
-        className="rounded-2xl overflow-hidden border border-red-500/20 shadow-lg shadow-red-500/5 opacity-0"
-        style={{ background: 'linear-gradient(135deg, rgba(239,68,68,0.05), transparent)' }}
-      >
-        <div className="border-b border-red-500/15 px-4 py-2.5 flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.5)]" />
-          <span className="text-xs font-bold text-red-400 uppercase tracking-wider">{stableBefore.label}</span>
-        </div>
-        <pre className="bg-[#0d1117] p-4 font-mono text-sm text-slate-300 overflow-x-auto leading-relaxed min-h-[80px]">
-          {stableBefore.code}
-        </pre>
-      </div>
-
-      {/* After */}
-      <div
-        ref={rightRef}
-        className="rounded-2xl overflow-hidden border border-green-500/20 shadow-lg shadow-green-500/5 opacity-0"
-        style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.05), transparent)' }}
-      >
-        <div className="border-b border-green-500/15 px-4 py-2.5 flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.5)]" />
-          <span className="text-xs font-bold text-green-400 uppercase tracking-wider">{stableAfter.label}</span>
-        </div>
-        <pre className="bg-[#0d1117] p-4 font-mono text-sm text-slate-300 overflow-x-auto leading-relaxed min-h-[80px]">
-          {stableAfter.code}
-        </pre>
-      </div>
+      <Side side={stableBefore} innerRef={leftRef} ba={ba} kind="before" />
+      <Side side={stableAfter} innerRef={rightRef} ba={ba} kind="after" />
     </div>
   );
 }
