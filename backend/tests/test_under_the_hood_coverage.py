@@ -1,8 +1,9 @@
-"""Coverage: every lesson that has example code yields a heap trace without a tracer error.
+"""Coverage: every lesson that has example code yields a heap trace that is either clean or fails only for a
+listed environment limit.
 
 Runs `trace_code(example_code(lesson), mode="heap")` serially for ALL lessons under backend/lessons
 (~380 with example code, about 3 minutes; the sandbox serialises per process anyway, so no sampling is
-needed) and requires >= 95 % to trace cleanly. Also guards the payload size (numpy/pandas objects must
+needed) and requires >= 95 % to be clean or environment-limited (listed); the clean share is printed separately. Also guards the payload size (numpy/pandas objects must
 show type + short repr only) and that the harness itself never crashes (RunError).
 
 A failure is allowed (and listed in the report) only when the lesson legitimately cannot run in the
@@ -85,9 +86,10 @@ def test_every_lesson_example_traces_in_heap_mode():
         if size > MAX_PAYLOAD_BYTES:
             oversized.append(f"{lesson_id}: {size}")
     ok = checked - len(failures) - len(allowed)
-    pct = 100.0 * (checked - len(failures)) / checked
+    pct = 100.0 * (checked - len(failures)) / checked          # clean or environment-limited
+    clean_pct = 100.0 * ok / checked
     summary = (f"{ok}/{checked} lessons traced cleanly; {len(allowed)} more fail only for environment limits; "
-               f"{pct:.1f}% pass ({len(ALLOW_LIST)} allow-listed and skipped) in {time.time() - started:.0f}s.\n"
+               f"{clean_pct:.1f}% clean, {pct:.1f}% clean-or-environment-limited ({len(ALLOW_LIST)} allow-listed and skipped) in {time.time() - started:.0f}s.\n"
                f"environment-limited:\n" + "\n".join(allowed) + "\nfailures:\n" + "\n".join(failures))
     print(summary)
     assert not oversized, f"payloads over {MAX_PAYLOAD_BYTES} bytes: {oversized}"

@@ -8,7 +8,7 @@ import hashlib
 import hmac
 import json
 from collections import OrderedDict
-from ratelimit import limit_ai_chat, limit_grading
+from ratelimit import limit_ai_chat, limit_grading, SlidingWindowRateLimiter
 import re
 import os
 import sqlite3
@@ -962,15 +962,29 @@ def catalog_stats():
     return {"lessons": len(lessons), "tracks": len({l.get("track") for l in lessons if l.get("track")})}
 
 
-_UTH_CACHE_MAX = 256
+_UTH_CACHE_MAX = 512
 _uth_cache: "OrderedDict[tuple, dict]" = OrderedDict()   # (lesson_id, sha256(code)) -> result; LRU, small on a 1 GB VM
 _uth_lock = threading.Lock()
+_uth_inflight: dict = {}                                  # key -> [lock, waiters]; single-flight per cache key
+_uth_limiter = SlidingWindowRateLimiter(max_calls=30, window_seconds=60)   # cache MISSES only, per user
+# errors that are a property of the code itself (cacheable); anything else (RunError, timeouts, busy) is transient
+_UTH_DETERMINISTIC_ERRORS = {"SyntaxError", "NameError", "StepLimit", "ImportError", "ModuleNotFoundError",
+                             "TooLong", "IndentationError"}
+
+
+def _uth_get(key):
+    with _uth_lock:
+        hit = _uth_cache.get(key)
+        if hit is not None:
+            _uth_cache.move_to_end(key)
+        return hit
 
 
 @router.get("/lesson/{lesson_id}/under-the-hood")
 def lesson_under_the_hood(lesson_id: str, caller: str = Depends(get_current_user_id)):
     """Heap trace (names, objects, frames, events per step) of the lesson's example code, for the
-    "Under the hood" view. Same auth + learning-access gates as /lesson/{id}; 404 without example code."""
+    "Under the hood" view. Same auth + learning-access gates as /lesson/{id}; 404 without example code.
+    Cache hits are free; a miss runs one sandboxed trace (single-flight per key) and counts against a per-user limit."""
     from access import assert_learning_access, ENTERPRISE_TRACKS, has_enterprise_access
     from vaathiyaar.lesson_code import example_code
     from vaathiyaar.tracer import trace_code
@@ -987,18 +1001,33 @@ def lesson_under_the_hood(lesson_id: str, caller: str = Depends(get_current_user
     if not code:
         raise HTTPException(status_code=404, detail="This lesson has no example code to look inside.")
     key = (lesson_id, hashlib.sha256(code.encode("utf-8")).hexdigest())
+    hit = _uth_get(key)
+    if hit is not None:
+        return hit
     with _uth_lock:
-        hit = _uth_cache.get(key)
-        if hit is not None:
-            _uth_cache.move_to_end(key)
-    if hit is None:
-        hit = {**trace_code(code, mode="heap"), "code": code}
-        if (hit.get("error") or {}).get("type") != "RunError":      # don't pin transient sandbox failures
-            with _uth_lock:
-                _uth_cache[key] = hit
-                while len(_uth_cache) > _UTH_CACHE_MAX:
-                    _uth_cache.popitem(last=False)
-    return hit
+        entry = _uth_inflight.setdefault(key, [threading.Lock(), 0])
+        entry[1] += 1
+    try:
+        with entry[0]:
+            hit = _uth_get(key)          # another request may have filled it while we waited
+            if hit is not None:
+                return hit
+            if not _uth_limiter.allow(caller):
+                wait = _uth_limiter.retry_after(caller)
+                raise HTTPException(status_code=429, detail=f"Rate limit reached. Try again in {wait}s.")
+            hit = {**trace_code(code, mode="heap"), "code": code}
+            err_type = (hit.get("error") or {}).get("type")
+            if err_type is None or err_type in _UTH_DETERMINISTIC_ERRORS:
+                with _uth_lock:
+                    _uth_cache[key] = hit
+                    while len(_uth_cache) > _UTH_CACHE_MAX:
+                        _uth_cache.popitem(last=False)
+            return hit
+    finally:
+        with _uth_lock:
+            entry[1] -= 1
+            if entry[1] == 0:
+                _uth_inflight.pop(key, None)
 
 
 @router.get("/lesson/{lesson_id}")

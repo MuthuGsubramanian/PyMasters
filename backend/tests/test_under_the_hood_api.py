@@ -62,6 +62,7 @@ def client(tmp_path, monkeypatch):
     conn.commit(); conn.close()
     import routes.classroom as classroom
     classroom._uth_cache.clear()
+    classroom._uth_limiter._calls.clear()
     from fastapi.testclient import TestClient
     return TestClient(main_mod.app)
 
@@ -145,3 +146,72 @@ def test_playground_trace_mode_passthrough(client, monkeypatch):
     assert client.post("/api/playground/trace", json={"code": "x = 1", "mode": "heap"}, headers=h).status_code == 200
     assert calls == [("x = 1", "steps"), ("x = 1", "steps"), ("x = 1", "heap")]
     assert client.post("/api/playground/trace", json={"code": "x = 1", "mode": "bogus"}, headers=h).status_code == 400
+
+
+def test_cache_hits_do_not_consume_the_limit_but_misses_do(client, monkeypatch):
+    import routes.classroom as classroom
+    import vaathiyaar.tracer as tracer
+    calls = []
+    monkeypatch.setattr(tracer, "trace_code", _fake_trace(calls))
+    monkeypatch.setattr(classroom, "_uth_limiter", classroom.SlidingWindowRateLimiter(max_calls=2, window_seconds=60))
+    current = {"code": "x = 0"}
+    monkeypatch.setattr(classroom, "_load_lesson_from_dir", lambda lid, *a, **k: _lesson(current["code"]))
+    h = _headers("u1")
+    get = lambda: client.get("/api/classroom/lesson/fake/under-the-hood", headers=h)
+    for _ in range(5):                           # one miss, four free hits
+        assert get().status_code == 200
+    assert len(calls) == 1
+    current["code"] = "x = 1"
+    assert get().status_code == 200              # second miss
+    current["code"] = "x = 2"
+    r = get()                                    # third miss is over the limit
+    assert r.status_code == 429 and "Try again in" in r.json()["detail"]
+    current["code"] = "x = 0"
+    assert get().status_code == 200              # cached entries still served
+
+
+def test_concurrent_cold_requests_run_one_trace(client, monkeypatch):
+    import threading
+    import time
+    import routes.classroom as classroom
+    import vaathiyaar.tracer as tracer
+    calls = []
+
+    def slow(code, timeout=10, mode="steps"):
+        calls.append(code)
+        time.sleep(0.4)
+        return {"steps": [], "stdout": "", "error": None}
+    monkeypatch.setattr(tracer, "trace_code", slow)
+    monkeypatch.setattr(classroom, "_load_lesson_from_dir", lambda lid, *a, **k: _lesson())
+    codes = []
+
+    def hit():
+        codes.append(client.get("/api/classroom/lesson/fake/under-the-hood", headers=_headers("u1")).status_code)
+    threads = [threading.Thread(target=hit) for _ in range(4)]
+    [t.start() for t in threads]
+    [t.join() for t in threads]
+    assert codes == [200] * 4 and len(calls) == 1
+    assert not classroom._uth_inflight
+
+
+def test_transient_run_error_is_not_cached(client, monkeypatch):
+    import routes.classroom as classroom
+    import vaathiyaar.tracer as tracer
+    calls = []
+
+    def flaky(code, timeout=10, mode="steps"):
+        calls.append(code)
+        return {"steps": [], "stdout": "", "error": {"type": "RunError", "message": "busy", "line": None}}
+    monkeypatch.setattr(tracer, "trace_code", flaky)
+    monkeypatch.setattr(classroom, "_load_lesson_from_dir", lambda lid, *a, **k: _lesson())
+    for _ in range(2):
+        assert client.get("/api/classroom/lesson/fake/under-the-hood", headers=_headers("u1")).status_code == 200
+    assert len(calls) == 2 and not classroom._uth_cache
+
+
+def test_enterprise_lesson_is_403_without_access(client, monkeypatch):
+    import routes.classroom as classroom
+    from access import ENTERPRISE_TRACKS
+    lesson = {**_lesson(), "track": next(iter(ENTERPRISE_TRACKS))}
+    monkeypatch.setattr(classroom, "_load_lesson_from_dir", lambda lid, *a, **k: lesson)
+    assert client.get("/api/classroom/lesson/fake/under-the-hood", headers=_headers("u1")).status_code == 403
