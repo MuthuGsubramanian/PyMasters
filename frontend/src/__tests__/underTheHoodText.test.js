@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { useTranslation } from '../i18n';
+// useTranslation is a plain dictionary lookup (no React state), so the test can call it outside a component.
+import { useTranslation as translator } from '../i18n';
 import { explainEvent, headline, explainStep } from '../components/animations/underTheHoodText';
 
-const en = useTranslation('en').t;
-const ta = useTranslation('ta').t;
+const en = translator('en').t;
+const ta = translator('ta').t;
 
 const EVENTS = {
   new_object: { kind: 'new_object', ref: 'o1', type: 'list' },
