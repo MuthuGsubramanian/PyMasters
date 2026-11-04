@@ -249,5 +249,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "image = [[10, 20], [30, 40]]            # 2x2 grey image\nmask = [[0, 1], [0, 1]]                 # right column is \"cat\"\nboxes = [(1, 0, 2, 2)]                  # x_min, y_min, x_max, y_max\n\ndef resize2x(grid):                     # nearest neighbour: labels stay labels\n    return [[v for v in row for _ in (0, 1)] for row in grid for _ in (0, 1)]\n\ndef brighten(grid, delta):\n    return [[min(255, v + delta) for v in row] for row in grid]\n\ndef compose(image, mask, boxes):\n    out = {\"image\": resize2x(image), \"mask\": resize2x(mask),\n           \"bboxes\": [tuple(c * 2 for c in b) for b in boxes]}\n    out[\"image\"] = brighten(out[\"image\"], 50)       # pixel-only: mask untouched\n    return out\n\nout = compose(image, mask, boxes)\nprint(\"image row 0:\", out[\"image\"][0])\nprint(\"mask row 0: \", out[\"mask\"][0], \"| box:\", out[\"bboxes\"])\n"
 }

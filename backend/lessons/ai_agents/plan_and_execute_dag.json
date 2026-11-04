@@ -246,5 +246,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "from graphlib import TopologicalSorter\n\nplan = {\n    \"fetch_menu\": {\"tool\": lambda: [\"dosa\", \"idli\"], \"needs\": []},\n    \"fetch_prices\": {\"tool\": lambda: {\"dosa\": 60, \"idli\": 40}, \"needs\": []},\n    \"total\": {\"tool\": lambda menu, prices: sum(prices[m] for m in menu),\n              \"needs\": [\"fetch_menu\", \"fetch_prices\"]},\n}\ngraph = {name: step[\"needs\"] for name, step in plan.items()}\norder = list(TopologicalSorter(graph).static_order())\n\nresults = {}\nfor name in order:\n    step = plan[name]\n    inputs = [results[dep] for dep in step[\"needs\"]]\n    results[name] = step[\"tool\"](*inputs)\n\nprint(\"order:\", order)\nprint(\"total bill:\", results[\"total\"])\n"
 }

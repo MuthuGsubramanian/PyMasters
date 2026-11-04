@@ -241,5 +241,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "leaderboard = {\"big-embedder\": 64.1, \"small-embedder\": 58.7}   # public average\nmy_queries = [(\"refund rules\", \"doc_refund\"), (\"reset login\", \"doc_login\"),\n              (\"cancel plan\", \"doc_cancel\")]\nretrieved = {                       # what each model returned first on MY data\n    \"big-embedder\": [\"doc_refund\", \"doc_billing\", \"doc_billing\"],\n    \"small-embedder\": [\"doc_refund\", \"doc_login\", \"doc_cancel\"],\n}\n\nmy_scores = {}\nfor model, top1 in retrieved.items():\n    hits = sum(1 for (q, gold), got in zip(my_queries, top1) if got == gold)\n    my_scores[model] = round(hits / len(my_queries), 2)\n\nfor model in leaderboard:\n    print(f\"{model:15} MTEB {leaderboard[model]}  my recall@1 {my_scores[model]}\")\nprint(\"pick:\", max(my_scores, key=my_scores.get))\n"
 }

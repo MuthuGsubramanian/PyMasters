@@ -207,5 +207,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "workspace = {}                                        # stands in for the file system\nattempts = [\n    \"def add(a, b):\\n    return a - b\\n\",             # first draft has a bug\n    \"def add(a, b):\\n    return a + b\\n\",\n]\n\ndef run_tests(source):\n    scope = {}\n    exec(source, scope)\n    got = scope[\"add\"](2, 3)\n    return \"PASS\" if got == 5 else f\"FAIL: add(2, 3) returned {got}\"\n\nmemory = []\nfor draft in attempts:                               # write -> run -> read feedback\n    workspace[\"calc.py\"] = draft\n    result = run_tests(workspace[\"calc.py\"])\n    memory.append(result)\n    if result == \"PASS\":\n        break\n\nprint(memory)\n"
 }

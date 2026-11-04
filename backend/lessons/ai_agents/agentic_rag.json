@@ -153,5 +153,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "library = {\n    \"docs\": [\"Python lists are mutable\", \"Tuples are immutable\"],\n    \"faq\": [\"Lists can grow with append\", \"Sets have no order\"],\n}\n\ndef retrieve(question, source):\n    words = set(question.lower().split())\n    return [d for d in library[source] if words & set(d.lower().split())]\n\ndef is_sufficient(docs):\n    return len(docs) >= 3\n\nquestion = \"are lists mutable and can lists grow\"\nstate = {\"question\": question, \"documents\": [], \"tried\": []}\nfor source in [\"docs\", \"faq\"]:           # the agent decides to look further\n    state[\"documents\"] += retrieve(question, source)\n    state[\"tried\"].append(source)\n    if is_sufficient(state[\"documents\"]):\n        break\n\nprint(\"searched\", state[\"tried\"], \"->\", state[\"documents\"])\n"
 }

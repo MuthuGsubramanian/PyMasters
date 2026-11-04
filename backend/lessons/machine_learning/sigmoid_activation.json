@@ -199,5 +199,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "import math\n\ndef sigmoid(z):\n    return 1 / (1 + math.exp(-z))\n\nspam_scores = {\"win money now\": 4.2, \"meeting at 3\": -1.7, \"free trial ends\": 0.4}\nthreshold = 0.5\n\ndecisions = {}\nfor subject, score in spam_scores.items():\n    p = round(sigmoid(score), 3)\n    decisions[subject] = {\"p_spam\": p, \"spam\": p >= threshold}\n\nprint(\"sigmoid(0) =\", sigmoid(0))\nfor subject, d in decisions.items():\n    print(f\"{subject:16} {d}\")\n"
 }

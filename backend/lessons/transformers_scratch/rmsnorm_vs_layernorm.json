@@ -211,5 +211,6 @@
     "category": "transformers",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "x = [2.0, 4.0, 6.0, 8.0]\nshifted = [v + 10 for v in x]\n\ndef layer_norm(v):\n    mean = sum(v) / len(v)\n    var = sum((a - mean) ** 2 for a in v) / len(v)\n    return [round((a - mean) / (var + 1e-5) ** 0.5, 2) for a in v]\n\ndef rms_norm(v):\n    rms = (sum(a * a for a in v) / len(v)) ** 0.5     # no mean: one pass, cheaper\n    return [round(a / rms, 2) for a in v]\n\nresults = {\n    \"layer(x)\": layer_norm(x), \"layer(x+10)\": layer_norm(shifted),\n    \"rms(x)\": rms_norm(x), \"rms(x+10)\": rms_norm(shifted),\n}\nfor name, out in results.items():\n    print(f\"{name:12} {out}\")\n"
 }

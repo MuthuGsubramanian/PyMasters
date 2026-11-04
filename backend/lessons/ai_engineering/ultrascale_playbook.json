@@ -212,5 +212,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "params = 7e9                          # a 7B-parameter model\ngpus = 8\nbytes_per_param = {\"weights\": 2, \"grads\": 2, \"optimizer\": 12}   # fp16 + Adam fp32 states\n\ndef per_gpu_gb(stage):\n    w, g, o = (params * bytes_per_param[k] for k in (\"weights\", \"grads\", \"optimizer\"))\n    if stage >= 1:\n        o /= gpus                     # ZeRO-1: shard optimizer states\n    if stage >= 2:\n        g /= gpus                     # ZeRO-2: also shard gradients\n    if stage >= 3:\n        w /= gpus                     # ZeRO-3: also shard weights\n    return round((w + g + o) / 1e9, 1)\n\nmemory = {f\"ZeRO-{s}\" if s else \"DDP\": per_gpu_gb(s) for s in range(4)}\nfor name, gb in memory.items():\n    print(f\"{name:7} {gb:6} GB per GPU\", \"(fits 80 GB)\" if gb <= 80 else \"\")\n"
 }

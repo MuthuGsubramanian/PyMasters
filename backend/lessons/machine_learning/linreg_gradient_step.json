@@ -213,5 +213,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "xs = [1.0, 2.0, 3.0]\nys = [3.0, 6.0, 9.0]                 # the true slope is 3\nw, lr = 0.0, 0.05\nhistory = []\n\nfor epoch in range(4):\n    preds = [w * x for x in xs]\n    errors = [p - y for p, y in zip(preds, ys)]\n    gradient = sum(2 * x * e for x, e in zip(xs, errors)) / len(xs)\n    w = w - lr * gradient            # step downhill\n    loss = sum(e * e for e in errors) / len(xs)\n    history.append({\"epoch\": epoch, \"w\": round(w, 3), \"loss\": round(loss, 2)})\n\nfor row in history:\n    print(row)\n"
 }

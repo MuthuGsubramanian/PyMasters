@@ -235,5 +235,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "query = \"speed up pandas joins\"\ndocs = [\"speed up your car\", \"make pandas joins faster\", \"pandas merge is slow\"]\nSYN = {\"faster\": \"speed\", \"merge\": \"joins\"}        # meaning only visible when read together\n\ndef bi_score(q, d):                  # bi-encoder: texts compared separately, word overlap\n    return len(set(q.split()) & set(d.split()))\n\ndef cross_score(q, d):               # cross-encoder: reads query AND doc as one input\n    dw = {SYN.get(w, w) for w in d.split()}\n    qw = q.split()\n    matched = sum(1 for w in qw if w in dw)\n    return matched + (2 if \"pandas\" in qw and \"pandas\" in dw else 0)\n\nstage1 = sorted(docs, key=lambda d: bi_score(query, d), reverse=True)     # fast recall\nscores = {d: cross_score(query, d) for d in stage1}                       # slow, precise\nstage2 = sorted(stage1, key=scores.get, reverse=True)\nprint(\"bi-encoder order:   \", stage1)\nprint(\"cross-encoder order:\", stage2, scores)\n"
 }

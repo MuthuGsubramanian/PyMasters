@@ -248,5 +248,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "notes = \"Our office opens at 9. Parking is in lot B. Lunch is served at 1. Wifi password is on the badge.\"\nchunks = [s.strip() for s in notes.split(\".\") if s.strip()]\nvocab = [\"office\", \"opens\", \"parking\", \"lot\", \"lunch\", \"wifi\", \"password\"]\n\ndef embed(text):\n    words = text.lower().split()\n    vec = [words.count(v) for v in vocab]\n    norm = sum(x * x for x in vec) ** 0.5 or 1\n    return [x / norm for x in vec]\n\nchunk_vecs = [embed(c) for c in chunks]\nquery = \"where is parking\"\nq_vec = embed(query)\nscores = [sum(a * b for a, b in zip(q_vec, cv)) for cv in chunk_vecs]\nbest = max(range(len(chunks)), key=lambda i: scores[i])\nprompt = f\"Answer using ONLY this context:\\n{chunks[best]}\\n\\nQuestion: {query}\"\nprint(prompt)\n"
 }

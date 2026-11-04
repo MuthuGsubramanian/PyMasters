@@ -151,5 +151,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "from dataclasses import dataclass\n\n@dataclass\nclass CityWeather:\n    city: str\n    temperature: float\n    condition: str\n\ndef fake_model(prompt):\n    return {\"city\": \"Chennai\", \"temperature\": \"31.5\", \"condition\": \"humid\"}\n\nclass Agent:\n    def __init__(self, result_type):\n        self.result_type = result_type\n    def run(self, prompt):\n        raw = fake_model(prompt)\n        raw[\"temperature\"] = float(raw[\"temperature\"])   # validate / coerce\n        return self.result_type(**raw)\n\nagent = Agent(result_type=CityWeather)\nresult = agent.run(\"Weather in Chennai?\")\nprint(result, type(result.temperature).__name__)\n"
 }

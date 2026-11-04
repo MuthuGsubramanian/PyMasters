@@ -246,5 +246,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "RISKY = {\"delete_file\"}\nplan = [(\"search\", {\"q\": \"flights\"}, 3), (\"search\", {\"q\": \"flights\"}, 3),\n        (\"search\", {\"q\": \"flights\"}, 3), (\"delete_file\", {\"path\": \"notes\"}, 1)]\nmax_cents, max_repeats = 8, 2\nspent, seen, log = 0, {}, []\n\ndef approver(tool, args):\n    return False          # a human said no\n\nfor tool, args, cost in plan:\n    if spent + cost > max_cents:\n        log.append(\"STOP: budget\"); break\n    sig = (tool, tuple(sorted(args.items())))\n    seen[sig] = seen.get(sig, 0) + 1\n    if seen[sig] > max_repeats:\n        log.append(\"STOP: loop on \" + tool); break\n    if tool in RISKY and not approver(tool, args):\n        log.append(\"BLOCKED \" + tool); continue\n    spent += cost\n    log.append(f\"ran {tool} ({cost}c)\")\n\nprint(log, \"spent:\", spent)\n"
 }

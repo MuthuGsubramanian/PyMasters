@@ -245,5 +245,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "ledger, seen = [], {}\nfailures = [True, True, False]       # the network fails twice, then works\n\ndef charge(key, amount):\n    if failures.pop(0):\n        raise ConnectionError(\"timeout\")\n    if key not in seen:\n        ledger.append(amount)\n        seen[key] = f\"charged {amount}\"\n    return seen[key]\n\ndelays = []\nfor attempt in range(1, 5):\n    try:\n        receipt = charge(\"order-7-charge\", 250)\n        break\n    except ConnectionError:\n        delays.append(0.1 * 2 ** (attempt - 1))   # would wait this long\n\nfailures.append(False)\nagain = charge(\"order-7-charge\", 250)         # same key: no second charge\nprint(receipt, \"| waits:\", delays, \"| ledger:\", ledger, \"|\", again)\n"
 }

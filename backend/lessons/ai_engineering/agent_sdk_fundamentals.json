@@ -280,5 +280,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "class Agent:\n    def __init__(self, tools, max_turns, allow):\n        self.tools, self.max_turns, self.allow = tools, max_turns, allow\n        self.history = []\n\n    def run(self, question, plans):\n        self.history.append({\"role\": \"user\", \"content\": question})\n        for turn, plan in enumerate(plans[: self.max_turns], 1):\n            if plan[\"type\"] == \"final\":\n                return plan[\"text\"], turn\n            if not self.allow(plan[\"name\"]):                 # permission hook\n                result = f\"denied: {plan['name']}\"\n            else:\n                result = self.tools[plan[\"name\"]](**plan[\"args\"])\n            self.history.append({\"role\": \"tool\", \"content\": result})\n        return \"gave up: turn limit\", self.max_turns\n\nplans = [{\"type\": \"tool\", \"name\": \"rm_rf\", \"args\": {}},\n         {\"type\": \"tool\", \"name\": \"add\", \"args\": {\"a\": 4, \"b\": 5}},\n         {\"type\": \"final\", \"text\": \"4 + 5 = 9\"}]\nagent = Agent({\"add\": lambda a, b: a + b}, max_turns=4, allow=lambda name: name != \"rm_rf\")\nanswer, turns = agent.run(\"What is 4 + 5?\", plans)\nprint(answer, \"in\", turns, \"turns;\", agent.history[1:])\n"
 }
