@@ -113,7 +113,29 @@ function isLocaleMap(obj) {
 }
 
 // CodeStepper: steps -> code + highlightSequence + stepDescriptions
+// A step's explanation as text plus its output. Some lessons put the output
+// inside the explanation map ({en, output}), which is not a pure locale map.
+function stepDescription(step, language) {
+  const desc = step.explanation || step.description || '';
+  let text = desc;
+  let output = step.output || null;
+  if (desc && typeof desc === 'object' && !Array.isArray(desc)) {
+    const { output: inner, ...locales } = desc;
+    if (output == null && inner != null) output = inner;
+    text = isLocaleMap(locales) ? String(locales[language] ?? locales.en ?? Object.values(locales)[0] ?? '') : '';
+  }
+  return { description: typeof text === 'string' ? text : String(text ?? ''), output };
+}
+
 function normalizeCodeStepper(p, language) {
+  // Full code plus line-numbered steps (aws_bedrock_genai): highlight those lines.
+  if (p.code && Array.isArray(p.steps) && !p.highlightSequence
+      && p.steps.length > 0 && p.steps.every((s) => s && typeof s === 'object' && Number.isInteger(s.line))) {
+    p.highlightSequence = p.steps.map((s) => s.line);
+    p.stepDescriptions = p.steps.map((s) => stepDescription(s, language));
+    delete p.steps;
+    return;
+  }
   if (p.steps && !p.code) {
     const steps = p.steps;
     const codeLines = [];
@@ -125,12 +147,7 @@ function normalizeCodeStepper(p, language) {
       codeLines.push(line);
 
       if (typeof step === 'object') {
-        const desc = step.explanation || step.description || '';
-        const resolvedDesc = isLocaleMap(desc) ? (desc[language] || desc.en || '') : desc;
-        descriptions.push({
-          description: resolvedDesc,
-          output: step.output || null,
-        });
+        descriptions.push(stepDescription(step, language));
       } else {
         descriptions.push({});
       }

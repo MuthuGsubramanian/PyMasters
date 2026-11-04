@@ -23,15 +23,34 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
     );
   }, []);
 
+  // Which line is being typed. The terminal types its own lines one after
+  // another; a CodeStepper that moves syncStep after mount can push it further.
+  // The syncStep present at mount is ignored: in a walkthrough the CodeStepper
+  // has already finished by then, and its last index (often past these lines)
+  // used to leave the terminal waiting forever, stalling the sequence.
+  const [selfStep, setSelfStep] = useState(0);
+  const mountSync = useRef(syncStep);
+  const synced = syncStep !== mountSync.current ? syncStep : 0;
+  const lastLine = stableOutput.length - 1;
+  const lineIndex = lastLine < 0 ? -1 : Math.min(Math.max(selfStep, synced, 0), lastLine);
+
+  // Nothing to print: complete after a short beat.
   useEffect(() => {
-    const lineIndex = syncStep;
-    if (lineIndex === prevStep.current) return;
-    if (lineIndex < 0 || lineIndex >= stableOutput.length) return;
+    if (stableOutput.length > 0) return undefined;
+    const hold = gsap.delayedCall(1.5, () => onCompleteRef.current?.());
+    return () => { hold.kill(); };
+  }, [stableOutput]);
+
+  useEffect(() => {
+    if (lineIndex === prevStep.current) return undefined;
+    if (lineIndex < 0 || lineIndex >= stableOutput.length) return undefined;
 
     prevStep.current = lineIndex;
     const isLast = lineIndex === stableOutput.length - 1;
-    const lineText = stableOutput[lineIndex];
+    const lineText = String(stableOutput[lineIndex] ?? '');
 
+    // Lines before this one are shown in full (also after a jump ahead).
+    setVisibleLines(stableOutput.slice(0, lineIndex).map((l) => String(l ?? '')));
     setTypingLine(lineIndex);
     setTypedText('');
 
@@ -55,6 +74,7 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
         });
 
         if (isLast) onCompleteRef.current?.();
+        else setSelfStep((s) => Math.max(s, lineIndex + 1));
       },
     });
 
@@ -73,8 +93,11 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
 
     return () => {
       tl.kill();
+      // A killed line was never finished: let a re-run (StrictMode, or the same
+      // index again) type it instead of returning early.
+      if (tl.progress() < 1) prevStep.current = -1;
     };
-  }, [syncStep, stableOutput]);
+  }, [lineIndex, stableOutput]);
 
   return (
     <div

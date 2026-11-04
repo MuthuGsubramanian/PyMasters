@@ -26,6 +26,9 @@ function detectType(val) {
   return typeof val;
 }
 
+// Seconds each value stays before the box shows the next one (covers the 1.35 s change animation).
+const VALUE_HOLD_S = 1.6;
+
 // `boxes` is the list form ({variable, values, dataType?, label?}[]): one box each.
 export default function VariableBox({ boxes = null, onComplete, ...rest }) {
   const doneRef = useRef(0);
@@ -89,12 +92,28 @@ function VariableBoxCell({ variable = '', values = [], label = '', dataType = ''
     );
   }, [stableValues]);
 
+  // Which value to show. The box steps through its own values; a CodeStepper
+  // that moves syncStep after the box has mounted can push it further. The
+  // syncStep present at mount is ignored: in a walkthrough the CodeStepper has
+  // already finished by then, and its last index (often past this box's
+  // values) used to leave the box waiting forever, stalling the sequence.
+  const [selfStep, setSelfStep] = useState(0);
+  const mountSync = useRef(syncStep);
+  const synced = syncStep !== mountSync.current ? syncStep : 0;
+  const last = stableValues.length - 1;
+  const valueIndex = last < 0 ? -1 : Math.min(Math.max(selfStep, synced, 0), last);
+
   useEffect(() => {
-    const valueIndex = syncStep;
-    if (valueIndex === prevStep.current) return;
-    if (valueIndex < 0 || valueIndex >= stableValues.length) return;
+    if (valueIndex === prevStep.current) return undefined;
+    if (valueIndex < 0 || valueIndex >= stableValues.length) return undefined;
 
     prevStep.current = valueIndex;
+    // Not the last value yet: move on after a beat. Not killed on cleanup, so a
+    // StrictMode effect re-run (which returns early above) cannot lose it; a
+    // late call after unmount is a no-op.
+    if (valueIndex < stableValues.length - 1) {
+      gsap.delayedCall(VALUE_HOLD_S, () => setSelfStep((s) => Math.max(s, valueIndex + 1)));
+    }
     const newValue = stableValues[valueIndex];
     const isLast = valueIndex === stableValues.length - 1;
 
@@ -139,10 +158,11 @@ function VariableBoxCell({ variable = '', values = [], label = '', dataType = ''
       setCurrentValue(newValue);
       if (isLast) onCompleteRef.current?.();
     }
-  }, [syncStep, stableValues]);
+    return undefined;
+  }, [valueIndex, stableValues]);
 
   const totalSteps = stableValues.length;
-  const currentIndex = Math.min(syncStep, totalSteps - 1);
+  const currentIndex = valueIndex;
 
   return (
     <div

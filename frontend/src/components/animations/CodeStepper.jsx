@@ -201,8 +201,19 @@ export default function CodeStepper({
   // Auto-play timeline
   useEffect(() => {
     if (isControlled) return;
-    if (stableSequence.length === 0) return;
     completedRef.current = false;
+
+    // Code with nothing to step through (agent_fundamentals): show it for a
+    // moment, then complete so a walkthrough moves on instead of stalling.
+    if (stableSequence.length === 0) {
+      const hold = gsap.delayedCall(stepDuration + 0.8, () => {
+        if (completedRef.current) return;
+        completedRef.current = true;
+        setIsPlaying(false);
+        onCompleteRef.current?.();
+      });
+      return () => { hold.kill(); };
+    }
 
     if (tlRef.current) tlRef.current.kill();
 
