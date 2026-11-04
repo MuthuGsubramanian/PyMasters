@@ -17,7 +17,6 @@ Prefix: /api/auth/linkedin
 """
 
 import os
-import time
 import uuid
 import json
 import sqlite3
@@ -25,12 +24,11 @@ import secrets as _secrets
 from urllib.parse import urlencode
 
 import requests
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Cookie, HTTPException, Query, Response
 from fastapi.responses import RedirectResponse
 
-import jwt
-from jwt import PyJWTError as JWTError   # PyJWT (python-jose had an unfixed advisory; 2026-11-02)
-from auth import create_access_token, JWT_SECRET, JWT_ALG, _is_blocked
+from routes.oauth_state import clear_nonce, cookie_name, issue_state, state_matches
+from auth import create_access_token, _is_blocked
 
 DB_PATH = os.getenv("DB_PATH", os.path.abspath("pymasters.db"))
 
@@ -40,7 +38,6 @@ AUTHORIZE_URL = "https://www.linkedin.com/oauth/v2/authorization"
 TOKEN_URL = "https://www.linkedin.com/oauth/v2/accessToken"
 USERINFO_URL = "https://api.linkedin.com/v2/userinfo"
 SCOPE = "openid profile email"
-_STATE_TTL = 600  # 10 minutes
 
 
 def _cfg():
@@ -75,19 +72,6 @@ def ensure_oauth_tables(db_path: str = None):
         conn.close()
 
 
-def _sign_state() -> str:
-    payload = {"k": "li_oauth", "n": _secrets.token_urlsafe(12), "exp": int(time.time()) + _STATE_TTL}
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
-
-
-def _verify_state(state: str) -> bool:
-    try:
-        p = jwt.decode(state, JWT_SECRET, algorithms=[JWT_ALG])
-        return p.get("k") == "li_oauth"
-    except JWTError:
-        return False
-
-
 # ── Discovery: lets the frontend decide whether to render the button ────────
 
 @router.get("/config")
@@ -98,7 +82,7 @@ def linkedin_config():
 # ── Step 1: hand the browser a LinkedIn authorize URL ───────────────────────
 
 @router.get("/start")
-def linkedin_start():
+def linkedin_start(response: Response):
     if not is_enabled():
         raise HTTPException(status_code=503, detail="LinkedIn sign-in is not configured.")
     c = _cfg()
@@ -107,7 +91,7 @@ def linkedin_start():
         "client_id": c["client_id"],
         "redirect_uri": c["redirect_uri"],
         "scope": SCOPE,
-        "state": _sign_state(),
+        "state": issue_state("li_oauth", "linkedin", response),
     }
     return {"authorize_url": f"{AUTHORIZE_URL}?{urlencode(params)}"}
 
@@ -115,20 +99,22 @@ def linkedin_start():
 # ── Step 2: LinkedIn redirects back here with ?code&state ───────────────────
 
 @router.get("/callback")
-def linkedin_callback(code: str = Query(None), state: str = Query(None), error: str = Query(None)):
+def linkedin_callback(code: str = Query(None), state: str = Query(None), error: str = Query(None),
+                      nonce: str = Cookie(None, alias=cookie_name("linkedin"))):
     c = _cfg()
     frontend = c["frontend"]
 
     def _bounce(**qs):
         # Fragment, not query (audit L2): the 30-day JWT must not land in proxy access logs or Referer
         # headers; browsers never send the #fragment to a server.
-        return RedirectResponse(url=f"{frontend}/login#{urlencode(qs)}")
+        return clear_nonce("linkedin", RedirectResponse(url=f"{frontend}/login#{urlencode(qs)}"))
 
     if not is_enabled():
         raise HTTPException(status_code=503, detail="LinkedIn sign-in is not configured.")
     if error:
         return _bounce(li_error="LinkedIn sign-in was cancelled.")
-    if not code or not state or not _verify_state(state):
+    # The state must come back to the browser that started sign-in (login CSRF, review M2).
+    if not code or not state_matches(state, "li_oauth", nonce):
         return _bounce(li_error="Invalid or expired sign-in attempt. Please try again.")
 
     # Exchange the code for an access token.
