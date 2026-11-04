@@ -117,6 +117,11 @@ export default function FlowDiagram({
   }, []);
 
   const isControlled = typeof controlledStep === 'number';
+  // Position used for per-step variable values. Derived directly from the prop
+  // when controlled so it is correct on first render (no effect round-trip).
+  const shownIndex = isControlled
+    ? Math.max(-1, Math.min(controlledStep, stablePath.length - 1))
+    : activePathIndex;
 
   // Controlled mode: scroll position picks the path position.
   useEffect(() => {
@@ -239,14 +244,29 @@ export default function FlowDiagram({
           <div className="w-48 border-l border-white/10 p-4">
             <p className="text-xs text-code-foreground/60 uppercase tracking-wider mb-2">Variables</p>
             <div className="space-y-1.5">
-              {Object.entries(variables).map(([name, value]) => (
-                <div key={name} className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-cyan-300 font-medium truncate">{name}</span>
-                  <span className="text-xs text-amber-300 bg-amber-500/10 rounded px-1.5 py-0.5 truncate max-w-[80px]">
-                    {value === null || value === undefined ? 'None' : String(value)}
-                  </span>
-                </div>
-              ))}
+              {Object.entries(variables).map(([name, raw]) => {
+                // Per-step arrays (aligned with executionPath) show the value
+                // at the current step; scalars are shown as-is.
+                const isSeries = Array.isArray(raw);
+                const at = (i) => (isSeries && raw.length > 0
+                  ? raw[Math.max(0, Math.min(i, raw.length - 1))]
+                  : undefined);
+                const value = isSeries ? at(shownIndex) : raw;
+                const changed = isSeries && shownIndex > 0 && value !== at(shownIndex - 1);
+                const empty = value === null || value === undefined;
+                return (
+                  <div key={name} className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-cyan-300 font-medium truncate">{name}</span>
+                    <span
+                      className={`text-xs text-amber-300 rounded px-1.5 py-0.5 truncate max-w-[80px] ${
+                        changed ? 'bg-amber-500/30 ring-1 ring-amber-400/60' : 'bg-amber-500/10'
+                      }`}
+                    >
+                      {empty ? (isSeries ? '—' : 'None') : String(value)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
