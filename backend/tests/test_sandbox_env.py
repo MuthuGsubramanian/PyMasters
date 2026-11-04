@@ -19,6 +19,16 @@ def test_minimal_env_keeps_matplotlib_headless_and_inside_the_run_dir():
     assert env["MPLCONFIGDIR"] == "/tmp/pm_sandbox_x/.mpl"
 
 
+def test_minimal_env_keeps_polars_inside_the_process_limit():
+    # The sandbox allows 16 processes+threads per uid (RLIMIT_NPROC). Polars starts one worker per CPU plus
+    # jemalloc background threads, so on a 4-CPU host polars_data failed with "<jemalloc>: background thread
+    # creation failed (11)" (nightly 2026-11-05). One worker and no allocator background thread, like BLAS.
+    env = _minimal_env(sys.executable, "/tmp/pm_sandbox_x")
+    assert env["POLARS_MAX_THREADS"] == "1"
+    assert env["RAYON_NUM_THREADS"] == "1"
+    assert "background_thread:false" in env["_RJEM_MALLOC_CONF"]
+
+
 @pytest.mark.parametrize("code,expected", [
     ("print(1)", 10),
     ("import pandas as pd\nprint(pd.__version__)", HEAVY_IMPORT_TIMEOUT),

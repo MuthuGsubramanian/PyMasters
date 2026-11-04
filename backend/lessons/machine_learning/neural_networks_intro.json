@@ -342,8 +342,8 @@
         "en": "Modify the perceptron code to learn the OR gate instead of AND. The OR gate outputs 1 if either input is 1. Training data: [0,0]->0, [0,1]->1, [1,0]->1, [1,1]->1. Train and print predictions.",
         "ta": "AND-க்கு பதிலாக OR gate கற்க perceptron code-ஐ மாற்றுங்கள். OR gate ஏதேனும் ஒரு input 1 ஆக இருந்தால் 1 output செய்யும். Train செய்து predictions-ஐ print செய்யுங்கள்."
       },
-      "starter_code": "import numpy as np\n\ndef sigmoid(x):\n    return 1 / (1 + np.exp(-x))\n\n# OR gate training data\nX = np.array([[0,0], [0,1], [1,0], [1,1]])\ny = np.array([  # Fill in OR gate expected outputs\n])\n\nnp.random.seed(42)\nweights = np.random.randn(2, 1)\nbias = np.zeros((1, 1))\n\n# Train for 10000 epochs\n# Your code here\n\n# Print predictions\nfor i in range(4):\n    pred = sigmoid(np.dot(X[i], weights) + bias)\n    print(f'{X[i]} -> {pred[0]:.3f}')",
-      "expected_output": "[0 0] -> 0.021\n[0 1] -> 0.981\n[1 0] -> 0.981\n[1 1] -> 1.000",
+      "starter_code": "import numpy as np\n\ndef sigmoid(x):\n    return 1 / (1 + np.exp(-x))\n\n# OR gate training data\nX = np.array([[0,0], [0,1], [1,0], [1,1]])\ny = np.array([  # Fill in OR gate expected outputs\n])\n\nnp.random.seed(42)\nweights = np.random.randn(2, 1)\nbias = np.zeros((1, 1))\n\n# Train for 10000 epochs\n# Your code here\n\n# Print predictions\nfor i in range(4):\n    pred = sigmoid(np.dot(X[i], weights) + bias)\n    print(f'{X[i]} -> {pred.item():.3f}')",
+      "expected_output": "[0 0] -> 0.023\n[0 1] -> 0.985\n[1 0] -> 0.985\n[1 1] -> 1.000",
       "hints": {
         "en": [
           "OR gate outputs: y = np.array([[0], [1], [1], [1]])",
@@ -356,7 +356,7 @@
           "Training-க்குப் பிறகு, [0,0] 0-க்கு அருகில், மற்றவை 1-க்கு அருகில் இருக்க வேண்டும்"
         ]
       },
-      "test_code": "import numpy as np\ndef sigmoid(x): return 1 / (1 + np.exp(-x))\nX = np.array([[0,0],[0,1],[1,0],[1,1]])\ny = np.array([[0],[1],[1],[1]])\nnp.random.seed(42)\nw = np.random.randn(2,1)\nb = np.zeros((1,1))\nfor _ in range(10000):\n    out = sigmoid(np.dot(X,w)+b)\n    err = y - out\n    adj = err * out * (1-out)\n    w += 0.5 * np.dot(X.T, adj)\n    b += 0.5 * np.sum(adj)\nfinal = sigmoid(np.dot(X,w)+b)\nassert final[0] < 0.1\nassert final[1] > 0.9\nassert final[2] > 0.9\nassert final[3] > 0.9"
+      "test_code": "import numpy as np\nassert 'y' in globals() and np.array_equal(np.asarray(y).reshape(-1), [0, 1, 1, 1]), 'y should hold the OR gate outputs [[0], [1], [1], [1]]'\n_pm_final = 1 / (1 + np.exp(-(np.dot(X, weights) + bias)))\nassert _pm_final[0, 0] < 0.1, f'[0, 0] should predict close to 0 after training, got {_pm_final[0, 0]:.3f}'\nassert all(_pm_final[i, 0] > 0.9 for i in (1, 2, 3)), 'the other three inputs should predict close to 1 after training'\n"
     }
   ],
   "quiz": [
