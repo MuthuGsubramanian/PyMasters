@@ -4,8 +4,10 @@ classroom.py — FastAPI APIRouter for the AI classroom experience.
 Prefix: /api/classroom
 """
 
+import hashlib
 import hmac
 import json
+from collections import OrderedDict
 from ratelimit import limit_ai_chat, limit_grading
 import re
 import os
@@ -958,6 +960,45 @@ def catalog_stats():
     The underlying catalogue is cached; this only counts it."""
     lessons = list_lessons(user_id=None, lang="en", authorization=None).get("lessons", [])
     return {"lessons": len(lessons), "tracks": len({l.get("track") for l in lessons if l.get("track")})}
+
+
+_UTH_CACHE_MAX = 256
+_uth_cache: "OrderedDict[tuple, dict]" = OrderedDict()   # (lesson_id, sha256(code)) -> result; LRU, small on a 1 GB VM
+_uth_lock = threading.Lock()
+
+
+@router.get("/lesson/{lesson_id}/under-the-hood")
+def lesson_under_the_hood(lesson_id: str, caller: str = Depends(get_current_user_id)):
+    """Heap trace (names, objects, frames, events per step) of the lesson's example code, for the
+    "Under the hood" view. Same auth + learning-access gates as /lesson/{id}; 404 without example code."""
+    from access import assert_learning_access, ENTERPRISE_TRACKS, has_enterprise_access
+    from vaathiyaar.lesson_code import example_code
+    from vaathiyaar.tracer import trace_code
+    assert_learning_access(_get_db_path(), caller)
+    lesson = _load_lesson_from_dir(lesson_id)
+    if lesson is None:
+        raise HTTPException(status_code=404, detail=f"Lesson '{lesson_id}' not found.")
+    if lesson.get("track") in ENTERPRISE_TRACKS and not has_enterprise_access(_get_db_path(), caller):
+        raise HTTPException(
+            status_code=403,
+            detail="This lesson is part of the enterprise curriculum, available on organization plans.",
+        )
+    code = example_code(lesson)
+    if not code:
+        raise HTTPException(status_code=404, detail="This lesson has no example code to look inside.")
+    key = (lesson_id, hashlib.sha256(code.encode("utf-8")).hexdigest())
+    with _uth_lock:
+        hit = _uth_cache.get(key)
+        if hit is not None:
+            _uth_cache.move_to_end(key)
+    if hit is None:
+        hit = {**trace_code(code, mode="heap"), "code": code}
+        if (hit.get("error") or {}).get("type") != "RunError":      # don't pin transient sandbox failures
+            with _uth_lock:
+                _uth_cache[key] = hit
+                while len(_uth_cache) > _UTH_CACHE_MAX:
+                    _uth_cache.popitem(last=False)
+    return hit
 
 
 @router.get("/lesson/{lesson_id}")

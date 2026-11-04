@@ -602,6 +602,11 @@ def trace_code_endpoint(request: dict = Body(...), user_id: str = Depends(get_cu
     code = request.get("code", "")
     if not isinstance(code, str) or not code.strip():
         raise HTTPException(status_code=400, detail="No code provided.")
+    mode = request.get("mode", "steps")
+    if mode not in ("steps", "heap"):
+        raise HTTPException(status_code=400, detail="mode must be 'steps' or 'heap'.")
+    if mode == "heap":
+        return trace_code(code, mode="heap")
     return trace_code(code)
 
 
