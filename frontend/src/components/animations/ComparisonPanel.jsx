@@ -87,13 +87,13 @@ export default function ComparisonPanel({
   const ba = tone === 'before_after';
   return (
     <div ref={containerRef} data-tone={ba ? 'before_after' : 'neutral'} className="relative grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl">
-      {/* VS badge */}
-      <div ref={vsRef} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 opacity-0">
+      <Side side={stableBefore} innerRef={leftRef} ba={ba} kind="before" />
+      {/* VS badge: inline between the stacked cards below sm, centred overlay from sm up */}
+      <div ref={vsRef} className="justify-self-center sm:absolute sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:z-10 opacity-0">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-purple-500/30">
           VS
         </div>
       </div>
-      <Side side={stableBefore} innerRef={leftRef} ba={ba} kind="before" />
       <Side side={stableAfter} innerRef={rightRef} ba={ba} kind="after" />
     </div>
   );

@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
+import useReducedMotion from '../../hooks/useReducedMotion';
 
 export default function TerminalOutput({ output = [], syncStep = 0, onComplete }) {
   const containerRef = useRef(null);
-  const [visibleLines, setVisibleLines] = useState([]);
+  const reduced = useReducedMotion();
+  // Reduced motion: every line is on screen from the first render.
+  const [visibleLines, setVisibleLines] = useState(() => (reduced ? (output || []).map((l) => String(l ?? '')) : []));
   const [typingLine, setTypingLine] = useState(null);
   const [typedText, setTypedText] = useState('');
   const lineRefs = useRef([]);
@@ -15,13 +18,23 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || reduced) return;
     gsap.fromTo(
       containerRef.current,
       { opacity: 0, y: 20, scale: 0.98 },
       { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'power3.out' }
     );
-  }, []);
+  }, [reduced]);
+
+  // Reduced motion: no typing, no timers; complete once at once.
+  const reducedDone = useRef(false);
+  useEffect(() => {
+    if (!reduced || reducedDone.current) return;
+    reducedDone.current = true;
+    setVisibleLines(stableOutput.map((l) => String(l ?? '')));
+    setTypingLine(null);
+    onCompleteRef.current?.();
+  }, [reduced, stableOutput]);
 
   // Which line is being typed. The terminal types its own lines one after
   // another; a CodeStepper that moves syncStep after mount can push it further.
@@ -36,12 +49,13 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
 
   // Nothing to print: complete after a short beat.
   useEffect(() => {
-    if (stableOutput.length > 0) return undefined;
+    if (reduced || stableOutput.length > 0) return undefined;
     const hold = gsap.delayedCall(1.5, () => onCompleteRef.current?.());
     return () => { hold.kill(); };
-  }, [stableOutput]);
+  }, [stableOutput, reduced]);
 
   useEffect(() => {
+    if (reduced) return undefined;
     if (lineIndex === prevStep.current) return undefined;
     if (lineIndex < 0 || lineIndex >= stableOutput.length) return undefined;
 
@@ -97,12 +111,12 @@ export default function TerminalOutput({ output = [], syncStep = 0, onComplete }
       // index again) type it instead of returning early.
       if (tl.progress() < 1) prevStep.current = -1;
     };
-  }, [lineIndex, stableOutput]);
+  }, [lineIndex, stableOutput, reduced]);
 
   return (
     <div
       ref={containerRef}
-      className="rounded-2xl overflow-hidden opacity-0 max-w-2xl border border-white/[0.06] shadow-2xl shadow-black/20"
+      className={`rounded-2xl overflow-hidden ${reduced ? '' : 'opacity-0 '}max-w-2xl border border-white/[0.06] shadow-2xl shadow-black/20`}
     >
       {/* Terminal header */}
       <div className="surface-code border-b border-white/10 px-4 py-2.5 flex items-center gap-2">
