@@ -128,4 +128,12 @@ describe('explainStep', () => {
     expect(explainStep({ line: 5 }, ta).headline).toMatch(/[஀-௿]/);
     expect(explainStep({ line: 5 }, ta).headline).toContain('5');
   });
+  it('a missing line never leaks a raw placeholder', () => {
+    for (const step of [null, undefined, {}, { line: null, events: [] }]) {
+      expect(explainStep(step, en)).toEqual({ headline: 'Python runs the next line.', details: [] });
+      const s = explainStep(step, ta).headline;
+      expect(s).toMatch(/[஀-௿]/);
+      expect(s).not.toMatch(/[{}]/);
+    }
+  });
 });

@@ -1,0 +1,520 @@
+{
+ "steps": [
+  {
+   "line": 1,
+   "event": "line",
+   "func": "<module>",
+   "depth": 1,
+   "vars": {},
+   "out": 0,
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {}
+    }
+   ],
+   "objects": {},
+   "events": []
+  },
+  {
+   "line": 2,
+   "event": "line",
+   "func": "<module>",
+   "depth": 1,
+   "vars": {
+    "a": "[1, 2]"
+   },
+   "out": 0,
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {
+      "a": "o1"
+     }
+    }
+   ],
+   "objects": {
+    "o1": {
+     "type": "list",
+     "repr": "[1, 2]",
+     "mutable": true,
+     "items": [
+      "1",
+      "2"
+     ],
+     "len": 2
+    }
+   },
+   "events": [
+    {
+     "kind": "new_object",
+     "ref": "o1",
+     "type": "list"
+    },
+    {
+     "kind": "bind",
+     "name": "a",
+     "ref": "o1",
+     "func": "<module>"
+    }
+   ]
+  },
+  {
+   "line": 3,
+   "event": "line",
+   "func": "<module>",
+   "depth": 1,
+   "vars": {
+    "a": "[1, 2]",
+    "b": "[1, 2]"
+   },
+   "out": 0,
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {
+      "a": "o1",
+      "b": "o1"
+     }
+    }
+   ],
+   "objects": {
+    "o1": {
+     "type": "list",
+     "repr": "[1, 2]",
+     "mutable": true,
+     "items": [
+      "1",
+      "2"
+     ],
+     "len": 2
+    }
+   },
+   "events": [
+    {
+     "kind": "alias",
+     "name": "b",
+     "ref": "o1",
+     "other": "a",
+     "func": "<module>"
+    }
+   ]
+  },
+  {
+   "line": 4,
+   "event": "line",
+   "func": "<module>",
+   "depth": 1,
+   "vars": {
+    "a": "[1, 2, 3]",
+    "b": "[1, 2, 3]"
+   },
+   "out": 0,
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {
+      "a": "o1",
+      "b": "o1"
+     }
+    }
+   ],
+   "objects": {
+    "o1": {
+     "type": "list",
+     "repr": "[1, 2, 3]",
+     "mutable": true,
+     "items": [
+      "1",
+      "2",
+      "3"
+     ],
+     "len": 3
+    }
+   },
+   "events": [
+    {
+     "kind": "mutate",
+     "ref": "o1",
+     "name": "a"
+    }
+   ]
+  },
+  {
+   "line": 5,
+   "event": "line",
+   "func": "<module>",
+   "depth": 1,
+   "vars": {
+    "a": "[1, 2, 3]",
+    "b": "[1, 2, 3]",
+    "x": "1"
+   },
+   "out": 0,
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {
+      "a": "o1",
+      "b": "o1",
+      "x": "o2"
+     }
+    }
+   ],
+   "objects": {
+    "o1": {
+     "type": "list",
+     "repr": "[1, 2, 3]",
+     "mutable": true,
+     "items": [
+      "1",
+      "2",
+      "3"
+     ],
+     "len": 3
+    },
+    "o2": {
+     "type": "int",
+     "repr": "1",
+     "mutable": false
+    }
+   },
+   "events": [
+    {
+     "kind": "new_object",
+     "ref": "o2",
+     "type": "int"
+    },
+    {
+     "kind": "bind",
+     "name": "x",
+     "ref": "o2",
+     "func": "<module>"
+    }
+   ]
+  },
+  {
+   "line": 6,
+   "event": "line",
+   "func": "<module>",
+   "depth": 1,
+   "vars": {
+    "a": "[1, 2, 3]",
+    "b": "[1, 2, 3]",
+    "x": "2"
+   },
+   "out": 0,
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {
+      "a": "o1",
+      "b": "o1",
+      "x": "o3"
+     }
+    }
+   ],
+   "objects": {
+    "o1": {
+     "type": "list",
+     "repr": "[1, 2, 3]",
+     "mutable": true,
+     "items": [
+      "1",
+      "2",
+      "3"
+     ],
+     "len": 3
+    },
+    "o3": {
+     "type": "int",
+     "repr": "2",
+     "mutable": false
+    }
+   },
+   "events": [
+    {
+     "kind": "new_object",
+     "ref": "o3",
+     "type": "int"
+    },
+    {
+     "kind": "rebind",
+     "name": "x",
+     "from": "o2",
+     "to": "o3",
+     "func": "<module>"
+    }
+   ]
+  },
+  {
+   "line": 8,
+   "event": "line",
+   "func": "<module>",
+   "depth": 1,
+   "vars": {
+    "a": "[1, 2, 3]",
+    "b": "[1, 2, 3]",
+    "x": "2",
+    "f": "<function f>"
+   },
+   "out": 0,
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {
+      "a": "o1",
+      "b": "o1",
+      "x": "o3",
+      "f": "o4"
+     }
+    }
+   ],
+   "objects": {
+    "o1": {
+     "type": "list",
+     "repr": "[1, 2, 3]",
+     "mutable": true,
+     "items": [
+      "1",
+      "2",
+      "3"
+     ],
+     "len": 3
+    },
+    "o3": {
+     "type": "int",
+     "repr": "2",
+     "mutable": false
+    },
+    "o4": {
+     "type": "function",
+     "repr": "<function f>",
+     "mutable": false
+    }
+   },
+   "events": [
+    {
+     "kind": "new_object",
+     "ref": "o4",
+     "type": "function"
+    },
+    {
+     "kind": "bind",
+     "name": "f",
+     "ref": "o4",
+     "func": "<module>"
+    }
+   ]
+  },
+  {
+   "line": 7,
+   "event": "line",
+   "func": "f",
+   "depth": 2,
+   "vars": {
+    "n": "2"
+   },
+   "out": 0,
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {
+      "a": "o1",
+      "b": "o1",
+      "x": "o3",
+      "f": "o4"
+     }
+    },
+    {
+     "func": "f",
+     "depth": 2,
+     "names": {
+      "n": "o3"
+     }
+    }
+   ],
+   "objects": {
+    "o3": {
+     "type": "int",
+     "repr": "2",
+     "mutable": false
+    },
+    "o1": {
+     "type": "list",
+     "repr": "[1, 2, 3]",
+     "mutable": true,
+     "items": [
+      "1",
+      "2",
+      "3"
+     ],
+     "len": 3
+    },
+    "o4": {
+     "type": "function",
+     "repr": "<function f>",
+     "mutable": false
+    }
+   },
+   "events": [
+    {
+     "kind": "call",
+     "func": "f",
+     "depth": 2
+    },
+    {
+     "kind": "bind",
+     "name": "n",
+     "ref": "o3",
+     "func": "f"
+    }
+   ]
+  },
+  {
+   "line": 7,
+   "event": "return",
+   "func": "f",
+   "depth": 2,
+   "vars": {
+    "n": "2"
+   },
+   "out": 0,
+   "ret": "4",
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {
+      "a": "o1",
+      "b": "o1",
+      "x": "o3",
+      "f": "o4"
+     }
+    },
+    {
+     "func": "f",
+     "depth": 2,
+     "names": {
+      "n": "o3"
+     }
+    }
+   ],
+   "objects": {
+    "o3": {
+     "type": "int",
+     "repr": "2",
+     "mutable": false
+    },
+    "o1": {
+     "type": "list",
+     "repr": "[1, 2, 3]",
+     "mutable": true,
+     "items": [
+      "1",
+      "2",
+      "3"
+     ],
+     "len": 3
+    },
+    "o4": {
+     "type": "function",
+     "repr": "<function f>",
+     "mutable": false
+    },
+    "o5": {
+     "type": "int",
+     "repr": "4",
+     "mutable": false
+    }
+   },
+   "events": [
+    {
+     "kind": "new_object",
+     "ref": "o5",
+     "type": "int"
+    },
+    {
+     "kind": "return",
+     "func": "f",
+     "ref": "o5"
+    }
+   ]
+  },
+  {
+   "line": 8,
+   "event": "return",
+   "func": "<module>",
+   "depth": 1,
+   "vars": {
+    "a": "[1, 2, 3]",
+    "b": "[1, 2, 3]",
+    "x": "2",
+    "f": "<function f>",
+    "y": "4"
+   },
+   "out": 0,
+   "ret": "None",
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {
+      "a": "o1",
+      "b": "o1",
+      "x": "o3",
+      "f": "o4",
+      "y": "o5"
+     }
+    }
+   ],
+   "objects": {
+    "o1": {
+     "type": "list",
+     "repr": "[1, 2, 3]",
+     "mutable": true,
+     "items": [
+      "1",
+      "2",
+      "3"
+     ],
+     "len": 3
+    },
+    "o3": {
+     "type": "int",
+     "repr": "2",
+     "mutable": false
+    },
+    "o4": {
+     "type": "function",
+     "repr": "<function f>",
+     "mutable": false
+    },
+    "o5": {
+     "type": "int",
+     "repr": "4",
+     "mutable": false
+    }
+   },
+   "events": [
+    {
+     "kind": "bind",
+     "name": "y",
+     "ref": "o5",
+     "func": "<module>"
+    }
+   ]
+  }
+ ],
+ "stdout": "",
+ "error": null,
+ "code": "a = [1, 2]\nb = a\nb.append(3)\nx = 1\nx = x + 1\ndef f(n):\n    return n * 2\ny = f(x)\n"
+}

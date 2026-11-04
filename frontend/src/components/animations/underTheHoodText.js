@@ -20,6 +20,7 @@ const EN = {
   exception: 'An error, `{name}`, happens here, so this line cannot finish normally.',
   exception_anon: 'An error happens here, so this line cannot finish normally.',
   line: 'Python runs line {line}.',
+  line_next: 'Python runs the next line.',
   w_name: 'a name',
   w_name_acc: 'a name',
   w_other: 'a name',
@@ -82,8 +83,11 @@ export function explainStep(step, t) {
   const events = ((step && step.events) || []).map((e) => withType(e, step));
   const top = headline(events);
   if (!top) {
+    const line = step && step.line;
     return {
-      headline: fill(t('uth.line', EN.line), { line: step ? step.line : '' }, t),
+      headline: line != null && line !== ''
+        ? fill(t('uth.line', EN.line), { line }, t)
+        : t('uth.line_next', EN.line_next),
       details: [],
     };
   }
