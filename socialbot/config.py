@@ -45,6 +45,7 @@ TTS_SPEED = 1.06
 QUALITY_MIN_SCORE = 7.5      # calibrated critic score (8 = strong senior-engineer post) + no errors/blockers
 MAX_ATTEMPTS = 4             # write -> critique -> rewrite rounds before a draft is dropped
 NO_REPEAT_DAYS = 120         # same lesson/topic is not reused within this window
+LINKEDIN_FUN_SHARE = 0.35    # share of LinkedIn posts in the random "Fun with Python" real-world format
 
 
 def ensure_dirs():

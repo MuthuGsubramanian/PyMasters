@@ -1,5 +1,6 @@
 """Produce one piece of content end to end: pick lesson -> write -> gate (rewrite up to MAX_ATTEMPTS) -> render."""
 import logging
+import random
 from datetime import datetime
 from pathlib import Path
 
@@ -15,11 +16,21 @@ WRITERS = {
 }
 
 
+def linkedin_style(rng=random):
+    """LinkedIn mixes our "jargon, made simple" posts with random "Fun with Python" real-world posts (owner, 2026-11-04)."""
+    return "fun" if rng.random() < config.LINKEDIN_FUN_SHARE else "jargon"
+
+
 def write_until_good(kind, les):
     prompt_fn, schema = WRITERS[kind]
+    style = linkedin_style() if kind == "linkedin" else None
     feedback, cost, last, best = None, 0.0, None, None
     for attempt in range(1, config.MAX_ATTEMPTS + 1):
-        draft = llm.ask_json(prompt_fn(les, feedback, last[0] if last else None), schema, system=briefs.BRAND)
+        previous = last[0] if last else None
+        prompt = prompt_fn(les, feedback, previous, style=style) if style else prompt_fn(les, feedback, previous)
+        draft = llm.ask_json(prompt, schema, system=briefs.BRAND)
+        if style:
+            draft["style"] = style   # the critic judges each format by its own rules
         cost += draft.pop("_cost_usd", 0) or 0
         ok, score, crit, problems = quality.verdict(kind, draft, les)
         cost += crit.pop("_cost_usd", 0) or 0
