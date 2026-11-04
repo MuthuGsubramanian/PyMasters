@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import useReducedMotion from '../hooks/useReducedMotion';
+import useMediaQuery from '../hooks/useMediaQuery';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // ScrollyExplain — MLU-Explain-style scrollytelling engine.
@@ -27,11 +28,13 @@ export function ScrollyBody({ steps, Visual }) {
     const [active, setActive] = useState(0);
     const stepRefs = useRef([]);
     const reducedMotion = useReducedMotion();
+    const isDesktop = useMediaQuery('(min-width: 1024px)');
 
     useEffect(() => {
         // F4: no scroll-driven advancement under reduced motion — the explicit
         // step controls drive `active` instead (below). Skip the observer entirely.
-        if (reducedMotion) return undefined;
+        // Below lg the steps are stacked with their own visual: no observer needed.
+        if (reducedMotion || !isDesktop) return undefined;
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
@@ -46,7 +49,7 @@ export function ScrollyBody({ steps, Visual }) {
         );
         stepRefs.current.forEach((el) => el && observer.observe(el));
         return () => observer.disconnect();
-    }, [steps.length, reducedMotion]);
+    }, [steps.length, reducedMotion, isDesktop]);
 
     // Clamp active if the step count shrinks.
     useEffect(() => { if (active > steps.length - 1) setActive(Math.max(0, steps.length - 1)); }, [steps.length, active]);
@@ -106,9 +109,34 @@ export function ScrollyBody({ steps, Visual }) {
         );
     }
 
+    // Below lg: each step is its own block — its visual, then its text. Nothing
+    // is sticky, so the visual can never cover the step being read.
+    if (!isDesktop) {
+        return (
+            <div className="space-y-10">
+                {steps.map((step, i) => (
+                    <section key={i} data-step={i} className="space-y-4">
+                        <div className="panel rounded-2xl p-3 overflow-hidden" style={{ height: 'clamp(220px, 40vh, 320px)' }}>
+                            <Visual stepIndex={i} />
+                        </div>
+                        <div className="max-w-md">
+                            {step.title && (
+                                <h2 className="text-lg font-bold font-display text-text-primary mb-2">
+                                    <span className="text-accent-primary mr-2 font-mono text-sm">{String(i + 1).padStart(2, '0')}</span>
+                                    {step.title}
+                                </h2>
+                            )}
+                            <div className="text-[15px] text-text-secondary leading-relaxed space-y-3">{step.body}</div>
+                        </div>
+                    </section>
+                ))}
+            </div>
+        );
+    }
+
     return (
         <div className="lg:grid lg:grid-cols-2 lg:gap-10">
-                {/* Sticky visual — top on mobile, right column on desktop */}
+                {/* Sticky visual — right column on desktop */}
                 <div className="sticky top-14 lg:top-6 z-20 order-2 h-[42vh] lg:h-[78vh] mb-6 lg:mb-0 lg:order-2 lg:col-start-2 lg:row-start-1 float-none">
                     <div className="panel rounded-2xl h-full p-3 lg:p-5 flex flex-col overflow-hidden">
                         <div className="flex-1 min-h-0">
