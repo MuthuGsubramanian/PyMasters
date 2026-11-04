@@ -41,5 +41,6 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "endpoint = {\"deployed\": {\"v1\": 90, \"v2\": 10}, \"min_replicas\": 1, \"max_replicas\": 4}\ncanary_stats = {\"v1\": {\"requests\": 900, \"errors\": 9}, \"v2\": {\"requests\": 100, \"errors\": 0}}\n\ndef error_rate(version):\n    s = canary_stats[version]\n    return s[\"errors\"] / s[\"requests\"]\n\nif error_rate(\"v2\") <= error_rate(\"v1\"):\n    endpoint[\"deployed\"] = {\"v1\": 0, \"v2\": 100}         # promote the challenger\nelse:\n    endpoint[\"deployed\"] = {\"v1\": 100, \"v2\": 0}         # roll back\n\nserving = {\n    \"online\": {\"latency\": \"~100 ms\", \"pays_for\": \"replicas always on\"},\n    \"batch\": {\"latency\": \"minutes\", \"pays_for\": \"only the job\"},\n}\nprint(\"traffic split now:\", endpoint[\"deployed\"])\nprint(\"nightly scoring of 1M rows ->\", \"batch\", serving[\"batch\"])\n"
 }

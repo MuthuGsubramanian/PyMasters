@@ -33,5 +33,6 @@
     {"q": {"en": "Why cap the tool loop with a step budget?"}, "options": {"en": ["Azure bills per loop iteration", "A confused model can otherwise cycle tool calls indefinitely, burning tokens", "Models refuse to make more than two calls", "Step budgets improve JSON parsing"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["ai_foundry_agents", "azure_openai_service"], "concepts_required": ["functions", "dictionaries", "llm_concepts"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_ai", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "def get_order(order_id):\n    return {\"order_id\": order_id, \"status\": \"shipped\"}\n\ntools_schema = [{\"name\": \"get_order\", \"parameters\": {\"required\": [\"order_id\"]}}]\nregistry = {\"get_order\": get_order}\n\ndef fake_model(question):                    # the model only PROPOSES a call\n    return {\"name\": \"get_order\", \"args\": {\"order_id\": \"A-17\"}}\n\ndef run_tool(call):\n    spec = next(t for t in tools_schema if t[\"name\"] == call[\"name\"])\n    missing = [a for a in spec[\"parameters\"][\"required\"] if a not in call[\"args\"]]\n    if missing:\n        return {\"error\": \"missing \" + missing[0]}\n    return registry[call[\"name\"]](**call[\"args\"])\n\ncall = fake_model(\"Where is order A-17?\")\nresult = run_tool(call)\nbad = run_tool({\"name\": \"get_order\", \"args\": {}})\nprint(result, bad)\n"
 }

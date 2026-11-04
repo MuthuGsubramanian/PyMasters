@@ -33,5 +33,6 @@
     {"q": {"en": "Which deployment type trades latency (async results within a time window) for a significant per-token discount?"}, "options": {"en": ["Global Standard", "Provisioned", "Batch", "Data Zone"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["azure_openai_service", "cloud_cost_management", "ai_foundry_platform"], "concepts_required": ["llm_concepts", "functions"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_ai", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "deployments = {\n    \"chat-prod\": {\"model\": \"gpt-4o\", \"sku\": \"ProvisionedManaged\", \"ptu\": 50},\n    \"chat-dev\": {\"model\": \"gpt-4o-mini\", \"sku\": \"GlobalStandard\", \"tpm_quota\": 30000},\n}\n\nclass FakeEndpoint:                          # stands in for the Azure OpenAI client\n    def __init__(self, deployments):\n        self.deployments = deployments\n    def complete(self, model, prompt):       # 'model' is the DEPLOYMENT name\n        d = self.deployments[model]\n        return f\"[{d['model']} via {d['sku']}] reply to {prompt!r}\"\n\nclient = FakeEndpoint(deployments)\nreply = client.complete(model=\"chat-dev\", prompt=\"hi\")\nrpm, tokens_per_call = 200, 800\nneeded_tpm = rpm * tokens_per_call\nfits = needed_tpm <= deployments[\"chat-dev\"][\"tpm_quota\"]\nprint(reply)\nprint(\"needs\", needed_tpm, \"TPM; fits pay-as-you-go quota:\", fits)\n"
 }

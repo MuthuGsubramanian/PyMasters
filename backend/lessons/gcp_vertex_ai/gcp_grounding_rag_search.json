@@ -41,5 +41,6 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "retrieved = [\n    {\"id\": \"policy-3\", \"text\": \"refunds are accepted within 30 days\"},\n    {\"id\": \"policy-7\", \"text\": \"shipping is free above 50 dollars\"},\n]\nanswer_claims = [\n    \"refunds are accepted within 30 days\",\n    \"refunds include a free gift\",\n]\n\ndef support(claim):\n    words = set(claim.split())\n    best = max(retrieved, key=lambda d: len(words & set(d[\"text\"].split())))\n    overlap = len(words & set(best[\"text\"].split())) / len(words)\n    return best[\"id\"], round(overlap, 2)\n\ngrounded = []\nfor claim in answer_claims:\n    source, score = support(claim)\n    grounded.append({\"claim\": claim, \"source\": source if score >= 0.8 else None, \"score\": score})\n\nfor g in grounded:\n    print(g)\n"
 }

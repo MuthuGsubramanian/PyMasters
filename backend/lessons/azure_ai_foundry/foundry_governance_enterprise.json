@@ -33,5 +33,6 @@
     {"q": {"en": "A human reviewer approves 100% of AI outputs at sub-second speed. What does this signal?"}, "options": {"en": ["Excellent model quality, oversight can be removed", "The oversight control has decayed into theater and needs redesign and sample-auditing", "The reviewer deserves automation bonuses", "Nothing; approval rates are meaningless"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["ai_governance", "ai_content_safety", "azure_identity"], "concepts_required": ["ai_safety", "dictionaries", "functions"], "difficulty": "advanced", "engagement_type": "conceptual", "estimated_minutes": 24, "category": "enterprise_ai", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "policy = {\"content_filter\": True, \"managed_identity\": True, \"network_isolation\": True}\ninventory = [\n    {\"name\": \"chat-prod\", \"content_filter\": True, \"managed_identity\": True,\n     \"network_isolation\": True, \"owner\": \"support\"},\n    {\"name\": \"poc-bot\", \"content_filter\": False, \"managed_identity\": True,\n     \"network_isolation\": False, \"owner\": \"labs\"},\n]\n\nreport = {}\nfor deployment in inventory:\n    gaps = [rule for rule, needed in policy.items() if needed and not deployment[rule]]\n    report[deployment[\"name\"]] = {\"owner\": deployment[\"owner\"],\n                                  \"status\": \"compliant\" if not gaps else \"blocked\",\n                                  \"gaps\": gaps}\n\nfor name, row in report.items():\n    print(name, row)\n"
 }

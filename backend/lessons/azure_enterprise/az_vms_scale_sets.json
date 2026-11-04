@@ -33,5 +33,6 @@
     {"q": {"en": "Why should scale-out and scale-in thresholds be far apart with a cooldown?"}, "options": {"en": ["Azure bills per threshold evaluation", "To prevent flapping — rapid provision/destroy cycles that hurt latency", "Narrow bands are rejected by the API", "Cooldowns are required for zone-spread scale sets only"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["azure_compute", "cloud_cost_management"], "concepts_required": ["cloud_fundamentals", "azure_resource_management"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "scale_set = {\"sku\": \"Standard_D4s_v5\", \"zones\": [1, 2, 3], \"priority\": \"Spot\",\n             \"min\": 2, \"max\": 6, \"instances\": []}\n\ndef scale_to(count):\n    count = max(scale_set[\"min\"], min(scale_set[\"max\"], count))\n    scale_set[\"instances\"] = [\n        {\"name\": f\"vm-{i}\", \"zone\": scale_set[\"zones\"][i % len(scale_set[\"zones\"])]}\n        for i in range(count)\n    ]\n\ncpu_by_hour = [35, 82, 91, 40]\nfor cpu in cpu_by_hour:                    # autoscale rule\n    current = len(scale_set[\"instances\"])\n    scale_to(current + 2 if cpu > 75 else current - 1)\n\nzones_used = sorted({vm[\"zone\"] for vm in scale_set[\"instances\"]})\nprint(len(scale_set[\"instances\"]), \"instances across zones\", zones_used)\n"
 }

@@ -34,5 +34,6 @@
     {"q": {"en": "Apps sharing one App Service plan..."}, "options": {"en": ["are isolated with dedicated instances each", "share the plan's instances, so one noisy app can starve the others", "cannot use custom domains", "must use the same programming language"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["azure_compute", "azure_networking"], "concepts_required": ["azure_compute", "azure_resource_management"], "difficulty": "intermediate", "engagement_type": "conceptual", "estimated_minutes": 18, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "workloads = [\n    {\"name\": \"shop-web\", \"containers\": 1, \"needs_k8s_ecosystem\": False, \"event_driven\": False},\n    {\"name\": \"order-mesh\", \"containers\": 14, \"needs_k8s_ecosystem\": True, \"event_driven\": False},\n    {\"name\": \"thumbnailer\", \"containers\": 1, \"needs_k8s_ecosystem\": False, \"event_driven\": True},\n]\n\ndef pick_platform(w):\n    if w[\"event_driven\"]:\n        return \"Functions / Container Apps\"\n    if w[\"needs_k8s_ecosystem\"] or w[\"containers\"] > 10:\n        return \"AKS\"\n    return \"App Service\"\n\ndecisions = {w[\"name\"]: pick_platform(w) for w in workloads}\n\nslots = {\"production\": \"v1\", \"staging\": \"v2\"}          # deployment slots\nslots[\"production\"], slots[\"staging\"] = slots[\"staging\"], slots[\"production\"]  # swap\nprint(decisions)\nprint(\"after slot swap:\", slots)\n"
 }

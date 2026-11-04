@@ -33,5 +33,6 @@
     {"q": {"en": "Which flow type takes another run's inputs/outputs and emits quality metrics?"}, "options": {"en": ["Chat flow", "Standard flow", "Evaluation flow", "Batch flow"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["prompt_flow", "llmops"], "concepts_required": ["llm_concepts", "functions", "dictionaries"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_ai", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "spans = []\n\ndef trace(fn):                                # like promptflow.tracing.trace\n    def wrapper(*args):\n        result = fn(*args)\n        spans.append({\"step\": fn.__name__, \"output\": result})\n        return result\n    return wrapper\n\nDOCS = {\"refund\": \"Refunds within 30 days\", \"ship\": \"Free shipping over 50\"}\n\n@trace\ndef clean(question):\n    return question.strip().lower()\n\n@trace\ndef retrieve(question):\n    return [text for key, text in DOCS.items() if key in question]\n\n@trace\ndef build_prompt(question, chunks):\n    return f\"Context: {chunks}\\nQ: {question}\"\n\nq = clean(\"  How do I get a REFUND? \")\nprompt = build_prompt(q, retrieve(q))\nprint([s[\"step\"] for s in spans])\nprint(prompt)\n"
 }

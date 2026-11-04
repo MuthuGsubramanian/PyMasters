@@ -33,5 +33,6 @@
     {"q": {"en": "A model version you deployed will eventually be retired by Azure OpenAI. What is the professional response?"}, "options": {"en": ["Ignore it; deployments never stop working", "Track retirement dates and re-run evaluations before upgrading versions", "Switch to managed compute to avoid retirement", "Delete the project and start over"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["ai_foundry_platform", "ai_platform_selection", "azure_openai_service"], "concepts_required": ["llm_concepts", "dictionaries", "functions"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 18, "category": "enterprise_ai", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "catalog = [\n    {\"name\": \"gpt-4o\", \"quality\": 0.92, \"cost\": 10.0, \"open_weights\": False},\n    {\"name\": \"gpt-4o-mini\", \"quality\": 0.84, \"cost\": 0.6, \"open_weights\": False},\n    {\"name\": \"phi-4\", \"quality\": 0.80, \"cost\": 0.3, \"open_weights\": True},\n    {\"name\": \"llama-3-70b\", \"quality\": 0.86, \"cost\": 2.0, \"open_weights\": True},\n]\nneeds = {\"min_quality\": 0.82, \"max_cost\": 3.0}\n\nshortlist = [m for m in catalog\n             if m[\"quality\"] >= needs[\"min_quality\"] and m[\"cost\"] <= needs[\"max_cost\"]]\nbest = max(shortlist, key=lambda m: m[\"quality\"] / m[\"cost\"])\nprint(\"shortlist:\", [m[\"name\"] for m in shortlist])\nprint(\"best value:\", best[\"name\"])\n"
 }

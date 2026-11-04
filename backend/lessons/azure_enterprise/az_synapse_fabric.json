@@ -33,5 +33,6 @@
     {"q": {"en": "Serverless SQL pool pricing punishes which lake habit most?"}, "options": {"en": ["Using Parquet format", "Partitioned folder structures", "Millions of tiny un-partitioned files scanned in full per query", "Storing data in the same region as compute"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["azure_data_platform", "cloud_cost_management"], "concepts_required": ["azure_data_platform", "azure_storage"], "difficulty": "advanced", "engagement_type": "conceptual", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "bronze = [\n    {\"sale_id\": 1, \"cust\": \"c1\", \"amount\": \"120\"},\n    {\"sale_id\": 2, \"cust\": \"c2\", \"amount\": \"bad\"},\n    {\"sale_id\": 3, \"cust\": \"c1\", \"amount\": \"80\"},\n]\ndim_customer = {\"c1\": \"Asha\", \"c2\": \"Ravi\"}        # small: replicate everywhere\n\nsilver = []\nfor row in bronze:                                 # clean and type\n    if row[\"amount\"].isdigit():\n        silver.append({**row, \"amount\": int(row[\"amount\"])})\n\ndistributions = {0: [], 1: []}                     # fact table: HASH(sale_id)\nfor row in silver:\n    distributions[row[\"sale_id\"] % 2].append(row)\n\ngold = {}\nfor rows in distributions.values():\n    for row in rows:\n        name = dim_customer[row[\"cust\"]]\n        gold[name] = gold.get(name, 0) + row[\"amount\"]\nprint(distributions)\nprint(\"gold sales by customer:\", gold)\n"
 }

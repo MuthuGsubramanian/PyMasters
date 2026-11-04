@@ -33,5 +33,6 @@
     {"q": {"en": "Subscription vending primarily converts platform engineering into..."}, "options": {"en": ["A monthly change-board meeting", "A self-service product: governed environments created by pipeline in minutes", "A reseller agreement", "A manual runbook with screenshots"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["landing_zones", "cloud_compliance", "infrastructure_as_code"], "concepts_required": ["azure_identity", "azure_networking", "azure_security", "azure_resource_management"], "difficulty": "advanced", "engagement_type": "conceptual", "estimated_minutes": 24, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "hub = {\"vnet\": \"10.0.0.0/16\", \"spokes\": []}\nsubscriptions = []\n\ndef vend_subscription(name, mg, address_prefix, team):\n    sub = {\n        \"name\": name,\n        \"management_group\": mg,\n        \"vnet\": address_prefix,\n        \"peered_to_hub\": True,\n        \"roles\": {team: \"Contributor\"},\n        \"policies\": [\"require-tags\", \"deny-public-ip\"],\n    }\n    hub[\"spokes\"].append(address_prefix)\n    subscriptions.append(sub)\n    return sub\n\nclaims = vend_subscription(\"sub-claims-prod-001\", \"landing-zones-corp\", \"10.42.16.0/22\", \"claims-team\")\nweb = vend_subscription(\"sub-web-prod-001\", \"landing-zones-online\", \"10.42.20.0/22\", \"web-team\")\nprint(claims[\"name\"], claims[\"roles\"], claims[\"policies\"])\nprint(\"hub peers:\", hub[\"spokes\"])\n"
 }

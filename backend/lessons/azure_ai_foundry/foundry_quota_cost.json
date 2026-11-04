@@ -33,5 +33,6 @@
     {"q": {"en": "What is the 'spillover' deployment pattern?"}, "options": {"en": ["Sending failed requests to a cheaper model", "Sizing PTU for baseline traffic and overflowing bursts to a pay-as-you-go deployment", "Duplicating every request across two regions", "Moving all traffic to Batch on weekends"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["cloud_cost_management", "azure_openai_service", "llmops"], "concepts_required": ["llm_concepts", "functions"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_ai", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "MOCK_RATES = {\"big\": {\"in\": 2.5, \"out\": 10.0}, \"mini\": {\"in\": 0.15, \"out\": 0.6}}  # $ per 1M tokens\n\ndef monthly_cost(calls, in_tok, out_tok, rate):\n    return calls * (in_tok * rate[\"in\"] + out_tok * rate[\"out\"]) / 1e6\n\nplans = {\n    \"big, full history\": monthly_cost(3e6, 1500, 300, MOCK_RATES[\"big\"]),\n    \"big, pruned context\": monthly_cost(3e6, 600, 200, MOCK_RATES[\"big\"]),\n    \"mini, pruned context\": monthly_cost(3e6, 600, 200, MOCK_RATES[\"mini\"]),\n}\nbase = plans[\"big, full history\"]\nfor name, cost in plans.items():\n    print(f\"{name:22} ${cost:9,.0f}  saves {1 - cost / base:.0%}\")\n"
 }

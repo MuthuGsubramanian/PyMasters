@@ -49,5 +49,6 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "providers = {\n    \"provider_a\": {\"max_context\": 200_000, \"regions\": [\"us\", \"eu\"], \"cost\": 3},\n    \"provider_b\": {\"max_context\": 128_000, \"regions\": [\"us\"], \"cost\": 2},\n    \"provider_c\": {\"max_context\": 1_000_000, \"regions\": [\"us\", \"eu\", \"asia\"], \"cost\": 4},\n}\nworkloads = [\n    {\"name\": \"EU support chat\", \"context\": 20_000, \"region\": \"eu\"},\n    {\"name\": \"contract review\", \"context\": 600_000, \"region\": \"us\"},\n    {\"name\": \"US autocomplete\", \"context\": 4_000, \"region\": \"us\"},\n]\n\nrouting = {}\nfor w in workloads:\n    fits = [name for name, p in providers.items()\n            if p[\"max_context\"] >= w[\"context\"] and w[\"region\"] in p[\"regions\"]]\n    routing[w[\"name\"]] = min(fits, key=lambda name: providers[name][\"cost\"])\n\nfor workload, provider in routing.items():\n    print(f\"{workload:16} -> {provider}\")\n"
 }

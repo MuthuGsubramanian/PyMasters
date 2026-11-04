@@ -49,5 +49,6 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "TOKENS_PER = {\"page\": 560, \"image\": 258, \"audio_sec\": 32, \"video_sec\": 263}\nwindow = 1_000_000\n\nrequest = [\n    {\"part\": \"contract.pdf\", \"kind\": \"page\", \"count\": 120},\n    {\"part\": \"site photo\", \"kind\": \"image\", \"count\": 3},\n    {\"part\": \"call recording\", \"kind\": \"audio_sec\", \"count\": 900},\n    {\"part\": \"walkthrough\", \"kind\": \"video_sec\", \"count\": 600},\n]\n\ntotal, breakdown = 0, {}\nfor item in request:\n    tokens = TOKENS_PER[item[\"kind\"]] * item[\"count\"]\n    breakdown[item[\"part\"]] = tokens\n    total += tokens\n\nprint(breakdown)\nprint(f\"{total:,} tokens = {total / window:.0%} of the window;\",\n      \"fits in ONE request\" if total <= window else \"needs splitting\")\n"
 }

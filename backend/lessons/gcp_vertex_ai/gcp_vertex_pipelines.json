@@ -41,5 +41,6 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "import hashlib\nimport json\n\ncache, runs = {}, []\n\ndef component(name, fn):\n    def run(**inputs):\n        key = hashlib.sha256(json.dumps([name, inputs], sort_keys=True).encode()).hexdigest()[:8]\n        if key in cache:\n            runs.append(f\"{name}: cached\")\n            return cache[key]\n        runs.append(f\"{name}: executed\")\n        cache[key] = fn(**inputs)\n        return cache[key]\n    return run\n\ningest = component(\"ingest\", lambda table: [3, 5, 8, 13])\ntrain = component(\"train\", lambda rows, lr: {\"weight\": round(sum(rows) * lr, 2)})\n\ndef pipeline(table, lr):\n    rows = ingest(table=table)\n    return train(rows=rows, lr=lr)\n\nfirst = pipeline(\"churn_2025\", 0.1)\nsecond = pipeline(\"churn_2025\", 0.2)          # only the changed step re-runs\nprint(first, second)\nprint(runs)\n"
 }

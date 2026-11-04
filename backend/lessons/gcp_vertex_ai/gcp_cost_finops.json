@@ -41,5 +41,6 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "vms = [\n    {\"name\": \"api-1\", \"vcpus\": 16, \"avg_cpu\": 0.11},\n    {\"name\": \"etl-1\", \"vcpus\": 8, \"avg_cpu\": 0.74},\n    {\"name\": \"dev-box\", \"vcpus\": 4, \"avg_cpu\": 0.02},\n]\nbudget, spent = 5000, 4620\nthresholds = [0.5, 0.9, 1.0]\n\nrecommendations = []\nfor vm in vms:\n    if vm[\"avg_cpu\"] < 0.05:\n        recommendations.append((vm[\"name\"], \"stop: idle\"))\n    elif vm[\"avg_cpu\"] < 0.3:\n        new_size = max(2, vm[\"vcpus\"] // 4)\n        recommendations.append((vm[\"name\"], f\"rightsize {vm['vcpus']} -> {new_size} vCPU\"))\n\nalerts = [f\"{int(t * 100)}% budget alert\" for t in thresholds if spent >= t * budget]\nprint(recommendations)\nprint(alerts)\n"
 }

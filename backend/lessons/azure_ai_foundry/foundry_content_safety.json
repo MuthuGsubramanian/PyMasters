@@ -33,5 +33,6 @@
     {"q": {"en": "Why are content filters alone insufficient for agent safety?"}, "options": {"en": ["Filters add too much latency to matter", "Business-logic abuse (e.g., talking an agent into unauthorized refunds) violates no harm category", "Filters only run on weekends", "Agents bypass all filters by design"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["ai_content_safety", "ai_governance"], "concepts_required": ["ai_safety", "llm_concepts", "functions"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_ai", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "SEVERITY_WORDS = {\"attack\": 4, \"weapon\": 6, \"hate\": 4}\nfilter_config = {\"threshold\": 4}             # block medium and above\n\ndef fake_model(prompt):\n    return {\"text\": \"Here is a summary.\", \"finish_reason\": \"stop\"}\n\ndef guarded_chat(prompt):\n    severity = max([SEVERITY_WORDS.get(w, 0) for w in prompt.lower().split()] + [0])\n    if severity >= filter_config[\"threshold\"]:\n        return {\"finish_reason\": \"content_filter\", \"severity\": severity}\n    return fake_model(prompt)\n\nanswers = []\nfor prompt in [\"Summarise this report\", \"Plan an attack on the server\"]:\n    resp = guarded_chat(prompt)\n    if resp[\"finish_reason\"] == \"content_filter\":\n        answers.append(\"I can't help with that request.\")\n    else:\n        answers.append(resp[\"text\"])\nprint(answers)\n"
 }

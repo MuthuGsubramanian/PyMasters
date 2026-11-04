@@ -41,5 +41,6 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "PRICE_PER_TB = 6.25                         # on-demand, illustrative\ntable = {                                   # partitioned by day: GB per partition\n    \"2025-03-01\": 120, \"2025-03-02\": 135, \"2025-03-03\": 128, \"2025-03-04\": 140,\n}\n\ndef dry_run(date_from=None):\n    parts = [d for d in table if date_from is None or d >= date_from]\n    gb = sum(table[d] for d in parts)\n    return {\"partitions\": len(parts), \"gb\": gb, \"cost\": round(gb / 1024 * PRICE_PER_TB, 2)}\n\nfull_scan = dry_run()\npruned = dry_run(date_from=\"2025-03-04\")    # WHERE event_date >= '2025-03-04'\nprint(\"no filter:   \", full_scan)\nprint(\"with filter: \", pruned)\n"
 }
