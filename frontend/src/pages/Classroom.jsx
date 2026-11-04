@@ -16,7 +16,7 @@ import {
     BookOpen, ChevronRight, Play, RotateCcw,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
     Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones, Mic,
-    MessageCircle, X, Cloud, Building2, Network, GraduationCap, Lightbulb, Loader2
+    MessageCircle, X, Cloud, Building2, Network, GraduationCap, Lightbulb, Loader2, History
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import useTTS from '../hooks/useTTS';
@@ -36,6 +36,8 @@ import VoiceTutor from '../components/VoiceTutor';
 import BossBattle from '../components/BossBattle';
 import { Badge } from '../components/ui';
 import useReducedMotion from '../hooks/useReducedMotion';
+import useCodeTrace from '../hooks/useCodeTrace';
+import TraceViewer from '../components/TraceViewer';
 
 // Display labels for the F5 "not available in your language yet" notice.
 const LANG_LABELS = {
@@ -1144,7 +1146,7 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
 // ──────────────────────────────────────────────────────────────────────────────
 // Phase: practice — code challenge
 // ──────────────────────────────────────────────────────────────────────────────
-function PracticePhase({
+export function PracticePhase({
     lesson,
     language,
     code,
@@ -1159,7 +1161,9 @@ function PracticePhase({
     onClearOutput,
     challengeIndex = 0,
     onSelectChallenge,
+    userId,
 }) {
+    const { trace, loading: tracing, error: traceError, visualize, close: closeTrace } = useCodeTrace(userId);
     const challenges = lesson?.practice_challenges || [];
     const challenge = challenges[challengeIndex] ?? null;
     const hints = hintList(challenge, language);
@@ -1242,7 +1246,7 @@ function PracticePhase({
                         </div>
                         <span className="text-[11px] font-mono text-slate-400 ml-2">solution.py</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
                         <span className="text-[10px] text-slate-600 font-mono hidden sm:inline">Ctrl+Enter</span>
                         <button
                             onClick={onRun}
@@ -1256,8 +1260,21 @@ function PracticePhase({
                             )}
                             {running ? 'Running...' : 'Run Code'}
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => visualize(code)}
+                            disabled={tracing || !code?.trim()}
+                            className="flex items-center gap-1.5 text-xs font-semibold text-slate-200 rounded-xl px-3 min-h-[44px] sm:min-h-0 sm:py-1.5 transition-colors bg-white/5 hover:bg-white/10 border border-slate-600/60 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
+                        >
+                            <History size={13} aria-hidden="true" />
+                            {tracing ? 'Tracing…' : 'Visualize my code'}
+                        </button>
                     </div>
                 </div>
+
+                {traceError && (
+                    <p role="alert" className="px-4 py-2 text-xs text-red-300 bg-red-500/10 border-b border-slate-700/50">{traceError}</p>
+                )}
 
                 {/* Editor */}
                 <PythonEditor
@@ -1296,6 +1313,7 @@ function PracticePhase({
                     </button>
                 </div>
             )}
+            {trace && <TraceViewer code={code} trace={trace} onClose={closeTrace} />}
         </div>
     );
 }
@@ -1338,7 +1356,8 @@ function RelatedLessons({ lessonId, language, onOpen }) {
     );
 }
 
-function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0, lessonId, onOpenRelated, nextLesson = null, onNext, nextChallenge = null, onNextChallenge }) {
+export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0, lessonId, onOpenRelated, nextLesson = null, onNext, nextChallenge = null, onNextChallenge, submittedCode = '', userId }) {
+    const { trace, loading: tracing, error: traceError, visualize, close: closeTrace } = useCodeTrace(userId);
     const success = evalResult?.passed ?? evalResult?.success ?? false;
     // Backend flags `struggling` after repeated failures; fall back to a local
     // count so the supportive UI still appears even without the signal.
@@ -1503,20 +1522,36 @@ function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount
                                 </button>
                             )
                         ) : (
+                            <>
                             <button
                                 onClick={onRetry}
                                 className="btn-neo btn-neo-ghost flex items-center gap-2 py-2.5"
                             >
                                 <RotateCcw size={15} /> Try Again
                             </button>
+                            {submittedCode?.trim() && (
+                                <button
+                                    type="button"
+                                    onClick={() => visualize(submittedCode)}
+                                    disabled={tracing}
+                                    className="btn-neo btn-neo-ghost flex items-center gap-2 py-2.5 min-h-[44px] disabled:opacity-40"
+                                >
+                                    <History size={15} aria-hidden="true" /> {tracing ? 'Tracing…' : 'Step through my code'}
+                                </button>
+                            )}
+                            </>
                         )}
                     </div>
+                    {traceError && !success && (
+                        <p role="alert" className="text-sm text-red-600 dark:text-red-400">{traceError}</p>
+                    )}
 
                     {success && lessonId && onOpenRelated && (
                         <RelatedLessons lessonId={lessonId} language={language} onOpen={onOpenRelated} />
                     )}
                 </div>
             </motion.div>
+            {trace && <TraceViewer code={submittedCode} trace={trace} onClose={closeTrace} />}
         </div>
     );
 }
@@ -2312,6 +2347,7 @@ export default function Classroom() {
                                 onClearOutput={() => { setOutput(''); setExecutionTime(null); }}
                                 challengeIndex={challengeIndex}
                                 onSelectChallenge={handleSelectChallenge}
+                                userId={user?.id}
                             /></ErrorBoundary>
                         </motion.div>
                     )}
@@ -2337,6 +2373,8 @@ export default function Classroom() {
                                 onNextChallenge={() => handleSelectChallenge(challengeIndex + 1)}
                                 lessonId={currentLesson?.id}
                                 onOpenRelated={handleSelectLesson}
+                                submittedCode={code}
+                                userId={user?.id}
                             /></ErrorBoundary>
                         </motion.div>
                     )}
