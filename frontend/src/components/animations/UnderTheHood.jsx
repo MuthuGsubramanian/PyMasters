@@ -107,7 +107,9 @@ function ObjectBox({ id, obj, changed, objects, reducedMotion, t }) {
       data-uth-obj={id}
       data-changed={changed ? 'true' : 'false'}
       className={`min-w-0 rounded-lg border bg-bg-surface p-2 ${reducedMotion ? '' : 'transition-shadow duration-500'} ${
-        changed ? 'border-amber-400 ring-2 ring-amber-400/60' : 'border-border-default'}`}
+        changed
+          ? 'border-amber-600 ring-2 ring-amber-600 dark:border-amber-400 dark:ring-amber-400/70'
+          : 'border-border-default'}`}
     >
       <div className="mb-1 flex flex-wrap items-center gap-1.5">
         <RefChip id={id} />
@@ -175,10 +177,10 @@ function FrameList({ frames, step, changedNames, phone, t }) {
                       key={name}
                       data-uth-name={name}
                       data-ref={ref}
-                      aria-label={fmt(t('uth.ui_points_to', '{name} points to {ref}'), { name, ref })}
                       className={`flex min-h-[28px] items-center justify-between gap-2 rounded-md px-1.5 ${hot ? 'bg-amber-400/15' : ''}`}
                     >
-                      <code className="min-w-0 break-all font-mono text-sm font-semibold text-text-primary">{name}</code>
+                      <span className="sr-only">{fmt(t('uth.ui_points_to', '{name} points to {ref}'), { name, ref })}</span>
+                      <code aria-hidden="true" className="min-w-0 break-all font-mono text-sm font-semibold text-text-primary">{name}</code>
                       {phone
                         ? <RefChip id={ref} />
                         : <span data-uth-anchor="" aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-text-secondary" />}
@@ -204,8 +206,10 @@ function useArrows(boxRef, deps) {
       const c = box.getBoundingClientRect();
       const next = [];
       box.querySelectorAll('[data-uth-name]').forEach((row) => {
+        const ref = row.getAttribute('data-ref') || '';
+        if (!REF_RE.test(ref)) return; // refs are o1, o2, ...; anything else is not a safe selector
         const anchor = row.querySelector('[data-uth-anchor]');
-        const target = box.querySelector(`[data-uth-obj="${row.getAttribute('data-ref')}"]`);
+        const target = box.querySelector(`[data-uth-obj="${ref}"]`);
         if (!anchor || !target) return;
         const a = anchor.getBoundingClientRect();
         const b = target.getBoundingClientRect();
@@ -220,7 +224,10 @@ function useArrows(boxRef, deps) {
       setPaths((prev) => (prev.join('|') === next.join('|') ? prev : next));
     };
     measure();
-    if (typeof ResizeObserver === 'undefined') return undefined;
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
     const ro = new ResizeObserver(measure);
     ro.observe(box);
     return () => ro.disconnect();
@@ -273,10 +280,12 @@ function Memory({ step, phone, reducedMotion, t }) {
   );
 }
 
-function ErrorBanner({ error, t }) {
+function ErrorBanner({ error, t, language }) {
   const stepLimit = error.type === 'StepLimit';
   const raw = `${error.type || 'Error'}: ${error.message || ''}`;
-  const ex = stepLimit ? null : explainError(raw);
+  // The what/fix hint is English-only; other locales keep the localized title.
+  const english = !language || language === 'en';
+  const ex = stepLimit || !english ? null : explainError(raw);
   const helpful = ex && ex.title !== ex.type;
   return (
     <div role="alert" className="flex gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-sm text-text-primary">
@@ -291,7 +300,7 @@ function ErrorBanner({ error, t }) {
               {error.line ? ` (${fmt(t('uth.ui_on_line', 'line {line}'), { line: error.line })})` : ''}
             </p>
             <p className="mt-0.5 break-words font-mono">{raw}</p>
-            {helpful && <p className="mt-1 text-text-secondary">{ex.what} {ex.fix}</p>}
+            {helpful && <p data-uth="error-hint" className="mt-1 text-text-secondary">{ex.what} {ex.fix}</p>}
           </>
         )}
       </div>
@@ -337,7 +346,7 @@ export default function UnderTheHood({ code, trace, language = 'en' }) {
 
   return (
     <section aria-label={t('uth.ui_title', 'Under the hood')} className="flex min-w-0 flex-col gap-3 text-text-primary">
-      {error ? <ErrorBanner error={error} t={t} /> : null}
+      {error ? <ErrorBanner error={error} t={t} language={language} /> : null}
       {steps.length > 0 ? (
         <PlayableVisual total={steps.length}>
           {(i) => (

@@ -193,6 +193,68 @@ describe('UnderTheHood', () => {
     expect(headlineText()).toContain('b');
   });
 
+  it('changed objects use a 3:1 border in light mode; unchanged objects are not marked', () => {
+    mount(<UnderTheHood {...aliasProps} />);
+    next(3);
+    const box = container.querySelector('[data-uth-obj="o1"]');
+    expect(box.className).toContain('border-amber-600');
+    expect(box.className).toContain('dark:border-amber-400');
+    expect(box.className).toContain('ring-amber-600');
+    expect(box.className).not.toMatch(/(^|\s)border-amber-400/);
+    next(1); // x = 1 created o2; o1 untouched
+    expect(container.querySelector('[data-uth-obj="o1"]').getAttribute('data-changed')).toBe('false');
+    expect(container.querySelector('[data-uth-obj="o2"]').getAttribute('data-changed')).toBe('true');
+  });
+
+  it('name rows expose their text plus an sr-only "points to" sentence, no aria-label', () => {
+    mount(<UnderTheHood {...aliasProps} />);
+    next(2);
+    const row = nameRow('a');
+    expect(row.hasAttribute('aria-label')).toBe(false);
+    expect(row.querySelector('.sr-only').textContent).toBe('a points to o1');
+  });
+
+  it('the English-only error hint shows for en, not for ta', () => {
+    mount(<UnderTheHood code={ERR.code} trace={ERR} language="en" />);
+    expect(container.querySelector('[data-uth="error-hint"]')).toBeTruthy();
+    act(() => root.unmount());
+    container.remove();
+    mount(<UnderTheHood code={ERR.code} trace={ERR} language="ta" />);
+    expect(container.querySelector('[role="alert"]')).toBeTruthy();
+    expect(container.querySelector('[data-uth="error-hint"]')).toBeNull();
+  });
+
+  it('without ResizeObserver arrows re-measure on window resize and the listener is removed', () => {
+    const savedRO = globalThis.ResizeObserver;
+    delete globalThis.ResizeObserver;
+    const add = vi.spyOn(window, 'addEventListener');
+    const remove = vi.spyOn(window, 'removeEventListener');
+    try {
+      mount(<UnderTheHood {...aliasProps} />);
+      const added = add.mock.calls.filter(([e]) => e === 'resize');
+      expect(added.length).toBeGreaterThan(0);
+      act(() => { window.dispatchEvent(new Event('resize')); });
+      act(() => root.unmount());
+      root = null;
+      const removed = remove.mock.calls.filter(([e]) => e === 'resize').map(([, fn]) => fn);
+      for (const [, fn] of added) expect(removed).toContain(fn);
+    } finally {
+      add.mockRestore();
+      remove.mockRestore();
+      if (savedRO) globalThis.ResizeObserver = savedRO;
+    }
+  });
+
+  it('a ref that is not a valid selector does not crash the arrows', () => {
+    const step = {
+      line: 1, event: 'line', func: '<module>', depth: 1, vars: {}, out: 0,
+      frames: [{ func: '<module>', depth: 1, names: { a: 'o"]1' } }],
+      objects: {}, events: [],
+    };
+    mount(<UnderTheHood code={'a = 1\n'} trace={{ steps: [step], stdout: '', error: null }} language="en" />);
+    expect(nameRow('a')).toBeTruthy();
+  });
+
   it('markup never uses text smaller than 12 px', () => {
     for (const p of [aliasProps, { code: ERR.code, trace: ERR }, PRINT_ONLY]) {
       const html = renderToStaticMarkup(<UnderTheHood {...p} />);
