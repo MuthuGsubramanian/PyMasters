@@ -13,6 +13,8 @@ mode="heap" (2026-11-04, "Under the hood") additionally gives every step:
   events  [{kind, name?, ref?, from?, to?, other?, func?, type?, depth?}]  derived by diffing with the
           previous step: new_object, bind, rebind, alias, mutate, call, return, unbind, exception
 The heap model is computed inside the sandboxed program, where the objects live.
+Note: heap mode keeps every traced object alive until the trace ends (so ids are never reused), which changes
+what __del__, weakref and sys.getrefcount show; lessons about those should use mode="steps".
 """
 import json
 
@@ -77,8 +79,9 @@ if HEAP:
     MAX_FRAMES = 12
     MAX_NAMES = 40
     HEAP_BUDGET = 1000000
-    _ADDR = re.compile(r"\s*at 0x[0-9a-fA-F]+")
-    _HEX = re.compile(r"0x[0-9a-fA-F]{6,}")
+    # One linear pass: " at 0x..." is dropped, any other long hex run becomes "..." (no leading \s*, which
+    # backtracks quadratically on long whitespace).
+    _ADDR = re.compile(r"( at 0x[0-9a-fA-F]+)|(0x[0-9a-fA-F]{6,})")
     _PRIM = (int, float, complex, str, bytes, bool, type(None))
     _refs = {}        # id(obj) -> "oN"
     _keep = []        # strong refs to every tracked object so ids are never reused during the trace
@@ -90,8 +93,31 @@ if HEAP:
     _prev = {"stack": set(), "frames": {}, "sig": {}}
     _budget = [0]
 
+    def _repl(m):
+        return "" if m.group(1) else "..."
+
     def clean(s):
-        return _HEX.sub("...", _ADDR.sub("", s))
+        return _ADDR.sub(_repl, s)
+
+    def clean_output(raw, offsets):
+        """Clean stdout once and map each raw offset to its position in the cleaned text (one pass)."""
+        parts, mapped, last, shift = [], {}, 0, 0
+        todo = sorted(set(offsets))
+        j = 0
+        for m in _ADDR.finditer(raw):
+            while j < len(todo) and todo[j] < m.end():
+                mapped[todo[j]] = min(todo[j], m.start()) - shift
+                j += 1
+            rep = _repl(m)
+            parts.append(raw[last:m.start()])
+            parts.append(rep)
+            shift += (m.end() - m.start()) - len(rep)
+            last = m.end()
+        parts.append(raw[last:])
+        while j < len(todo):
+            mapped[todo[j]] = todo[j] - shift
+            j += 1
+        return "".join(parts), mapped
 
     def ref_of(v):
         k = id(v)
@@ -145,9 +171,24 @@ if HEAP:
             o.pop("len", None)
         return o
 
-    def sig_of(o):
-        if "items" in o:
-            return json.dumps([o["items"], o.get("len")])
+    def _ik(x):
+        return short(x) if isinstance(x, _PRIM) else id(x)
+
+    def sig_of(v, o):
+        # Shallow content signature, the same whether the object is shown named (expanded) or as a child:
+        # primitive items by repr, other items by identity (tracked ones are kept alive, so ids are stable).
+        try:
+            if isinstance(v, (list, tuple)):
+                return repr([[_ik(x) for x in itertools.islice(v, MAX_ITEMS)], len(v)])
+            if isinstance(v, (set, frozenset)):
+                return repr([sorted(str(_ik(x)) for x in itertools.islice(v, MAX_ITEMS)), len(v)])
+            if isinstance(v, dict):
+                return repr([[[_ik(k), _ik(x)] for k, x in itertools.islice(dict.items(v), MAX_ITEMS)], len(v)])
+            if is_user_instance(v):
+                d = vars(v)
+                return repr([[[k, _ik(x)] for k, x in itertools.islice(d.items(), MAX_ITEMS)], len(d)])
+        except Exception:
+            pass
         return o["repr"]
 
     def frame_names(f):
@@ -256,7 +297,7 @@ if HEAP:
             holders.setdefault(r, []).append(k)
         sig = {}
         for r, o in objects.items():
-            sig[r] = sig_of(o)
+            sig[r] = sig_of(_vals.get(r), o)
             if o["mutable"] and r in _prev["sig"] and _prev["sig"][r] != sig[r]:
                 e = {"kind": "mutate", "ref": r}
                 if holders.get(r):
@@ -341,10 +382,11 @@ if code is not None:
         sys.settrace(None)
         sys.stdout = real_out
 if HEAP:
-    _raw = out.getvalue()
+    _raw = out.getvalue()[:20000]  # the same cap the result applies; clean only what is sent
+    _clean, _map = clean_output(_raw, [min(s["out"], len(_raw)) for s in steps])
     for s in steps:  # keep each step's output offset pointing into the cleaned text
-        s["out"] = len(clean(_raw[:s["out"]]))
-    out = io.StringIO(clean(_raw))
+        s["out"] = _map[min(s["out"], len(_raw))]
+    out = io.StringIO(_clean)
     if error is not None:
         error["message"] = clean(error["message"])
 real_out.write(MARK + json.dumps({"steps": steps, "stdout": out.getvalue()[:20000], "error": error}))

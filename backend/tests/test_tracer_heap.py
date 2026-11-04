@@ -140,6 +140,8 @@ def test_no_memory_addresses():
     r = heap(code)
     text = json.dumps(r)
     assert "0x" not in text, re.findall(r".{30}0x.{10}", text)[:3]
+    assert r["steps"][-1]["out"] == len(r["stdout"])  # offsets map into the cleaned output
+    assert r["stdout"].startswith("<__main__.P object> <function f>")
 
 
 def test_deep_recursion_frames_capped_and_step_limit():
@@ -166,6 +168,23 @@ def test_unbind_and_syntax_error():
     assert ub and ub[0][1]["name"] == "x"
     s = trace_code("for i in range(3)\n    print(i)\n", mode="heap")
     assert s["error"]["type"] == "SyntaxError" and s["steps"] == []
+
+
+def test_long_whitespace_output_is_fast():
+    import time
+    t = time.time()
+    r = trace_code("print(' ' * 200000)\nfor i in range(50):\n    print(' ' * 20000)\nx = 1\n", mode="heap")
+    assert time.time() - t < 3
+    assert r["error"] is None and r["steps"]
+    assert all(s["out"] <= len(r["stdout"]) for s in r["steps"])
+
+
+def test_no_spurious_mutate_when_object_moves_between_named_and_child():
+    r = heap("x = [1]\nd = {'k': x}\ndel x\ny = d['k']\nprint(y)\n")
+    assert not events(r, "mutate"), events(r, "mutate")
+    r2 = heap("x = [1]\nd = {'k': x}\ndel x\nd['k'].append(2)\nprint(d)\n")
+    mu = events(r2, "mutate")
+    assert mu and all(e["ref"] == "o1" for _, e in mu), mu
 
 
 def test_typical_payload_small():
