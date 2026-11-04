@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
+import useReducedMotion from '../../hooks/useReducedMotion';
 
 const TYPE_COLORS = {
   int: { bg: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-400/40', text: 'text-blue-300', badge: 'bg-blue-500/20 text-blue-300' },
@@ -28,6 +29,8 @@ function detectType(val) {
 
 // Seconds each value stays before the box shows the next one (covers the 1.35 s change animation).
 const VALUE_HOLD_S = 1.6;
+// While a CodeStepper is stepping, the box follows it and only self-advances after it has been idle this long.
+const SYNC_IDLE_S = 4;
 
 // `boxes` is the list form ({variable, values, dataType?, label?}[]): one box each.
 export default function VariableBox({ boxes = null, onComplete, ...rest }) {
@@ -60,7 +63,11 @@ function VariableBoxCell({ variable = '', values = [], label = '', dataType = ''
   const onCompleteRef = useRef(onComplete);
   useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
 
-  const [currentValue, setCurrentValue] = useState(stableValues[0] ?? '');
+  // Reduced motion: no autoplay. Show the final value at once and complete.
+  const reduced = useReducedMotion();
+  const [currentValue, setCurrentValue] = useState(
+    (reduced ? stableValues[stableValues.length - 1] : stableValues[0]) ?? ''
+  );
   const [oldValue, setOldValue] = useState(null);
   const [showOld, setShowOld] = useState(false);
   const [justChanged, setJustChanged] = useState(false);
@@ -73,6 +80,10 @@ function VariableBoxCell({ variable = '', values = [], label = '', dataType = ''
   const colors = TYPE_COLORS[typeLabel] || TYPE_COLORS[detectedType] || DEFAULT_COLORS;
 
   useEffect(() => {
+    if (reduced) {
+      if (stableValues.length === 0) onCompleteRef.current?.();
+      return;
+    }
     if (!boxRef.current) return;
 
     gsap.fromTo(
@@ -90,7 +101,7 @@ function VariableBoxCell({ variable = '', values = [], label = '', dataType = ''
         },
       }
     );
-  }, [stableValues]);
+  }, [stableValues, reduced]);
 
   // Which value to show. The box steps through its own values; a CodeStepper
   // that moves syncStep after the box has mounted can push it further. The
@@ -101,18 +112,28 @@ function VariableBoxCell({ variable = '', values = [], label = '', dataType = ''
   const mountSync = useRef(syncStep);
   const synced = syncStep !== mountSync.current ? syncStep : 0;
   const last = stableValues.length - 1;
-  const valueIndex = last < 0 ? -1 : Math.min(Math.max(selfStep, synced, 0), last);
+  const valueIndex = last < 0 ? -1 : Math.min(Math.max(reduced ? last : selfStep, synced, 0), last);
+  const syncActive = syncStep !== mountSync.current;
+
+  // Self-advance timer, one per shown value; killed on unmount or when superseded.
+  // While a CodeStepper is stepping the box follows it and waits much longer.
+  useEffect(() => {
+    if (reduced || valueIndex < 0 || valueIndex >= last) return undefined;
+    const call = gsap.delayedCall(syncActive ? SYNC_IDLE_S : VALUE_HOLD_S, () => {
+      setSelfStep((s) => Math.max(s, valueIndex + 1));
+    });
+    return () => { call.kill(); };
+  }, [valueIndex, syncActive, last, reduced]);
 
   useEffect(() => {
     if (valueIndex === prevStep.current) return undefined;
     if (valueIndex < 0 || valueIndex >= stableValues.length) return undefined;
 
     prevStep.current = valueIndex;
-    // Not the last value yet: move on after a beat. Not killed on cleanup, so a
-    // StrictMode effect re-run (which returns early above) cannot lose it; a
-    // late call after unmount is a no-op.
-    if (valueIndex < stableValues.length - 1) {
-      gsap.delayedCall(VALUE_HOLD_S, () => setSelfStep((s) => Math.max(s, valueIndex + 1)));
+    if (reduced) {
+      setCurrentValue(stableValues[valueIndex]);
+      onCompleteRef.current?.();
+      return undefined;
     }
     const newValue = stableValues[valueIndex];
     const isLast = valueIndex === stableValues.length - 1;
@@ -159,7 +180,7 @@ function VariableBoxCell({ variable = '', values = [], label = '', dataType = ''
       if (isLast) onCompleteRef.current?.();
     }
     return undefined;
-  }, [valueIndex, stableValues]);
+  }, [valueIndex, stableValues, reduced]);
 
   const totalSteps = stableValues.length;
   const currentIndex = valueIndex;
@@ -167,7 +188,7 @@ function VariableBoxCell({ variable = '', values = [], label = '', dataType = ''
   return (
     <div
       ref={boxRef}
-      className="opacity-0 w-56 relative perspective-[800px]"
+      className={`${reduced ? '' : 'opacity-0 '}w-56 relative perspective-[800px]`}
     >
       {/* Glow burst element */}
       <div
