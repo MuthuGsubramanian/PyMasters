@@ -208,8 +208,12 @@
   "uth.alias": "`{name}` and `{other}` now point to the same {type} object. Nothing was copied.",
   "uth.mutate": "The {type} itself changed (same object, new contents). Every name pointing to it sees the change.",
   "uth.call": "Python calls `{func}`. A new frame holds its local names.",
-  "uth.return": "`{func}` returns; its frame and local names are gone.",
+  "uth.return": "`{func}` finishes and hands control back to its caller.",
   "uth.unbind": "`{name}` is gone. The name no longer points to anything.",
-  "uth.exception": "Python raises `{name}` and stops this line.",
-  "uth.line": "Python runs line {line}."
+  "uth.exception": "An error, `{name}`, happens here, so this line cannot finish normally.",
+  "uth.line": "Python runs line {line}.",
+  "uth.bind_anon": "A name now points to the object. Names are labels, not boxes.",
+  "uth.rebind_anon": "A name now points to a different object; the old one is untouched.",
+  "uth.alias_anon": "`{name}` and another name now point to the same {type} object. Nothing was copied.",
+  "uth.unbind_anon": "A name is gone. It no longer points to anything."
 }

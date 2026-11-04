@@ -9,13 +9,17 @@ export const PRIORITY = [
 const EN = {
   new_object: 'Python creates a new {type} object in memory.',
   bind: '`{name}` now points to the object. Names are labels, not boxes.',
+  bind_anon: 'A name now points to the object. Names are labels, not boxes.',
   rebind: '`{name}` now points to a different object; the old one is untouched.',
+  rebind_anon: 'A name now points to a different object; the old one is untouched.',
   alias: '`{name}` and `{other}` now point to the same {type} object. Nothing was copied.',
+  alias_anon: '`{name}` and another name now point to the same {type} object. Nothing was copied.',
   mutate: 'The {type} itself changed (same object, new contents). Every name pointing to it sees the change.',
   call: 'Python calls `{func}`. A new frame holds its local names.',
-  return: '`{func}` returns; its frame and local names are gone.',
+  return: '`{func}` finishes and hands control back to its caller.',
   unbind: '`{name}` is gone. The name no longer points to anything.',
-  exception: 'Python raises `{name}` and stops this line.',
+  unbind_anon: 'A name is gone. It no longer points to anything.',
+  exception: 'An error, `{name}`, happens here, so this line cannot finish normally.',
   line: 'Python runs line {line}.',
 };
 
@@ -27,7 +31,9 @@ export function explainEvent(event, t) {
   const kind = event && event.kind;
   if (!kind || !EN[kind]) return '';
   const type = event.type ? `\`${event.type}\`` : '`object`';
-  return fill(t(`uth.${kind}`, EN[kind]), {
+  const anon = kind === 'alias' ? !event.other : ['bind', 'rebind', 'unbind'].includes(kind) && !event.name;
+  const key = anon ? `${kind}_anon` : kind;
+  return fill(t(`uth.${key}`, EN[key]), {
     name: event.name ?? '',
     other: event.other ?? '',
     func: event.func ?? '',

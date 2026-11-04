@@ -31,7 +31,7 @@ describe('explainEvent en', () => {
   it('rebind, call, return, exception, unbind, bind, new_object', () => {
     expect(explainEvent(EVENTS.rebind, en)).toContain('`x` now points to a different object');
     expect(explainEvent(EVENTS.call, en)).toContain('Python calls `f`');
-    expect(explainEvent(EVENTS.return, en)).toContain('`f` returns');
+    expect(explainEvent(EVENTS.return, en)).toContain('`f` finishes and hands control back');
     expect(explainEvent(EVENTS.exception, en)).toContain('`ZeroDivisionError`');
     expect(explainEvent(EVENTS.unbind, en)).toContain('`n`');
     expect(explainEvent(EVENTS.bind, en)).toContain('`a`');
@@ -42,6 +42,25 @@ describe('explainEvent en', () => {
       expect(explainEvent(ev, en)).not.toMatch(/[{}]/);
       expect(explainEvent(ev, ta)).not.toMatch(/[{}]/);
     }
+  });
+});
+
+describe('missing names', () => {
+  it('never produce empty backticks or undefined', () => {
+    const evs = [
+      { kind: 'bind', ref: 'o1' }, { kind: 'rebind', from: 'o1', to: 'o2' }, { kind: 'unbind', ref: 'o1' },
+      { kind: 'alias', name: 'b', ref: 'o1' }, { kind: 'mutate', ref: 'o1' },
+    ];
+    for (const ev of evs) {
+      for (const t of [en, ta]) {
+        const s = explainEvent(ev, t);
+        expect(s).not.toContain('``');
+        expect(s).not.toContain('undefined');
+        expect(s).not.toMatch(/[{}]/);
+      }
+    }
+    expect(explainEvent({ kind: 'bind' }, en)).toMatch(/^A name now/);
+    expect(explainEvent({ kind: 'alias', name: 'b' }, en)).toContain('another name');
   });
 });
 
