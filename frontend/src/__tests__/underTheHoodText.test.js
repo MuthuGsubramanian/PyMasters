@@ -60,7 +60,22 @@ describe('missing names', () => {
       }
     }
     expect(explainEvent({ kind: 'bind' }, en)).toMatch(/^A name now/);
-    expect(explainEvent({ kind: 'alias', name: 'b' }, en)).toContain('another name');
+    expect(explainEvent({ kind: 'alias', name: 'b' }, en)).toContain('`b` and a name');
+  });
+  it('every kind with all optional fields missing is clean in en and ta', () => {
+    for (const kind of Object.keys(EVENTS)) {
+      for (const t of [en, ta]) {
+        const s = explainEvent({ kind }, t);
+        expect(s, kind).toBeTruthy();
+        expect(s, kind).not.toContain('``');
+        expect(s, kind).not.toContain('undefined');
+        expect(s, kind).not.toContain('{');
+      }
+    }
+    expect(explainEvent({ kind: 'alias', other: 'a' }, en)).toContain('`a` and a name');
+    expect(explainEvent({ kind: 'call' }, en)).toContain('Python calls a function');
+    expect(explainEvent({ kind: 'exception' }, en)).toMatch(/^An error happens here/);
+    expect(explainEvent({ kind: 'call' }, ta)).toContain('ஒரு செயல்பாட்டை அழைக்கிறது');
   });
 });
 
