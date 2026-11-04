@@ -34,7 +34,9 @@ function RefChip({ id }) {
   return <span data-uth-chip="" className={CHIP}>{id}</span>;
 }
 
-function CodePanel({ code, line, t, reducedMotion }) {
+// `line` is the line Python runs next; `ranLine` is the line that just ran, which is what the
+// step's explanation describes (the tracer reports each line before running it).
+function CodePanel({ code, line, ranLine, t, reducedMotion }) {
   const lines = String(code || '').replace(/\n$/, '').split('\n');
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
@@ -43,19 +45,26 @@ function CodePanel({ code, line, t, reducedMotion }) {
         <div className="min-w-max">
           {lines.map((src, i) => {
             const active = i + 1 === line;
+            const ran = !active && i + 1 === ranLine;
             return (
               <div
                 key={i}
                 aria-current={active ? 'step' : undefined}
+                data-uth-ran={ran ? '' : undefined}
                 className={`flex border-l-2 pr-3 ${reducedMotion ? '' : 'transition-colors duration-200'} ${
-                  active ? 'border-cyan-400 bg-cyan-400/15' : 'border-transparent'}`}
+                  active ? 'border-cyan-400 bg-cyan-400/15' : ran ? 'border-amber-400 bg-amber-400/10' : 'border-transparent'}`}
               >
                 <span className={`w-9 shrink-0 select-none pr-3 text-right text-xs leading-6 tabular-nums ${
-                  active ? 'font-semibold text-cyan-300' : 'text-code-foreground/70'}`}
+                  active ? 'font-semibold text-cyan-300' : ran ? 'font-semibold text-amber-300' : 'text-code-foreground/70'}`}
                 >
                   {i + 1}
                 </span>
                 <span className="whitespace-pre leading-6">{src || ' '}</span>
+                {ran && (
+                  <span className="ml-3 shrink-0 self-center rounded bg-amber-400/15 px-1.5 font-sans text-xs font-semibold leading-5 text-amber-300">
+                    {t('uth.ui_just_ran', 'just ran')}
+                  </span>
+                )}
               </div>
             );
           })}
@@ -308,13 +317,13 @@ function ErrorBanner({ error, t, language }) {
   );
 }
 
-function StepView({ step, code, stdout, phone, reducedMotion, t }) {
+function StepView({ step, prev, code, stdout, phone, reducedMotion, t }) {
   const { headline, details } = explainStep(step, t);
   const output = stdout ? stdout.slice(0, Math.max(0, step.out || 0)) : '';
   return (
     <div className="flex min-w-0 flex-col gap-3">
       <div className="grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
-        <CodePanel code={code} line={step.line} t={t} reducedMotion={reducedMotion} />
+        <CodePanel code={code} line={step.line} ranLine={prev ? prev.line : null} t={t} reducedMotion={reducedMotion} />
         <Memory step={step} phone={phone} reducedMotion={reducedMotion} t={t} />
       </div>
       <div className={PANEL}>
@@ -352,6 +361,7 @@ export default function UnderTheHood({ code, trace, language = 'en' }) {
           {(i) => (
             <StepView
               step={steps[Math.min(i, steps.length - 1)]}
+              prev={i > 0 ? steps[Math.min(i, steps.length - 1) - 1] : null}
               code={code}
               stdout={trace.stdout || ''}
               phone={phone}

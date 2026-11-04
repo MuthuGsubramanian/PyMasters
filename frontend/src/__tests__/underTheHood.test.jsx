@@ -86,6 +86,18 @@ describe('UnderTheHood', () => {
     expect(container.querySelector('[data-uth="headline"] code').textContent).toBe('b');
   });
 
+  it('marks the line that just ran, which is the line the explanation is about', () => {
+    // Live check 2026-11-04: the alias sentence (from `b = a`, line 2) showed while only line 3 was highlighted.
+    mount(<UnderTheHood {...aliasProps} />);
+    const code = () => container.querySelector('[data-uth="code"]');
+    expect(code().querySelector('[data-uth-ran]')).toBeNull();          // first step: nothing has run yet
+    next(2);
+    const ran = code().querySelector('[data-uth-ran]');
+    expect(ran.textContent).toContain('b = a');
+    expect(ran.textContent).toContain('just ran');
+    expect(code().querySelector('[aria-current="step"]').textContent).toContain('b.append(3)');
+  });
+
   it('at the mutate step the object shows the new items and is marked as changed', () => {
     mount(<UnderTheHood {...aliasProps} />);
     next(3);
