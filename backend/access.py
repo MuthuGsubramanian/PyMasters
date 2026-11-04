@@ -235,3 +235,18 @@ def assert_learning_access(db_path: str, user_id: str) -> None:
             status_code=402,
             detail="Your 7-day free trial has ended. Choose a plan to keep learning.",
         )
+
+
+def owner_or_super_admin(db_path: str, owner_id: str | None, caller: str | None) -> bool:
+    """True when `caller` owns the record (`owner_id`) or is a super admin. Authorizes on the
+    users.is_super_admin column only (never on username/email), in the same database the route reads."""
+    if not caller:
+        return False
+    if owner_id and str(owner_id) == str(caller):
+        return True
+    conn = sqlite3.connect(db_path)
+    try:
+        row = conn.execute("SELECT COALESCE(is_super_admin, 0) FROM users WHERE id = ?", [caller]).fetchone()
+    finally:
+        conn.close()
+    return bool(row) and int(row[0]) == 1

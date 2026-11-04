@@ -1504,12 +1504,13 @@ def generate_explain(request: ExplainRequest, caller: str = Depends(get_current_
 
 @router.get("/explain/{explain_id}")
 def get_explain(explain_id: str, caller: str = Depends(get_current_user_id)):
-    """Fetch a previously generated Explains essay by id."""
+    """Fetch a previously generated Explains essay by id (its owner or a super admin; 404 for anyone else)."""
+    from access import owner_or_super_admin
     conn = sqlite3.connect(_get_db_path())
     conn.row_factory = sqlite3.Row
-    row = conn.execute("SELECT data FROM generated_explains WHERE id = ?", [explain_id]).fetchone()
+    row = conn.execute("SELECT user_id, data FROM generated_explains WHERE id = ?", [explain_id]).fetchone()
     conn.close()
-    if not row:
+    if not row or not owner_or_super_admin(_get_db_path(), row["user_id"], caller):
         raise HTTPException(status_code=404, detail="Explanation not found")
     return {"id": explain_id, **json.loads(row["data"])}
 

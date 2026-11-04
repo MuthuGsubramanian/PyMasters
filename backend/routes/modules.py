@@ -47,7 +47,8 @@ async def request_module(data: ModuleRequest, caller: str = Depends(get_current_
 
 
 @router.get("/status/{job_id}")
-async def get_job_status(job_id: str):
+async def get_job_status(job_id: str, caller: str = Depends(get_current_user_id)):
+    from access import owner_or_super_admin
     conn = sqlite3.connect(_get_db_path())
     conn.row_factory = sqlite3.Row
     row = conn.execute(
@@ -55,7 +56,8 @@ async def get_job_status(job_id: str):
     ).fetchone()
     conn.close()
 
-    if not row:
+    # Only the learner who asked for it (or a super admin); 404 otherwise so job ids can't be probed.
+    if not row or not owner_or_super_admin(_get_db_path(), row["user_id"], caller):
         raise HTTPException(status_code=404, detail="Job not found")
 
     status = row["status"]
