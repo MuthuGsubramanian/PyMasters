@@ -20,7 +20,6 @@ const KNOWN_GAPS = {
     'animations', 'connections', 'highlight_cells', 'highlight_color', 'initial_state',
     'items', 'label', 'labels', 'layers', 'pending_append', 'structure_type', 'visualization',
   ],
-  FlowArrow: ['flows', 'from', 'nodes', 'stages', 'steps', 'to'],
   LoopVisualizer: [
     'arrayLabel', 'condition', 'expression', 'initialArray', 'iterable', 'label', 'loopVariable',
     'result', 'type_name',

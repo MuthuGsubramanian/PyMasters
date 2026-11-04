@@ -45,7 +45,9 @@ export const CONTRACT = {
   VariableBox: { consumes: ['variable', 'values', 'value', 'animate_sequence', 'label', 'syncStep'] },
   TerminalOutput: { consumes: ['output', 'lines', 'syncStep'] },
   ParticleEffect: { consumes: ['effect', 'active'] },
-  FlowArrow: { consumes: ['label', 'branch', 'direction'] },
+  FlowArrow: {
+    consumes: ['label', 'branch', 'direction', 'stages', 'steps', 'nodes', 'flows', 'from', 'to', 'controlledStep'],
+  },
   DataStructure: { consumes: ['structure', 'data', 'operations'] },
   MemoryStack: { consumes: ['frames', 'slots', 'operations'] },
   ComparisonPanel: {
@@ -253,11 +255,87 @@ function normalizeTerminalOutput(p) {
   }
 }
 
-// FlowArrow: branch -> label
-function normalizeFlowArrow(p) {
-  if (p.branch && !p.label) {
+// Stage item (string or {label|name|title, description|detail}) -> {label, detail?}
+function stageOf(item, language) {
+  const text = (v) => {
+    if (v == null) return '';
+    if (typeof v === 'string') return v;
+    if (isLocaleMap(v)) return v[language] || v.en || '';
+    return String(v);
+  };
+  if (item == null) return null;
+  if (typeof item !== 'object') return { label: text(item) };
+  const label = text(item.label ?? item.name ?? item.title ?? item.text);
+  const detail = text(item.detail ?? item.description);
+  if (!label && !detail) return null;
+  return label && detail ? { label, detail } : { label: label || detail };
+}
+
+// FlowArrow: stages/steps/nodes/flows/from+to -> stages; branch -> label
+function normalizeFlowArrow(p, language) {
+  if (p.branch != null && !p.label) {
     p.label = typeof p.branch === 'string' ? p.branch : '';
-    delete p.branch;
+  }
+  delete p.branch;
+
+  let stages = [];
+  for (const key of ['stages', 'steps', 'nodes']) {
+    if (Array.isArray(p[key]) && p[key].length) {
+      stages = p[key].map((s) => stageOf(s, language)).filter(Boolean);
+      break;
+    }
+  }
+  if (!stages.length && Array.isArray(p.flows) && p.flows.length) {
+    const names = (v) => (Array.isArray(v) ? v.join(', ') : v == null ? '' : String(v));
+    stages = p.flows.map((f) => {
+      if (f == null || typeof f !== 'object') return stageOf(f, language);
+      const route = f.from != null || f.to != null ? `${names(f.from)} → ${names(f.to)}` : '';
+      const label = stageOf({ label: f.label ?? f.name ?? f.title }, language)?.label || route;
+      return label ? (route && label !== route ? { label, detail: route } : { label }) : null;
+    }).filter(Boolean);
+  }
+  if (!stages.length && (p.from != null || p.to != null)) {
+    stages = [p.from, p.to].filter((v) => v != null && v !== '').map((v) => ({ label: String(v) }));
+  }
+  for (const k of ['steps', 'nodes', 'flows', 'from', 'to']) delete p[k];
+  p.stages = stages;
+}
+
+const slug = (s) => String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+// FlowDiagram: nodes always {id, label}; label-based edges resolve to ids
+function normalizeFlowDiagram(p) {
+  if (!Array.isArray(p.nodes)) return;
+  const byLabel = new Map();
+  const used = new Set();
+  const uniq = (base) => {
+    let id = base;
+    for (let i = 2; used.has(id); i++) id = `${base}-${i}`;
+    used.add(id);
+    return id;
+  };
+  p.nodes = p.nodes.map((n, i) => {
+    if (n == null || typeof n !== 'object') {
+      const label = String(n ?? '');
+      const id = uniq(slug(label) || `n${i}`);
+      byLabel.set(label, id);
+      return { id, label };
+    }
+    const label = String(n.label ?? n.name ?? n.title ?? n.text ?? n.id ?? `Node ${i + 1}`);
+    const id = n.id != null ? String(n.id) : uniq(slug(label) || `n${i}`);
+    used.add(id);
+    if (!byLabel.has(label)) byLabel.set(label, id);
+    return { ...n, id, label };
+  });
+  if (Array.isArray(p.edges)) {
+    const ids = new Set(p.nodes.map((n) => n.id));
+    const fix = (v) => (v != null && !ids.has(v) && byLabel.has(v) ? byLabel.get(v) : v);
+    p.edges = p.edges.map((e) => {
+      if (!e || typeof e !== 'object') return e;
+      const out = { ...e };
+      for (const k of ['from', 'to', 'source', 'target']) if (k in out) out[k] = fix(out[k]);
+      return out;
+    });
   }
 }
 
@@ -269,6 +347,7 @@ const NORMALIZERS = {
   ComparisonPanel: normalizeComparisonPanel,
   TerminalOutput: normalizeTerminalOutput,
   FlowArrow: normalizeFlowArrow,
+  FlowDiagram: normalizeFlowDiagram,
 };
 
 /**
