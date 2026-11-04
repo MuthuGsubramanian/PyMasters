@@ -242,5 +242,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "candidates = [\n    \"def avg(xs): return sum(xs) / len(xs)\",\n    \"def avg(xs): return sum(xs) // len(xs)\",\n    \"def avg(xs): return sum(xs) / len(xs) if xs else 0.0\",\n]\ntests = [([2, 4], 3.0), ([1, 2], 1.5), ([], 0.0)]\n\ndef verifier(source):                       # the reward: fraction of tests passed\n    scope = {}\n    exec(source, scope)\n    passed = 0\n    for args, want in tests:\n        try:\n            passed += scope[\"avg\"](args) == want\n        except ZeroDivisionError:\n            pass\n    return passed / len(tests)\n\nscores = [round(verifier(c), 2) for c in candidates]\nbest = max(range(len(candidates)), key=lambda i: scores[i])\nprint(\"scores:\", scores)\nprint(\"winner:\", candidates[best])\n"
 }

@@ -242,5 +242,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "head_dim, base = 8, 10_000\npairs = range(head_dim // 2)\n\nthetas = {i: round(base ** (-(2 * i) / head_dim), 6) for i in pairs}\n\nangles = {}\nfor pos in [1, 10, 100]:\n    angles[pos] = [round(pos * thetas[i], 4) for i in pairs]\n\nprint(\"rotation speed per pair:\", thetas)\nfor pos, a in angles.items():\n    print(f\"position {pos:>3}: angles {a}\")      # pair 0 spins fast, pair 3 barely moves\n"
 }

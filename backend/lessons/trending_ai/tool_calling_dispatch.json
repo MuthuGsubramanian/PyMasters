@@ -228,5 +228,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "import json\n\ndef convert_currency(amount, rate):\n    return round(amount * rate, 2)\n\ndef word_count(text):\n    return len(text.split())\n\nregistry = {\"convert_currency\": convert_currency, \"word_count\": word_count}\n\nmodel_output = '[{\"name\": \"convert_currency\", \"args\": {\"amount\": 120, \"rate\": 0.012}},' \\\n               ' {\"name\": \"word_count\", \"args\": {\"text\": \"tools turn talk into action\"}},' \\\n               ' {\"name\": \"launch_rocket\", \"args\": {}}]'\n\nresults = []\nfor call in json.loads(model_output):\n    fn = registry.get(call[\"name\"])\n    if fn is None:\n        results.append({\"tool\": call[\"name\"], \"error\": \"unknown tool\"})\n        continue\n    results.append({\"tool\": call[\"name\"], \"result\": fn(**call[\"args\"])})\nprint(results)\n"
 }

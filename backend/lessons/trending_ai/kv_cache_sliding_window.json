@@ -222,5 +222,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "window = 4\ncache, memory_log = [], []\n\nconversation = \"hi how are you today I am fine thanks for asking\".split()\nfor t, token in enumerate(conversation):\n    cache.append((t, token))                 # new key/value for this token\n    if len(cache) > window:\n        cache = cache[-window:]              # evict the oldest\n    memory_log.append(len(cache))\n\nprint(\"cache now:\", cache)\nprint(\"cache size per step:\", memory_log)\nprint(\"the model can no longer attend to:\", conversation[: len(conversation) - window])\n"
 }

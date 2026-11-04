@@ -227,5 +227,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "import random\n\ndraft_tokens = [                         # (token, p_draft, p_target)\n    (\"The\", 0.60, 0.70),\n    (\"quick\", 0.50, 0.45),\n    (\"purple\", 0.40, 0.05),              # the small model guessed badly\n    (\"fox\", 0.30, 0.60),\n]\nrng = random.Random(3)                   # fixed seed, so the run is repeatable\n\naccepted = []\nfor token, p_draft, p_target in draft_tokens:\n    accept_prob = min(1.0, p_target / p_draft)\n    u = round(rng.random(), 3)\n    if u < accept_prob:\n        accepted.append(token)\n    else:\n        accepted.append(\"<resample>\")    # the target model picks this token instead\n        break                            # later drafts are thrown away\nprint(\"kept:\", accepted)\n"
 }

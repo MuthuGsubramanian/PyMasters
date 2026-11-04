@@ -240,5 +240,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "eps = 0.2\nsamples = [                     # (probability ratio new/old, advantage)\n    (1.05, 1.4),                # small step on a good sample\n    (1.60, 1.4),                # big jump on a good sample -> clipped\n    (0.50, -0.9),               # big drop on a bad sample -> clipped\n    (0.95, -0.9),\n]\n\nrows = []\nfor ratio, adv in samples:\n    unclipped = ratio * adv\n    clipped = max(1 - eps, min(1 + eps, ratio)) * adv\n    rows.append({\"ratio\": ratio, \"adv\": adv, \"objective\": round(min(unclipped, clipped), 3),\n                 \"was_clipped\": clipped < unclipped})\n\nfor r in rows:\n    print(r)\nprint(\"group objective:\", round(sum(r[\"objective\"] for r in rows) / len(rows), 3))\n"
 }

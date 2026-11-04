@@ -222,5 +222,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "import math\n\nexperts = [\"math\", \"code\", \"french\", \"poetry\", \"biology\", \"law\"]\ntokens = {\"integral\": [2.5, 1.1, -0.5, 0.2, 0.0, -1.0],\n          \"bonjour\": [-0.8, 0.1, 3.0, 1.2, -0.2, 0.0]}\nk = 2\n\nrouting = {}\nfor token, scores in tokens.items():\n    top = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]\n    exps = [math.exp(scores[i]) for i in top]\n    weights = [round(e / sum(exps), 2) for e in exps]      # mix only the chosen experts\n    routing[token] = list(zip([experts[i] for i in top], weights))\n\nfor token, picks in routing.items():\n    print(f\"{token:9} -> {picks}\")\nprint(f\"active experts per token: {k} of {len(experts)}\")\n"
 }

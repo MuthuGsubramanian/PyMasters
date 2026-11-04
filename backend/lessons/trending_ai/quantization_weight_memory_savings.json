@@ -233,5 +233,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "gpu_gb = 80\nmodel_params = {\"Llama-70B\": 70e9, \"MoE-400B\": 400e9}\nbytes_per = {\"fp32\": 4, \"bf16\": 2, \"int8\": 1, \"int4\": 0.5}\n\ntable = {}\nfor model, params in model_params.items():\n    table[model] = {}\n    for fmt, b in bytes_per.items():\n        gb = round(params * b / 1e9, 1)\n        table[model][fmt] = (gb, -(-gb // gpu_gb))      # GPUs needed (ceil)\n\nfor model, row in table.items():\n    print(model)\n    for fmt, (gb, gpus) in row.items():\n        print(f\"  {fmt:5} {gb:7} GB -> {int(gpus)} x 80GB GPU\")\n"
 }

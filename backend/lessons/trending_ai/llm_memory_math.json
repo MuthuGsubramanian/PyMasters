@@ -253,5 +253,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "laptop_ram_gb = 16\nmodels = {\"3B\": 3e9, \"8B\": 8e9, \"14B\": 14e9}\nprecisions = {\"fp16\": 16, \"int8\": 8, \"q4\": 4}\n\nfits = {}\nfor name, params in models.items():\n    for prec, bits in precisions.items():\n        weights = params * bits / 8\n        total_gb = round(weights * 1.2 / 1e9, 1)       # +20% for KV cache and runtime\n        fits[(name, prec)] = (total_gb, total_gb <= laptop_ram_gb)\n\nfor (name, prec), (gb, ok) in fits.items():\n    print(f\"{name:4} {prec:5} {gb:5} GB {'fits' if ok else 'too big'}\")\n"
 }

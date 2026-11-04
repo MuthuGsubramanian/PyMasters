@@ -242,5 +242,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "from collections import Counter\n\nquestion = \"A shop sells pens at 3 for 10. How much for 12 pens?\"\nreasoning_paths = [\n    (\"12 / 3 = 4 packs, 4 * 10\", \"40\"),\n    (\"each pen 3.33, 12 * 3.33\", \"39.96\"),\n    (\"4 packs of 3, 4 * 10\", \"40\"),\n    (\"12 * 10 / 3\", \"40\"),\n    (\"3 + 10 = 13 per pen?\", \"156\"),\n]\n\nanswers = [ans for _, ans in reasoning_paths]\ncounts = Counter(answers)\nwinner, votes = counts.most_common(1)[0]\nconfidence = votes / len(answers)\nprint(counts)\nprint(f\"answer {winner} with {confidence:.0%} agreement\")\n"
 }

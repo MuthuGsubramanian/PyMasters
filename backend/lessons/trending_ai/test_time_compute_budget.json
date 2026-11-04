@@ -241,5 +241,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "budget = 100.0                               # compute units available per question\nmodels = {\"small\": {\"cost\": 4.0, \"solve_rate\": 0.35},\n          \"large\": {\"cost\": 25.0, \"solve_rate\": 0.70}}\n\nplan = {}\nfor name, m in models.items():\n    samples = int(budget // m[\"cost\"])\n    p_any = 1 - (1 - m[\"solve_rate\"]) ** samples   # chance at least one sample is right\n    plan[name] = {\"samples\": samples, \"p_at_least_one_correct\": round(p_any, 3)}\n\nfor name, row in plan.items():\n    print(f\"{name:6} {row}\")\nprint(\"with a good verifier, many cheap samples can beat a few expensive ones\")\n"
 }
