@@ -28,7 +28,8 @@ export default function useCodeTrace(userId) {
         }
     }, [userId]);
 
+    const resetError = useCallback(() => setError(''), []);
     const close = useCallback(() => setTrace(null), []);
 
-    return { trace, loading, error, visualize, close };
+    return { trace, loading, error, visualize, close, resetError };
 }

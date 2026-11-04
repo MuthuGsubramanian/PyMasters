@@ -64,4 +64,28 @@ describe('Visualize my code', () => {
     expect(document.querySelector('[role="dialog"][aria-label="Time-travel visualizer"]')).toBeTruthy()
     r.unmount()
   })
+
+  it('PracticePhase: hidden for lessons that seed sandbox files', () => {
+    const r = render(<PracticePhase lesson={{ practice_challenges: [], sandbox_files: { 'a.txt': 'hi' } }} language="en" code="x = 1" setCode={() => {}} output="" hintIndex={0} onHint={() => {}} onRun={() => {}} running={false} chatMessages={[]} userId="u1" />)
+    expect(byText(r.container, 'Visualize my code')).toBeFalsy()
+    r.unmount()
+  })
+
+  it('PracticePhase: stale trace error clears when the code changes', async () => {
+    api.post.mockRejectedValue({ response: { status: 429, data: { detail: 'Try again in 9s.' } } })
+    const props = { lesson: { practice_challenges: [] }, language: 'en', setCode: () => {}, output: '', hintIndex: 0, onHint: () => {}, onRun: () => {}, running: false, chatMessages: [], userId: 'u1' }
+    const r = render(<PracticePhase {...props} code="x = 1" />)
+    r.click(byText(r.container, 'Visualize my code'))
+    await flush()
+    expect(r.container.querySelector('[role="alert"]')).toBeTruthy()
+    r.rerender(<PracticePhase {...props} code="x = 12" />)
+    expect(r.container.querySelector('[role="alert"]')).toBeFalsy()
+    r.unmount()
+  })
+
+  it('FeedbackPhase: no "Step through my code" when not traceable', () => {
+    const r = render(<FeedbackPhase evalResult={{ passed: false }} language="en" onContinue={() => {}} onRetry={() => {}} submittedCode="print(2)" userId="u1" traceable={false} />)
+    expect(byText(r.container, 'Step through my code')).toBeFalsy()
+    r.unmount()
+  })
 })

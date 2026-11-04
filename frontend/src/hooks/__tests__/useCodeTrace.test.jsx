@@ -58,4 +58,14 @@ describe('useCodeTrace', () => {
     expect(current.loading).toBe(false)
     r.unmount()
   })
+
+  it('resetError clears a stale error', async () => {
+    api.post.mockRejectedValue({ response: { status: 429, data: { detail: 'Try again in 3s.' } } })
+    const r = render(<Probe userId="u1" />)
+    await act(async () => { await current.visualize('print(1)') })
+    expect(current.error).not.toBe('')
+    act(() => current.resetError())
+    expect(current.error).toBe('')
+    r.unmount()
+  })
 })

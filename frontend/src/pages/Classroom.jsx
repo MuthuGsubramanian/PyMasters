@@ -1163,7 +1163,10 @@ export function PracticePhase({
     onSelectChallenge,
     userId,
 }) {
-    const { trace, loading: tracing, error: traceError, visualize, close: closeTrace } = useCodeTrace(userId);
+    const { trace, loading: tracing, error: traceError, visualize, close: closeTrace, resetError } = useCodeTrace(userId);
+    // File-I/O lessons seed sandbox files the tracer doesn't get, so a trace would only end in FileNotFoundError.
+    const traceable = !(lesson?.sandbox_files && typeof lesson.sandbox_files === 'object' && Object.keys(lesson.sandbox_files).length > 0);
+    useEffect(() => { resetError(); }, [code, resetError]);
     const challenges = lesson?.practice_challenges || [];
     const challenge = challenges[challengeIndex] ?? null;
     const hints = hintList(challenge, language);
@@ -1260,6 +1263,7 @@ export function PracticePhase({
                             )}
                             {running ? 'Running...' : 'Run Code'}
                         </button>
+                        {traceable && (
                         <button
                             type="button"
                             onClick={() => visualize(code)}
@@ -1269,10 +1273,11 @@ export function PracticePhase({
                             <History size={13} aria-hidden="true" />
                             {tracing ? 'Tracing…' : 'Visualize my code'}
                         </button>
+                        )}
                     </div>
                 </div>
 
-                {traceError && (
+                {traceable && traceError && (
                     <p role="alert" className="px-4 py-2 text-xs text-red-300 bg-red-500/10 border-b border-slate-700/50">{traceError}</p>
                 )}
 
@@ -1356,7 +1361,7 @@ function RelatedLessons({ lessonId, language, onOpen }) {
     );
 }
 
-export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0, lessonId, onOpenRelated, nextLesson = null, onNext, nextChallenge = null, onNextChallenge, submittedCode = '', userId }) {
+export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0, lessonId, onOpenRelated, nextLesson = null, onNext, nextChallenge = null, onNextChallenge, submittedCode = '', userId, traceable = true }) {
     const { trace, loading: tracing, error: traceError, visualize, close: closeTrace } = useCodeTrace(userId);
     const success = evalResult?.passed ?? evalResult?.success ?? false;
     // Backend flags `struggling` after repeated failures; fall back to a local
@@ -1529,7 +1534,7 @@ export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attem
                             >
                                 <RotateCcw size={15} /> Try Again
                             </button>
-                            {submittedCode?.trim() && (
+                            {traceable && submittedCode?.trim() && (
                                 <button
                                     type="button"
                                     onClick={() => visualize(submittedCode)}
@@ -2374,6 +2379,7 @@ export default function Classroom() {
                                 lessonId={currentLesson?.id}
                                 onOpenRelated={handleSelectLesson}
                                 submittedCode={code}
+                                traceable={!(currentLesson?.sandbox_files && Object.keys(currentLesson.sandbox_files).length > 0)}
                                 userId={user?.id}
                             /></ErrorBoundary>
                         </motion.div>
