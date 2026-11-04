@@ -6,6 +6,8 @@ import UnderTheHood from './animations/UnderTheHood';
 import { useTranslation } from '../i18n';
 import { traceErrorMessage } from '../hooks/useCodeTrace';
 
+// 44 px touch target; five of these plus the slider fit a 390 px phone (the slider shrinks).
+const STEP_BTN = 'flex min-h-[44px] min-w-[44px] flex-shrink-0 items-center justify-center rounded-lg hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60';
 const TAB = 'min-h-[44px] px-4 text-sm font-semibold border-b-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60';
 
 // Time-travel visualizer: scrub through every executed step of the learner's own code.
@@ -21,6 +23,16 @@ export default function TraceViewer({ code, trace, onClose, loadHeap, language =
     const [heap, setHeap] = useState({ status: 'idle', data: null, error: '' });
     const heapRequested = useRef(false);
     const timer = useRef(null);
+
+    // Give focus back to whatever opened the viewer (e.g. "Visualize my code") when it closes.
+    // Captured during the first render, before anything inside the dialog can take focus.
+    const opener = useRef(typeof document !== 'undefined' ? document.activeElement : null);
+    useEffect(() => {
+        const el = opener.current;
+        return () => {
+            if (el && el !== document.body && el.isConnected && typeof el.focus === 'function') el.focus();
+        };
+    }, []);
 
     const fetchHeap = useCallback(() => {
         if (!loadHeap || heapRequested.current) return;
@@ -173,16 +185,16 @@ export default function TraceViewer({ code, trace, onClose, loadHeap, language =
                 </div>
 
                 {/* Controls */}
-                <div className="flex items-center gap-2 border-t border-white/10 px-4 py-3">
-                    <button onClick={() => go(0)} className="rounded-lg p-2 hover:bg-white/10" aria-label="First step"><SkipBack size={16} /></button>
-                    <button onClick={() => go((c) => c - 1)} className="rounded-lg p-2 hover:bg-white/10" aria-label="Previous step"><ChevronLeft size={16} /></button>
-                    <button onClick={() => setPlaying((p) => !p)} className="rounded-lg bg-cyan-500/20 p-2 text-cyan-200 hover:bg-cyan-500/30" aria-label={playing ? 'Pause' : 'Play'}>
+                <div className="flex items-center gap-1 border-t border-white/10 px-2 py-2 sm:gap-2 sm:px-4 sm:py-3">
+                    <button onClick={() => go(0)} className={STEP_BTN} aria-label="First step"><SkipBack size={16} /></button>
+                    <button onClick={() => go((c) => c - 1)} className={STEP_BTN} aria-label="Previous step"><ChevronLeft size={16} /></button>
+                    <button onClick={() => setPlaying((p) => !p)} className={`${STEP_BTN} bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/30`} aria-label={playing ? 'Pause' : 'Play'}>
                         {playing ? <Pause size={16} /> : <Play size={16} />}
                     </button>
-                    <button onClick={() => go((c) => c + 1)} className="rounded-lg p-2 hover:bg-white/10" aria-label="Next step"><ChevronRight size={16} /></button>
-                    <button onClick={() => go(last)} className="rounded-lg p-2 hover:bg-white/10" aria-label="Last step"><SkipForward size={16} /></button>
+                    <button onClick={() => go((c) => c + 1)} className={STEP_BTN} aria-label="Next step"><ChevronRight size={16} /></button>
+                    <button onClick={() => go(last)} className={STEP_BTN} aria-label="Last step"><SkipForward size={16} /></button>
                     <input type="range" min={0} max={last} value={i} onChange={(e) => go(Number(e.target.value))}
-                           className="mx-2 flex-1 accent-cyan-400" aria-label="Step" disabled={!steps.length} />
+                           className="mx-1 min-w-0 flex-1 accent-cyan-400 sm:mx-2" aria-label="Step" disabled={!steps.length} />
                     <span className="hidden text-xs text-slate-400 sm:inline">← → to step, space to play</span>
                 </div>
                 </>) : (

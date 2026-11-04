@@ -110,6 +110,23 @@ describe('Lesson intro: Under the hood', () => {
     r.unmount()
   })
 
+  it('a late 200 for lesson A never shows a button on lesson B (B answered 404)', async () => {
+    let resolveA
+    api.get.mockImplementation((url) => (url.includes('/lists_alias/')
+      ? new Promise((res) => { resolveA = res })
+      : Promise.reject(httpError(404))))
+    const r = render(<IntroPhase lesson={LESSON} language="en" onComplete={() => {}} />)
+    await flush()
+    r.rerender(<IntroPhase lesson={{ ...LESSON, id: 'lesson_b' }} language="en" onComplete={() => {}} />)
+    await flush()
+    expect(api.get).toHaveBeenLastCalledWith('/classroom/lesson/lesson_b/under-the-hood')
+    await act(async () => { resolveA({ data: LESSON_UTH }) })
+    await flush()
+    expect(uthButton(r.container)).toBeFalsy()
+    expect(document.querySelector('[role="dialog"]')).toBeFalsy()
+    r.unmount()
+  })
+
   it('shows the button even for a lesson without Watch It Run visuals', async () => {
     api.get.mockResolvedValue({ data: LESSON_UTH })
     const r = render(<IntroPhase lesson={{ ...LESSON, animation_sequence: [] }} language="en" onComplete={() => {}} />)
@@ -217,6 +234,41 @@ describe('TraceViewer: Steps | Under the hood tabs', () => {
     expect(alert).toBeTruthy()
     expect(alert.textContent).toMatch(/too fast/i)
     r.unmount()
+  })
+
+  it('step controls are 44 px touch targets', () => {
+    const r = render(<TraceViewer code={ALIAS_CODE} trace={STEPS_TRACE} onClose={() => {}} loadHeap={vi.fn()} language="en" />)
+    for (const label of ['First step', 'Previous step', 'Play', 'Next step', 'Last step']) {
+      const b = document.querySelector(`[role="dialog"] button[aria-label="${label}"]`)
+      expect(b, label).toBeTruthy()
+      expect(b.className, label).toMatch(/\bmin-h-\[44px\]/)
+      expect(b.className, label).toMatch(/\bmin-w-\[44px\]/)
+    }
+    // The slider may shrink so five 44 px buttons still fit a 390 px phone.
+    expect(document.querySelector('[role="dialog"] input[aria-label="Step"]').className).toMatch(/\bmin-w-0\b/)
+    r.unmount()
+  })
+
+  it('closing returns focus to the element that opened the viewer', () => {
+    const opener = document.createElement('button')
+    opener.textContent = 'Visualize my code'
+    document.body.appendChild(opener)
+    opener.focus()
+    const r = render(<TraceViewer code={ALIAS_CODE} trace={STEPS_TRACE} onClose={() => {}} loadHeap={vi.fn()} language="en" />)
+    document.querySelector('[role="dialog"] button[aria-label="Close visualizer"]').focus()
+    r.unmount()
+    expect(document.activeElement).toBe(opener)
+  })
+
+  it('does not try to focus an opener that is gone', () => {
+    const opener = document.createElement('button')
+    document.body.appendChild(opener)
+    opener.focus()
+    const r = render(<TraceViewer code={ALIAS_CODE} trace={STEPS_TRACE} onClose={() => {}} language="en" />)
+    opener.remove()
+    const spy = vi.spyOn(opener, 'focus')
+    expect(() => r.unmount()).not.toThrow()
+    expect(spy).not.toHaveBeenCalled()
   })
 
   it('Escape still closes the viewer from the Under the hood tab', async () => {
