@@ -4,6 +4,8 @@ graph/queries.py — Graph traversal: learning frontier, gap detection, recommen
 
 import sqlite3
 
+COMPLETED_MASTERY = 0.8   # a completed lesson counts as learned (matches routes/review.py COMPLETED_MASTERY)
+
 
 def get_user_mastery_map(db_path: str, user_id: str) -> dict[str, float]:
     """Return {concept_id: mastery_level} for a user, including 0.0 for untouched concepts."""
@@ -47,6 +49,29 @@ def get_user_mastery_map(db_path: str, user_id: str) -> dict[str, float]:
         topic = row["topic"]
         if topic in mastery_map and row["mastery"] is not None:
             mastery_map[topic] = max(mastery_map[topic], row["mastery"])
+
+    # Completion overlay (live audit 2026-11-04): mastery only rises 0.1 per passed challenge, so a learner who had
+    # completed every lesson saw "Not started" across the map. A completed lesson counts as learned for the concepts
+    # it teaches (and for a concept that shares the lesson's id) — the same rule as the review queue.
+    conn3 = sqlite3.connect(db_path)
+    try:
+        completed = conn3.execute(
+            """
+            SELECT lc.concept_id FROM lesson_completions c
+            JOIN lesson_concepts lc ON lc.lesson_id = c.lesson_id AND lc.role = 'teaches'
+            WHERE c.user_id = ?
+            UNION
+            SELECT c.lesson_id FROM lesson_completions c WHERE c.user_id = ?
+            """,
+            [user_id, user_id],
+        ).fetchall()
+    except sqlite3.OperationalError:   # databases created before lesson_completions existed
+        completed = []
+    finally:
+        conn3.close()
+    for (concept_id,) in completed:
+        if concept_id in mastery_map:
+            mastery_map[concept_id] = max(mastery_map[concept_id], COMPLETED_MASTERY)
 
     return mastery_map
 
