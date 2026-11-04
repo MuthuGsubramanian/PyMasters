@@ -25,10 +25,14 @@ from datetime import datetime
 PAUSE_AT, RESUME_AT, ALERT_AT = 80.0, 68.0, 90.0
 MIN_PAUSE_S = 90    # this laptop heats/cools in seconds; short pauses just oscillate
 # The status email is light; never freeze it. The slice holds every heavy job started via ~/pymasters-ops/heavy.
-HEAVY_UNITS = ["pymasters-heavy.slice", "pymasters-social.service"]
 LOG = os.path.expanduser("~/pymasters-ops/thermal.log")
 CSV = os.path.expanduser("~/pymasters-ops/thermal.csv")
 UID = os.getuid()
+# Fixed cgroupfs paths, never resolved through systemctl: on 2026-11-04 a freeze caught systemd spawning a unit
+# into the slice, systemd blocked, `systemctl --user show` timed out and the guard could not thaw (deadlock).
+_USER_CG = f"/sys/fs/cgroup/user.slice/user-{UID}.slice/user@{UID}.service"
+HEAVY_CGROUPS = [f"{_USER_CG}/pymasters.slice/pymasters-heavy.slice",        # every heavy job incl. the social bot
+                 f"{_USER_CG}/app.slice/pymasters-social.service"]          # legacy placement, if still there
 
 
 def temps():
@@ -46,27 +50,6 @@ def temps():
         except OSError:
             pass
     return out
-
-
-def unit_pids(unit):
-    try:
-        cg = subprocess.run(["systemctl", "--user", "show", unit, "-p", "ControlGroup", "--value"],
-                            capture_output=True, text=True, timeout=5).stdout.strip()
-        if not cg:
-            return []
-        with open(f"/sys/fs/cgroup{cg}/cgroup.procs") as f:
-            return [int(p) for p in f.read().split()]
-    except (OSError, subprocess.SubprocessError, ValueError):
-        return []
-
-
-def unit_cgroup(unit):
-    try:
-        cg = subprocess.run(["systemctl", "--user", "show", unit, "-p", "ControlGroup", "--value"],
-                            capture_output=True, text=True, timeout=5).stdout.strip()
-        return f"/sys/fs/cgroup{cg}" if cg else None
-    except subprocess.SubprocessError:
-        return None
 
 
 def count_procs(cg):
@@ -101,13 +84,23 @@ def continue_stopped(cg):
     return n
 
 
+def _pids(cg):
+    pids = []
+    for root, _dirs, files in os.walk(cg):
+        if "cgroup.procs" in files:
+            try:
+                pids += [int(x) for x in open(os.path.join(root, "cgroup.procs")).read().split()]
+            except (OSError, ValueError):
+                pass
+    return pids
+
+
 def signal_units(sig):
-    """Freeze (SIGSTOP) / thaw (SIGCONT) every heavy unit's whole cgroup subtree via cgroup.freeze, which also
-    catches children spawned later (podman containers placed in the slice, browser renderers, ...)."""
+    """Freeze (SIGSTOP) / thaw (SIGCONT) each heavy cgroup subtree via cgroup.freeze, which also catches children
+    spawned later (podman containers placed in the slice, browser renderers, ...)."""
     n = 0
-    for u in HEAVY_UNITS:
-        cg = unit_cgroup(u)
-        if not cg or not os.path.isdir(cg):
+    for cg in HEAVY_CGROUPS:
+        if not os.path.isdir(cg):
             continue
         try:
             with open(os.path.join(cg, "cgroup.freeze"), "w") as f:
@@ -116,7 +109,7 @@ def signal_units(sig):
                 continue_stopped(cg)
             n += count_procs(cg)
         except OSError:   # no freezer here: fall back to signalling the processes directly
-            for pid in unit_pids(u):
+            for pid in _pids(cg):
                 try:
                     os.kill(pid, sig)
                     n += 1
