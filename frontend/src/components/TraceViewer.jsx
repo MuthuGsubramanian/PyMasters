@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, SkipBack, ChevronLeft, ChevronRight, SkipForward, Play, Pause, History } from 'lucide-react';
 import ErrorExplainer from './ErrorExplainer';
 
@@ -53,7 +54,9 @@ export default function TraceViewer({ code, trace, onClose }) {
     const endLabel = err && err.type !== 'StepLimit' ? 'program stopped by an error' : 'program finished';
     const status = moduleEnd ? `${endLabel} at line ${step.line}` : `${verb} line ${step?.line} (${where})`;
 
-    return (
+    // Portal to <body>: inside the page container (a z-10 stacking context) the overlay's z-70 only competed
+    // within that context, and the mobile top bar painted over the title and close button.
+    return createPortal(
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-2 sm:p-6" role="dialog" aria-modal="true" aria-label="Time-travel visualizer">
             <div className="flex h-full max-h-[860px] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0f1020] text-slate-100 shadow-2xl">
                 <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
@@ -129,6 +132,7 @@ export default function TraceViewer({ code, trace, onClose }) {
                     <span className="hidden text-[11px] text-slate-500 sm:inline">← → to step, space to play</span>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
