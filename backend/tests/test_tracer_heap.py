@@ -192,3 +192,20 @@ def test_typical_payload_small():
             "nums = [3, 1, 2]\nalias = nums\nalias.append(4)\nprint(total(nums))\n")
     r = heap(code)
     assert len(json.dumps(r)) < 60_000
+
+
+def test_heavy_import_examples_get_the_heavy_import_time_budget(monkeypatch):
+    # Live 2026-11-04: ml_what_is_it (from sklearn ...) timed out after 10 s, so its lesson showed no Under the hood.
+    # The runner widens the timeout when it sees a heavy import, but the tracer hands it a harness, not the code.
+    import vaathiyaar.tracer as tracer
+    from vaathiyaar.execution import HEAVY_IMPORT_TIMEOUT
+    seen = {}
+
+    def fake_run(code, timeout=10, **kw):
+        seen['timeout'] = timeout
+        return {'output': '', 'error': 'x', 'exit_code': 1}
+    monkeypatch.setattr(tracer, 'run_code_subprocess', fake_run)
+    trace_code('from sklearn.linear_model import LinearRegression\nprint(1)\n', mode='heap')
+    assert seen['timeout'] >= HEAVY_IMPORT_TIMEOUT
+    trace_code('print(1)\n', mode='heap')
+    assert seen['timeout'] == 10
