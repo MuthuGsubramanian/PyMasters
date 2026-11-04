@@ -27,6 +27,7 @@ import LoopVisualizer from '../components/animations/LoopVisualizer';
 import CodeStepper from '../components/animations/CodeStepper';
 import ConceptMap from '../components/animations/ConceptMap';
 import VisualCaption from '../components/animations/VisualCaption';
+import { PlayableVisual, getStepTotal } from '../components/animations/VisualControls';
 import { ScrollyBody } from '../components/ScrollyExplain';
 import PythonEditor from '../components/PythonEditor';
 import OutputPanel from '../components/OutputPanel';
@@ -665,24 +666,31 @@ function splitStorySections(md) {
 // every other path, so loopVariable / iterable / result etc. are honoured.
 export function PopupLoopVisual({ loopViz, language, animKey = 0 }) {
     const p = normalizeProps('LoopVisualizer', loopViz, language);
+    const total = getStepTotal('LoopVisualizer', p);
+    const loop = (controlledStep) => (
+        <LoopVisualizer
+            key={`loop-${animKey}`}
+            loopType={p.loopType || 'for'}
+            collection={p.collection}
+            variable={p.variable || 'i'}
+            rangeStart={p.rangeStart ?? 0}
+            rangeEnd={p.rangeEnd ?? 5}
+            rangeStep={p.rangeStep ?? 1}
+            iterations={p.iterations || []}
+            code={p.code || ''}
+            result={p.result || ''}
+            condition={p.condition || ''}
+            label={p.label || ''}
+            speed={p.speed || 'normal'}
+            controlledStep={controlledStep}
+        />
+    );
     return (
         <>
             <VisualCaption title={p.caption?.title} />
-            <LoopVisualizer
-                key={`loop-${animKey}`}
-                loopType={p.loopType || 'for'}
-                collection={p.collection}
-                variable={p.variable || 'i'}
-                rangeStart={p.rangeStart ?? 0}
-                rangeEnd={p.rangeEnd ?? 5}
-                rangeStep={p.rangeStep ?? 1}
-                iterations={p.iterations || []}
-                code={p.code || ''}
-                result={p.result || ''}
-                condition={p.condition || ''}
-                label={p.label || ''}
-                speed={p.speed || 'normal'}
-            />
+            {total > 0
+                ? <PlayableVisual key={`loop-play-${animKey}`} total={total}>{loop}</PlayableVisual>
+                : loop(null)}
             <VisualCaption description={p.caption?.description} />
         </>
     );
@@ -1023,12 +1031,25 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
                                     <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                                     Step-by-Step Execution
                                 </div>
-                                <ExecutionVisualizer
-                                    key={`exec-${animKey}`}
-                                    code={executionViz.code || ''}
-                                    executionSteps={executionViz.executionSteps || []}
-                                    speed={executionViz.speed || 'normal'}
-                                />
+                                {(executionViz.executionSteps || []).length > 0 ? (
+                                    <PlayableVisual key={`exec-${animKey}`} total={executionViz.executionSteps.length}>
+                                        {(step) => (
+                                            <ExecutionVisualizer
+                                                code={executionViz.code || ''}
+                                                executionSteps={executionViz.executionSteps}
+                                                speed={executionViz.speed || 'normal'}
+                                                controlledStep={step}
+                                            />
+                                        )}
+                                    </PlayableVisual>
+                                ) : (
+                                    <ExecutionVisualizer
+                                        key={`exec-${animKey}`}
+                                        code={executionViz.code || ''}
+                                        executionSteps={[]}
+                                        speed={executionViz.speed || 'normal'}
+                                    />
+                                )}
                             </div>
                         )}
                         {legacyAnimPrimitives.length > 0 && (

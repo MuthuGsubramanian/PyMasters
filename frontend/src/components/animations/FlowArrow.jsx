@@ -19,11 +19,11 @@ function StageChain({ stages, label, current }) {
                 aria-current={active ? 'step' : undefined}
                 className={`rounded-xl border px-3 py-2 text-center w-full sm:w-auto sm:max-w-[16rem] transition-colors ${
                   active
-                    ? 'border-border-focus bg-accent-subtle'
+                    ? 'border-border-focus bg-accent-subtle ring-2 ring-border-focus'
                     : 'border-border-default bg-bg-elevated'
                 }`}
               >
-                <span className="block text-sm font-medium text-text-primary">{stage.label}</span>
+                <span className={`block text-sm ${active ? 'font-semibold text-accent-primary' : 'font-medium text-text-primary'}`}>{stage.label}</span>
                 {stage.detail && (
                   <span className="block text-xs text-text-secondary mt-0.5">{stage.detail}</span>
                 )}

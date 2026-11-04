@@ -16,6 +16,7 @@ import NeuralNetworkVisualizer from './NeuralNetworkVisualizer';
 import AlgorithmVisualizer from './AlgorithmVisualizer';
 import TreeVisualizer from './TreeVisualizer';
 import VisualCaption from './VisualCaption';
+import { PlayableVisual, getStepTotal } from './VisualControls';
 import { normalizeProps } from './normalize';
 
 // Exported so the scroll-synced lesson layout (Classroom IntroPhase) can
@@ -184,6 +185,7 @@ export default function AnimationRenderer({
         props = applySpeed(props, speedMultiplier);
 
         const isCurrentStep = idx === currentStep;
+        const stepTotal = getStepTotal(pType, props);
 
         // Wire sync props
         const syncProps = {};
@@ -197,11 +199,20 @@ export default function AnimationRenderer({
         return (
           <div key={`${pType}-${idx}`} className="flex flex-col gap-2">
             <VisualCaption title={caption?.title} />
-            <Component
-              {...props}
-              {...syncProps}
-              onComplete={isCurrentStep ? () => handleStepComplete(idx) : undefined}
-            />
+            {stepTotal > 0 ? (
+              <PlayableVisual
+                total={stepTotal}
+                onComplete={isCurrentStep ? () => handleStepComplete(idx) : undefined}
+              >
+                {(step) => <Component {...props} {...syncProps} controlledStep={step} />}
+              </PlayableVisual>
+            ) : (
+              <Component
+                {...props}
+                {...syncProps}
+                onComplete={isCurrentStep ? () => handleStepComplete(idx) : undefined}
+              />
+            )}
             <VisualCaption description={caption?.description} />
           </div>
         );
