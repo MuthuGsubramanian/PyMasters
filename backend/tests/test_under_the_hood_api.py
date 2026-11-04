@@ -41,6 +41,25 @@ def test_non_python_stepper_and_missing_code():
     assert example_code({}) is None
 
 
+def test_uth_example_used_when_nothing_else_qualifies():
+    lesson = {"uth_example": "nums = [1, 2]\ntotal = sum(nums)\n",
+              "animation_sequence": [{"type": "CodeStepper", "steps": [{"line": "return x + 1"}]}]}
+    assert example_code(lesson) == "nums = [1, 2]\ntotal = sum(nums)\n"
+    assert example_code({"uth_example": "a = 1"}) == "a = 1"
+
+
+def test_uth_example_ignored_when_execution_visualizer_exists():
+    lesson = {"uth_example": "a = 1",
+              "animation_sequence": [{"type": "ExecutionVisualizer", "code": "x = 1\n"}]}
+    assert example_code(lesson) == "x = 1\n"
+
+
+def test_uth_example_ignored_when_not_self_contained():
+    assert example_code({"uth_example": "y = undefined_name + 1"}) is None
+    assert example_code({"uth_example": "def f(:\n"}) is None
+    assert example_code({"uth_example": ["a = 1"]}) is None
+
+
 # ---------- routes ----------
 
 def _headers(uid):

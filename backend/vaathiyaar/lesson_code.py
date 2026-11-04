@@ -2,6 +2,8 @@
 
 Order: first ExecutionVisualizer `code`, else first CodeStepper `code` (or its `steps` lines joined),
 else the first other primitive that carries a string `code`. Non-Python CodeStepper code is skipped.
+Last fallback: the lesson's optional top-level `uth_example` (a short self-contained program written for this
+view, for lessons whose animation code is only fragments).
 """
 from __future__ import annotations
 
@@ -103,4 +105,7 @@ def example_code(lesson: dict) -> str | None:
                 code = _code_of(props)
                 if code:
                     return code
+    extra = lesson.get("uth_example") if isinstance(lesson, dict) else None
+    if isinstance(extra, str) and extra.strip() and _self_contained(extra):
+        return extra
     return None
