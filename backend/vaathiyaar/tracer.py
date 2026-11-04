@@ -18,7 +18,7 @@ what __del__, weakref and sys.getrefcount show; lessons about those should use m
 """
 import json
 
-from vaathiyaar.execution import run_code_subprocess
+from vaathiyaar.execution import _effective_timeout, run_code_subprocess
 
 MARK = "@@PM_TRACE@@"
 MAX_STEPS = 300
@@ -401,7 +401,9 @@ def trace_code(code: str, timeout: int = 10, mode: str = "steps") -> dict:
         return {"steps": [], "stdout": "", "error": {"type": "TooLong", "message":
                 f"The visualizer handles up to {MAX_CODE_CHARS} characters of code.", "line": None}}
     heap = mode == "heap"
-    res = run_code_subprocess(HEAP_HARNESS if heap else HARNESS, timeout=timeout,
+    # The runner only sees the harness (the code travels as a seed file), so widen the timeout for
+    # heavy imports (sklearn, pandas, ...) here, from the learner's/lesson's own code.
+    res = run_code_subprocess(HEAP_HARNESS if heap else HARNESS, timeout=_effective_timeout(code, timeout),
                               seed_files={"user_code.py": code},
                               max_output=HEAP_MAX_OUTPUT if heap else 600_000)
     raw = res.get("output") or ""

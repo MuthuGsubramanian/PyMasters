@@ -42,7 +42,10 @@ const LESSON = {
   title: 'Lists',
   story_variants: { en: 'A story without section headings.' },
   animation_sequence: [{ type: 'VariableBox', variable: 'a', value: '[1, 2]', data_type: 'list' }],
+  has_under_the_hood: true,
 }
+const dialog = () => document.querySelector('[role="dialog"][aria-label="Under the hood"]')
+const ofLesson = (id) => `/classroom/lesson/${id}/under-the-hood`
 
 let saved
 beforeAll(() => {
@@ -58,12 +61,11 @@ beforeEach(() => { api.get.mockReset(); api.post.mockReset(); document.body.inne
 afterEach(() => { document.body.innerHTML = '' })
 
 describe('Lesson intro: Under the hood', () => {
-  it('shows an "Under the hood" button next to "Watch It Run" when the lesson has a heap trace', async () => {
-    api.get.mockResolvedValue({ data: LESSON_UTH })
+  it('shows the button next to "Watch It Run" from the lesson flag, without running anything', async () => {
+    // Opening a lesson must not hold the one-at-a-time sandbox (ML examples take up to 25 s to import).
     const r = render(<IntroPhase lesson={LESSON} language="en" onComplete={() => {}} />)
     await flush()
-    expect(api.get).toHaveBeenCalledTimes(1)
-    expect(api.get).toHaveBeenCalledWith('/classroom/lesson/lists_alias/under-the-hood')
+    expect(api.get).not.toHaveBeenCalled()
     expect(byText(r.container, 'Watch It Run')).toBeTruthy()
     const btn = uthButton(r.container)
     expect(btn).toBeTruthy()
@@ -72,63 +74,16 @@ describe('Lesson intro: Under the hood', () => {
     r.unmount()
   })
 
-  it('does not block the page: the lesson renders before the trace arrives', async () => {
-    let resolve
-    api.get.mockReturnValue(new Promise((res) => { resolve = res }))
-    const r = render(<IntroPhase lesson={LESSON} language="en" onComplete={() => {}} />)
-    expect(byText(r.container, 'Start Practice')).toBeTruthy()
-    expect(uthButton(r.container)).toBeFalsy()
-    await act(async () => { resolve({ data: LESSON_UTH }) })
-    await flush()
-    expect(uthButton(r.container)).toBeTruthy()
-    r.unmount()
-  })
-
-  it.each([404, 403, 429])('hides the button when the API answers %i', async (status) => {
-    api.get.mockRejectedValue(httpError(status))
-    const r = render(<IntroPhase lesson={LESSON} language="en" onComplete={() => {}} />)
+  it('has no button when the lesson has no example code', async () => {
+    const r = render(<IntroPhase lesson={{ ...LESSON, has_under_the_hood: false }} language="en" onComplete={() => {}} />)
     await flush()
     expect(uthButton(r.container)).toBeFalsy()
     expect(byText(r.container, 'Start Practice')).toBeTruthy()
-    r.unmount()
-  })
-
-  it('fetches once per lesson, even across re-renders', async () => {
-    api.get.mockResolvedValue({ data: LESSON_UTH })
-    const r = render(<IntroPhase lesson={LESSON} language="en" onComplete={() => {}} />)
-    await flush()
-    r.rerender(<IntroPhase lesson={{ ...LESSON }} language="en" onComplete={() => {}} />)
-    await flush()
-    expect(api.get).toHaveBeenCalledTimes(1)
-    api.get.mockRejectedValue(httpError(404))
-    r.rerender(<IntroPhase lesson={{ ...LESSON, id: 'other' }} language="en" onComplete={() => {}} />)
-    await flush()
-    expect(api.get).toHaveBeenCalledTimes(2)
-    expect(api.get).toHaveBeenLastCalledWith('/classroom/lesson/other/under-the-hood')
-    // The previous lesson's trace is not shown for the new lesson.
-    expect(uthButton(r.container)).toBeFalsy()
-    r.unmount()
-  })
-
-  it('a late 200 for lesson A never shows a button on lesson B (B answered 404)', async () => {
-    let resolveA
-    api.get.mockImplementation((url) => (url.includes('/lists_alias/')
-      ? new Promise((res) => { resolveA = res })
-      : Promise.reject(httpError(404))))
-    const r = render(<IntroPhase lesson={LESSON} language="en" onComplete={() => {}} />)
-    await flush()
-    r.rerender(<IntroPhase lesson={{ ...LESSON, id: 'lesson_b' }} language="en" onComplete={() => {}} />)
-    await flush()
-    expect(api.get).toHaveBeenLastCalledWith('/classroom/lesson/lesson_b/under-the-hood')
-    await act(async () => { resolveA({ data: LESSON_UTH }) })
-    await flush()
-    expect(uthButton(r.container)).toBeFalsy()
-    expect(document.querySelector('[role="dialog"]')).toBeFalsy()
+    expect(api.get).not.toHaveBeenCalled()
     r.unmount()
   })
 
   it('shows the button even for a lesson without Watch It Run visuals', async () => {
-    api.get.mockResolvedValue({ data: LESSON_UTH })
     const r = render(<IntroPhase lesson={{ ...LESSON, animation_sequence: [] }} language="en" onComplete={() => {}} />)
     await flush()
     expect(byText(r.container, 'Watch It Run')).toBeFalsy()
@@ -136,20 +91,68 @@ describe('Lesson intro: Under the hood', () => {
     r.unmount()
   })
 
-  it('opens a dark popup with the Under the hood view; Escape closes it and focus returns to the button', async () => {
+  it('opening runs the example once: a loading message, then the view; reopening reuses it', async () => {
+    let resolve
+    api.get.mockReturnValue(new Promise((res) => { resolve = res }))
+    const r = render(<IntroPhase lesson={LESSON} language="en" onComplete={() => {}} />)
+    r.click(uthButton(r.container))
+    expect(api.get).toHaveBeenCalledWith(ofLesson('lists_alias'))
+    expect(dialog().querySelector('[role="status"]').textContent).toMatch(/Running the example/)
+    await act(async () => { resolve({ data: LESSON_UTH }) })
+    await flush()
+    expect(dialog().querySelector('[data-uth="code"]').textContent).toContain('b.append(3)')
+    r.key('Escape')
+    await flush()
+    r.click(uthButton(r.container))
+    await flush()
+    expect(api.get).toHaveBeenCalledTimes(1)
+    expect(dialog().querySelector('section[aria-label="Under the hood"]')).toBeTruthy()
+    r.unmount()
+  })
+
+  it.each([429, 500])('a failed run (%i) says so and Try again runs it again', async (status) => {
+    api.get.mockRejectedValueOnce(httpError(status)).mockResolvedValueOnce({ data: LESSON_UTH })
+    const r = render(<IntroPhase lesson={LESSON} language="en" onComplete={() => {}} />)
+    r.click(uthButton(r.container))
+    await flush()
+    const alert = dialog().querySelector('[role="alert"]')
+    expect(alert.textContent).toMatch(/Could not run the example/)
+    r.click(byText(alert, 'Try again'))
+    await flush()
+    expect(api.get).toHaveBeenCalledTimes(2)
+    expect(dialog().querySelector('section[aria-label="Under the hood"]')).toBeTruthy()
+    r.unmount()
+  })
+
+  it('a late answer for lesson A is never shown on lesson B', async () => {
+    let resolveA
+    api.get.mockImplementation((url) => (url === ofLesson('lists_alias')
+      ? new Promise((res) => { resolveA = res })
+      : new Promise(() => {})))
+    const r = render(<IntroPhase lesson={LESSON} language="en" onComplete={() => {}} />)
+    r.click(uthButton(r.container))
+    r.rerender(<IntroPhase lesson={{ ...LESSON, id: 'lesson_b' }} language="en" onComplete={() => {}} />)
+    await flush()
+    expect(dialog()).toBeFalsy()                       // switching lessons closes the popup
+    await act(async () => { resolveA({ data: LESSON_UTH }) })
+    await flush()
+    r.click(uthButton(r.container))
+    expect(api.get).toHaveBeenLastCalledWith(ofLesson('lesson_b'))
+    expect(dialog().querySelector('[data-uth="code"]')).toBeFalsy()
+    expect(dialog().querySelector('[role="status"]')).toBeTruthy()
+    r.unmount()
+  })
+
+  it('opens a dark popup; Escape closes it and focus returns to the button', async () => {
     api.get.mockResolvedValue({ data: LESSON_UTH })
     const r = render(<IntroPhase lesson={LESSON} language="en" onComplete={() => {}} />)
-    await flush()
     const btn = uthButton(r.container)
     btn.focus()
     r.click(btn)
-    const dlg = document.querySelector('[role="dialog"][aria-label="Under the hood"]')
-    expect(dlg).toBeTruthy()
+    await flush()
+    const dlg = dialog()
     expect(dlg.classList.contains('dark')).toBe(true)
     expect(document.documentElement.classList.contains('dark')).toBe(false)
-    // The UnderTheHood view, with the lesson's code and its step controls.
-    expect(dlg.querySelector('section[aria-label="Under the hood"]')).toBeTruthy()
-    expect(dlg.querySelector('[data-uth="code"]').textContent).toContain('b.append(3)')
     expect(dlg.querySelector('[aria-label="Next step"]')).toBeTruthy()
     // The popup scrolls inside itself, not the page.
     expect(dlg.innerHTML).toMatch(/overflow-y-auto/)
@@ -157,7 +160,7 @@ describe('Lesson intro: Under the hood', () => {
     expect(dlg.innerHTML).not.toMatch(/text-\[(9|10|11)px\]/)
     r.key('Escape')
     await flush()
-    expect(document.querySelector('[role="dialog"][aria-label="Under the hood"]')).toBeFalsy()
+    expect(dialog()).toBeFalsy()
     expect(document.activeElement).toBe(uthButton(r.container))
     r.unmount()
   })
@@ -165,15 +168,13 @@ describe('Lesson intro: Under the hood', () => {
   it('the close button closes the popup and returns focus to the button', async () => {
     api.get.mockResolvedValue({ data: LESSON_UTH })
     const r = render(<IntroPhase lesson={LESSON} language="en" onComplete={() => {}} />)
-    await flush()
     r.click(uthButton(r.container))
-    const dlg = document.querySelector('[role="dialog"][aria-label="Under the hood"]')
-    const close = dlg.querySelector('button[aria-label="Close"]')
-    expect(close).toBeTruthy()
+    await flush()
+    const close = dialog().querySelector('button[aria-label="Close"]')
     expect(close.className).toMatch(/min-h-\[44px\]|h-11/)
     r.click(close)
     await flush()
-    expect(document.querySelector('[role="dialog"][aria-label="Under the hood"]')).toBeFalsy()
+    expect(dialog()).toBeFalsy()
     expect(document.activeElement).toBe(uthButton(r.container))
     r.unmount()
   })
@@ -181,10 +182,9 @@ describe('Lesson intro: Under the hood', () => {
   it('uses the learner language for the view (Tamil title)', async () => {
     api.get.mockResolvedValue({ data: LESSON_UTH })
     const r = render(<IntroPhase lesson={LESSON} language="ta" onComplete={() => {}} />)
-    await flush()
     const btn = uthButton(r.container) || byText(r.container, 'உள்ளே என்ன நடக்கிறது')
-    expect(btn).toBeTruthy()
     r.click(btn)
+    await flush()
     expect(document.querySelector('section[aria-label="உள்ளே என்ன நடக்கிறது"]')).toBeTruthy()
     r.unmount()
   })

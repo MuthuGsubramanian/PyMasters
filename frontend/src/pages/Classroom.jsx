@@ -876,30 +876,28 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
         return () => window.removeEventListener('keydown', onKey);
     }, [showFlow]);
 
-    // "Under the hood": the heap trace of the lesson's example code. Fetched in the background once
-    // per lesson (the page never waits on it); the button only appears when a trace came back, so
-    // lessons without example code (404), locked ones (403) or a busy server (429) simply don't show it.
+    // "Under the hood": the heap trace of the lesson's example code. The lesson says whether it has an
+    // example (no code runs for that); the trace itself is fetched only when the learner opens the
+    // popup, because it runs in the one-at-a-time sandbox and ML examples need up to 25 s to import.
     const { t } = useTranslation(language);
     const lessonId = lesson?.id;
-    const [uth, setUth] = useState(null);              // { id, data } for the lesson it belongs to
+    const hasUth = !!lesson?.has_under_the_hood;
+    const [uth, setUth] = useState(null);              // { id, status: 'loading' | 'ready' | 'error', data }
     const [showUth, setShowUth] = useState(false);
-    const uthFetchedFor = useRef(null);
     const uthButtonRef = useRef(null);
     const uthCloseRef = useRef(null);
-    useEffect(() => {
-        if (!lessonId || uthFetchedFor.current === lessonId) return;
-        uthFetchedFor.current = lessonId;
-        setShowUth(false);
-        api.get(`/classroom/lesson/${encodeURIComponent(lessonId)}/under-the-hood`)
-            .then((res) => {
-                const data = res?.data;
-                if (uthFetchedFor.current === lessonId && Array.isArray(data?.steps) && data.steps.length) {
-                    setUth({ id: lessonId, data });
-                }
-            })
-            .catch(() => { /* hidden: no example code, not entitled, or rate limited */ });
-    }, [lessonId]);
-    const uthTrace = uth && uth.id === lessonId ? uth.data : null;
+    useEffect(() => { setShowUth(false); }, [lessonId]);
+    const uthState = uth && uth.id === lessonId ? uth : null;
+    const openUth = () => {
+        setShowUth(true);
+        if (uthState && uthState.status !== 'error') return;      // loading or loaded: fetch once per lesson
+        const id = lessonId;
+        setUth({ id, status: 'loading' });
+        const settle = (next) => setUth((cur) => (cur && cur.id === id ? { id, ...next } : cur));
+        api.get(`/classroom/lesson/${encodeURIComponent(id)}/under-the-hood`)
+            .then((res) => settle({ status: 'ready', data: res?.data }))
+            .catch(() => settle({ status: 'error' }));
+    };
     const closeUth = () => {
         setShowUth(false);
         uthButtonRef.current?.focus();
@@ -1022,7 +1020,7 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
             )}
 
             {/* ── Launcher card: opens the code execution + flow popup ── */}
-            {(hasVisuals || uthTrace) && (
+            {(hasVisuals || hasUth) && (
             <div className="flex flex-col gap-3 sm:flex-row">
             {hasVisuals && (
                 <button
@@ -1047,11 +1045,11 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
                 </button>
             )}
             {/* ── Launcher: Under the hood (names and objects of the lesson's example code) ── */}
-            {uthTrace && (
+            {hasUth && (
                 <button
                     ref={uthButtonRef}
                     type="button"
-                    onClick={() => setShowUth(true)}
+                    onClick={openUth}
                     aria-haspopup="dialog"
                     className={`group min-h-[44px] w-full min-w-0 text-left rounded-2xl surface-code shadow-lg border border-white/[0.08] hover:border-cyan-400/40 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 ${hasVisuals ? 'sm:w-auto sm:max-w-xs' : ''}`}
                 >
@@ -1071,7 +1069,7 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
 
             {/* ── Popup: Under the hood ── */}
             <AnimatePresence>
-                {showUth && uthTrace && (
+                {showUth && uthState && (
                     <motion.div
                         className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm"
                         initial={reducedMotion ? false : { opacity: 0 }}
@@ -1106,7 +1104,25 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
                                 </button>
                             </div>
                             <div className="flex-1 min-h-0 min-w-0 overflow-y-auto p-3 sm:p-4 dark-scrollbar">
-                                <UnderTheHood code={uthTrace.code} trace={uthTrace} language={language} />
+                                {uthState.status === 'ready' ? (
+                                    <UnderTheHood code={uthState.data?.code} trace={uthState.data} language={language} />
+                                ) : uthState.status === 'loading' ? (
+                                    <p role="status" className="flex items-center gap-2 py-6 text-sm text-slate-300">
+                                        <Loader2 size={16} className={reducedMotion ? '' : 'animate-spin'} aria-hidden="true" />
+                                        {t('uth.ui_running_example', 'Running the example… lessons that import libraries such as scikit-learn can take up to 30 seconds the first time.')}
+                                    </p>
+                                ) : (
+                                    <div role="alert" className="flex flex-col items-start gap-3 py-6 text-sm text-slate-300">
+                                        <p>{t('uth.ui_load_failed', 'Could not run the example right now. The code runner may be busy.')}</p>
+                                        <button
+                                            type="button"
+                                            onClick={openUth}
+                                            className="min-h-[44px] rounded-lg bg-cyan-500/15 px-4 text-sm font-semibold text-cyan-200 hover:bg-cyan-500/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
+                                        >
+                                            {t('uth.ui_retry', 'Try again')}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     </motion.div>
