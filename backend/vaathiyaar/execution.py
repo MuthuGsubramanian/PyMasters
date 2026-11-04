@@ -359,6 +359,8 @@ def _minimal_env(python_cmd: str, work_dir: str | None = None) -> dict:
         "PYTHONUNBUFFERED": "1",
         # One thread per numeric library: fewer address-space reservations and no thread fan-out.
         "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1",
+        # Polars (Rust): one worker and no jemalloc background thread, or it hits RLIMIT_NPROC (16) on multi-CPU hosts.
+        "POLARS_MAX_THREADS": "1", "RAYON_NUM_THREADS": "1", "_RJEM_MALLOC_CONF": "background_thread:false",
         # matplotlib (requirements-sandbox.txt) must never look for a display.
         "MPLBACKEND": "Agg",
     }
