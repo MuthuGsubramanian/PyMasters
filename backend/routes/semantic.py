@@ -6,11 +6,23 @@ first use; until it is ready these endpoints return ready:false / [] and
 the frontend simply hides the feature.
 """
 
-from fastapi import APIRouter, Header, Query
+from fastapi import APIRouter, Header, Query, Request
 
+from ratelimit import SlidingWindowRateLimiter, enforce
 from semantic.store import get_index
 
 router = APIRouter(prefix="/api/semantic", tags=["semantic"])
+
+# Public and CPU-bound (an embedding per query on the 1 GB VM): limited per client IP (review L4). Behind Caddy
+# the first X-Forwarded-For hop is exactly the visitor's IP (CF-Connecting-IP is trusted only from Cloudflare).
+# 120/min: a debounced search box sends at most ~1/s; the headroom covers a classroom behind one NAT address.
+_search_ip_limiter = SlidingWindowRateLimiter(max_calls=120, window_seconds=60)
+
+
+def _limit_by_ip(request: Request) -> None:
+    ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+          or (request.client.host if request.client else "unknown"))
+    enforce(_search_ip_limiter, ip, "searches")
 
 
 def _allowed_tracks(authorization):
@@ -44,9 +56,11 @@ def status():
 
 
 @router.get("/search")
-def search(q: str = Query(..., min_length=2, max_length=200),
+def search(request: Request,
+           q: str = Query(..., min_length=2, max_length=200),
            k: int = Query(8, ge=1, le=25),
            authorization: str = Header(None)):
+    _limit_by_ip(request)
     idx = get_index()
     idx.ensure_started()
     if not idx.ready:
@@ -55,9 +69,11 @@ def search(q: str = Query(..., min_length=2, max_length=200),
 
 
 @router.get("/related/{lesson_id}")
-def related(lesson_id: str,
+def related(request: Request,
+            lesson_id: str,
             k: int = Query(6, ge=1, le=12),
             authorization: str = Header(None)):
+    _limit_by_ip(request)
     idx = get_index()
     idx.ensure_started()
     if not idx.ready:
