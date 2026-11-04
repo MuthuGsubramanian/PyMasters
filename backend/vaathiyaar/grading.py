@@ -49,22 +49,35 @@ def probe_harness(test_code: str, sandbox_files: dict | None = None) -> bool | N
     return False if "Traceback (most recent call last)" in (res["error"] or "") else None
 
 
-def harness_is_vacuous(test_code: str, sandbox_files: dict | None = None) -> bool:
+def _vacuous_verdict(test_code: str, sandbox_files: dict | None = None) -> bool | None:
+    """Cached probe verdict; None (inconclusive: runner busy, timeout) is never cached."""
     key = hashlib.sha256((test_code + repr(sorted((sandbox_files or {}).items()))).encode()).hexdigest()
     if key not in _VACUOUS:
         verdict = probe_harness(test_code, sandbox_files)
         if verdict is None:
-            return False        # grade with the harness this time; probe again on the next submission
+            return None         # probe again on the next submission
         _VACUOUS[key] = verdict
     return _VACUOUS[key]
+
+
+def harness_is_vacuous(test_code: str, sandbox_files: dict | None = None) -> bool:
+    return _vacuous_verdict(test_code, sandbox_files) is True
+
+
+_RUNNER_BUSY = "The code runner is busy right now. Please try again in a few seconds."
 
 
 def grade_submission(student_code: str, expected_output: str, test_code: str | None = None,
                      sandbox_files: dict | None = None) -> dict:
     """Returns {"success", "output", "error"} for one submission (the safety gate runs before this)."""
     harness = test_code if isinstance(test_code, str) and test_code.strip() else None
-    if harness and harness_is_vacuous(harness, sandbox_files):
-        harness = None
+    if harness:
+        verdict = _vacuous_verdict(harness, sandbox_files)
+        if verdict is None:
+            # We don't know whether the harness passes on its own; grading by it could pass any program.
+            return {"success": False, "output": "", "error": _RUNNER_BUSY}
+        if verdict:
+            harness = None
     if harness:
         result = run_code_subprocess(student_code + "\n\n" + harness, seed_files=sandbox_files)
         success = result["exit_code"] == 0

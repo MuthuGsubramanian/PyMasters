@@ -69,11 +69,17 @@ describe('Watch It Run popup: ExecutionVisualizer goes through normalizeProps, c
 
 describe('Watch It Run popup is a dark surface in both themes', () => {
   let root, container;
-  beforeEach(() => { localStorage.setItem('pm_reduce_motion', '1'); });
+  beforeEach(async () => {
+    localStorage.setItem('pm_reduce_motion', '1');
+    // IntroPhase asks for the lesson's Under the hood trace in the background; no server here.
+    const { default: api } = await import('../api');
+    vi.spyOn(api, 'get').mockRejectedValue(Object.assign(new Error('Not Found'), { response: { status: 404 } }));
+  });
   afterEach(() => {
     act(() => root?.unmount());
     container?.remove();
     localStorage.removeItem('pm_reduce_motion');
+    vi.restoreAllMocks();
   });
 
   const lesson = {

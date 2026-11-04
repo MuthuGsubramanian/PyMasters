@@ -4,9 +4,11 @@ classroom.py — FastAPI APIRouter for the AI classroom experience.
 Prefix: /api/classroom
 """
 
+import hashlib
 import hmac
 import json
-from ratelimit import limit_ai_chat, limit_grading
+from collections import OrderedDict
+from ratelimit import limit_ai_chat, limit_grading, SlidingWindowRateLimiter
 import re
 import os
 import sqlite3
@@ -16,7 +18,7 @@ from pathlib import Path
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Header, Depends
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 
 from auth import get_current_user_id, optional_user_id
@@ -958,6 +960,95 @@ def catalog_stats():
     The underlying catalogue is cached; this only counts it."""
     lessons = list_lessons(user_id=None, lang="en", authorization=None).get("lessons", [])
     return {"lessons": len(lessons), "tracks": len({l.get("track") for l in lessons if l.get("track")})}
+
+
+_UTH_CACHE_MAX = 512
+_UTH_CACHE_BYTES = 32 * 1024 * 1024                       # total JSON bytes kept; one trace can be ~1.5 MB
+# (lesson_id, sha256(code)) -> serialized JSON bytes; LRU bounded by count AND bytes (a 1 GB VM). Bytes, not dicts:
+# a dict costs several times its JSON size, and a hit then needs no re-encoding.
+_uth_cache: "OrderedDict[tuple, bytes]" = OrderedDict()
+_uth_cache_bytes = 0
+_uth_lock = threading.Lock()
+_uth_inflight: dict = {}                                  # key -> [lock, waiters]; single-flight per cache key
+_uth_limiter = SlidingWindowRateLimiter(max_calls=30, window_seconds=60)   # cache MISSES only, per user
+# errors that are a property of the code itself (cacheable); anything else (RunError, timeouts, busy) is transient
+_UTH_DETERMINISTIC_ERRORS = {"SyntaxError", "NameError", "StepLimit", "ImportError", "ModuleNotFoundError",
+                             "TooLong", "IndentationError"}
+
+
+def _uth_get(key):
+    with _uth_lock:
+        hit = _uth_cache.get(key)
+        if hit is not None:
+            _uth_cache.move_to_end(key)
+        return hit
+
+
+def _uth_put(key, body: bytes):
+    global _uth_cache_bytes
+    if len(body) > _UTH_CACHE_BYTES:
+        return                                   # too big to keep; served once, re-traced next time
+    with _uth_lock:
+        old = _uth_cache.pop(key, None)
+        if old is not None:
+            _uth_cache_bytes -= len(old)
+        _uth_cache[key] = body
+        _uth_cache_bytes += len(body)
+        while len(_uth_cache) > _UTH_CACHE_MAX or _uth_cache_bytes > _UTH_CACHE_BYTES:
+            _, evicted = _uth_cache.popitem(last=False)
+            _uth_cache_bytes -= len(evicted)
+
+
+def _uth_response(body: bytes) -> Response:
+    return Response(content=body, media_type="application/json")
+
+
+@router.get("/lesson/{lesson_id}/under-the-hood")
+def lesson_under_the_hood(lesson_id: str, caller: str = Depends(get_current_user_id)):
+    """Heap trace (names, objects, frames, events per step) of the lesson's example code, for the
+    "Under the hood" view. Same auth + learning-access gates as /lesson/{id}; 404 without example code.
+    Cache hits are free; a miss runs one sandboxed trace (single-flight per key) and counts against a per-user limit."""
+    from access import assert_learning_access, ENTERPRISE_TRACKS, has_enterprise_access
+    from vaathiyaar.lesson_code import example_code
+    from vaathiyaar.tracer import trace_code
+    assert_learning_access(_get_db_path(), caller)
+    lesson = _load_lesson_from_dir(lesson_id)
+    if lesson is None:
+        raise HTTPException(status_code=404, detail=f"Lesson '{lesson_id}' not found.")
+    if lesson.get("track") in ENTERPRISE_TRACKS and not has_enterprise_access(_get_db_path(), caller):
+        raise HTTPException(
+            status_code=403,
+            detail="This lesson is part of the enterprise curriculum, available on organization plans.",
+        )
+    code = example_code(lesson)
+    if not code:
+        raise HTTPException(status_code=404, detail="This lesson has no example code to look inside.")
+    key = (lesson_id, hashlib.sha256(code.encode("utf-8")).hexdigest())
+    hit = _uth_get(key)
+    if hit is not None:
+        return _uth_response(hit)
+    with _uth_lock:
+        entry = _uth_inflight.setdefault(key, [threading.Lock(), 0])
+        entry[1] += 1
+    try:
+        with entry[0]:
+            hit = _uth_get(key)          # another request may have filled it while we waited
+            if hit is not None:
+                return _uth_response(hit)
+            if not _uth_limiter.allow(caller):
+                wait = _uth_limiter.retry_after(caller)
+                raise HTTPException(status_code=429, detail=f"Rate limit reached. Try again in {wait}s.")
+            result = {**trace_code(code, mode="heap"), "code": code}
+            body = json.dumps(result, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+            err_type = (result.get("error") or {}).get("type")
+            if err_type is None or err_type in _UTH_DETERMINISTIC_ERRORS:
+                _uth_put(key, body)
+            return _uth_response(body)
+    finally:
+        with _uth_lock:
+            entry[1] -= 1
+            if entry[1] == 0:
+                _uth_inflight.pop(key, None)
 
 
 @router.get("/lesson/{lesson_id}")

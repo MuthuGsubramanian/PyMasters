@@ -1,0 +1,129 @@
+{
+ "steps": [
+  {
+   "line": 1,
+   "event": "line",
+   "func": "<module>",
+   "depth": 1,
+   "vars": {},
+   "out": 0,
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {}
+    }
+   ],
+   "objects": {},
+   "events": []
+  },
+  {
+   "line": 2,
+   "event": "line",
+   "func": "<module>",
+   "depth": 1,
+   "vars": {
+    "x": "1"
+   },
+   "out": 0,
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {
+      "x": "o1"
+     }
+    }
+   ],
+   "objects": {
+    "o1": {
+     "type": "int",
+     "repr": "1",
+     "mutable": false
+    }
+   },
+   "events": [
+    {
+     "kind": "new_object",
+     "ref": "o1",
+     "type": "int"
+    },
+    {
+     "kind": "bind",
+     "name": "x",
+     "ref": "o1",
+     "func": "<module>"
+    }
+   ]
+  },
+  {
+   "line": 2,
+   "event": "exception",
+   "func": "<module>",
+   "depth": 1,
+   "vars": {
+    "x": "1"
+   },
+   "out": 0,
+   "exc": "ZeroDivisionError: ZeroDivisionError('division by zero')",
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {
+      "x": "o1"
+     }
+    }
+   ],
+   "objects": {
+    "o1": {
+     "type": "int",
+     "repr": "1",
+     "mutable": false
+    }
+   },
+   "events": [
+    {
+     "kind": "exception",
+     "func": "<module>",
+     "name": "ZeroDivisionError"
+    }
+   ]
+  },
+  {
+   "line": 2,
+   "event": "return",
+   "func": "<module>",
+   "depth": 1,
+   "vars": {
+    "x": "1"
+   },
+   "out": 0,
+   "ret": "None",
+   "frames": [
+    {
+     "func": "<module>",
+     "depth": 1,
+     "names": {
+      "x": "o1"
+     }
+    }
+   ],
+   "objects": {
+    "o1": {
+     "type": "int",
+     "repr": "1",
+     "mutable": false
+    }
+   },
+   "events": []
+  }
+ ],
+ "stdout": "",
+ "error": {
+  "type": "ZeroDivisionError",
+  "message": "division by zero",
+  "line": 2
+ },
+ "code": "x = 1\ny = x / 0\n"
+}
