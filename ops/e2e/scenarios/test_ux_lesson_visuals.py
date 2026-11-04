@@ -5,6 +5,8 @@ Lessons used (all open for a brand-new user, none sit in an enterprise-only trac
 - variables_operators: an ExecutionVisualizer with a playback bar (Watch It Run popup).
 - for_loops: its ExecutionVisualizer code has an indented line (a loop body).
 - ml_workflow: its ExecutionVisualizer has lines of up to 92 characters (long-line overflow on a phone).
+- conditionals: a VariableBox ('signal') and a captioned ComparisonPanel in the popup walkthrough (light-mode contrast).
+- agent_fundamentals: a FlowDiagram whose nodes are plain strings, with a description caption.
 - /dashboard/explains/gradient-descent: a ScrollyBody essay."""
 import re
 
@@ -157,6 +159,41 @@ def test_long_code_line_scrolls_inside_its_box_on_a_phone(logged_in_page):
     scrolls = column.evaluate("c => ({ overflowX: getComputedStyle(c).overflowX, inner: c.scrollWidth, outer: c.clientWidth })")
     assert scrolls["overflowX"] in ("auto", "scroll"), f"code column does not scroll: {scrolls}"
     assert scrolls["inner"] > scrolls["outer"], f"long line is clipped instead of scrollable: {scrolls}"
+
+
+@pytest.mark.parametrize("width,height", SIZES)
+def test_popup_caption_and_variable_name_read_in_light_mode(logged_in_page, width, height):
+    # The popup is a dark code surface in both themes; in light mode its captions and VariableBox text used the light
+    # tokens (about 1.2-1.6:1). conditionals: the walkthrough is CodeStepper -> VariableBox 'signal' -> FlowArrow ->
+    # ComparisonPanel with the description "Only the first True branch executes" (shown as a caption).
+    page, dialog = _open_visual(logged_in_page, "conditionals", width, height, dark=False)
+    # The VariableBox header name (font-mono, uppercase); the CodeStepper also highlights "signal", so not get_by_text.
+    name = dialog.locator("span.font-mono.uppercase").filter(has_text=re.compile(r"^\s*signal\s*$", re.I)).first
+    name.wait_for(timeout=60000)
+    caption = dialog.get_by_text("Only the first True branch executes", exact=True).first
+    caption.wait_for(timeout=90000)   # the walkthrough autoplays CodeStepper, VariableBox and FlowArrow first
+    for label, el in (("VariableBox name", name), ("ComparisonPanel caption", caption)):
+        el.scroll_into_view_if_needed()
+        ratio = el.evaluate(_CONTRAST)
+        assert ratio >= 4.5, f"{label} contrast {ratio:.1f}:1 (light, {width}px)"
+    # Only the popup is dark; the page behind it keeps the light theme.
+    assert not page.evaluate("document.documentElement.classList.contains('dark')"), "the page switched to dark"
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), \
+        f"page scrolls sideways: scrollWidth={page.evaluate('document.documentElement.scrollWidth')} innerWidth={width}"
+
+
+@pytest.mark.parametrize("dark", THEMES)
+def test_popup_flow_diagram_with_string_nodes_shows_labels(logged_in_page, dark):
+    # agent_fundamentals' FlowDiagram lists its nodes as plain strings; on main the popup drew them as blank boxes.
+    page, dialog = _open_visual(logged_in_page, "agent_fundamentals", 390, 844, dark)
+    for label in ("Perceive", "Reason", "Memory Update", "Task Complete?"):
+        el = dialog.get_by_text(label, exact=True).first
+        el.wait_for(timeout=30000)
+        assert el.inner_text().strip() == label
+    caption = dialog.get_by_text(re.compile(r"^The Perceive-Reason-Act loop")).first
+    caption.wait_for(timeout=30000)
+    ratio = caption.evaluate(_CONTRAST)
+    assert ratio >= 4.5, f"flow caption contrast {ratio:.1f}:1 ({'dark' if dark else 'light'})"
 
 
 def test_explains_step_headings_are_not_covered_on_a_short_phone(logged_in_page):

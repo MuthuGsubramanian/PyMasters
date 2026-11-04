@@ -13,7 +13,7 @@ function Side({ side, innerRef, ba, kind }) {
       ? { box: 'border-red-500/20 shadow-lg shadow-red-500/5', head: 'border-red-500/15', dot: 'bg-red-400', label: 'text-red-700 dark:text-red-400' }
       : { box: 'border-green-500/20 shadow-lg shadow-green-500/5', head: 'border-green-500/15', dot: 'bg-green-400', label: 'text-green-700 dark:text-green-400' };
   return (
-    <div ref={innerRef} className={`rounded-2xl overflow-hidden border opacity-0 ${theme.box}`}>
+    <div ref={innerRef} className={`min-w-0 rounded-2xl overflow-hidden border opacity-0 ${theme.box}`}>
       <div className={`border-b px-4 py-2.5 flex items-start gap-2 ${theme.head}`}>
         <span className={`w-2.5 h-2.5 mt-1 rounded-full shrink-0 ${theme.dot}`} />
         <span className={`text-xs font-bold tracking-wide ${theme.label}`}>{side.label}</span>
@@ -24,10 +24,10 @@ function Side({ side, innerRef, ba, kind }) {
         </pre>
       )}
       {hasResult && hasCode && (
-        <div data-result className="bg-[#0d1117] px-4 pb-4 font-mono text-sm text-emerald-300">{`→ ${pyValue(side.result)}`}</div>
+        <div data-result className="bg-[#0d1117] px-4 pb-4 font-mono text-sm text-emerald-300 whitespace-pre-wrap break-words">{`→ ${pyValue(side.result)}`}</div>
       )}
       {hasResult && !hasCode && (
-        <div data-result className="px-4 py-6 font-mono text-3xl font-bold text-text-primary">{pyValue(side.result)}</div>
+        <div data-result className="px-4 py-6 font-mono text-3xl font-bold text-text-primary break-words">{pyValue(side.result)}</div>
       )}
     </div>
   );
@@ -86,7 +86,7 @@ export default function ComparisonPanel({
 
   const ba = tone === 'before_after';
   return (
-    <div ref={containerRef} data-tone={ba ? 'before_after' : 'neutral'} className="relative grid grid-cols-2 gap-6 max-w-3xl">
+    <div ref={containerRef} data-tone={ba ? 'before_after' : 'neutral'} className="relative grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl">
       {/* VS badge */}
       <div ref={vsRef} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 opacity-0">
         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-white text-xs font-black shadow-lg shadow-purple-500/30">

@@ -73,7 +73,7 @@ export default function VisualControls({
       >
         {speed}x
       </button>
-      <span aria-live="polite" className="text-xs font-medium text-text-primary px-1">
+      <span aria-live={playing ? 'off' : 'polite'} className="text-xs font-medium text-text-primary px-1">
         {`Step ${Math.min(step + 1, total)} of ${total}`}
       </span>
     </div>
@@ -89,7 +89,7 @@ function isEditableTarget(t) {
 // Wraps a step-based visual: owns the playback state, passes the current step
 // to `children(step)` (which renders the visual with controlledStep), and shows
 // the controls. `onComplete` fires when playback finishes the last step or the
-// learner presses Next on it, so a "Watch It Run" sequence still advances.
+// learner steps onto it with Next, so a "Watch It Run" sequence still advances.
 export function PlayableVisual({ total, onComplete, children }) {
   const reducedMotion = useReducedMotion();
   const completedRef = useRef(false);
@@ -100,9 +100,13 @@ export function PlayableVisual({ total, onComplete, children }) {
   };
   const pb = useStepPlayback(total, { reducedMotion, onFinish: complete });
 
+  // A Next press that reaches the last step finishes the visual right away, so
+  // the next one in a sequence appears without an extra press on a counter that
+  // already reads "Step N of N" (manual stepping pauses autoplay, and under
+  // reduced motion there is no autoplay to finish it).
   const next = () => {
-    if (pb.step >= total - 1) {
-      pb.pause();
+    if (pb.step >= total - 2) {
+      if (pb.step < total - 1) pb.next(); else pb.pause();
       complete();
     } else {
       pb.next();

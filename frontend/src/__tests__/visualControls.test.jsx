@@ -91,12 +91,42 @@ describe('VisualControls', () => {
     expect(counters[1].textContent).toBe('Step 1 of 5');
   });
 
-  it('Next on the last step completes the sequence', () => {
+  it('Next that lands on the last step completes the sequence at once (reduced motion: no autoplay to finish it)', () => {
     const onComplete = vi.fn();
-    mount(<PlayableVisual total={2} onComplete={onComplete}>{visual('a')}</PlayableVisual>);
+    mount(<PlayableVisual total={3} onComplete={onComplete}>{visual('a')}</PlayableVisual>);
     act(() => btn(container, 'Next step').click());
     expect(onComplete).not.toHaveBeenCalled();
     act(() => btn(container, 'Next step').click());
+    expect(container.querySelector('[aria-live="polite"]').textContent).toBe('Step 3 of 3');
     expect(onComplete).toHaveBeenCalledTimes(1);
+    // Further presses stay on the last step and do not complete twice.
+    act(() => btn(container, 'Next step').click());
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain('a:2');
+  });
+
+  it('ArrowRight onto the last step completes too', () => {
+    const onComplete = vi.fn();
+    mount(<PlayableVisual total={2} onComplete={onComplete}>{visual('a')}</PlayableVisual>);
+    keydown(container.querySelector('[tabindex="0"]'), 'ArrowRight');
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it('a one-step visual under reduced motion completes on the first Next', () => {
+    const onComplete = vi.fn();
+    mount(<PlayableVisual total={1} onComplete={onComplete}>{visual('a')}</PlayableVisual>);
+    expect(onComplete).not.toHaveBeenCalled();
+    act(() => btn(container, 'Next step').click());
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it('the step counter is silent while playing and polite when paused', () => {
+    mount(<PlayableVisual total={5}>{visual('a')}</PlayableVisual>);
+    const counter = () => [...container.querySelectorAll('span')].find((s) => /^Step \d+ of \d+$/.test(s.textContent));
+    expect(counter().getAttribute('aria-live')).toBe('polite');
+    act(() => btn(container, 'Play').click());
+    expect(counter().getAttribute('aria-live')).toBe('off');
+    act(() => btn(container, 'Pause').click());
+    expect(counter().getAttribute('aria-live')).toBe('polite');
   });
 });
