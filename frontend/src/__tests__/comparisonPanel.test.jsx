@@ -38,6 +38,10 @@ describe('ComparisonPanel results and tone', () => {
     expect(html).toContain('data-tone="before_after"');
     expect(html).toMatch(/red-/);
     expect(html).toMatch(/green-/);
+    for (const c of ['red', 'green']) {
+      expect(html).toContain(`text-${c}-700`);
+      expect(html).toContain(`dark:text-${c}-400`);
+    }
   });
 
   it('a Wrong/Right side label selects before_after tone', () => {

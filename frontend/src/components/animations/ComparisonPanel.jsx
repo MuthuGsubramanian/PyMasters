@@ -10,8 +10,8 @@ function Side({ side, innerRef, ba, kind }) {
   const theme = !ba
     ? { box: 'border-border-default bg-bg-surface', head: 'border-border-default', dot: 'bg-accent-primary', label: 'text-accent-primary' }
     : kind === 'before'
-      ? { box: 'border-red-500/20 shadow-lg shadow-red-500/5', head: 'border-red-500/15', dot: 'bg-red-400', label: 'text-red-400' }
-      : { box: 'border-green-500/20 shadow-lg shadow-green-500/5', head: 'border-green-500/15', dot: 'bg-green-400', label: 'text-green-400' };
+      ? { box: 'border-red-500/20 shadow-lg shadow-red-500/5', head: 'border-red-500/15', dot: 'bg-red-400', label: 'text-red-700 dark:text-red-400' }
+      : { box: 'border-green-500/20 shadow-lg shadow-green-500/5', head: 'border-green-500/15', dot: 'bg-green-400', label: 'text-green-700 dark:text-green-400' };
   return (
     <div ref={innerRef} className={`rounded-2xl overflow-hidden border opacity-0 ${theme.box}`}>
       <div className={`border-b px-4 py-2.5 flex items-start gap-2 ${theme.head}`}>
