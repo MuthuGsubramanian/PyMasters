@@ -235,3 +235,17 @@ def assert_learning_access(db_path: str, user_id: str) -> None:
             status_code=402,
             detail="Your 7-day free trial has ended. Choose a plan to keep learning.",
         )
+
+
+def owner_or_super_admin(owner_id: str | None, caller: str | None) -> bool:
+    """True when `caller` owns the record (`owner_id`) or is a super admin (users.is_super_admin column only)."""
+    if not caller:
+        return False
+    if owner_id and str(owner_id) == str(caller):
+        return True
+    from fastapi import HTTPException
+    from routes.admin import require_super_admin
+    try:
+        return require_super_admin(caller)
+    except HTTPException:
+        return False
