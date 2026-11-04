@@ -119,3 +119,19 @@ def test_no_practice_starter_passes_untouched():
             if out.returncode == 0 and json.loads(out.stdout.strip().splitlines()[-1])["ok"]:
                 giveaways.append(f"{d.get('id') or f.stem}#{i}")
     assert not giveaways, f"starter code already passes (nothing to write): {sorted(giveaways)}"
+
+
+def test_a_self_contained_harness_does_not_pass_any_program():
+    # Live 2026-11-04: variables_operators#0's harness computed the circle area itself, so `print("hi")` got
+    # "You nailed this challenge". The grader now ignores a harness that passes on its own.
+    assert _verify("variables_operators", 'print("hi")\n')["ok"] is False
+    sol = json.loads((SOLUTIONS / "variables_operators.json").read_text())
+    assert _verify("variables_operators", sol["challenges"][0]["code"])["ok"] is True
+
+
+def test_no_practice_challenge_accepts_an_empty_submission():
+    out = subprocess.run([DOCKER, "exec", CONTAINER, "python", "/app/ops_e2e/verify.py", "empty", "/app/backend/lessons"],
+                         capture_output=True, text=True, timeout=900)
+    assert out.returncode == 0, out.stderr[-500:]
+    accepted = json.loads(out.stdout.strip().splitlines()[-1])["accepted_empty"]
+    assert not accepted, f"{len(accepted)} challenges pass with no code at all: {accepted[:30]}"

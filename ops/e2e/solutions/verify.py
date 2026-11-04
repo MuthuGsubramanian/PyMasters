@@ -3,6 +3,7 @@
 
   python /app/ops_e2e/verify.py one <lesson_id> [index]  < code  → {"ok", "output", "error"}
   python /app/ops_e2e/verify.py all <dir>       → {"checked", "failed": [{lesson_id, index, output, error}]}
+  python /app/ops_e2e/verify.py empty <lessons> → {"accepted_empty": ["lesson#i", ...]} (must be [])
 
 The rules are the ones /api/classroom/evaluate applies to practice_challenges[index]: with a server-authored
 test_code harness, the code + harness must exit cleanly; otherwise stdout must satisfy _output_matches (exact
@@ -83,8 +84,31 @@ def main(argv) -> int:
                                    "output": r["output"][-400:], "error": r["error"][-400:]})
         print(json.dumps({"checked": checked, "failed": failed}))
         return 1 if failed else 0
+    if argv[:1] == ["empty"] and len(argv) == 2:
+        # Every practice challenge must reject an empty submission (2026-11-04: 61 accepted anything).
+        print(json.dumps({"accepted_empty": accepts_empty(Path(argv[1]))}))
+        return 0
     print(__doc__, file=sys.stderr)
     return 2
+
+
+def _empty_ok(key):
+    return key if verify(key[0], "", key[1])["ok"] else None
+
+
+def accepts_empty(lessons_dir: Path) -> list:
+    keys = []
+    for f in sorted(lessons_dir.rglob("*.json")):
+        try:
+            d = json.loads(f.read_text())
+        except Exception:  # noqa: BLE001 — non-lesson JSON
+            continue
+        if isinstance(d, dict):
+            keys += [(d.get("id") or f.stem, i) for i, ch in enumerate(d.get("practice_challenges") or [])
+                     if isinstance(ch, dict)]
+    from concurrent.futures import ProcessPoolExecutor   # the sandbox serialises runs per process
+    with ProcessPoolExecutor(max_workers=4) as pool:
+        return sorted(f"{k[0]}#{k[1]}" for k in pool.map(_empty_ok, keys, chunksize=8) if k)
 
 
 if __name__ == "__main__":
