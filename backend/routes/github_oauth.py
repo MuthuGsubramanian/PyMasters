@@ -18,7 +18,6 @@ Prefix: /api/auth/github
 """
 
 import os
-import time
 import uuid
 import json
 import sqlite3
@@ -26,12 +25,11 @@ import secrets as _secrets
 from urllib.parse import urlencode
 
 import requests
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Cookie, HTTPException, Query, Response
 from fastapi.responses import RedirectResponse
 
-import jwt
-from jwt import PyJWTError as JWTError   # PyJWT (python-jose had an unfixed advisory; 2026-11-02)
-from auth import create_access_token, JWT_SECRET, JWT_ALG, _is_blocked
+from auth import create_access_token, _is_blocked
+from routes.oauth_state import clear_nonce, cookie_name, issue_state, state_matches
 
 # Shared identity table (provider, provider_user_id, user_id, ...)
 from routes.oauth import ensure_oauth_tables
@@ -45,7 +43,6 @@ TOKEN_URL = "https://github.com/login/oauth/access_token"
 USER_URL = "https://api.github.com/user"
 EMAILS_URL = "https://api.github.com/user/emails"
 SCOPE = "read:user user:email"
-_STATE_TTL = 600  # 10 minutes
 
 
 def _cfg():
@@ -62,19 +59,6 @@ def is_enabled() -> bool:
     return bool(c["client_id"] and c["client_secret"] and c["redirect_uri"])
 
 
-def _sign_state() -> str:
-    payload = {"k": "gh_oauth", "n": _secrets.token_urlsafe(12), "exp": int(time.time()) + _STATE_TTL}
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
-
-
-def _verify_state(state: str) -> bool:
-    try:
-        p = jwt.decode(state, JWT_SECRET, algorithms=[JWT_ALG])
-        return p.get("k") == "gh_oauth"
-    except JWTError:
-        return False
-
-
 # ── Discovery: lets the frontend decide whether to render the button ────────
 
 @router.get("/config")
@@ -85,7 +69,7 @@ def github_config():
 # ── Step 1: hand the browser a GitHub authorize URL ─────────────────────────
 
 @router.get("/start")
-def github_start():
+def github_start(response: Response):
     if not is_enabled():
         raise HTTPException(status_code=503, detail="GitHub sign-in is not configured.")
     c = _cfg()
@@ -94,7 +78,7 @@ def github_start():
         "client_id": c["client_id"],
         "redirect_uri": c["redirect_uri"],
         "scope": SCOPE,
-        "state": _sign_state(),
+        "state": issue_state("gh_oauth", "github", response),
         "allow_signup": "true",
     }
     return {"authorize_url": f"{AUTHORIZE_URL}?{urlencode(params)}"}
@@ -103,20 +87,22 @@ def github_start():
 # ── Step 2: GitHub redirects back here with ?code&state ─────────────────────
 
 @router.get("/callback")
-def github_callback(code: str = Query(None), state: str = Query(None), error: str = Query(None)):
+def github_callback(code: str = Query(None), state: str = Query(None), error: str = Query(None),
+                    nonce: str = Cookie(None, alias=cookie_name("github"))):
     c = _cfg()
     frontend = c["frontend"]
 
     def _bounce(**qs):
         # Fragment, not query (audit L2): the 30-day JWT must not land in proxy access logs or Referer
         # headers; browsers never send the #fragment to a server.
-        return RedirectResponse(url=f"{frontend}/login#{urlencode(qs)}")
+        return clear_nonce("github", RedirectResponse(url=f"{frontend}/login#{urlencode(qs)}"))
 
     if not is_enabled():
         raise HTTPException(status_code=503, detail="GitHub sign-in is not configured.")
     if error:
         return _bounce(gh_error="GitHub sign-in was cancelled.")
-    if not code or not state or not _verify_state(state):
+    # The state must come back to the browser that started sign-in (login CSRF, review M2).
+    if not code or not state_matches(state, "gh_oauth", nonce):
         return _bounce(gh_error="Invalid or expired sign-in attempt. Please try again.")
 
     # Exchange the code for an access token.
