@@ -26,7 +26,27 @@ function detectType(val) {
   return typeof val;
 }
 
-export default function VariableBox({ variable = '', values = [], label = '', syncStep = 0, onComplete }) {
+// `boxes` is the list form ({variable, values, dataType?, label?}[]): one box each.
+export default function VariableBox({ boxes = null, onComplete, ...rest }) {
+  const doneRef = useRef(0);
+  const total = Array.isArray(boxes) ? boxes.length : 0;
+  const boxDone = () => {
+    doneRef.current += 1;
+    if (doneRef.current === total) onComplete?.();
+  };
+  if (total > 0) {
+    return (
+      <div className="flex flex-wrap gap-4">
+        {boxes.map((b, i) => (
+          <VariableBoxCell key={`${b.variable}-${i}`} syncStep={rest.syncStep} {...b} onComplete={boxDone} />
+        ))}
+      </div>
+    );
+  }
+  return <VariableBoxCell {...rest} onComplete={onComplete} />;
+}
+
+function VariableBoxCell({ variable = '', values = [], label = '', dataType = '', syncStep = 0, onComplete }) {
   const boxRef = useRef(null);
   const valueRef = useRef(null);
   const oldValueRef = useRef(null);
@@ -44,8 +64,10 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
   const [history, setHistory] = useState([]);
   const prevStep = useRef(-1);
 
-  const typeLabel = detectType(currentValue);
-  const colors = TYPE_COLORS[typeLabel] || DEFAULT_COLORS;
+  const detectedType = detectType(currentValue);
+  // An authored data_type wins over the guess from the value's shape.
+  const typeLabel = dataType || detectedType;
+  const colors = TYPE_COLORS[typeLabel] || TYPE_COLORS[detectedType] || DEFAULT_COLORS;
 
   useEffect(() => {
     if (!boxRef.current) return;
@@ -141,7 +163,7 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
           <span className="text-[11px] font-bold text-slate-300 uppercase tracking-widest font-mono">
             {variable}
           </span>
-          <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full ${colors.badge}`}>
+          <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${colors.badge}`}>
             {typeLabel}
           </span>
         </div>

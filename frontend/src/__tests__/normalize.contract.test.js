@@ -16,16 +16,10 @@ import { CONTRACT, NON_CONTENT_KEYS, canonicalType, droppedKeys } from '../compo
 // new key starts being dropped and when a listed key stops being dropped.
 const KNOWN_GAPS = {
   CodeStepper: ['language'],
-  DataStructure: [
-    'animations', 'connections', 'highlight_cells', 'highlight_color', 'initial_state',
-    'items', 'label', 'labels', 'layers', 'pending_append', 'structure_type', 'visualization',
-  ],
-  LoopVisualizer: [
-    'arrayLabel', 'condition', 'expression', 'initialArray', 'iterable', 'label', 'loopVariable',
-    'result', 'type_name',
-  ],
+  // connections/layers need a diagram component (network/stack layers) and
+  // visualization names a custom renderer: out of scope for the list/matrix box.
+  DataStructure: ['connections', 'layers', 'visualization'],
   ParticleEffect: ['message'],
-  VariableBox: ['data_type', 'variables'],
 };
 
 const LESSONS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../backend/lessons');

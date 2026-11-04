@@ -72,6 +72,9 @@ export default function LoopVisualizer({
   iterations = [],
   code = '',
   speed = 'normal',
+  result = '',
+  condition = '',
+  label = '',
   onComplete,
   // When a number is provided the auto-play timeline is disabled and the
   // visualizer renders exactly this iteration (scroll-synced lesson layout).
@@ -190,6 +193,15 @@ export default function LoopVisualizer({
         )}
       </div>
 
+      {(label || condition) && (
+        <div className="surface-code border-b border-white/10 px-4 py-2 space-y-1">
+          {label && <p className="text-xs text-code-foreground/90">{label}</p>}
+          {condition && (
+            <p className="text-xs text-amber-300">{`Condition: ${condition}`}</p>
+          )}
+        </div>
+      )}
+
       {/* Code display */}
       {code && (
         <div className="surface-code border-b border-white/10 py-2 px-4">
@@ -263,6 +275,12 @@ export default function LoopVisualizer({
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {result && (
+        <div className="surface-code border-t border-white/10 px-4 py-3">
+          <p className="text-xs text-green-400 font-mono font-medium">{`Result: ${result}`}</p>
         </div>
       )}
 

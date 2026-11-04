@@ -42,13 +42,23 @@ export const NON_CONTENT_KEYS = new Set([
 export const CONTRACT = {
   StoryCard: { consumes: ['content', 'illustration', 'visual_theme'] },
   CodeStepper: { consumes: ['code', 'steps', 'highlightSequence', 'stepDescriptions', 'controlledStep'] },
-  VariableBox: { consumes: ['variable', 'values', 'value', 'animate_sequence', 'label', 'syncStep'] },
+  VariableBox: {
+    consumes: [
+      'variable', 'values', 'value', 'animate_sequence', 'label', 'syncStep', 'data_type', 'dataType',
+      'variables', 'boxes',
+    ],
+  },
   TerminalOutput: { consumes: ['output', 'lines', 'syncStep'] },
   ParticleEffect: { consumes: ['effect', 'active'] },
   FlowArrow: {
     consumes: ['label', 'branch', 'direction', 'stages', 'steps', 'nodes', 'flows', 'from', 'to', 'controlledStep'],
   },
-  DataStructure: { consumes: ['structure', 'data', 'operations'] },
+  DataStructure: {
+    consumes: [
+      'structure', 'data', 'operations', 'structure_type', 'highlight_cells', 'highlight', 'highlight_color',
+      'highlightColor', 'initial_state', 'items', 'labels', 'label', 'animations', 'pending_append',
+    ],
+  },
   MemoryStack: { consumes: ['frames', 'slots', 'operations'] },
   ComparisonPanel: {
     consumes: [
@@ -60,7 +70,8 @@ export const CONTRACT = {
   LoopVisualizer: {
     consumes: [
       'loopType', 'collection', 'variable', 'rangeStart', 'rangeEnd', 'rangeStep',
-      'iterations', 'code', 'controlledStep',
+      'iterations', 'code', 'controlledStep', 'loopVariable', 'iterable', 'expression', 'result',
+      'label', 'arrayLabel', 'initialArray', 'condition', 'type_name',
     ],
   },
   FlowDiagram: { consumes: ['nodes', 'edges', 'executionPath', 'variables', 'controlledStep'] },
@@ -134,15 +145,113 @@ function normalizeCodeStepper(p, language) {
   }
 }
 
-// VariableBox: value -> values
+// Python-style text for authored values (lists, True/False/None), used where a
+// lesson hands us a raw JSON value to print.
+function pyText(v, nested = false) {
+  if (v === null || v === undefined) return 'None';
+  if (typeof v === 'boolean') return v ? 'True' : 'False';
+  if (typeof v === 'string') return nested ? `'${v}'` : v;
+  if (Array.isArray(v)) return `[${v.map((x) => pyText(x, true)).join(', ')}]`;
+  if (typeof v === 'object') {
+    return `{${Object.entries(v).map(([k, x]) => `${k}: ${pyText(x, true)}`).join(', ')}}`;
+  }
+  return String(v);
+}
+
+// VariableBox: value -> values, data_type -> dataType, variables[] -> boxes[]
 function normalizeVariableBox(p) {
+  const box = (src) => {
+    const b = { variable: String(src.variable ?? src.name ?? ''), values: [] };
+    if (src.values) b.values = src.values;
+    else if (src.animate_sequence) b.values = src.animate_sequence;
+    else if (src.value != null) b.values = [src.value];
+    const dt = src.dataType ?? src.data_type;
+    if (dt) b.dataType = String(dt);
+    if (src.label) b.label = String(src.label);
+    return b;
+  };
+  if (Array.isArray(p.variables) && p.variables.length > 0) {
+    p.boxes = p.variables.filter((v) => v && typeof v === 'object').map(box);
+  }
+  delete p.variables;
   if (p.value != null && !p.values) {
     p.values = p.animate_sequence || [p.value];
     delete p.value;
     delete p.animate_sequence;
   }
-  delete p.data_type;
+  if (p.data_type != null) {
+    if (p.dataType == null) p.dataType = String(p.data_type);
+    delete p.data_type;
+  }
   delete p.color;
+}
+
+// LoopVisualizer: loopVariable -> variable, iterable/initialArray -> collection,
+// string iterable/expression -> a code line, result/condition/label shown as text.
+function normalizeLoopVisualizer(p) {
+  if (p.loopVariable != null && p.variable == null) p.variable = String(p.loopVariable);
+  delete p.loopVariable;
+
+  const list = Array.isArray(p.iterable) ? p.iterable : Array.isArray(p.initialArray) ? p.initialArray : null;
+  if (list && !p.collection) p.collection = list;
+  delete p.initialArray;
+
+  const expression = typeof p.expression === 'string' ? p.expression : '';
+  if (!p.code) {
+    const lines = [];
+    if (typeof p.iterable === 'string' && p.iterable) {
+      lines.push(`for ${p.variable || 'item'} in ${p.iterable}:`);
+      if (expression) lines.push(`    ${expression}`);
+    } else if (expression) {
+      lines.push(expression);
+    }
+    if (lines.length) p.code = lines.join('\n');
+  }
+  delete p.iterable;
+  delete p.expression;
+
+  if (p.result != null) p.result = pyText(p.result);
+  if (p.condition != null) {
+    p.condition = String(p.condition);
+    if (!p.loopType) p.loopType = 'while';
+  }
+  const heading = p.label ?? p.arrayLabel ?? p.type_name;
+  if (heading != null) p.label = String(heading);
+  delete p.arrayLabel;
+  delete p.type_name;
+}
+
+// DataStructure: structure_type -> structure, items/initial_state -> data,
+// animations/pending_append -> operations, highlight_cells -> highlight.
+function normalizeDataStructure(p) {
+  if (p.structure_type != null && p.structure == null) p.structure = String(p.structure_type);
+  delete p.structure_type;
+
+  if (p.data == null) {
+    if (p.items != null) p.data = p.items;
+    else if (p.initial_state != null) p.data = p.initial_state;
+  }
+  delete p.items;
+  delete p.initial_state;
+  // An object (dict / vector tables) shows as key: value entries.
+  if (p.data && typeof p.data === 'object' && !Array.isArray(p.data)) {
+    p.data = Object.entries(p.data).map(([k, v]) => `${k}: ${pyText(v, true)}`);
+  }
+
+  if (!p.operations) {
+    if (Array.isArray(p.animations)) p.operations = p.animations.filter((a) => a && typeof a === 'object');
+    else if (p.pending_append != null) p.operations = [{ action: 'append', value: p.pending_append }];
+  }
+  delete p.animations;
+  delete p.pending_append;
+
+  if (Array.isArray(p.highlight_cells) && p.highlight == null) p.highlight = p.highlight_cells;
+  delete p.highlight_cells;
+  if (p.highlight_color != null) {
+    p.highlightColor = String(p.highlight_color);
+    delete p.highlight_color;
+  }
+  if (p.label != null) p.label = String(p.label);
 }
 
 // MemoryStack: slots -> frames
@@ -348,6 +457,8 @@ function normalizeFlowDiagram(p) {
 const NORMALIZERS = {
   CodeStepper: normalizeCodeStepper,
   VariableBox: normalizeVariableBox,
+  LoopVisualizer: normalizeLoopVisualizer,
+  DataStructure: normalizeDataStructure,
   MemoryStack: normalizeMemoryStack,
   ConceptMap: normalizeConceptMap,
   ComparisonPanel: normalizeComparisonPanel,
