@@ -100,6 +100,7 @@ export default function Pricing() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const ctaTarget = user ? '/dashboard' : '/login';
+  useEffect(() => { document.title = 'Pricing — PyMasters'; }, []);
 
   // Whether online checkout is live (server-side Razorpay config). Defaults to
   // false and stays false on any error, so the page renders exactly its
