@@ -276,6 +276,31 @@
     --shadow-glow: 0 0 60px -10px oklch(0.65 0.24 295 / 0.55);
     --shadow-cyan: 0 0 40px -8px oklch(0.78 0.15 215 / 0.45);
     --shadow-elegant: 0 30px 80px -30px oklch(0.05 0.02 280 / 0.9);
+
+    /* Re-resolve the Tailwind colour tokens here. @theme declares them on :root as
+       var(--text-primary) etc., which resolves there and is inherited already-resolved,
+       so without these a `.dark` element inside a light page (the Watch It Run popup)
+       would keep light text tokens on its dark surface. Same values on <html class="dark">. */
+    --color-text-primary: var(--text-primary);
+    --color-text-secondary: var(--text-secondary);
+    --color-text-muted: var(--text-muted);
+    --color-text-disabled: var(--text-disabled);
+    --color-bg-base: var(--bg-base);
+    --color-bg-surface: var(--bg-surface);
+    --color-bg-elevated: var(--bg-elevated);
+    --color-bg-inset: var(--bg-inset);
+    --color-border-default: var(--border-default);
+    --color-border-strong: var(--border-strong);
+    --color-border-focus: var(--border-focus);
+    --color-accent-primary: var(--accent-primary);
+    --color-accent-subtle: var(--accent-subtle);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-destructive: var(--destructive);
+    --color-bg-code: var(--bg-code);
+    --color-code-foreground: var(--code-foreground);
 }
 
 /* Perspective utility */

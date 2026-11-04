@@ -13,6 +13,10 @@ export default function DataStructure({
   data = [],
   operations = [],
   duration = 3000,
+  highlight = [],
+  highlightColor = '',
+  labels = [],
+  label = '',
   onComplete,
 }) {
   const containerRef = useRef(null);
@@ -136,7 +140,23 @@ export default function DataStructure({
     return () => { tl.kill(); };
   }, [stableData, stableOperations, duration]);
 
-  const theme = STRUCTURE_THEMES[structure] || STRUCTURE_THEMES.list;
+  const theme = STRUCTURE_THEMES[structure]
+    || { ...STRUCTURE_THEMES.list, label: String(structure).replace(/_/g, ' ') };
+  const markColor = highlightColor || theme.accent;
+
+  // highlight: item indexes, or [row, col] pairs for a matrix.
+  const wholeItems = new Set(Array.isArray(highlight) ? highlight.filter((h) => typeof h === 'number') : []);
+  const cellPairs = new Set(
+    Array.isArray(highlight)
+      ? highlight.filter((h) => Array.isArray(h) && h.length === 2).map(([r, c]) => `${r},${c}`)
+      : [],
+  );
+  const showItem = (v) => (Array.isArray(v) ? `[${v.map(String).join(', ')}]` : String(v));
+  const markStyle = {
+    background: `${markColor}30`,
+    borderColor: `${markColor}80`,
+    boxShadow: `0 0 12px ${markColor}30`,
+  };
 
   return (
     <div
@@ -148,24 +168,28 @@ export default function DataStructure({
       <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center gap-2"
         style={{ background: `${theme.accent}10` }}>
         <span className="text-base">{theme.icon}</span>
-        <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: theme.accent }}>
+        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: theme.accent }}>
           {theme.label}
         </span>
-        <span className="text-slate-500 font-mono text-xs ml-1">
+        <span className="text-text-muted font-mono text-xs ml-1">
           len={items.length}
         </span>
         {operationLabel && (
-          <span className="ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full border"
+          <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded-full border"
             style={{ color: theme.accent, borderColor: `${theme.accent}30`, background: `${theme.accent}10` }}>
             .{operationLabel}
           </span>
         )}
       </div>
 
+      {label && (
+        <p className="px-4 pt-3 text-xs text-text-secondary">{label}</p>
+      )}
+
       {/* Items visualization */}
       <div className="p-4">
         <div className="flex items-center gap-1 mb-2">
-          <span className="text-slate-500 font-mono text-sm font-bold">{theme.open}</span>
+          <span className="text-text-secondary font-mono text-sm font-bold">{theme.open}</span>
         </div>
 
         <div className="flex flex-wrap gap-2 min-h-[3rem] pl-4">
@@ -176,38 +200,55 @@ export default function DataStructure({
               className="flex flex-col items-center"
             >
               {/* Index label */}
-              <div className="text-[9px] text-slate-500 mb-1 font-mono tabular-nums">[{idx}]</div>
-              {/* Value cell */}
-              <div
-                className={`rounded-lg px-3 py-2 font-mono text-sm min-w-[2.5rem] text-center border transition-all duration-300 ${
-                  idx === highlightIdx
-                    ? 'text-white scale-105'
-                    : 'text-slate-300 bg-white/[0.03]'
-                }`}
-                style={idx === highlightIdx ? {
-                  background: `${theme.accent}30`,
-                  borderColor: `${theme.accent}60`,
-                  boxShadow: `0 0 12px ${theme.accent}30`,
-                } : {
-                  borderColor: 'rgba(255,255,255,0.06)',
-                }}
-              >
-                {String(item)}
+              <div className="text-xs text-text-muted mb-1 font-mono tabular-nums">
+                {labels[idx] != null ? String(labels[idx]) : `[${idx}]`}
               </div>
+              {/* Value cell(s): a matrix row is a row of cells */}
+              {Array.isArray(item) ? (
+                <div className="flex gap-1">
+                  {item.map((cell, c) => {
+                    const on = cellPairs.has(`${idx},${c}`) || wholeItems.has(idx) || idx === highlightIdx;
+                    return (
+                      <div
+                        key={c}
+                        data-highlighted={on ? 'true' : undefined}
+                        className={`rounded-lg px-3 py-2 font-mono text-sm min-w-[2.5rem] text-center border border-border-default transition-all duration-300 ${
+                          on ? 'text-text-primary' : 'text-text-secondary bg-bg-inset'
+                        }`}
+                        style={on ? markStyle : undefined}
+                      >
+                        {showItem(cell)}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div
+                  data-highlighted={idx === highlightIdx || wholeItems.has(idx) ? 'true' : undefined}
+                  className={`rounded-lg px-3 py-2 font-mono text-sm min-w-[2.5rem] text-center border border-border-default transition-all duration-300 ${
+                    idx === highlightIdx || wholeItems.has(idx)
+                      ? 'text-text-primary scale-105'
+                      : 'text-text-secondary bg-bg-inset'
+                  }`}
+                  style={idx === highlightIdx || wholeItems.has(idx) ? markStyle : undefined}
+                >
+                  {showItem(item)}
+                </div>
+              )}
               {/* Comma separator */}
               {idx < items.length - 1 && (
-                <span className="text-slate-600 font-mono text-xs mt-1">,</span>
+                <span className="text-text-muted font-mono text-xs mt-1">,</span>
               )}
             </div>
           ))}
 
           {items.length === 0 && (
-            <span className="text-slate-600 text-sm font-mono italic py-2">empty</span>
+            <span className="text-text-muted text-sm font-mono italic py-2">empty</span>
           )}
         </div>
 
         <div className="flex items-center gap-1 mt-2">
-          <span className="text-slate-500 font-mono text-sm font-bold">{theme.close}</span>
+          <span className="text-text-secondary font-mono text-sm font-bold">{theme.close}</span>
         </div>
       </div>
     </div>

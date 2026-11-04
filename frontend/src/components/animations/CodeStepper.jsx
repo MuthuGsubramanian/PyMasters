@@ -195,13 +195,25 @@ export default function CodeStepper({
     const idx = Math.max(-1, Math.min(controlledStep, stableSequence.length - 1));
     setActiveStepIndex(idx);
     setIsPlaying(false);
+    if (idx >= 0) onStepRef.current?.(idx, stableSequence[idx]);
   }, [isControlled, controlledStep, stableSequence]);
 
   // Auto-play timeline
   useEffect(() => {
     if (isControlled) return;
-    if (stableSequence.length === 0) return;
     completedRef.current = false;
+
+    // Code with nothing to step through (agent_fundamentals): show it for a
+    // moment, then complete so a walkthrough moves on instead of stalling.
+    if (stableSequence.length === 0) {
+      const hold = gsap.delayedCall(stepDuration + 0.8, () => {
+        if (completedRef.current) return;
+        completedRef.current = true;
+        setIsPlaying(false);
+        onCompleteRef.current?.();
+      });
+      return () => { hold.kill(); };
+    }
 
     if (tlRef.current) tlRef.current.kill();
 
@@ -269,7 +281,7 @@ export default function CodeStepper({
           <span className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)]" />
         </div>
-        <span className="ml-3 text-[11px] text-code-foreground/70 tracking-wide">code.py</span>
+        <span className="ml-3 text-xs text-code-foreground/70 tracking-wide">code.py</span>
 
         {/* Cinema mode indicator */}
         <div className="ml-auto flex items-center gap-3">
@@ -279,11 +291,11 @@ export default function CodeStepper({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
               </span>
-              <span className="text-[10px] text-red-400 font-medium tracking-wider uppercase">Live</span>
+              <span className="text-xs text-red-400 font-medium tracking-wider uppercase">Live</span>
             </div>
           )}
           {totalSteps > 0 && (
-            <span className="text-[10px] text-code-foreground/70 tabular-nums">
+            <span className="text-xs text-code-foreground/70 tabular-nums">
               {Math.max(activeStepIndex + 1, 1)}/{totalSteps}
             </span>
           )}
@@ -300,7 +312,7 @@ export default function CodeStepper({
           />
         )}
 
-        <div className="py-1">
+        <div className="py-1 overflow-x-auto">
           {lines.map((line, idx) => {
             const lineNum = idx + 1;
             const isActive = lineNum === activeLineNum;
@@ -312,7 +324,7 @@ export default function CodeStepper({
               <div
                 key={idx}
                 ref={(el) => (lineRefs.current[lineNum] = el)}
-                className={`flex items-center px-4 py-[5px] transition-all duration-400 relative group ${
+                className={`flex items-center w-max min-w-full px-4 py-[5px] transition-all duration-400 relative group ${
                   isActive
                     ? 'bg-cyan-500/10'
                     : isPast
@@ -339,14 +351,14 @@ export default function CodeStepper({
                 </span>
 
                 {/* Line number */}
-                <span className={`w-7 text-right select-none mr-4 text-[11px] tabular-nums transition-all duration-300 ${
+                <span className={`w-8 text-right select-none mr-4 text-xs tabular-nums transition-all duration-300 ${
                   isActive ? 'text-cyan-400 font-medium' : isPast ? 'text-code-foreground/40' : 'text-code-foreground/30'
                 }`}>
                   {lineNum}
                 </span>
 
                 {/* Code content */}
-                <span className={`flex-1 transition-all duration-300 leading-relaxed ${
+                <span className={`flex-1 whitespace-pre transition-all duration-300 leading-relaxed ${
                   isActive
                     ? 'text-code-foreground brightness-110'
                     : isPast
@@ -360,7 +372,7 @@ export default function CodeStepper({
 
                 {/* Inline output indicator for active step */}
                 {isActive && currentDesc?.output && (
-                  <span className="ml-3 text-[11px] text-green-400/80 bg-green-500/10 rounded px-2 py-0.5 font-mono animate-[fadeIn_0.3s_ease]">
+                  <span className="ml-3 text-xs text-green-400/80 bg-green-500/10 rounded px-2 py-0.5 font-mono animate-[fadeIn_0.3s_ease]">
                     → {currentDesc.output}
                   </span>
                 )}
@@ -386,7 +398,7 @@ export default function CodeStepper({
                 }}
               />
             </div>
-            <span className="text-[10px] font-mono text-code-foreground/60 tabular-nums">
+            <span className="text-xs font-mono text-code-foreground/60 tabular-nums">
               {activeStepIndex >= 0 ? activeStepIndex + 1 : 0}/{totalSteps}
             </span>
           </div>

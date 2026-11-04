@@ -1,7 +1,47 @@
 import { useEffect, useRef, useMemo } from 'react';
 import gsap from 'gsap';
 
-export default function FlowArrow({ label = '', style = 'solid', direction = 'down', duration = 3000, onComplete }) {
+function StageChain({ stages, label, current }) {
+  return (
+    <div className="flex flex-col items-center gap-2 w-full max-w-3xl">
+      <ol className="flex flex-col items-stretch sm:flex-row sm:flex-wrap sm:items-stretch justify-center gap-y-1 sm:gap-y-2 list-none p-0 m-0">
+        {stages.map((stage, i) => {
+          const active = current === i;
+          return (
+            <li key={i} className="flex flex-col sm:flex-row items-center">
+              {i > 0 && (
+                <span aria-hidden="true" className="text-accent-primary text-base leading-none px-2 py-1">
+                  <span className="sm:hidden">{'\u2193'}</span>
+                  <span className="hidden sm:inline">{'\u2192'}</span>
+                </span>
+              )}
+              <div
+                aria-current={active ? 'step' : undefined}
+                className={`rounded-xl border px-3 py-2 text-center w-full sm:w-auto sm:max-w-[16rem] transition-colors ${
+                  active
+                    ? 'border-border-focus bg-accent-subtle ring-2 ring-border-focus'
+                    : 'border-border-default bg-bg-elevated'
+                }`}
+              >
+                <span className={`block text-sm ${active ? 'font-semibold text-accent-primary' : 'font-medium text-text-primary'}`}>{stage.label}</span>
+                {stage.detail && (
+                  <span className="block text-xs text-text-secondary mt-0.5">{stage.detail}</span>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      {label && <span className="text-xs font-medium text-text-secondary">{label}</span>}
+    </div>
+  );
+}
+
+export default function FlowArrow({
+  label = '', style = 'solid', direction = 'down', duration = 3000, onComplete,
+  stages = [], controlledStep = null,
+}) {
+  const hasStages = Array.isArray(stages) && stages.length > 0;
   const arrowRef = useRef(null);
   const pathRef = useRef(null);
   const labelRef = useRef(null);
@@ -27,7 +67,7 @@ export default function FlowArrow({ label = '', style = 'solid', direction = 'do
     );
 
     // Animate the SVG path drawing effect
-    if (pathRef.current) {
+    if (pathRef.current && !hasStages) {
       const length = pathRef.current.getTotalLength?.() || 100;
       tl.fromTo(
         pathRef.current,
@@ -50,7 +90,19 @@ export default function FlowArrow({ label = '', style = 'solid', direction = 'do
     tl.to({}, { duration: holdSeconds });
 
     return () => { tl.kill(); };
-  }, [stableLabel, direction, style, isVertical, duration]);
+  }, [stableLabel, direction, style, isVertical, duration, hasStages]);
+
+  if (hasStages) {
+    return (
+      <div ref={arrowRef} className="flex justify-center opacity-0">
+        <StageChain
+          stages={stages}
+          label={stableLabel}
+          current={typeof controlledStep === 'number' ? controlledStep : null}
+        />
+      </div>
+    );
+  }
 
   const strokeDasharray = style === 'dashed' ? '6 4' : 'none';
   const gradientId = `arrow-grad-${direction}`;
@@ -80,7 +132,7 @@ export default function FlowArrow({ label = '', style = 'solid', direction = 'do
   return (
     <div ref={arrowRef} className="flex flex-col items-center gap-1.5 opacity-0">
       {stableLabel && direction !== 'down' && (
-        <span ref={labelRef} className="text-xs font-medium text-slate-300 bg-white/[0.05] rounded-lg px-2.5 py-1 border border-white/[0.06] opacity-0">
+        <span ref={labelRef} className="text-xs font-medium text-text-secondary bg-bg-inset rounded-lg px-2.5 py-1 border border-border-default opacity-0">
           {stableLabel}
         </span>
       )}
@@ -103,7 +155,7 @@ export default function FlowArrow({ label = '', style = 'solid', direction = 'do
         {arrowhead}
       </svg>
       {stableLabel && direction === 'down' && (
-        <span ref={labelRef} className="text-xs font-medium text-slate-300 bg-white/[0.05] rounded-lg px-2.5 py-1 border border-white/[0.06] opacity-0">
+        <span ref={labelRef} className="text-xs font-medium text-text-secondary bg-bg-inset rounded-lg px-2.5 py-1 border border-border-default opacity-0">
           {stableLabel}
         </span>
       )}

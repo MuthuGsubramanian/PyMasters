@@ -15,6 +15,13 @@ import ExecutionVisualizer from './ExecutionVisualizer';
 import NeuralNetworkVisualizer from './NeuralNetworkVisualizer';
 import AlgorithmVisualizer from './AlgorithmVisualizer';
 import TreeVisualizer from './TreeVisualizer';
+import VisualCaption from './VisualCaption';
+import { PlayableVisual, getStepTotal } from './VisualControls';
+import { normalizeProps } from './normalize';
+
+// Exported so the scroll-synced lesson layout (Classroom IntroPhase) can
+// normalize a single primitive without going through the full renderer.
+export { normalizeProps } from './normalize';
 
 // Maps primitive type strings to components (PascalCase + snake_case)
 const PRIMITIVE_MAP = {
@@ -98,190 +105,6 @@ function resolveProps(props, language, storyContent) {
   return resolved;
 }
 
-/**
- * Normalize lesson JSON props to match component prop signatures.
- * Exported so the scroll-synced lesson layout (Classroom IntroPhase) can
- * normalize a single primitive without going through the full renderer.
- */
-export function normalizeProps(type, raw, language) {
-  const p = { ...raw };
-  delete p.id;
-
-  // duration_ms → duration
-  if (p.duration_ms != null && p.duration == null) {
-    p.duration = p.duration_ms;
-    delete p.duration_ms;
-  }
-
-  // visual_theme → illustration
-  if (p.visual_theme != null && p.illustration == null) {
-    p.illustration = p.visual_theme;
-    delete p.visual_theme;
-  }
-
-  // CodeStepper: steps → code + highlightSequence + stepDescriptions
-  if ((type === 'CodeStepper' || type === 'code_stepper') && p.steps && !p.code) {
-    const steps = p.steps;
-    const codeLines = [];
-    const descriptions = [];
-
-    // Build a proper execution sequence that shows the full program flow
-    for (const step of steps) {
-      const line = typeof step === 'string' ? step : (step.code || step.line || '');
-      codeLines.push(line);
-
-      if (typeof step === 'object') {
-        const desc = step.explanation || step.description || '';
-        const resolvedDesc = isLocaleMap(desc) ? (desc[language] || desc.en || '') : desc;
-        descriptions.push({
-          description: resolvedDesc,
-          output: step.output || null,
-        });
-      } else {
-        descriptions.push({});
-      }
-    }
-
-    p.code = codeLines.join('\n');
-    // Highlight each line in sequence
-    p.highlightSequence = codeLines.map((_, i) => i + 1);
-    p.stepDescriptions = descriptions;
-    p.speed = p.speed || 'normal';
-    delete p.steps;
-  }
-
-  // VariableBox: value → values
-  if (type === 'VariableBox' || type === 'variable_box') {
-    if (p.value != null && !p.values) {
-      p.values = p.animate_sequence || [p.value];
-      delete p.value;
-      delete p.animate_sequence;
-    }
-    delete p.data_type;
-    delete p.color;
-  }
-
-  // MemoryStack: slots → frames
-  if ((type === 'MemoryStack' || type === 'memory_stack') && p.slots && !p.frames) {
-    p.frames = p.slots.map(s => ({
-      name: s.label || s.name || 'frame',
-      variables: s.variables || (s.value != null ? { value: s.value } : {})
-    }));
-    p.operations = p.slots.map(() => 'push');
-    delete p.slots;
-  }
-
-  // ConceptMap: normalize nodes — handle {label, children} format
-  if (type === 'ConceptMap' || type === 'concept_map') {
-    if (p.nodes) {
-      const flatNodes = [];
-      const flatEdges = p.edges || [];
-
-      p.nodes.forEach((n, i) => {
-        const nodeLabel = typeof n === 'string' ? n : (n.label || n.text || `Node ${i}`);
-        const nodeId = n.id || `n${i}`;
-        flatNodes.push({ id: nodeId, label: nodeLabel });
-
-        // Expand children into nodes + edges
-        if (n.children && Array.isArray(n.children)) {
-          n.children.forEach((child, ci) => {
-            const childLabel = typeof child === 'string' ? child : (child.label || child.text || '');
-            const childId = `${nodeId}_c${ci}`;
-            flatNodes.push({ id: childId, label: childLabel });
-            flatEdges.push({ from: nodeId, to: childId, label: '' });
-          });
-        }
-      });
-
-      p.nodes = flatNodes;
-      p.edges = flatEdges;
-    }
-  }
-
-  // ComparisonPanel: left/right → before/after
-  if (type === 'ComparisonPanel' || type === 'comparison_panel') {
-    // Lesson JSON has drifted into several author-time shapes (2026-10-26
-    // audit: ~55 lessons rendered an EMPTY panel). Coerce each known shape
-    // into the component's before/after {label, code} contract.
-    const txt = (v) => (v == null ? '' : typeof v === 'string' ? v : String(v));
-    const joinLines = (arr) => (Array.isArray(arr) ? arr.map(txt).join('\n') : txt(arr));
-    // {left:{title,items[]}, right:{title,items[]}}  (GRPO / trending_ai trilogies)
-    if (p.left && Array.isArray(p.left.items) && !p.left.code) {
-      p.left = { label: p.left.title || p.left.label, code: joinLines(p.left.items) };
-    }
-    if (p.right && Array.isArray(p.right.items) && !p.right.code) {
-      p.right = { label: p.right.title || p.right.label, code: joinLines(p.right.items) };
-    }
-    // {left_label, right_label, left_content, right_content}  (ai_fundamentals / web_development)
-    if (!p.before && !p.left && (p.left_content != null || p.right_content != null)) {
-      p.before = { label: p.left_label || 'Before', code: txt(p.left_content) };
-      p.after = { label: p.right_label || 'After', code: txt(p.right_content) };
-    }
-    // {left_label, right_label, items:[{left,right}]}  (ai_engineering pipeline lessons)
-    if (!p.before && !p.left && Array.isArray(p.items) && p.items.length && p.items[0] && 'left' in p.items[0]) {
-      p.before = { label: p.left_label || 'Option A', code: p.items.map((i) => txt(i.left)).join('\n') };
-      p.after = { label: p.right_label || 'Option B', code: p.items.map((i) => txt(i.right)).join('\n') };
-    }
-    // {items:[{label,value,note}]}  (deep_learning) -> first option vs the rest
-    if (!p.before && !p.left && Array.isArray(p.items) && p.items.length && p.items[0] && 'label' in p.items[0]) {
-      const line = (i) => `${txt(i.value)}${i.note ? ` (${txt(i.note)})` : ''}`;
-      const [first, ...rest] = p.items;
-      p.before = { label: txt(first.label), code: line(first) };
-      p.after = { label: rest.map((i) => txt(i.label)).join(' / ') || 'Alternatives', code: rest.map((i) => `${txt(i.label)}: ${line(i)}`).join('\n') };
-    }
-    // {models:[{name,strengths,weaknesses}]}  (machine_learning)
-    if (!p.before && !p.left && Array.isArray(p.models) && p.models.length) {
-      p.before = { label: 'Strengths', code: p.models.map((m) => `${txt(m.name)}: ${txt(m.strengths)}`).join('\n') };
-      p.after = { label: 'Weaknesses', code: p.models.map((m) => `${txt(m.name)}: ${txt(m.weaknesses)}`).join('\n') };
-    }
-    // {comparisons:[{label,values[]}], x_labels[]}  (dsa growth tables)
-    if (!p.before && !p.left && Array.isArray(p.comparisons) && p.comparisons.length) {
-      const xs = Array.isArray(p.x_labels) ? p.x_labels.map(txt).join('  ') : '';
-      p.before = { label: 'Inputs', code: xs };
-      p.after = { label: 'Growth', code: p.comparisons.map((c) => `${txt(c.label)}: ${(c.values || []).map(txt).join('  ')}`).join('\n') };
-    }
-    for (const k of ['left_label', 'right_label', 'left_content', 'right_content', 'items', 'models', 'comparisons', 'x_labels']) delete p[k];
-    if (p.left && !p.before) {
-      p.before = {
-        label: p.left.label || 'Before',
-        code: p.left.result != null ? `Result: ${p.left.result}` : (p.left.code || ''),
-      };
-      delete p.left;
-    }
-    if (p.right && !p.after) {
-      p.after = {
-        label: p.right.label || 'After',
-        code: p.right.result != null ? `Result: ${p.right.result}` : (p.right.code || ''),
-      };
-      delete p.right;
-    }
-    // Remove description — it's for the lesson, not the component
-    delete p.description;
-  }
-
-  // Terminal: ensure output is always an array
-  if (type === 'Terminal' || type === 'TerminalOutput' || type === 'terminal_output') {
-    // Authors also write `lines` (200+ lessons) — map it to `output`.
-    if (p.output == null && p.lines != null) {
-      p.output = Array.isArray(p.lines) ? p.lines.map((l) => (typeof l === 'string' ? l : String(l))) : String(p.lines);
-      delete p.lines;
-    }
-    if (typeof p.output === 'string') {
-      p.output = p.output.split('\n').filter(Boolean);
-    }
-  }
-
-  // FlowArrow: branch → label
-  if (type === 'FlowArrow' || type === 'flow_arrow') {
-    if (p.branch && !p.label) {
-      p.label = typeof p.branch === 'string' ? p.branch : '';
-      delete p.branch;
-    }
-  }
-
-  return p;
-}
-
 function applySpeed(props, speedMultiplier) {
   if (!props || speedMultiplier === 1) return props;
   const out = { ...props };
@@ -357,10 +180,12 @@ export default function AnimationRenderer({
         })();
 
         const normalized = normalizeProps(pType, rawProps, language);
-        let props = resolveProps(normalized, language, storyContent);
+        const { caption, ...componentProps } = normalized;
+        let props = resolveProps(componentProps, language, storyContent);
         props = applySpeed(props, speedMultiplier);
 
         const isCurrentStep = idx === currentStep;
+        const stepTotal = getStepTotal(pType, props);
 
         // Wire sync props
         const syncProps = {};
@@ -372,12 +197,23 @@ export default function AnimationRenderer({
         }
 
         return (
-          <div key={`${pType}-${idx}`}>
-            <Component
-              {...props}
-              {...syncProps}
-              onComplete={isCurrentStep ? () => handleStepComplete(idx) : undefined}
-            />
+          <div key={`${pType}-${idx}`} className="flex flex-col gap-2">
+            <VisualCaption title={caption?.title} />
+            {stepTotal > 0 ? (
+              <PlayableVisual
+                total={stepTotal}
+                onComplete={isCurrentStep ? () => handleStepComplete(idx) : undefined}
+              >
+                {(step) => <Component {...props} {...syncProps} controlledStep={step} />}
+              </PlayableVisual>
+            ) : (
+              <Component
+                {...props}
+                {...syncProps}
+                onComplete={isCurrentStep ? () => handleStepComplete(idx) : undefined}
+              />
+            )}
+            <VisualCaption description={caption?.description} />
           </div>
         );
       })}

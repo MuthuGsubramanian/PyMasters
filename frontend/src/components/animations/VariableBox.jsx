@@ -26,7 +26,30 @@ function detectType(val) {
   return typeof val;
 }
 
-export default function VariableBox({ variable = '', values = [], label = '', syncStep = 0, onComplete }) {
+// Seconds each value stays before the box shows the next one (covers the 1.35 s change animation).
+const VALUE_HOLD_S = 1.6;
+
+// `boxes` is the list form ({variable, values, dataType?, label?}[]): one box each.
+export default function VariableBox({ boxes = null, onComplete, ...rest }) {
+  const doneRef = useRef(0);
+  const total = Array.isArray(boxes) ? boxes.length : 0;
+  const boxDone = () => {
+    doneRef.current += 1;
+    if (doneRef.current === total) onComplete?.();
+  };
+  if (total > 0) {
+    return (
+      <div className="flex flex-wrap gap-4">
+        {boxes.map((b, i) => (
+          <VariableBoxCell key={`${b.variable}-${i}`} syncStep={rest.syncStep} {...b} onComplete={boxDone} />
+        ))}
+      </div>
+    );
+  }
+  return <VariableBoxCell {...rest} onComplete={onComplete} />;
+}
+
+function VariableBoxCell({ variable = '', values = [], label = '', dataType = '', syncStep = 0, onComplete }) {
   const boxRef = useRef(null);
   const valueRef = useRef(null);
   const oldValueRef = useRef(null);
@@ -44,8 +67,10 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
   const [history, setHistory] = useState([]);
   const prevStep = useRef(-1);
 
-  const typeLabel = detectType(currentValue);
-  const colors = TYPE_COLORS[typeLabel] || DEFAULT_COLORS;
+  const detectedType = detectType(currentValue);
+  // An authored data_type wins over the guess from the value's shape.
+  const typeLabel = dataType || detectedType;
+  const colors = TYPE_COLORS[typeLabel] || TYPE_COLORS[detectedType] || DEFAULT_COLORS;
 
   useEffect(() => {
     if (!boxRef.current) return;
@@ -67,12 +92,28 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
     );
   }, [stableValues]);
 
+  // Which value to show. The box steps through its own values; a CodeStepper
+  // that moves syncStep after the box has mounted can push it further. The
+  // syncStep present at mount is ignored: in a walkthrough the CodeStepper has
+  // already finished by then, and its last index (often past this box's
+  // values) used to leave the box waiting forever, stalling the sequence.
+  const [selfStep, setSelfStep] = useState(0);
+  const mountSync = useRef(syncStep);
+  const synced = syncStep !== mountSync.current ? syncStep : 0;
+  const last = stableValues.length - 1;
+  const valueIndex = last < 0 ? -1 : Math.min(Math.max(selfStep, synced, 0), last);
+
   useEffect(() => {
-    const valueIndex = syncStep;
-    if (valueIndex === prevStep.current) return;
-    if (valueIndex < 0 || valueIndex >= stableValues.length) return;
+    if (valueIndex === prevStep.current) return undefined;
+    if (valueIndex < 0 || valueIndex >= stableValues.length) return undefined;
 
     prevStep.current = valueIndex;
+    // Not the last value yet: move on after a beat. Not killed on cleanup, so a
+    // StrictMode effect re-run (which returns early above) cannot lose it; a
+    // late call after unmount is a no-op.
+    if (valueIndex < stableValues.length - 1) {
+      gsap.delayedCall(VALUE_HOLD_S, () => setSelfStep((s) => Math.max(s, valueIndex + 1)));
+    }
     const newValue = stableValues[valueIndex];
     const isLast = valueIndex === stableValues.length - 1;
 
@@ -117,10 +158,11 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
       setCurrentValue(newValue);
       if (isLast) onCompleteRef.current?.();
     }
-  }, [syncStep, stableValues]);
+    return undefined;
+  }, [valueIndex, stableValues]);
 
   const totalSteps = stableValues.length;
-  const currentIndex = Math.min(syncStep, totalSteps - 1);
+  const currentIndex = valueIndex;
 
   return (
     <div
@@ -138,10 +180,10 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
       <div className={`relative rounded-2xl border ${colors.border} bg-gradient-to-br ${colors.bg} backdrop-blur-sm overflow-hidden`}>
         {/* Header strip */}
         <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center justify-between">
-          <span className="text-[11px] font-bold text-slate-300 uppercase tracking-widest font-mono">
+          <span className="text-xs font-bold text-text-secondary uppercase tracking-widest font-mono">
             {variable}
           </span>
-          <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full ${colors.badge}`}>
+          <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${colors.badge}`}>
             {typeLabel}
           </span>
         </div>
@@ -150,7 +192,7 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
         <div className="px-4 py-5 relative">
           {/* Change indicator */}
           {justChanged && (
-            <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-amber-400 text-[10px] font-bold tracking-wider uppercase animate-bounce">
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 text-amber-400 text-xs font-bold tracking-wider uppercase animate-bounce">
               updated
             </div>
           )}
@@ -174,7 +216,7 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
           </div>
 
           {label && (
-            <div className="text-[11px] text-slate-400 text-center mt-2">{label}</div>
+            <div className="text-xs text-text-secondary text-center mt-2">{label}</div>
           )}
         </div>
 
@@ -199,14 +241,14 @@ export default function VariableBox({ variable = '', values = [], label = '', sy
         {/* Value history trail */}
         {history.length > 0 && (
           <div className="px-4 pb-3 flex items-center gap-1 justify-center">
-            <span className="text-[9px] text-slate-600 mr-1">history:</span>
+            <span className="text-xs text-text-muted mr-1">history:</span>
             {history.slice(-4).map((h, i) => (
-              <span key={i} className="text-[10px] font-mono text-slate-600 bg-white/[0.03] rounded px-1.5 py-0.5">
+              <span key={i} className="text-xs font-mono text-text-muted bg-white/[0.03] rounded px-1.5 py-0.5">
                 {String(h.value)}
               </span>
             ))}
-            <span className="text-[10px] text-slate-500 mx-0.5">→</span>
-            <span className={`text-[10px] font-mono font-bold ${colors.text} bg-white/[0.05] rounded px-1.5 py-0.5`}>
+            <span className="text-xs text-text-muted mx-0.5">→</span>
+            <span className={`text-xs font-mono font-bold ${colors.text} bg-white/[0.05] rounded px-1.5 py-0.5`}>
               {String(currentValue)}
             </span>
           </div>

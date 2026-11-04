@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
+import { loopStepCount } from './normalize';
+
+// Stable defaults: a fresh [] each render would change `items` every render and
+// re-fire the effects that depend on it (controlled mode then loops forever).
+const NO_ITEMS = [];
 
 const SPEED_MAP = { slow: 2.5, normal: 1.8, fast: 1.0, profile_adaptive: 1.8 };
 
@@ -64,14 +69,17 @@ const LOOP_THEMES = {
 
 export default function LoopVisualizer({
   loopType = 'for',
-  collection = [],
+  collection = NO_ITEMS,
   variable = 'item',
   rangeStart = 0,
   rangeEnd = 5,
   rangeStep = 1,
-  iterations = [],
+  iterations = NO_ITEMS,
   code = '',
   speed = 'normal',
+  result = '',
+  condition = '',
+  label = '',
   onComplete,
   // When a number is provided the auto-play timeline is disabled and the
   // visualizer renders exactly this iteration (scroll-synced lesson layout).
@@ -101,7 +109,7 @@ export default function LoopVisualizer({
   );
 
   const stepDuration = SPEED_MAP[speed] ?? 1.8;
-  const totalSteps = stableIterations.length > 0 ? stableIterations.length : items.length;
+  const totalSteps = loopStepCount({ loopType, collection, iterations: stableIterations, rangeStart, rangeEnd, rangeStep });
   const theme = LOOP_THEMES[loopType] || LOOP_THEMES.for;
 
   // Container fade-in
@@ -118,17 +126,17 @@ export default function LoopVisualizer({
   // Controlled mode: scroll position picks the iteration.
   useEffect(() => {
     if (!isControlled) return;
-    const stepCount = stableIterations.length > 0 ? stableIterations.length : items.length;
+    const stepCount = totalSteps;
     if (stepCount === 0) return;
     const idx = Math.max(-1, Math.min(controlledStep, stepCount - 1));
     setActiveIndex(idx);
     setOutputLines(stableIterations.slice(0, idx + 1).filter(it => it?.output).map(it => it.output));
-  }, [isControlled, controlledStep, stableIterations, items]);
+  }, [isControlled, controlledStep, stableIterations, items, totalSteps]);
 
   // Auto-play timeline
   useEffect(() => {
     if (isControlled) return;
-    const stepCount = stableIterations.length > 0 ? stableIterations.length : items.length;
+    const stepCount = totalSteps;
     if (stepCount === 0) return;
     completedRef.current = false;
     setActiveIndex(-1);
@@ -180,23 +188,32 @@ export default function LoopVisualizer({
           <span className="w-3 h-3 rounded-full bg-[#febc2e] shadow-[0_0_6px_rgba(254,188,46,0.4)]" />
           <span className="w-3 h-3 rounded-full bg-[#28c840] shadow-[0_0_6px_rgba(40,200,64,0.4)]" />
         </div>
-        <span className="ml-3 text-[11px] tracking-wide" style={{ color: theme.accent }}>
+        <span className="ml-3 text-xs tracking-wide" style={{ color: theme.accent }}>
           {theme.icon} {theme.label}
         </span>
         {totalSteps > 0 && (
-          <span className="ml-auto text-[10px] text-code-foreground/60 tabular-nums">
+          <span className="ml-auto text-xs text-code-foreground/60 tabular-nums">
             Iteration {Math.max(activeIndex + 1, 0)}/{totalSteps}
           </span>
         )}
       </div>
 
+      {(label || condition) && (
+        <div className="surface-code border-b border-white/10 px-4 py-2 space-y-1">
+          {label && <p className="text-xs text-code-foreground/90">{label}</p>}
+          {condition && (
+            <p className="text-xs text-amber-300">{`Condition: ${condition}`}</p>
+          )}
+        </div>
+      )}
+
       {/* Code display */}
       {code && (
-        <div className="surface-code border-b border-white/10 py-2 px-4">
+        <div className="surface-code border-b border-white/10 py-2 px-4 overflow-x-auto">
           {code.split('\n').map((line, idx) => (
-            <div key={idx} className="flex items-center py-[3px]">
-              <span className="w-6 text-right select-none mr-3 text-[11px] text-code-foreground/30 tabular-nums">{idx + 1}</span>
-              <span className="text-code-foreground/90 leading-relaxed">{colorizeLine(line) || '\u00A0'}</span>
+            <div key={idx} className="flex items-center w-max min-w-full py-[3px]">
+              <span className="w-6 text-right select-none mr-3 text-xs text-code-foreground/30 tabular-nums">{idx + 1}</span>
+              <span className="whitespace-pre text-code-foreground/90 leading-relaxed">{colorizeLine(line) || '\u00A0'}</span>
             </div>
           ))}
         </div>
@@ -204,7 +221,7 @@ export default function LoopVisualizer({
 
       {/* Collection items row */}
       <div className="surface-code px-4 py-4">
-        <p className="text-[10px] text-code-foreground/60 uppercase tracking-wider mb-3">Collection</p>
+        <p className="text-xs text-code-foreground/60 uppercase tracking-wider mb-3">Collection</p>
         <div className="flex flex-wrap gap-2">
           {items.map((item, idx) => {
             const isActive = idx === activeIndex;
@@ -221,7 +238,7 @@ export default function LoopVisualizer({
                 }`}
               >
                 {isPast && (
-                  <span className="absolute -top-1 -right-1 text-[10px] text-green-400">✓</span>
+                  <span className="absolute -top-1 -right-1 text-xs text-green-400">✓</span>
                 )}
                 {typeof item === 'string' ? `"${item}"` : String(item)}
               </div>
@@ -233,7 +250,7 @@ export default function LoopVisualizer({
       {/* Variable display */}
       <div className="surface-code border-t border-white/10 px-4 py-3 flex items-center gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-code-foreground/60 uppercase tracking-wider">Variable</span>
+          <span className="text-xs text-code-foreground/60 uppercase tracking-wider">Variable</span>
           <span className="text-xs text-cyan-300 font-medium">{variable}</span>
           <span className="text-code-foreground/50">=</span>
           <span className={`text-xs px-2 py-1 rounded transition-all duration-300 ${
@@ -255,7 +272,7 @@ export default function LoopVisualizer({
       {/* Output */}
       {outputLines.length > 0 && (
         <div className="surface-code border-t border-white/10 px-4 py-3">
-          <p className="text-[10px] text-code-foreground/60 uppercase tracking-wider mb-1.5">Output</p>
+          <p className="text-xs text-code-foreground/60 uppercase tracking-wider mb-1.5">Output</p>
           <div className="space-y-0.5 max-h-32 overflow-y-auto">
             {outputLines.map((line, idx) => (
               <div key={idx} className="text-xs text-green-400 font-mono">
@@ -263,6 +280,12 @@ export default function LoopVisualizer({
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {result && (
+        <div className="surface-code border-t border-white/10 px-4 py-3">
+          <p className="text-xs text-green-400 font-mono font-medium">{`Result: ${result}`}</p>
         </div>
       )}
 
@@ -280,7 +303,7 @@ export default function LoopVisualizer({
               }}
             />
           </div>
-          <span className="text-[10px] font-mono text-code-foreground/60 tabular-nums">
+          <span className="text-xs font-mono text-code-foreground/60 tabular-nums">
             {activeIndex >= 0 ? activeIndex + 1 : 0}/{totalSteps}
           </span>
         </div>

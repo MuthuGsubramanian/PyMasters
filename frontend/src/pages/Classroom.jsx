@@ -26,6 +26,8 @@ import FlowDiagram from '../components/animations/FlowDiagram';
 import LoopVisualizer from '../components/animations/LoopVisualizer';
 import CodeStepper from '../components/animations/CodeStepper';
 import ConceptMap from '../components/animations/ConceptMap';
+import VisualCaption from '../components/animations/VisualCaption';
+import { PlayableVisual, getStepTotal } from '../components/animations/VisualControls';
 import { ScrollyBody } from '../components/ScrollyExplain';
 import PythonEditor from '../components/PythonEditor';
 import OutputPanel from '../components/OutputPanel';
@@ -660,13 +662,101 @@ function splitStorySections(md) {
 // and drives it from the scroll position (section in view → execution step).
 // Priority: step-by-step execution > loop > flow diagram > code walkthrough >
 // concept map (static). Every catalogue lesson has at least one of these.
-function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, stepper, flowDiagram, conceptMap, language }) {
+// The auto-playing loop in the intro popup. Props go through normalizeProps like
+// every other path, so loopVariable / iterable / result etc. are honoured.
+export function PopupLoopVisual({ loopViz, language, animKey = 0 }) {
+    const p = normalizeProps('LoopVisualizer', loopViz, language);
+    const total = getStepTotal('LoopVisualizer', p);
+    const loop = (controlledStep) => (
+        <LoopVisualizer
+            key={`loop-${animKey}`}
+            loopType={p.loopType || 'for'}
+            collection={p.collection}
+            variable={p.variable || 'i'}
+            rangeStart={p.rangeStart ?? 0}
+            rangeEnd={p.rangeEnd ?? 5}
+            rangeStep={p.rangeStep ?? 1}
+            iterations={p.iterations || []}
+            code={p.code || ''}
+            result={p.result || ''}
+            condition={p.condition || ''}
+            label={p.label || ''}
+            speed={p.speed || 'normal'}
+            controlledStep={controlledStep}
+        />
+    );
+    return (
+        <>
+            <VisualCaption title={p.caption?.title} />
+            {total > 0
+                ? <PlayableVisual key={`loop-play-${animKey}`} total={total}>{loop}</PlayableVisual>
+                : loop(null)}
+            <VisualCaption description={p.caption?.description} />
+        </>
+    );
+}
+
+// The popup's step-by-step execution, built like PopupLoopVisual: normalised
+// props, caption, and playback controls when there are steps.
+export function PopupExecutionVisual({ executionViz, language, animKey = 0 }) {
+    const p = normalizeProps('ExecutionVisualizer', executionViz, language);
+    const total = getStepTotal('ExecutionVisualizer', p);
+    const exec = (controlledStep) => (
+        <ExecutionVisualizer
+            key={`exec-${animKey}`}
+            code={p.code || ''}
+            executionSteps={p.executionSteps || []}
+            speed={p.speed || 'normal'}
+            controlledStep={controlledStep}
+        />
+    );
+    return (
+        <>
+            <VisualCaption title={p.caption?.title} />
+            {total > 0
+                ? <PlayableVisual key={`exec-play-${animKey}`} total={total}>{exec}</PlayableVisual>
+                : exec(null)}
+            <VisualCaption description={p.caption?.description} />
+        </>
+    );
+}
+
+// The popup's flow diagram: normalised (string nodes get ids and labels), caption,
+// and playback controls when it has an execution path.
+export function PopupFlowVisual({ flowDiagram, language, animKey = 0 }) {
+    const p = normalizeProps('FlowDiagram', flowDiagram, language);
+    const total = getStepTotal('FlowDiagram', p);
+    const flow = (controlledStep) => (
+        <FlowDiagram
+            key={`flow-${animKey}`}
+            nodes={p.nodes || []}
+            edges={p.edges || []}
+            executionPath={p.executionPath || []}
+            variables={p.variables || {}}
+            speed={p.speed || 'normal'}
+            controlledStep={controlledStep}
+        />
+    );
+    return (
+        <>
+            <VisualCaption title={p.caption?.title} />
+            {total > 0
+                ? <PlayableVisual key={`flow-play-${animKey}`} total={total}>{flow}</PlayableVisual>
+                : flow(null)}
+            <VisualCaption description={p.caption?.description} />
+        </>
+    );
+}
+
+export function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, stepper, flowDiagram, conceptMap, language }) {
     const frac = totalSections > 1 ? Math.min(1, Math.max(0, stepIndex / (totalSections - 1))) : 1;
     const mapTo = (count) => (count > 0 ? Math.round(frac * (count - 1)) : -1);
 
     let inner = null;
+    let caption = null;
     if (executionViz) {
         const p = normalizeProps('ExecutionVisualizer', executionViz, language);
+        caption = p.caption;
         inner = (
             <ExecutionVisualizer
                 code={p.code || ''}
@@ -676,8 +766,8 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
         );
     } else if (loopViz) {
         const p = normalizeProps('LoopVisualizer', loopViz, language);
-        const count = (p.iterations || []).length || (p.collection || []).length
-            || Math.max(0, Math.ceil(((p.rangeEnd ?? 5) - (p.rangeStart ?? 0)) / (p.rangeStep || 1)));
+        caption = p.caption;
+        const count = getStepTotal('LoopVisualizer', p);
         inner = (
             <LoopVisualizer
                 loopType={p.loopType || 'for'}
@@ -688,11 +778,15 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
                 rangeStep={p.rangeStep ?? 1}
                 iterations={p.iterations || []}
                 code={p.code || ''}
+                result={p.result || ''}
+                condition={p.condition || ''}
+                label={p.label || ''}
                 controlledStep={mapTo(count)}
             />
         );
     } else if (flowDiagram) {
         const p = normalizeProps('FlowDiagram', flowDiagram, language);
+        caption = p.caption;
         inner = (
             <FlowDiagram
                 nodes={p.nodes || []}
@@ -704,6 +798,7 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
         );
     } else if (stepper) {
         const p = normalizeProps('CodeStepper', stepper, language);
+        caption = p.caption;
         inner = (
             <CodeStepper
                 code={p.code || ''}
@@ -714,14 +809,21 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
         );
     } else if (conceptMap) {
         const p = normalizeProps('ConceptMap', conceptMap, language);
+        caption = p.caption;
         inner = <ConceptMap nodes={p.nodes || []} edges={p.edges || []} />;
     }
 
     if (!inner) return null;
-    return <div className="h-full overflow-y-auto dark-scrollbar pr-1">{inner}</div>;
+    return (
+        <div className="h-full overflow-y-auto dark-scrollbar pr-1 flex flex-col gap-2">
+            <VisualCaption title={caption?.title} />
+            {inner}
+            <VisualCaption description={caption?.description} />
+        </div>
+    );
 }
 
-function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
+export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
     const reducedMotion = useReducedMotion();
     const [starting, setStarting] = useState(false);   // the press registers visibly at once
     const storyContent =
@@ -770,10 +872,14 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
         return () => window.removeEventListener('keydown', onKey);
     }, [showFlow]);
 
+    // Counts come from the normalised props, the same numbers the step counters show.
     const flowSubtitle = executionViz
-        ? `${(executionViz.executionSteps || []).length} execution steps`
+        ? `${getStepTotal('ExecutionVisualizer', normalizeProps('ExecutionVisualizer', executionViz, language))} execution steps`
         : loopViz
-            ? `${loopViz.loopType || 'for'} loop · ${(loopViz.iterations || []).length} iterations`
+            ? (() => {
+                const p = normalizeProps('LoopVisualizer', loopViz, language);
+                return `${p.loopType || 'for'} loop · ${getStepTotal('LoopVisualizer', p)} iterations`;
+            })()
             : 'Animated walkthrough';
 
     // ── Scroll-synced layout (Explain-style) ──
@@ -845,8 +951,8 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
                 <>
                     <div className="flex items-center gap-2">
                         <span className="text-sm font-bold text-text-primary">Vaathiyaar</span>
-                        <span className="text-emerald-500 text-[10px] font-medium">Teaching</span>
-                        <span className="text-[11px] text-text-muted">· {reducedMotion ? 'use the step controls to advance' : 'scroll — the flow follows you'}</span>
+                        <span className="text-emerald-700 dark:text-emerald-400 text-xs font-medium">Teaching</span>
+                        <span className="text-xs text-text-muted">· {reducedMotion ? 'use the step controls to advance' : 'scroll — the flow follows you'}</span>
                     </div>
                     {/* One run scope for the whole story: a block in a later section builds on the
                         imports/variables of earlier sections, exactly like the single-card layout. */}
@@ -863,7 +969,7 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-white font-bold text-sm">Vaathiyaar</span>
-                            <span className="text-emerald-400 text-[10px] font-medium">Teaching</span>
+                            <span className="text-emerald-400 text-xs font-medium">Teaching</span>
                         </div>
                         <div className="text-sm text-slate-200 leading-relaxed" data-runcode-scope>
                             {storyContent ? (
@@ -917,14 +1023,17 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
                             initial={{ scale: 0.96, opacity: 0, y: 12 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.96, opacity: 0, y: 12 }}
-                            className="w-full max-w-5xl max-h-[88vh] rounded-2xl surface-code shadow-2xl border border-white/[0.08] overflow-hidden flex flex-col"
+                            /* `dark`: the popup is a dark code surface in both themes, so the tokens and
+                               dark: variants of the visuals inside it must be the dark ones (index.css
+                               re-resolves the colour tokens under any .dark element). */
+                            className="dark w-full max-w-5xl max-h-[88vh] rounded-2xl surface-code shadow-2xl border border-white/[0.08] overflow-hidden flex flex-col"
                         >
                             {/* Popup header */}
                             <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-white/[0.08] bg-white/[0.02] flex-shrink-0">
                                 <div className="flex items-center gap-2.5 min-w-0">
                                     <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 flex-shrink-0" />
                                     <h3 className="text-sm font-bold text-white tracking-wide">Watch It Run</h3>
-                                    <span className="text-[11px] text-slate-400 truncate">{flowSubtitle}</span>
+                                    <span className="text-xs text-slate-400 truncate">{flowSubtitle}</span>
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0">
                                     <button
@@ -955,53 +1064,37 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
                         <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
                         <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
                         <span className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-                        <span className="ml-2 text-[11px] text-slate-300 font-mono">step-by-step execution</span>
+                        <span className="ml-2 text-xs text-slate-300 font-mono">step-by-step execution</span>
                         <div className="ml-auto flex items-center gap-1.5">
                             <span className="relative flex h-2 w-2">
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
                             </span>
-                            <span className="text-[10px] text-green-400">running</span>
+                            <span className="text-xs text-green-400">running</span>
                         </div>
                     </div>
                     <div className="p-5 space-y-4 overflow-y-auto flex-1 dark-scrollbar">
                         {loopViz && (
                             <div>
-                                <div className="text-[10px] text-amber-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <div className="text-xs text-amber-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                                     Loop Iteration
                                 </div>
-                                <LoopVisualizer
-                                    key={`loop-${animKey}`}
-                                    loopType={loopViz.loopType || 'for'}
-                                    collection={loopViz.collection}
-                                    variable={loopViz.variable || 'i'}
-                                    rangeStart={loopViz.rangeStart ?? 0}
-                                    rangeEnd={loopViz.rangeEnd ?? 5}
-                                    rangeStep={loopViz.rangeStep ?? 1}
-                                    iterations={loopViz.iterations || []}
-                                    code={loopViz.code || ''}
-                                    speed={loopViz.speed || 'normal'}
-                                />
+                                <PopupLoopVisual loopViz={loopViz} language={language} animKey={animKey} />
                             </div>
                         )}
                         {executionViz && (
                             <div>
-                                <div className="text-[10px] text-purple-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <div className="text-xs text-purple-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                                     Step-by-Step Execution
                                 </div>
-                                <ExecutionVisualizer
-                                    key={`exec-${animKey}`}
-                                    code={executionViz.code || ''}
-                                    executionSteps={executionViz.executionSteps || []}
-                                    speed={executionViz.speed || 'normal'}
-                                />
+                                <PopupExecutionVisual executionViz={executionViz} language={language} animKey={animKey} />
                             </div>
                         )}
                         {legacyAnimPrimitives.length > 0 && (
                             <div>
-                                <div className="text-[10px] text-cyan-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                <div className="text-xs text-cyan-400/90 font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                     <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                                     Code Walkthrough
                                 </div>
@@ -1025,14 +1118,7 @@ function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {
                                         <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                                         Execution Flow
                                     </div>
-                                    <FlowDiagram
-                                        key={`flow-${animKey}`}
-                                        nodes={flowDiagram.nodes || []}
-                                        edges={flowDiagram.edges || []}
-                                        executionPath={flowDiagram.executionPath || []}
-                                        variables={flowDiagram.variables || {}}
-                                        speed={flowDiagram.speed || 'normal'}
-                                    />
+                                    <PopupFlowVisual flowDiagram={flowDiagram} language={language} animKey={animKey} />
                                 </div>
                             )}
                             </div>
