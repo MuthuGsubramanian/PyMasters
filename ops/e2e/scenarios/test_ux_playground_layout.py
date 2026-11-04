@@ -64,3 +64,17 @@ def test_send_to_vaathiyaar_is_readable_on_the_code_panel(logged_in_page, dark):
     label.wait_for(timeout=30000)
     ratio = label.evaluate(_CONTRAST)
     assert ratio >= 4.5, f"'Send to Vaathiyaar' contrast {ratio:.1f}:1 on the code panel"
+
+
+def test_visualizer_opens_above_the_top_bar(logged_in_page):
+    # Live audit 2026-11-04 at 748x660: the visualizer overlay (z-70) rendered inside the page container's own
+    # stacking context (z-10), so the mobile top bar painted over its title and close button.
+    page = _open(logged_in_page, 748, 660)
+    page.get_by_role("button", name="Visualize").first.click()
+    dialog = page.get_by_role("dialog", name="Time-travel visualizer")
+    dialog.wait_for(timeout=30000)
+    for name, el in (("title", dialog.get_by_role("heading").first), ("close button", dialog.get_by_role("button", name="Close visualizer"))):
+        hidden_by = el.evaluate("""e => { const r = e.getBoundingClientRect();
+            const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+            return e.contains(top) ? null : (top ? top.tagName + '.' + top.className : 'nothing'); }""")
+        assert hidden_by is None, f"visualizer {name} is covered by {hidden_by}"
