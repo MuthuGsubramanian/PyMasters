@@ -239,7 +239,7 @@
           "en": "axes[0].set_title('Quadratic')"
         }
       ],
-      "test_code": "import numpy as np\nx = np.linspace(-5, 5, 100)\nassert len(x) == 100, 'x must have 100 points'\nassert x[0] == -5 and x[-1] == 5, 'x must span -5 to 5'"
+      "test_code": "import numpy as _np\nimport matplotlib.pyplot as _plt\nassert len(x) == 100 and x[0] == -5 and x[-1] == 5, 'Use x = np.linspace(-5, 5, 100)'\n_axes = [ax for n in _plt.get_fignums() for ax in _plt.figure(n).axes]\nassert len(_axes) >= 2, f'Make one figure with two subplots side by side, plt.subplots(1, 2); found {len(_axes)} axes'\n_left, _right = sorted(_axes[-2:], key=lambda ax: ax.get_position().x0)\nassert abs(_left.get_position().y0 - _right.get_position().y0) < 1e-6, 'Put the two subplots side by side (1 row, 2 columns)'\ndef _plots(ax, want):\n    return any(len(l.get_ydata()) == len(x) and _np.allclose(l.get_ydata(), want) for l in ax.get_lines())\nassert _plots(_left, x ** 2), 'Plot y = x**2 on the left subplot'\nassert _plots(_right, x ** 3), 'Plot y = x**3 on the right subplot'\nassert _left.get_title() and _right.get_title(), 'Give each subplot a title'\n"
     }
   ],
   "generated": false,

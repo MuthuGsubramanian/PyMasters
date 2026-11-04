@@ -89,12 +89,32 @@ def main(argv) -> int:
     return 2
 
 
+def _probe_plain(test_code: str, files: dict | None):
+    """grading.probe_harness without the sandbox: True passes alone, False raised, None inconclusive."""
+    import subprocess
+    import tempfile
+    with tempfile.TemporaryDirectory(prefix="pm_probe_") as cwd:
+        for name, text in (files or {}).items():
+            Path(cwd, name).write_text(text)
+        try:
+            r = subprocess.run([sys.executable, "-I", "-c", test_code], cwd=cwd, capture_output=True, text=True,
+                               timeout=60, env={"PATH": os.environ.get("PATH", ""), "MPLBACKEND": "Agg",
+                                                "HOME": cwd})
+        except subprocess.TimeoutExpired:
+            return None
+    if r.returncode == 0:
+        return True
+    return False if "Traceback (most recent call last)" in r.stderr else None
+
+
 def accepts_empty(lessons_dir: Path) -> list:
     """Challenges an empty submission passes under grade_submission. An empty program prints nothing, so: with no
     harness (or a self-contained one) it passes iff "" matches expected_output; with a real harness, the empty run
-    IS the harness on its own, which fails. One sandbox run per harness, serial: the sandbox user's RLIMIT_NPROC is
-    shared, and parallel runs die spuriously (CI 2026-11-04 counted 9 instead of 61)."""
-    from vaathiyaar.grading import output_matches, probe_harness
+    IS the harness on its own, which fails. The harness is server-authored, so it is probed with a plain python
+    process, NOT the sandbox: after every run the sandbox kills all processes of the sandbox uid and deletes its temp
+    files, so a second process using it in this container kills the app's runs (CI 2026-11-04: a parallel probe
+    counted 9 instead of 61, and a concurrent dashboard test lost its sandbox directory)."""
+    from vaathiyaar.grading import output_matches
     accepted = []
     for f in sorted(lessons_dir.rglob("*.json")):
         try:
@@ -109,7 +129,7 @@ def accepts_empty(lessons_dir: Path) -> list:
             tc = ch.get("test_code") if isinstance(ch.get("test_code"), str) and ch["test_code"].strip() else None
             alone = None
             for _ in range(3 if tc else 0):      # None = the run said nothing (busy/timeout/killed): try again
-                alone = probe_harness(tc, _sandbox_files(d))
+                alone = _probe_plain(tc, _sandbox_files(d))
                 if alone is not None:
                     break
             if tc and alone is None:
