@@ -35,6 +35,18 @@ def _norm(s: str) -> str:
     return "".join(ch if ch.isalnum() else "_" for ch in (s or "").strip().lower()).strip("_")
 
 
+CURATED_LINKS = Path(__file__).resolve().parent / "concept_links.json"
+
+
+def _curated_links() -> dict:
+    """{concept_id: [lesson_id, ...]} from concept_links.json (keys starting with '_' are notes/gaps)."""
+    try:
+        data = json.loads(CURATED_LINKS.read_text(encoding="utf-8"))
+    except Exception:  # missing/invalid file: curated step is skipped, never breaks boot
+        return {}
+    return {k: v for k, v in data.items() if not k.startswith("_") and isinstance(v, list)}
+
+
 def seed_lesson_concepts(db_path: str) -> int:
     """Populate lesson_concepts idempotently; returns number of links added."""
     conn = sqlite3.connect(db_path)
@@ -91,6 +103,18 @@ def seed_lesson_concepts(db_path: str) -> int:
                             "INSERT OR IGNORE INTO lesson_concepts (lesson_id, concept_id, role, depth) "
                             "VALUES (?, ?, 'teaches', 'moderate')", (lesson_id, concept_id))
                         break
+
+        # 3. Curated concept -> teaching lessons (graph/concept_links.json) for concepts whose lesson ids don't
+        #    match the concept id. Additive, existing lessons only.
+        lesson_ids = {fp.stem for fp in LESSONS_DIR.rglob("*.json")} if LESSONS_DIR.exists() else set()
+        for concept_id, lessons in _curated_links().items():
+            if concept_id not in concept_ids:
+                continue
+            for lesson_id in lessons:
+                if lesson_id in lesson_ids:
+                    cursor.execute(
+                        "INSERT OR IGNORE INTO lesson_concepts (lesson_id, concept_id, role, depth) "
+                        "VALUES (?, ?, 'teaches', 'moderate')", (lesson_id, concept_id))
 
         conn.commit()
         inserted = conn.execute("SELECT COUNT(*) FROM lesson_concepts").fetchone()[0] - before
