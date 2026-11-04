@@ -15,22 +15,17 @@ import { CONTRACT, NON_CONTENT_KEYS, canonicalType, droppedKeys } from '../compo
 // lessons), then delete the key from KNOWN_GAPS. The test fails both when a
 // new key starts being dropped and when a listed key stops being dropped.
 const KNOWN_GAPS = {
-  CodeStepper: ['language', 'title'],
-  ComparisonPanel: ['description'],
-  ConceptMap: ['description'],
+  CodeStepper: ['language'],
   DataStructure: [
-    'animations', 'caption', 'connections', 'highlight_cells', 'highlight_color', 'initial_state',
+    'animations', 'connections', 'highlight_cells', 'highlight_color', 'initial_state',
     'items', 'label', 'labels', 'layers', 'pending_append', 'structure_type', 'visualization',
   ],
-  ExecutionVisualizer: ['title'],
-  FlowArrow: ['description', 'flows', 'from', 'nodes', 'stages', 'steps', 'to'],
-  FlowDiagram: ['description', 'title'],
+  FlowArrow: ['flows', 'from', 'nodes', 'stages', 'steps', 'to'],
   LoopVisualizer: [
     'arrayLabel', 'condition', 'expression', 'initialArray', 'iterable', 'label', 'loopVariable',
-    'result', 'title', 'type_name',
+    'result', 'type_name',
   ],
   ParticleEffect: ['message'],
-  TerminalOutput: ['description'],
   VariableBox: ['data_type', 'variables'],
 };
 

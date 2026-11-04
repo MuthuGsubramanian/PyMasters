@@ -26,6 +26,7 @@ import FlowDiagram from '../components/animations/FlowDiagram';
 import LoopVisualizer from '../components/animations/LoopVisualizer';
 import CodeStepper from '../components/animations/CodeStepper';
 import ConceptMap from '../components/animations/ConceptMap';
+import VisualCaption from '../components/animations/VisualCaption';
 import { ScrollyBody } from '../components/ScrollyExplain';
 import PythonEditor from '../components/PythonEditor';
 import OutputPanel from '../components/OutputPanel';
@@ -665,8 +666,10 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
     const mapTo = (count) => (count > 0 ? Math.round(frac * (count - 1)) : -1);
 
     let inner = null;
+    let caption = null;
     if (executionViz) {
         const p = normalizeProps('ExecutionVisualizer', executionViz, language);
+        caption = p.caption;
         inner = (
             <ExecutionVisualizer
                 code={p.code || ''}
@@ -676,6 +679,7 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
         );
     } else if (loopViz) {
         const p = normalizeProps('LoopVisualizer', loopViz, language);
+        caption = p.caption;
         const count = (p.iterations || []).length || (p.collection || []).length
             || Math.max(0, Math.ceil(((p.rangeEnd ?? 5) - (p.rangeStart ?? 0)) / (p.rangeStep || 1)));
         inner = (
@@ -693,6 +697,7 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
         );
     } else if (flowDiagram) {
         const p = normalizeProps('FlowDiagram', flowDiagram, language);
+        caption = p.caption;
         inner = (
             <FlowDiagram
                 nodes={p.nodes || []}
@@ -704,6 +709,7 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
         );
     } else if (stepper) {
         const p = normalizeProps('CodeStepper', stepper, language);
+        caption = p.caption;
         inner = (
             <CodeStepper
                 code={p.code || ''}
@@ -714,11 +720,18 @@ function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopViz, ste
         );
     } else if (conceptMap) {
         const p = normalizeProps('ConceptMap', conceptMap, language);
+        caption = p.caption;
         inner = <ConceptMap nodes={p.nodes || []} edges={p.edges || []} />;
     }
 
     if (!inner) return null;
-    return <div className="h-full overflow-y-auto dark-scrollbar pr-1">{inner}</div>;
+    return (
+        <div className="h-full overflow-y-auto dark-scrollbar pr-1 flex flex-col gap-2">
+            <VisualCaption title={caption?.title} />
+            {inner}
+            <VisualCaption description={caption?.description} />
+        </div>
+    );
 }
 
 function IntroPhase({ lesson, language, onComplete, headerMeta = null }) {

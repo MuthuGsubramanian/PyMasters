@@ -68,6 +68,11 @@ export const CONTRACT = {
   TreeVisualizer: { consumes: ['data', 'operations', 'operationArgs'] },
 };
 
+// Every type shows these through VisualCaption (title above, description below),
+// so they count as consumed everywhere.
+export const CAPTION_KEYS = ['title', 'description', 'caption'];
+for (const c of Object.values(CONTRACT)) c.consumes.push(...CAPTION_KEYS);
+
 /**
  * Authored keys of `raw` that the normaliser for `type` neither maps to a
  * component prop nor lists in NON_CONTENT_KEYS.
@@ -77,6 +82,14 @@ export function droppedKeys(type, raw) {
   if (!contract || !raw || typeof raw !== 'object') return [];
   const consumed = new Set(contract.consumes);
   return Object.keys(raw).filter((k) => !consumed.has(k) && !NON_CONTENT_KEYS.has(k));
+}
+
+// Locale resolution for caption text: language, then English, then the first entry.
+function captionText(v, language) {
+  if (v == null) return '';
+  if (typeof v === 'string') return v;
+  if (isLocaleMap(v)) return String(v[language] ?? v.en ?? Object.values(v)[0] ?? '');
+  return '';
 }
 
 function isLocaleMap(obj) {
@@ -226,8 +239,6 @@ function normalizeComparisonPanel(p) {
     };
     delete p.right;
   }
-  // Remove description — it's for the lesson, not the component
-  delete p.description;
 }
 
 // TerminalOutput: ensure output is always an array
@@ -281,7 +292,16 @@ export function normalizeProps(type, raw, language) {
     delete p.visual_theme;
   }
 
+  // title/description/caption go to VisualCaption, never to the component.
+  const caption = {
+    title: captionText(p.title, language),
+    description: captionText(p.description, language) || captionText(p.caption, language),
+  };
+  delete p.title;
+  delete p.description;
+  delete p.caption;
+
   NORMALIZERS[canonicalType(type)]?.(p, language);
 
-  return p;
+  return { ...p, caption };
 }

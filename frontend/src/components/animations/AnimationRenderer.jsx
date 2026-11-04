@@ -15,6 +15,7 @@ import ExecutionVisualizer from './ExecutionVisualizer';
 import NeuralNetworkVisualizer from './NeuralNetworkVisualizer';
 import AlgorithmVisualizer from './AlgorithmVisualizer';
 import TreeVisualizer from './TreeVisualizer';
+import VisualCaption from './VisualCaption';
 import { normalizeProps } from './normalize';
 
 // Exported so the scroll-synced lesson layout (Classroom IntroPhase) can
@@ -178,7 +179,8 @@ export default function AnimationRenderer({
         })();
 
         const normalized = normalizeProps(pType, rawProps, language);
-        let props = resolveProps(normalized, language, storyContent);
+        const { caption, ...componentProps } = normalized;
+        let props = resolveProps(componentProps, language, storyContent);
         props = applySpeed(props, speedMultiplier);
 
         const isCurrentStep = idx === currentStep;
@@ -193,12 +195,14 @@ export default function AnimationRenderer({
         }
 
         return (
-          <div key={`${pType}-${idx}`}>
+          <div key={`${pType}-${idx}`} className="flex flex-col gap-2">
+            <VisualCaption title={caption?.title} />
             <Component
               {...props}
               {...syncProps}
               onComplete={isCurrentStep ? () => handleStepComplete(idx) : undefined}
             />
+            <VisualCaption description={caption?.description} />
           </div>
         );
       })}
