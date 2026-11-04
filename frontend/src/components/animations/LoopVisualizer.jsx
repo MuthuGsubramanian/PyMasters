@@ -204,9 +204,9 @@ export default function LoopVisualizer({
 
       {/* Code display */}
       {code && (
-        <div className="surface-code border-b border-white/10 py-2 px-4">
+        <div className="surface-code border-b border-white/10 py-2 px-4 overflow-x-auto">
           {code.split('\n').map((line, idx) => (
-            <div key={idx} className="flex items-center py-[3px]">
+            <div key={idx} className="flex items-center w-max min-w-full py-[3px]">
               <span className="w-6 text-right select-none mr-3 text-xs text-code-foreground/30 tabular-nums">{idx + 1}</span>
               <span className="whitespace-pre text-code-foreground/90 leading-relaxed">{colorizeLine(line) || '\u00A0'}</span>
             </div>

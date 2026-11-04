@@ -300,7 +300,7 @@ export default function CodeStepper({
           />
         )}
 
-        <div className="py-1">
+        <div className="py-1 overflow-x-auto">
           {lines.map((line, idx) => {
             const lineNum = idx + 1;
             const isActive = lineNum === activeLineNum;
@@ -312,7 +312,7 @@ export default function CodeStepper({
               <div
                 key={idx}
                 ref={(el) => (lineRefs.current[lineNum] = el)}
-                className={`flex items-center px-4 py-[5px] transition-all duration-400 relative group ${
+                className={`flex items-center w-max min-w-full px-4 py-[5px] transition-all duration-400 relative group ${
                   isActive
                     ? 'bg-cyan-500/10'
                     : isPast
