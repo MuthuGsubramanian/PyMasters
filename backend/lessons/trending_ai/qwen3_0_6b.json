@@ -190,7 +190,7 @@
           "Do not forget the final '<|im_start|>assistant\\n' — without it the model would not know to reply"
         ]
       },
-      "test_code": "def format_chat(messages):\n    blocks = \"\".join(\n        f\"<|im_start|>{m['role']}\\n{m['content']}<|im_end|>\\n\" for m in messages\n    )\n    return blocks + \"<|im_start|>assistant\\n\"\n\nmessages = [\n    {\"role\": \"system\", \"content\": \"You are a helpful tutor.\"},\n    {\"role\": \"user\", \"content\": \"What is Python?\"},\n]\nresult = format_chat(messages)\nassert result == (\n    \"<|im_start|>system\\nYou are a helpful tutor.<|im_end|>\\n\"\n    \"<|im_start|>user\\nWhat is Python?<|im_end|>\\n\"\n    \"<|im_start|>assistant\\n\"\n), \"Prompt must match Qwen's ChatML format exactly\"\nassert format_chat([]) == \"<|im_start|>assistant\\n\", \"Empty history still needs the generation prompt\"\nsingle = format_chat([{\"role\": \"user\", \"content\": \"hi\"}])\nassert single == \"<|im_start|>user\\nhi<|im_end|>\\n<|im_start|>assistant\\n\"\nprint(\"All chat template tests passed!\")"
+      "test_code": "_msgs = [\n    {\"role\": \"system\", \"content\": \"You are a helpful tutor.\"},\n    {\"role\": \"user\", \"content\": \"What is Python?\"},\n]\nassert format_chat(_msgs) == (\n    \"<|im_start|>system\\nYou are a helpful tutor.<|im_end|>\\n\"\n    \"<|im_start|>user\\nWhat is Python?<|im_end|>\\n\"\n    \"<|im_start|>assistant\\n\"\n), \"Prompt must match Qwen's ChatML format exactly\"\nassert format_chat([]) == \"<|im_start|>assistant\\n\", \"Empty history still needs the generation prompt\"\nassert format_chat([{\"role\": \"user\", \"content\": \"hi\"}]) == \"<|im_start|>user\\nhi<|im_end|>\\n<|im_start|>assistant\\n\"\n"
     },
     {
       "instruction": {
@@ -205,7 +205,7 @@
           "Wrap the whole expression in round(..., 2) before returning"
         ]
       },
-      "test_code": "def model_memory_gb(params_billions, bits):\n    bytes_needed = params_billions * 1_000_000_000 * (bits / 8)\n    return round(bytes_needed / 1024**3, 2)\n\nassert model_memory_gb(0.6, 16) == 1.12, \"Qwen3-0.6B in bf16 should need ~1.12 GiB\"\nassert model_memory_gb(0.6, 4) == 0.28, \"Qwen3-0.6B at 4-bit should need ~0.28 GiB\"\nassert model_memory_gb(8, 4) == 3.73, \"Qwen3-8B at 4-bit should need ~3.73 GiB\"\nassert model_memory_gb(0.6, 4) < 0.5, \"Sub-1B at 4-bit fits on any phone\"\nassert model_memory_gb(8, 16) > 8, \"8B at bf16 does not fit in 8 GB RAM\"\nprint(\"All memory math tests passed!\")"
+      "test_code": "assert model_memory_gb(0.6, 16) == 1.12, \"Qwen3-0.6B in bf16 should need ~1.12 GiB\"\nassert model_memory_gb(0.6, 4) == 0.28, \"Qwen3-0.6B at 4-bit should need ~0.28 GiB\"\nassert model_memory_gb(8, 4) == 3.73, \"Qwen3-8B at 4-bit should need ~3.73 GiB\"\nassert model_memory_gb(0.6, 4) < 0.5, \"Sub-1B at 4-bit fits on any phone\"\nassert model_memory_gb(8, 16) > 8, \"8B at bf16 does not fit in 8 GB RAM\"\n"
     }
   ],
   "tags": {

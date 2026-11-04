@@ -222,7 +222,7 @@
           "en": "Add plt.title(), plt.xlabel('Month'), plt.ylabel('Sales')"
         }
       ],
-      "test_code": "months = ['Jan','Feb','Mar','Apr']\nsales = [1200, 1500, 900, 1800]\nassert len(months) == 4, 'months must have 4 entries'\nassert len(sales) == 4, 'sales must have 4 entries'\nassert max(sales) == 1800, 'April should be peak sales'"
+      "test_code": "assert months == ['Jan', 'Feb', 'Mar', 'Apr'], f'months should be Jan..Apr, got {months!r}'\nassert sales == [1200, 1500, 900, 1800], f'sales should be [1200, 1500, 900, 1800], got {sales!r}'\nimport matplotlib.pyplot as _plt\n_axes = [ax for n in _plt.get_fignums() for ax in _plt.figure(n).axes]\nassert _axes, 'Draw the chart with plt.bar(months, sales) (and do not close the figure, so it can be checked)'\n_ax = _axes[-1]\nassert len(_ax.patches) == 4, f'Draw one bar per month; found {len(_ax.patches)} bars'\nassert _ax.get_title(), 'Give the chart a title with plt.title(...)'\nassert _ax.get_xlabel() and _ax.get_ylabel(), 'Label both axes with plt.xlabel(...) and plt.ylabel(...)'\n"
     },
     {
       "instruction": {

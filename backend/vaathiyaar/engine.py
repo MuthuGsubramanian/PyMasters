@@ -912,27 +912,8 @@ def build_feedback_prompt(
     )
 
 
-_OUTPUT_PLACEHOLDER = re.compile(r"<[a-z_]+>")
-
-
-def _output_matches(actual: str, expected: str) -> bool:
-    """True when the student's stdout satisfies the lesson's expected output.
-
-    Exact (stripped) match is the fast path. Some lessons' sample output uses
-    <placeholder> fill-in tokens — e.g. Lesson 1: "Name: <your_name>, Age:
-    <your_age>, Favourite Number: <your_number>". Those can NEVER match a real
-    answer literally, so treat each <token> as a non-empty wildcard: the literal
-    surrounding text must still match exactly (regression 2026-07-08, found by
-    live E2E — every new user was blocked on their first lesson)."""
-    a = (actual or "").strip()
-    e = (expected or "").strip()
-    if a == e:
-        return True
-    if not _OUTPUT_PLACEHOLDER.search(e):
-        return False
-    parts = _OUTPUT_PLACEHOLDER.split(e)
-    pattern = ".+?".join(re.escape(p) for p in parts)
-    return re.fullmatch(pattern, a, re.DOTALL) is not None
+# Grading rules live in vaathiyaar.grading (shared with the CI solution checker); the old name stays importable.
+from vaathiyaar.grading import grade_submission, output_matches as _output_matches  # noqa: E402,F401
 
 
 def evaluate_code(
@@ -1016,47 +997,10 @@ def evaluate_code(
             "animation": feedback.get("animation"),
         }
 
-    # Execute code via subprocess. Two grading modes:
-    #  • test_code present (server-authored, trusted assertion harness) → run the
-    #    student's code followed by the harness in ONE program; success == a clean
-    #    exit (no AssertionError/exception). This mirrors the proven Challenges
-    #    grader and is how "test_code" lessons (e.g. numpy/pandas/sklearn, whose
-    #    correctness is a property of the student's VARIABLES, not stdout) are meant
-    #    to be graded. Callers pass test_code only when there is no usable
-    #    expected_output, so the default path below is never altered for the
-    #    stdout-graded lessons.
-    #  • else (default, unchanged) → exact stdout match against expected_output.
-    harness = test_code if (isinstance(test_code, str) and test_code.strip()) else None
-    if harness:
-        result = run_code_subprocess(student_code + "\n\n" + harness, seed_files=sandbox_files)
-        actual_output = result["output"]
-        stderr_output = result["error"]
-        success = result["exit_code"] == 0
-        # On failure, surface the assertion/exception (its message names the exact
-        # unmet requirement, e.g. "matrix must be 3x3") so Vaathiyaar can coach.
-        error_msg = "" if success else stderr_output
-    else:
-        result = run_code_subprocess(student_code, seed_files=sandbox_files)
-        actual_output = result["output"]
-        stderr_output = result["error"]
-        exec_error = stderr_output if result["exit_code"] != 0 else ""
-        error_msg = exec_error or stderr_output
-
-        success = _output_matches(actual_output, expected_output)
-
-        # HARNESS RESCUE (2026-07-02): exact stdout matching fails semantically
-        # correct solutions (live QA: a correct decorator printing "Hello,
-        # PyMasters!" instead of the sample's "Hello!" was marked wrong while
-        # Vaathiyaar praised it — contradictory verdicts). When the lesson ships
-        # a server-authored test_code harness, use it as a second chance on a
-        # CLEAN-RUN stdout mismatch: if the assertions pass, the solution is
-        # correct. This can only rescue false negatives — passing solutions and
-        # error cases are untouched.
-        if not success and test_code and not exec_error:
-            rescue = run_code_subprocess(student_code + "\n\n" + test_code, seed_files=sandbox_files)
-            if rescue["exit_code"] == 0:
-                success = True
-                error_msg = ""
+    # Grade (vaathiyaar.grading): a server-authored test_code harness grades the learner's variables; a harness
+    # that passes with no learner code at all is ignored in favour of expected_output.
+    graded = grade_submission(student_code, expected_output, test_code=test_code, sandbox_files=sandbox_files)
+    success, actual_output, error_msg = graded["success"], graded["output"], graded["error"]
     struggling = is_struggling(success, attempt_count)
 
     # Build a feedback message for Vaathiyaar, escalating help if the student is stuck.

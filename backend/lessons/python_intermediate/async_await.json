@@ -375,7 +375,7 @@
           "மொத்த நேரம் ~3s (நீண்ட delay), 9s (எல்லா delays-ன் கூட்டுத்தொகை) அல்ல"
         ]
       },
-      "test_code": "import asyncio\nimport time\nasync def fetch_url(url, delay):\n    print(f'Fetching {url}...')\n    await asyncio.sleep(delay)\n    print(f'Done: {url} ({delay}s)')\n    return url\nasync def main():\n    urls = [('a', 0.1), ('b', 0.2), ('c', 0.15)]\n    start = time.time()\n    results = await asyncio.gather(*[fetch_url(u, d) for u, d in urls])\n    elapsed = time.time() - start\n    assert elapsed < 0.5  # concurrent, not sequential\n    assert len(results) == 3\nasyncio.run(main())"
+      "test_code": "import asyncio as _aio, time as _time\nassert _aio.run(fetch_url('https://x.test', 0)) == 'https://x.test', 'fetch_url should return the url it fetched'\n_delays = []\n_real_sleep = _aio.sleep\nasync def _quick_sleep(d, *a, **k):\n    _delays.append(d)\n    return await _real_sleep(d / 30)\n_aio.sleep = _quick_sleep\ntry:\n    _t0 = _time.time()\n    _aio.run(main())\n    _took = _time.time() - _t0\nfinally:\n    _aio.sleep = _real_sleep\nassert len(_delays) >= 5, 'fetch_url should call await asyncio.sleep(delay) for each of the 5 URLs'\nassert _took < sum(_delays) / 30 * 0.6, f'Fetch the URLs concurrently with asyncio.gather: took {_took:.2f}s, one after another takes {sum(_delays) / 30:.2f}s'\n"
     }
   ],
   "quiz": [

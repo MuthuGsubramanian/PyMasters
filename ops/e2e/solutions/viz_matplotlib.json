@@ -3,9 +3,9 @@
   "challenges": [
     {
       "index": 0,
-      "code": "months = ['Jan','Feb','Mar','Apr']\nsales = [1200, 1500, 900, 1800]\n\ntitle = 'Monthly Sales'\nxlabel = 'Month'\nylabel = 'Sales'\n\ntry:\n    import matplotlib\n    matplotlib.use('Agg')\n    import matplotlib.pyplot as plt\n\n    fig, ax = plt.subplots()\n    ax.bar(months, sales, color='steelblue')\n    ax.set_title(title)\n    ax.set_xlabel(xlabel)\n    ax.set_ylabel(ylabel)\n    plt.close(fig)\nexcept ImportError:\n    # matplotlib unavailable: render a simple text bar chart instead\n    print(title)\n    print(ylabel + ' by ' + xlabel)\n    for m, s in zip(months, sales):\n        print(f\"{m:>4} | {'#' * (s // 100)} {s}\")\n",
-      "verified_output": "Monthly Sales\nSales by Month\n Jan | ############ 1200\n Feb | ############### 1500\n Mar | ######### 900\n Apr | ################## 1800",
-      "source": "claude sonnet 2026-11-03, verified by verify.py"
+      "code": "import matplotlib\nmatplotlib.use('Agg')\nimport matplotlib.pyplot as plt\n\nmonths = ['Jan', 'Feb', 'Mar', 'Apr']\nsales = [1200, 1500, 900, 1800]\n\nplt.bar(months, sales, color='steelblue')\nplt.title('Monthly Sales')\nplt.xlabel('Month')\nplt.ylabel('Sales')\n",
+      "verified_output": "",
+      "source": "claude opus 2026-11-04, harness rewrite; verified by verify.py"
     },
     {
       "index": 1,

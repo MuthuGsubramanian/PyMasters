@@ -9,9 +9,9 @@
     },
     {
       "index": 1,
-      "code": "# /// script\n# requires-python = \">=3.12\"\n# dependencies = [\n#     \"polars\",\n#     \"rich\",\n# ]\n# ///\n\ntry:\n    import polars as pl\n    from rich import print\nexcept ImportError:\n    # Dependencies are normally installed by `uv run`; fall back gracefully\n    pl = None\n\nif pl is None:\n    print(\"polars/rich not installed; run this script with `uv run script.py`\")\nelse:\n    try:\n        df = pl.read_csv(\"data.csv\")\n        print(df.head(5))\n    except FileNotFoundError:\n        print(\"data.csv not found\")\n",
-      "verified_output": "polars/rich not installed; run this script with `uv run script.py`",
-      "source": "claude sonnet 2026-11-03, verified by verify.py"
+      "code": "header = '''# /// script\n# requires-python = \">=3.12\"\n# dependencies = [\n#     \"polars\",\n#     \"rich\",\n# ]\n# ///\n'''\n\nprint(header)\n",
+      "verified_output": "# /// script\n# requires-python = \">=3.12\"\n# dependencies = [\n#     \"polars\",\n#     \"rich\",\n# ]\n# ///",
+      "source": "claude opus 2026-11-04, harness rewrite; verified by verify.py"
     }
   ]
 }
