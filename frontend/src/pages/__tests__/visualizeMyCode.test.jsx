@@ -88,4 +88,14 @@ describe('Visualize my code', () => {
     expect(byText(r.container, 'Step through my code')).toBeFalsy()
     r.unmount()
   })
+
+  it('both buttons keep a 44px touch target at every size', () => {
+    const r = render(<PracticePhase lesson={{ practice_challenges: [] }} language="en" code="x = 1" setCode={() => {}} output="" hintIndex={0} onHint={() => {}} onRun={() => {}} running={false} chatMessages={[]} userId="u1" />)
+    const f = render(<FeedbackPhase evalResult={{ passed: false }} language="en" onContinue={() => {}} onRetry={() => {}} submittedCode="print(2)" userId="u1" />)
+    for (const b of [byText(r.container, 'Visualize my code'), byText(f.container, 'Step through my code')]) {
+      expect(b.className).toContain('min-h-[44px]')
+      expect(b.className).not.toContain('sm:min-h-0')
+    }
+    r.unmount(); f.unmount()
+  })
 })

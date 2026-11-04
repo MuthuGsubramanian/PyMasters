@@ -19,7 +19,7 @@ def test_visualize_my_code_in_lesson_practice(logged_in_page):
 
     btn = page.get_by_role("button", name="Visualize my code")
     assert btn.is_enabled()
-    assert btn.bounding_box()["height"] >= 40, "touch target too small"
+    assert btn.bounding_box()["height"] >= 44, "touch target too small"
     btn.click()
 
     dialog = page.get_by_role("dialog", name="Time-travel visualizer")

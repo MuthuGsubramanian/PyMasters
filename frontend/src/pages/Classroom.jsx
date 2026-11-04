@@ -1268,7 +1268,7 @@ export function PracticePhase({
                             type="button"
                             onClick={() => visualize(code)}
                             disabled={tracing || !code?.trim()}
-                            className="flex items-center gap-1.5 text-xs font-semibold text-slate-200 rounded-xl px-3 min-h-[44px] sm:min-h-0 sm:py-1.5 transition-colors bg-white/5 hover:bg-white/10 border border-slate-600/60 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
+                            className="flex items-center gap-1.5 text-xs font-semibold text-slate-200 rounded-xl px-3 min-h-[44px] transition-colors bg-white/5 hover:bg-white/10 border border-slate-600/60 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
                         >
                             <History size={13} aria-hidden="true" />
                             {tracing ? 'Tracing…' : 'Visualize my code'}
