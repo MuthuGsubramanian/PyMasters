@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createRoot } from 'react-dom/client';
 import { act } from 'react';
 import AnimationRenderer from '../components/animations/AnimationRenderer';
-import { canonicalType } from '../components/animations/normalize';
+import { canonicalType, normalizeProps } from '../components/animations/normalize';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -18,7 +18,7 @@ const LESSONS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const BAD = /\[object Object\]|\bundefined\b|\bNaN\b|Result: (true|false)\b/;
 
 function* jsonFiles(dir) {
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) yield* jsonFiles(full);
     else if (entry.name.endsWith('.json')) yield full;
@@ -110,7 +110,16 @@ describe('every authored lesson visual shape renders real content', () => {
     });
     act(() => { vi.advanceTimersByTime(10000); });
     const text = container.textContent;
+    // ParticleEffect is an overlay that renders no text.
     if (c.type !== 'ParticleEffect') expect(text.trim(), 'textContent is empty').not.toBe('');
     expect(text).not.toMatch(BAD);
+    if (c.type !== 'ParticleEffect') {
+      const squash = (v) => String(v).replace(/\s+/g, ' ').trim();
+      const raw = c.primitive.props ?? (({ type: _t, sync_with: _s, ...rest }) => rest)(c.primitive);
+      const { caption } = normalizeProps(c.primitive.type, { ...raw }, 'en');
+      const flat = squash(text);
+      if (caption?.title) expect(flat, 'caption title missing').toContain(squash(caption.title));
+      if (caption?.description) expect(flat, 'caption description missing').toContain(squash(caption.description));
+    }
   });
 });
