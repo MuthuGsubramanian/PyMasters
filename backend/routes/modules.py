@@ -57,7 +57,7 @@ async def get_job_status(job_id: str, caller: str = Depends(get_current_user_id)
     conn.close()
 
     # Only the learner who asked for it (or a super admin); 404 otherwise so job ids can't be probed.
-    if not row or not owner_or_super_admin(row["user_id"], caller):
+    if not row or not owner_or_super_admin(_get_db_path(), row["user_id"], caller):
         raise HTTPException(status_code=404, detail="Job not found")
 
     status = row["status"]

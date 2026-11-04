@@ -237,15 +237,16 @@ def assert_learning_access(db_path: str, user_id: str) -> None:
         )
 
 
-def owner_or_super_admin(owner_id: str | None, caller: str | None) -> bool:
-    """True when `caller` owns the record (`owner_id`) or is a super admin (users.is_super_admin column only)."""
+def owner_or_super_admin(db_path: str, owner_id: str | None, caller: str | None) -> bool:
+    """True when `caller` owns the record (`owner_id`) or is a super admin. Authorizes on the
+    users.is_super_admin column only (never on username/email), in the same database the route reads."""
     if not caller:
         return False
     if owner_id and str(owner_id) == str(caller):
         return True
-    from fastapi import HTTPException
-    from routes.admin import require_super_admin
+    conn = sqlite3.connect(db_path)
     try:
-        return require_super_admin(caller)
-    except HTTPException:
-        return False
+        row = conn.execute("SELECT COALESCE(is_super_admin, 0) FROM users WHERE id = ?", [caller]).fetchone()
+    finally:
+        conn.close()
+    return bool(row) and int(row[0]) == 1

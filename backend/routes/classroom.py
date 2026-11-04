@@ -1510,7 +1510,7 @@ def get_explain(explain_id: str, caller: str = Depends(get_current_user_id)):
     conn.row_factory = sqlite3.Row
     row = conn.execute("SELECT user_id, data FROM generated_explains WHERE id = ?", [explain_id]).fetchone()
     conn.close()
-    if not row or not owner_or_super_admin(row["user_id"], caller):
+    if not row or not owner_or_super_admin(_get_db_path(), row["user_id"], caller):
         raise HTTPException(status_code=404, detail="Explanation not found")
     return {"id": explain_id, **json.loads(row["data"])}
 
