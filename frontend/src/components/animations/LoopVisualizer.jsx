@@ -208,7 +208,7 @@ export default function LoopVisualizer({
           {code.split('\n').map((line, idx) => (
             <div key={idx} className="flex items-center py-[3px]">
               <span className="w-6 text-right select-none mr-3 text-xs text-code-foreground/30 tabular-nums">{idx + 1}</span>
-              <span className="text-code-foreground/90 leading-relaxed">{colorizeLine(line) || '\u00A0'}</span>
+              <span className="whitespace-pre text-code-foreground/90 leading-relaxed">{colorizeLine(line) || '\u00A0'}</span>
             </div>
           ))}
         </div>

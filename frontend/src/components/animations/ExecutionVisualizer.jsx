@@ -213,7 +213,7 @@ export default function ExecutionVisualizer({
                 }`}>
                   {lineNum}
                 </span>
-                <span className={`flex-1 transition-all duration-300 leading-relaxed ${
+                <span className={`flex-1 whitespace-pre transition-all duration-300 leading-relaxed ${
                   isActive ? 'text-code-foreground brightness-110' : 'text-code-foreground/70'
                 }`}>
                   {colorizeLine(line) || '\u00A0'}
