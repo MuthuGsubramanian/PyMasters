@@ -7,7 +7,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 export default function useStepPlayback(total, { reducedMotion = false, intervalMs = 1600, onFinish } = {}) {
   const last = Math.max(0, (Number(total) || 0) - 1);
   const [rawStep, setStep] = useState(0);
-  const [playing, setPlaying] = useState(() => !reducedMotion && last > 0);
+  const [playing, setPlaying] = useState(() => !reducedMotion && total > 0);
   const [speed, setSpeed] = useState(1);
 
   const step = Math.min(Math.max(rawStep, 0), last);
@@ -50,8 +50,8 @@ export default function useStepPlayback(total, { reducedMotion = false, interval
   }, [step]);
   const restart = useCallback(() => {
     setStep(0);
-    setPlaying(!reducedMotion && last > 0);
-  }, [reducedMotion, last]);
+    setPlaying(!reducedMotion && total > 0);
+  }, [reducedMotion, total]);
 
   return { step, playing, speed, play, pause, next, prev, restart, setSpeed };
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import gsap from 'gsap';
+import { loopStepCount } from './normalize';
 
 const SPEED_MAP = { slow: 2.5, normal: 1.8, fast: 1.0, profile_adaptive: 1.8 };
 
@@ -104,7 +105,7 @@ export default function LoopVisualizer({
   );
 
   const stepDuration = SPEED_MAP[speed] ?? 1.8;
-  const totalSteps = stableIterations.length > 0 ? stableIterations.length : items.length;
+  const totalSteps = loopStepCount({ loopType, collection, iterations: stableIterations, rangeStart, rangeEnd, rangeStep });
   const theme = LOOP_THEMES[loopType] || LOOP_THEMES.for;
 
   // Container fade-in
@@ -121,17 +122,17 @@ export default function LoopVisualizer({
   // Controlled mode: scroll position picks the iteration.
   useEffect(() => {
     if (!isControlled) return;
-    const stepCount = stableIterations.length > 0 ? stableIterations.length : items.length;
+    const stepCount = totalSteps;
     if (stepCount === 0) return;
     const idx = Math.max(-1, Math.min(controlledStep, stepCount - 1));
     setActiveIndex(idx);
     setOutputLines(stableIterations.slice(0, idx + 1).filter(it => it?.output).map(it => it.output));
-  }, [isControlled, controlledStep, stableIterations, items]);
+  }, [isControlled, controlledStep, stableIterations, items, totalSteps]);
 
   // Auto-play timeline
   useEffect(() => {
     if (isControlled) return;
-    const stepCount = stableIterations.length > 0 ? stableIterations.length : items.length;
+    const stepCount = totalSteps;
     if (stepCount === 0) return;
     completedRef.current = false;
     setActiveIndex(-1);

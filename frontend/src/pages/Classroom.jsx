@@ -715,8 +715,7 @@ export function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopV
     } else if (loopViz) {
         const p = normalizeProps('LoopVisualizer', loopViz, language);
         caption = p.caption;
-        const count = (p.iterations || []).length || (p.collection || []).length
-            || Math.max(0, Math.ceil(((p.rangeEnd ?? 5) - (p.rangeStart ?? 0)) / (p.rangeStep || 1)));
+        const count = getStepTotal('LoopVisualizer', p);
         inner = (
             <LoopVisualizer
                 loopType={p.loopType || 'for'}

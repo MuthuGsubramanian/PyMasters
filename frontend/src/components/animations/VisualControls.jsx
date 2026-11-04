@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { Play, Pause, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { loopStepCount } from './normalize';
 import useStepPlayback from '../../hooks/useStepPlayback';
 import useReducedMotion from '../../hooks/useReducedMotion';
 
@@ -27,8 +29,10 @@ export function getStepTotal(type, p = {}) {
     case 'FlowArrow': case 'flow_arrow':
       return len(p.stages) >= 2 ? len(p.stages) : 0;
     default: // LoopVisualizer
-      return len(p.iterations) || len(p.collection)
-        || Math.max(0, Math.ceil(((p.rangeEnd ?? 5) - (p.rangeStart ?? 0)) / (p.rangeStep || 1)));
+      return loopStepCount({
+        loopType: p.loopType || 'for', collection: p.collection || [], iterations: p.iterations || [],
+        rangeStart: p.rangeStart ?? 0, rangeEnd: p.rangeEnd ?? 5, rangeStep: p.rangeStep ?? 1,
+      });
   }
 }
 
@@ -88,12 +92,18 @@ function isEditableTarget(t) {
 // learner presses Next on it, so a "Watch It Run" sequence still advances.
 export function PlayableVisual({ total, onComplete, children }) {
   const reducedMotion = useReducedMotion();
-  const pb = useStepPlayback(total, { reducedMotion, onFinish: onComplete });
+  const completedRef = useRef(false);
+  const complete = () => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    onComplete?.();
+  };
+  const pb = useStepPlayback(total, { reducedMotion, onFinish: complete });
 
   const next = () => {
     if (pb.step >= total - 1) {
       pb.pause();
-      onComplete?.();
+      complete();
     } else {
       pb.next();
     }
@@ -101,6 +111,13 @@ export function PlayableVisual({ total, onComplete, children }) {
 
   const onKeyDown = (e) => {
     if (isEditableTarget(e.target)) return;
+    if (e.key === ' ' || e.key === 'Spacebar') {
+      // A focused button handles Space itself; toggling here too would double up.
+      if (e.target.closest && e.target.closest('button')) return;
+      e.preventDefault();
+      if (pb.playing) pb.pause(); else pb.play();
+      return;
+    }
     if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); pb.prev(); }
   };

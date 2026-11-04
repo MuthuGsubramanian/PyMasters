@@ -195,6 +195,7 @@ export default function CodeStepper({
     const idx = Math.max(-1, Math.min(controlledStep, stableSequence.length - 1));
     setActiveStepIndex(idx);
     setIsPlaying(false);
+    if (idx >= 0) onStepRef.current?.(idx, stableSequence[idx]);
   }, [isControlled, controlledStep, stableSequence]);
 
   // Auto-play timeline

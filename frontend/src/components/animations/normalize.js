@@ -503,3 +503,21 @@ export function normalizeProps(type, raw, language) {
 
   return { ...p, caption };
 }
+
+// Number of steps a LoopVisualizer plays: explicit iterations, else the
+// collection (or the range when it is a range loop / has no collection).
+// Single source for the component, the scroll layout and the controls.
+export function loopStepCount({
+  loopType = 'for', collection = [], iterations = [], rangeStart = 0, rangeEnd = 5, rangeStep = 1,
+} = {}) {
+  if (Array.isArray(iterations) && iterations.length > 0) return iterations.length;
+  const coll = Array.isArray(collection) ? collection : [];
+  if (loopType === 'for_range' || (loopType === 'for' && coll.length === 0)) {
+    const step = rangeStep || 1;
+    let n = 0;
+    if (step > 0) for (let i = rangeStart; i < rangeEnd; i += step) n++;
+    else for (let i = rangeStart; i > rangeEnd; i += step) n++;
+    return n;
+  }
+  return coll.length;
+}
