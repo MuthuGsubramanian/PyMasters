@@ -249,5 +249,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "model = {\"layers\": 32, \"d\": 4096}\nplans = {\n    \"q,v only\": {\"matrices\": 2, \"r\": 8},\n    \"q,k,v,o\": {\"matrices\": 4, \"r\": 8},\n    \"q,k,v,o r=64\": {\"matrices\": 4, \"r\": 64},\n}\n\nfull = model[\"layers\"] * 4 * model[\"d\"] ** 2         # full fine-tune of attention\nbudget = {}\nfor name, p in plans.items():\n    lora = model[\"layers\"] * p[\"matrices\"] * p[\"r\"] * (2 * model[\"d\"])\n    budget[name] = (lora, round(lora / full * 100, 3))\n\nprint(f\"full attention fine-tune: {full:,} params\")\nfor name, (params, pct) in budget.items():\n    print(f\"{name:14} {params:>11,} params = {pct}%\")\n"
 }

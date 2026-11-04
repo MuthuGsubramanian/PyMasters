@@ -33,5 +33,6 @@
     {"q": {"en": "Why capture prompts/completions in spans carefully rather than always and forever?"}, "options": {"en": ["Spans have a 1KB size limit", "Content capture at volume is a cost and compliance liability; sample, redact, and set retention", "OpenTelemetry forbids string attributes", "It slows the model down"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["llmops", "ai_foundry_platform"], "concepts_required": ["llm_concepts", "functions", "dictionaries"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_ai", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "spans = []\n\nclass Span:\n    def __init__(self, name, parent=None):\n        self.name, self.parent, self.attributes = name, parent, {}\n    def __enter__(self):\n        spans.append(self)\n        return self\n    def __exit__(self, *exc):\n        return False\n    def set_attribute(self, key, value):\n        self.attributes[key] = value\n\nwith Span(\"chat_request\") as root:\n    with Span(\"retrieval\", parent=root.name) as s:\n        chunks = [\"policy A\", \"policy B\"]\n        s.set_attribute(\"retrieval.top_k\", len(chunks))\n    with Span(\"llm_call\", parent=root.name) as s:\n        s.set_attribute(\"tokens.total\", 512)\n\nfor span in spans:\n    print(span.name, \"<-\", span.parent, span.attributes)\n"
 }

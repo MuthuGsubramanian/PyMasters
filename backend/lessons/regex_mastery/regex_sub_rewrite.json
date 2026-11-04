@@ -197,5 +197,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "import re\n\nnote = \"Call Ravi at 98400-12345 on 2025-03-14, mail ravi@example.com\"\n\nredacted = re.sub(r\"\\d{5}-\\d{5}\", \"[phone]\", note)\nredacted = re.sub(r\"[\\w.]+@[\\w.]+\", \"[email]\", redacted)\nindian_date = re.sub(r\"(\\d{4})-(\\d{2})-(\\d{2})\", r\"\\3/\\2/\\1\", redacted)   # backreferences\n\ndef shout(match):                        # a function can build each replacement\n    return match.group(0).upper()\n\nfinal = re.sub(r\"\\bravi\\b\", shout, indian_date, flags=re.IGNORECASE)\nprint(redacted)\nprint(final)\n"
 }

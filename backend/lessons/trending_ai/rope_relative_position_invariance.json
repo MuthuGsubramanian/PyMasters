@@ -243,5 +243,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "from math import cos, sin\n\ntheta = 0.5\nq, k = (1.0, 0.5), (0.3, 0.8)\n\ndef rotate(x, angle):\n    return (x[0] * cos(angle) - x[1] * sin(angle), x[0] * sin(angle) + x[1] * cos(angle))\n\ndef score(pos_q, pos_k):\n    rq, rk = rotate(q, pos_q * theta), rotate(k, pos_k * theta)\n    return round(rq[0] * rk[0] + rq[1] * rk[1], 6)\n\nsame_gap = {(5, 2): score(5, 2), (12, 9): score(12, 9), (103, 100): score(103, 100)}\nother_gap = score(10, 2)\nprint(\"gap 3 everywhere:\", same_gap)\nprint(\"gap 8:\", other_gap)\n"
 }

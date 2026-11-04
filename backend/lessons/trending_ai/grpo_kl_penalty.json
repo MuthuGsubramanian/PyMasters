@@ -235,5 +235,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "import math\n\nbeta = 0.04\nsteps = [                         # (logp under trained policy, logp under frozen reference)\n    (-1.20, -1.20),               # identical: no penalty\n    (-0.90, -1.30),\n    (-0.20, -2.50),               # drifted far from the reference\n]\n\nrows = []\nfor logp_theta, logp_ref in steps:\n    ratio = math.exp(logp_ref - logp_theta)\n    kl = ratio - math.log(ratio) - 1          # always >= 0\n    surrogate = 0.8\n    rows.append({\"kl\": round(kl, 4), \"objective\": round(surrogate - beta * kl, 4)})\n\nfor r in rows:\n    print(r)\n"
 }

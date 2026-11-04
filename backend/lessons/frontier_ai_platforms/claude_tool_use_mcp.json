@@ -49,5 +49,6 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "import json\n\nclass WeatherServer:                          # an MCP-style tool server\n    def list_tools(self):\n        return [{\"name\": \"get_weather\", \"input_schema\": {\"required\": [\"city\"]}}]\n    def call_tool(self, name, arguments):\n        temps = {\"Madurai\": 34, \"Ooty\": 18}\n        return {\"content\": f\"{arguments['city']}: {temps.get(arguments['city'], '?')} C\"}\n\nserver = WeatherServer()\ntools = server.list_tools()                   # the client discovers tools at runtime\n\nmodel_turn = {\"type\": \"tool_use\", \"name\": \"get_weather\", \"input\": {\"city\": \"Ooty\"}}\nwire = json.dumps({\"method\": \"tools/call\", \"params\": {\"name\": model_turn[\"name\"],\n                                                       \"arguments\": model_turn[\"input\"]}})\nrequest = json.loads(wire)\nresult = server.call_tool(request[\"params\"][\"name\"], request[\"params\"][\"arguments\"])\ntool_result = {\"type\": \"tool_result\", \"content\": result[\"content\"]}\nprint([t[\"name\"] for t in tools], \"->\", tool_result)\n"
 }

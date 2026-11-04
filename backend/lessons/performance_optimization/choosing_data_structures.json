@@ -182,5 +182,6 @@
     "category": "performance",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "from collections import Counter, deque\n\nvisits = [\"home\", \"shop\", \"home\", \"cart\", \"home\"]\ncounts = Counter(visits)                  # dict: count in one pass\n\nseen = set()                              # set: fast \"have I seen it?\"\nfirst_time = []\nfor page in visits:\n    if page not in seen:\n        seen.add(page)\n        first_time.append(page)\n\nrecent = deque(maxlen=3)                  # deque: cheap sliding window\nfor page in visits:\n    recent.append(page)\n\nprint(counts.most_common(1), first_time, list(recent))\n"
 }

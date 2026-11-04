@@ -234,5 +234,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "beta = 0.1\nresponses = {\n    \"helpful answer\": {\"logp_policy\": -12.0, \"logp_ref\": -15.0},\n    \"rude answer\": {\"logp_policy\": -20.0, \"logp_ref\": -18.5},\n    \"unchanged answer\": {\"logp_policy\": -9.0, \"logp_ref\": -9.0},\n}\n\nrewards = {}\nfor name, lp in responses.items():\n    drift = lp[\"logp_policy\"] - lp[\"logp_ref\"]      # how far the policy moved\n    rewards[name] = round(beta * drift, 3)\n\nranking = sorted(rewards, key=rewards.get, reverse=True)\nprint(rewards)\nprint(\"implicit preference order:\", ranking)\n"
 }

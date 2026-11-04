@@ -262,5 +262,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "class FakeModel:\n    def __init__(self):\n        self.turns = [{\"tool_call\": {\"name\": \"add\", \"args\": {\"a\": 2, \"b\": 3}}},\n                      {\"final_answer\": \"2 + 3 is 5\"}]\n    def complete(self, messages):\n        return self.turns.pop(0)\n\ntools = {\"add\": lambda a, b: a + b}\nmodel = FakeModel()\nmessages = [{\"role\": \"user\", \"content\": \"What is 2 + 3?\"}]\n\nfor step in range(5):\n    turn = model.complete(messages)\n    messages.append({\"role\": \"assistant\", **turn})\n    if \"final_answer\" in turn:\n        break\n    call = turn[\"tool_call\"]\n    result = tools[call[\"name\"]](**call[\"args\"])\n    messages.append({\"role\": \"tool\", \"content\": str(result)})\n\nprint(turn[\"final_answer\"], \"after\", len(messages), \"messages\")\n"
 }

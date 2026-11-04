@@ -242,5 +242,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "prompt = [\"The\", \"cat\", \"sat\", \"on\", \"the\", \"mat\"]\n\nnaive_work, cached_work, cache = [], [], []\nfor step in range(1, len(prompt) + 1):\n    naive_work.append(step)                 # re-project every earlier token\n    cache.append(f\"KV({prompt[step - 1]})\")  # project only the new one, keep it\n    cached_work.append(1)\n\nnaive_total, cached_total = sum(naive_work), sum(cached_work)\nsaved = round((1 - cached_total / naive_total) * 100, 1)\nprint(\"cache:\", cache)\nprint(f\"projections: naive {naive_total}, cached {cached_total} -> {saved}% saved\")\n"
 }

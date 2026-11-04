@@ -214,5 +214,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "builds = [101, 102, 103, 104, 105, 106, 107, 108, 109, 110]\nbroken_from = 107                         # every build from here on is broken\n\ndef is_broken(build):\n    return build >= broken_from\n\nlow, high = 0, len(builds) - 1\nsteps = []\nwhile low < high:                         # find the FIRST broken build\n    mid = (low + high) // 2\n    steps.append(builds[mid])\n    if is_broken(builds[mid]):\n        high = mid                        # answer is mid or to the left\n    else:\n        low = mid + 1                     # answer is to the right\n\nprint(\"probed:\", steps)\nprint(\"first broken build:\", builds[low], \"found in\", len(steps), \"checks\")\n"
 }

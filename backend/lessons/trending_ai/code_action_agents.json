@@ -228,5 +228,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "reply = \"\"\"Thought: I need the total of the cart.\n```py\ncart = [{\"item\": \"pen\", \"price\": 20, \"qty\": 3}, {\"item\": \"book\", \"price\": 150, \"qty\": 1}]\ntotal = sum(line[\"price\"] * line[\"qty\"] for line in cart)\nfinal_answer = f\"Cart total is {total}\"\n```\n\"\"\"\n\nfence = \"`\" * 3 + \"py\"\nstart = reply.index(fence) + len(fence)\nend = reply.index(\"`\" * 3, start)\ncode = reply[start:end].strip()\n\nsandbox = {}                          # the agent's action runs as real Python\nexec(code, sandbox)\nobservation = {k: v for k, v in sandbox.items() if k in (\"total\", \"final_answer\")}\nprint(len(code.splitlines()), \"lines of code executed\")\nprint(observation)\n"
 }

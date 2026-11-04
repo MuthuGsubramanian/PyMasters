@@ -33,5 +33,6 @@
     {"q": {"en": "A 95%-accurate specialist sits behind an 80%-accurate router. What is the approximate end-to-end accuracy, and the lesson?"}, "options": {"en": ["95% — the router does not matter", "76% — evaluate the system, including routing accuracy, not just individual agents", "87% — accuracies average out", "80% — only the router counts"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["ai_foundry_agents", "llmops"], "concepts_required": ["functions", "dictionaries", "llm_concepts"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_ai", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "class Specialist:\n    def __init__(self, name, topics):\n        self.name, self.topics = name, topics\n    def handle(self, message):\n        return f\"{self.name} agent handled: {message}\"\n\nbilling = Specialist(\"billing\", [\"invoice\", \"refund\", \"charge\"])\ntech = Specialist(\"tech\", [\"error\", \"login\", \"crash\"])\n\nclass Triage:                                 # the orchestrator agent\n    def __init__(self, specialists):\n        self.specialists = specialists\n    def route(self, message):\n        for agent in self.specialists:\n            if any(t in message.lower() for t in agent.topics):\n                return agent.handle(message)\n        return \"triage answered directly\"\n\ntriage = Triage([billing, tech])\nreplies = [triage.route(m) for m in [\"Refund my invoice\", \"App crash on login\", \"Hello\"]]\nprint(replies)\n"
 }

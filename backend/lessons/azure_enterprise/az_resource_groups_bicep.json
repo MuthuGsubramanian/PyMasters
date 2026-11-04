@@ -33,5 +33,6 @@
     {"q": {"en": "What is the recommended way to group resources into resource groups?"}, "options": {"en": ["One resource group per resource type across all apps", "By shared lifecycle — things deployed and retired together", "Alphabetically by resource name", "One resource group per Azure region, shared by all teams"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["azure_resource_management", "infrastructure_as_code"], "concepts_required": ["cloud_fundamentals", "azure_identity"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "import hashlib\n\ndef unique_string(seed):\n    return hashlib.sha256(seed.encode()).hexdigest()[:8]\n\nresource_group = {\"id\": \"/subscriptions/demo/resourceGroups/rg-data\", \"location\": \"westeurope\"}\ntemplate = {\n    \"type\": \"Microsoft.Storage/storageAccounts\",\n    \"name\": \"st\" + unique_string(resource_group[\"id\"]),\n    \"location\": resource_group[\"location\"],\n    \"sku\": {\"name\": \"Standard_LRS\"},\n}\n\ndeployed = {}\n\ndef arm_deploy(resource):                     # idempotent: same template, same result\n    action = \"update\" if resource[\"name\"] in deployed else \"create\"\n    deployed[resource[\"name\"]] = dict(resource)\n    return action\n\nfirst, second = arm_deploy(template), arm_deploy(template)\nprint(template[\"name\"], first, second, \"| resources:\", len(deployed))\n"
 }

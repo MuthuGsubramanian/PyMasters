@@ -33,5 +33,6 @@
     {"q": {"en": "An error-budget burn-rate alert fires when..."}, "options": {"en": ["Any single request fails", "The current failure rate would exhaust the SLO's allowed unreliability far too fast — e.g., a month's budget in hours", "The budget in Cost Management hits 100%", "CPU stays above 80% for an hour"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["cloud_observability", "cloud_compliance"], "concepts_required": ["azure_resource_management", "azure_networking"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 24, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "app_requests = [\n    {\"role\": \"api\", \"minute\": 0, \"success\": True},\n    {\"role\": \"api\", \"minute\": 2, \"success\": False},\n    {\"role\": \"api\", \"minute\": 3, \"success\": False},\n    {\"role\": \"web\", \"minute\": 6, \"success\": False},\n    {\"role\": \"api\", \"minute\": 7, \"success\": False},\n]\n\nerrors = {}                       # like: summarize count() by role, bin(time, 5m)\nfor row in app_requests:\n    if not row[\"success\"]:\n        key = (row[\"role\"], row[\"minute\"] // 5 * 5)\n        errors[key] = errors.get(key, 0) + 1\n\nranked = sorted(errors.items(), key=lambda kv: kv[1], reverse=True)\nalert_rule = {\"threshold\": 2}\nalerts = [k for k, n in ranked if n >= alert_rule[\"threshold\"]]\nprint(ranked)\nprint(\"fire alert for:\", alerts)\n"
 }

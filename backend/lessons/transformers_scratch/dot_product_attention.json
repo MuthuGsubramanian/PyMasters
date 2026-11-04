@@ -169,5 +169,6 @@
     "category": "transformers",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "import math\n\nquery = [1, 0, 1, 0]                      # the word \"it\"\nkeys = {\"cat\": [1, 0, 1, 0], \"milk\": [0, 1, 0, 1], \"drank\": [1, 1, 0, 0]}\nvalues = {\"cat\": [10, 0], \"milk\": [0, 10], \"drank\": [5, 5]}\nd = len(query)\n\nscores = {w: sum(q * k for q, k in zip(query, vec)) / math.sqrt(d) for w, vec in keys.items()}\nexps = {w: math.exp(s) for w, s in scores.items()}\ntotal = sum(exps.values())\nweights = {w: round(e / total, 3) for w, e in exps.items()}\n\noutput = [0.0, 0.0]\nfor w, weight in weights.items():\n    output = [o + weight * v for o, v in zip(output, values[w])]\nprint(\"weights:\", weights)\nprint(\"output:\", [round(o, 2) for o in output])\n"
 }

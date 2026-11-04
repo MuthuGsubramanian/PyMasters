@@ -227,5 +227,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "models = {\n    \"small-1B\": {\"layers\": 16, \"heads\": 16, \"head_dim\": 64},\n    \"mid-8B\": {\"layers\": 32, \"heads\": 32, \"head_dim\": 128},\n}\nbytes_fp16 = 2\n\ntable = []\nfor name, m in models.items():\n    per_token = 2 * m[\"layers\"] * m[\"heads\"] * m[\"head_dim\"] * bytes_fp16   # K and V\n    for seq_len in [4_096, 128_000]:\n        gb = round(per_token * seq_len / 1e9, 2)\n        table.append((name, seq_len, per_token, gb))\n\nfor name, seq_len, per_token, gb in table:\n    print(f\"{name:9} {seq_len:>7} tokens: {per_token:>7} B/token -> {gb} GB\")\n"
 }

@@ -212,5 +212,6 @@
     "category": "transformers",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "import math\n\nK = [[1, 0], [0, 1], [1, 1]]\nV = [[1, 2], [3, 4], [5, 6]]\nQ = [[1, 1], [0, 2], [2, 0]]\n\ndef attend(q, keys, vals):\n    s = [math.exp(sum(a * b for a, b in zip(q, k)) / math.sqrt(len(q))) for k in keys]\n    w = [x / sum(s) for x in s]\n    return [round(sum(wi * v[j] for wi, v in zip(w, vals)), 3) for j in range(len(vals[0]))]\n\ncache_k, cache_v, outputs, work = [], [], [], {\"cached\": 0, \"naive\": 0}\nfor t in range(3):\n    cache_k.append(K[t])                      # only the NEW token's K and V are computed\n    cache_v.append(V[t])\n    work[\"cached\"] += 1\n    work[\"naive\"] += t + 1                    # naive loop recomputes the whole prefix\n    outputs.append(attend(Q[t], cache_k, cache_v))\n\nprint(outputs)\nprint(\"K/V computations:\", work)\n"
 }

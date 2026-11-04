@@ -213,5 +213,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "import functools\n\ndef logged(fn):\n    @functools.wraps(fn)\n    def wrapper(*args, **kwargs):\n        result = fn(*args, **kwargs)\n        wrapper.log.append(f\"{fn.__name__}{args} -> {result}\")\n        return result\n    wrapper.log = []\n    return wrapper\n\n@logged\ndef area(w, h):\n    return w * h\n\n@logged\ndef greet(name):\n    return \"hi \" + name\n\narea(3, 4)\narea(2, 5)\ngreet(\"Kavi\")\nprint(area.__name__, area.log)\nprint(greet.log)\n"
 }

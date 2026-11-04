@@ -463,5 +463,6 @@
     "path_memberships": [
       "testing_devops"
     ]
-  }
+  },
+  "uth_example": "workflow = {\n    \"on\": {\"push\": [\"main\"], \"pull_request\": [\"main\"]},\n    \"steps\": [\"checkout\", \"setup-python\", \"install\", \"pytest\", \"flake8\"],\n}\nstep_results = {\"checkout\": True, \"setup-python\": True, \"install\": True,\n                \"pytest\": False, \"flake8\": True}\n\ndef run_pipeline(event, branch):\n    if branch not in workflow[\"on\"].get(event, []):\n        return \"skipped\", []\n    log = []\n    for step in workflow[\"steps\"]:\n        ok = step_results[step]\n        log.append(f\"{step}: {'ok' if ok else 'FAILED'}\")\n        if not ok:\n            return \"red - merge blocked\", log\n    return \"green - ready to deploy\", log\n\nstatus, log = run_pipeline(\"push\", \"main\")\nprint(status)\nprint(log)\nprint(run_pipeline(\"push\", \"feature-x\")[0])\n"
 }

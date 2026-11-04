@@ -229,5 +229,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "query = \"can I return shoes after 30 days\"\nstage1 = [                                  # fast vector search: roughly right\n    (\"Shoe size guide\", 0.82),\n    (\"Return policy: 30 days for all items\", 0.79),\n    (\"Shoes on sale this week\", 0.77),\n    (\"Late returns need manager approval\", 0.70),\n]\n\ndef stem(text):\n    return {w.rstrip(\"s\") for w in text.lower().replace(\":\", \"\").split()}\n\ndef reranker(q, doc):                       # slower, reads query and doc together\n    qw, words = stem(q), stem(doc)\n    return round(len(qw & words) + 0.5 * (\"return\" in doc.lower()), 2)\n\nrescored = [(doc, reranker(query, doc)) for doc, _ in stage1]\nrescored.sort(key=lambda p: p[1], reverse=True)\ntop2 = [doc for doc, _ in rescored[:2]]\nprint(\"vector order:  \", [d for d, _ in stage1])\nprint(\"reranked top-2:\", top2)\n"
 }

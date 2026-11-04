@@ -228,5 +228,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "import json\n\nreply = 'Sure! Here is the data:\\n```json\\n{\"name\": \"Asha\", \"skills\": {\"python\": 5, \"sql\": 3}}\\n```\\nLet me know {if} you need more.'\n\nstart = reply.index(\"{\")\ndepth = 0\nfor i in range(start, len(reply)):\n    ch = reply[i]\n    if ch in \"{}\":\n        depth += 1 if ch == \"{\" else -1\n        if depth == 0:\n            end = i + 1\n            break\n\nraw = reply[start:end]\ndata = json.loads(raw)\nprint(raw)\nprint(data[\"name\"], \"knows\", list(data[\"skills\"]))\n"
 }

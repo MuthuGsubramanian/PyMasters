@@ -241,5 +241,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "layers, head_dim, seq_len, bytes_fp16 = 32, 128, 32_000, 2\nquery_heads = 32\ndesigns = {\"MHA\": 32, \"GQA-8\": 8, \"MQA\": 1}          # number of KV heads\n\nreport = {}\nfor name, kv_heads in designs.items():\n    total = 2 * layers * kv_heads * head_dim * seq_len * bytes_fp16\n    report[name] = {\n        \"cache_gb\": round(total / 1e9, 2),\n        \"saved\": f\"{(1 - kv_heads / query_heads) * 100:.1f}%\",\n    }\n\nfor name, row in report.items():\n    print(f\"{name:6} {row}\")\n"
 }

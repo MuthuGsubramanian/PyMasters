@@ -33,5 +33,6 @@
     {"q": {"en": "Why do enterprises prefer many subscriptions over one shared subscription?"}, "options": {"en": ["Subscriptions are free while resource groups cost money", "Azure limits each subscription to 10 resource groups", "Quotas, throttling limits, and blast radius are per-subscription boundaries", "Management groups only accept one subscription each"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["cloud_fundamentals", "cloud_compliance"], "concepts_required": ["functions", "dictionaries"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 18, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "tenant = {\"name\": \"contoso\", \"groups\": {}}\n\ndef add_group(parent, name):\n    group = {\"name\": name, \"groups\": {}, \"subscriptions\": [], \"policies\": []}\n    parent[\"groups\"][name] = group\n    return group\n\nroot = add_group(tenant, \"root\")\nroot[\"policies\"].append(\"allowed-regions: eu\")\nlanding = add_group(root, \"landing-zones\")\nlanding[\"policies\"].append(\"require-tags\")\nlanding[\"subscriptions\"].append(\"sub-payments-prod-001\")\n\ndef effective_policies(path):\n    node, found = tenant, []\n    for name in path:\n        node = node[\"groups\"][name]\n        found += node[\"policies\"]                # policies inherit downwards\n    return found\n\nprint(landing[\"subscriptions\"], \"inherits\", effective_policies([\"root\", \"landing-zones\"]))\n"
 }

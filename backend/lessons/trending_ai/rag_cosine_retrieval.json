@@ -242,5 +242,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "docs = {\n    \"How to reset a password\": [0.9, 0.1, 0.2],\n    \"Monthly billing explained\": [0.1, 0.8, 0.3],\n    \"Password rules and length\": [0.7, 0.0, 0.6],\n}\nquery = [0.8, 0.05, 0.3]                 # \"forgot my password\"\n\ndef cosine(a, b):\n    dot = sum(x * y for x, y in zip(a, b))\n    na = sum(x * x for x in a) ** 0.5\n    nb = sum(y * y for y in b) ** 0.5\n    return round(dot / (na * nb), 4)\n\nscores = {title: cosine(query, vec) for title, vec in docs.items()}\nranked = sorted(scores.items(), key=lambda kv: kv[1], reverse=True)\nfor title, score in ranked:\n    print(f\"{score}  {title}\")\ncontext = ranked[0][0]\nprint(\"send to the LLM:\", context)\n"
 }

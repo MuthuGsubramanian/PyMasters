@@ -244,5 +244,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "from math import pi\n\nhead_dim = 128\ncontext_len = 128_000\npairs = [0, 16, 32, 48, 63]                 # dimension pairs, fast -> slow\n\ndef wavelengths(base):\n    return {i: round(2 * pi * base ** (2 * i / head_dim), 1) for i in pairs}\n\nreport = {}\nfor base in [10_000, 500_000]:\n    waves = wavelengths(base)\n    covering = [i for i, w in waves.items() if w >= context_len]\n    report[base] = (waves, covering)\n\nfor base, (waves, covering) in report.items():\n    print(f\"base {base}: slowest wavelength {waves[63]:,} -> pairs covering 128k: {covering}\")\n"
 }

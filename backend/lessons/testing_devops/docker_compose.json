@@ -435,5 +435,6 @@
     "path_memberships": [
       "testing_devops"
     ]
-  }
+  },
+  "uth_example": "from graphlib import TopologicalSorter\n\ncompose = {\n    \"web\": {\"build\": \".\", \"ports\": [\"8000:8000\"], \"depends_on\": [\"db\", \"cache\"],\n            \"environment\": {\"DATABASE_HOST\": \"db\", \"REDIS_HOST\": \"cache\"}},\n    \"db\": {\"image\": \"postgres:16\", \"depends_on\": []},\n    \"cache\": {\"image\": \"redis:7\", \"depends_on\": []},\n}\n\nstart_order = list(TopologicalSorter(\n    {name: svc[\"depends_on\"] for name, svc in compose.items()}).static_order())\n\nnetwork = {name: f\"172.18.0.{i + 2}\" for i, name in enumerate(compose)}   # service-name DNS\nweb_env = compose[\"web\"][\"environment\"]\nresolved = {key: network[host] for key, host in web_env.items()}\nhost_port, container_port = compose[\"web\"][\"ports\"][0].split(\":\")\n\nprint(\"docker compose up starts:\", start_order)\nprint(\"web reaches:\", resolved, \"| browser uses localhost:\" + host_port)\n"
 }

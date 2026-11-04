@@ -263,5 +263,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "TOOLS = {\"lookup\": lambda city: {\"Paris\": 18}.get(city, 0),\n         \"to_f\": lambda c: c * 9 / 5 + 32}\ncalls = [{\"name\": \"lookup\", \"args\": {\"city\": \"Paris\"}},\n         {\"name\": \"to_f\", \"args\": {\"c\": 18}}]\n\ntrace = []\nfor call in calls:\n    result = TOOLS[call[\"name\"]](**call[\"args\"])\n    trace.append({\"tool\": call[\"name\"], \"args\": call[\"args\"], \"result\": result})\n\nchecks = [\n    (\"used lookup\", lambda t: any(s[\"tool\"] == \"lookup\" for s in t)),\n    (\"no shell\", lambda t: all(s[\"tool\"] != \"shell\" for s in t)),\n    (\"under 2 steps\", lambda t: len(t) < 2),\n]\nfailed = [label for label, check in checks if not check(trace)]\nprint(\"steps:\", len(trace), \"failed checks:\", failed)\n"
 }

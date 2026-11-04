@@ -242,5 +242,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "chunk_vecs = {                                  # pretend these came from the embedder\n    \"Reset your password from the login page.\": [0.9, 0.1, 0.0],\n    \"Invoices are emailed monthly.\": [0.1, 0.9, 0.1],\n    \"Our office has a cafe.\": [0.0, 0.2, 0.9],\n}\nTHRESHOLD = 0.35\n\ndef retrieve(q_vec, k=2):\n    scored = [(sum(a * b for a, b in zip(q_vec, v)), text) for text, v in chunk_vecs.items()]\n    scored.sort(reverse=True)\n    if scored[0][0] < THRESHOLD:\n        return \"No relevant context found.\"\n    return [text for score, text in scored[:k]]\n\npassword_q = [0.95, 0.05, 0.0]                  # \"How do I reset my password?\"\nweather_q = [0.1, 0.1, 0.1]                     # \"Will it rain tomorrow?\"\nprint(retrieve(password_q))\nprint(retrieve(weather_q))\n"
 }

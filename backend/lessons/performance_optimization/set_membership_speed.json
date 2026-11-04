@@ -199,5 +199,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "banned_list = [\"u3\", \"u7\", \"u9\", \"u12\"]\nbanned_set = set(banned_list)\n\nrequests = [\"u1\", \"u7\", \"u3\", \"u5\", \"u12\"]\nchecks = {\"list\": 0, \"set\": 0}\n\nblocked = []\nfor user in requests:\n    for b in banned_list:                 # list: scan item by item\n        checks[\"list\"] += 1\n        if b == user:\n            break\n    checks[\"set\"] += 1                    # set: one hash lookup\n    if user in banned_set:\n        blocked.append(user)\n\nprint(\"blocked:\", blocked, \"comparisons:\", checks)\n"
 }

@@ -248,5 +248,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "ttl = 300                                    # seconds the cache lives after each use\ntraffic = {\n    \"busy hour\": [0, 40, 95, 180, 260, 330, 400],\n    \"quiet evening\": [0, 420, 900, 1500, 1620],\n}\n\nresults = {}\nfor name, arrivals in traffic.items():\n    last_touch, hits = None, []\n    for t in arrivals:\n        hit = last_touch is not None and t - last_touch <= ttl\n        hits.append(hit)\n        last_touch = t                       # every call refreshes the TTL\n    results[name] = (hits, round(sum(hits) / len(hits), 2))\n\nfor name, (hits, rate) in results.items():\n    print(f\"{name:13} hit rate {rate}: {['hit' if h else 'miss' for h in hits]}\")\n"
 }

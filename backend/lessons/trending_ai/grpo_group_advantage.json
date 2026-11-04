@@ -234,5 +234,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "completions = {\"A\": 0.9, \"B\": 0.4, \"C\": 0.4, \"D\": 0.1}   # rewards for one prompt's group\neps = 1e-4\n\nrewards = list(completions.values())\nmean_r = sum(rewards) / len(rewards)\nstd_r = (sum((r - mean_r) ** 2 for r in rewards) / len(rewards)) ** 0.5\n\nadvantages = {}\nfor name, reward in completions.items():\n    advantages[name] = round((reward - mean_r) / (std_r + eps), 4)\n\nprint(\"group mean:\", round(mean_r, 3), \"std:\", round(std_r, 3))\nprint(advantages)        # above average -> pushed up, below -> pushed down\n"
 }

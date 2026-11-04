@@ -247,5 +247,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "stages = 3\n\ndef timeline(microbatches):\n    ticks = microbatches + stages - 1\n    rows = []\n    for s in range(stages):\n        row = \"\"\n        for t in range(ticks):\n            mb = t - s                          # stage s works on micro-batch t - s\n            row += str(mb) if 0 <= mb < microbatches else \".\"\n        rows.append(row)\n    return rows\n\nfor m in [1, 6]:\n    rows = timeline(m)\n    idle = sum(r.count(\".\") for r in rows) / sum(len(r) for r in rows)\n    print(f\"{m} micro-batch(es): bubble {idle:.0%}\")\n    for s, row in enumerate(rows):\n        print(f\"  GPU{s} {row}\")\n"
 }

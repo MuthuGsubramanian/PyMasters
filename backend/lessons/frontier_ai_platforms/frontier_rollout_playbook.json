@@ -49,5 +49,6 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "phases = [\n    {\"name\": \"pilot\", \"users\": 50},\n    {\"name\": \"department\", \"users\": 800},\n    {\"name\": \"company\", \"users\": 12000},\n]\ngates = {\"weekly_active\": 0.6, \"csat\": 4.0, \"incidents\": 0}\nmetrics = {\n    \"pilot\": {\"weekly_active\": 0.72, \"csat\": 4.4, \"incidents\": 0},\n    \"department\": {\"weekly_active\": 0.55, \"csat\": 4.1, \"incidents\": 1},\n}\n\nrolled_out = []\nfor phase in phases:\n    m = metrics.get(phase[\"name\"])\n    rolled_out.append(phase[\"name\"])\n    if m is None:\n        break\n    passed = (m[\"weekly_active\"] >= gates[\"weekly_active\"] and m[\"csat\"] >= gates[\"csat\"]\n              and m[\"incidents\"] <= gates[\"incidents\"])\n    if not passed:\n        print(f\"hold at {phase['name']}: fix adoption and incidents first\")\n        break\nprint(\"reached:\", rolled_out)\n"
 }

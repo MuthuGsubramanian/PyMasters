@@ -241,5 +241,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "d, k = 4096, 4096\ntable = []\nfor r in [4, 8, 16, 64]:\n    full = d * k\n    lora = r * (d + k)                     # B is d x r, A is r x k\n    table.append({\"rank\": r, \"lora_params\": lora,\n                  \"fraction\": f\"{lora / full:.3%}\", \"smaller_by\": round(full / lora)})\n\nfor row in table:\n    print(row)\n\ntiny_B = [[1], [2], [3]]                   # rank-1 update for a 3x3 matrix\ntiny_A = [[1, 0, -1]]\nupdate = [[b[0] * a for a in tiny_A[0]] for b in tiny_B]\nprint(\"rank-1 update from 6 numbers:\", update)\n"
 }

@@ -206,5 +206,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "import asyncio\n\nasync def fetch_price(item, delay):\n    await asyncio.sleep(delay)\n    return {\"item\": item, \"price\": len(item) * 10}\n\nasync def main():\n    orders = [(\"tea\", 0.03), (\"coffee\", 0.01), (\"juice\", 0.02)]\n    coros = [fetch_price(name, d) for name, d in orders]\n    results = await asyncio.gather(*coros)     # all run at once\n    total = sum(r[\"price\"] for r in results)\n    return results, total\n\nresults, total = asyncio.run(main())\nprint([r[\"item\"] for r in results], \"total:\", total)\n"
 }

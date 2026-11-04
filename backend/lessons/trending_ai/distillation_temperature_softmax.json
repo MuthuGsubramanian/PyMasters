@@ -242,5 +242,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "from math import exp\n\nclasses = [\"cat\", \"tiger\", \"car\"]\nlogits = [8.0, 5.0, -1.0]\n\ntable = {}\nfor T in [1, 2, 5]:\n    exps = [exp(x / T) for x in logits]\n    total = sum(exps)\n    table[T] = [round(e / total, 4) for e in exps]\n\nfor T, probs in table.items():\n    pairs = dict(zip(classes, probs))\n    print(f\"T={T}: {pairs}\")\nprint(\"At higher T the student can see that a cat looks more like a tiger than a car.\")\n"
 }

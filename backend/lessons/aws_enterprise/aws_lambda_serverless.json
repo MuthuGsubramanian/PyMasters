@@ -33,5 +33,6 @@
     {"q": {"en": "Which workload is a POOR fit for Lambda?"}, "options": {"en": ["Resizing images uploaded to S3", "Handling spiky webhook traffic", "Processing SQS messages at variable rates", "A 4-hour nightly batch computation in a single process"]}, "correct": 3}
   ],
   "tags": {"concepts_taught": ["aws_compute", "cloud_fundamentals"], "concepts_required": ["aws_identity", "aws_storage"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "table = {}                                     # stands in for a DynamoDB table\n\ndef handler(event, context):\n    failures = []\n    for record in event[\"Records\"]:\n        order = record[\"body\"]\n        if order.get(\"qty\", 0) <= 0:\n            failures.append({\"itemIdentifier\": record[\"messageId\"]})\n            continue\n        table[order[\"id\"]] = order\n    return {\"batchItemFailures\": failures}     # only bad messages get retried\n\nevent = {\"Records\": [\n    {\"messageId\": \"m1\", \"body\": {\"id\": \"o1\", \"qty\": 2}},\n    {\"messageId\": \"m2\", \"body\": {\"id\": \"o2\", \"qty\": 0}},\n    {\"messageId\": \"m3\", \"body\": {\"id\": \"o3\", \"qty\": 1}},\n]}\nresponse = handler(event, context=None)\ngb_seconds = 0.5 * 0.120                       # 512 MB for 120 ms\nprint(response, \"| stored:\", list(table), \"| billed GB-s:\", gb_seconds)\n"
 }

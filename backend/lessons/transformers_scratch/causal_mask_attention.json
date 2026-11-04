@@ -212,5 +212,6 @@
     "category": "transformers",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "import math\n\ntokens = [\"The\", \"cat\", \"sat\"]\nscores = [[1.0, 0.5, 2.0],\n          [0.3, 1.2, 0.8],\n          [0.6, 0.4, 1.5]]\n\ndef softmax(row):\n    exps = [math.exp(v) for v in row]\n    return [round(e / sum(exps), 2) for e in exps]\n\nmasked = []\nfor i, row in enumerate(scores):\n    masked.append([v if j <= i else float(\"-inf\") for j, v in enumerate(row)])\n\nweights = [softmax(r) for r in masked]\nfor tok, w in zip(tokens, weights):\n    print(f\"{tok:4} attends to {w}\")         # zeros above the diagonal: no peeking\n"
 }

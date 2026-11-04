@@ -230,5 +230,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "text = \"Refunds take 5 days. Shipping is free over 50. Returns need a receipt.\"\nsize, overlap = 30, 10\n\nchunks = []\nstep = size - overlap\nfor start in range(0, len(text), step):\n    chunks.append(text[start:start + size])\n    if start + size >= len(text):\n        break\n\nno_overlap = [text[i:i + size] for i in range(0, len(text), size)]\nfor c in chunks:\n    print(repr(c))\nprint(\"without overlap the fact is cut:\", repr(no_overlap[0]), \"|\", repr(no_overlap[1]))\n"
 }

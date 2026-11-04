@@ -228,5 +228,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "import json\n\nschema = {\"name\": str, \"age\": int, \"member\": bool}\nreplies = [\n    '{\"name\": \"Asha\", \"age\": \"42\", \"member\": true}',\n    '{\"name\": \"Ravi\", \"member\": false}',\n    '{\"name\": \"Kiran\", \"age\": \"forty\", \"member\": true}',\n]\n\naccepted, rejected = [], []\nfor raw in replies:\n    data = json.loads(raw)\n    try:\n        clean = {}\n        for field, typ in schema.items():\n            if field not in data:\n                raise ValueError(f\"missing {field}\")\n            clean[field] = typ(data[field])          # coerce \"42\" -> 42\n        accepted.append(clean)\n    except ValueError as err:\n        rejected.append((data[\"name\"], str(err)))\n\nprint(\"accepted:\", accepted)\nprint(\"rejected:\", rejected)                      # retry these with the error message\n"
 }

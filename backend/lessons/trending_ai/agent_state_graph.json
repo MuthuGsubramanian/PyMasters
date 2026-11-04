@@ -222,5 +222,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "def draft(state):\n    state[\"draft\"] = f\"Reply to: {state['ticket']}\"\n    state[\"attempts\"] += 1\n    return state\n\ndef review(state):\n    state[\"approved\"] = state[\"attempts\"] >= 2        # reviewer wants one revision\n    return state\n\ndef send(state):\n    state[\"sent\"] = True\n    return state\n\nnodes = {\"draft\": draft, \"review\": review, \"send\": send}\nedges = {\"draft\": \"review\",\n         \"review\": lambda s: \"send\" if s[\"approved\"] else \"draft\",   # conditional edge\n         \"send\": \"END\"}\n\nstate = {\"ticket\": \"refund for order 9\", \"attempts\": 0, \"approved\": False, \"sent\": False}\ncurrent, path = \"draft\", []\nwhile current != \"END\":\n    path.append(current)\n    state = nodes[current](state)\n    nxt = edges[current]\n    current = nxt(state) if callable(nxt) else nxt\nprint(\" -> \".join(path))\nprint(state)\n"
 }

@@ -248,5 +248,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "calls = {\"model\": 0}\n\ndef fake_encode(texts):                    # stands in for model.encode(batch)\n    calls[\"model\"] += 1\n    return {t: [round(len(t) / 10, 2), -0.5, 0.25] for t in texts}\n\ncache = {}\n\ndef embed(texts):\n    missing = [t for t in dict.fromkeys(texts) if t not in cache]\n    if missing:\n        cache.update(fake_encode(missing))  # one batched call for all new texts\n    return [cache[t] for t in texts]\n\nembed([\"reset password\", \"billing help\"])\nembed([\"billing help\", \"reset password\", \"billing help\"])     # all cache hits\n\nvec = cache[\"reset password\"]\nscale = max(abs(x) for x in vec) / 127     # int8: 1 byte per number instead of 4\nq = [round(x / scale) for x in vec]\napprox = [round(i * scale, 3) for i in q]\nprint(\"model calls:\", calls[\"model\"], \"| cached texts:\", len(cache))\nprint(\"float:\", vec, \"-> int8:\", q, \"-> back:\", approx)\n"
 }

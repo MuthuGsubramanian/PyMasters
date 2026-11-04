@@ -211,5 +211,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "config = {\"db\": {\"primary\": {\"host\": \"10.0.0.5\", \"port\": 5432}}}\n\ndef lookup(data, path):\n    current = data\n    try:\n        for key in path:\n            current = current[key]\n    except (KeyError, TypeError):\n        return None\n    return current\n\nhost = lookup(config, [\"db\", \"primary\", \"host\"])\nmissing = lookup(config, [\"db\", \"replica\", \"host\"])\ntoo_deep = lookup(config, [\"db\", \"primary\", \"port\", \"x\"])\nprint(host, missing, too_deep)\n"
 }

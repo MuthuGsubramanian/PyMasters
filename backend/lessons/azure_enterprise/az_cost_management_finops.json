@@ -33,5 +33,6 @@
     {"q": {"en": "The most scalable way to guarantee cost-allocation tags exist is..."}, "options": {"en": ["A quarterly email asking teams to tag", "A wiki page of tagging standards", "Azure Policy: modify effects inheriting tags plus deny on untagged resource groups", "Manually tagging during month-end close"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["cloud_cost_management", "cloud_compliance"], "concepts_required": ["cloud_fundamentals", "azure_resource_management"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "resources = [\n    {\"name\": \"vm-build-01\", \"cost\": 410, \"cpu_avg\": 3, \"tags\": {\"team\": \"ci\"}},\n    {\"name\": \"disk-orphan-7\", \"cost\": 85, \"attached\": False, \"tags\": {}},\n    {\"name\": \"sql-claims\", \"cost\": 1900, \"cpu_avg\": 62, \"tags\": {\"team\": \"claims\"}},\n]\nbudget = {\"name\": \"bud-claims-prod\", \"amount\": 2000}\n\nfindings = []\nfor r in resources:\n    if r.get(\"cpu_avg\", 100) < 5:\n        findings.append((r[\"name\"], \"rightsize or shut down\"))\n    if r.get(\"attached\") is False:\n        findings.append((r[\"name\"], \"delete orphaned disk\"))\n    if not r[\"tags\"]:\n        findings.append((r[\"name\"], \"missing cost-center tag\"))\n\nspend = sum(r[\"cost\"] for r in resources)\nprint(findings)\nprint(f\"spend {spend} of {budget['amount']} ({spend / budget['amount']:.0%} of budget)\")\n"
 }

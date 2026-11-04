@@ -33,5 +33,6 @@
     {"q": {"en": "What is the recommended default retrieval configuration to start from on enterprise corpora?"}, "options": {"en": ["Keyword-only BM25", "Vector-only with high top-k", "Hybrid search plus semantic ranker, then measure", "Random sampling of chunks"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["enterprise_rag", "ai_foundry_platform"], "concepts_required": ["rag", "llm_concepts", "functions"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_ai", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "index = [\n    {\"text\": \"Refund policy: 30 days\", \"vec\": [0.9, 0.1], \"groups\": [\"all\"]},\n    {\"text\": \"Exec bonus plan\", \"vec\": [0.8, 0.3], \"groups\": [\"hr\"]},\n    {\"text\": \"Shipping times\", \"vec\": [0.1, 0.9], \"groups\": [\"all\"]},\n]\n\ndef score(a, b):\n    return sum(x * y for x, y in zip(a, b))\n\ndef search(query_vec, user_group, top=2):\n    allowed = [d for d in index if \"all\" in d[\"groups\"] or user_group in d[\"groups\"]]\n    ranked = sorted(allowed, key=lambda d: score(query_vec, d[\"vec\"]), reverse=True)\n    return [d[\"text\"] for d in ranked[:top]]\n\nquery_vec = [1.0, 0.2]                       # \"how do refunds work?\"\nfor group in [\"sales\", \"hr\"]:\n    chunks = search(query_vec, group)\n    print(group, \"sees\", chunks)\n"
 }

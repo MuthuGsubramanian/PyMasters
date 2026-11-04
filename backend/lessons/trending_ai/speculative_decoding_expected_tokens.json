@@ -225,5 +225,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "def expected_tokens(alpha, k):\n    return round((1 - alpha ** (k + 1)) / (1 - alpha), 2)\n\nacceptance = {\"weak draft model\": 0.5, \"good draft model\": 0.8}\ntable = {}\nfor name, alpha in acceptance.items():\n    table[name] = {k: expected_tokens(alpha, k) for k in [1, 2, 4, 8]}\n\nfor name, row in table.items():\n    print(f\"{name:17} tokens per target pass by K: {row}\")\nprint(\"more drafts help only while the draft model keeps guessing right\")\n"
 }

@@ -242,5 +242,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "num_query_heads, num_kv_heads = 8, 2\ngroup_size = num_query_heads // num_kv_heads\n\nkv_heads = [{\"id\": g, \"serves\": []} for g in range(num_kv_heads)]\nfor q in range(num_query_heads):\n    group = q // group_size                     # contiguous blocks share one K/V head\n    kv_heads[group][\"serves\"].append(f\"q{q}\")\n\nfor head in kv_heads:\n    print(f\"KV head {head['id']} serves {head['serves']}\")\nprint(f\"cache holds {num_kv_heads} K/V heads instead of {num_query_heads}\")\n"
 }

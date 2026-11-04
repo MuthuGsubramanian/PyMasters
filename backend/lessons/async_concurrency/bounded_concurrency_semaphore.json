@@ -163,5 +163,6 @@
     "category": "async",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "import asyncio\n\nasync def download(page, sem, stats):\n    async with sem:                      # at most 2 inside at once\n        stats[\"active\"] += 1\n        stats[\"peak\"] = max(stats[\"peak\"], stats[\"active\"])\n        await asyncio.sleep(0.01)\n        stats[\"active\"] -= 1\n        return f\"page{page}\"\n\nasync def main():\n    sem = asyncio.Semaphore(2)\n    stats = {\"active\": 0, \"peak\": 0}\n    pages = await asyncio.gather(*(download(p, sem, stats) for p in range(5)))\n    return pages, stats\n\npages, stats = asyncio.run(main())\nprint(pages, \"peak concurrency:\", stats[\"peak\"])\n"
 }

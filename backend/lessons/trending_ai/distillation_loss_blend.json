@@ -241,5 +241,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "from math import exp, log\n\ndef softmax(logits, T=1.0):\n    exps = [exp(x / T) for x in logits]\n    return [e / sum(exps) for e in exps]\n\nteacher = [4.0, 3.5, 0.2]                 # teacher is torn between class 0 and 1\nstudent = [2.0, 2.4, 0.1]\ntrue_index, T = 1, 2.0                    # the real label is class 1\n\np, q = softmax(teacher, T), softmax(student, T)\nsoft = sum(pi * log(pi / qi) for pi, qi in zip(p, q)) * T ** 2\nhard = -log(softmax(student)[true_index])\n\nblends = {}\nfor alpha in [0.0, 0.5, 0.9]:\n    blends[alpha] = round(alpha * soft + (1 - alpha) * hard, 4)\nprint(\"soft:\", round(soft, 4), \"hard:\", round(hard, 4))\nprint(\"total loss by alpha:\", blends)\n"
 }

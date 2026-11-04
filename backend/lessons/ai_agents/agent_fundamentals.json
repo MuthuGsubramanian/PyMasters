@@ -151,5 +151,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "def get_weather(city):\n    return {\"Tokyo\": \"sunny, 22C\", \"Oslo\": \"snow, -3C\"}.get(city, \"unknown\")\n\ntools = {\"get_weather\": get_weather}\n\ndef fake_llm(question):\n    # a real model would decide this; here the decision is canned\n    city = question.split()[-1].strip(\"?\")\n    return {\"tool\": \"get_weather\", \"args\": {\"city\": city}}\n\nquestion = \"What is the weather in Tokyo?\"\ndecision = fake_llm(question)\nobservation = tools[decision[\"tool\"]](**decision[\"args\"])\nanswer = f\"Agent: it is {observation} in {decision['args']['city']}.\"\nprint(answer)\n"
 }

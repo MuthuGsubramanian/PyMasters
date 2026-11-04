@@ -248,5 +248,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "weights = [0.02, -0.05, 0.04, 0.01, 8.0, -0.03, 0.06, -0.02]    # one outlier: 8.0\n\ndef mean_error(values, group_size):\n    errors = []\n    for start in range(0, len(values), group_size):\n        group = values[start:start + group_size]\n        scale = max(abs(v) for v in group) / 127\n        errors += [abs(round(v / scale) * scale - v) for v in group]\n    return round(sum(errors) / len(errors), 5)\n\nresults = {}\nfor size in [8, 4, 2]:\n    results[size] = mean_error(weights, size)\n\nfor size, err in results.items():\n    print(f\"group size {size}: mean error {err}\")\n"
 }

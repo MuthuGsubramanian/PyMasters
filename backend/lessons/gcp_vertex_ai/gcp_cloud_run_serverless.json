@@ -42,5 +42,6 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "import math\n\nservice = {\"concurrency\": 80, \"min_instances\": 0, \"max_instances\": 10}\ntraffic = [0, 30, 250, 900, 40, 0]              # concurrent requests each minute\n\nrunning, cold_starts, timeline = 0, 0, []\nfor load in traffic:\n    needed = math.ceil(load / service[\"concurrency\"])\n    target = max(service[\"min_instances\"], min(service[\"max_instances\"], needed))\n    if target > running:\n        cold_starts += target - running          # new containers must boot\n    running = target\n    timeline.append(running)\n\nprint(\"instances per minute:\", timeline)\nprint(\"cold starts:\", cold_starts, \"| scales to zero:\", timeline[-1] == 0)\n"
 }

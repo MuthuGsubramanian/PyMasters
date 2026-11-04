@@ -242,5 +242,6 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "uth_example": "rate = 3.00 / 1_000_000                    # $ per input token (illustrative)\nprefix = 20_000                            # long system prompt, reused every call\nquestions = {\"short\": 50, \"medium\": 800, \"long\": 6_000}\n\nreport = {}\nfor name, new_tokens in questions.items():\n    no_cache = (prefix + new_tokens) * rate\n    cached = prefix * rate * 0.1 + new_tokens * rate\n    report[name] = {\"no_cache\": round(no_cache, 4), \"cached\": round(cached, 4),\n                    \"saved\": f\"{(1 - cached / no_cache) * 100:.1f}%\"}\n\nfor name, row in report.items():\n    print(f\"{name:7} {row}\")\n"
 }

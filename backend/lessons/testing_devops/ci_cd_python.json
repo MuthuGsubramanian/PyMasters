@@ -435,5 +435,6 @@
     "path_memberships": [
       "testing_devops"
     ]
-  }
+  },
+  "uth_example": "from itertools import product\n\njobs = {\n    \"lint\": {\"needs\": [], \"matrix\": {}},\n    \"test\": {\"needs\": [\"lint\"], \"matrix\": {\"python\": [\"3.11\", \"3.12\"], \"os\": [\"ubuntu\"]}},\n    \"deploy\": {\"needs\": [\"test\"], \"matrix\": {}},\n}\ncoverage, fail_under = 84, 80\n\nruns = []\nfor name, job in jobs.items():                   # needs: run in dependency order\n    keys = list(job[\"matrix\"])\n    combos = list(product(*job[\"matrix\"].values())) or [()]\n    for combo in combos:\n        runs.append(f\"{name} {dict(zip(keys, combo)) if combo else ''}\".strip())\n\ngate = \"pass\" if coverage >= fail_under else \"fail\"\nprint(\"\\n\".join(runs))\nprint(f\"coverage {coverage}% vs --fail-under={fail_under}: {gate}\")\n"
 }

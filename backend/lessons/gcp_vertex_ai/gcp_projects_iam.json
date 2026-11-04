@@ -41,5 +41,6 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "ROLE_PERMISSIONS = {\n    \"roles/bigquery.dataViewer\": {\"bigquery.tables.getData\"},\n    \"roles/bigquery.admin\": {\"bigquery.tables.getData\", \"bigquery.tables.delete\"},\n}\ngroups = {\"group:data-eng\": [\"user:asha\", \"user:ravi\"]}\nbindings = {                                    # project api-prod IAM policy\n    \"roles/bigquery.dataViewer\": [\"group:data-eng\"],\n    \"roles/bigquery.admin\": [\"user:meera\"],\n}\n\ndef can(member, permission):\n    identities = {member} | {g for g, users in groups.items() if member in users}\n    for role, members in bindings.items():\n        if identities & set(members) and permission in ROLE_PERMISSIONS[role]:\n            return True\n    return False\n\nchecks = {(m, p): can(m, p) for m in [\"user:asha\", \"user:meera\"]\n          for p in [\"bigquery.tables.getData\", \"bigquery.tables.delete\"]}\nfor (member, perm), ok in checks.items():\n    print(f\"{member:11} {perm:26} {'yes' if ok else 'no'}\")\n"
 }

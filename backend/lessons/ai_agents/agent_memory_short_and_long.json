@@ -264,5 +264,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "def estimate_tokens(text):\n    return len(text.split())\n\nsystem = {\"role\": \"system\", \"content\": \"You are a helpful tutor\"}\nrest = [{\"role\": \"user\", \"content\": \"hi there\"},\n        {\"role\": \"assistant\", \"content\": \"hello how can I help today\"},\n        {\"role\": \"user\", \"content\": \"explain lists please\"}]\nbudget = 10\n\nused = estimate_tokens(system[\"content\"])\nkept = []\nfor m in reversed(rest):\n    cost = estimate_tokens(m[\"content\"])\n    if used + cost > budget:\n        break\n    kept.append(m)\n    used += cost\nkept.reverse()\nwindow = [system] + kept\n\nlong_term = {\"name\": \"Asha\", \"likes\": \"examples\"}   # facts kept outside the window\nprint(len(window), \"messages in window,\", used, \"tokens; remembered:\", long_term)\n"
 }

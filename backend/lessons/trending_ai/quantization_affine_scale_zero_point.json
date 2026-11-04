@@ -248,5 +248,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "weights = [-0.62, -0.10, 0.0, 0.33, 1.27]\nmin_val, max_val = min(weights), max(weights)\n\nscale = (max_val - min_val) / 255\nzero_point = round(-min_val / scale)          # the int that stands for 0.0\n\nrows = []\nfor x in weights:\n    q = max(0, min(255, round(x / scale + zero_point)))\n    back = (q - zero_point) * scale\n    rows.append({\"x\": x, \"q\": q, \"back\": round(back, 4), \"error\": round(abs(back - x), 4)})\n\nprint(\"scale:\", round(scale, 5), \"zero_point:\", zero_point)\nfor r in rows:\n    print(r)\n"
 }

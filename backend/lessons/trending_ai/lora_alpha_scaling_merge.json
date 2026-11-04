@@ -242,5 +242,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "W = [[0.50, -0.20], [0.10, 0.30]]        # frozen weights (2x2)\nB = [[0.4], [-0.2]]                      # 2 x r   (r = 1)\nA = [[0.5, 1.0]]                         # r x 2\nr = 1\n\ndef merge(alpha):\n    scale = alpha / r\n    merged = []\n    for i in range(2):\n        row = []\n        for j in range(2):\n            delta = sum(B[i][t] * A[t][j] for t in range(r)) * scale\n            row.append(round(W[i][j] + delta, 3))\n        merged.append(row)\n    return merged\n\nfor alpha in [0, 1, 4]:\n    print(f\"alpha={alpha}: {merge(alpha)}\")\n"
 }

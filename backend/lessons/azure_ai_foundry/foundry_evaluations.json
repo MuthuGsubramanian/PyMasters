@@ -33,5 +33,6 @@
     {"q": {"en": "What is 'test-set leakage' in LLM evaluation?"}, "options": {"en": ["Dataset files stored unencrypted", "The judge model seeing the context", "Tuning the prompt on the same questions you later evaluate with, inflating scores", "Running evaluations on weekends"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["llm_evaluation_ops", "llmops"], "concepts_required": ["ai_evaluation", "functions", "llm_concepts"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_ai", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "uth_example": "golden_set = [\n    {\"question\": \"Refund window?\", \"context\": \"Refunds within 30 days [1]\"},\n    {\"question\": \"Shipping cost?\", \"context\": \"Shipping is free over 50 [2]\"},\n]\n\ndef fake_app(question):\n    return {\"Refund window?\": \"Refunds within 30 days [1]\",\n            \"Shipping cost?\": \"Shipping costs 5\"}[question]\n\ndef has_citation(response):\n    return int(\"[\" in response)\n\ndef grounded(response, context):\n    words = set(response.lower().split())\n    return round(len(words & set(context.lower().split())) / len(words), 2)\n\nrows = []\nfor case in golden_set:\n    answer = fake_app(case[\"question\"])\n    rows.append({\"q\": case[\"question\"], \"cited\": has_citation(answer),\n                 \"grounded\": grounded(answer, case[\"context\"])})\nprint(rows)\n"
 }

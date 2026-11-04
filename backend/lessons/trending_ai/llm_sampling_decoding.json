@@ -243,5 +243,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "import math\nimport random\n\nvocab = [\"pizza\", \"pasta\", \"salad\", \"soup\", \"cake\"]\nlogits = [3.2, 2.9, 1.0, 0.5, -1.0]\n\ngreedy = vocab[max(range(len(logits)), key=lambda i: logits[i])]\n\ndef probs(T):\n    exps = [math.exp(x / T) for x in logits]\n    return [round(e / sum(exps), 3) for e in exps]\n\ntop_k = sorted(range(len(logits)), key=lambda i: logits[i], reverse=True)[:2]\nrng = random.Random(7)                      # fixed seed: same \"random\" pick every run\nsampled = rng.choices([vocab[i] for i in top_k], weights=[probs(1.0)[i] for i in top_k])[0]\n\nprint(\"greedy:\", greedy)\nprint(\"T=0.5:\", probs(0.5), \"| T=2:\", probs(2.0))\nprint(\"top-2 candidates:\", [vocab[i] for i in top_k], \"-> sampled:\", sampled)\n"
 }

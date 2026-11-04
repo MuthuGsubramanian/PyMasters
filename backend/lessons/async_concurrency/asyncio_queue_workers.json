@@ -163,5 +163,6 @@
     "category": "async",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "import asyncio\n\nasync def worker(name, queue, done):\n    while True:\n        word = await queue.get()\n        if word is None:\n            queue.task_done()\n            return\n        await asyncio.sleep(0)                  # let the other worker run\n        done.append((name, word.upper()))\n        queue.task_done()\n\nasync def main():\n    queue, done = asyncio.Queue(), []\n    for word in [\"ant\", \"bee\", \"cat\", \"dog\", \"eel\"]:\n        queue.put_nowait(word)\n    for _ in range(2):\n        queue.put_nowait(None)                  # one stop signal per worker\n    workers = [asyncio.create_task(worker(f\"w{i}\", queue, done)) for i in range(2)]\n    await queue.join()\n    await asyncio.gather(*workers)\n    return done\n\nprint(asyncio.run(main()))\n"
 }

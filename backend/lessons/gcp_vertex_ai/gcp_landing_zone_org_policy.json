@@ -41,5 +41,6 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "org_policies = {\n    \"gcp.resourceLocations\": {\"allowed\": [\"europe-west1\", \"europe-west4\"]},\n    \"compute.vmExternalIpAccess\": {\"allowed\": []},\n    \"iam.disableServiceAccountKeyCreation\": {\"enforced\": True},\n}\nrequests = [\n    {\"what\": \"vm\", \"region\": \"europe-west1\", \"external_ip\": False},\n    {\"what\": \"vm\", \"region\": \"us-central1\", \"external_ip\": False},\n    {\"what\": \"vm\", \"region\": \"europe-west4\", \"external_ip\": True},\n    {\"what\": \"sa_key\"},\n]\n\ndef evaluate(req):\n    if req[\"what\"] == \"sa_key\" and org_policies[\"iam.disableServiceAccountKeyCreation\"][\"enforced\"]:\n        return \"DENY: service account keys disabled\"\n    if req[\"region\"] not in org_policies[\"gcp.resourceLocations\"][\"allowed\"]:\n        return \"DENY: region not allowed\"\n    if req[\"external_ip\"] and not org_policies[\"compute.vmExternalIpAccess\"][\"allowed\"]:\n        return \"DENY: external IPs blocked\"\n    return \"ALLOW\"\n\ndecisions = [evaluate(r) for r in requests]\nprint(decisions)\n"
 }

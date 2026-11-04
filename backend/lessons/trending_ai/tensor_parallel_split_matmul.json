@@ -246,5 +246,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "x = [[1, 2, 3, 4]]                          # one token, hidden size 4\nW = [[1, 0, 2, 1],\n     [0, 1, 1, 0],\n     [1, 1, 0, 2],\n     [2, 0, 1, 1]]\n\ndef matmul(a, b):\n    return [[sum(a[i][t] * b[t][j] for t in range(len(b))) for j in range(len(b[0]))]\n            for i in range(len(a))]\n\nW0, W1 = [row[:2] for row in W], [row[2:] for row in W]   # column split across 2 GPUs\ny0, y1 = matmul(x, W0), matmul(x, W1)\ny_tensor_parallel = [y0[0] + y1[0]]                        # concatenate the halves\n\ny_single_gpu = matmul(x, W)\nprint(\"GPU0:\", y0, \"GPU1:\", y1)\nprint(\"joined:\", y_tensor_parallel, \"| one GPU:\", y_single_gpu)\n"
 }

@@ -234,5 +234,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "batch = {                                   # token vectors from the transformer (dim 3)\n    \"I love Python\": [[0.2, 0.8, 0.1], [0.9, 0.1, 0.4], [0.5, 0.5, 0.9], [0.0, 0.0, 0.0]],\n    \"Hi\": [[0.7, 0.3, 0.2], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],\n}\nmasks = {\"I love Python\": [1, 1, 1, 0], \"Hi\": [1, 0, 0, 0]}   # 0 = padding\n\nsentence_vecs = {}\nfor text, tokens in batch.items():\n    mask = masks[text]\n    summed = [sum(vec[d] * m for vec, m in zip(tokens, mask)) for d in range(3)]\n    count = sum(mask)                       # divide by REAL tokens, not padded length\n    sentence_vecs[text] = [round(s / count, 3) for s in summed]\n\nnaive = [round(sum(v[d] for v in batch[\"Hi\"]) / 4, 3) for d in range(3)]\nprint(sentence_vecs)\nprint(\"without the mask 'Hi' would shrink to\", naive)\n"
 }

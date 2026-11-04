@@ -243,5 +243,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "from math import exp, log\n\ndef soften(logits, T):\n    exps = [exp(x / T) for x in logits]\n    return [e / sum(exps) for e in exps]\n\nteacher_logits = [6.0, 2.5, 0.5]          # cat, fox, car\nstudents = {\"close student\": [5.0, 2.0, 0.8], \"confused student\": [1.0, 3.0, 2.0]}\nT = 2.0\np = soften(teacher_logits, T)\n\nlosses = {}\nfor name, logits in students.items():\n    q = soften(logits, T)\n    kl = sum(pi * log(pi / qi) for pi, qi in zip(p, q) if pi > 0)\n    losses[name] = round(kl * T ** 2, 4)       # T^2 keeps gradients comparable\n\nprint(\"teacher (soft):\", [round(x, 3) for x in p])\nprint(losses)\n"
 }
