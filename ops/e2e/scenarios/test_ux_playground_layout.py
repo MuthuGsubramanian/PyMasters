@@ -70,6 +70,8 @@ def test_visualizer_opens_above_the_top_bar(logged_in_page):
     # Live audit 2026-11-04 at 748x660: the visualizer overlay (z-70) rendered inside the page container's own
     # stacking context (z-10), so the mobile top bar painted over its title and close button.
     page = _open(logged_in_page, 748, 660)
+    page.locator(".cm-content").first.click()
+    page.keyboard.type("total = 0\nfor i in range(3):\ntotal += i\n")   # Visualize stays disabled on an empty editor
     page.get_by_role("button", name="Visualize").first.click()
     dialog = page.get_by_role("dialog", name="Time-travel visualizer")
     dialog.wait_for(timeout=30000)
