@@ -212,5 +212,6 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "uth_example": "from collections import defaultdict\n\nsales = [\n    {\"region\": \"south\", \"rep\": \"Asha\", \"amount\": 120},\n    {\"region\": \"north\", \"rep\": \"Ravi\", \"amount\": 80},\n    {\"region\": \"south\", \"rep\": \"Meena\", \"amount\": 200},\n    {\"region\": \"west\", \"rep\": \"Kiran\", \"amount\": 50},\n    {\"region\": \"north\", \"rep\": \"Arun\", \"amount\": 95},\n]\n\nby_region = defaultdict(list)\nfor sale in sales:\n    by_region[sale[\"region\"]].append(sale)\n\nreport = {region: sum(s[\"amount\"] for s in rows) for region, rows in by_region.items()}\ntop = max(report, key=report.get)\nprint(dict(report))\nprint(\"top region:\", top, \"reps:\", [s[\"rep\"] for s in by_region[top]])\n"
 }

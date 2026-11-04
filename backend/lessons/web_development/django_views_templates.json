@@ -384,5 +384,6 @@
     "path_memberships": [
       "web_development"
     ]
-  }
+  },
+  "uth_example": "from string import Template\n\nclass Post:\n    def __init__(self, pk, title, is_published):\n        self.pk, self.title, self.is_published = pk, title, is_published\n\nPOSTS = [Post(1, \"Hello Django\", True), Post(2, \"Draft idea\", False), Post(3, \"Views 101\", True)]\nTEMPLATE = Template(\"<h1>$title</h1><ul>$items</ul>\")\n\ndef render(template, context):                        # the template: HOW to show it\n    items = \"\".join(f\"<li>{p.title}</li>\" for p in context[\"posts\"])\n    return template.substitute(title=context[\"title\"], items=items)\n\ndef post_list(request):                               # the view: WHAT to show\n    posts = [p for p in POSTS if p.is_published]\n    context = {\"posts\": posts, \"title\": \"Blog\"}\n    return {\"status\": 200, \"body\": render(TEMPLATE, context)}\n\nresponse = post_list({\"path\": \"/blog/\"})\nprint(response[\"status\"], response[\"body\"])\n"
 }

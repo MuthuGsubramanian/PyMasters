@@ -144,5 +144,6 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "ai_suggestions = [\n    (\"str\", \"removeprefix\"),\n    (\"str\", \"count_unique\"),            # plausible, but invented\n    (\"list\", \"sort\"),\n    (\"dict\", \"get_or_default\"),         # plausible, but invented\n]\ntypes = {\"str\": str, \"list\": list, \"dict\": dict}\n\nverdicts = {}\nfor type_name, method in ai_suggestions:\n    exists = hasattr(types[type_name], method)\n    verdicts[f\"{type_name}.{method}\"] = \"real\" if exists else \"HALLUCINATED\"\n\nwords = \"the cat and the hat\".split()\nunique_count = len(set(words))          # the boring, real way\nprint(verdicts)\nprint(\"unique words:\", unique_count)\n"
 }

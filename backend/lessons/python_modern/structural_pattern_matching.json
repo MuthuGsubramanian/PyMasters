@@ -212,5 +212,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "events = [\n    {\"type\": \"click\", \"x\": 10, \"y\": 20},\n    {\"type\": \"key\", \"key\": \"q\"},\n    {\"type\": \"scroll\", \"delta\": -3},\n    [\"resize\", 800, 600],\n]\n\ndef describe(event):\n    match event:\n        case {\"type\": \"click\", \"x\": x, \"y\": y}:\n            return f\"click at ({x}, {y})\"\n        case {\"type\": \"key\", \"key\": \"q\"}:\n            return \"quit\"\n        case [\"resize\", width, height]:\n            return f\"resize to {width}x{height}\"\n        case _:\n            return \"ignored\"\n\nlog = [describe(e) for e in events]\nprint(log)\n"
 }

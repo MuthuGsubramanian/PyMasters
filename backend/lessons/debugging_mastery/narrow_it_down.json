@@ -165,5 +165,6 @@
     "category": "debugging",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "commits = [\"a1\", \"b2\", \"c3\", \"d4\", \"e5\", \"f6\", \"g7\", \"h8\"]\nfirst_bad = \"e5\"                       # unknown to us; the test below reveals it\n\ndef tests_pass(commit):\n    return commits.index(commit) < commits.index(first_bad)\n\nlow, high = 0, len(commits) - 1         # commits[0] is good, commits[-1] is bad\nchecked = []\nwhile high - low > 1:\n    mid = (low + high) // 2\n    checked.append(commits[mid])\n    if tests_pass(commits[mid]):\n        low = mid\n    else:\n        high = mid\n\nprint(\"checked\", checked, \"-> first bad commit:\", commits[high])\nprint(f\"{len(checked)} test runs instead of {len(commits)}\")\n"
 }

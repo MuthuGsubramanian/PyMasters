@@ -152,5 +152,6 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "uth_example": "from html import escape\n\nclass Interpolation:\n    def __init__(self, value, expression):\n        self.value, self.expression = value, expression\n\nclass Template:                      # what t\"<p>{user}</p>\" builds in 3.14\n    def __init__(self, *parts):\n        self.parts = parts\n        self.strings = tuple(p for p in parts if isinstance(p, str))\n        self.interpolations = tuple(p for p in parts if isinstance(p, Interpolation))\n\ndef safe_html(template):\n    out = []\n    for part in template.parts:\n        out.append(part if isinstance(part, str) else escape(str(part.value)))\n    return \"\".join(out)\n\nuser = \"<b>Ravi</b>\"\ntmpl = Template(\"<p>Hi \", Interpolation(user, \"user\"), \"</p>\")\nprint(tmpl.strings, [i.expression for i in tmpl.interpolations])\nprint(safe_html(tmpl))\n"
 }

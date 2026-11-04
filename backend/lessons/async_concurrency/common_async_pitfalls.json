@@ -160,5 +160,6 @@
     "category": "async",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "import asyncio\n\nasync def get_score(player):\n    await asyncio.sleep(0)\n    return {\"asha\": 7, \"ravi\": 9}[player]\n\nasync def main():\n    forgot = get_score(\"asha\")           # pitfall: no await -> coroutine object\n    kind = type(forgot).__name__\n    forgot.close()                       # tidy up the never-run coroutine\n    fixed = await get_score(\"asha\")      # the fix\n    scores = await asyncio.gather(get_score(\"asha\"), get_score(\"ravi\"))\n    return kind, fixed, scores\n\nkind, fixed, scores = asyncio.run(main())\nprint(\"without await:\", kind, \"| with await:\", fixed, \"| gathered:\", scores)\n"
 }

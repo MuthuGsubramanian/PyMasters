@@ -160,5 +160,6 @@
     "category": "performance",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "from functools import lru_cache\n\ncalls = {\"plain\": 0, \"cached\": 0}\n\ndef fib(n):\n    calls[\"plain\"] += 1\n    return n if n < 2 else fib(n - 1) + fib(n - 2)\n\n@lru_cache(maxsize=None)\ndef fib_cached(n):\n    calls[\"cached\"] += 1\n    return n if n < 2 else fib_cached(n - 1) + fib_cached(n - 2)\n\nslow = fib(5)\nfast = fib_cached(5)\ntax = 0.18                                   # hoisted: computed once, not per item\nprices = [100, 250, 40]\nwith_tax = [round(p * (1 + tax), 2) for p in prices]\nprint(slow, fast, calls, with_tax)\n"
 }

@@ -166,5 +166,6 @@
     "category": "python_internals",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "class GIL:\n    def __init__(self):\n        self.holder = None\n        self.timeline = []\n\ndef worker(name, steps):\n    for i in range(steps):\n        yield f\"{name}:{i}\"          # one slice of Python bytecode\n\ngil = GIL()\nthreads = {\"A\": worker(\"A\", 3), \"B\": worker(\"B\", 3)}\nwhile threads:\n    for name in list(threads):\n        gil.holder = name            # only one thread holds the lock\n        try:\n            gil.timeline.append(next(threads[name]))\n        except StopIteration:\n            del threads[name]\n    gil.holder = None\n\nprint(\"turns, never parallel:\", gil.timeline)\n"
 }

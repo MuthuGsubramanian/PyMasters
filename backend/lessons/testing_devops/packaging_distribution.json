@@ -446,5 +446,6 @@
     "path_memberships": [
       "testing_devops"
     ]
-  }
+  },
+  "uth_example": "import tomllib\n\npyproject = \"\"\"\n[build-system]\nrequires = [\"setuptools>=68.0\", \"wheel\"]\nbuild-backend = \"setuptools.build_meta\"\n\n[project]\nname = \"pymasters-utils\"\nversion = \"1.0.0\"\nrequires-python = \">=3.10\"\ndependencies = [\"click>=8.0\"]\n\"\"\"\n\nmeta = tomllib.loads(pyproject)\nproject = meta[\"project\"]\nmajor, minor, patch = (int(p) for p in project[\"version\"].split(\".\"))\nnext_version = f\"{major}.{minor + 1}.0\"                     # a new feature release\nwheel = f\"{project['name'].replace('-', '_')}-{project['version']}-py3-none-any.whl\"\nprint(\"backend:\", meta[\"build-system\"][\"build-backend\"])\nprint(\"wheel:\", wheel, \"| next release:\", next_version)\n"
 }

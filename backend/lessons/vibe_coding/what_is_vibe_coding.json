@@ -154,5 +154,6 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "def fake_ai(prompt):                       # canned \"generated\" code per request\n    return {\"slugify a title\": lambda s: s.lower().replace(\" \", \"-\"),\n            \"make it strip punctuation\": lambda s: \"\".join(\n                c for c in s.lower().replace(\" \", \"-\") if c.isalnum() or c == \"-\")}[prompt]\n\nchecks = [(\"Hello World\", \"hello-world\"), (\"Hi, there!\", \"hi-there\")]\nprompts = [\"slugify a title\", \"make it strip punctuation\"]\n\nhistory = []\nfor prompt in prompts:                     # describe -> generate -> RUN -> judge -> refine\n    candidate = fake_ai(prompt)\n    failures = [inp for inp, want in checks if candidate(inp) != want]\n    history.append({\"prompt\": prompt, \"failures\": failures})\n    if not failures:\n        break\n\nfor step in history:\n    print(step)\nprint(\"accepted after\", len(history), \"rounds\")\n"
 }

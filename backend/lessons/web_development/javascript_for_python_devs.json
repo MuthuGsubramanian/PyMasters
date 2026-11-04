@@ -395,5 +395,6 @@
     "path_memberships": [
       "web_development"
     ]
-  }
+  },
+  "uth_example": "from functools import reduce\n\nnumbers = [1, 2, 3, 4, 5]\ndoubled = list(map(lambda n: n * 2, numbers))         # numbers.map(n => n * 2)\nevens = [n for n in numbers if n % 2 == 0]            # numbers.filter(n => n % 2 === 0)\ntotal = reduce(lambda acc, n: acc + n, numbers, 0)    # numbers.reduce((a, n) => a + n, 0)\n\nstudent = {\"name\": \"Alice\", \"grades\": [90, 85, 95]}   # const student = {name: 'Alice', ...}\nname = student[\"name\"]                                 # student.name\ngrades_copy = [*student[\"grades\"], 100]                # [...student.grades, 100]\n\nempties = {\"[]\": [], \"{}\": {}}                        # falsy in Python, TRUTHY in JS\nprint(\"Doubled:\", doubled, \"Evens:\", evens, \"Sum:\", total)\nprint(name, grades_copy, {k: bool(v) for k, v in empties.items()})\n"
 }

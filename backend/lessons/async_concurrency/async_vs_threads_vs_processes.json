@@ -167,5 +167,6 @@
     "category": "async",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "workloads = [\n    {\"name\": \"10k HTTP requests\", \"kind\": \"io\", \"async_lib\": True},\n    {\"name\": \"resize 500 images\", \"kind\": \"cpu\", \"async_lib\": False},\n    {\"name\": \"legacy DB driver\", \"kind\": \"io\", \"async_lib\": False},\n]\n\ndef choose_model(w):\n    if w[\"kind\"] == \"cpu\":\n        return \"processes\"       # escape the GIL, use every core\n    if w[\"async_lib\"]:\n        return \"asyncio\"         # one thread, thousands of waits\n    return \"threads\"             # blocking library, I/O-bound\n\nchoices = {}\nfor w in workloads:\n    choices[w[\"name\"]] = choose_model(w)\n\nfor name, model in choices.items():\n    print(f\"{name:20} -> {model}\")\n"
 }

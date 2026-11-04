@@ -167,5 +167,6 @@
     "category": "python_internals",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "class NonNegative:\n    def __set_name__(self, owner, name):\n        self.name = \"_\" + name\n    def __get__(self, obj, objtype=None):\n        return getattr(obj, self.name)\n    def __set__(self, obj, value):\n        if value < 0:\n            raise ValueError(f\"{self.name[1:]} must be >= 0\")\n        setattr(obj, self.name, value)\n\nclass Item:\n    stock = NonNegative()            # the descriptor lives on the class\n    def __init__(self, stock):\n        self.stock = stock           # goes through __set__\n\npen = Item(10)\npen.stock = 4\ntry:\n    pen.stock = -1\nexcept ValueError as err:\n    problem = str(err)\nprint(pen.stock, vars(pen), problem)\n"
 }

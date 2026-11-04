@@ -166,5 +166,6 @@
     "category": "performance",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "import cProfile\nimport pstats\nimport io\n\ndef slow_lookup(names, wanted):\n    return [n for n in wanted if n in names]      # list membership\n\ndef build_report():\n    names = [f\"user{i}\" for i in range(30)]\n    wanted = [f\"user{i}\" for i in range(0, 60, 3)]\n    return len(slow_lookup(names, wanted))\n\nprofiler = cProfile.Profile()\nfound = profiler.runcall(build_report)\nout = io.StringIO()\nstats = pstats.Stats(profiler, stream=out).sort_stats(\"cumulative\")\nstats.print_stats(3)\nhot = [line for line in out.getvalue().splitlines() if \"slow_lookup\" in line]\nprint(\"found\", found, \"| hot spot:\", hot[0].split()[-1] if hot else \"?\")\n"
 }

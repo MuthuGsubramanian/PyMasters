@@ -163,5 +163,6 @@
     "category": "async",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "import asyncio\nimport time\n\nasync def blocking_job(state):\n    time.sleep(0.05)                 # blocks the ONE event-loop thread\n    state[\"done\"] = True\n\nasync def offloaded_job(state):\n    await asyncio.sleep(0.05)        # stands in for: await asyncio.to_thread(slow_call)\n    state[\"done\"] = True\n\nasync def heartbeat(state):\n    while not state[\"done\"]:\n        state[\"ticks\"] += 1\n        await asyncio.sleep(0.01)\n\nasync def run(job):\n    state = {\"done\": False, \"ticks\": 0}\n    await asyncio.gather(heartbeat(state), job(state))\n    return state[\"ticks\"]\n\nfrozen = asyncio.run(run(blocking_job))\nsmooth = asyncio.run(run(offloaded_job))\nprint(\"heartbeats while blocking:\", frozen, \"| while offloaded:\", smooth)\n"
 }

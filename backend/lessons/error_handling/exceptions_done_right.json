@@ -169,5 +169,6 @@
     "estimated_minutes": 18,
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "uth_example": "def parse_age(text, log):\n    try:\n        age = int(text)                  # the risky part\n    except ValueError:\n        log.append(f\"bad input {text!r}\")\n        age = None                       # expected failure, handled\n    else:\n        log.append(f\"parsed {age}\")      # only when no exception\n    finally:\n        log.append(\"done\")               # always runs\n    return age\n\nlog = []\nages = [parse_age(t, log) for t in [\"42\", \"forty\"]]\nprint(ages)\nprint(log)\n"
 }

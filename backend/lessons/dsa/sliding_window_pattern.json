@@ -213,5 +213,6 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "uth_example": "temps = [31, 33, 35, 30, 28, 34, 36, 37]\nk = 3\n\nwindow = sum(temps[:k])\nmoving_avg = [round(window / k, 1)]\nfor i in range(k, len(temps)):\n    window += temps[i] - temps[i - k]     # add the new day, drop the oldest\n    moving_avg.append(round(window / k, 1))\n\nhottest = max(range(len(moving_avg)), key=lambda i: moving_avg[i])\nprint(\"3-day averages:\", moving_avg)\nprint(\"hottest stretch:\", temps[hottest:hottest + k])\n"
 }

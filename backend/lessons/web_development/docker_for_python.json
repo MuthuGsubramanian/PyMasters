@@ -401,5 +401,6 @@
     "path_memberships": [
       "web_development"
     ]
-  }
+  },
+  "uth_example": "import hashlib\n\ndef digest(text):\n    return hashlib.sha256(text.encode()).hexdigest()[:6]\n\ndockerfile = [\"FROM python:3.12-slim\", \"WORKDIR /app\", \"COPY requirements.txt .\",\n              \"RUN pip install -r requirements.txt\", \"COPY . .\", \"CMD uvicorn main:app\"]\n\ndef build(files, cache):\n    parent, report = \"\", []\n    for step in dockerfile:\n        inputs = \"\"\n        if step.startswith(\"COPY requirements\"):\n            inputs = files[\"requirements.txt\"]\n        elif step == \"COPY . .\":\n            inputs = files[\"src\"]\n        layer = digest(parent + step + inputs)      # depends on everything above it\n        report.append(\"CACHED\" if layer in cache else \"built\")\n        cache.add(layer)\n        parent = layer\n    return report\n\ncache = set()\nfirst = build({\"requirements.txt\": \"fastapi==0.115\", \"src\": \"v1\"}, cache)\nsecond = build({\"requirements.txt\": \"fastapi==0.115\", \"src\": \"v2\"}, cache)\nprint(\"first build: \", first)\nprint(\"code change: \", second)          # pip install layer stays cached\n"
 }
