@@ -33,5 +33,86 @@
     {"q": {"en": "What is the core advantage of one internal control catalog mapped to many frameworks?"}, "options": {"en": ["Auditors charge less per framework", "Overlapping requirements (often 60-70%) mean evidence is collected once per control and reused across every framework", "It removes the need for a risk assessment", "It makes SOC 2 and ISO 27001 legally identical"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["cloud_compliance", "ai_governance"], "concepts_required": ["cloud_fundamentals", "landing_zones"], "difficulty": "advanced", "engagement_type": "conceptual", "estimated_minutes": 23, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Compliance works as a mapping: one internal catalogue of controls is mapped to the requirements of SOC 2, ISO 27001 and GDPR, each control is implemented once (often as policy-as-code), and its evidence is collected automatically and reused for every framework that needs it.",
+    "steps": [
+      {
+        "title": "Frameworks ask different questions",
+        "body": "SOC 2 reports whether controls were designed well (Type I) and worked over a period (Type II). ISO 27001 certifies a management system for information security. GDPR is law about personal data, with rights and duties."
+      },
+      {
+        "title": "One control, many requirements",
+        "body": "A single control such as 'production access requires MFA and is reviewed quarterly' satisfies requirements in several frameworks. The catalogue stores that mapping once.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "control": "AC-07 MFA for production access",
+              "SOC 2": "logical access criteria",
+              "ISO 27001": "access control requirements",
+              "GDPR": "security of processing (Art. 32)",
+              "evidence": "IdP policy export, quarterly review record"
+            },
+            "caption": "Control catalogue entry"
+          }
+        }
+      },
+      {
+        "title": "Controls become code",
+        "body": "Where possible, controls are enforced by policy-as-code: a cloud policy that denies unencrypted storage is both the control and, through its compliance report, the evidence that it worked every day.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Control: encrypt storage",
+                "type": "input"
+              },
+              {
+                "label": "Policy-as-code (deny unencrypted)",
+                "type": "process"
+              },
+              {
+                "label": "Daily compliance scan",
+                "type": "process"
+              },
+              {
+                "label": "Evidence stored with timestamp",
+                "type": "process"
+              },
+              {
+                "label": "Reused for SOC 2 + ISO audits",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Continuous evidence"
+          }
+        }
+      },
+      {
+        "title": "Drift is a finding",
+        "body": "When a scan finds a non-compliant resource, a ticket is raised and tracked to closure. Auditors look for exactly that loop: detection, owner, fix, proof.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "control  resource              status",
+              "ENC-02   bucket logs-archive   NON-COMPLIANT -> ticket SEC-118",
+              "AC-07    group prod-admins     OK",
+              "LOG-01   subscription data-dev OK"
+            ],
+            "caption": "Weekly drift report (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Scope decides cost",
+        "body": "What is in scope (systems, data, teams) determines the work. A small, well-defined scope with real controls passes; claiming everything is in scope without evidence fails."
+      }
+    ],
+    "takeaway": "Build controls once and map them many times. If evidence is produced by the system every day, an audit becomes a report, not a project."
+  }
 }

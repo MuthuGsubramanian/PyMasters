@@ -33,5 +33,99 @@
     {"q": {"en": "An enterprise has 40 guardrails on its anchor cloud and 4 on its secondary cloud. What is the core problem?"}, "options": {"en": ["Nothing — small footprints need fewer controls", "Auditors only review the anchor cloud", "Attackers and auditors both find the weak estate; controls must be capability-equivalent across clouds", "SCPs cannot exceed 4 per account"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["landing_zones", "infrastructure_as_code", "multi_cloud_strategy"], "concepts_required": ["cloud_fundamentals", "multi_cloud_strategy"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "All three landing zones build the same machine in different dialects: a hierarchy of containers (management groups, OUs, folders), guardrails attached high in the tree and evaluated by each cloud's own inheritance rules, and vending that places new accounts beneath them.",
+    "steps": [
+      {
+        "title": "The containers line up",
+        "body": "Azure subscription, AWS account and Google Cloud project are the unit of isolation and billing. Above them sit management groups, OUs and folders. A cross-cloud design starts with this mapping.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "unit of isolation": "subscription / account / project",
+              "grouping": "management group / OU / folder",
+              "guardrail": "Azure Policy / SCP / Org Policy",
+              "vending": "subscription vending / Account Factory / project factory"
+            },
+            "caption": "Equivalent building blocks"
+          }
+        }
+      },
+      {
+        "title": "Guardrails inherit differently",
+        "body": "SCPs intersect: every level must allow an action. Azure Policy assignments add up, and any Deny effect at any level blocks. GCP organisation policy is computed: the nearest policy wins unless it merges with its parent.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "AWS SCP",
+              "code": "allow must exist at every level\nany deny wins"
+            },
+            "right": {
+              "label": "GCP Org Policy",
+              "code": "nearest setting wins\nlist policies may merge with parent"
+            },
+            "description": "Same intent, different evaluation"
+          }
+        }
+      },
+      {
+        "title": "Logging is centralised in each",
+        "body": "Each design sends audit logs to a separate, locked-down place: Log Archive account, central Log Analytics workspace, or an aggregated log sink to a dedicated project. Workload owners can write but not delete."
+      },
+      {
+        "title": "Vending is where they converge",
+        "body": "In all three, automation creates the container, places it in the right branch of the tree, connects its network to the hub and assigns baseline access. The new workload is compliant before anyone logs in.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Request: team, env, data class",
+                "type": "input"
+              },
+              {
+                "label": "Pick cloud by workload rules",
+                "type": "process"
+              },
+              {
+                "label": "Create account / subscription / project",
+                "type": "process"
+              },
+              {
+                "label": "Place in tree, inherit guardrails",
+                "type": "process"
+              },
+              {
+                "label": "Connect network + baseline access",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Cross-cloud vending flow"
+          }
+        }
+      },
+      {
+        "title": "Test the guardrails, not the diagram",
+        "body": "The proof that the three are equivalent is a test: attempt the same forbidden action (public bucket, disallowed region) in each cloud and confirm all three refuse it.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "Azure:  RequestDisallowedByPolicy",
+              "AWS:    AccessDenied (explicit deny in SCP)",
+              "GCP:    constraint gcp.resourceLocations violated",
+              "-> all three guardrails hold"
+            ],
+            "caption": "Equivalence test: create storage in a forbidden region"
+          }
+        }
+      }
+    ],
+    "takeaway": "Learn one landing zone deeply, then map the others onto it. Prove equivalence by trying the same forbidden actions everywhere."
+  }
 }

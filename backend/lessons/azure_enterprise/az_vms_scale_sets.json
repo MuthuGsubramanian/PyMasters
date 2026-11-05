@@ -34,5 +34,71 @@
   ],
   "tags": {"concepts_taught": ["azure_compute", "cloud_cost_management"], "concepts_required": ["cloud_fundamentals", "azure_resource_management"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "scale_set = {\"sku\": \"Standard_D4s_v5\", \"zones\": [1, 2, 3], \"priority\": \"Spot\",\n             \"min\": 2, \"max\": 6, \"instances\": []}\n\ndef scale_to(count):\n    count = max(scale_set[\"min\"], min(scale_set[\"max\"], count))\n    scale_set[\"instances\"] = [\n        {\"name\": f\"vm-{i}\", \"zone\": scale_set[\"zones\"][i % len(scale_set[\"zones\"])]}\n        for i in range(count)\n    ]\n\ncpu_by_hour = [35, 82, 91, 40]\nfor cpu in cpu_by_hour:                    # autoscale rule\n    current = len(scale_set[\"instances\"])\n    scale_to(current + 2 if cpu > 75 else current - 1)\n\nzones_used = sorted({vm[\"zone\"] for vm in scale_set[\"instances\"]})\nprint(len(scale_set[\"instances\"]), \"instances across zones\", zones_used)\n"
+  "uth_example": "scale_set = {\"sku\": \"Standard_D4s_v5\", \"zones\": [1, 2, 3], \"priority\": \"Spot\",\n             \"min\": 2, \"max\": 6, \"instances\": []}\n\ndef scale_to(count):\n    count = max(scale_set[\"min\"], min(scale_set[\"max\"], count))\n    scale_set[\"instances\"] = [\n        {\"name\": f\"vm-{i}\", \"zone\": scale_set[\"zones\"][i % len(scale_set[\"zones\"])]}\n        for i in range(count)\n    ]\n\ncpu_by_hour = [35, 82, 91, 40]\nfor cpu in cpu_by_hour:                    # autoscale rule\n    current = len(scale_set[\"instances\"])\n    scale_to(current + 2 if cpu > 75 else current - 1)\n\nzones_used = sorted({vm[\"zone\"] for vm in scale_set[\"instances\"]})\nprint(len(scale_set[\"instances\"]), \"instances across zones\", zones_used)\n",
+  "under_the_hood": {
+    "summary": "A VM is placed on a host in a chosen zone; a scale set keeps a group of identical VMs, and the autoscale engine compares metrics with your rules and adds or removes instances, while Spot VMs can be evicted with a short Scheduled Events notice.",
+    "steps": [
+      {
+        "title": "Size names are a code",
+        "body": "In Standard_D4s_v5, D is the general-purpose family, 4 is the vCPU count, s means premium SSD capable and v5 is the generation. An 'a' means AMD and 'p' means Arm, for example D4ps_v5.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "D": "general purpose family",
+              "4": "vCPUs",
+              "a": "AMD processor",
+              "s": "premium storage capable",
+              "v5": "generation"
+            },
+            "caption": "Decoding Standard_D4as_v5"
+          }
+        }
+      },
+      {
+        "title": "Availability comes from placement",
+        "body": "An availability set spreads VMs across fault and update domains inside one datacenter. Availability zones place VMs in physically separate datacenters in the region. Two or more VMs across zones carry the strongest VM SLA."
+      },
+      {
+        "title": "A scale set stamps out identical VMs",
+        "body": "A VM Scale Set holds one model: image, size, network config, extensions. Increasing capacity creates new VMs from that model, spread across the zones you chose. Flexible orchestration also lets you mix VM sizes and Spot with regular VMs."
+      },
+      {
+        "title": "Autoscale rules run on a loop",
+        "body": "Azure Monitor autoscale checks metrics on a schedule. A rule like 'average CPU > 70% over 10 minutes -> add 2' fires, then the cooldown period blocks further actions so new VMs can start taking load before the next decision.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "10:00  avg CPU 78% > 70% for 10 min  -> +2 (4 -> 6)",
+              "10:02  cooldown, no action",
+              "10:20  avg CPU 45%  -> no rule matches",
+              "11:00  avg CPU 22% < 25% for 30 min  -> -1 (6 -> 5)"
+            ],
+            "caption": "Autoscale over time (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Spot VMs can be evicted",
+        "body": "Spot VMs use spare capacity at a discount. When Azure needs it back, or the price passes your max, the VM receives a Preempt event through Scheduled Events with a short notice, then is stopped or deleted according to your eviction policy.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Regular VM",
+              "code": "capacity guaranteed while running\nfull price or reservation"
+            },
+            "right": {
+              "label": "Spot VM",
+              "code": "evicted when capacity is needed\nshort notice via Scheduled Events\ndeep discount"
+            },
+            "description": "Regular vs Spot"
+          }
+        }
+      }
+    ],
+    "takeaway": "Treat VMs as cattle: describe one model, let the scale set and autoscale rules keep the count right, and design workloads on Spot to survive eviction at any moment."
+  }
 }

@@ -43,5 +43,97 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "import math\n\nservice = {\"concurrency\": 80, \"min_instances\": 0, \"max_instances\": 10}\ntraffic = [0, 30, 250, 900, 40, 0]              # concurrent requests each minute\n\nrunning, cold_starts, timeline = 0, 0, []\nfor load in traffic:\n    needed = math.ceil(load / service[\"concurrency\"])\n    target = max(service[\"min_instances\"], min(service[\"max_instances\"], needed))\n    if target > running:\n        cold_starts += target - running          # new containers must boot\n    running = target\n    timeline.append(running)\n\nprint(\"instances per minute:\", timeline)\nprint(\"cold starts:\", cold_starts, \"| scales to zero:\", timeline[-1] == 0)\n"
+  "uth_example": "import math\n\nservice = {\"concurrency\": 80, \"min_instances\": 0, \"max_instances\": 10}\ntraffic = [0, 30, 250, 900, 40, 0]              # concurrent requests each minute\n\nrunning, cold_starts, timeline = 0, 0, []\nfor load in traffic:\n    needed = math.ceil(load / service[\"concurrency\"])\n    target = max(service[\"min_instances\"], min(service[\"max_instances\"], needed))\n    if target > running:\n        cold_starts += target - running          # new containers must boot\n    running = target\n    timeline.append(running)\n\nprint(\"instances per minute:\", timeline)\nprint(\"cold starts:\", cold_starts, \"| scales to zero:\", timeline[-1] == 0)\n",
+  "under_the_hood": {
+    "summary": "Cloud Run sends each request to an instance of an immutable revision; one instance can serve many requests at once up to its concurrency setting, and the autoscaler adds or removes instances based on request concurrency and CPU use, starting new ones with a cold start.",
+    "steps": [
+      {
+        "title": "Deploy creates a revision",
+        "body": "Each deploy of image gcr.io/app:v7 with its settings creates an immutable revision, for example api-00007-xyz. The service's traffic config says which revisions receive what percentage of requests.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "api-00006-abc": "90%",
+              "api-00007-xyz": "10% (canary)",
+              "tag 'beta'": "api-00007-xyz via its own URL"
+            },
+            "caption": "Service traffic split"
+          }
+        }
+      },
+      {
+        "title": "Requests are routed to instances",
+        "body": "Cloud Run's front end terminates TLS, checks invoker IAM if the service is private, picks a revision by the traffic split and forwards the request to an instance of that revision.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "HTTPS request",
+                "type": "input"
+              },
+              {
+                "label": "Ingress + IAM invoker check",
+                "type": "process"
+              },
+              {
+                "label": "Pick revision by traffic %",
+                "type": "process"
+              },
+              {
+                "label": "Pick an instance with free concurrency",
+                "type": "process"
+              },
+              {
+                "label": "Container handles request",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "One request"
+          }
+        }
+      },
+      {
+        "title": "Concurrency: many requests per instance",
+        "body": "Unlike classic Lambda, one Cloud Run instance handles many requests at once, up to the concurrency setting (80 by default). 400 requests in flight at concurrency 80 need at least 5 instances.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "in-flight requests: 400",
+              "max concurrency per instance: 80",
+              "minimum instances = 400 / 80 = 5 (autoscaler keeps headroom, so often more)"
+            ],
+            "caption": "Instances needed"
+          }
+        }
+      },
+      {
+        "title": "Cold start vs warm instance",
+        "body": "When no instance has room, the autoscaler starts one: it pulls the image, starts the container and waits for it to listen on the port, and that first request waits. min-instances keeps some instances warm to avoid this.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Cold",
+              "code": "start instance, start container\nrun app startup, then serve"
+            },
+            "right": {
+              "label": "Warm",
+              "code": "instance already listening\nrequest served immediately"
+            },
+            "description": "Cold vs warm"
+          }
+        }
+      },
+      {
+        "title": "Scale to zero and CPU allocation",
+        "body": "With request-based billing, CPU is only allocated while requests are being processed, and idle instances are shut down, eventually to zero. Work after the response is sent may be throttled, so background tasks need instance-based billing or Cloud Run jobs."
+      }
+    ],
+    "takeaway": "Cloud Run scales on concurrency, not just request rate. Tune concurrency to what your code safely handles in parallel, keep startup fast, and keep state outside the instance."
+  }
 }

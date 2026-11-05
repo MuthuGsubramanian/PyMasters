@@ -33,5 +33,71 @@
     {"q": {"en": "Why do enterprises often prefer Compute Savings Plans over Standard Reserved Instances?"}, "options": {"en": ["Savings Plans are always a deeper discount than any RI", "Savings Plans apply flexibly across instance families, regions, Fargate and Lambda", "RIs cannot be purchased for Linux", "Savings Plans include free data transfer"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["aws_compute", "cloud_cost_management"], "concepts_required": ["cloud_fundamentals", "aws_identity"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 18, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "An Auto Scaling group keeps a desired number of instances from a launch template between min and max; health checks replace bad ones and target tracking changes desired capacity so a metric such as average CPU stays near your target.",
+    "steps": [
+      {
+        "title": "The group holds three numbers",
+        "body": "An ASG has min, desired and max. It constantly compares running healthy instances with desired. If there are fewer, it launches from the launch template (AMI, instance type, security groups, user data) spread across the subnets you gave it.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "min": "2",
+              "desired": "4",
+              "max": "12",
+              "in_service": "4",
+              "subnets": "3 AZs"
+            },
+            "caption": "Auto Scaling group state"
+          }
+        }
+      },
+      {
+        "title": "Health checks make it self-healing",
+        "body": "EC2 status checks, and optionally load balancer health checks, mark instances unhealthy. The ASG terminates them and launches replacements, so a failed instance becomes a new instance rather than a ticket."
+      },
+      {
+        "title": "Target tracking does proportional math",
+        "body": "With a target of 50% average CPU, if 4 instances run at 80%, the group needs about 4 x 80 / 50 = 6.4, rounded up to 7 instances. CloudWatch alarms managed by the policy trigger the change.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "target CPU: 50%",
+              "current: 4 instances at 80%",
+              "needed = 4 * 80 / 50 = 6.4 -> 7",
+              "desired: 4 -> 7  (scale out)"
+            ],
+            "caption": "Target tracking calculation"
+          }
+        }
+      },
+      {
+        "title": "Out fast, in slowly",
+        "body": "Scale-out happens as soon as the metric breaches. Scale-in waits for a longer period of low load and respects instance warm-up, so new instances that have not started serving yet do not distort the average.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Scale out",
+              "code": "breach -> add capacity quickly\nprotects users"
+            },
+            "right": {
+              "label": "Scale in",
+              "code": "sustained low load -> remove slowly\navoids flapping"
+            },
+            "description": "Asymmetric scaling"
+          }
+        }
+      },
+      {
+        "title": "Spot interruptions are just another removal",
+        "body": "In a mixed-instances group, Spot capacity can be reclaimed with a two-minute notice. The ASG treats the lost instance like any other gap and launches a replacement, possibly from another instance type you allowed."
+      }
+    ],
+    "takeaway": "An ASG is a control loop: measure, compare with a target, adjust desired. Pick a metric that really rises with load, or the loop will scale on noise."
+  }
 }

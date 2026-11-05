@@ -34,5 +34,88 @@
   ],
   "tags": {"concepts_taught": ["ai_foundry_platform", "azure_identity"], "concepts_required": ["functions", "dictionaries", "llm_concepts"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_ai", "path_memberships": []},
   "generated": false,
-  "uth_example": "class FakeCredential:                        # stands in for DefaultAzureCredential\n    def get_token(self):\n        return \"token-for-demo\"\n\nclass FakeProjectClient:                     # stands in for AIProjectClient\n    def __init__(self, endpoint, credential):\n        self.endpoint = endpoint\n        self.token = credential.get_token()\n        self.connections = [\n            {\"name\": \"aoai-main\", \"type\": \"AzureOpenAI\", \"is_default\": True},\n            {\"name\": \"search-docs\", \"type\": \"AzureAISearch\", \"is_default\": True},\n        ]\n    def get_connection(self, conn_type):\n        return next(c for c in self.connections if c[\"type\"] == conn_type and c[\"is_default\"])\n    def complete(self, model, text):\n        return f\"{model} says hello back to {text!r}\"\n\nproject = FakeProjectClient(\"https://example.invalid/project\", FakeCredential())\nopenai_conn = project.get_connection(\"AzureOpenAI\")\nreply = project.complete(\"chat-prod\", \"hello\")\nprint(openai_conn[\"name\"], \"|\", reply)\n"
+  "uth_example": "class FakeCredential:                        # stands in for DefaultAzureCredential\n    def get_token(self):\n        return \"token-for-demo\"\n\nclass FakeProjectClient:                     # stands in for AIProjectClient\n    def __init__(self, endpoint, credential):\n        self.endpoint = endpoint\n        self.token = credential.get_token()\n        self.connections = [\n            {\"name\": \"aoai-main\", \"type\": \"AzureOpenAI\", \"is_default\": True},\n            {\"name\": \"search-docs\", \"type\": \"AzureAISearch\", \"is_default\": True},\n        ]\n    def get_connection(self, conn_type):\n        return next(c for c in self.connections if c[\"type\"] == conn_type and c[\"is_default\"])\n    def complete(self, model, text):\n        return f\"{model} says hello back to {text!r}\"\n\nproject = FakeProjectClient(\"https://example.invalid/project\", FakeCredential())\nopenai_conn = project.get_connection(\"AzureOpenAI\")\nreply = project.complete(\"chat-prod\", \"hello\")\nprint(openai_conn[\"name\"], \"|\", reply)\n",
+  "under_the_hood": {
+    "summary": "AIProjectClient takes a project endpoint and a credential; DefaultAzureCredential walks a chain of identity sources until one returns an Entra token, and the client attaches that token to every call and hands out sub-clients for inference, agents and connections.",
+    "steps": [
+      {
+        "title": "The credential chain",
+        "body": "DefaultAzureCredential tries sources in order: environment variables, workload identity, managed identity, then developer logins such as the Azure CLI. The first one that returns a token wins, which is why the same code works on a laptop and in App Service.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Environment variables?",
+                "type": "input"
+              },
+              {
+                "label": "Workload identity?",
+                "type": "process"
+              },
+              {
+                "label": "Managed identity?",
+                "type": "process"
+              },
+              {
+                "label": "Azure CLI / developer login?",
+                "type": "process"
+              },
+              {
+                "label": "First token found is used",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "DefaultAzureCredential, simplified order"
+          }
+        }
+      },
+      {
+        "title": "Tokens are scoped and cached",
+        "body": "The credential asks Entra ID for a token for the service's scope. Tokens are short-lived; the SDK caches them and refreshes before expiry, so most calls do not hit Entra at all."
+      },
+      {
+        "title": "One client, many sub-clients",
+        "body": "AIProjectClient(endpoint, credential) is the root. From it you get project.agents, project.connections and inference clients such as get_azure_openai_client(). Each sub-client reuses the same credential and endpoint.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "label": "AIProjectClient",
+                "children": [
+                  "inference: chat, embeddings",
+                  "agents: agents, threads, runs",
+                  "connections: resolve by name",
+                  "datasets / evaluations"
+                ]
+              }
+            ],
+            "description": "Sub-clients from one project handle"
+          }
+        }
+      },
+      {
+        "title": "Connections bind code to environment",
+        "body": "Code asks for a connection by name, for example 'search-main'. In dev that name points at a dev index; in prod, at the prod index. The code names the dependency; the project binds it."
+      },
+      {
+        "title": "Failures carry a status and a request ID",
+        "body": "401 means no valid token; 403 means a valid token without the needed role on the project; 429 means rate limiting, with a Retry-After header. Logging the request ID lets support trace one call.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "401 Unauthorized  -> credential chain found no usable identity",
+              "403 Forbidden     -> identity lacks a role such as Azure AI Developer",
+              "429 Too Many Requests, Retry-After: 4 -> back off, then retry"
+            ],
+            "caption": "Reading SDK errors"
+          }
+        }
+      }
+    ],
+    "takeaway": "Identity first: if DefaultAzureCredential and RBAC are right, the rest of the SDK is plumbing. Reuse clients, log request IDs, and treat 429 as normal."
+  }
 }

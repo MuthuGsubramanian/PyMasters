@@ -33,5 +33,85 @@
     {"q": {"en": "Which lifecycle rule reclaims storage that never appears in any object listing?"}, "options": {"en": ["NoncurrentVersionExpiration", "Transition to Deep Archive", "Expiration of current versions", "AbortIncompleteMultipartUpload"]}, "correct": 3}
   ],
   "tags": {"concepts_taught": ["aws_storage", "cloud_cost_management"], "concepts_required": ["cloud_fundamentals"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 18, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "S3 stores each object redundantly across devices (and, for most classes, across several AZs); storage classes trade a lower storage rate for retrieval fees, minimum durations or retrieval delays, and lifecycle rules move objects between classes in the background.",
+    "steps": [
+      {
+        "title": "A PUT is stored redundantly",
+        "body": "When you PUT an object to S3 Standard, S3 stores it redundantly across devices in at least three AZs before returning success. That design target is the eleven nines (99.999999999%) of durability. One Zone classes keep data in a single AZ.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "PUT s3://bucket/key",
+                "type": "input"
+              },
+              {
+                "label": "Data written redundantly",
+                "type": "process"
+              },
+              {
+                "label": "Spread across AZs (most classes)",
+                "type": "process"
+              },
+              {
+                "label": "200 OK returned",
+                "type": "process"
+              },
+              {
+                "label": "Read-after-write consistent",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "What happens on PUT"
+          }
+        }
+      },
+      {
+        "title": "Classes trade storage rate for access cost",
+        "body": "Standard has no retrieval fee. Standard-IA and One Zone-IA cost less to store but charge per GB retrieved and have a 30-day minimum. Glacier classes are cheaper still with longer minimums, and Deep Archive restores take hours.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "Standard": "none",
+              "Standard-IA": "30 days",
+              "Glacier Instant Retrieval": "90 days",
+              "Glacier Flexible Retrieval": "90 days",
+              "Glacier Deep Archive": "180 days"
+            },
+            "caption": "Minimum storage duration by class"
+          }
+        }
+      },
+      {
+        "title": "Intelligent-Tiering watches access",
+        "body": "Intelligent-Tiering moves each object between access tiers based on its own access pattern: not accessed for 30 days moves to a cheaper tier, accessed again moves back up. There is a small monitoring charge per object and no retrieval fees."
+      },
+      {
+        "title": "Lifecycle rules run in the background",
+        "body": "A lifecycle rule such as 'transition logs/ to Glacier after 90 days, expire after 365' is evaluated asynchronously by S3, not at the exact second an object turns 90 days old. Rules can also abort incomplete multipart uploads.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "day 0    PUT logs/app.gz  -> Standard",
+              "day 90   transition       -> Glacier Flexible Retrieval",
+              "day 365  expiration       -> deleted"
+            ],
+            "caption": "A log object's life under one rule"
+          }
+        }
+      },
+      {
+        "title": "Versioning changes what delete means",
+        "body": "With versioning on, a DELETE adds a delete marker on top; the older versions are still stored and billed. Lifecycle rules for noncurrent versions are what actually clean them up."
+      }
+    ],
+    "takeaway": "Choose a class from how often data is read, not how important it is. Every class is highly durable; the trade-off is access cost and delay."
+  }
 }

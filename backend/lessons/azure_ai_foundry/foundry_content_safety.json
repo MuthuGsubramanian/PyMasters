@@ -34,5 +34,88 @@
   ],
   "tags": {"concepts_taught": ["ai_content_safety", "ai_governance"], "concepts_required": ["ai_safety", "llm_concepts", "functions"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_ai", "path_memberships": []},
   "generated": false,
-  "uth_example": "SEVERITY_WORDS = {\"attack\": 4, \"weapon\": 6, \"hate\": 4}\nfilter_config = {\"threshold\": 4}             # block medium and above\n\ndef fake_model(prompt):\n    return {\"text\": \"Here is a summary.\", \"finish_reason\": \"stop\"}\n\ndef guarded_chat(prompt):\n    severity = max([SEVERITY_WORDS.get(w, 0) for w in prompt.lower().split()] + [0])\n    if severity >= filter_config[\"threshold\"]:\n        return {\"finish_reason\": \"content_filter\", \"severity\": severity}\n    return fake_model(prompt)\n\nanswers = []\nfor prompt in [\"Summarise this report\", \"Plan an attack on the server\"]:\n    resp = guarded_chat(prompt)\n    if resp[\"finish_reason\"] == \"content_filter\":\n        answers.append(\"I can't help with that request.\")\n    else:\n        answers.append(resp[\"text\"])\nprint(answers)\n"
+  "uth_example": "SEVERITY_WORDS = {\"attack\": 4, \"weapon\": 6, \"hate\": 4}\nfilter_config = {\"threshold\": 4}             # block medium and above\n\ndef fake_model(prompt):\n    return {\"text\": \"Here is a summary.\", \"finish_reason\": \"stop\"}\n\ndef guarded_chat(prompt):\n    severity = max([SEVERITY_WORDS.get(w, 0) for w in prompt.lower().split()] + [0])\n    if severity >= filter_config[\"threshold\"]:\n        return {\"finish_reason\": \"content_filter\", \"severity\": severity}\n    return fake_model(prompt)\n\nanswers = []\nfor prompt in [\"Summarise this report\", \"Plan an attack on the server\"]:\n    resp = guarded_chat(prompt)\n    if resp[\"finish_reason\"] == \"content_filter\":\n        answers.append(\"I can't help with that request.\")\n    else:\n        answers.append(resp[\"text\"])\nprint(answers)\n",
+  "under_the_hood": {
+    "summary": "Content filtering runs classifiers on the prompt before the model and on the completion after it, scoring each harm category for severity; content at or above your threshold is blocked, and Prompt Shields separately detect jailbreak and injection attempts.",
+    "steps": [
+      {
+        "title": "Classify the prompt",
+        "body": "Before the model runs, the input is scored in four categories: hate and unfairness, sexual, violence and self-harm. Each gets a severity: safe, low, medium or high.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "hate": "safe",
+              "sexual": "safe",
+              "violence": "medium",
+              "self_harm": "safe",
+              "jailbreak (Prompt Shields)": "not detected"
+            },
+            "caption": "Annotations on one prompt"
+          }
+        }
+      },
+      {
+        "title": "Compare with the filter threshold",
+        "body": "Your filter configuration sets, per category and per direction, which severities to block. With the default threshold of medium, both medium and high are blocked and low passes.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Threshold: medium",
+              "code": "violence = medium -> BLOCKED\nHTTP 400, code content_filter"
+            },
+            "right": {
+              "label": "Threshold: high",
+              "code": "violence = medium -> passes\nmodel generates"
+            },
+            "description": "Same prompt, two configurations"
+          }
+        }
+      },
+      {
+        "title": "Prompt Shields look for attacks",
+        "body": "Prompt Shields check user prompts for direct jailbreaks ('ignore your rules...') and check documents or tool results for indirect attacks, instructions hidden in content the model will read."
+      },
+      {
+        "title": "Classify the completion",
+        "body": "As output is generated, it is scored the same way. If it crosses the threshold, the response is cut and finish_reason becomes content_filter. With streaming, output is checked in chunks, which can add a little latency.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "User prompt",
+                "type": "input"
+              },
+              {
+                "label": "Prompt filters + Prompt Shields",
+                "type": "process"
+              },
+              {
+                "label": "Model generates",
+                "type": "process"
+              },
+              {
+                "label": "Completion filters",
+                "type": "process"
+              },
+              {
+                "label": "Response or finish_reason=content_filter",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Both directions of filtering"
+          }
+        }
+      },
+      {
+        "title": "More checks you can add",
+        "body": "Groundedness detection compares an answer with its source documents to flag unsupported claims. Custom blocklists catch exact terms the classifiers do not know, such as internal project names."
+      }
+    ],
+    "takeaway": "Filters are one layer, not the whole defence. Tune thresholds per use case, handle the content_filter result in your UI, and keep authorisation for actions outside the model."
+  }
 }

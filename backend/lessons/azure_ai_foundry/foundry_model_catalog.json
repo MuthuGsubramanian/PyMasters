@@ -34,5 +34,86 @@
   ],
   "tags": {"concepts_taught": ["ai_foundry_platform", "ai_platform_selection", "azure_openai_service"], "concepts_required": ["llm_concepts", "dictionaries", "functions"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 18, "category": "enterprise_ai", "path_memberships": []},
   "generated": false,
-  "uth_example": "catalog = [\n    {\"name\": \"gpt-4o\", \"quality\": 0.92, \"cost\": 10.0, \"open_weights\": False},\n    {\"name\": \"gpt-4o-mini\", \"quality\": 0.84, \"cost\": 0.6, \"open_weights\": False},\n    {\"name\": \"phi-4\", \"quality\": 0.80, \"cost\": 0.3, \"open_weights\": True},\n    {\"name\": \"llama-3-70b\", \"quality\": 0.86, \"cost\": 2.0, \"open_weights\": True},\n]\nneeds = {\"min_quality\": 0.82, \"max_cost\": 3.0}\n\nshortlist = [m for m in catalog\n             if m[\"quality\"] >= needs[\"min_quality\"] and m[\"cost\"] <= needs[\"max_cost\"]]\nbest = max(shortlist, key=lambda m: m[\"quality\"] / m[\"cost\"])\nprint(\"shortlist:\", [m[\"name\"] for m in shortlist])\nprint(\"best value:\", best[\"name\"])\n"
+  "uth_example": "catalog = [\n    {\"name\": \"gpt-4o\", \"quality\": 0.92, \"cost\": 10.0, \"open_weights\": False},\n    {\"name\": \"gpt-4o-mini\", \"quality\": 0.84, \"cost\": 0.6, \"open_weights\": False},\n    {\"name\": \"phi-4\", \"quality\": 0.80, \"cost\": 0.3, \"open_weights\": True},\n    {\"name\": \"llama-3-70b\", \"quality\": 0.86, \"cost\": 2.0, \"open_weights\": True},\n]\nneeds = {\"min_quality\": 0.82, \"max_cost\": 3.0}\n\nshortlist = [m for m in catalog\n             if m[\"quality\"] >= needs[\"min_quality\"] and m[\"cost\"] <= needs[\"max_cost\"]]\nbest = max(shortlist, key=lambda m: m[\"quality\"] / m[\"cost\"])\nprint(\"shortlist:\", [m[\"name\"] for m in shortlist])\nprint(\"best value:\", best[\"name\"])\n",
+  "under_the_hood": {
+    "summary": "A catalog model reaches production in one of three ways: an Azure OpenAI deployment, a serverless API where Microsoft hosts the model and bills per token, or managed compute where the model runs on VMs you pay for by the hour; the path decides cost, scaling and isolation.",
+    "steps": [
+      {
+        "title": "A catalog entry is a model card plus options",
+        "body": "Each entry lists the provider, license, supported tasks, context length and which deployment options exist. Not every model offers every option."
+      },
+      {
+        "title": "Option 1: Azure OpenAI deployment",
+        "body": "OpenAI models deploy into an Azure OpenAI or Foundry resource, use TPM quota and content filters, and are billed per token or per PTU."
+      },
+      {
+        "title": "Option 2: serverless API",
+        "body": "For many partner models such as Llama or Mistral, a serverless API deployment gives you an endpoint while Microsoft runs the model. You pay per token, with no VMs to size.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Serverless API",
+              "code": "Microsoft hosts the model\npay per token\nno capacity planning"
+            },
+            "right": {
+              "label": "Managed compute",
+              "code": "model on VMs in your control\npay per VM hour, even idle\nchoose GPU SKU, scale replicas"
+            },
+            "description": "Serverless API vs managed compute"
+          }
+        }
+      },
+      {
+        "title": "Option 3: managed compute",
+        "body": "Open-weight models can be deployed to a managed online endpoint: Azure starts VMs of the GPU size you choose, loads the weights and serves them. You pay while the VMs run, whether or not traffic arrives.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Pick model + VM SKU",
+                "type": "input"
+              },
+              {
+                "label": "Provision VMs",
+                "type": "process"
+              },
+              {
+                "label": "Load weights into GPU memory",
+                "type": "process"
+              },
+              {
+                "label": "Endpoint ready",
+                "type": "process"
+              },
+              {
+                "label": "Billed per VM hour",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Managed compute deployment"
+          }
+        }
+      },
+      {
+        "title": "Choose by filter, then evaluate",
+        "body": "Filter out models that fail hard requirements: license, region, data boundary, context length. Then run your own evaluation dataset on the few that remain, and compare cost at your real volume.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "needs: EU processing, 32K context, function calling",
+              "candidate A: passes filters  -> eval 0.88, cost/1K conv: medium",
+              "candidate B: passes filters  -> eval 0.84, cost/1K conv: low",
+              "candidate C: no EU option    -> filtered out"
+            ],
+            "caption": "Shortlist for a support bot (illustrative)"
+          }
+        }
+      }
+    ],
+    "takeaway": "The model name is only half the choice; the deployment path decides your bill and operations. Filter by constraints, then let your own evals decide."
+  }
 }
