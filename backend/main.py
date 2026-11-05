@@ -987,7 +987,7 @@ app.add_middleware(
 # --- Auth rate limiting (Phase 5) ---
 # Unauthenticated auth endpoints are keyed on client IP. NOTE: this limiter is
 # IN-PROCESS; it is only effective while the service runs as a single instance
-# (min=max=1, see cloud-run.tf). If it ever scales horizontally, move this to a
+# (one process on the VM). If it ever scales horizontally, move this to a
 # shared store (Redis/Memorystore) or it becomes trivially bypassable per-instance.
 from ratelimit import SlidingWindowRateLimiter as _SWRL
 
