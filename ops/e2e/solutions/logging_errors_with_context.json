@@ -1,0 +1,17 @@
+{
+ "lesson_id": "logging_errors_with_context",
+ "challenges": [
+  {
+   "index": 0,
+   "code": "import logging, io\n\ndef make_logger(level):\n    stream = io.StringIO()\n    handler = logging.StreamHandler(stream)\n    handler.setFormatter(logging.Formatter(\"%(levelname)s:%(message)s\"))\n    log = logging.getLogger(\"lesson.demo.\" + str(level))\n    log.handlers.clear()\n    log.setLevel(level)\n    log.addHandler(handler)\n    log.propagate = False\n    return log, stream\n\nlog, stream = make_logger(logging.WARNING)\nlog.debug(\"d\")\nlog.info(\"i\")\nlog.warning(\"w\")\nlog.error(\"e\")\nprint(stream.getvalue().strip())\n",
+   "verified_output": "WARNING:w\nERROR:e",
+   "source": "hand-written 2026-11-05 ([daily] lesson shipped without solutions)"
+  },
+  {
+   "index": 1,
+   "code": "import logging, io\n\nstream = io.StringIO()\nhandler = logging.StreamHandler(stream)\nhandler.setFormatter(logging.Formatter(\"%(levelname)s:%(message)s\"))\nlog = logging.getLogger(\"lesson.parse\")\nlog.handlers.clear()\nlog.setLevel(logging.INFO)\nlog.addHandler(handler)\nlog.propagate = False\n\ndef parse_all(values):\n    good = []\n    for v in values:\n        try:\n            good.append(int(v))\n        except ValueError:\n            log.error(\"skipping %r\", v)\n    log.info(\"parsed %d of %d\", len(good), len(values))\n    return good\n\nresult = parse_all([\"4\", \"x\", \"10\", \"3.5\"])\nprint(result)\nprint(stream.getvalue().strip())\n",
+   "verified_output": "[4, 10]\nERROR:skipping 'x'\nERROR:skipping '3.5'\nINFO:parsed 2 of 4",
+   "source": "hand-written 2026-11-05 ([daily] lesson shipped without solutions)"
+  }
+ ]
+}
