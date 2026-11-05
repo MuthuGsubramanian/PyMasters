@@ -34,5 +34,99 @@
   ],
   "tags": {"concepts_taught": ["llm_evaluation_ops", "llmops"], "concepts_required": ["ai_evaluation", "functions", "llm_concepts"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_ai", "path_memberships": []},
   "generated": false,
-  "uth_example": "golden_set = [\n    {\"question\": \"Refund window?\", \"context\": \"Refunds within 30 days [1]\"},\n    {\"question\": \"Shipping cost?\", \"context\": \"Shipping is free over 50 [2]\"},\n]\n\ndef fake_app(question):\n    return {\"Refund window?\": \"Refunds within 30 days [1]\",\n            \"Shipping cost?\": \"Shipping costs 5\"}[question]\n\ndef has_citation(response):\n    return int(\"[\" in response)\n\ndef grounded(response, context):\n    words = set(response.lower().split())\n    return round(len(words & set(context.lower().split())) / len(words), 2)\n\nrows = []\nfor case in golden_set:\n    answer = fake_app(case[\"question\"])\n    rows.append({\"q\": case[\"question\"], \"cited\": has_citation(answer),\n                 \"grounded\": grounded(answer, case[\"context\"])})\nprint(rows)\n"
+  "uth_example": "golden_set = [\n    {\"question\": \"Refund window?\", \"context\": \"Refunds within 30 days [1]\"},\n    {\"question\": \"Shipping cost?\", \"context\": \"Shipping is free over 50 [2]\"},\n]\n\ndef fake_app(question):\n    return {\"Refund window?\": \"Refunds within 30 days [1]\",\n            \"Shipping cost?\": \"Shipping costs 5\"}[question]\n\ndef has_citation(response):\n    return int(\"[\" in response)\n\ndef grounded(response, context):\n    words = set(response.lower().split())\n    return round(len(words & set(context.lower().split())) / len(words), 2)\n\nrows = []\nfor case in golden_set:\n    answer = fake_app(case[\"question\"])\n    rows.append({\"q\": case[\"question\"], \"cited\": has_citation(answer),\n                 \"grounded\": grounded(answer, case[\"context\"])})\nprint(rows)\n",
+  "under_the_hood": {
+    "summary": "An evaluation run sends every row of a test dataset through your app, passes each (query, context, response) to a set of evaluators, some code-based and some an LLM judge with a rubric, and aggregates per-row scores into metrics you can compare between versions.",
+    "steps": [
+      {
+        "title": "Start from a golden dataset",
+        "body": "Each row holds a query, and where relevant the expected answer and the source context. A few hundred realistic rows, including hard and adversarial ones, matter more than any metric choice.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "query": "Can I return an opened laptop?",
+              "ground_truth": "Yes, within 14 days, with receipt",
+              "context": "Returns policy section 3",
+              "category": "returns / edge case"
+            },
+            "caption": "One dataset row"
+          }
+        }
+      },
+      {
+        "title": "Run the target over every row",
+        "body": "The evaluate call invokes your app (the target) for each row and captures the response and retrieved context. The app version, prompt and model are recorded with the run.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Dataset rows",
+                "type": "input"
+              },
+              {
+                "label": "Target app generates responses",
+                "type": "process"
+              },
+              {
+                "label": "Evaluators score each row",
+                "type": "process"
+              },
+              {
+                "label": "Aggregate metrics",
+                "type": "process"
+              },
+              {
+                "label": "Compare with baseline run",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Evaluation run"
+          }
+        }
+      },
+      {
+        "title": "Code evaluators vs LLM judges",
+        "body": "Deterministic evaluators compute things like F1 overlap or JSON validity. AI-assisted evaluators send the row to a judge model with a rubric, for example 'rate groundedness 1-5: is every claim supported by the context?', and parse the score and reason.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Code-based",
+              "code": "F1, exact match, schema check\ncheap, repeatable, shallow"
+            },
+            "right": {
+              "label": "LLM judge",
+              "code": "groundedness, relevance 1-5\nunderstands meaning, must be calibrated"
+            },
+            "description": "Two kinds of evaluator"
+          }
+        }
+      },
+      {
+        "title": "Aggregate and slice",
+        "body": "Per-row scores roll up to averages and pass rates, for example the share of rows with groundedness of at least 4. Slicing by category shows that a release improved FAQs but broke returns questions.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "metric            v1      v2",
+              "groundedness>=4   0.86    0.91",
+              "relevance>=4      0.90    0.89",
+              "returns subset    0.88    0.71   <- regression"
+            ],
+            "caption": "Two versions compared (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Gate releases on it",
+        "body": "In CI, a pipeline runs the evaluation for each change and fails the build if key metrics drop below thresholds, just like failing unit tests."
+      }
+    ],
+    "takeaway": "Your dataset is the real asset; evaluators are just rulers. Calibrate LLM judges against human labels, and always read the slices, not only the average."
+  }
 }

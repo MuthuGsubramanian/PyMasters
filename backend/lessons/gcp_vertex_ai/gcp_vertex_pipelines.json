@@ -42,5 +42,80 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "import hashlib\nimport json\n\ncache, runs = {}, []\n\ndef component(name, fn):\n    def run(**inputs):\n        key = hashlib.sha256(json.dumps([name, inputs], sort_keys=True).encode()).hexdigest()[:8]\n        if key in cache:\n            runs.append(f\"{name}: cached\")\n            return cache[key]\n        runs.append(f\"{name}: executed\")\n        cache[key] = fn(**inputs)\n        return cache[key]\n    return run\n\ningest = component(\"ingest\", lambda table: [3, 5, 8, 13])\ntrain = component(\"train\", lambda rows, lr: {\"weight\": round(sum(rows) * lr, 2)})\n\ndef pipeline(table, lr):\n    rows = ingest(table=table)\n    return train(rows=rows, lr=lr)\n\nfirst = pipeline(\"churn_2025\", 0.1)\nsecond = pipeline(\"churn_2025\", 0.2)          # only the changed step re-runs\nprint(first, second)\nprint(runs)\n"
+  "uth_example": "import hashlib\nimport json\n\ncache, runs = {}, []\n\ndef component(name, fn):\n    def run(**inputs):\n        key = hashlib.sha256(json.dumps([name, inputs], sort_keys=True).encode()).hexdigest()[:8]\n        if key in cache:\n            runs.append(f\"{name}: cached\")\n            return cache[key]\n        runs.append(f\"{name}: executed\")\n        cache[key] = fn(**inputs)\n        return cache[key]\n    return run\n\ningest = component(\"ingest\", lambda table: [3, 5, 8, 13])\ntrain = component(\"train\", lambda rows, lr: {\"weight\": round(sum(rows) * lr, 2)})\n\ndef pipeline(table, lr):\n    rows = ingest(table=table)\n    return train(rows=rows, lr=lr)\n\nfirst = pipeline(\"churn_2025\", 0.1)\nsecond = pipeline(\"churn_2025\", 0.2)          # only the changed step re-runs\nprint(first, second)\nprint(runs)\n",
+  "under_the_hood": {
+    "summary": "A KFP pipeline is compiled into a graph of tasks; Vertex AI Pipelines runs each ready task as its own container, passes parameters and artifact URIs between them, skips tasks whose inputs are unchanged by using cached results, and records lineage in ML Metadata.",
+    "steps": [
+      {
+        "title": "Python becomes a pipeline spec",
+        "body": "Functions decorated with @dsl.component become components, and the @dsl.pipeline function wires their outputs to inputs. The KFP compiler writes a YAML pipeline spec describing every task, its container image and its inputs."
+      },
+      {
+        "title": "Data dependencies form the DAG",
+        "body": "If train takes prepare.outputs['dataset'], train depends on prepare. Tasks without dependencies between them, such as two evaluations, run in parallel.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "ingest",
+              "validate",
+              "prepare",
+              "train",
+              "evaluate",
+              "deploy if better"
+            ],
+            "edges": [
+              {
+                "from": "ingest",
+                "to": "validate"
+              },
+              {
+                "from": "validate",
+                "to": "prepare"
+              },
+              {
+                "from": "prepare",
+                "to": "train"
+              },
+              {
+                "from": "train",
+                "to": "evaluate"
+              },
+              {
+                "from": "evaluate",
+                "to": "deploy if better"
+              }
+            ],
+            "description": "A typical training DAG"
+          }
+        }
+      },
+      {
+        "title": "Each task is a container run",
+        "body": "When a task's inputs are ready, Vertex launches its container on the requested machine. Small parameters are passed directly; artifacts such as datasets and models are written under the pipeline root in Cloud Storage and passed as URIs."
+      },
+      {
+        "title": "Caching skips repeated work",
+        "body": "Before running a task, Vertex computes a key from the component definition and its inputs. If a previous successful run had the same key, it reuses those outputs instead of running again.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "ingest     cached (inputs unchanged)",
+              "validate   cached",
+              "prepare    cached",
+              "train      RUN (component changed)",
+              "evaluate   RUN (new model input)"
+            ],
+            "caption": "Re-running with only the training code changed"
+          }
+        }
+      },
+      {
+        "title": "Lineage is recorded automatically",
+        "body": "Every run records which artifacts each task consumed and produced in ML Metadata. From a deployed model you can trace back to the dataset version and run that created it."
+      }
+    ],
+    "takeaway": "Pipelines turn notebook steps into a reproducible graph. Keep components pure (same inputs, same outputs) so caching is safe and lineage stays meaningful."
+  }
 }

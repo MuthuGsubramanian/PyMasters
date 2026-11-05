@@ -34,5 +34,97 @@
   ],
   "tags": {"concepts_taught": ["azure_resource_management", "infrastructure_as_code"], "concepts_required": ["cloud_fundamentals", "azure_identity"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "import hashlib\n\ndef unique_string(seed):\n    return hashlib.sha256(seed.encode()).hexdigest()[:8]\n\nresource_group = {\"id\": \"/subscriptions/demo/resourceGroups/rg-data\", \"location\": \"westeurope\"}\ntemplate = {\n    \"type\": \"Microsoft.Storage/storageAccounts\",\n    \"name\": \"st\" + unique_string(resource_group[\"id\"]),\n    \"location\": resource_group[\"location\"],\n    \"sku\": {\"name\": \"Standard_LRS\"},\n}\n\ndeployed = {}\n\ndef arm_deploy(resource):                     # idempotent: same template, same result\n    action = \"update\" if resource[\"name\"] in deployed else \"create\"\n    deployed[resource[\"name\"]] = dict(resource)\n    return action\n\nfirst, second = arm_deploy(template), arm_deploy(template)\nprint(template[\"name\"], first, second, \"| resources:\", len(deployed))\n"
+  "uth_example": "import hashlib\n\ndef unique_string(seed):\n    return hashlib.sha256(seed.encode()).hexdigest()[:8]\n\nresource_group = {\"id\": \"/subscriptions/demo/resourceGroups/rg-data\", \"location\": \"westeurope\"}\ntemplate = {\n    \"type\": \"Microsoft.Storage/storageAccounts\",\n    \"name\": \"st\" + unique_string(resource_group[\"id\"]),\n    \"location\": resource_group[\"location\"],\n    \"sku\": {\"name\": \"Standard_LRS\"},\n}\n\ndeployed = {}\n\ndef arm_deploy(resource):                     # idempotent: same template, same result\n    action = \"update\" if resource[\"name\"] in deployed else \"create\"\n    deployed[resource[\"name\"]] = dict(resource)\n    return action\n\nfirst, second = arm_deploy(template), arm_deploy(template)\nprint(template[\"name\"], first, second, \"| resources:\", len(deployed))\n",
+  "under_the_hood": {
+    "summary": "Bicep compiles to an ARM JSON template; Azure Resource Manager builds a dependency graph from it, deploys independent resources in parallel and dependent ones in order, and in incremental mode leaves resources that are not in the template untouched.",
+    "steps": [
+      {
+        "title": "Everything goes through ARM",
+        "body": "Portal, CLI, PowerShell, Terraform and Bicep all end up calling the Resource Manager API. ARM authenticates the caller, checks RBAC, Azure Policy and locks, then forwards the request to the resource provider, such as Microsoft.Storage.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Portal / CLI / Bicep",
+                "type": "input"
+              },
+              {
+                "label": "Azure Resource Manager",
+                "type": "process"
+              },
+              {
+                "label": "Auth + RBAC + Policy + locks",
+                "type": "process"
+              },
+              {
+                "label": "Resource provider",
+                "type": "process"
+              },
+              {
+                "label": "Resource created or updated",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Path of any Azure change"
+          }
+        }
+      },
+      {
+        "title": "Bicep compiles to JSON",
+        "body": "bicep build turns main.bicep into an ARM template. Symbolic references like storage.id become expressions, and modules become nested deployments. ARM only ever sees the JSON."
+      },
+      {
+        "title": "References become a dependency graph",
+        "body": "If a web app references appServicePlan.id, Bicep adds an implicit dependsOn. ARM sorts the graph: the plan and a storage account with no links deploy in parallel, the web app waits for the plan.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "storage account",
+              "app service plan",
+              "web app",
+              "app setting: storage connection"
+            ],
+            "edges": [
+              {
+                "from": "app service plan",
+                "to": "web app"
+              },
+              {
+                "from": "storage account",
+                "to": "app setting: storage connection"
+              },
+              {
+                "from": "web app",
+                "to": "app setting: storage connection"
+              }
+            ],
+            "description": "Deployment order from references"
+          }
+        }
+      },
+      {
+        "title": "Declarative means idempotent",
+        "body": "Deploying the same template twice makes no changes the second time, because ARM compares desired properties with what exists. what-if shows the planned creates, modifies and deletes before you deploy.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "+ Microsoft.Storage/storageAccounts/stlogs01   Create",
+              "~ Microsoft.Web/sites/app-api                  Modify  (siteConfig.alwaysOn: false => true)",
+              "= Microsoft.Web/serverfarms/plan-api           NoChange"
+            ],
+            "caption": "az deployment group what-if (shortened)"
+          }
+        }
+      },
+      {
+        "title": "Incremental vs complete mode",
+        "body": "Incremental mode, the default, adds and updates what is in the template and ignores other resources in the group. Complete mode deletes resources in the group that are not in the template, which is powerful and dangerous."
+      }
+    ],
+    "takeaway": "Write what you want, not the steps: ARM works out order and parallelism. Always run what-if before deploying, and be very careful with complete mode."
+  }
 }

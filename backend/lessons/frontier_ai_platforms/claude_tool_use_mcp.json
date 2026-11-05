@@ -50,5 +50,87 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "import json\n\nclass WeatherServer:                          # an MCP-style tool server\n    def list_tools(self):\n        return [{\"name\": \"get_weather\", \"input_schema\": {\"required\": [\"city\"]}}]\n    def call_tool(self, name, arguments):\n        temps = {\"Madurai\": 34, \"Ooty\": 18}\n        return {\"content\": f\"{arguments['city']}: {temps.get(arguments['city'], '?')} C\"}\n\nserver = WeatherServer()\ntools = server.list_tools()                   # the client discovers tools at runtime\n\nmodel_turn = {\"type\": \"tool_use\", \"name\": \"get_weather\", \"input\": {\"city\": \"Ooty\"}}\nwire = json.dumps({\"method\": \"tools/call\", \"params\": {\"name\": model_turn[\"name\"],\n                                                       \"arguments\": model_turn[\"input\"]}})\nrequest = json.loads(wire)\nresult = server.call_tool(request[\"params\"][\"name\"], request[\"params\"][\"arguments\"])\ntool_result = {\"type\": \"tool_result\", \"content\": result[\"content\"]}\nprint([t[\"name\"] for t in tools], \"->\", tool_result)\n"
+  "uth_example": "import json\n\nclass WeatherServer:                          # an MCP-style tool server\n    def list_tools(self):\n        return [{\"name\": \"get_weather\", \"input_schema\": {\"required\": [\"city\"]}}]\n    def call_tool(self, name, arguments):\n        temps = {\"Madurai\": 34, \"Ooty\": 18}\n        return {\"content\": f\"{arguments['city']}: {temps.get(arguments['city'], '?')} C\"}\n\nserver = WeatherServer()\ntools = server.list_tools()                   # the client discovers tools at runtime\n\nmodel_turn = {\"type\": \"tool_use\", \"name\": \"get_weather\", \"input\": {\"city\": \"Ooty\"}}\nwire = json.dumps({\"method\": \"tools/call\", \"params\": {\"name\": model_turn[\"name\"],\n                                                       \"arguments\": model_turn[\"input\"]}})\nrequest = json.loads(wire)\nresult = server.call_tool(request[\"params\"][\"name\"], request[\"params\"][\"arguments\"])\ntool_result = {\"type\": \"tool_result\", \"content\": result[\"content\"]}\nprint([t[\"name\"] for t in tools], \"->\", tool_result)\n",
+  "under_the_hood": {
+    "summary": "Claude never runs tools itself: it replies with a tool_use block naming a tool and its JSON input, your code runs the tool and returns a tool_result, and the loop repeats; MCP standardises how tools are discovered and called, using JSON-RPC messages between a client and a server.",
+    "steps": [
+      {
+        "title": "Declare tools with schemas",
+        "body": "Each tool has a name, a description and an input_schema in JSON Schema. These go into the request alongside the messages. The description tells Claude when the tool is useful."
+      },
+      {
+        "title": "Claude asks, your code acts",
+        "body": "If Claude wants a tool, the response has stop_reason tool_use and a content block {type: tool_use, id, name, input}. Your application validates the input, runs the function and sends a new user message containing {type: tool_result, tool_use_id, content}.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Request with tools",
+                "type": "input"
+              },
+              {
+                "label": "Response: tool_use get_weather {city: 'Chennai'}",
+                "type": "process"
+              },
+              {
+                "label": "Your code validates + runs",
+                "type": "process"
+              },
+              {
+                "label": "User message: tool_result (same id)",
+                "type": "process"
+              },
+              {
+                "label": "Claude writes final answer",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "One tool round trip"
+          }
+        }
+      },
+      {
+        "title": "Loops until done",
+        "body": "Claude may call several tools in sequence or several in one turn. Your loop keeps sending results back until stop_reason is end_turn, with a cap on steps so a confused loop cannot run forever."
+      },
+      {
+        "title": "MCP: one protocol for tools",
+        "body": "The Model Context Protocol defines how an AI application (the client) talks to a tool provider (the server) using JSON-RPC 2.0. After an initialize handshake, the client calls tools/list to discover tools and tools/call to run one. Servers can also expose resources and prompts.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "-> initialize {protocolVersion, capabilities}",
+              "<- result {serverInfo, capabilities}",
+              "-> tools/list",
+              "<- [{name: 'search_tickets', inputSchema: {...}}]",
+              "-> tools/call {name: 'search_tickets', arguments: {q: 'refund'}}"
+            ],
+            "caption": "MCP messages, simplified"
+          }
+        }
+      },
+      {
+        "title": "Transports and trust",
+        "body": "Local servers usually run as a subprocess speaking over stdio; remote servers use HTTP. Every server you connect can see the arguments it receives and returns text the model will read, so connect only servers you trust and scope their permissions.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "stdio",
+              "code": "server runs as a local process\nmessages over stdin/stdout"
+            },
+            "right": {
+              "label": "HTTP",
+              "code": "remote server over the network\nneeds auth and access control"
+            },
+            "description": "Two MCP transports"
+          }
+        }
+      }
+    ],
+    "takeaway": "The model proposes, your code disposes. Validate every tool input, keep tools narrow, and treat MCP servers as code you are choosing to trust."
+  }
 }

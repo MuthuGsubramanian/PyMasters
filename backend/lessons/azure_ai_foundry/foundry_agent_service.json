@@ -34,5 +34,91 @@
   ],
   "tags": {"concepts_taught": ["ai_foundry_agents", "ai_foundry_platform"], "concepts_required": ["llm_concepts", "dictionaries", "functions"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_ai", "path_memberships": []},
   "generated": false,
-  "uth_example": "class FakeAgentService:                      # stands in for project.agents\n    def __init__(self):\n        self.threads = {}\n    def create_agent(self, name, instructions, tools):\n        return {\"name\": name, \"instructions\": instructions, \"tools\": tools}\n    def create_thread(self):\n        thread_id = f\"thread-{len(self.threads) + 1}\"\n        self.threads[thread_id] = []\n        return thread_id\n    def add_message(self, thread_id, role, content):\n        self.threads[thread_id].append({\"role\": role, \"content\": content})\n    def run(self, thread_id, agent):\n        invoices = [450, 1200, 980]                  # \"code interpreter\" output\n        total = sum(i for i in invoices if i > 900)\n        self.add_message(thread_id, \"assistant\", f\"Invoices over 900 sum to {total}\")\n        return {\"status\": \"completed\"}\n\nservice = FakeAgentService()\nagent = service.create_agent(\"invoice-analyst\", \"Use code for math\", [\"code_interpreter\"])\nthread = service.create_thread()\nservice.add_message(thread, \"user\", \"Sum invoices over 900\")\nrun = service.run(thread, agent)\nprint(run[\"status\"], \"->\", service.threads[thread][-1][\"content\"])\n"
+  "uth_example": "class FakeAgentService:                      # stands in for project.agents\n    def __init__(self):\n        self.threads = {}\n    def create_agent(self, name, instructions, tools):\n        return {\"name\": name, \"instructions\": instructions, \"tools\": tools}\n    def create_thread(self):\n        thread_id = f\"thread-{len(self.threads) + 1}\"\n        self.threads[thread_id] = []\n        return thread_id\n    def add_message(self, thread_id, role, content):\n        self.threads[thread_id].append({\"role\": role, \"content\": content})\n    def run(self, thread_id, agent):\n        invoices = [450, 1200, 980]                  # \"code interpreter\" output\n        total = sum(i for i in invoices if i > 900)\n        self.add_message(thread_id, \"assistant\", f\"Invoices over 900 sum to {total}\")\n        return {\"status\": \"completed\"}\n\nservice = FakeAgentService()\nagent = service.create_agent(\"invoice-analyst\", \"Use code for math\", [\"code_interpreter\"])\nthread = service.create_thread()\nservice.add_message(thread, \"user\", \"Sum invoices over 900\")\nrun = service.run(thread, agent)\nprint(run[\"status\"], \"->\", service.threads[thread][-1][\"content\"])\n",
+  "under_the_hood": {
+    "summary": "In Agent Service you create an agent once, add messages to a thread, and start a run; the service loops calling the model, running built-in tools itself and pausing in requires_action when your own function must run, until replies are appended to the thread.",
+    "steps": [
+      {
+        "title": "Four objects",
+        "body": "An Agent holds model deployment, instructions and tools. A Thread stores a conversation's messages on the server. A Message is one turn. A Run is one execution of the agent over a thread.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "Agent": "model, instructions, tools (long-lived)",
+              "Thread": "server-side message history",
+              "Message": "one user or agent turn",
+              "Run": "one execution, has a status"
+            },
+            "caption": "Object model"
+          }
+        }
+      },
+      {
+        "title": "A run moves through states",
+        "body": "Creating a run puts it in queued, then in_progress while the service calls the model. It ends in completed, failed, cancelled or expired. Your code polls or streams events to follow it.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "queued",
+              "in_progress",
+              "requires_action",
+              "completed",
+              "failed"
+            ],
+            "edges": [
+              {
+                "from": "queued",
+                "to": "in_progress"
+              },
+              {
+                "from": "in_progress",
+                "to": "requires_action"
+              },
+              {
+                "from": "requires_action",
+                "to": "in_progress"
+              },
+              {
+                "from": "in_progress",
+                "to": "completed"
+              },
+              {
+                "from": "in_progress",
+                "to": "failed"
+              }
+            ],
+            "description": "Run status lifecycle"
+          }
+        }
+      },
+      {
+        "title": "Built-in tools run inside the service",
+        "body": "If the model calls file search, the service queries the vector store and feeds results back. If it calls code interpreter, the service runs the Python in a sandbox. Your code never sees these steps except as run steps."
+      },
+      {
+        "title": "Your functions pause the run",
+        "body": "If the model calls one of your function tools, the run stops in requires_action with the tool name and JSON arguments. Your app executes it, submits the output with the tool call ID, and the run continues.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "run status: in_progress",
+              "run status: requires_action  -> get_order_status({'order_id': 'A-17'})",
+              "app submits tool output: {'status': 'shipped'}",
+              "run status: in_progress -> completed"
+            ],
+            "caption": "A run that needs your function"
+          }
+        }
+      },
+      {
+        "title": "Replies land on the thread",
+        "body": "When the run completes, the agent's messages are appended to the thread. The next user message goes on the same thread, so the model sees the history without you storing it."
+      }
+    ],
+    "takeaway": "The managed loop is just call model, run tools, repeat. Know the run states, handle requires_action quickly and safely, and you control everything that matters."
+  }
 }

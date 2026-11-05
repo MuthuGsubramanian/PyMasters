@@ -34,5 +34,89 @@
   ],
   "tags": {"concepts_taught": ["cloud_cost_management", "azure_openai_service", "llmops"], "concepts_required": ["llm_concepts", "functions"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_ai", "path_memberships": []},
   "generated": false,
-  "uth_example": "MOCK_RATES = {\"big\": {\"in\": 2.5, \"out\": 10.0}, \"mini\": {\"in\": 0.15, \"out\": 0.6}}  # $ per 1M tokens\n\ndef monthly_cost(calls, in_tok, out_tok, rate):\n    return calls * (in_tok * rate[\"in\"] + out_tok * rate[\"out\"]) / 1e6\n\nplans = {\n    \"big, full history\": monthly_cost(3e6, 1500, 300, MOCK_RATES[\"big\"]),\n    \"big, pruned context\": monthly_cost(3e6, 600, 200, MOCK_RATES[\"big\"]),\n    \"mini, pruned context\": monthly_cost(3e6, 600, 200, MOCK_RATES[\"mini\"]),\n}\nbase = plans[\"big, full history\"]\nfor name, cost in plans.items():\n    print(f\"{name:22} ${cost:9,.0f}  saves {1 - cost / base:.0%}\")\n"
+  "uth_example": "MOCK_RATES = {\"big\": {\"in\": 2.5, \"out\": 10.0}, \"mini\": {\"in\": 0.15, \"out\": 0.6}}  # $ per 1M tokens\n\ndef monthly_cost(calls, in_tok, out_tok, rate):\n    return calls * (in_tok * rate[\"in\"] + out_tok * rate[\"out\"]) / 1e6\n\nplans = {\n    \"big, full history\": monthly_cost(3e6, 1500, 300, MOCK_RATES[\"big\"]),\n    \"big, pruned context\": monthly_cost(3e6, 600, 200, MOCK_RATES[\"big\"]),\n    \"mini, pruned context\": monthly_cost(3e6, 600, 200, MOCK_RATES[\"mini\"]),\n}\nbase = plans[\"big, full history\"]\nfor name, cost in plans.items():\n    print(f\"{name:22} ${cost:9,.0f}  saves {1 - cost / base:.0%}\")\n",
+  "under_the_hood": {
+    "summary": "Quota is a per-subscription, per-region, per-model tokens-per-minute pool that deployments draw slices from, while cost is metered per input and output token (or per reserved PTU hour), so every prompt's size is both a capacity and a cost decision.",
+    "steps": [
+      {
+        "title": "Quota is a regional wallet",
+        "body": "Each subscription has a TPM quota per model and region, for example for gpt-4o in Sweden Central. Creating a deployment takes a slice of that wallet; the slices across deployments cannot exceed it.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "gpt-4o quota, one region:  300K TPM",
+              "chat-prod:      200K",
+              "chat-staging:    50K",
+              "batch-jobs:      50K",
+              "free for new deployments: 0  -> new team gets nothing"
+            ],
+            "caption": "Splitting one regional quota (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "The meter counts both directions",
+        "body": "Each call reports prompt tokens and completion tokens, which are priced separately; output tokens are usually priced higher per token. In RAG apps, input dominates because retrieved context is resent on every call.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "system prompt": "400 tokens",
+              "retrieved chunks": "2,400 tokens",
+              "history": "900 tokens",
+              "question": "40 tokens",
+              "answer (output)": "220 tokens"
+            },
+            "caption": "Usage of one RAG call"
+          }
+        }
+      },
+      {
+        "title": "Attribution needs labels",
+        "body": "Azure bills per resource and meter. To know which team spent what, give each team its own deployment or route calls through a gateway that logs token usage with a team ID."
+      },
+      {
+        "title": "Levers ranked by effect",
+        "body": "The biggest lever is the model tier; then shrinking resent context (fewer, better chunks, summarised history); then caching repeated prompts; then capping max_tokens; then moving non-urgent work to batch.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Right-size the model",
+              "Shrink resent context",
+              "Cache",
+              "Cap output",
+              "Batch the batchable"
+            ],
+            "edges": [
+              {
+                "from": "Right-size the model",
+                "to": "Shrink resent context"
+              },
+              {
+                "from": "Shrink resent context",
+                "to": "Cache"
+              },
+              {
+                "from": "Cache",
+                "to": "Cap output"
+              },
+              {
+                "from": "Cap output",
+                "to": "Batch the batchable"
+              }
+            ],
+            "description": "Cost levers, biggest first"
+          }
+        }
+      },
+      {
+        "title": "Budgets watch the trend",
+        "body": "Cost Management budgets alert on actual or forecast spend per scope. A monthly review of tokens per request and cost per resolved conversation catches slow drift that alerts miss."
+      }
+    ],
+    "takeaway": "Every token you resend costs twice: once in quota, once on the bill. Design prompts small, split quota deliberately, and attribute usage per team."
+  }
 }

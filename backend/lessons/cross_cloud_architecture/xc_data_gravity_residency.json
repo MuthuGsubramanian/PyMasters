@@ -33,5 +33,110 @@
     {"q": {"en": "Why are embeddings built from EU customer PII a residency concern?"}, "options": {"en": ["Embeddings are always public data", "Derived data typically inherits the classification of its source — computing them in a US region is a transfer", "Vector databases cannot run in the EU", "GDPR only applies to relational databases"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["cloud_compliance", "multi_cloud_strategy"], "concepts_required": ["cloud_fundamentals", "dictionaries"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Data pulls compute towards it because moving it costs time and egress fees that grow with volume, and residency rules decide where it may go at all; a placement engine combines a dataset's classification and home jurisdiction into a list of allowed regions.",
+    "steps": [
+      {
+        "title": "Moving data takes real time",
+        "body": "Transfer time is size divided by bandwidth. One petabyte over a fully used 10 Gbps link is 8 x 10^15 bits / 10^10 bits per second = 800,000 seconds, more than nine days, before retries.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "1 PB = 8 x 10^15 bits",
+              "10 Gbps link, fully used:  8 x 10^5 s  = ~9.3 days",
+              "100 Gbps link:             8 x 10^4 s  = ~22 hours"
+            ],
+            "caption": "How long to move 1 PB"
+          }
+        }
+      },
+      {
+        "title": "Egress makes movement a bill",
+        "body": "Providers charge for data leaving their network or crossing regions, per GB. A pipeline that copies a large dataset to another cloud every night pays that every night, which is why compute usually moves to the data."
+      },
+      {
+        "title": "Derived data grows the mass",
+        "body": "Indexes, embeddings, features, caches and backups are copies too. A vector index built from customer documents carries the same residency obligations as the documents themselves.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Customer documents (EU)",
+              "Chunks",
+              "Embeddings",
+              "Vector index (must stay EU)"
+            ],
+            "edges": [
+              {
+                "from": "Customer documents (EU)",
+                "to": "Chunks"
+              },
+              {
+                "from": "Chunks",
+                "to": "Embeddings"
+              },
+              {
+                "from": "Embeddings",
+                "to": "Vector index (must stay EU)"
+              }
+            ],
+            "description": "Derived data inherits the rules"
+          }
+        }
+      },
+      {
+        "title": "Residency becomes rules",
+        "body": "Each dataset is tagged with a classification and home jurisdiction. A rule engine maps those to allowed regions and services, for example 'personal data, EU home' -> EU regions only, EU data-zone model endpoints only.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "public, any": "any region",
+              "internal, EU": "EU regions",
+              "personal, EU": "EU regions, EU data-zone AI endpoints",
+              "regulated, IN": "India regions only"
+            },
+            "caption": "Placement rules (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Check at deploy and at run time",
+        "body": "The rules run in pipelines (refuse a deployment to a disallowed region) and in policy (location constraints per cloud). A data flow diagram that crosses a boundary without a rule is a finding.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "New pipeline writes dataset X",
+                "type": "input"
+              },
+              {
+                "label": "Look up X: personal, EU",
+                "type": "process"
+              },
+              {
+                "label": "Target region: us-east",
+                "type": "process"
+              },
+              {
+                "label": "Rule: EU only",
+                "type": "process"
+              },
+              {
+                "label": "Deployment blocked",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Placement check"
+          }
+        }
+      }
+    ],
+    "takeaway": "Do the transfer arithmetic and the residency lookup before choosing where compute runs. Remember that every derived copy of data carries the same rules."
+  }
 }

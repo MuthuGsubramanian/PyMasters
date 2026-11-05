@@ -33,5 +33,94 @@
     {"q": {"en": "In the replicated-index pattern, what new operational obligation appears?"}, "options": {"en": ["Per-query cross-cloud latency on retrieval", "An index freshness SLO and refresh pipeline, plus securing a second estate — with the embedding model pinned across both", "Re-training the LLM weekly", "Moving the corpus permanently"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["enterprise_rag", "ai_platform_selection", "cloud_compliance"], "concepts_required": ["ai_platform_selection", "dictionaries"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 24, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A RAG system is a chain of separable stages (ingest, embed, index, retrieve, generate) and each one can run in a different place; hybrid designs decide which stage sits next to the data and which next to the model, then pay for every hop in latency, egress and governance.",
+    "steps": [
+      {
+        "title": "Break RAG into placeable stages",
+        "body": "Ingestion and chunking read the source documents. Embedding turns chunks into vectors. The index stores them. Retrieval runs per question. Generation sends retrieved text to a model. Only retrieved text, not the whole corpus, must reach the model.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Source documents",
+              "Chunk",
+              "Embed",
+              "Vector index",
+              "Retrieve top-k",
+              "LLM generates answer"
+            ],
+            "edges": [
+              {
+                "from": "Source documents",
+                "to": "Chunk"
+              },
+              {
+                "from": "Chunk",
+                "to": "Embed"
+              },
+              {
+                "from": "Embed",
+                "to": "Vector index"
+              },
+              {
+                "from": "Vector index",
+                "to": "Retrieve top-k"
+              },
+              {
+                "from": "Retrieve top-k",
+                "to": "LLM generates answer"
+              }
+            ],
+            "description": "RAG stages as separate components"
+          }
+        }
+      },
+      {
+        "title": "Pattern 1: colocated",
+        "body": "Everything runs in the cloud that hosts the model: documents are copied there. Simple and fast per query, but the whole corpus moves and must meet that cloud's residency rules."
+      },
+      {
+        "title": "Pattern 2: replicated index",
+        "body": "Ingestion and embedding run near the data; only the vector index (plus chunk text) is replicated to the model's cloud. Queries are fast, but the replica is a copy of sensitive text with the same obligations."
+      },
+      {
+        "title": "Pattern 3: retrieval at source",
+        "body": "The index stays with the data. Per question, the app retrieves on-premises or in cloud A, then sends only the top few chunks to the model in cloud B. Least data moves, but every question pays a cross-cloud hop.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Replicated index",
+              "code": "index copy next to the model\nfast queries, copy to govern"
+            },
+            "right": {
+              "label": "Retrieval at source",
+              "code": "index stays with data\nonly top-k chunks cross per query"
+            },
+            "description": "Where the corpus lives"
+          }
+        }
+      },
+      {
+        "title": "Identity and latency span the chain",
+        "body": "Retrieval must filter by the end user's permissions, so the user's identity has to travel from the app to the index. And the latency budget is the sum of all hops.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "embed question        30 ms",
+              "retrieve (cross-cloud) 90 ms",
+              "re-rank               60 ms",
+              "LLM generation      1,800 ms",
+              "total              ~2.0 s"
+            ],
+            "caption": "Latency budget of one answer (illustrative)"
+          }
+        }
+      }
+    ],
+    "takeaway": "Place each RAG stage deliberately: move the smallest thing that answers the question, carry the user's identity end to end, and evaluate quality again after moving anything."
+  }
 }

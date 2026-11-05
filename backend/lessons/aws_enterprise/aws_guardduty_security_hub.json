@@ -33,5 +33,93 @@
     {"q": {"en": "A team enables Security Hub, sees thousands of failed controls, and wants to disable it. What is the recommended playbook?"}, "options": {"en": ["Disable it — the score is not meaningful", "Enable every available standard simultaneously for full coverage", "Start with FSBP only, suppress accepted risks with documented reasons, burn down CRITICALs, then ratchet the score up", "Export findings to a spreadsheet and review annually"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["aws_security", "cloud_observability"], "concepts_required": ["aws_security", "aws_identity"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "GuardDuty reads AWS-side streams such as CloudTrail events, VPC flow data and DNS queries, compares them with threat intelligence and learned baselines, and emits findings; Security Hub normalises findings from many sources into one format and runs posture checks.",
+    "steps": [
+      {
+        "title": "GuardDuty reads independent data streams",
+        "body": "Once enabled, GuardDuty analyses CloudTrail management events, VPC Flow Logs and DNS query logs from AWS's side, without you turning those logs on or storing them. Optional protection plans add S3 data events, EKS audit logs, runtime monitoring and more.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "label": "GuardDuty",
+                "children": [
+                  "CloudTrail management events",
+                  "VPC flow data",
+                  "DNS queries",
+                  "Optional: S3, EKS, runtime, malware scan"
+                ]
+              }
+            ],
+            "description": "GuardDuty's inputs"
+          }
+        }
+      },
+      {
+        "title": "Detection: intelligence plus anomaly",
+        "body": "Some findings come from threat intelligence, for example an instance talking to a known command-and-control IP. Others come from behaviour, such as credentials used from an unusual location or an API that role has never called before."
+      },
+      {
+        "title": "A finding is structured evidence",
+        "body": "Each finding has a type such as UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration.OutsideAWS, a severity score, the affected resource, and the actor details: IP, ASN, API calls. That structure is what automation acts on.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "type": "Recon:EC2/PortProbeUnprotectedPort",
+              "severity": "low / medium / high band",
+              "resource": "i-0abc... in prod-web",
+              "actor": "remote IP, ASN, country",
+              "count": "first seen / last seen"
+            },
+            "caption": "Parts of a GuardDuty finding"
+          }
+        }
+      },
+      {
+        "title": "Security Hub normalises and aggregates",
+        "body": "Security Hub ingests findings from GuardDuty, Inspector, Macie, Config and partners into one format (ASFF), aggregates member accounts and Regions into one place, and runs standards such as AWS Foundational Security Best Practices as control checks.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "GuardDuty / Inspector / Macie / Config",
+              "Security Hub (ASFF)",
+              "Aggregation Region",
+              "EventBridge rule",
+              "Ticket or auto-remediation"
+            ],
+            "edges": [
+              {
+                "from": "GuardDuty / Inspector / Macie / Config",
+                "to": "Security Hub (ASFF)"
+              },
+              {
+                "from": "Security Hub (ASFF)",
+                "to": "Aggregation Region"
+              },
+              {
+                "from": "Aggregation Region",
+                "to": "EventBridge rule"
+              },
+              {
+                "from": "EventBridge rule",
+                "to": "Ticket or auto-remediation"
+              }
+            ],
+            "description": "From many sources to one queue"
+          }
+        }
+      },
+      {
+        "title": "Delegated admin runs it org-wide",
+        "body": "The management account delegates a security account as administrator. That account auto-enables the services in new member accounts, so detection exists before the first workload is deployed."
+      }
+    ],
+    "takeaway": "Detection is cheap to switch on and costly to ignore. The value comes from the pipeline after the finding: normalise, route by severity, and automate the boring responses."
+  }
 }

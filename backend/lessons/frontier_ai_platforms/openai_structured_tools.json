@@ -49,5 +49,99 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "With Structured Outputs in strict mode, the API compiles your JSON Schema into a grammar and, at each generation step, only lets the model pick tokens that keep the output valid, so the result always parses and matches the schema; your code still checks business rules.",
+    "steps": [
+      {
+        "title": "Three generations of JSON",
+        "body": "Prompting 'reply in JSON' works most of the time. JSON mode guarantees valid JSON but not your fields. Structured Outputs with strict: true guarantees output that matches the schema you supply.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "JSON mode",
+              "code": "always valid JSON\nfields may be missing or wrong type"
+            },
+            "right": {
+              "label": "Structured Outputs (strict)",
+              "code": "valid JSON matching your schema\nrequired fields always present"
+            },
+            "description": "JSON mode vs Structured Outputs"
+          }
+        }
+      },
+      {
+        "title": "The schema becomes a grammar",
+        "body": "The API converts the schema into a grammar. During generation, before each token is chosen, tokens that would break the grammar are masked out, so the model can only continue in valid ways. This is constrained decoding.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Output so far: {\"priority\": ",
+                "type": "input"
+              },
+              {
+                "label": "Grammar allows: \"low\" | \"medium\" | \"high\"",
+                "type": "process"
+              },
+              {
+                "label": "Mask every other token",
+                "type": "process"
+              },
+              {
+                "label": "Model picks among allowed tokens",
+                "type": "process"
+              },
+              {
+                "label": "Output stays valid",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Constrained decoding, one step"
+          }
+        }
+      },
+      {
+        "title": "Strict mode has schema rules",
+        "body": "In strict mode every property must be listed as required and additionalProperties must be false; optional values are expressed as a union with null. Unsupported schema features are rejected when you send the request.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "category": "enum: billing | bug | other",
+              "priority": "enum: low | medium | high",
+              "order_id": "string or null",
+              "required": "all three",
+              "additionalProperties": "false"
+            },
+            "caption": "A strict schema for ticket extraction"
+          }
+        }
+      },
+      {
+        "title": "Function calling uses the same machinery",
+        "body": "A function tool with strict: true makes the model's arguments match the parameters schema. The arguments still arrive as a JSON string you must parse, and your code decides whether to run the function."
+      },
+      {
+        "title": "Validation does not go away",
+        "body": "The schema guarantees shape, not truth. An order_id can be well formed but belong to another customer; a refund amount can be valid JSON and still exceed policy. Business rules and authorisation stay in your code.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "{\"action\": \"refund\", \"order_id\": \"A-17\", \"amount\": 950}",
+              "schema check: OK",
+              "business rule: refunds over 500 need approval -> REJECTED"
+            ],
+            "caption": "Schema-valid, still rejected"
+          }
+        }
+      }
+    ],
+    "takeaway": "Let constrained decoding guarantee the shape, and spend your validation effort on meaning: ownership, limits and policy."
+  }
 }

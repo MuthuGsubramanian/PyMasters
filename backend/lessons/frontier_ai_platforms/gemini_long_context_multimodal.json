@@ -50,5 +50,87 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "TOKENS_PER = {\"page\": 560, \"image\": 258, \"audio_sec\": 32, \"video_sec\": 263}\nwindow = 1_000_000\n\nrequest = [\n    {\"part\": \"contract.pdf\", \"kind\": \"page\", \"count\": 120},\n    {\"part\": \"site photo\", \"kind\": \"image\", \"count\": 3},\n    {\"part\": \"call recording\", \"kind\": \"audio_sec\", \"count\": 900},\n    {\"part\": \"walkthrough\", \"kind\": \"video_sec\", \"count\": 600},\n]\n\ntotal, breakdown = 0, {}\nfor item in request:\n    tokens = TOKENS_PER[item[\"kind\"]] * item[\"count\"]\n    breakdown[item[\"part\"]] = tokens\n    total += tokens\n\nprint(breakdown)\nprint(f\"{total:,} tokens = {total / window:.0%} of the window;\",\n      \"fits in ONE request\" if total <= window else \"needs splitting\")\n"
+  "uth_example": "TOKENS_PER = {\"page\": 560, \"image\": 258, \"audio_sec\": 32, \"video_sec\": 263}\nwindow = 1_000_000\n\nrequest = [\n    {\"part\": \"contract.pdf\", \"kind\": \"page\", \"count\": 120},\n    {\"part\": \"site photo\", \"kind\": \"image\", \"count\": 3},\n    {\"part\": \"call recording\", \"kind\": \"audio_sec\", \"count\": 900},\n    {\"part\": \"walkthrough\", \"kind\": \"video_sec\", \"count\": 600},\n]\n\ntotal, breakdown = 0, {}\nfor item in request:\n    tokens = TOKENS_PER[item[\"kind\"]] * item[\"count\"]\n    breakdown[item[\"part\"]] = tokens\n    total += tokens\n\nprint(breakdown)\nprint(f\"{total:,} tokens = {total / window:.0%} of the window;\",\n      \"fits in ONE request\" if total <= window else \"needs splitting\")\n",
+  "under_the_hood": {
+    "summary": "Gemini converts every input modality into tokens at documented rates (an image of up to 384 by 384 pixels is about 258 tokens, and video and audio cost a fixed number of tokens per second), and attention spans the whole sequence, so long inputs cost more and run slower.",
+    "steps": [
+      {
+        "title": "Media becomes tokens",
+        "body": "Images, audio and video are encoded into tokens alongside text. Google documents rough rates: an image up to 384 x 384 pixels is about 258 tokens (larger ones are tiled), audio is about 32 tokens per second, and video about 263 tokens per second.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "image up to 384 x 384 px": "about 258 tokens",
+              "audio": "about 32 tokens per second",
+              "video": "about 263 tokens per second",
+              "1 hour of video": "about 950K tokens"
+            },
+            "caption": "Approximate token cost by input (from Google's docs)"
+          }
+        }
+      },
+      {
+        "title": "Long context is one big sequence",
+        "body": "A million-token window lets a whole codebase, a long contract set or an hour of video fit in one request. The model attends over all of it, so it can link a clause on page 3 with an exception on page 290."
+      },
+      {
+        "title": "Cost and latency scale with size",
+        "body": "You pay for every input token on every call, and the time before the first output token grows as input grows. Sending 800K tokens for a question that needs 5 pages wastes both.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Send the whole manual",
+              "code": "800K input tokens every call\nslow first token"
+            },
+            "right": {
+              "label": "Retrieve 5 relevant pages",
+              "code": "~4K input tokens\nfast, cheap"
+            },
+            "description": "Answering one question about a manual"
+          }
+        }
+      },
+      {
+        "title": "Context caching for repeated material",
+        "body": "If many questions use the same large input, context caching stores it once. Later requests reference the cache and pay a reduced rate for those tokens, plus storage time for the cache.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Upload contracts once",
+                "type": "input"
+              },
+              {
+                "label": "Create cache (with TTL)",
+                "type": "process"
+              },
+              {
+                "label": "Question 1 references cache",
+                "type": "process"
+              },
+              {
+                "label": "Question 2 references cache",
+                "type": "process"
+              },
+              {
+                "label": "Cache expires",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Caching a large document set"
+          }
+        }
+      },
+      {
+        "title": "Packing still matters",
+        "body": "Recall is not equally strong at every position, so put the instructions and the question clearly, label each document, and remove what is not needed. A context packer that picks and orders material often beats sending everything."
+      }
+    ],
+    "takeaway": "Long context removes the need to chunk, not the need to choose. Estimate tokens per modality, cache what repeats, and send only what the question needs."
+  }
 }
