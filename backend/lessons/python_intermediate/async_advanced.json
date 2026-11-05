@@ -519,5 +519,111 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "create_task schedules a coroutine to start on the loop's next turn, a Semaphore is a counter with a queue of waiting futures, and async generators and async with are protocols whose methods are awaited.",
+    "steps": [
+      {
+        "title": "create_task starts work without waiting",
+        "body": "`task = asyncio.create_task(fetch(url))` wraps the coroutine in a Task and puts its first step on the ready queue immediately. The calling code continues. The task actually starts the next time the current coroutine awaits something, and runs alongside it.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "create_task(fetch())",
+                "detail": "Task created"
+              },
+              {
+                "label": "loop.call_soon(task step)",
+                "detail": "queued"
+              },
+              {
+                "label": "caller continues",
+                "detail": "until its next await"
+              },
+              {
+                "label": "loop runs task",
+                "detail": "fetch starts"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Semaphore: a counter plus waiters",
+        "body": "`asyncio.Semaphore(3)` holds a counter starting at 3. `async with sem:` calls `acquire()`: if the counter is above zero it decrements and continues; if zero, it creates a future, appends it to a waiters deque and awaits it. `release()` increments the counter and wakes the first waiter.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "sem._value",
+                "values": [
+                  "3",
+                  "2",
+                  "1",
+                  "0",
+                  "0",
+                  "1",
+                  "0"
+                ]
+              },
+              {
+                "variable": "event",
+                "values": [
+                  "start",
+                  "task A in",
+                  "task B in",
+                  "task C in",
+                  "task D waits",
+                  "A releases",
+                  "D wakes and enters"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Async generators: __anext__ is awaited",
+        "body": "A function with both `async def` and `yield` is an async generator. `async for row in stream():` calls `__anext__()`, which returns an awaitable. Between yields the generator may itself await I/O, so producing each item can involve network waits.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "async def stream(pages):\n    for p in pages:\n        data = await fetch(p)\n        yield data\n\nasync for d in stream(urls):\n    print(d)",
+            "highlightSequence": [
+              6,
+              3,
+              4,
+              7
+            ],
+            "stepDescriptions": [
+              {
+                "description": "async for awaits __anext__() for each item."
+              },
+              {
+                "description": "The generator awaits I/O between items."
+              },
+              {
+                "description": "yield hands one item to the loop body."
+              },
+              {
+                "description": "Body runs; then the next __anext__ is awaited."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "async with awaits enter and exit",
+        "body": "`async with session:` awaits `__aenter__()` before the block and `__aexit__()` after it, so opening and closing a connection can involve network round trips without blocking the loop."
+      },
+      {
+        "title": "Exceptions travel through tasks",
+        "body": "If a task raises, the exception is stored on the Task. It is re-raised wherever the task is awaited. A task that fails and is never awaited only gets logged as 'Task exception was never retrieved' when it is garbage collected, so always await or gather the tasks you create."
+      }
+    ],
+    "takeaway": "Tasks are scheduled coroutines, semaphores are counters with a waiting line, and the async protocols simply await their hook methods. Keep a reference to every task and await it, or its errors vanish."
   }
 }

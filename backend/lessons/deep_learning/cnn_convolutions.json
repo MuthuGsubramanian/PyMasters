@@ -366,5 +366,105 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A convolution slides a small grid of weights over the image, multiplies it element-wise with the patch underneath and adds the products into one number per position; the same weights are reused at every position, so each filter becomes a detector for one pattern.",
+    "steps": [
+      {
+        "title": "One position: multiply and add",
+        "body": "Patch [[1, 2, 3], [4, 5, 6], [7, 8, 9]] with kernel [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]] gives -1 + 0 + 3 - 8 + 0 + 12 - 7 + 0 + 9 = 8. That single number goes into the output map at this position. Deep learning libraries actually compute cross-correlation (no kernel flip), but call it convolution.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                -1,
+                0,
+                3
+              ],
+              [
+                -8,
+                0,
+                12
+              ],
+              [
+                -7,
+                0,
+                9
+              ]
+            ],
+            "labels": [
+              "row 0",
+              "row 1",
+              "row 2"
+            ],
+            "caption": "Element-wise products; their sum is 8"
+          }
+        }
+      },
+      {
+        "title": "Slide to build a feature map",
+        "body": "Move the kernel one pixel (stride 1) and repeat. On a 28 x 28 image a 3 x 3 kernel fits in 26 x 26 positions: output = (input - kernel + 2 x padding) / stride + 1. With padding 1 the output stays 28 x 28; with stride 2 it is (28 - 3 + 2) / 2 + 1, rounded down to 14.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "input",
+                "value": "28 x 28"
+              },
+              {
+                "variable": "kernel",
+                "value": "3 x 3"
+              },
+              {
+                "variable": "padding 0, stride 1",
+                "value": "26 x 26"
+              },
+              {
+                "variable": "padding 1, stride 1",
+                "value": "28 x 28"
+              },
+              {
+                "variable": "padding 1, stride 2",
+                "value": "14 x 14"
+              }
+            ],
+            "caption": "Output size for different settings"
+          }
+        }
+      },
+      {
+        "title": "The kernel is a pattern detector",
+        "body": "This kernel responds to left-to-right brightness changes. On a patch with a vertical edge, columns 0, 0, 10, it gives 10 + 20 + 10 = 40. On a flat patch where every pixel is 5 it gives 0. High output means 'my pattern is here'. In a CNN these weights are not designed by hand; training learns them."
+      },
+      {
+        "title": "Channels and filter banks",
+        "body": "A colour image has 3 channels, so each kernel is 3 x 3 x 3 and sums across all channels into one output map. A layer with 16 such filters makes 16 maps and has 3 x 3 x 3 x 16 + 16 biases = 448 parameters, whatever the image size, because the same weights are shared across positions.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              "3 x 3 x 3 = 27",
+              16,
+              16,
+              "27 x 16 + 16 = 448"
+            ],
+            "labels": [
+              "weights per filter",
+              "filters",
+              "biases",
+              "total"
+            ],
+            "caption": "Parameters of Conv2d(3, 16, kernel_size=3)"
+          }
+        }
+      },
+      {
+        "title": "Stacking widens the view",
+        "body": "One 3 x 3 layer sees 3 x 3 pixels; a second layer on top sees 5 x 5 of the original image, a third 7 x 7. Early layers learn edges and colours, later ones combine them into textures, parts and objects. Weight sharing also means a feature is detected wherever it appears in the image."
+      }
+    ],
+    "takeaway": "A convolution is a small dot product repeated at every position with shared weights. That gives far fewer parameters than dense layers, detection anywhere in the image, and, when stacked, a growing field of view."
+  }
 }

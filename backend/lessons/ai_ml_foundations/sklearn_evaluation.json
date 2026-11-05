@@ -368,5 +368,151 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "cross_val_score clones a fresh model for each fold, fits it on the other folds, scores it on the held-out one, and returns one score per fold; classification_report turns the confusion matrix into per-class precision, recall and F1.",
+    "steps": [
+      {
+        "title": "One fresh model per fold",
+        "body": "cross_val_score(clf, X, y, cv=5) builds the 5 splits (stratified for classifiers), and for each one calls clone(clf), fits it on 4 folds, and applies the scorer to the fifth. Cloning matters: no fold's model has seen another fold's test data.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "make 5 stratified folds",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "clone(clf)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "fit on 4 folds",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "score on the held-out fold",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "5 scores, one per fold",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Inside cross_val_score"
+          }
+        }
+      },
+      {
+        "title": "Mean and spread tell different things",
+        "body": "Scores like [0.97, 0.93, 1.00, 0.97, 0.93] have mean 0.96 and standard deviation about 0.03. The mean estimates performance on new data; the spread says how much that estimate depends on which rows ended up in the test fold. A large spread means more data or more folds are needed."
+      },
+      {
+        "title": "The confusion matrix per class",
+        "body": "For 30 iris test flowers, confusion_matrix(y_true, y_pred) might be [[10, 0, 0], [0, 9, 1], [0, 1, 9]]: rows are true classes, columns predictions. One versicolor was called virginica and one virginica was called versicolor.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                10,
+                0,
+                0
+              ],
+              [
+                0,
+                9,
+                1
+              ],
+              [
+                0,
+                1,
+                9
+              ]
+            ],
+            "labels": [
+              "true setosa",
+              "true versicolor",
+              "true virginica"
+            ],
+            "highlight": [
+              [
+                1,
+                2
+              ],
+              [
+                2,
+                1
+              ]
+            ],
+            "caption": "Off-diagonal cells are the mistakes"
+          }
+        }
+      },
+      {
+        "title": "Per-class metrics from columns and rows",
+        "body": "For versicolor, precision = 9 / (column total 10) = 0.9 and recall = 9 / (row total 10) = 0.9, so F1 = 0.9; setosa scores 1.0 on all three. classification_report prints these for every class plus accuracy, here 28/30 = 0.93.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "setosa F1",
+                "value": 1.0
+              },
+              {
+                "variable": "versicolor F1",
+                "value": 0.9
+              },
+              {
+                "variable": "virginica F1",
+                "value": 0.9
+              },
+              {
+                "variable": "accuracy",
+                "value": 0.93
+              }
+            ],
+            "caption": "From the matrix above"
+          }
+        }
+      },
+      {
+        "title": "Macro and weighted averages",
+        "body": "The macro average gives each class an equal vote: (1.0 + 0.9 + 0.9) / 3 = 0.93. The weighted average weights each class by how many true samples it has. When one class is rare, macro shows how it really does, while weighted is dominated by the common classes."
+      }
+    ],
+    "takeaway": "One split gives one noisy number; cross-validation gives a distribution. Look at the mean and the spread, then open the confusion matrix to see which classes are confused, because an average can hide a class the model gets wrong."
+  }
 }

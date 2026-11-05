@@ -200,5 +200,92 @@
       "correct": 2
     }
   ],
-  "uth_example": "import math\n\ndef sigmoid(z):\n    return 1 / (1 + math.exp(-z))\n\nspam_scores = {\"win money now\": 4.2, \"meeting at 3\": -1.7, \"free trial ends\": 0.4}\nthreshold = 0.5\n\ndecisions = {}\nfor subject, score in spam_scores.items():\n    p = round(sigmoid(score), 3)\n    decisions[subject] = {\"p_spam\": p, \"spam\": p >= threshold}\n\nprint(\"sigmoid(0) =\", sigmoid(0))\nfor subject, d in decisions.items():\n    print(f\"{subject:16} {d}\")\n"
+  "uth_example": "import math\n\ndef sigmoid(z):\n    return 1 / (1 + math.exp(-z))\n\nspam_scores = {\"win money now\": 4.2, \"meeting at 3\": -1.7, \"free trial ends\": 0.4}\nthreshold = 0.5\n\ndecisions = {}\nfor subject, score in spam_scores.items():\n    p = round(sigmoid(score), 3)\n    decisions[subject] = {\"p_spam\": p, \"spam\": p >= threshold}\n\nprint(\"sigmoid(0) =\", sigmoid(0))\nfor subject, d in decisions.items():\n    print(f\"{subject:16} {d}\")\n",
+  "under_the_hood": {
+    "summary": "The sigmoid computes 1 / (1 + e^(-z)): e^(-z) is huge for very negative z and tiny for very positive z, so the output is squeezed smoothly between 0 and 1 with 0.5 exactly at z = 0.",
+    "steps": [
+      {
+        "title": "Follow e^(-z) as z changes",
+        "body": "At z = 0, e^0 = 1, so sigmoid = 1/2 = 0.5. At z = 2, e^(-2) = 0.135, giving 1/1.135 = 0.881. At z = -2, e^2 = 7.39, giving 1/8.39 = 0.119. The exponential does all the work; the 1 + and the division keep the result inside (0, 1).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                -2,
+                0.119
+              ],
+              [
+                0,
+                0.5
+              ],
+              [
+                2,
+                0.881
+              ],
+              [
+                4.2,
+                0.985
+              ]
+            ],
+            "labels": [
+              "z",
+              "z",
+              "z",
+              "z"
+            ],
+            "highlight": [
+              1
+            ],
+            "caption": "Pairs of z and sigmoid(z)"
+          }
+        }
+      },
+      {
+        "title": "Symmetry and the log-odds",
+        "body": "sigmoid(-z) = 1 - sigmoid(z): 0.119 is exactly 1 - 0.881. Its inverse is the logit, z = ln(p / (1 - p)), the log-odds. A probability of 0.8 corresponds to z = ln(4) = 1.386. So a model's raw score is really 'log-odds of class 1', which is why logistic regression coefficients are read as changes in log-odds."
+      },
+      {
+        "title": "The slope is sigmoid times one minus sigmoid",
+        "body": "The derivative is sigmoid(z) * (1 - sigmoid(z)). At z = 0 it is 0.5 x 0.5 = 0.25, the largest it gets. At z = 4 it is only 0.018. Gradient descent multiplies by this slope, so learning nearly stops when a neuron's input is far from 0.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0,
+                0.25
+              ],
+              [
+                2,
+                0.105
+              ],
+              [
+                4,
+                0.018
+              ]
+            ],
+            "labels": [
+              "z",
+              "z",
+              "z"
+            ],
+            "highlight": [
+              0
+            ],
+            "caption": "sigmoid'(z) is at most 0.25"
+          }
+        }
+      },
+      {
+        "title": "Vanishing gradients in deep stacks",
+        "body": "Backpropagation multiplies one such slope per layer. Through 10 sigmoid layers the factor is at most 0.25^10, about one in a million, so early layers barely learn. That is why hidden layers in modern networks mostly use ReLU, while sigmoid stays at the output of binary classifiers."
+      },
+      {
+        "title": "Computing it safely",
+        "body": "math.exp(-z) overflows for z below about -709. Libraries avoid this by using e^z / (1 + e^z) when z is negative, which is mathematically identical; scipy.special.expit does this. When the sigmoid feeds a cross-entropy loss, frameworks combine the two (for example PyTorch's BCEWithLogitsLoss) for the same reason."
+      }
+    ],
+    "takeaway": "The sigmoid turns a score into a probability through one exponential. Remember three numbers: 0.5 at zero, a maximum slope of 0.25, and near-flat tails, which explain both its use as an output and its weakness in deep hidden layers."
+  }
 }

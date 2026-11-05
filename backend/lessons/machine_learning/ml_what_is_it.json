@@ -407,5 +407,117 @@
     "path_memberships": [
       "ml_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Machine learning means a program with adjustable numbers that changes those numbers to score better on examples: matching labels in supervised learning, fitting structure in unsupervised learning, collecting reward in reinforcement learning.",
+    "steps": [
+      {
+        "title": "A model is a function with knobs",
+        "body": "A spam filter might compute score = 2.1*(count of 'free') + 1.4*(has link) - 3.0 and call the email spam if the score is above 0. Those numbers 2.1, 1.4, -3.0 are the parameters. A programmer writes the shape of the function; learning finds the numbers."
+      },
+      {
+        "title": "Supervised: compare to the label, adjust",
+        "body": "With labelled examples, each prediction is compared to the true answer by a loss such as squared error. The parameters are nudged in the direction that lowers the loss, usually by gradient descent, over thousands of examples. Classification predicts a category, regression a number.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "example + label",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "model predicts",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "loss = how wrong",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "adjust parameters to lower loss",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "next example",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "The supervised learning loop"
+          }
+        }
+      },
+      {
+        "title": "Unsupervised: the data is its own target",
+        "body": "Without labels the objective is defined on the inputs. K-Means, for instance, moves cluster centres to lower the total squared distance from points to their centre, and PCA finds directions that keep the most variance. The algorithm finds structure; you interpret it."
+      },
+      {
+        "title": "Reinforcement: learn from reward",
+        "body": "An agent acts, the environment returns a reward and a new state. Q-learning keeps a value Q for each state-action pair and updates Q = Q + alpha * (reward + gamma * best next Q - Q). With Q = 0, reward 1, gamma 0.9, best next Q 0.5 and alpha 0.5 the new Q is 0.725. Repeated over many episodes, good actions gain value.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "Q old",
+                "value": 0
+              },
+              {
+                "variable": "reward",
+                "value": 1
+              },
+              {
+                "variable": "gamma * next",
+                "value": 0.45
+              },
+              {
+                "variable": "alpha",
+                "value": 0.5
+              },
+              {
+                "variable": "Q new",
+                "value": 0.725
+              }
+            ],
+            "caption": "One Q-learning update"
+          }
+        }
+      },
+      {
+        "title": "Success means generalising",
+        "body": "A model that memorised the training examples can score perfectly and still fail on new ones. That is why data is split, the model is judged on examples it never trained on, and the gap between training and test scores is watched as closely as the scores themselves."
+      }
+    ],
+    "takeaway": "All three kinds of learning share one engine: a scoring rule and a procedure that adjusts parameters to improve the score. What changes is where the score comes from: labels, the data's own structure, or rewards."
   }
 }

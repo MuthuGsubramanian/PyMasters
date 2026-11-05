@@ -169,5 +169,77 @@
     "category": "regex",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "The re engine tries to match the pattern at a start position and, for search(), moves the start one character right after each failure; match(), fullmatch() and findall() are different ways of driving that same loop.",
+    "steps": [
+      {
+        "title": "A pattern becomes engine code",
+        "body": "`re.search(r\"\\d+\", \"room 237\")` compiles `\\d+` into a small program for the C engine `_sre`: 'one or more characters from the digit class'. The same compiled program is used no matter which function you call."
+      },
+      {
+        "title": "search() slides the start position",
+        "body": "The engine tries the program at index 0: 'r' is not a digit, fail. It tries index 1, 2, 3, 4 (the space): fail. At index 5 '2' matches, the `+` keeps taking '3' and '7', and the match is `'237'` with span (5, 8).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "r",
+              "o",
+              "o",
+              "m",
+              " ",
+              "2",
+              "3",
+              "7"
+            ],
+            "highlight": [
+              5,
+              6,
+              7
+            ],
+            "label": "search: first success at index 5"
+          }
+        }
+      },
+      {
+        "title": "match() and fullmatch() pin the ends",
+        "body": "`re.match` tries only index 0, so `re.match(r\"\\d+\", \"room 237\")` returns None. `re.fullmatch` also requires the match to end at the last character, which makes it the right tool for validation like 'is this whole string a phone number?'.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Function",
+              "code": "re.search(p, s)\nre.match(p, s)\nre.fullmatch(p, s)\nre.findall(p, s)"
+            },
+            "right": {
+              "label": "Where the engine may match",
+              "code": "any start position, first hit\nstart at index 0 only\nindex 0 to the very end\nevery non-overlapping hit"
+            }
+          }
+        }
+      },
+      {
+        "title": "findall() keeps going",
+        "body": "`re.findall(r\"\\d+\", \"a1 b22 c3\")` restarts the search right after each match's end, collecting '1', '22', '3'. Matches never overlap. `finditer` does the same lazily and gives Match objects with positions.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> re.findall(r'\\d+', 'a1 b22 c3')",
+              "['1', '22', '3']",
+              ">>> [m.span() for m in re.finditer(r'\\d+', 'a1 b22 c3')]",
+              "[(1, 2), (4, 6), (8, 9)]"
+            ]
+          }
+        }
+      },
+      {
+        "title": "A Match object or None",
+        "body": "Successful calls return a Match holding the string, the span and the groups; failures return None. That is why the idiom is `if m := re.search(...):` before calling `m.group()`, which would otherwise raise AttributeError on None."
+      }
+    ],
+    "takeaway": "One engine, one compiled pattern, four ways to drive it. Pick search to find, fullmatch to validate, findall or finditer to extract, and always handle the None case."
+  }
 }

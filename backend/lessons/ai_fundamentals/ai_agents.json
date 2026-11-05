@@ -376,5 +376,124 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "An agent is a loop in your code: send the conversation plus tool descriptions to the model, run any tool it asks for, append the result to the conversation, and call the model again until it gives a final answer or hits a step limit.",
+    "steps": [
+      {
+        "title": "The model only asks; your code acts",
+        "body": "You describe each tool with a name, a purpose and an input schema. The model cannot run anything. When it decides a tool is needed, it replies with a structured request such as calculator with input {'expression': '0.15 * 840'}, and your program decides whether and how to execute it."
+      },
+      {
+        "title": "Think, act, observe, repeat",
+        "body": "Task: 'What is a 15% tip on the bill in receipt.txt?' Turn 1: the model requests read_file('receipt.txt'); your code returns 'Total: 840'. Turn 2: it requests calculator('0.15 * 840'); you return 126. Turn 3: with both results in context it answers 'The tip is 126.' Three model calls, two tool runs.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "task + tool list -> model",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "tool requested?",
+                "type": "decision"
+              },
+              {
+                "id": "n2",
+                "label": "run tool in your code",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "append result to messages",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "call model again",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "final answer",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "The agent loop"
+          }
+        }
+      },
+      {
+        "title": "The whole history goes back every turn",
+        "body": "The model is stateless, so each call resends the task, every earlier request and every tool result. Context grows with each step: a 5-step task sends the first message 5 times. Long tool outputs should be trimmed or summarised before appending, or they crowd out the instructions.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "call 1",
+                "task"
+              ],
+              [
+                "call 2",
+                "task, read_file request, 'Total: 840'"
+              ],
+              [
+                "call 3",
+                "task, ..., calculator request, 126"
+              ]
+            ],
+            "labels": [
+              "turn 1",
+              "turn 2",
+              "turn 3"
+            ],
+            "caption": "What each model call contains"
+          }
+        }
+      },
+      {
+        "title": "Guard rails live in the loop",
+        "body": "Because the loop is yours, so are the limits: a maximum number of steps so a confused agent cannot run forever, timeouts on tools, validation of tool inputs, and a human confirmation before irreversible actions such as sending email or deleting files."
+      },
+      {
+        "title": "Planning and memory are prompt patterns",
+        "body": "'Planning' usually means the model first writes a list of steps into the conversation and then works through it. 'Memory' means storing facts outside the conversation, in a file or database, and inserting the relevant ones into later prompts. Both are built from the same ingredients: text in context and tools."
+      }
+    ],
+    "takeaway": "An agent is not a smarter model but a loop around one: the model chooses the next action, your code executes it and feeds back the result. Keep tools narrow, limit the steps, and confirm anything you cannot undo."
   }
 }

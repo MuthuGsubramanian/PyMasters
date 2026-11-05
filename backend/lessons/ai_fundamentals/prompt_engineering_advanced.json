@@ -357,5 +357,123 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Advanced control works on two levels: the system prompt conditions every reply because it sits first in the context, and sampling settings such as temperature, top_p, max_tokens and stop sequences decide how each next token is picked and when generation ends.",
+    "steps": [
+      {
+        "title": "The system prompt sits first",
+        "body": "Chat models are trained to treat the system message as standing instructions that outrank ordinary user requests. 'You are a Tamil-English translator. Only output translations.' is placed before every user turn, so every token of every reply is predicted with it in view."
+      },
+      {
+        "title": "Temperature reshapes probabilities",
+        "body": "Logits are divided by the temperature before softmax. At low values the top token takes almost all the probability, so output becomes nearly repeatable; at higher values lower-ranked tokens get real chances. Translation and extraction suit low settings, brainstorming higher ones."
+      },
+      {
+        "title": "top_p keeps a probability budget",
+        "body": "Nucleus sampling sorts tokens by probability and keeps the smallest set whose total reaches top_p. With probabilities [0.5, 0.3, 0.15, 0.05] and top_p = 0.8, only the first two are kept and renormalised to [0.625, 0.375]; the long tail can never be sampled. Usually you tune temperature or top_p, not both.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0.5,
+                0.3,
+                0.15,
+                0.05
+              ],
+              [
+                0.625,
+                0.375,
+                0,
+                0
+              ]
+            ],
+            "labels": [
+              "before",
+              "after top_p 0.8"
+            ],
+            "highlight": [
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "caption": "Nucleus sampling cuts the tail"
+          }
+        }
+      },
+      {
+        "title": "max_tokens and stop end generation",
+        "body": "max_tokens caps the reply; hitting it gives a truncated answer with finish reason 'length'. Stop sequences end generation as soon as a given string would be produced, for example '###' or '\\n\\n', which keeps the model from running past the part you need.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "system prompt + user turn",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "score next token",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "temperature / top_p choose one",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "stop sequence or max_tokens?",
+                "type": "decision"
+              },
+              {
+                "id": "n4",
+                "label": "return reply",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Where each control acts"
+          }
+        }
+      },
+      {
+        "title": "Delimiters and format specs",
+        "body": "Wrapping input in clear delimiters such as XML-style tags or triple quotes tells the model where the data starts and ends, and a precise output spec ('return JSON with keys sentiment and confidence') narrows the space of likely replies. For guaranteed structure, use the API's structured output features."
+      }
+    ],
+    "takeaway": "The system prompt sets what a good answer is; sampling settings decide how adventurous each token choice may be and when to stop. Tune both deliberately, and test changes against a fixed set of examples."
   }
 }

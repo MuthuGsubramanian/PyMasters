@@ -214,5 +214,92 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "pytest collects test files and functions by name, rewrites their assert statements at import time so failures can show values, injects fixtures by matching parameter names, and records each test's outcome.",
+    "steps": [
+      {
+        "title": "Collection by naming convention",
+        "body": "`pytest` walks the folder tree looking for files named `test_*.py` or `*_test.py`, imports them, and collects functions named `test_*` (and methods of classes named `Test*`). Each becomes a test item with an id like `test_calc.py::test_add`.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "walk folders",
+                "detail": "find test_*.py"
+              },
+              {
+                "label": "import module",
+                "detail": "assert rewriting applied"
+              },
+              {
+                "label": "collect",
+                "detail": "test_* functions"
+              },
+              {
+                "label": "run each",
+                "detail": "pass / fail / error"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Assert statements are rewritten",
+        "body": "pytest installs an import hook that rewrites the syntax tree of test modules before they are compiled. A plain `assert add(2, 3) == 6` is expanded so that, on failure, pytest can report the intermediate values instead of a bare AssertionError.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "    def test_add():",
+              ">       assert add(2, 3) == 6",
+              "E       assert 5 == 6",
+              "E        +  where 5 = add(2, 3)"
+            ],
+            "caption": "Rewritten assert shows what each side was"
+          }
+        }
+      },
+      {
+        "title": "Fixtures are injected by name",
+        "body": "If a test function has a parameter called `db`, pytest looks for a fixture function named `db`, calls it and passes the result in. A fixture that uses `yield` runs its setup before the test and its teardown after, even if the test fails.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "@pytest.fixture\ndef db():\n    conn = connect()\n    yield conn\n    conn.close()\n\ndef test_save(db):\n    db.save('x')",
+            "highlightSequence": [
+              3,
+              7,
+              8,
+              5
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Setup runs before the test."
+              },
+              {
+                "description": "pytest sees the parameter name db and calls the fixture."
+              },
+              {
+                "description": "The test gets the yielded connection."
+              },
+              {
+                "description": "Teardown resumes after yield, pass or fail."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Each test is isolated",
+        "body": "A failing assert raises AssertionError inside that one test; pytest catches it, records a failure with the traceback and moves to the next test. Any other exception is reported as a failure too, so one broken test does not stop the run."
+      },
+      {
+        "title": "The exit code tells CI",
+        "body": "At the end pytest prints a summary and exits with status 0 if all tests passed, 1 if any failed. Continuous-integration systems read that exit code to mark a commit green or red."
+      }
+    ],
+    "takeaway": "pytest works by convention: names decide what is a test, parameter names decide which fixtures run, and rewritten asserts explain failures. Follow the conventions and the tool does the plumbing."
+  }
 }

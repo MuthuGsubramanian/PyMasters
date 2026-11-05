@@ -367,5 +367,89 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Conversions like int(), float() and str() are constructors: each one reads the source object and builds a brand-new object of the target type.",
+    "steps": [
+      {
+        "title": "A conversion builds a new object",
+        "body": "`int('42')` does not change the string. It calls the int type, which parses the characters and creates a new int object 42. The original '42' is still a str. That is why you must assign the result: `age = int(text)`."
+      },
+      {
+        "title": "Parsing text, character by character",
+        "body": "`int('  42\\n')` strips surrounding whitespace, then reads each digit and accumulates value = value*10 + digit. Any character that is not a digit (like the '.' in '4.2') makes it raise `ValueError: invalid literal for int() with base 10`.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "int('  42 ')    # 42, whitespace ignored\nint('4.2')      # ValueError\nint(float('4.2'))  # 4\nint('ff', 16)   # 255",
+            "highlightSequence": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Whitespace around the digits is skipped."
+              },
+              {
+                "description": "A dot is not a digit in base 10, so parsing fails."
+              },
+              {
+                "description": "Parse as float first, then truncate."
+              },
+              {
+                "description": "A base argument changes which characters count as digits."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "float to int truncates toward zero",
+        "body": "`int(3.9)` gives 3 and `int(-3.9)` gives -3: the fractional part is cut off, not rounded. Use `round()` when you want the nearest whole number; note that `round(2.5)` is 2 because Python rounds halves to the even neighbour.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "int() truncates",
+              "code": "int(3.9)   -> 3\nint(-3.9)  -> -3"
+            },
+            "right": {
+              "label": "round() to nearest even",
+              "code": "round(3.9)  -> 4\nround(2.5)  -> 2\nround(3.5)  -> 4"
+            }
+          }
+        }
+      },
+      {
+        "title": "bool() asks the object about itself",
+        "body": "`bool(x)` calls `x.__bool__()` if the type defines it; otherwise it calls `__len__()` and treats 0 as False. So `0`, `0.0`, `''`, `[]`, `{}` and `None` are False and almost everything else is True, including the string 'False'."
+      },
+      {
+        "title": "str() asks for the object's text form",
+        "body": "`str(x)` calls `type(x).__str__`, which for numbers formats the digits: `str(3.14)` is '3.14'. For a float, Python prints the shortest text that turns back into exactly the same float, which is why `str(0.1)` shows '0.1' even though the stored value is not exactly 0.1.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "str(x)",
+                "detail": "call type(x).__str__"
+              },
+              {
+                "label": "no __str__?",
+                "detail": "fall back to __repr__"
+              },
+              {
+                "label": "result",
+                "detail": "a new str object"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "A conversion never edits the value you pass in; it reads it and builds a new object. Remember the rules that surprise people: int() truncates, round() rounds halves to even, and any non-empty string is truthy."
+  }
 }

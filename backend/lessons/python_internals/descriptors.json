@@ -168,5 +168,95 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "class NonNegative:\n    def __set_name__(self, owner, name):\n        self.name = \"_\" + name\n    def __get__(self, obj, objtype=None):\n        return getattr(obj, self.name)\n    def __set__(self, obj, value):\n        if value < 0:\n            raise ValueError(f\"{self.name[1:]} must be >= 0\")\n        setattr(obj, self.name, value)\n\nclass Item:\n    stock = NonNegative()            # the descriptor lives on the class\n    def __init__(self, stock):\n        self.stock = stock           # goes through __set__\n\npen = Item(10)\npen.stock = 4\ntry:\n    pen.stock = -1\nexcept ValueError as err:\n    problem = str(err)\nprint(pen.stock, vars(pen), problem)\n"
+  "uth_example": "class NonNegative:\n    def __set_name__(self, owner, name):\n        self.name = \"_\" + name\n    def __get__(self, obj, objtype=None):\n        return getattr(obj, self.name)\n    def __set__(self, obj, value):\n        if value < 0:\n            raise ValueError(f\"{self.name[1:]} must be >= 0\")\n        setattr(obj, self.name, value)\n\nclass Item:\n    stock = NonNegative()            # the descriptor lives on the class\n    def __init__(self, stock):\n        self.stock = stock           # goes through __set__\n\npen = Item(10)\npen.stock = 4\ntry:\n    pen.stock = -1\nexcept ValueError as err:\n    problem = str(err)\nprint(pen.stock, vars(pen), problem)\n",
+  "under_the_hood": {
+    "summary": "On every `obj.attr`, object.__getattribute__ first finds attr on the class via the MRO; if that class attribute has __get__ and __set__ it wins, otherwise the instance __dict__ wins, then non-data descriptors and plain class attributes.",
+    "steps": [
+      {
+        "title": "Step 1: look on the type first",
+        "body": "`obj.x` calls `type(obj).__getattribute__(obj, 'x')`. For normal classes that is `object.__getattribute__`, which first searches `type(obj).__mro__` for a class attribute named 'x' and remembers what it finds, without using it yet."
+      },
+      {
+        "title": "Data descriptors beat the instance",
+        "body": "If the class attribute has `__set__` or `__delete__` (a data descriptor, such as a `property`), Python calls its `__get__(obj, type(obj))` and returns that, ignoring `obj.__dict__`. That is how a property keeps control even if the instance dict has a key with the same name.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "class attr is data descriptor?",
+                "detail": "call its __get__"
+              },
+              {
+                "label": "else: key in obj.__dict__?",
+                "detail": "return that value"
+              },
+              {
+                "label": "else: class attr has __get__?",
+                "detail": "call __get__ (non-data)"
+              },
+              {
+                "label": "else: class attr exists?",
+                "detail": "return it as is"
+              },
+              {
+                "label": "else",
+                "detail": "__getattr__ or AttributeError"
+              }
+            ],
+            "caption": "object.__getattribute__ precedence"
+          }
+        }
+      },
+      {
+        "title": "Functions are non-data descriptors",
+        "body": "A plain function defines only `__get__`. `Circle.area` found on the class is turned by `function.__get__(obj, Circle)` into a bound method that stores the function and the instance. That is where `self` comes from. Since there is no `__set__`, assigning `obj.area = 5` puts a key in the instance dict and shadows the method.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Data descriptor (property)",
+              "code": "has __get__ + __set__\nbeats obj.__dict__\nobj.x = 1 calls __set__"
+            },
+            "right": {
+              "label": "Non-data descriptor (function)",
+              "code": "has only __get__\nloses to obj.__dict__\nobj.x = 1 shadows it"
+            }
+          }
+        }
+      },
+      {
+        "title": "property is a descriptor class",
+        "body": "`@property def radius(self)` creates a `property` object holding fget (and later fset via `@radius.setter`). Its `__get__` calls fget(obj); its `__set__` calls fset(obj, value) or raises `AttributeError` if there is no setter. You could write the same class in a dozen lines of Python.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "class Positive:\n    def __set_name__(self, owner, name):\n        self.key = '_' + name\n    def __get__(self, obj, objtype=None):\n        return getattr(obj, self.key)\n    def __set__(self, obj, value):\n        if value <= 0: raise ValueError(value)\n        setattr(obj, self.key, value)",
+            "highlightSequence": [
+              2,
+              4,
+              6
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Called once when the owner class is created: learn the attribute name."
+              },
+              {
+                "description": "obj.radius reads go through here."
+              },
+              {
+                "description": "obj.radius = v writes go through here and validate."
+              }
+            ],
+            "caption": "A hand-written validating descriptor"
+          }
+        }
+      },
+      {
+        "title": "__slots__ and classmethod use the same hook",
+        "body": "`__slots__ = ('x', 'y')` replaces the instance dict with fixed storage and puts a member descriptor for each name on the class. `classmethod` and `staticmethod` are descriptors whose `__get__` binds the class or nothing instead of the instance."
+      }
+    ],
+    "takeaway": "Attribute access is a fixed algorithm: data descriptors, then the instance dict, then non-data descriptors, then plain class attributes. property, methods, classmethod and slots are all just objects plugging into that order."
+  }
 }

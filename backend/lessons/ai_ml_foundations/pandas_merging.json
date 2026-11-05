@@ -284,5 +284,140 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "merge builds a hash table from one table's key column, looks up every key from the other table, and emits one output row per matching pair; the join type decides what happens to keys without a partner.",
+    "steps": [
+      {
+        "title": "Build and probe a hash table",
+        "body": "For orders.merge(customers, on='cust_id'), pandas hashes the keys of one side, say customers 10, 11, 12, and then looks up each order's cust_id: 10, 11, 10. Each lookup is constant time on average, so the join scales roughly with the number of rows, not rows times rows.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "hash customers.cust_id {10, 11, 12}",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "probe with order 1: cust 10 -> Alice",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "order 2: cust 11 -> Bob",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "order 3: cust 10 -> Alice",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "3 joined rows",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "An inner merge, step by step"
+          }
+        }
+      },
+      {
+        "title": "how= decides unmatched keys",
+        "body": "inner keeps only keys present on both sides: 3 rows, Charlie (12) has no orders and is dropped. left keeps every order. right keeps every customer, so Charlie appears with NaN for order_id and amount. outer keeps everything from both. indicator=True adds a _merge column saying where each row came from.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "inner",
+                3,
+                "Charlie dropped"
+              ],
+              [
+                "left",
+                3,
+                "all orders"
+              ],
+              [
+                "right",
+                4,
+                "Charlie with NaN"
+              ],
+              [
+                "outer",
+                4,
+                "all keys"
+              ]
+            ],
+            "labels": [
+              "how",
+              "how",
+              "how",
+              "how"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "Row counts for orders x customers"
+          }
+        }
+      },
+      {
+        "title": "Duplicate keys multiply rows",
+        "body": "Every matching pair produces a row. If key 10 appears 3 times on the left and 2 times on the right, the output has 3 x 2 = 6 rows for that key. Unexpected row growth after a merge almost always means duplicate keys; validate='many_to_one' makes pandas raise an error instead."
+      },
+      {
+        "title": "join and concat",
+        "body": "df.join(other) is merge on the index instead of on a column. pd.concat([df1, df2]) does not match keys at all: it stacks rows and aligns columns by name, filling NaN where a column is missing in one frame. ignore_index=True renumbers the rows 0 to n-1.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "merge / join",
+              "code": "match rows by key\nmay add or drop rows\nneeds key columns or index"
+            },
+            "right": {
+              "label": "concat",
+              "code": "stack rows (axis=0) or columns (axis=1)\nno key matching\naligns by column names"
+            },
+            "caption": "Matching versus stacking"
+          }
+        }
+      },
+      {
+        "title": "Check keys before you trust the result",
+        "body": "Mismatched dtypes make keys fail to match: 10 as int and '10' as string are different keys. Strip spaces and fix types first, then compare row counts before and after; a left merge should keep the left row count unless the right side has duplicate keys."
+      }
+    ],
+    "takeaway": "A merge is a hash lookup that emits every matching pair. Decide which rows you must keep (how=), make sure keys are clean and of the same type, and verify the row count after every join."
+  }
 }

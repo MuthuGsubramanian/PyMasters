@@ -327,5 +327,131 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A language model reads your prompt as tokens and predicts a probability for every possible next token; each word of instruction, role and format shifts those probabilities, which is why wording changes the answer.",
+    "steps": [
+      {
+        "title": "The prompt becomes tokens",
+        "body": "The tokenizer splits text into sub-word pieces and maps each to an integer id; 'Explain Python sorting' might become 3 or 4 tokens. Chat APIs wrap the system and user messages in special formatting tokens, so a role instruction is simply more tokens at the start of the sequence."
+      },
+      {
+        "title": "The model scores every next token",
+        "body": "After reading all tokens, the model outputs one score (logit) per vocabulary entry, often 50,000 or more. Softmax turns scores into probabilities: logits [2.0, 1.0, 0.1] for three candidates become [0.66, 0.24, 0.10]. The reply is built one token at a time, each new token appended and the scoring repeated.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "'sort'",
+                2.0,
+                0.66
+              ],
+              [
+                "'list'",
+                1.0,
+                0.24
+              ],
+              [
+                "'the'",
+                0.1,
+                0.1
+              ]
+            ],
+            "labels": [
+              "cand 1",
+              "cand 2",
+              "cand 3"
+            ],
+            "caption": "Logits and their softmax probabilities"
+          }
+        }
+      },
+      {
+        "title": "Temperature sharpens or flattens",
+        "body": "Sampling divides logits by the temperature before softmax. At 0.5 the logits become [4.0, 2.0, 0.2] and the probabilities [0.86, 0.12, 0.02]: the top choice dominates. Near 0 the model almost always takes the top token; higher temperatures spread the probability and produce more varied text.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "temperature 1.0",
+              "code": "[0.66, 0.24, 0.10]"
+            },
+            "right": {
+              "label": "temperature 0.5",
+              "code": "[0.86, 0.12, 0.02]"
+            },
+            "caption": "Same logits, different temperature"
+          }
+        }
+      },
+      {
+        "title": "Specific prompts narrow the distribution",
+        "body": "'Tell me about sorting' is consistent with thousands of continuations. 'Explain Python's sort() to a beginner: what it does, syntax, one code example' makes tokens about list.sort, key= and short examples far more probable than history or theory. Role, audience and format are all conditioning text."
+      },
+      {
+        "title": "Everything must fit in the context window",
+        "body": "The model only sees tokens inside its context window, which includes the prompt and the reply it is writing. Instructions placed clearly, with the task stated once and the output format shown, are easier for attention to use than the same facts scattered through a long prompt.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "system + user text",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "tokenize",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "model scores next token",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "sample (temperature)",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "append, repeat until stop",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "How a reply is generated"
+          }
+        }
+      }
+    ],
+    "takeaway": "A prompt does not command the model; it conditions a probability distribution. Clear task, audience, constraints and format move probability towards the answer you want, and temperature controls how far sampling strays from the top choice."
+  }
 }

@@ -167,5 +167,93 @@
     "category": "async",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "`await coro` runs that coroutine inline and waits for it, so awaits in a row are sequential; gather first wraps every coroutine in a Task so they all start, then returns a future that completes when every child is done, with results in argument order.",
+    "steps": [
+      {
+        "title": "await alone is sequential",
+        "body": "`a = await fetch(1); b = await fetch(2)` runs `fetch(1)` to completion inside the current task before `fetch(2)` even starts. Awaiting a bare coroutine creates no new task. Ten awaits of one second each in a row take ten seconds.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Sequential awaits",
+              "code": "a = await fetch(1)\nb = await fetch(2)\nc = await fetch(3)\n# 3 x 1s = ~3s"
+            },
+            "right": {
+              "label": "gather",
+              "code": "a, b, c = await asyncio.gather(\n    fetch(1), fetch(2), fetch(3))\n# ~1s, the longest one"
+            }
+          }
+        }
+      },
+      {
+        "title": "gather wraps each coroutine in a Task",
+        "body": "`asyncio.gather(square(1), square(2), square(3))` calls `ensure_future` on each argument, which creates three Tasks and schedules their first steps. All three now exist on the loop independently and run whenever the current task awaits.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "gather(c1, c2, c3)",
+                "detail": "ensure_future on each"
+              },
+              {
+                "label": "3 Tasks scheduled",
+                "detail": "run concurrently"
+              },
+              {
+                "label": "each finishes",
+                "detail": "done callback fires"
+              },
+              {
+                "label": "count == 3",
+                "detail": "outer future gets results"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "A counting future collects results",
+        "body": "gather returns a special future and attaches a done-callback to every child. Each callback increments a counter. When the counter reaches the number of children, the outer future's result is set to the children's results in the order you passed them, not the order they finished. That is why the lesson prints `[1, 4, 9]`.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "finished so far",
+                "values": [
+                  "0",
+                  "1",
+                  "2",
+                  "3"
+                ]
+              },
+              {
+                "variable": "results list",
+                "values": [
+                  "[?, ?, ?]",
+                  "[?, 4, ?]",
+                  "[1, 4, ?]",
+                  "[1, 4, 9]"
+                ]
+              }
+            ],
+            "caption": "Finishing order may differ; result order never does"
+          }
+        }
+      },
+      {
+        "title": "Errors and return_exceptions",
+        "body": "By default the first child exception is raised from `await gather(...)` immediately, but the other tasks are not cancelled; they keep running in the background. With `return_exceptions=True`, exceptions are placed into the results list instead, so you get one entry per input."
+      },
+      {
+        "title": "Concurrency needs suspension points",
+        "body": "Tasks only overlap at awaits that actually wait. In the lesson, `square` never waits, so the three tasks simply run one after another within a single loop iteration. With real I/O, each task pauses at its network call and the waits overlap."
+      }
+    ],
+    "takeaway": "await means wait here; gather means start them all, then wait for all. Use gather (or a TaskGroup) whenever the operations are independent, and remember results come back in argument order."
+  }
 }

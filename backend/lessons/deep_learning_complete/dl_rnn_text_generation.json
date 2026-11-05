@@ -14,7 +14,7 @@
   },
   "xp_reward": 85,
   "story_variants": {
-    "en": "## Vaathiyaar's Typewriter\n\nVaathiyaar sits at an old typewriter. \"After reading thousands of pages, your brain can predict the next word. Given 'The cat sat on the', you think 'mat'. A character-level RNN does the same — one character at a time.\"\n\n### Character-Level Text Generation\n\n```python\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# Sample text corpus\ntext = \"\"\"To be or not to be that is the question whether tis nobler in the mind\nto suffer the slings and arrows of outrageous fortune or to take arms against\na sea of troubles and by opposing end them\"\"\"\n\n# Build character vocabulary\nchars = sorted(set(text))\nchar_to_idx = {c: i for i, c in enumerate(chars)}\nidx_to_char = {i: c for i, c in enumerate(chars)}\nvocab_size = len(chars)\n\nprint(f'Vocabulary: {vocab_size} unique characters')\nprint(f'Characters: {chars}')\n\n# Encode text\nencoded = torch.tensor([char_to_idx[c] for c in text], dtype=torch.long)\n\n# Create training sequences\ndef make_batches(data, seq_len=40, batch_size=32):\n    num_batches = len(data) // (seq_len * batch_size)\n    data = data[:num_batches * seq_len * batch_size]\n    data = data.view(batch_size, -1)\n    for i in range(0, data.size(1) - seq_len, seq_len):\n        x = data[:, i:i+seq_len]\n        y = data[:, i+1:i+seq_len+1]\n        yield x, y\n\n# Model\nclass CharRNN(nn.Module):\n    def __init__(self, vocab_size, embed_dim, hidden_dim, num_layers):\n        super().__init__()\n        self.embedding = nn.Embedding(vocab_size, embed_dim)\n        self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers,\n                           batch_first=True, dropout=0.2)\n        self.fc = nn.Linear(hidden_dim, vocab_size)\n    \n    def forward(self, x, hidden=None):\n        x = self.embedding(x)\n        output, hidden = self.lstm(x, hidden)\n        logits = self.fc(output)\n        return logits, hidden\n\nmodel = CharRNN(vocab_size, embed_dim=64, hidden_dim=128, num_layers=2)\ncriterion = nn.CrossEntropyLoss()\noptimizer = torch.optim.Adam(model.parameters(), lr=0.002)\n\n# Generation function\ndef generate(model, start_str, length=200, temperature=0.8):\n    model.eval()\n    chars_generated = list(start_str)\n    x = torch.tensor([[char_to_idx[c] for c in start_str]])\n    hidden = None\n    \n    with torch.no_grad():\n        for _ in range(length):\n            logits, hidden = model(x, hidden)\n            logits = logits[0, -1] / temperature\n            probs = F.softmax(logits, dim=0)\n            next_idx = torch.multinomial(probs, 1).item()\n            chars_generated.append(idx_to_char[next_idx])\n            x = torch.tensor([[next_idx]])\n    \n    return ''.join(chars_generated)\n\nprint(generate(model, 'to ', length=100))\n```\n\n> **Temperature:** Controls randomness. Low (0.2) = conservative/repetitive. High (1.5) = creative/chaotic. 0.8 is a good default.",
+    "en": "## Vaathiyaar's Typewriter\n\nVaathiyaar sits at an old typewriter. \"After reading thousands of pages, your brain can predict the next word. Given 'The cat sat on the', you think 'mat'. A character-level RNN does the same — one character at a time.\"\n\n### Character-Level Text Generation\n\n```python\nimport torch\nimport torch.nn as nn\nimport torch.nn.functional as F\n\n# Sample text corpus\ntext = \"\"\"To be or not to be that is the question whether tis nobler in the mind\nto suffer the slings and arrows of outrageous fortune or to take arms against\na sea of troubles and by opposing end them\"\"\"\n\n# Build character vocabulary\nchars = sorted(set(text))\nchar_to_idx = {c: i for i, c in enumerate(chars)}\nidx_to_char = {i: c for i, c in enumerate(chars)}\nvocab_size = len(chars)\n\nprint(f'Vocabulary: {vocab_size} unique characters')\nprint(f'Characters: {chars}')\n\n# Encode text\nencoded = torch.tensor([char_to_idx[c] for c in text], dtype=torch.long)\n\n# Create training sequences\n# Needs at least 2 * seq_len * batch_size characters (here 2 * 20 * 2 = 80; our text has 191)\ndef make_batches(data, seq_len=20, batch_size=2):\n    num_batches = len(data) // (seq_len * batch_size)\n    data = data[:num_batches * seq_len * batch_size]\n    data = data.view(batch_size, -1)\n    for i in range(0, data.size(1) - seq_len, seq_len):\n        x = data[:, i:i+seq_len]\n        y = data[:, i+1:i+seq_len+1]\n        yield x, y\n\n# Model\nclass CharRNN(nn.Module):\n    def __init__(self, vocab_size, embed_dim, hidden_dim, num_layers):\n        super().__init__()\n        self.embedding = nn.Embedding(vocab_size, embed_dim)\n        self.lstm = nn.LSTM(embed_dim, hidden_dim, num_layers,\n                           batch_first=True, dropout=0.2)\n        self.fc = nn.Linear(hidden_dim, vocab_size)\n    \n    def forward(self, x, hidden=None):\n        x = self.embedding(x)\n        output, hidden = self.lstm(x, hidden)\n        logits = self.fc(output)\n        return logits, hidden\n\nmodel = CharRNN(vocab_size, embed_dim=64, hidden_dim=128, num_layers=2)\ncriterion = nn.CrossEntropyLoss()\noptimizer = torch.optim.Adam(model.parameters(), lr=0.002)\n\n# Generation function\ndef generate(model, start_str, length=200, temperature=0.8):\n    model.eval()\n    chars_generated = list(start_str)\n    x = torch.tensor([[char_to_idx[c] for c in start_str]])\n    hidden = None\n    \n    with torch.no_grad():\n        for _ in range(length):\n            logits, hidden = model(x, hidden)\n            logits = logits[0, -1] / temperature\n            probs = F.softmax(logits, dim=0)\n            next_idx = torch.multinomial(probs, 1).item()\n            chars_generated.append(idx_to_char[next_idx])\n            x = torch.tensor([[next_idx]])\n    \n    return ''.join(chars_generated)\n\nprint(generate(model, 'to ', length=100))\n```\n\n> **Temperature:** Controls randomness. Low (0.2) = conservative/repetitive. High (1.5) = creative/chaotic. 0.8 is a good default.",
     "ta": "## வாத்தியாரின் தட்டச்சு இயந்திரம்\n\nவாத்தியார் ஒரு பழைய தட்டச்சு இயந்திரத்தில் அமர்கிறார். \"ஆயிரக்கணக்கான பக்கங்களைப் படித்த பிறகு, உங்கள் மூளை அடுத்த வார்த்தையை கணிக்க முடியும். ஒரு எழுத்து-நிலை RNN அதையே செய்கிறது — ஒரு நேரத்தில் ஒரு எழுத்து.\""
   },
   "animation_sequence": [
@@ -132,7 +132,7 @@
         "Sample 'b'",
         "Feed back",
         "Predict next...",
-        "200 chars generated"
+        "100 chars generated"
       ],
       "duration_ms": 4000
     },
@@ -140,7 +140,7 @@
       "type": "VariableBox",
       "id": "box_vocab",
       "variable": "vocab_size",
-      "value": "28",
+      "value": "24",
       "data_type": "int",
       "color": "#ff6b6b"
     },
@@ -213,7 +213,7 @@
       "type": "Terminal",
       "id": "output_display",
       "output": [
-        "Vocabulary: 28 unique characters",
+        "Vocabulary: 24 unique characters",
         "Epoch 10: Loss=2.34",
         "Epoch 50: Loss=1.12",
         "Epoch 100: Loss=0.78",
@@ -439,5 +439,149 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A character-level LSTM is trained on chunks of text where every position predicts the following character; cross-entropy over all positions measures how surprised it is, and generation repeatedly samples a character and feeds it back with the carried hidden state.",
+    "steps": [
+      {
+        "title": "Encode the corpus as integers",
+        "body": "The lesson's Shakespeare excerpt has 191 characters drawn from 24 distinct symbols, including space, newline and capital T. chars = sorted(set(text)) fixes an order, char_to_idx maps each to 0 to 23, and the whole text becomes one tensor of indices."
+      },
+      {
+        "title": "Training pairs are shifted windows",
+        "body": "make_batches cuts the data into windows of seq_len = 40: x = data[:, i:i+40] and y = data[:, i+1:i+41], the same window shifted by one. So 'To be or not' as input has 'o be or not ' as target, and all 40 positions are trained at once. The function also needs at least seq_len x batch_size = 1,280 characters to form one batch, more than this short excerpt provides, so real runs use a longer corpus.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "x",
+                "T o _ b e _ o r"
+              ],
+              [
+                "y",
+                "o _ b e _ o r _"
+              ]
+            ],
+            "labels": [
+              "input",
+              "target"
+            ],
+            "caption": "Input and target windows ('_' marks a space)"
+          }
+        }
+      },
+      {
+        "title": "The loss and what it means",
+        "body": "The model outputs 24 scores per position; CrossEntropyLoss averages -log p(true next char) over all positions in the batch. Guessing uniformly among 24 characters gives ln 24 = 3.18. A loss of 1.5 means perplexity e^1.5 = 4.5: the model is about as unsure as choosing among 4 or 5 characters.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "uniform guess",
+                "value": "ln 24 = 3.18"
+              },
+              {
+                "variable": "trained loss",
+                "value": 1.5
+              },
+              {
+                "variable": "perplexity",
+                "value": "e^1.5 = 4.5"
+              }
+            ],
+            "caption": "Reading the loss"
+          }
+        }
+      },
+      {
+        "title": "Two LSTM layers carry the context",
+        "body": "CharRNN embeds each index into 64 numbers, runs a 2-layer LSTM with 128 hidden units (dropout 0.2 between layers), and a Linear(128, 24) produces the next-character scores. The hidden state lets the model know it is in the middle of 'question' rather than at the start of a word.",
+        "visual": {
+          "type": "NeuralNetworkVisualizer",
+          "props": {
+            "layers": [
+              4,
+              6,
+              6,
+              4
+            ],
+            "labels": {
+              "input": [
+                "char idx"
+              ],
+              "output": [
+                "next char"
+              ]
+            },
+            "caption": "embedding -> LSTM layer 1 -> LSTM layer 2 -> 24 scores (scaled down)"
+          }
+        }
+      },
+      {
+        "title": "Generating from a start string",
+        "body": "Feed the start string through the model to warm up the hidden state. Then loop: divide the last scores by the temperature, softmax, sample an index, append idx_to_char[next_idx] to chars_generated, and feed that character in next. With so little training text the model mostly learns to reproduce fragments of it.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "start_str -> warm up hidden",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "last logits / temperature",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "softmax -> sample next_idx",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "append character",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "feed it back, repeat",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "The generation loop"
+          }
+        }
+      }
+    ],
+    "takeaway": "Training is next-character prediction on shifted windows; generation is sampling one character at a time with the memory carried forward. The loss, read as perplexity, tells you how many characters the model is effectively choosing between."
   }
 }

@@ -301,5 +301,78 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Built-in syntax is translated into calls on the object's type: len(x) calls type(x).__len__, x == y calls __eq__, print(x) calls __str__, so defining these methods makes your class behave like a built-in.",
+    "steps": [
+      {
+        "title": "Syntax maps to special methods",
+        "body": "Python's data model defines a dunder method for each piece of syntax. When your class defines one, the matching syntax works on your objects.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "You write",
+              "code": "len(cart)\ncart == other\nstr(cart), print(cart)\nrepr(cart)\nitem in cart\ncart[0]"
+            },
+            "right": {
+              "label": "Python calls",
+              "code": "type(cart).__len__(cart)\ncart.__eq__(other)\ntype(cart).__str__(cart)\ntype(cart).__repr__(cart)\ncart.__contains__(item)\ncart.__getitem__(0)"
+            }
+          }
+        }
+      },
+      {
+        "title": "Lookup happens on the type",
+        "body": "For implicit calls Python looks the method up on the class, not the instance. Setting `cart.__len__ = lambda: 5` on one object does nothing for `len(cart)`. CPython stores these methods in slots of the type object so the call is fast."
+      },
+      {
+        "title": "__str__ falls back to __repr__",
+        "body": "`print(cart)` calls `str(cart)`, which uses `__str__`. If the class defines only `__repr__`, `str()` falls back to it. The reverse is not true, so define `__repr__` first: it is what the REPL, debuggers and lists of objects show.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "print(cart)",
+                "detail": "str(cart)"
+              },
+              {
+                "label": "__str__ defined?",
+                "detail": "use it"
+              },
+              {
+                "label": "otherwise",
+                "detail": "use __repr__"
+              },
+              {
+                "label": "neither",
+                "detail": "<Cart object at 0x...>"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "__eq__ and NotImplemented",
+        "body": "`a == b` calls `a.__eq__(b)`. If that returns the special value NotImplemented, Python tries `b.__eq__(a)`, and if both decline it falls back to identity (`a is b`). Return NotImplemented for types you do not understand instead of False."
+      },
+      {
+        "title": "Defining __eq__ removes __hash__",
+        "body": "If a class defines `__eq__` but not `__hash__`, Python sets `__hash__` to None, so instances can no longer go into sets or be dict keys. Equal objects must have equal hashes; define `__hash__` from the same fields if the objects are immutable.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> class P:",
+              "...     def __eq__(self, o): return True",
+              ">>> {P()}",
+              "TypeError: unhashable type: 'P'"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Dunder methods are hooks the interpreter calls for you. Python finds them on the class, uses NotImplemented to try the other operand, and ties __eq__ to __hash__; respect those rules and your objects feel built-in."
+  }
 }

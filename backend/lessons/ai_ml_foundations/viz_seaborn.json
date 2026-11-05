@@ -283,5 +283,127 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A seaborn call takes a DataFrame and column names, groups rows by hue or category, computes a statistic such as a mean with a bootstrap interval or a smoothed density, and then draws the result with matplotlib.",
+    "steps": [
+      {
+        "title": "Columns in, groups out",
+        "body": "sns.barplot(data=df, x='day', y='total_bill', hue='sex') looks up those columns, splits the rows by each (day, sex) pair, and assigns each hue level a colour from the palette. You describe what to plot by name; seaborn does the grouping you would otherwise write by hand.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "DataFrame + column names",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "group rows by x and hue",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "compute statistic per group",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "draw with matplotlib on an Axes",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "legend + labels from column names",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "What one seaborn call does"
+          }
+        }
+      },
+      {
+        "title": "barplot shows a mean and a bootstrap interval",
+        "body": "For a group with values [3, 5, 7] the bar height is the mean, 5. The error bar is a 95% confidence interval estimated by bootstrapping: resample the group with replacement 1,000 times (n_boot=1000), compute each resample's mean, and take the 2.5th and 97.5th percentiles. errorbar='sd' shows the standard deviation instead.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "values",
+                "value": "[3, 5, 7]"
+              },
+              {
+                "variable": "bar height (mean)",
+                "value": 5
+              },
+              {
+                "variable": "n_boot",
+                "value": 1000
+              },
+              {
+                "variable": "error bar",
+                "value": "2.5th-97.5th pct of means"
+              }
+            ],
+            "caption": "Inside one bar"
+          }
+        }
+      },
+      {
+        "title": "kdeplot sums little bell curves",
+        "body": "A kernel density estimate places a small Gaussian bump on every data point and adds them up, then scales the total so the area is 1. The bump width, the bandwidth, comes from Scott's rule by default; bw_adjust=0.5 halves it to show more detail, and 2 smooths more."
+      },
+      {
+        "title": "Axes-level and figure-level functions",
+        "body": "histplot, scatterplot and boxplot draw onto one matplotlib Axes, which you can pass in with ax=. displot, relplot and catplot are figure-level: they create a FacetGrid, split the data again by col= or row=, and call the axes-level function once per panel.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Axes-level",
+              "code": "histplot, scatterplot, boxplot\ndraws on one Axes\nax= to place it"
+            },
+            "right": {
+              "label": "Figure-level",
+              "code": "displot, relplot, catplot\nbuilds a FacetGrid\ncol= / row= make panels"
+            },
+            "caption": "Two layers of the seaborn API"
+          }
+        }
+      },
+      {
+        "title": "It is still matplotlib underneath",
+        "body": "Every seaborn function returns matplotlib objects, an Axes or a FacetGrid holding Axes, so ax.set_title or plt.savefig work as usual. sns.set_theme only changes matplotlib's rcParams defaults, which is why it also restyles plain matplotlib charts."
+      }
+    ],
+    "takeaway": "Seaborn is a statistics layer over matplotlib: it groups by column names, computes means, intervals or densities, then draws. Know which statistic a plot computes, especially the error bar, before you read meaning into it."
+  }
 }

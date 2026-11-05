@@ -277,5 +277,67 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Threads share one process and, in standard CPython, take turns holding the GIL to run Python code, while multiprocessing starts separate interpreter processes that really run in parallel.",
+    "steps": [
+      {
+        "title": "A thread is an OS thread",
+        "body": "`threading.Thread(target=work).start()` asks the operating system for a real thread inside the same process. All threads share the same memory, so they see the same lists, dicts and globals without copying."
+      },
+      {
+        "title": "The GIL lets one thread run Python at a time",
+        "body": "In standard CPython only the thread holding the Global Interpreter Lock may execute bytecode. A running thread is asked to release it every 5 ms (`sys.getswitchinterval()` is 0.005), so threads interleave, but CPU-heavy Python code does not get faster with more threads.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "thread 1",
+                "detail": "holds GIL, runs bytecode"
+              },
+              {
+                "label": "5 ms or blocking I/O",
+                "detail": "GIL released"
+              },
+              {
+                "label": "thread 2",
+                "detail": "takes GIL, runs"
+              },
+              {
+                "label": "repeat",
+                "detail": "turns alternate"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Waiting releases the GIL",
+        "body": "When a thread waits on a network reply, a file read or `time.sleep`, CPython releases the GIL during the wait. Other threads run meanwhile, which is why threads speed up I/O-bound work such as downloading many pages."
+      },
+      {
+        "title": "Processes sidestep the GIL",
+        "body": "`multiprocessing.Pool(4)` starts four separate Python processes, each with its own interpreter, memory and GIL. They can use four CPU cores at once. The cost: arguments and results are pickled and sent between processes, and starting a process takes far longer than starting a thread.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Threads",
+              "code": "shared memory\none GIL: Python code takes turns\ngood for I/O waits\ncheap to start"
+            },
+            "right": {
+              "label": "Processes",
+              "code": "separate memory\none GIL each: true parallelism\ngood for CPU work\ndata pickled across"
+            }
+          }
+        }
+      },
+      {
+        "title": "Shared memory needs locks",
+        "body": "Because threads share objects, two threads doing `counter += 1` can interleave between reading and writing and lose updates. A `threading.Lock` makes the read-modify-write happen as one unit; processes avoid this by not sharing memory by default."
+      }
+    ],
+    "takeaway": "Rule of thumb in standard CPython: threads for waiting (I/O), processes for computing (CPU). The GIL is the reason, and switching only happens between bytecodes or during blocking calls."
+  }
 }

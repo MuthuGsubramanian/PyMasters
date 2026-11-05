@@ -335,5 +335,100 @@
     "path_memberships": [
       "supervised_learning"
     ]
+  },
+  "under_the_hood": {
+    "summary": "KNN stores the training set; to predict, it measures the distance from the new point to every stored point, takes the K closest, and lets them vote or averages their values.",
+    "steps": [
+      {
+        "title": "Fitting only stores the data",
+        "body": "KNeighborsClassifier.fit copies X and y and, depending on algorithm='auto', may build a KD-tree or ball tree index. No weights are learned. All the work happens at prediction time, which is why KNN is called a lazy learner."
+      },
+      {
+        "title": "Measure distance to every stored point",
+        "body": "Query q = (3, 3). Stored points: E (3, 2) red at distance 1.0, C (4, 4) blue at 1.41, B (2, 1) red at 2.24, A (1, 1) red at 2.83, D (5, 5) blue at 2.83. Euclidean distance is the square root of the summed squared differences: for C that is sqrt(1 + 1) = 1.41. Manhattan distance would add absolute differences instead: 1 + 1 = 2.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "E",
+                "red",
+                1.0
+              ],
+              [
+                "C",
+                "blue",
+                1.41
+              ],
+              [
+                "B",
+                "red",
+                2.24
+              ],
+              [
+                "A",
+                "red",
+                2.83
+              ],
+              [
+                "D",
+                "blue",
+                2.83
+              ]
+            ],
+            "labels": [
+              "1st",
+              "2nd",
+              "3rd",
+              "4th",
+              "5th"
+            ],
+            "highlight": [
+              0,
+              1,
+              2
+            ],
+            "caption": "Sorted distances from (3, 3); K=3 keeps the top three"
+          }
+        }
+      },
+      {
+        "title": "The K nearest vote",
+        "body": "With K=3 the neighbours are E (red), C (blue) and B (red), so the vote is 2 to 1 and the prediction is red, with predict_proba giving red 0.67 and blue 0.33. With weights='distance' each vote counts 1/distance, giving closer points more say. For regression the K target values are averaged.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "K",
+                "value": 3
+              },
+              {
+                "variable": "red votes",
+                "value": 2
+              },
+              {
+                "variable": "blue votes",
+                "value": 1
+              },
+              {
+                "variable": "prediction",
+                "value": "red"
+              }
+            ],
+            "caption": "Majority vote of the 3 nearest"
+          }
+        }
+      },
+      {
+        "title": "Small K is jumpy, large K is blurry",
+        "body": "K=1 follows every noisy point and gives a ragged boundary; large K smooths the boundary but can outvote a small class. Odd K avoids ties in two-class problems. Choose K by cross-validation."
+      },
+      {
+        "title": "Scale features, mind the dimensions",
+        "body": "If one feature is income in rupees and another is age in years, income differences of thousands swamp age differences of tens, so distances ignore age. Standardise first. In many dimensions distances also bunch together, so the nearest and the farthest point are almost equally far, the curse of dimensionality, and the neighbours stop meaning much."
+      }
+    ],
+    "takeaway": "KNN's whole model is 'similar inputs have similar outputs', judged by a distance you choose. Get the distance right with scaling and sensible features, and pick K by validation."
   }
 }

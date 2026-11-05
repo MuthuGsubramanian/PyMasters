@@ -344,5 +344,141 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "An activation function is applied to each neuron's weighted sum to bend it; without that bend any stack of layers collapses into one linear map, and the shape of the bend decides how well gradients flow during training.",
+    "steps": [
+      {
+        "title": "Without it, layers collapse",
+        "body": "Two linear layers y = W2 (W1 x) equal one layer with matrix W2 W1. With scalars: multiply by 2, then by 3, is just multiply by 6. However many layers you stack, the network could only draw straight boundaries. A non-linear function between layers breaks this."
+      },
+      {
+        "title": "Compare the shapes at the same inputs",
+        "body": "At z = -2, 0, 2: sigmoid gives 0.119, 0.5, 0.881 (range 0 to 1); tanh gives -0.964, 0, 0.964 (range -1 to 1, centred at 0); ReLU gives 0, 0, 2 (max(0, z)). Each squashes or clips in its own way.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0.119,
+                0.5,
+                0.881
+              ],
+              [
+                -0.964,
+                0,
+                0.964
+              ],
+              [
+                0,
+                0,
+                2
+              ]
+            ],
+            "labels": [
+              "sigmoid",
+              "tanh",
+              "ReLU"
+            ],
+            "caption": "Outputs at z = -2, 0, 2"
+          }
+        }
+      },
+      {
+        "title": "Slopes decide how gradients flow",
+        "body": "Backprop multiplies by the activation's slope at every layer. Sigmoid's slope is at most 0.25, tanh's at most 1 but tiny for large |z|, and ReLU's is exactly 1 for positive z. Ten sigmoid layers can shrink a gradient by 0.25^10, about a millionth; ReLU passes it through unchanged when active, which is why it became the default for hidden layers.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "sigmoid / tanh",
+              "code": "slope <= 0.25 / <= 1\nflat tails: gradients vanish\nuse at outputs or in gates"
+            },
+            "right": {
+              "label": "ReLU",
+              "code": "slope 1 for z > 0, 0 for z < 0\ncheap to compute\ndefault for hidden layers"
+            },
+            "caption": "Why ReLU took over hidden layers"
+          }
+        }
+      },
+      {
+        "title": "Dead ReLUs and the fixes",
+        "body": "If a ReLU neuron's input is negative for every example, its slope is always 0 and it stops learning: a dead neuron. Leaky ReLU keeps a small slope, 0.01 x z for negative z, and GELU and SiLU, smooth curves used in transformers, also let small negative values through."
+      },
+      {
+        "title": "Softmax at the output",
+        "body": "For multi-class outputs softmax exponentiates each score and divides by the total: [2, 1, 0.1] becomes [0.66, 0.24, 0.10], positive and summing to 1. It is applied across the output layer as a whole, not neuron by neuron, and pairs with cross-entropy loss.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "hidden layers: ReLU / GELU",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "output layer raw scores",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "task?",
+                "type": "decision"
+              },
+              {
+                "id": "n3",
+                "label": "binary: sigmoid",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "multi-class: softmax",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "regression: no activation",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "Choosing activations by position"
+          }
+        }
+      }
+    ],
+    "takeaway": "Hidden layers need a non-linearity, and the one with healthy slopes, usually ReLU or GELU, trains best. The output activation follows the task: sigmoid for yes/no, softmax for one-of-many, none for numbers."
+  }
 }

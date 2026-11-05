@@ -161,5 +161,76 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "import asyncio\n\nasync def get_score(player):\n    await asyncio.sleep(0)\n    return {\"asha\": 7, \"ravi\": 9}[player]\n\nasync def main():\n    forgot = get_score(\"asha\")           # pitfall: no await -> coroutine object\n    kind = type(forgot).__name__\n    forgot.close()                       # tidy up the never-run coroutine\n    fixed = await get_score(\"asha\")      # the fix\n    scores = await asyncio.gather(get_score(\"asha\"), get_score(\"ravi\"))\n    return kind, fixed, scores\n\nkind, fixed, scores = asyncio.run(main())\nprint(\"without await:\", kind, \"| with await:\", fixed, \"| gathered:\", scores)\n"
+  "uth_example": "import asyncio\n\nasync def get_score(player):\n    await asyncio.sleep(0)\n    return {\"asha\": 7, \"ravi\": 9}[player]\n\nasync def main():\n    forgot = get_score(\"asha\")           # pitfall: no await -> coroutine object\n    kind = type(forgot).__name__\n    forgot.close()                       # tidy up the never-run coroutine\n    fixed = await get_score(\"asha\")      # the fix\n    scores = await asyncio.gather(get_score(\"asha\"), get_score(\"ravi\"))\n    return kind, fixed, scores\n\nkind, fixed, scores = asyncio.run(main())\nprint(\"without await:\", kind, \"| with await:\", fixed, \"| gathered:\", scores)\n",
+  "under_the_hood": {
+    "summary": "Most async bugs come from how the machinery works: calling a coroutine function only creates an object, a blocking call freezes the single event-loop thread, and the loop keeps only weak references to tasks, so an unreferenced task can vanish.",
+    "steps": [
+      {
+        "title": "Forgetting await returns a coroutine object",
+        "body": "In the lesson, `result = get_value()` without await gives `<coroutine object get_value at 0x...>`, not 42. The function body never runs. When the unused coroutine is garbage collected, Python prints `RuntimeWarning: coroutine 'get_value' was never awaited`, which is your clue.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> print(asyncio.run(main()))",
+              "<coroutine object get_value at 0x7f...>",
+              "RuntimeWarning: coroutine 'get_value' was never awaited"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Blocking calls freeze everything",
+        "body": "`time.sleep(1)` or `requests.get(url)` inside a coroutine does not await; it blocks the only thread the loop has. For that second no other task runs, no timers fire and no sockets are read. `await asyncio.sleep(1)` instead hands control back to the loop.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Blocks the loop",
+              "code": "time.sleep(1)\nrequests.get(url)\nopen(big).read()"
+            },
+            "right": {
+              "label": "Yields to the loop",
+              "code": "await asyncio.sleep(1)\nawait client.get(url)  # async library\nawait asyncio.to_thread(read_big)"
+            }
+          }
+        }
+      },
+      {
+        "title": "Fire-and-forget tasks can disappear",
+        "body": "`asyncio.create_task(log_event())` with the result thrown away is risky: the event loop keeps only weak references to tasks, so a task with no other reference can be garbage collected before it finishes. Keep tasks in a set (and discard them in a done callback) or use a TaskGroup.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "background = set()\n\ntask = asyncio.create_task(log_event())\nbackground.add(task)\ntask.add_done_callback(background.discard)",
+            "highlightSequence": [
+              3,
+              4,
+              5
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Create and schedule the task."
+              },
+              {
+                "description": "A strong reference keeps it alive."
+              },
+              {
+                "description": "Remove it when finished so the set does not grow forever."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Awaiting in a loop is sequential",
+        "body": "`for u in urls: data.append(await fetch(u))` waits for each fetch before starting the next. It is correct but gives no concurrency. Build the coroutines first and pass them to `gather` or a TaskGroup."
+      },
+      {
+        "title": "Unretrieved exceptions",
+        "body": "If a task raises and nobody awaits it, the exception is stored on the task and only logged as 'Task exception was never retrieved' when the task is destroyed, often far from the cause. Await every task, or let a TaskGroup do it for you."
+      }
+    ],
+    "takeaway": "Async bugs are quiet because nothing crashes: a missing await, a blocking call or a lost task just makes results wrong or slow. Await everything you create, use async libraries, and keep references to your tasks."
+  }
 }

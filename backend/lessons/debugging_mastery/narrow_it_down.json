@@ -166,5 +166,95 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "commits = [\"a1\", \"b2\", \"c3\", \"d4\", \"e5\", \"f6\", \"g7\", \"h8\"]\nfirst_bad = \"e5\"                       # unknown to us; the test below reveals it\n\ndef tests_pass(commit):\n    return commits.index(commit) < commits.index(first_bad)\n\nlow, high = 0, len(commits) - 1         # commits[0] is good, commits[-1] is bad\nchecked = []\nwhile high - low > 1:\n    mid = (low + high) // 2\n    checked.append(commits[mid])\n    if tests_pass(commits[mid]):\n        low = mid\n    else:\n        high = mid\n\nprint(\"checked\", checked, \"-> first bad commit:\", commits[high])\nprint(f\"{len(checked)} test runs instead of {len(commits)}\")\n"
+  "uth_example": "commits = [\"a1\", \"b2\", \"c3\", \"d4\", \"e5\", \"f6\", \"g7\", \"h8\"]\nfirst_bad = \"e5\"                       # unknown to us; the test below reveals it\n\ndef tests_pass(commit):\n    return commits.index(commit) < commits.index(first_bad)\n\nlow, high = 0, len(commits) - 1         # commits[0] is good, commits[-1] is bad\nchecked = []\nwhile high - low > 1:\n    mid = (low + high) // 2\n    checked.append(commits[mid])\n    if tests_pass(commits[mid]):\n        low = mid\n    else:\n        high = mid\n\nprint(\"checked\", checked, \"-> first bad commit:\", commits[high])\nprint(f\"{len(checked)} test runs instead of {len(commits)}\")\n",
+  "under_the_hood": {
+    "summary": "Bisection halves the search space with every check: test the data at the midpoint of the pipeline (or the midpoint commit in history), keep the half where it is already wrong, and a bug among n places is found in about log2(n) checks.",
+    "steps": [
+      {
+        "title": "Check the midpoint",
+        "body": "With `data = step3(step2(step1(raw)))` and wrong output at the end, print `repr(data)` after step2. If it is already wrong, the bug is in step1 or step2; if it is right, it is in step3. One check removes half of the suspects.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "raw",
+                "detail": "known good input"
+              },
+              {
+                "label": "step1",
+                "detail": "?"
+              },
+              {
+                "label": "step2",
+                "detail": "print repr(data) here"
+              },
+              {
+                "label": "step3",
+                "detail": "?"
+              },
+              {
+                "label": "output",
+                "detail": "known bad"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Halving adds up fast",
+        "body": "Each check halves the remaining range, so 1000 lines need about 10 checks (2^10 = 1024), and 1,000,000 need about 20. Reading line by line could take hundreds of steps for the same answer.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "suspect lines left",
+                "values": [
+                  "1000",
+                  "500",
+                  "250",
+                  "125",
+                  "63",
+                  "32",
+                  "16",
+                  "8",
+                  "4",
+                  "2",
+                  "1"
+                ]
+              }
+            ],
+            "caption": "Ten checks narrow 1000 lines to one"
+          }
+        }
+      },
+      {
+        "title": "Shrink the input too",
+        "body": "A minimal reproducible example applies the same idea to data: remove half of the failing input and check whether the bug still appears. Keep the half that still fails and repeat until removing anything makes the bug disappear. A 10,000-row file often shrinks to two or three rows."
+      },
+      {
+        "title": "git bisect does it over history",
+        "body": "If the code worked last month and fails today, `git bisect start`, `git bisect bad` and `git bisect good <old-commit>` make git check out the commit in the middle. You test it and mark it good or bad; git halves the range again. `git bisect run pytest tests/test_export.py` automates every step.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "$ git bisect start",
+              "$ git bisect bad",
+              "$ git bisect good v1.4",
+              "Bisecting: 511 revisions left to test after this (roughly 9 steps)",
+              "$ git bisect run pytest -q tests/test_export.py",
+              "a1b2c3d is the first bad commit"
+            ]
+          }
+        }
+      },
+      {
+        "title": "It needs a reliable yes/no test",
+        "body": "Bisection only works if each check gives a clear good or bad answer. A flaky test that sometimes passes sends you into the wrong half, so make the reproduction deterministic first."
+      }
+    ],
+    "takeaway": "When you do not know where a bug is, do not read everything: cut the space in half and test. A clear pass/fail check plus halving finds bugs in code, data and history in a few steps."
+  }
 }

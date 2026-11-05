@@ -391,5 +391,123 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Quantization stores weights as 8-bit integers plus a scale, pruning zeroes the smallest weights through a mask, and ONNX export traces the model once with a dummy input into a portable graph that other runtimes can execute.",
+    "steps": [
+      {
+        "title": "Quantization maps floats to integers",
+        "body": "With symmetric int8 quantization, scale = max|w| / 127. If the largest weight is 1.27, scale = 0.01, so w = 0.4237 is stored as round(42.37) = 42 and read back as 0.42, an error of 0.0037. Every float32 weight (4 bytes) becomes one byte plus a shared scale.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              0.4237,
+              0.01,
+              42,
+              0.42,
+              0.0037
+            ],
+            "labels": [
+              "float32 weight",
+              "scale",
+              "stored int8",
+              "dequantised",
+              "error"
+            ],
+            "caption": "Quantizing one weight"
+          }
+        }
+      },
+      {
+        "title": "Dynamic quantization of Linear layers",
+        "body": "quantize_dynamic(model, {nn.Linear}, dtype=torch.qint8) converts the Linear weights to int8 ahead of time and quantizes each layer's activations on the fly during inference. SimpleNet has 203,530 parameters, about 795 KB in float32, so its weights drop to roughly a quarter of that. Accuracy usually changes very little; check it on your test set."
+      },
+      {
+        "title": "Pruning zeroes small weights with a mask",
+        "body": "prune.l1_unstructured(model.fc1, 'weight', amount=0.3) finds the 30% of fc1's 200,704 weights with the smallest absolute value and creates a 0/1 mask. The layer then computes with weight_orig * mask. prune.remove makes the zeros permanent and deletes the mask.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "fc1.weight (256 x 784)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "rank by |w|",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "mask = 0 for the smallest 30%",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "weight = weight_orig * mask",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "prune.remove: bake zeros in",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Unstructured L1 pruning"
+          }
+        }
+      },
+      {
+        "title": "Zeros do not automatically mean speed",
+        "body": "Scattered zeros still occupy a dense matrix, so a normal matrix multiply does the same work. Pruning saves time only with sparse-aware kernels or with structured pruning that removes whole neurons or channels, and size only if the file is stored in a compressed or sparse format.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Unstructured pruning",
+              "code": "individual weights set to 0\nsame dense shape\nneeds sparse kernels to be faster"
+            },
+            "right": {
+              "label": "Structured pruning",
+              "code": "whole neurons / channels removed\nsmaller dense layers\nfaster with ordinary kernels"
+            },
+            "caption": "Which kind of pruning makes things faster"
+          }
+        }
+      },
+      {
+        "title": "ONNX export traces the computation",
+        "body": "torch.onnx.export(model, dummy_input, 'model.onnx', ...) runs the model on the dummy input, records every operation into a graph of standard ONNX operators with the weights embedded, and saves it. dynamic_axes marks the batch dimension as variable. ONNX Runtime and other engines can then run the file without Python or PyTorch."
+      }
+    ],
+    "takeaway": "Each technique trades something: quantization trades a little precision for 4x smaller weights, pruning trades weights for sparsity that needs the right kernels, and ONNX trades Python flexibility for portability. Always re-measure accuracy and speed after each."
   }
 }

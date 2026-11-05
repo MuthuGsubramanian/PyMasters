@@ -167,5 +167,82 @@
     "category": "error_handling",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "`except AppError` matches by walking the raised exception's class hierarchy, so a tree of custom exception classes lets callers choose how broadly to catch, and `raise ... from err` links the original error as __cause__.",
+    "steps": [
+      {
+        "title": "A custom exception is a class",
+        "body": "`class AppError(Exception): pass` and `class ValidationError(AppError): pass` create classes whose MRO is ValidationError -> AppError -> Exception -> BaseException -> object. Raising `ValidationError('unknown user 42')` creates an instance with `args = ('unknown user 42',)`.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "tuple",
+            "data": [
+              "ValidationError",
+              "AppError",
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "label": "ValidationError.__mro__"
+          }
+        }
+      },
+      {
+        "title": "except matches by subclass",
+        "body": "For each `except` clause Python checks whether the raised exception's class is a subclass of the listed class. `except AppError` therefore catches ValidationError and every other AppError subclass, while `except ValidationError` catches only that branch.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "raise ValidationError",
+                "detail": "class hierarchy checked"
+              },
+              {
+                "label": "except KeyError",
+                "detail": "not a subclass: skip"
+              },
+              {
+                "label": "except AppError",
+                "detail": "subclass: handler runs"
+              },
+              {
+                "label": "except Exception",
+                "detail": "not reached"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Extra data rides on the instance",
+        "body": "A custom `__init__` can store fields: `self.user_id = user_id` and then `super().__init__(f'unknown user {user_id}')`. Handlers can read `err.user_id` instead of parsing the message, and `str(err)` still gives the readable message."
+      },
+      {
+        "title": "from err sets __cause__",
+        "body": "In the lesson, the `KeyError` from `registry[42]` is caught and `raise ValidationError(...) from err` is raised. Python sets `__cause__` to the KeyError and `__suppress_context__` to True. The traceback shows the KeyError first, then 'The above exception was the direct cause of the following exception', then the ValidationError.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "KeyError: 42",
+              "",
+              "The above exception was the direct cause of the following exception:",
+              "",
+              "Traceback (most recent call last):",
+              "  ...",
+              "ValidationError: unknown user 42"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Translate at layer boundaries",
+        "body": "Low-level errors (KeyError, ConnectionError) mean little to callers of a high-level API. Catch them at the boundary and raise a domain exception from them: the caller catches one meaningful type, and the root cause is still attached for debugging."
+      }
+    ],
+    "takeaway": "Exception classes are routing labels: the hierarchy decides which handler catches what. Raise specific subclasses, catch at the level you can act on, and chain with from so the real cause is never lost."
+  }
 }

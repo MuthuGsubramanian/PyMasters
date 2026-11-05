@@ -170,5 +170,91 @@
     "estimated_minutes": 20,
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A regression test turns a bug report into an assertion that fails on the current code, passes after the fix, and runs on every future change, so the test runner's exit code flags the bug the moment it returns.",
+    "steps": [
+      {
+        "title": "Reproduce as a failing assert",
+        "body": "In the lesson, `median([4, 1, 3, 2])` should be 2.5. Writing `assert median([4, 1, 3, 2]) == 2.5` and running it against the buggy code must fail. A test that never failed proves nothing; a failure proves it really detects this bug.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "$ pytest -q test_median.py",
+              "F",
+              "E   assert 3 == 2.5",
+              "E    +  where 3 = median([4, 1, 3, 2])",
+              "1 failed"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Fix until it passes",
+        "body": "The buggy version returns `s[mid]` for every length. Trace the even-length case: sorted is [1, 2, 3, 4], `mid = 2`, so it returns 3, but the correct middle pair is s[1] and s[2], which is (2 + 3) / 2 = 2.5. Correct the code, rerun, and the same test goes green. The test now encodes the exact case that broke.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "s",
+                "values": [
+                  "[1, 2, 3, 4]"
+                ]
+              },
+              {
+                "variable": "mid",
+                "values": [
+                  "2"
+                ]
+              },
+              {
+                "variable": "(s[mid-1] + s[mid]) / 2",
+                "values": [
+                  "2.5"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Keep it in the suite",
+        "body": "The test lives in the tests folder next to the others. pytest collects it on every run, and continuous integration runs the whole suite on every push. If a later refactor reintroduces the bug, this one test fails and the non-zero exit code turns the build red.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "bug report",
+                "detail": "smallest failing input"
+              },
+              {
+                "label": "failing test",
+                "detail": "red"
+              },
+              {
+                "label": "fix",
+                "detail": "green"
+              },
+              {
+                "label": "CI on every push",
+                "detail": "bug cannot return unnoticed"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "It also finds where bugs came from",
+        "body": "Because the test is a clear pass/fail check, `git bisect run pytest tests/test_median.py` can search history automatically for the commit that first broke it."
+      },
+      {
+        "title": "Name it after the bug",
+        "body": "A name like `test_median_even_length_returns_mean_of_middle_pair` explains the rule to the next reader. Add neighbouring cases too, such as a single item and negative numbers, because bugs cluster at the same edges."
+      }
+    ],
+    "takeaway": "Before fixing a bug, capture it as a test that fails. After the fix it passes, and from then on it guards that behaviour on every run."
+  }
 }

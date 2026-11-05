@@ -449,5 +449,84 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Nested `for` clauses in a comprehension run like nested loops written left to right, and dict and set comprehensions add each result with MAP_ADD or SET_ADD, where later duplicates overwrite or vanish.",
+    "steps": [
+      {
+        "title": "for clauses nest left to right",
+        "body": "`[(r, c) for r in range(2) for c in range(3)]` runs exactly like `for r in range(2):` with `for c in range(3):` inside it. The leftmost `for` is the outer loop; each `if` filters at the level where it appears.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Comprehension",
+              "code": "[(r, c)\n for r in range(2)\n for c in range(3)\n if r != c]"
+            },
+            "right": {
+              "label": "Same loops",
+              "code": "for r in range(2):\n    for c in range(3):\n        if r != c:\n            out.append((r, c))"
+            }
+          }
+        }
+      },
+      {
+        "title": "A comprehension inside a comprehension",
+        "body": "`[[r * c for c in range(3)] for r in range(3)]` is different: the inner comprehension is the expression, so for each `r` it builds a whole new row list. That produces a 3x3 matrix of separate lists, which avoids the shared-row trap of `[[0]*3]*3`.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "matrix",
+            "data": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                1,
+                2
+              ],
+              [
+                0,
+                2,
+                4
+              ]
+            ],
+            "label": "[[r*c for c in range(3)] for r in range(3)]"
+          }
+        }
+      },
+      {
+        "title": "Dict comprehensions overwrite keys",
+        "body": "`{w[0]: w for w in ['apple', 'avocado', 'banana']}` stores each pair with MAP_ADD, which works like `d[k] = v`. When 'avocado' arrives with key 'a', it replaces 'apple'. The last value for a key wins, and the key keeps the position of its first insertion.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "result",
+                "values": [
+                  "{'a': 'apple'}",
+                  "{'a': 'avocado'}",
+                  "{'a': 'avocado', 'b': 'banana'}"
+                ],
+                "data_type": "dict"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Set comprehensions drop duplicates",
+        "body": "`{len(w) for w in words}` adds each result with SET_ADD, which hashes it and ignores it if an equal value is already present. You get unique values, in no guaranteed order."
+      },
+      {
+        "title": "Each layer has its own scope",
+        "body": "In CPython 3.11 each comprehension runs in its own hidden function, so the loop variables `r` and `c` do not leak. Only the first iterable is evaluated in the enclosing scope, which is why a nested clause can refer to `r` from the outer clause but not to class-level names when used inside a class body."
+      }
+    ],
+    "takeaway": "Read a multi-clause comprehension as nested loops from left to right. Pick the dict or set version when you want duplicates handled for you, and remember which one wins: the last value for dicts, the first equal element for sets."
   }
 }

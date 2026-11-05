@@ -428,5 +428,126 @@
     "path_memberships": [
       "machine_learning"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A neural network multiplies inputs by weights, adds a bias, squashes the result with an activation, passes it to the next layer, and learns by pushing each weight against its share of the error.",
+    "steps": [
+      {
+        "title": "One neuron: weighted sum plus bias",
+        "body": "Inputs x = [0.5, 0.3, 0.8], weights w = [0.2, -0.4, 0.6], bias 0.1. The neuron computes z = 0.2*0.5 - 0.4*0.3 + 0.6*0.8 + 0.1 = 0.56. Each weight says how much its input matters and in which direction."
+      },
+      {
+        "title": "Activation bends the output",
+        "body": "z goes through an activation such as the sigmoid: sigmoid(0.56) = 0.636. Without a non-linear activation, stacking layers would collapse into one big linear function and the network could only draw straight boundaries.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "z",
+                "value": 0.56
+              },
+              {
+                "variable": "sigmoid(z)",
+                "value": 0.636
+              }
+            ],
+            "caption": "Neuron output"
+          }
+        }
+      },
+      {
+        "title": "A layer is a matrix multiply",
+        "body": "A layer of 4 neurons on 3 inputs stores a 3 x 4 weight matrix W and 4 biases. One call to X @ W + b computes all 4 sums for a whole batch at once, and the activation is applied to every element. That is why NumPy and GPUs make networks fast.",
+        "visual": {
+          "type": "NeuralNetworkVisualizer",
+          "props": {
+            "layers": [
+              3,
+              4,
+              1
+            ],
+            "labels": {
+              "input": [
+                "x1",
+                "x2",
+                "x3"
+              ],
+              "output": [
+                "p"
+              ]
+            },
+            "caption": "3 inputs -> 4 hidden neurons -> 1 output"
+          }
+        }
+      },
+      {
+        "title": "Loss says how wrong",
+        "body": "If the true label is 1, binary cross-entropy is -log(0.636) = 0.45. A perfect prediction would cost 0. Training means lowering this average loss over all examples."
+      },
+      {
+        "title": "Backpropagation assigns the blame",
+        "body": "For a sigmoid output with cross-entropy, d loss / d z = p - y = -0.364, and d loss / d w_i = (p - y) * x_i, giving [-0.18, -0.11, -0.29]. With learning rate 0.5, w1 becomes 0.2 + 0.5*0.18 = 0.291. In deeper networks the chain rule carries this error signal back through each layer's weights and activations.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "forward: compute p",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "loss vs label",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "backward: gradients via chain rule",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "update: w -= lr * grad",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "repeat for many batches",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One training step"
+          }
+        }
+      }
+    ],
+    "takeaway": "A network is just weighted sums and simple non-linear functions, repeated. Forward pass to predict, chain rule to find each weight's blame, small step to fix it: that loop is all of deep learning's training."
   }
 }

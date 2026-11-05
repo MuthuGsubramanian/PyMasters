@@ -326,5 +326,113 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Few-shot examples and chain-of-thought both work through the context: the model's weights never change, but examples make the pattern's next token likely, and written-out reasoning steps become context that later tokens can use.",
+    "steps": [
+      {
+        "title": "Examples are just more tokens",
+        "body": "In few-shot prompting, the demonstrations 'Review: Amazing quality! Label: Positive' sit in the context before the real query. No training happens and no weight changes; the examples only change which continuation is most probable at the final 'Label:'."
+      },
+      {
+        "title": "Attention picks up the pattern",
+        "body": "When the model reaches 'Label:' after the query, attention lets that position look back at earlier positions, including the earlier 'Label:' lines and the words that followed them. The format and label set, Positive, Negative or Neutral, become far more probable than free text.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "instruction",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "example 1 -> Positive",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "example 2 -> Negative",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "example 3 -> Neutral",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "query review",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "'Label:' -> next token drawn from the shown labels",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "What the model sees in a few-shot prompt"
+          }
+        }
+      },
+      {
+        "title": "Choice of examples matters",
+        "body": "Models copy surface patterns: if four of five examples are Positive, Positive becomes more likely for the query too, and the last examples often carry extra weight. Balanced labels, varied inputs and examples close to real queries give the most reliable effect."
+      },
+      {
+        "title": "Chain-of-thought adds working space",
+        "body": "Each generated token gets a fixed amount of computation. Asking 'think step by step' makes the model write intermediate results, and each written token is then context for the next. For 'had 23 apples, used 20, bought 6', writing '23 - 20 = 3' first makes '3 + 6 = 9' an easy next step.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Direct answer",
+              "code": "Q: 23 apples, used 20, bought 6\nA: 27   (one jump, easy to slip)"
+            },
+            "right": {
+              "label": "Chain-of-thought",
+              "code": "23 - 20 = 3\n3 + 6 = 9\nA: 9"
+            },
+            "caption": "Writing steps turns one hard jump into small ones"
+          }
+        }
+      },
+      {
+        "title": "Self-consistency votes over chains",
+        "body": "Sampling several reasoning chains at temperature above 0 and taking the most common final answer (self-consistency) reduces the effect of one chain's slip. It costs one model call per chain, so it is used when correctness matters more than speed."
+      }
+    ],
+    "takeaway": "Few-shot shows the model what the answer should look like; chain-of-thought gives it room to compute before answering. Both are context engineering: nothing is learned permanently, so the examples must travel with every request."
+  }
 }

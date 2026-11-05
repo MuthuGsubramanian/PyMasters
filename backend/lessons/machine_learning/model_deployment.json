@@ -392,5 +392,103 @@
     "path_memberships": [
       "production"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Deploying a model means turning the fitted Python object into bytes on disk, rebuilding it inside a server process, and running predict for each validated request.",
+    "steps": [
+      {
+        "title": "pickle writes the object graph",
+        "body": "pickle walks the fitted model's attributes, such as coef_, classes_ and every tree's arrays, and writes instructions to rebuild them. Classes are stored by import path, for example sklearn.ensemble._forest.RandomForestClassifier, not as code. Loading imports that class again, so the same library version should be installed."
+      },
+      {
+        "title": "joblib handles big arrays better",
+        "body": "joblib.dump uses pickle but stores large NumPy arrays efficiently and supports compression (compress=3) and memory-mapped loading (mmap_mode='r'). That is why scikit-learn's documentation recommends it for models full of arrays, such as forests with hundreds of trees.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "pickle",
+              "code": "standard library\nany Python object\nlarge arrays not optimised"
+            },
+            "right": {
+              "label": "joblib",
+              "code": "built on pickle\nefficient for NumPy arrays\ncompression and mmap loading"
+            },
+            "caption": "Two ways to serialise the same model"
+          }
+        }
+      },
+      {
+        "title": "Never load untrusted model files",
+        "body": "Unpickling can call arbitrary functions while rebuilding objects, so loading a pickle or joblib file from an unknown source can run code on your server. Load only files you produced, and keep them in storage you control. scikit-learn warns when the file was saved with a different version."
+      },
+      {
+        "title": "The server loads once, predicts per request",
+        "body": "With FastAPI, the model is loaded when the app starts, not inside the request handler. Uvicorn receives each HTTP request, FastAPI parses the JSON body into a Pydantic model (rejecting missing or mistyped fields with 422), and the handler builds the feature row, calls predict, and returns JSON.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "app start: model = joblib.load(...)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "POST /predict with JSON",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "Pydantic validates fields",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "features -> model.predict",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "JSON response",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Inside a prediction request"
+          }
+        }
+      },
+      {
+        "title": "MLflow records how the file was made",
+        "body": "mlflow.log_param and log_metric store a run's settings and scores in a tracking store (by default the local mlruns folder), and mlflow.sklearn.log_model saves the model with its environment. Later you can compare runs, register a version, and know exactly which data and settings produced the file you are serving."
+      }
+    ],
+    "takeaway": "A deployed model is a saved object plus the code and library versions to rebuild it. Load it once, validate every input, never unpickle untrusted files, and track which run produced it."
   }
 }

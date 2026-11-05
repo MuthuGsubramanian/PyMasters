@@ -474,5 +474,89 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "@contextlib.contextmanager turns a generator into a context manager: __enter__ runs it to the yield, and __exit__ either resumes it or throws the block's exception in at the yield line.",
+    "steps": [
+      {
+        "title": "A generator split at the yield",
+        "body": "In `@contextmanager def timer(): start = perf_counter(); yield; print(perf_counter() - start)`, the code before `yield` is setup and the code after is teardown. The decorator wraps the generator in a `_GeneratorContextManager` object that has `__enter__` and `__exit__`.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "@contextmanager\ndef opened(path):\n    f = open(path)\n    try:\n        yield f\n    finally:\n        f.close()",
+            "highlightSequence": [
+              3,
+              5,
+              7
+            ],
+            "stepDescriptions": [
+              {
+                "description": "__enter__ runs the generator up to here."
+              },
+              {
+                "description": "The yielded value becomes the `as` target."
+              },
+              {
+                "description": "__exit__ resumes the generator; finally closes the file."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "__enter__ calls next()",
+        "body": "`with opened('a.txt') as f:` calls `__enter__`, which calls `next(gen)`. The generator runs its setup and pauses at `yield f`; the yielded file becomes `f`. If the generator does not yield at all, you get `RuntimeError: generator didn't yield`."
+      },
+      {
+        "title": "Normal exit resumes the generator",
+        "body": "If the block finishes normally, `__exit__` calls `next(gen)` again. The generator runs its teardown and should then end, raising StopIteration, which the manager treats as success. A second `yield` would raise `RuntimeError: generator didn't stop`.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "__enter__",
+                "detail": "next(gen): run to yield"
+              },
+              {
+                "label": "block runs",
+                "detail": "uses f"
+              },
+              {
+                "label": "__exit__, no error",
+                "detail": "next(gen): run teardown"
+              },
+              {
+                "label": "StopIteration",
+                "detail": "done"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "An error is thrown in at the yield",
+        "body": "If the block raises, `__exit__` calls `gen.throw(exc)`. The exception appears inside the generator exactly at the `yield` line, so a surrounding `try/finally` runs its cleanup, and an `except` there could even handle it. That is why the try/finally around yield matters.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Without try/finally",
+              "code": "f = open(path)\nyield f\nf.close()   # skipped on error!"
+            },
+            "right": {
+              "label": "With try/finally",
+              "code": "try:\n    yield f\nfinally:\n    f.close()  # always runs"
+            }
+          }
+        }
+      },
+      {
+        "title": "Class-based managers do the same job",
+        "body": "A class with `__enter__` and `__exit__` can keep state across uses and be reused, while the generator form is shorter for one-shot setup and teardown. Both plug into the same with statement protocol."
+      }
+    ],
+    "takeaway": "With @contextmanager, the yield is the with-block. Put teardown in a finally around it, because an exception in the block is delivered to your generator at exactly that line."
   }
 }

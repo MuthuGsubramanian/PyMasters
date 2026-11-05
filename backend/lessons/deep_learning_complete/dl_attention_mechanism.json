@@ -502,5 +502,157 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "In code, attention is a few tensor operations: project the batch into Q, K and V with linear layers, take Q @ Kᵀ scaled by sqrt(d), fill masked positions with minus infinity, softmax over the last dimension, and multiply by V.",
+    "steps": [
+      {
+        "title": "Linear layers make Q, K and V",
+        "body": "For input x of shape (batch, seq, embed), self.W_q(x), self.W_k(x) and self.W_v(x) each return (batch, seq, embed). Every token gets three learned views of itself: what it is looking for, how it can be found, and what it will contribute."
+      },
+      {
+        "title": "Scores are a batched matrix product",
+        "body": "scores = Q @ K.transpose(-2, -1) / math.sqrt(embed) has shape (batch, seq, seq): entry [b, i, j] says how much token i attends to token j in example b. For 'The cat sat on the mat because it was tired', the row for 'it' should end up highest at 'cat'.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "(batch, seq, embed)",
+                "Q, K, V"
+              ],
+              [
+                "(batch, seq, seq)",
+                "Q @ Kᵀ / sqrt(d)"
+              ],
+              [
+                "(batch, seq, seq)",
+                "softmax(dim=-1)"
+              ],
+              [
+                "(batch, seq, embed)",
+                "weights @ V"
+              ]
+            ],
+            "labels": [
+              "step 1",
+              "step 2",
+              "step 3",
+              "step 4"
+            ],
+            "caption": "Tensor shapes through one attention call"
+          }
+        }
+      },
+      {
+        "title": "Masks set scores to minus infinity",
+        "body": "Before softmax, positions a token must not see are filled with -inf, because e^-inf = 0. For a causal mask, token 2 with scores [0.5, 1.5, 2.0] against tokens 1 to 3 becomes [0.5, 1.5, -inf], and softmax gives [0.27, 0.73, 0]: no peeking at the future. Padding masks use the same trick to ignore filler tokens.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0.5,
+                1.5,
+                "-inf"
+              ],
+              [
+                0.27,
+                0.73,
+                0.0
+              ]
+            ],
+            "labels": [
+              "masked scores",
+              "softmax"
+            ],
+            "highlight": [
+              [
+                1,
+                2
+              ]
+            ],
+            "caption": "Causal masking for token 2 of 3"
+          }
+        }
+      },
+      {
+        "title": "Softmax over the last dimension",
+        "body": "F.softmax(scores, dim=-1) normalises each row so that one token's attention weights over all keys sum to 1. Using the wrong dim would normalise over queries instead, a subtle bug that still runs. The result times V mixes value vectors according to those weights."
+      },
+      {
+        "title": "Reading attention maps",
+        "body": "Returning the weight tensor lets you plot a seq x seq heatmap per head. It shows where information came from, not why the model decided something, so treat it as a clue rather than an explanation. PyTorch's F.scaled_dot_product_attention computes the same result with fused, memory-efficient kernels.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "x (batch, seq, embed)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "Q, K, V = W_q x, W_k x, W_v x",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "scores = Q Kᵀ / sqrt(d)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "apply mask (-inf)",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "softmax(dim=-1)",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "output = weights @ V",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "The SelfAttention forward pass"
+          }
+        }
+      }
+    ],
+    "takeaway": "Attention in code is matmul, scale, mask, softmax, matmul. Keep the shapes (batch, seq, seq) for weights and (batch, seq, embed) for outputs in mind, and remember that masks work by sending scores to minus infinity."
   }
 }

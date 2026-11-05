@@ -394,5 +394,104 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Regularisation makes memorising harder: dropout silences random units, L2 and L1 penalties pull weights towards zero, batch norm adds batch-dependent noise, and early stopping keeps the weights from the best validation epoch.",
+    "steps": [
+      {
+        "title": "Dropout with rescaling",
+        "body": "With p = 0.5, activations [2, 4, 6, 8] and a random mask [1, 0, 1, 0], PyTorch outputs [4, 0, 12, 0]: dropped values become 0 and survivors are doubled (divided by 1 - p), so the expected total stays the same and nothing needs changing at test time. Each batch trains a different random sub-network, so no unit can rely on a particular partner.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                2,
+                4,
+                6,
+                8
+              ],
+              [
+                1,
+                0,
+                1,
+                0
+              ],
+              [
+                4,
+                0,
+                12,
+                0
+              ]
+            ],
+            "labels": [
+              "activations",
+              "mask",
+              "output"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "Inverted dropout, p = 0.5"
+          }
+        }
+      },
+      {
+        "title": "L2 penalty shrinks weights each step",
+        "body": "Adding lambda x sum(w²) to the loss adds 2 lambda w to each weight's gradient, so every step also moves w a little towards 0, in proportion to its size; in optimizers this appears as weight_decay. Large weights that fit noise in a few examples become expensive, which smooths the learned function."
+      },
+      {
+        "title": "L1 penalty pushes weights to exactly zero",
+        "body": "L1 adds lambda x sum(|w|), whose gradient is lambda x sign(w): the same push for small and large weights. Small, unhelpful weights get driven all the way to zero, giving a sparse model. It has no optimizer flag in PyTorch; you add it to the loss yourself.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "L2 (weight decay)",
+              "code": "gradient term 2 * lambda * w\nshrinks big weights most\nweights get small, rarely zero"
+            },
+            "right": {
+              "label": "L1",
+              "code": "gradient term lambda * sign(w)\nsame push for every weight\nmany weights become exactly zero"
+            },
+            "caption": "Two penalties, two effects"
+          }
+        }
+      },
+      {
+        "title": "Batch norm: normalise per batch",
+        "body": "For one channel with batch values [2, 4, 6], BatchNorm computes mean 4 and std 1.63 and outputs [-1.22, 0, 1.22], then applies a learned scale gamma and shift beta. Each sample's output depends slightly on its batch-mates, a mild noise that acts as a regulariser; at eval time running averages replace batch statistics."
+      },
+      {
+        "title": "Early stopping watches validation loss",
+        "body": "Validation losses 0.50, 0.42, 0.40, 0.41, 0.43, 0.44 with patience 3: the best is epoch 3; epochs 4, 5 and 6 fail to improve, so training stops after epoch 6 and the epoch-3 weights are restored. It costs nothing to add and catches the moment the model starts to memorise.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              0.5,
+              0.42,
+              0.4,
+              0.41,
+              0.43,
+              0.44
+            ],
+            "labels": [
+              "ep 1",
+              "ep 2",
+              "ep 3",
+              "ep 4",
+              "ep 5",
+              "ep 6"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "Best at epoch 3; stop after 3 epochs without improvement"
+          }
+        }
+      }
+    ],
+    "takeaway": "Each regulariser limits a different route to memorisation: random sub-networks, small or sparse weights, normalised activations, or simply stopping in time. Use validation loss to decide how much you need."
   }
 }

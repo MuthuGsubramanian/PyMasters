@@ -477,5 +477,153 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A hidden layer re-maps the inputs into a new space where the classes become separable by a straight line; for XOR, two ReLU units fold the four corner points so that the output layer only has to add them up.",
+    "steps": [
+      {
+        "title": "XOR defeats a single line",
+        "body": "XOR outputs 1 for (0, 1) and (1, 0) and 0 for (0, 0) and (1, 1). The 1s sit on opposite corners of the square, so any straight line that has both 1s on one side also has at least one 0 there. A single neuron draws exactly one line, so it cannot solve XOR."
+      },
+      {
+        "title": "Hidden units fold the space",
+        "body": "Take h1 = relu(x1 - x2) and h2 = relu(x2 - x1). (0, 0) maps to (0, 0), (0, 1) to (0, 1), (1, 0) to (1, 0), and (1, 1) to (0, 0). The two 'same' inputs land on the same point, and the two 'different' inputs move away from it.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "(0, 0)",
+                "(0, 0)",
+                0
+              ],
+              [
+                "(0, 1)",
+                "(0, 1)",
+                1
+              ],
+              [
+                "(1, 0)",
+                "(1, 0)",
+                1
+              ],
+              [
+                "(1, 1)",
+                "(0, 0)",
+                0
+              ]
+            ],
+            "labels": [
+              "in",
+              "in",
+              "in",
+              "in"
+            ],
+            "highlight": [
+              3
+            ],
+            "caption": "Columns: input, hidden (h1, h2), XOR target"
+          }
+        }
+      },
+      {
+        "title": "Now one line is enough",
+        "body": "In hidden space the output neuron computes y = h1 + h2: 0, 1, 1, 0, exactly XOR. With a sigmoid output as in the lesson, scores like 10(h1 + h2) - 5 give probabilities near 0.007 and 0.993. The output layer is still linear; the hidden layer did the hard part.",
+        "visual": {
+          "type": "NeuralNetworkVisualizer",
+          "props": {
+            "layers": [
+              2,
+              2,
+              1
+            ],
+            "labels": {
+              "input": [
+                "x1",
+                "x2"
+              ],
+              "output": [
+                "XOR"
+              ]
+            },
+            "activations": [
+              1,
+              0,
+              1,
+              0,
+              0.99
+            ],
+            "caption": "Input (1, 0): h1 fires, h2 stays 0, output near 1"
+          }
+        }
+      },
+      {
+        "title": "Training finds a folding by itself",
+        "body": "The lesson's MultiLayerNet(2, 4, 1) has 2 x 4 + 4 + 4 x 1 + 1 = 17 parameters. BCE loss and Adam (lr = 0.1) over 2,000 epochs adjust them until the outputs approach [0, 1, 1, 0]. The learned weights rarely match the hand-made ones, but they achieve the same kind of fold; four hidden units give extra room so training rarely gets stuck.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "X: 4 corner points",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "layer1 + ReLU: re-map into 4-D hidden space",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "layer2 + sigmoid: one linear cut",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "BCE loss vs [0, 1, 1, 0]",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "Adam step, repeat 2,000 times",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Training MultiLayerNet on XOR"
+          }
+        }
+      },
+      {
+        "title": "Width, depth and what to add",
+        "body": "More hidden units give more ways to fold and bend the space; more layers compose folds of folds, which is how deep networks carve very complex boundaries. Start small, watch training and validation loss, and grow the network only while validation keeps improving."
+      }
+    ],
+    "takeaway": "Hidden layers are learned changes of coordinates. Each one reshapes the data so that the next layer's simple, linear decision becomes possible."
   }
 }

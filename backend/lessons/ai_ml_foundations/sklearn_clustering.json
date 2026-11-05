@@ -349,5 +349,132 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "scikit-learn's KMeans runs the assign-and-average loop from several starts and keeps the run with the lowest inertia, while DBSCAN labels points by density in one pass; both just return integer cluster labels with no meaning beyond 'same group'.",
+    "steps": [
+      {
+        "title": "KMeans.fit runs several starts",
+        "body": "KMeans(n_clusters=4, n_init=10) runs the whole algorithm 10 times from different k-means++ starting centroids. Each run alternates assigning points to the nearest centroid and moving centroids to the mean until they stop moving. The run with the lowest inertia_ wins and supplies cluster_centers_ and labels_.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "start i of n_init",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "k-means++ initial centroids",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "assign / update until stable",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "compute inertia",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "keep the run with lowest inertia",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Inside KMeans.fit"
+          }
+        }
+      },
+      {
+        "title": "Label numbers are arbitrary",
+        "body": "Cluster 0 in one run might be cluster 2 in another; the numbers only mean 'these points belong together'. To compare a clustering with known labels use adjusted_rand_score, which ignores how clusters are numbered, rather than accuracy."
+      },
+      {
+        "title": "predict means nearest centre",
+        "body": "After fitting, kmeans.predict(new_points) just computes the distance from each new point to the 4 stored centres and returns the nearest one's label; no centres move. DBSCAN has no predict method because its clusters are defined by the training points' density, so you use fit_predict on the data you have."
+      },
+      {
+        "title": "The elbow loop",
+        "body": "Fitting KMeans for K = 1 to 8 and recording inertia_ gives a falling curve, because more centres always sit closer to the points. On make_blobs data with 4 centres the curve drops steeply until K = 4 and then flattens; that bend is the elbow.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                "very high"
+              ],
+              [
+                2,
+                "high"
+              ],
+              [
+                3,
+                "medium"
+              ],
+              [
+                4,
+                "low"
+              ],
+              [
+                5,
+                "slightly lower"
+              ],
+              [
+                6,
+                "slightly lower"
+              ]
+            ],
+            "labels": [
+              "K",
+              "K",
+              "K",
+              "K",
+              "K",
+              "K"
+            ],
+            "highlight": [
+              3
+            ],
+            "caption": "Typical inertia pattern for data with 4 blobs"
+          }
+        }
+      },
+      {
+        "title": "Silhouette checks separation",
+        "body": "silhouette_score(X, labels) computes, for every point, a = mean distance to its own cluster and b = mean distance to the nearest other cluster, then averages (b - a) / max(a, b). It needs all pairwise distances, so it gets slow beyond tens of thousands of points; sample_size lets it score a random subset."
+      }
+    ],
+    "takeaway": "In scikit-learn, clustering is fit, then read labels_. KMeans keeps its best of n_init runs and can predict new points; DBSCAN cannot. Judge results with silhouette or, when you have true labels, adjusted Rand, never with raw label numbers."
+  }
 }

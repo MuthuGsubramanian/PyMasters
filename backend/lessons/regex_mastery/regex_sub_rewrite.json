@@ -198,5 +198,104 @@
       "correct": 0
     }
   ],
-  "uth_example": "import re\n\nnote = \"Call Ravi at 98400-12345 on 2025-03-14, mail ravi@example.com\"\n\nredacted = re.sub(r\"\\d{5}-\\d{5}\", \"[phone]\", note)\nredacted = re.sub(r\"[\\w.]+@[\\w.]+\", \"[email]\", redacted)\nindian_date = re.sub(r\"(\\d{4})-(\\d{2})-(\\d{2})\", r\"\\3/\\2/\\1\", redacted)   # backreferences\n\ndef shout(match):                        # a function can build each replacement\n    return match.group(0).upper()\n\nfinal = re.sub(r\"\\bravi\\b\", shout, indian_date, flags=re.IGNORECASE)\nprint(redacted)\nprint(final)\n"
+  "uth_example": "import re\n\nnote = \"Call Ravi at 98400-12345 on 2025-03-14, mail ravi@example.com\"\n\nredacted = re.sub(r\"\\d{5}-\\d{5}\", \"[phone]\", note)\nredacted = re.sub(r\"[\\w.]+@[\\w.]+\", \"[email]\", redacted)\nindian_date = re.sub(r\"(\\d{4})-(\\d{2})-(\\d{2})\", r\"\\3/\\2/\\1\", redacted)   # backreferences\n\ndef shout(match):                        # a function can build each replacement\n    return match.group(0).upper()\n\nfinal = re.sub(r\"\\bravi\\b\", shout, indian_date, flags=re.IGNORECASE)\nprint(redacted)\nprint(final)\n",
+  "under_the_hood": {
+    "summary": "re.sub finds each non-overlapping match from left to right and replaces it with either a template, whose \\1 and \\g<name> references are filled from the match's groups, or the return value of a function called with the Match object.",
+    "steps": [
+      {
+        "title": "Scan, replace, copy the gaps",
+        "body": "`re.sub(r'\\d+', '#', 'Call 5551234 or 911')` finds '5551234', copies 'Call ', adds '#', continues after the match, finds '911', copies ' or ', adds '#', and finally copies whatever text remains. The original string is not modified; a new string is returned.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "copy 'Call '",
+                "detail": "text before match 1"
+              },
+              {
+                "label": "'5551234' -> '#'",
+                "detail": "replacement"
+              },
+              {
+                "label": "copy ' or '",
+                "detail": "gap"
+              },
+              {
+                "label": "'911' -> '#'",
+                "detail": "replacement"
+              },
+              {
+                "label": "result",
+                "detail": "'Call # or #'"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The template is parsed once",
+        "body": "A replacement string such as `r'\\2/\\g<y>'` is parsed into literal pieces and group references before the scan starts. For each match the references are filled in: with `(?P<y>\\d{4})-(\\d\\d)` on '2026-06' the result is '06/2026'. `\\g<0>` inserts the whole match.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Template piece",
+              "code": "\\1, \\2\n\\g<name>\n\\g<0>\n\\n"
+            },
+            "right": {
+              "label": "Filled with",
+              "code": "text of group 1, group 2\ntext of a named group\nthe whole match\na newline character"
+            }
+          }
+        }
+      },
+      {
+        "title": "A function replacement",
+        "body": "If the replacement is callable, re.sub calls it once per match with the Match object and uses whatever string it returns. That lets you compute replacements: `re.sub(r'\\d+', lambda m: str(int(m.group()) * 2), 'a1 b22')` gives 'a2 b44'.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "def mask(m):\n    digits = m.group()\n    return '*' * (len(digits) - 4) + digits[-4:]\n\nre.sub(r'\\d{8,}', mask, 'card 4111111111111111')",
+            "highlightSequence": [
+              5,
+              2,
+              3
+            ],
+            "stepDescriptions": [
+              {
+                "description": "re.sub finds each long digit run."
+              },
+              {
+                "description": "mask receives the Match and reads its text."
+              },
+              {
+                "description": "Returns '************1111' for that match."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "count, subn and empty matches",
+        "body": "`count=1` stops after the first replacement; `re.subn` returns the new string and how many replacements happened. A pattern that can match empty text matches between characters too: `re.sub('x*', '-', 'abc')` gives '-a-b-c-'."
+      },
+      {
+        "title": "Raw strings protect backslashes",
+        "body": "Write both the pattern and the template as raw strings. In a normal string, '\\1' is the character with code 1, not a group reference, and '\\d' only works by accident.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> re.sub(r'(\\w+)@', r'\\1 at ', 'asha@site')",
+              "'asha at site'",
+              ">>> re.sub(r'(\\w+)@', '\\1 at ', 'asha@site')",
+              "'\\x01 at site'"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "re.sub is a left-to-right scan that rebuilds the string from gaps and replacements. Use templates for rearranging groups and a function when the replacement needs logic."
+  }
 }

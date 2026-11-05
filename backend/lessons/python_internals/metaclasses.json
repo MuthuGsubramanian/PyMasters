@@ -171,5 +171,107 @@
     "category": "python_internals",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A class statement is executed: Python picks the metaclass, calls its __prepare__ to get a namespace, runs the class body into that namespace, then calls metaclass(name, bases, namespace), which runs __new__ and __init__ to build the class object.",
+    "steps": [
+      {
+        "title": "Pick the metaclass",
+        "body": "For `class Model(Base, metaclass=Meta):`, Python uses the explicit `metaclass=`, otherwise the most derived metaclass among the bases' types, which is `type` for ordinary classes. Every class object is an instance of its metaclass: `type(int)` is `type`.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "obj",
+                "label": "user = User()"
+              },
+              {
+                "id": "cls",
+                "label": "class User"
+              },
+              {
+                "id": "meta",
+                "label": "metaclass type"
+              }
+            ],
+            "edges": [
+              {
+                "from": "obj",
+                "to": "cls",
+                "label": "instance of"
+              },
+              {
+                "from": "cls",
+                "to": "meta",
+                "label": "instance of"
+              },
+              {
+                "from": "meta",
+                "to": "meta",
+                "label": "instance of itself"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "__prepare__ makes the namespace",
+        "body": "Python calls `Meta.__prepare__(name, bases)`, which returns the mapping the class body will write into. For `type` it is an ordinary dict. A metaclass can return a custom mapping, for example one that records duplicate definitions."
+      },
+      {
+        "title": "The body runs like a function",
+        "body": "The class body executes top to bottom with that namespace as its locals. Each `def` adds a function, each assignment adds an attribute. When the body ends, the namespace holds everything, for example `{'__module__': ..., '__qualname__': 'User', 'table': 'users', 'save': <function>}`.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "__module__": "'app'",
+              "__qualname__": "'User'",
+              "table": "'users'",
+              "save": "<function save>"
+            },
+            "label": "namespace after the class body"
+          }
+        }
+      },
+      {
+        "title": "The metaclass builds the class",
+        "body": "Python calls `Meta('User', (Base,), namespace)`. That runs `Meta.__new__`, which normally calls `type.__new__` to create the class object, then `Meta.__init__`. A metaclass can inspect or change the namespace here: register the class, check required methods, or add attributes. `type('User', (Base,), ns)` does the same thing without the class statement.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "metaclass chosen",
+                "detail": "type or Meta"
+              },
+              {
+                "label": "__prepare__",
+                "detail": "empty namespace"
+              },
+              {
+                "label": "exec class body",
+                "detail": "fill namespace"
+              },
+              {
+                "label": "Meta.__new__ / __init__",
+                "detail": "class object created"
+              },
+              {
+                "label": "bind name",
+                "detail": "User = class object"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Lighter tools usually suffice",
+        "body": "Since Python 3.6, `__init_subclass__` on a base class runs for every new subclass and `__set_name__` tells descriptors their names. Together with class decorators they cover most registration and validation uses without a custom metaclass."
+      }
+    ],
+    "takeaway": "Classes are created at run time by calling their metaclass. Once you see class statements as `metaclass(name, bases, namespace)`, frameworks that register models or check subclasses stop looking like magic."
+  }
 }
