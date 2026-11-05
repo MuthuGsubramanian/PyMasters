@@ -41,6 +41,11 @@ def _open(logged_in_page, width, height, dark):
     launcher.first.click()
     dialog = page.get_by_role("dialog", name=re.compile("Under the hood"))
     dialog.wait_for(timeout=30000)
+    # The popup scales in from 96%: measure sizes only once the opening animation has settled.
+    dialog.evaluate("""d => new Promise(r => { const t0 = performance.now(); (function tick() {
+        const m = getComputedStyle(d).transform;
+        if (m === 'none' || m === 'matrix(1, 0, 0, 1, 0, 0)' || performance.now() - t0 > 3000) r(); else requestAnimationFrame(tick);
+    })(); })""")
     topic_tab = dialog.get_by_role("tab", name="How it works")
     try:
         topic_tab.wait_for(timeout=10000)
