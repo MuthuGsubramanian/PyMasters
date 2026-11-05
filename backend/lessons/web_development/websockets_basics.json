@@ -404,5 +404,99 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A WebSocket starts as an HTTP request asking to upgrade; after the server answers 101 Switching Protocols, the same TCP connection stays open and both sides send small framed messages whenever they like.",
+    "steps": [
+      {
+        "title": "It begins as HTTP",
+        "body": "new WebSocket('wss://chat.example.com/ws') sends an ordinary GET with Upgrade: websocket, Connection: Upgrade and a random Sec-WebSocket-Key. Starting as HTTP lets WebSockets pass through the same ports (80 and 443), proxies and load balancers as normal web traffic.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "GET /ws HTTP/1.1",
+              "Host: chat.example.com",
+              "Upgrade: websocket",
+              "Connection: Upgrade",
+              "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==",
+              "Sec-WebSocket-Version: 13"
+            ],
+            "title": "The opening handshake"
+          }
+        }
+      },
+      {
+        "title": "The server proves it understood",
+        "body": "The server appends the fixed GUID 258EAFA5-E914-47DA-95CA-C5AB0DC85B11 to the key, takes the SHA-1 and base64-encodes it. For the key above that gives s3pPLMBiTxaQ9kYGzzhZRbK+xOo=, sent back as Sec-WebSocket-Accept with status 101 Switching Protocols. From now on the connection no longer carries HTTP.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "HTTP/1.1 101 Switching Protocols",
+              "Upgrade: websocket",
+              "Connection: Upgrade",
+              "Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo="
+            ],
+            "title": "The server's answer"
+          }
+        }
+      },
+      {
+        "title": "Messages travel as frames",
+        "body": "Each message is a frame with a small header: an opcode (1 text, 2 binary, 8 close, 9 ping, 10 pong), the payload length and the data. A short chat message costs only a few bytes of framing instead of a full set of HTTP headers. Frames from the browser are masked with a 4-byte key, as the protocol requires.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "opcode",
+                "values": [
+                  1,
+                  2,
+                  8,
+                  9,
+                  10
+                ]
+              },
+              {
+                "variable": "meaning",
+                "values": [
+                  "text",
+                  "binary",
+                  "close",
+                  "ping",
+                  "pong"
+                ]
+              }
+            ],
+            "title": "Frame types"
+          }
+        }
+      },
+      {
+        "title": "Either side can speak first",
+        "body": "Because the connection stays open, the server can push a message the moment something happens, such as a new chat line or a price change, with no polling. Ping and pong frames keep idle connections alive and detect dead ones.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "HTTP polling",
+              "code": "client: anything new?  server: no\nclient: anything new?  server: no\nclient: anything new?  server: yes\n(new request every time)"
+            },
+            "right": {
+              "label": "WebSocket",
+              "code": "connect once\nserver: new message!\nclient: reply\nserver: new message!\n(same connection)"
+            },
+            "title": "Polling versus a held-open connection"
+          }
+        }
+      },
+      {
+        "title": "The server holds many connections",
+        "body": "A Python server built with asyncio (for example the websockets library or FastAPI's WebSocket support) keeps each open connection as a coroutine waiting on await websocket.recv(). Thousands can wait at once on one event loop. Broadcasting to a chat room is a loop that awaits send() on every connection in the room's set."
+      }
+    ],
+    "takeaway": "WebSockets reuse HTTP only to get started. After the 101 upgrade, it is one long-lived connection carrying tiny frames in both directions."
   }
 }

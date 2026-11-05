@@ -394,5 +394,167 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Django forms clean raw strings field by field into cleaned_data, the auth system checks passwords against salted PBKDF2 hashes, and login() writes the user id into a database-backed session referenced by a cookie.",
+    "steps": [
+      {
+        "title": "is_valid() runs a cleaning pipeline",
+        "body": "form.is_valid() calls full_clean(). For each field Django converts the raw string to a Python value (to_python), runs the field's validators, then any clean_<fieldname>() method you wrote; finally it runs form.clean() for checks across fields, such as 'passwords match'. Good values land in form.cleaned_data, problems in form.errors.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "raw POST strings",
+                "detail": "'asha', 'a@b.com'"
+              },
+              {
+                "label": "field.clean()",
+                "detail": "to_python + validators"
+              },
+              {
+                "label": "clean_<field>()",
+                "detail": "your per-field rules"
+              },
+              {
+                "label": "form.clean()",
+                "detail": "cross-field rules"
+              },
+              {
+                "label": "cleaned_data / errors",
+                "detail": "results"
+              }
+            ],
+            "title": "What is_valid() runs"
+          }
+        }
+      },
+      {
+        "title": "Passwords are stored as PBKDF2 hashes",
+        "body": "user.set_password('s3cret') stores a string like pbkdf2_sha256$<iterations>$<salt>$<hash>. PBKDF2 runs SHA-256 hundreds of thousands of times (the default count rises with each Django release), so each guess is slow for an attacker. Because the algorithm and iteration count are stored with the hash, Django can upgrade old hashes when users next log in.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "part",
+                "values": [
+                  "algorithm",
+                  "iterations",
+                  "salt",
+                  "hash"
+                ]
+              },
+              {
+                "variable": "example",
+                "values": [
+                  "pbkdf2_sha256",
+                  "(set by Django version)",
+                  "random per user",
+                  "base64 of the derived key"
+                ]
+              }
+            ],
+            "title": "Anatomy of the password field"
+          }
+        }
+      },
+      {
+        "title": "authenticate() asks each backend",
+        "body": "authenticate(request, username='asha', password='s3cret') tries every class in AUTHENTICATION_BACKENDS. The default ModelBackend loads the user and calls check_password, which re-hashes the attempt with the stored salt and iterations and compares in constant time. It returns the User or None, and inactive users are refused."
+      },
+      {
+        "title": "login() writes the session",
+        "body": "login(request, user) rotates the session key (to block session fixation) and stores the user's id in the session. The session data lives server-side, by default in the django_session table, and the browser only holds a sessionid cookie. On later requests AuthenticationMiddleware reads that id and sets request.user.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "cookie",
+                "label": "sessionid cookie arrives",
+                "type": "start"
+              },
+              {
+                "id": "lookup",
+                "label": "row in django_session?",
+                "type": "decision"
+              },
+              {
+                "id": "user",
+                "label": "request.user = User 7"
+              },
+              {
+                "id": "anon",
+                "label": "request.user = AnonymousUser"
+              },
+              {
+                "id": "guard",
+                "label": "@login_required passes?",
+                "type": "decision"
+              },
+              {
+                "id": "view",
+                "label": "view runs",
+                "type": "end"
+              },
+              {
+                "id": "redirect",
+                "label": "redirect to LOGIN_URL",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "cookie",
+                "to": "lookup"
+              },
+              {
+                "from": "lookup",
+                "to": "user",
+                "label": "yes"
+              },
+              {
+                "from": "lookup",
+                "to": "anon",
+                "label": "no"
+              },
+              {
+                "from": "user",
+                "to": "guard"
+              },
+              {
+                "from": "anon",
+                "to": "guard"
+              },
+              {
+                "from": "guard",
+                "to": "view",
+                "label": "yes"
+              },
+              {
+                "from": "guard",
+                "to": "redirect",
+                "label": "no"
+              }
+            ],
+            "executionPath": [
+              "cookie",
+              "lookup",
+              "user",
+              "guard",
+              "view"
+            ],
+            "title": "How request.user is found"
+          }
+        }
+      },
+      {
+        "title": "CSRF protects the login form too",
+        "body": "{% csrf_token %} writes a hidden csrfmiddlewaretoken field tied to the csrftoken cookie. CsrfViewMiddleware compares the two on every POST and answers 403 if they do not match, so another site cannot submit forms using your logged-in browser."
+      }
+    ],
+    "takeaway": "Forms turn untrusted strings into checked Python values, password hashes make stolen tables hard to use, and the session cookie only points to server-side data that says who you are."
   }
 }

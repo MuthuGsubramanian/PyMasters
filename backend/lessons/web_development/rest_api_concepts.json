@@ -472,5 +472,163 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A REST API maps each resource to a URL and each operation to an HTTP method; the server's routing table pairs (method, path pattern) with a handler, and the status code and JSON body report the result.",
+    "steps": [
+      {
+        "title": "Resources are nouns in the URL",
+        "body": "/books is the collection and /books/42 is one book. The URL names the thing; the method says what to do with it. That is why REST APIs avoid paths like /getBook or /deleteBook.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "GET /books -> list",
+              "POST /books -> create",
+              "GET /books/42 -> read",
+              "PUT /books/42 -> replace",
+              "PATCH /books/42 -> update fields",
+              "DELETE /books/42 -> delete"
+            ],
+            "title": "CRUD mapped onto two URLs"
+          }
+        }
+      },
+      {
+        "title": "The server routes on method plus path",
+        "body": "When DELETE /books/42 arrives, the framework walks its routing table, finds the pattern /books/{id} registered for DELETE, extracts id = '42' and calls that handler. The same path with GET reaches a different function. No match on the path gives 404; a matching path with an unregistered method gives 405 Method Not Allowed.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "req",
+                "label": "DELETE /books/42",
+                "type": "start"
+              },
+              {
+                "id": "match",
+                "label": "path matches /books/{id}?",
+                "type": "decision"
+              },
+              {
+                "id": "method",
+                "label": "DELETE registered?",
+                "type": "decision"
+              },
+              {
+                "id": "handler",
+                "label": "delete_book(id=42)"
+              },
+              {
+                "id": "r404",
+                "label": "404 Not Found",
+                "type": "end"
+              },
+              {
+                "id": "r405",
+                "label": "405 Method Not Allowed",
+                "type": "end"
+              },
+              {
+                "id": "r204",
+                "label": "204 No Content",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "req",
+                "to": "match"
+              },
+              {
+                "from": "match",
+                "to": "method",
+                "label": "yes"
+              },
+              {
+                "from": "match",
+                "to": "r404",
+                "label": "no"
+              },
+              {
+                "from": "method",
+                "to": "handler",
+                "label": "yes"
+              },
+              {
+                "from": "method",
+                "to": "r405",
+                "label": "no"
+              },
+              {
+                "from": "handler",
+                "to": "r204"
+              }
+            ],
+            "executionPath": [
+              "req",
+              "match",
+              "method",
+              "handler",
+              "r204"
+            ],
+            "title": "Routing one request"
+          }
+        }
+      },
+      {
+        "title": "Method semantics are promises",
+        "body": "GET must not change anything (safe), so caches and crawlers can repeat it freely. PUT and DELETE are idempotent: sending the same request twice leaves the same final state. POST is neither, which is why a browser warns before re-submitting a form, and why retry logic treats POST carefully.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "method",
+                "values": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "PATCH",
+                  "DELETE"
+                ]
+              },
+              {
+                "variable": "safe",
+                "values": [
+                  "yes",
+                  "no",
+                  "no",
+                  "no",
+                  "no"
+                ]
+              },
+              {
+                "variable": "idempotent",
+                "values": [
+                  "yes",
+                  "no",
+                  "yes",
+                  "not guaranteed",
+                  "yes"
+                ]
+              }
+            ],
+            "title": "What clients may assume"
+          }
+        }
+      },
+      {
+        "title": "Status code and body carry the outcome",
+        "body": "A successful create returns 201 Created with a Location: /books/43 header and the new book as JSON. Validation problems return 400 or 422 with an error body. The client reads the status first, then parses the body as JSON because Content-Type: application/json says so."
+      },
+      {
+        "title": "Stateless means every request is complete",
+        "body": "The server keeps no conversation state between calls, so each request carries everything needed, including credentials such as Authorization: Bearer <token>. Any server instance can then answer any request, which is what lets an API scale by adding more servers behind a load balancer."
+      }
+    ],
+    "takeaway": "REST is a convention for using HTTP itself as the API: URLs for things, methods for actions, status codes for outcomes, and a routing table that ties them to your functions."
   }
 }

@@ -385,5 +385,119 @@
       "web_development"
     ]
   },
-  "uth_example": "from string import Template\n\nclass Post:\n    def __init__(self, pk, title, is_published):\n        self.pk, self.title, self.is_published = pk, title, is_published\n\nPOSTS = [Post(1, \"Hello Django\", True), Post(2, \"Draft idea\", False), Post(3, \"Views 101\", True)]\nTEMPLATE = Template(\"<h1>$title</h1><ul>$items</ul>\")\n\ndef render(template, context):                        # the template: HOW to show it\n    items = \"\".join(f\"<li>{p.title}</li>\" for p in context[\"posts\"])\n    return template.substitute(title=context[\"title\"], items=items)\n\ndef post_list(request):                               # the view: WHAT to show\n    posts = [p for p in POSTS if p.is_published]\n    context = {\"posts\": posts, \"title\": \"Blog\"}\n    return {\"status\": 200, \"body\": render(TEMPLATE, context)}\n\nresponse = post_list({\"path\": \"/blog/\"})\nprint(response[\"status\"], response[\"body\"])\n"
+  "uth_example": "from string import Template\n\nclass Post:\n    def __init__(self, pk, title, is_published):\n        self.pk, self.title, self.is_published = pk, title, is_published\n\nPOSTS = [Post(1, \"Hello Django\", True), Post(2, \"Draft idea\", False), Post(3, \"Views 101\", True)]\nTEMPLATE = Template(\"<h1>$title</h1><ul>$items</ul>\")\n\ndef render(template, context):                        # the template: HOW to show it\n    items = \"\".join(f\"<li>{p.title}</li>\" for p in context[\"posts\"])\n    return template.substitute(title=context[\"title\"], items=items)\n\ndef post_list(request):                               # the view: WHAT to show\n    posts = [p for p in POSTS if p.is_published]\n    context = {\"posts\": posts, \"title\": \"Blog\"}\n    return {\"status\": 200, \"body\": render(TEMPLATE, context)}\n\nresponse = post_list({\"path\": \"/blog/\"})\nprint(response[\"status\"], response[\"body\"])\n",
+  "under_the_hood": {
+    "summary": "A view gathers data and calls render(), which finds the template file, compiles it into a tree of nodes, and renders that tree with a context dict, escaping every variable for HTML along the way.",
+    "steps": [
+      {
+        "title": "render() is three steps in one",
+        "body": "render(request, 'blog/post_list.html', {'posts': posts}) asks the template loaders for the file (with APP_DIRS on, it searches each app's templates/ folder), renders it with the context, and wraps the resulting string in an HttpResponse with status 200.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "loader",
+                "detail": "find blog/templates/blog/post_list.html"
+              },
+              {
+                "label": "compile",
+                "detail": "text -> node tree"
+              },
+              {
+                "label": "render",
+                "detail": "nodes + context -> HTML string"
+              },
+              {
+                "label": "HttpResponse",
+                "detail": "status 200, text/html"
+              }
+            ],
+            "title": "What render() does"
+          }
+        }
+      },
+      {
+        "title": "Templates compile into nodes",
+        "body": "The template engine splits the text into tokens: plain text, {{ variables }} and {% tags %}. It builds a node list where a {% for post in posts %} tag becomes a ForNode holding its inner nodes. Rendering walks that tree; production setups cache compiled templates so this parsing happens once.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "root",
+                "label": "NodeList"
+              },
+              {
+                "id": "t1",
+                "label": "TextNode '<ul>'"
+              },
+              {
+                "id": "for",
+                "label": "ForNode post in posts"
+              },
+              {
+                "id": "var",
+                "label": "VariableNode post.title"
+              },
+              {
+                "id": "t2",
+                "label": "TextNode '</ul>'"
+              }
+            ],
+            "edges": [
+              {
+                "from": "root",
+                "to": "t1",
+                "label": ""
+              },
+              {
+                "from": "root",
+                "to": "for",
+                "label": ""
+              },
+              {
+                "from": "for",
+                "to": "var",
+                "label": "inner"
+              },
+              {
+                "from": "root",
+                "to": "t2",
+                "label": ""
+              }
+            ],
+            "title": "post_list.html as a node tree"
+          }
+        }
+      },
+      {
+        "title": "Dot lookups try several things",
+        "body": "{{ post.title }} resolves by trying, in order, a dictionary lookup post['title'], then an attribute post.title, then a list index if the part is a number. If the attribute is a method with no arguments, Django calls it. A missing value renders as an empty string instead of raising an error."
+      },
+      {
+        "title": "Autoescaping protects the page",
+        "body": "Every variable is HTML-escaped on output: a title of <script>alert(1)</script> is written as &lt;script&gt;alert(1)&lt;/script&gt;, so the browser shows it as text instead of running it. The |safe filter switches this off and should only be used on HTML you generated yourself.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Value in the database",
+              "code": "<script>alert(1)</script>"
+            },
+            "right": {
+              "label": "What the template outputs",
+              "code": "&lt;script&gt;alert(1)&lt;/script&gt;"
+            },
+            "title": "Autoescape in action"
+          }
+        }
+      },
+      {
+        "title": "Class-based views dispatch on the method",
+        "body": "PostListView.as_view() returns an ordinary function for urls.py. On each request it creates a view instance and calls dispatch(), which picks get() or post() from request.method. ListView's get() calls get_queryset(), then get_context_data() (adding object_list and post_list), then renders the template, so you only override the step you need."
+      }
+    ],
+    "takeaway": "Views decide what data to show; templates are compiled node trees that turn that data into escaped HTML. render() is the glue, and class-based views are the same steps split into overridable methods."
+  }
 }

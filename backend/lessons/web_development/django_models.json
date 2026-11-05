@@ -407,5 +407,93 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A model class describes a table; makemigrations records the difference between your models and the last migration as operations, migrate turns those operations into SQL, and QuerySets build SQL lazily and run it only when you need the rows.",
+    "steps": [
+      {
+        "title": "A class becomes a table definition",
+        "body": "class Post(models.Model) in the app blog maps to a table named blog_post. Each field becomes a column with a database type: CharField(max_length=200) becomes a varchar(200), DateTimeField a datetime column, ForeignKey(Author) an author_id column with a foreign key constraint. An id primary key is added automatically.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Python model",
+              "code": "class Post(models.Model):\n    title = models.CharField(max_length=200)\n    views = models.IntegerField(default=0)\n    author = models.ForeignKey(Author, on_delete=models.CASCADE)"
+            },
+            "right": {
+              "label": "Table it describes",
+              "code": "blog_post\n  id         primary key\n  title      varchar(200)\n  views      integer\n  author_id  references blog_author(id)"
+            },
+            "title": "Class to table"
+          }
+        }
+      },
+      {
+        "title": "makemigrations writes down the change",
+        "body": "makemigrations loads the current models and compares them with the state built from all existing migration files. The difference is written as a new file such as 0002_post_views.py containing operations like AddField('post', 'views', ...). No database is touched yet."
+      },
+      {
+        "title": "migrate runs the SQL and records it",
+        "body": "migrate checks the django_migrations table to see which migrations have already run, then translates each pending operation into SQL for your database (for example ALTER TABLE blog_post ADD COLUMN views integer) and executes it. After success it inserts a row into django_migrations so it never runs twice.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "models.py",
+                "detail": "you add a field"
+              },
+              {
+                "label": "makemigrations",
+                "detail": "writes 0002_post_views.py"
+              },
+              {
+                "label": "migrate",
+                "detail": "runs ALTER TABLE ..."
+              },
+              {
+                "label": "django_migrations",
+                "detail": "records 0002 as applied"
+              }
+            ],
+            "title": "From model change to database change"
+          }
+        }
+      },
+      {
+        "title": "QuerySets are lazy",
+        "body": "Post.objects.filter(views__gte=100).order_by('-views') runs no SQL. It builds a query object; each chained call returns a new QuerySet with one more clause. The SQL runs only when you iterate, slice, call len() or list(), and the rows are then cached on that QuerySet.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "qs = Post.objects.filter(views__gte=100)",
+                "explanation": "No SQL yet: just a query description."
+              },
+              {
+                "code": "qs = qs.order_by('-views')",
+                "explanation": "Still no SQL: one more clause."
+              },
+              {
+                "code": "for post in qs:",
+                "explanation": "Now Django sends one SELECT ... WHERE views >= 100 ORDER BY views DESC."
+              },
+              {
+                "code": "    print(post.title)",
+                "explanation": "Rows come from the cached result."
+              }
+            ],
+            "title": "When the database is actually hit"
+          }
+        }
+      },
+      {
+        "title": "Lookups become SQL clauses",
+        "body": "Field lookups map directly: views__gte=100 becomes WHERE views >= 100, title__startswith='How' becomes a LIKE 'How%' condition, and author__name='Asha' adds a JOIN to the author table. print(qs.query) shows the SQL Django built. Accessing post.author for each post in a loop runs one extra query per post; select_related('author') fetches them in the same JOIN."
+      }
+    ],
+    "takeaway": "Models are table blueprints, migrations are a versioned record of schema changes, and QuerySets are SQL builders that wait until you actually need the rows."
   }
 }
