@@ -39,6 +39,24 @@ def test_playground_fits_a_phone(logged_in_page, dark):
     assert install.is_enabled()
     assert page.evaluate("document.documentElement.scrollWidth") <= 390
 
+    # Deferred polish 2026-11-05: every Playground control is a 44px touch target on a phone, and Run Code's
+    # white label is readable (it was white on green-600, 3.3:1).
+    small = []
+    for name in ("Voice", "Save", "Save as", "My files", "Run Code", "Visualize", "Clear", "Send to Vaathiyaar", "Install"):
+        box = page.get_by_role("button", name=name, exact=True).first.bounding_box()
+        if box is None or box["height"] < 44 or box["width"] < 44:
+            small.append(f"{name}: {box and (round(box['width']), round(box['height']))}")
+    field = page.get_by_label("Package name to install").bounding_box()
+    if field["height"] < 44:
+        small.append(f"pip field: {round(field['height'])}px")
+    assert not small, f"touch targets under 44px on a phone: {small}"
+    run = page.get_by_role("button", name="Run Code", exact=True)
+    page.locator(".cm-content").first.click()
+    page.keyboard.type("print(1)")
+    ratio = run.evaluate(_CONTRAST)
+    assert ratio >= 4.5, f"'Run Code' contrast {ratio:.1f}:1"
+    assert page.evaluate("document.documentElement.scrollWidth") <= 390
+
 
 def test_playground_actions_stay_on_one_line_on_a_laptop(logged_in_page):
     page = _open(logged_in_page, 1440, 900)

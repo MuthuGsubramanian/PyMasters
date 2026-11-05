@@ -25,6 +25,11 @@ import { Button, Badge, Modal, Drawer, Input } from '../components/ui';
 //   pm:vaathiyaar-ask    → panel opens and sends the given message
 //   pm:vaathiyaar-inject → panel's "To editor" button replaces the editor code
 // ──────────────────────────────────────────────────────────────────────────────
+
+// Phones and tablets: every control is a 44px touch target; laptops keep the compact toolbar.
+const TAP = 'min-h-11 lg:min-h-0';
+const TAP_ICON = 'min-h-11 min-w-11 justify-center lg:min-h-0 lg:min-w-0';
+
 export default function Playground() {
     const { user } = useAuth();
     const [voiceOpen, setVoiceOpen] = useState(false);
@@ -385,6 +390,7 @@ export default function Playground() {
                     size="sm"
                     onClick={() => setVoiceOpen(true)}
                     title="Talk to Vaathiyaar (voice)"
+                    className={TAP}
                 >
                     <Mic size={14} />
                     Voice
@@ -395,12 +401,12 @@ export default function Playground() {
             {restoredSession && (
                 <div
                     role="status"
-                    className="mt-2 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-200 flex items-center justify-between gap-3"
+                    className="mt-2 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-800 dark:text-cyan-200 flex items-center justify-between gap-3"
                 >
                     <span>Restored your last session’s code.</span>
                     <button
                         onClick={() => setRestoredSession(false)}
-                        className="text-cyan-300 hover:text-cyan-100 underline underline-offset-2"
+                        className={`${TAP} px-2 font-semibold text-cyan-800 hover:text-cyan-950 dark:text-cyan-200 dark:hover:text-cyan-100 underline underline-offset-2`}
                     >
                         Dismiss
                     </button>
@@ -413,8 +419,8 @@ export default function Playground() {
                     role="status"
                     className={`mt-2 rounded-lg border px-3 py-2 text-xs ${
                         notice.kind === 'error'
-                            ? 'border-red-500/40 bg-red-500/10 text-red-300'
-                            : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-200'
+                            ? 'border-red-500/40 bg-red-500/10 text-red-800 dark:text-red-300'
+                            : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200'
                     }`}
                 >
                     {notice.text}
@@ -449,9 +455,9 @@ export default function Playground() {
                                 onClick={handleSave}
                                 disabled={saving || !code.trim() || (currentFile && !dirty)}
                                 title={currentFile ? `Save changes to ${currentFile.name}` : 'Save this code as a file'}
-                                className="flex items-center gap-1 text-xs font-semibold text-code-foreground/70 bg-white/5 border border-white/10 rounded-lg px-2 py-1 hover:bg-white/10 hover:text-code-foreground transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                className={`${TAP} flex items-center gap-1 text-xs font-semibold text-code-foreground/70 bg-white/5 border border-white/10 rounded-lg px-3 lg:px-2 py-1 hover:bg-white/10 hover:text-code-foreground transition-all disabled:opacity-40 disabled:cursor-not-allowed`}
                             >
-                                {saving ? <Loader2 size={11} className="animate-spin" /> : <Save size={11} />}
+                                {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
                                 Save
                             </button>
                             <button
@@ -459,18 +465,18 @@ export default function Playground() {
                                 disabled={saving || !code.trim()}
                                 title="Save as a new file"
                                 aria-label="Save as"
-                                className="flex items-center gap-1 text-xs font-semibold text-code-foreground/70 bg-white/5 border border-white/10 rounded-lg px-2 py-1 hover:bg-white/10 hover:text-code-foreground transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                className={`${TAP_ICON} flex items-center gap-1 text-xs font-semibold text-code-foreground/70 bg-white/5 border border-white/10 rounded-lg px-2 py-1 hover:bg-white/10 hover:text-code-foreground transition-all disabled:opacity-40 disabled:cursor-not-allowed`}
                             >
-                                <FilePlus2 size={11} />
+                                <FilePlus2 size={13} />
                                 <span className="hidden sm:inline">Save as</span>
                             </button>
                             <button
                                 onClick={openFilesDrawer}
                                 title="Browse your saved files"
                                 aria-label="My files"
-                                className="flex items-center gap-1 text-xs font-semibold text-code-foreground/70 bg-white/5 border border-white/10 rounded-lg px-2 py-1 hover:bg-white/10 hover:text-code-foreground transition-all"
+                                className={`${TAP_ICON} flex items-center gap-1 text-xs font-semibold text-code-foreground/70 bg-white/5 border border-white/10 rounded-lg px-2 py-1 hover:bg-white/10 hover:text-code-foreground transition-all`}
                             >
-                                <FolderOpen size={11} />
+                                <FolderOpen size={13} />
                                 <span className="hidden sm:inline">My files</span>
                             </button>
                             <span className="hidden sm:inline whitespace-nowrap text-xs text-code-foreground/50 font-mono ml-1">Python 3</span>
@@ -499,10 +505,10 @@ export default function Playground() {
                                 <button
                                     onClick={handleRunCode}
                                     disabled={running || !code.trim()}
-                                    className={`flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-white rounded-xl px-4 py-2 transition-colors ${
+                                    className={`${TAP} flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-white rounded-xl px-4 py-2 transition-colors ${
                                         running
-                                            ? 'bg-green-600 animate-pulse cursor-wait'
-                                            : 'bg-green-600 hover:bg-green-500'
+                                            ? 'bg-green-700 animate-pulse cursor-wait'
+                                            : 'bg-green-700 hover:bg-green-800'
                                     } disabled:opacity-40 disabled:cursor-not-allowed`}
                                 >
                                     {running ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
@@ -514,14 +520,14 @@ export default function Playground() {
                                     disabled={tracing || !code.trim()}
                                     title="Step through your code line by line and watch the variables change"
                                     aria-label="Visualize"
-                                    className="flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-cyan-200 bg-cyan-500/10 border border-cyan-400/30 rounded-xl px-3 py-2 hover:bg-cyan-500/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="min-h-11 min-w-11 justify-center lg:min-h-0 lg:min-w-0 flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-cyan-200 bg-cyan-500/10 border border-cyan-400/30 rounded-xl px-3 py-2 hover:bg-cyan-500/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     {tracing ? <Loader2 size={13} className="animate-spin" /> : <History size={13} />}
                                     <span className="hidden sm:inline">{tracing ? 'Tracing...' : 'Visualize'}</span>
                                 </button>
                                 <button
                                     onClick={handleClearTerminal}
-                                    className="flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-code-foreground/70 bg-white/5 border border-white/10 rounded-xl px-3 py-2 hover:bg-white/10 hover:text-code-foreground transition-all duration-200"
+                                    className="min-h-11 lg:min-h-0 flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-code-foreground/70 bg-white/5 border border-white/10 rounded-xl px-3 py-2 hover:bg-white/10 hover:text-code-foreground transition-all duration-200"
                                 >
                                     <Trash2 size={13} />
                                     Clear
@@ -532,7 +538,7 @@ export default function Playground() {
                                     disabled={!code.trim()}
                                     title="Open Vaathiyaar and ask for a review of this code"
                                     aria-label="Send to Vaathiyaar"
-                                    className="flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-violet-200 bg-violet-500/15 border border-violet-400/40 rounded-xl px-3 py-2 hover:bg-violet-500/25 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="min-h-11 min-w-11 justify-center lg:min-h-0 lg:min-w-0 flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-violet-200 bg-violet-500/15 border border-violet-400/40 rounded-xl px-3 py-2 hover:bg-violet-500/25 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <Send size={13} />
                                     <span className="hidden sm:inline">Send to Vaathiyaar</span>
@@ -549,12 +555,12 @@ export default function Playground() {
                                     onKeyDown={(e) => e.key === 'Enter' && handleInstallPackage()}
                                     placeholder="package-name"
                                     aria-label="Package name to install"
-                                    className="flex-1 min-w-0 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-code-foreground placeholder-code-foreground/40 font-mono focus:outline-none focus:border-green-500/40"
+                                    className="min-h-11 lg:min-h-0 flex-1 min-w-0 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1.5 text-xs text-code-foreground placeholder-code-foreground/40 font-mono focus:outline-none focus:border-green-500/40"
                                 />
                                 <button
                                     onClick={handleInstallPackage}
                                     disabled={!installPkg.trim() || installing}
-                                    className="flex-shrink-0 whitespace-nowrap text-xs font-bold text-green-300 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-1.5 hover:bg-green-500/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="min-h-11 lg:min-h-0 flex-shrink-0 whitespace-nowrap text-xs font-bold text-green-300 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-1.5 hover:bg-green-500/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     {installing ? 'Installing...' : 'Install'}
                                 </button>
