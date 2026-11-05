@@ -167,7 +167,9 @@ function checkTopicVisual(visual, language) {
   const squash = (v) => String(v).replace(/\s+/g, ' ').trim();
   const text = container.textContent;
   expect(text.trim(), 'textContent is empty').not.toBe('');
-  expect(text).not.toMatch(BAD);
+  // "NaN" is a bug only when the renderer made it up; pandas explainers author it on purpose (missing values).
+  const authoredNaN = /\bNaN\b/.test(JSON.stringify(visual.props));
+  expect(authoredNaN ? text.replace(/\bNaN\b/g, '') : text).not.toMatch(BAD);
   const { caption } = normalizeProps(visual.type, { ...visual.props }, language);
   if (caption?.title) expect(squash(text), 'caption title missing').toContain(squash(caption.title));
   if (caption?.description) expect(squash(text), 'caption description missing').toContain(squash(caption.description));
