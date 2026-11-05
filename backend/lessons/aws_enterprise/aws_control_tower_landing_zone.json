@@ -33,5 +33,75 @@
     {"q": {"en": "A region-restriction SCP breaks deployments org-wide with vague AccessDenied errors. What was most likely forgotten?"}, "options": {"en": ["Enabling MFA on the root user", "Attaching the SCP to the management account", "Increasing service quotas", "Exemptions for global service endpoints like IAM and STS in the SCP's conditions"]}, "correct": 3}
   ],
   "tags": {"concepts_taught": ["landing_zones", "infrastructure_as_code", "identity_federation"], "concepts_required": ["aws_identity", "aws_security"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 24, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Control Tower builds an Organization with fixed OUs and shared accounts, then enforces controls as SCPs (prevent), Config rules (detect) and CloudFormation hooks (proactive); new accounts inherit all of it the moment they land in an OU.",
+    "steps": [
+      {
+        "title": "Setup builds the skeleton",
+        "body": "Control Tower uses the management account to create a Security OU with a Log Archive account and an Audit account, turns on organization-wide CloudTrail into the Log Archive, and configures IAM Identity Center for sign-in.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "label": "Management account",
+                "children": [
+                  "Security OU: Log Archive, Audit",
+                  "Workload / Sandbox OUs",
+                  "Org CloudTrail -> Log Archive",
+                  "IAM Identity Center",
+                  "Controls on OUs"
+                ]
+              }
+            ],
+            "description": "What a fresh landing zone contains"
+          }
+        }
+      },
+      {
+        "title": "Three kinds of control, three mechanisms",
+        "body": "A preventive control is an SCP that blocks an API call before it runs. A detective control is an AWS Config rule that flags non-compliant resources after they exist. A proactive control is a CloudFormation hook that checks a template before resources are created.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Preventive (SCP)",
+              "code": "API call -> SCP Deny -> blocked\nnothing is created"
+            },
+            "right": {
+              "label": "Detective (Config rule)",
+              "code": "resource created -> rule evaluates\n-> NON_COMPLIANT finding"
+            },
+            "description": "When each control acts"
+          }
+        }
+      },
+      {
+        "title": "SCP inheritance is an intersection",
+        "body": "For an action to be allowed in an account, an SCP at every level of the path (root, each OU, the account) must allow it. A Deny at any level wins. So an OU cannot give back what its parent took away.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "Root:        FullAWSAccess          -> allowed",
+              "Workloads:   Deny outside eu-*      -> allowed",
+              "Prod OU:     FullAWSAccess          -> allowed",
+              "Account:     FullAWSAccess          -> ALLOWED (every level allows)"
+            ],
+            "caption": "Tracing ec2:RunInstances in eu-west-1 down one path"
+          }
+        }
+      },
+      {
+        "title": "Account Factory vends accounts",
+        "body": "Account Factory creates a new account through AWS Service Catalog, places it in the chosen OU and applies the baseline: CloudTrail and Config wiring, the roles Control Tower needs and the OU's controls. The account is governed from its first minute."
+      },
+      {
+        "title": "Drift is detected, not prevented",
+        "body": "If someone changes a Control Tower managed resource directly, for example moving an account between OUs outside the console, Control Tower reports drift. You repair it by re-registering the OU or updating the landing zone."
+      }
+    ],
+    "takeaway": "Placement is governance: put an account in the right OU and it inherits every guardrail. Trace SCPs top-down and remember any level can only take permissions away."
+  }
 }

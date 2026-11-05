@@ -49,5 +49,87 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Each prompt travels over TLS to the provider, is processed, may be kept for a set window (for abuse monitoring) unless zero data retention applies, and is excluded from training under business terms; your controls decide what data enters that path.",
+    "steps": [
+      {
+        "title": "Follow one prompt",
+        "body": "The prompt leaves your app over TLS, reaches the provider's API in a region, is processed by the model and the response returns. The questions are what is stored, where, for how long and who can read it.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Your app classifies data",
+                "type": "input"
+              },
+              {
+                "label": "TLS to provider endpoint",
+                "type": "process"
+              },
+              {
+                "label": "Processed in a region",
+                "type": "process"
+              },
+              {
+                "label": "Retention window (or zero retention)",
+                "type": "process"
+              },
+              {
+                "label": "Deleted per policy",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Where a prompt goes"
+          }
+        }
+      },
+      {
+        "title": "Training use is a contract term",
+        "body": "Business and API offerings from the major providers state that customer data is not used to train models by default. This is set in the commercial terms, not just a settings toggle, so security reviews check the contract."
+      },
+      {
+        "title": "Retention vs zero data retention",
+        "body": "Standard terms may keep inputs and outputs for a limited period for abuse monitoring. Zero-data-retention arrangements, where offered and approved, mean content is not stored after the response, though some features that need storage may then be unavailable.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Standard retention",
+              "code": "kept for a limited window\nfor abuse monitoring"
+            },
+            "right": {
+              "label": "Zero data retention",
+              "code": "not stored after response\nsome stateful features off"
+            },
+            "description": "Two retention postures"
+          }
+        }
+      },
+      {
+        "title": "Threats the vendor cannot fix",
+        "body": "Prompt injection through documents, over-broad tool permissions, users pasting secrets and outputs that leak data to the wrong person are your application's problems. Contracts do not stop them; design does."
+      },
+      {
+        "title": "Policy as code",
+        "body": "A data-classification matrix becomes a check in the request path: before a call, detect the data class and compare it with what each provider and endpoint may receive.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "request contains: customer email, order id",
+              "classified: personal data",
+              "target: provider A, global endpoint",
+              "rule: personal data -> EU data-zone endpoint only",
+              "-> rerouted to EU endpoint"
+            ],
+            "caption": "Pre-call policy check (illustrative)"
+          }
+        }
+      }
+    ],
+    "takeaway": "Know the four answers for every provider: training use, retention, residency and access. Then enforce your own classification rules before data ever leaves your app."
+  }
 }

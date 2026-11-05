@@ -34,5 +34,107 @@
   ],
   "tags": {"concepts_taught": ["prompt_flow", "llmops"], "concepts_required": ["llm_concepts", "functions", "dictionaries"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_ai", "path_memberships": []},
   "generated": false,
-  "uth_example": "spans = []\n\ndef trace(fn):                                # like promptflow.tracing.trace\n    def wrapper(*args):\n        result = fn(*args)\n        spans.append({\"step\": fn.__name__, \"output\": result})\n        return result\n    return wrapper\n\nDOCS = {\"refund\": \"Refunds within 30 days\", \"ship\": \"Free shipping over 50\"}\n\n@trace\ndef clean(question):\n    return question.strip().lower()\n\n@trace\ndef retrieve(question):\n    return [text for key, text in DOCS.items() if key in question]\n\n@trace\ndef build_prompt(question, chunks):\n    return f\"Context: {chunks}\\nQ: {question}\"\n\nq = clean(\"  How do I get a REFUND? \")\nprompt = build_prompt(q, retrieve(q))\nprint([s[\"step\"] for s in spans])\nprint(prompt)\n"
+  "uth_example": "spans = []\n\ndef trace(fn):                                # like promptflow.tracing.trace\n    def wrapper(*args):\n        result = fn(*args)\n        spans.append({\"step\": fn.__name__, \"output\": result})\n        return result\n    return wrapper\n\nDOCS = {\"refund\": \"Refunds within 30 days\", \"ship\": \"Free shipping over 50\"}\n\n@trace\ndef clean(question):\n    return question.strip().lower()\n\n@trace\ndef retrieve(question):\n    return [text for key, text in DOCS.items() if key in question]\n\n@trace\ndef build_prompt(question, chunks):\n    return f\"Context: {chunks}\\nQ: {question}\"\n\nq = clean(\"  How do I get a REFUND? \")\nprompt = build_prompt(q, retrieve(q))\nprint([s[\"step\"] for s in spans])\nprint(prompt)\n",
+  "under_the_hood": {
+    "summary": "A Prompt Flow is a DAG defined in flow.dag.yaml; the runtime reads which node references which output, runs nodes in dependency order (independent nodes in parallel), and records each node's inputs, outputs and timing as a trace.",
+    "steps": [
+      {
+        "title": "Nodes reference each other's outputs",
+        "body": "Each node declares inputs using references such as ${inputs.question} or ${retrieve.output}. Those references are the edges of the graph; nothing else decides the order.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "inputs.question": "user question",
+              "embed": "${inputs.question}",
+              "retrieve": "${embed.output}",
+              "prompt": "${inputs.question}, ${retrieve.output}",
+              "llm": "${prompt.output}",
+              "outputs.answer": "${llm.output}"
+            },
+            "caption": "A small flow.dag.yaml, as a map"
+          }
+        }
+      },
+      {
+        "title": "The runtime sorts and runs the graph",
+        "body": "Prompt Flow builds the dependency graph and starts every node whose inputs are ready. Nodes that do not depend on each other, such as a safety check and a retrieval, can run at the same time.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "inputs.question",
+              "embed",
+              "safety check",
+              "retrieve",
+              "prompt",
+              "llm",
+              "outputs.answer"
+            ],
+            "edges": [
+              {
+                "from": "inputs.question",
+                "to": "embed"
+              },
+              {
+                "from": "inputs.question",
+                "to": "safety check"
+              },
+              {
+                "from": "embed",
+                "to": "retrieve"
+              },
+              {
+                "from": "retrieve",
+                "to": "prompt"
+              },
+              {
+                "from": "inputs.question",
+                "to": "prompt"
+              },
+              {
+                "from": "prompt",
+                "to": "llm"
+              },
+              {
+                "from": "safety check",
+                "to": "outputs.answer"
+              },
+              {
+                "from": "llm",
+                "to": "outputs.answer"
+              }
+            ],
+            "description": "Execution order from references"
+          }
+        }
+      },
+      {
+        "title": "Node types do different work",
+        "body": "A Python node runs your function, a Prompt node renders a Jinja template into text, and an LLM node sends a prompt to a model through a named connection. Connections keep endpoints and keys out of the flow file."
+      },
+      {
+        "title": "Variants run side by side",
+        "body": "An LLM node can have variants with different prompts or parameters. Running a batch with each variant over the same dataset gives comparable outputs for evaluation."
+      },
+      {
+        "title": "Every run is traced",
+        "body": "Each node execution becomes a span with its inputs, outputs, duration and token usage, using OpenTelemetry. When an answer is wrong, the trace shows whether retrieval returned bad chunks or the LLM ignored good ones.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "embed      45 ms",
+              "retrieve   120 ms  -> 3 chunks",
+              "prompt     2 ms",
+              "llm        1,450 ms  -> 812 input / 96 output tokens"
+            ],
+            "caption": "Trace of one run (illustrative)"
+          }
+        }
+      }
+    ],
+    "takeaway": "Treat a prompt app as a graph of small, testable steps. The trace per node is what turns 'the bot is wrong' into a specific fixable cause."
+  }
 }

@@ -41,5 +41,98 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "In GKE, Google runs the control plane; the scheduler places each pod on a node whose allocatable CPU and memory still fits the pod's requests, and Autopilot goes further by provisioning nodes for you and billing by pod requests.",
+    "steps": [
+      {
+        "title": "Machine types are a menu",
+        "body": "Compute Engine names like n2-standard-8 mean family n2, a standard memory ratio and 8 vCPUs. e2 is cost-optimised, c3 compute-optimised, m3 memory-optimised, a3 adds GPUs. Custom machine types let you choose vCPU and memory yourself.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "n2": "general purpose family, 2nd gen",
+              "highmem": "more memory per vCPU",
+              "16": "vCPUs"
+            },
+            "caption": "Decoding n2-highmem-16"
+          }
+        }
+      },
+      {
+        "title": "Allocatable is less than capacity",
+        "body": "A node does not give pods its full size. GKE reserves CPU and memory for the kubelet, the OS and an eviction threshold; what is left is allocatable. Smaller nodes lose a larger share to these reservations.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "machine memory:        32 GiB",
+              "reserved for system:   about 2-3 GiB",
+              "allocatable for pods:  the rest",
+              "pods are packed against allocatable, not 32 GiB"
+            ],
+            "caption": "A node's memory budget (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "The scheduler packs by requests",
+        "body": "Each pod declares requests, for example 500m CPU and 1 GiB. The scheduler filters nodes where the requests still fit and scores the rest. Actual usage does not matter for placement; requests do.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Pod requests 500m / 1Gi",
+                "type": "input"
+              },
+              {
+                "label": "Filter nodes with room",
+                "type": "process"
+              },
+              {
+                "label": "Score nodes (spread, affinity)",
+                "type": "process"
+              },
+              {
+                "label": "Bind pod to node",
+                "type": "process"
+              },
+              {
+                "label": "Kubelet starts containers",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Scheduling one pod"
+          }
+        }
+      },
+      {
+        "title": "Node pools and autoscaling",
+        "body": "In GKE Standard you manage node pools of one machine type each. If pods are Pending, the cluster autoscaler adds nodes to a pool; if nodes are underused, it drains and removes them."
+      },
+      {
+        "title": "Autopilot bills by pod",
+        "body": "In Autopilot, Google provisions and manages nodes for you. You pay for the resources your pods request, so oversized requests directly cost money, while empty node space no longer does.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "GKE Standard",
+              "code": "you pay for whole nodes\nempty space on nodes is your cost"
+            },
+            "right": {
+              "label": "GKE Autopilot",
+              "code": "you pay for pod requests\nnode packing is Google's problem"
+            },
+            "description": "Who pays for unused space"
+          }
+        }
+      }
+    ],
+    "takeaway": "Requests drive both scheduling and (in Autopilot) billing. Measure real usage and set requests to match; that one habit fixes most GKE cost and capacity problems."
+  }
 }

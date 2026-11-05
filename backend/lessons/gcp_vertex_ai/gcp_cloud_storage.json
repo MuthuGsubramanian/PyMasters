@@ -41,5 +41,69 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Cloud Storage keeps every object with the same high durability in all classes; the class only changes storage price, retrieval fees and minimum storage duration, while generations, lifecycle rules and retention policies decide how long versions survive.",
+    "steps": [
+      {
+        "title": "Objects have generations",
+        "body": "Every write of gs://bucket/model.pkl creates a new generation number. With object versioning on, overwriting or deleting keeps the old generation as noncurrent, so it can be restored.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "write v1 -> generation 1700000000000001 (live)",
+              "write v2 -> generation 1700000000000002 (live), gen ...01 noncurrent",
+              "delete   -> no live object, both generations noncurrent"
+            ],
+            "caption": "Generations of one object (versioning on)"
+          }
+        }
+      },
+      {
+        "title": "Classes change the economics, not latency",
+        "body": "Standard, Nearline, Coldline and Archive all return data with millisecond latency. Colder classes cost less per GB-month but charge retrieval fees and have minimum storage durations.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "Standard": "none",
+              "Nearline": "30 days",
+              "Coldline": "90 days",
+              "Archive": "365 days"
+            },
+            "caption": "Minimum storage duration by class"
+          }
+        }
+      },
+      {
+        "title": "Lifecycle rules: conditions and actions",
+        "body": "A rule pairs conditions (age, number of newer versions, current class, prefix) with an action (SetStorageClass or Delete). Cloud Storage evaluates them asynchronously, so an action can happen some time after the condition becomes true."
+      },
+      {
+        "title": "Retention blocks deletes",
+        "body": "A retention policy of, say, 7 years makes every object undeletable until it is that old; locking the policy makes it permanent. Soft delete keeps deleted objects restorable for a retention window.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "No retention policy",
+              "code": "DELETE -> object removed\n(restorable while soft delete lasts)"
+            },
+            "right": {
+              "label": "7-year retention policy",
+              "code": "DELETE -> 403\nobject is still under retention"
+            },
+            "description": "Delete request on a 2-year-old object"
+          }
+        }
+      },
+      {
+        "title": "Uniform access: one place for permissions",
+        "body": "With uniform bucket-level access, object ACLs are disabled and only IAM on the bucket (or above) decides access, which makes 'who can read this' answerable from one policy."
+      }
+    ],
+    "takeaway": "Durability is the same everywhere; pick the class by how often you read. Versioning, lifecycle and retention together decide what you can recover and what you pay to keep."
+  }
 }

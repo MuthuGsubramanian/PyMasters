@@ -49,5 +49,87 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A benchmark score is the share of a fixed test set a model gets right under a specific prompt and sampling setup, so numbers move with contamination, prompting and settings; preference arenas instead fit ratings from many pairwise human votes.",
+    "steps": [
+      {
+        "title": "A benchmark is a scored test set",
+        "body": "A benchmark has fixed items (questions, coding tasks), a prompt format and a grader. The score is correct items divided by total. For code, pass@1 is the share of problems where the first generated solution passes the hidden tests.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "problem 1: tests pass",
+              "problem 2: tests fail",
+              "problem 3: tests pass",
+              "problem 4: tests pass",
+              "pass@1 = 3 / 4 = 75%"
+            ],
+            "caption": "pass@1 on a tiny coding set"
+          }
+        }
+      },
+      {
+        "title": "Settings change the number",
+        "body": "The same model can score differently with few-shot examples, chain-of-thought, a larger thinking budget, several attempts with majority voting, or tool access. A fair comparison needs identical settings, which launch posts often do not share.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Single attempt, no reasoning",
+              "code": "lower score\ncheap, fast"
+            },
+            "right": {
+              "label": "Long thinking, best of many",
+              "code": "higher score\nmuch more compute per item"
+            },
+            "description": "Same model, same test"
+          }
+        }
+      },
+      {
+        "title": "Contamination inflates scores",
+        "body": "If test items leaked into training data, the model can recall answers instead of solving them. Newer or private test sets and fresh problems written after the training cut-off reduce this."
+      },
+      {
+        "title": "Arenas rate by pairwise votes",
+        "body": "In a human-preference arena, users see two anonymous answers and pick the better one. A rating model (Elo-style or Bradley-Terry) turns thousands of such wins and losses into one score per model, which measures preference, not correctness."
+      },
+      {
+        "title": "Build your own scorecard",
+        "body": "Take 50 to 200 real tasks from your workload, grade outputs with rules or a calibrated judge, and weight axes like accuracy, latency, cost and format adherence. That score predicts your production results far better than a leaderboard.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Real tasks from your app",
+                "type": "input"
+              },
+              {
+                "label": "Run each candidate model",
+                "type": "process"
+              },
+              {
+                "label": "Grade: rules + judge",
+                "type": "process"
+              },
+              {
+                "label": "Weight accuracy, latency, cost",
+                "type": "process"
+              },
+              {
+                "label": "Ranked shortlist",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Workload scorecard"
+          }
+        }
+      }
+    ],
+    "takeaway": "Leaderboards tell you who is roughly competitive; your own eval set tells you who wins for your job. Always ask what settings produced a headline number."
+  }
 }

@@ -33,5 +33,86 @@
     {"q": {"en": "What does continuous access evaluation change about sessions?"}, "options": {"en": ["Sessions become permanent after first grant", "Access becomes a stream of decisions — a session granted now can be revoked minutes later when risk signals change", "Passwords rotate hourly", "Sessions are limited to one cloud"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["zero_trust_architecture", "identity_federation"], "concepts_required": ["identity_federation", "cloud_fundamentals"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 23, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "In zero trust every request is decided at the moment it is made: a policy engine combines identity, device posture and request context into an allow or deny decision, and an enforcement point in front of the resource applies it, so network location alone never grants access.",
+    "steps": [
+      {
+        "title": "No trusted inside",
+        "body": "A VPN used to mean 'inside, so trusted'. Zero trust drops that: a request from the office network and one from a café go through the same checks, because an attacker who gets inside looks just like a user.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Perimeter model",
+              "code": "on the network -> trusted\none breach spreads sideways"
+            },
+            "right": {
+              "label": "Zero trust",
+              "code": "every request verified\nidentity + device + context"
+            },
+            "description": "Where trust comes from"
+          }
+        }
+      },
+      {
+        "title": "Decision and enforcement are separate",
+        "body": "The policy decision point evaluates the request; the policy enforcement point (an identity-aware proxy, an API gateway, a service mesh sidecar) sits in front of the resource and only forwards allowed requests.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "User or service request",
+                "type": "input"
+              },
+              {
+                "label": "Enforcement point intercepts",
+                "type": "process"
+              },
+              {
+                "label": "Decision: identity verified?",
+                "type": "process"
+              },
+              {
+                "label": "Device compliant? Context OK?",
+                "type": "process"
+              },
+              {
+                "label": "Allow with least privilege, or deny",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "One request under zero trust"
+          }
+        }
+      },
+      {
+        "title": "Signals feed the decision",
+        "body": "Signals include who (strong authentication, group), what device (managed, patched, disk encrypted), and context (location, time, risk score, sensitivity of the resource). Each cloud evaluates them with its own tools, such as Conditional Access or context-aware access.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "identity: alice, MFA passed",
+              "device: managed, but OS patch missing",
+              "resource: payroll export (high sensitivity)",
+              "-> deny, ask to update device"
+            ],
+            "caption": "A decision with signals (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Workloads too",
+        "body": "Service-to-service calls use workload identities and mutual TLS, so each service proves who it is on every call, and authorisation policies say which services may call which."
+      },
+      {
+        "title": "Evaluation is continuous",
+        "body": "Tokens are short-lived and sessions can be revoked when risk changes, for example a stolen-credential signal. The weakest cloud's controls set the real posture across the estate."
+      }
+    ],
+    "takeaway": "Move trust from the network to each request. Put enforcement points in front of every sensitive resource and feed them identity, device and context signals."
+  }
 }

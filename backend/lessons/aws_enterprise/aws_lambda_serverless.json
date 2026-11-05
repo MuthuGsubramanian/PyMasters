@@ -34,5 +34,93 @@
   ],
   "tags": {"concepts_taught": ["aws_compute", "cloud_fundamentals"], "concepts_required": ["aws_identity", "aws_storage"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "table = {}                                     # stands in for a DynamoDB table\n\ndef handler(event, context):\n    failures = []\n    for record in event[\"Records\"]:\n        order = record[\"body\"]\n        if order.get(\"qty\", 0) <= 0:\n            failures.append({\"itemIdentifier\": record[\"messageId\"]})\n            continue\n        table[order[\"id\"]] = order\n    return {\"batchItemFailures\": failures}     # only bad messages get retried\n\nevent = {\"Records\": [\n    {\"messageId\": \"m1\", \"body\": {\"id\": \"o1\", \"qty\": 2}},\n    {\"messageId\": \"m2\", \"body\": {\"id\": \"o2\", \"qty\": 0}},\n    {\"messageId\": \"m3\", \"body\": {\"id\": \"o3\", \"qty\": 1}},\n]}\nresponse = handler(event, context=None)\ngb_seconds = 0.5 * 0.120                       # 512 MB for 120 ms\nprint(response, \"| stored:\", list(table), \"| billed GB-s:\", gb_seconds)\n"
+  "uth_example": "table = {}                                     # stands in for a DynamoDB table\n\ndef handler(event, context):\n    failures = []\n    for record in event[\"Records\"]:\n        order = record[\"body\"]\n        if order.get(\"qty\", 0) <= 0:\n            failures.append({\"itemIdentifier\": record[\"messageId\"]})\n            continue\n        table[order[\"id\"]] = order\n    return {\"batchItemFailures\": failures}     # only bad messages get retried\n\nevent = {\"Records\": [\n    {\"messageId\": \"m1\", \"body\": {\"id\": \"o1\", \"qty\": 2}},\n    {\"messageId\": \"m2\", \"body\": {\"id\": \"o2\", \"qty\": 0}},\n    {\"messageId\": \"m3\", \"body\": {\"id\": \"o3\", \"qty\": 1}},\n]}\nresponse = handler(event, context=None)\ngb_seconds = 0.5 * 0.120                       # 512 MB for 120 ms\nprint(response, \"| stored:\", list(table), \"| billed GB-s:\", gb_seconds)\n",
+  "under_the_hood": {
+    "summary": "Each Lambda invocation is routed to an execution environment: if none is free, AWS creates one (cold start: microVM, runtime, your init code), otherwise it reuses a warm one; scaling out means more environments, each handling one request at a time.",
+    "steps": [
+      {
+        "title": "An event reaches the Lambda service",
+        "body": "A trigger such as API Gateway calls Invoke synchronously, or S3 and EventBridge invoke it asynchronously through an internal queue. The service looks for an idle execution environment for that function version."
+      },
+      {
+        "title": "Cold start: build an environment",
+        "body": "If none is idle, Lambda starts a Firecracker microVM, downloads your code or image, starts the runtime and runs your init code, everything outside the handler. This happens once per environment and adds latency to that first request.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Invoke, no idle environment",
+                "type": "input"
+              },
+              {
+                "label": "Start microVM",
+                "type": "process"
+              },
+              {
+                "label": "Download code",
+                "type": "process"
+              },
+              {
+                "label": "Start runtime",
+                "type": "process"
+              },
+              {
+                "label": "Run init code (imports, clients)",
+                "type": "process"
+              },
+              {
+                "label": "Run handler",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Cold start path"
+          }
+        }
+      },
+      {
+        "title": "Warm start: reuse it",
+        "body": "After the handler returns, the environment stays alive for a while. The next request skips straight to the handler, and globals such as an already-created boto3 client are still in memory.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Cold start",
+              "code": "microVM + runtime + init + handler\nfirst request pays the setup"
+            },
+            "right": {
+              "label": "Warm start",
+              "code": "handler only\nclients and caches already loaded"
+            },
+            "description": "Cold vs warm"
+          }
+        }
+      },
+      {
+        "title": "Concurrency = environments in use",
+        "body": "One environment handles one request at a time. If 50 requests are in flight, 50 environments are busy. Concurrency is roughly requests per second times average duration: 100 req/s at 0.2 s needs about 20 environments.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "rate: 100 requests/s",
+              "duration: 0.2 s",
+              "concurrency = 100 * 0.2 = 20 environments"
+            ],
+            "caption": "Estimating concurrency"
+          }
+        }
+      },
+      {
+        "title": "Limits and pre-warming",
+        "body": "Reserved concurrency caps a function so it cannot starve others or flood a database. Provisioned concurrency keeps a set number of environments initialised in advance, so those requests never see a cold start."
+      },
+      {
+        "title": "Shutdown and reclaiming",
+        "body": "Idle environments are eventually frozen and reclaimed, and you cannot control when. Never rely on local disk or memory surviving between invocations; durable state belongs in a database or S3."
+      }
+    ],
+    "takeaway": "Lambda scales out, not up: more traffic means more environments. Put expensive setup in init code, keep handlers stateless, and use reserved concurrency to protect what sits downstream."
+  }
 }
