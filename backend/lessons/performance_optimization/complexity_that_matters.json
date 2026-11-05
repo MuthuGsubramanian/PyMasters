@@ -167,5 +167,97 @@
     "category": "performance",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Big-O counts how many basic steps grow with input size: the lesson's common(a, b) does n membership checks, and each check on a list scans up to m items, so the work is n*m; a set makes each check one hash probe, so the work becomes n + m.",
+    "steps": [
+      {
+        "title": "Count the hidden loop",
+        "body": "`for x in a: if x in b:` looks like one loop, but when `b` is a list, `x in b` is itself a loop that compares `x` with each element using `==` until it finds a match. A loop inside a loop is n*m steps, even though only one `for` is written.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "def common(a, b):\n    result = []\n    for x in a:        # n passes\n        if x in b:     # scans b: up to m compares\n            result.append(x)\n    return result",
+            "highlightSequence": [
+              3,
+              4,
+              5
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Outer loop: once per item of a."
+              },
+              {
+                "description": "Hidden inner loop when b is a list: O(m) per check."
+              },
+              {
+                "description": "append is O(1) on average, so it does not change the total."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Watch it grow",
+        "body": "With 1,000 items in each list, the worst case is 1,000,000 comparisons. With 100,000 items each, it is 10,000,000,000, a ten-thousand-fold increase for a hundred-fold bigger input. That is the signature of O(n²).",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "n (both lists)",
+                "values": [
+                  "1,000",
+                  "10,000",
+                  "100,000"
+                ]
+              },
+              {
+                "variable": "list: n*n compares",
+                "values": [
+                  "1,000,000",
+                  "100,000,000",
+                  "10,000,000,000"
+                ]
+              },
+              {
+                "variable": "set: about n + n steps",
+                "values": [
+                  "2,000",
+                  "20,000",
+                  "200,000"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "One keyword changes the class",
+        "body": "`bs = set(b)` costs one pass over `b` (O(m)) to build a hash table. After that, `x in bs` hashes `x` and checks one or a few slots, which takes about the same time regardless of size. The total becomes O(n + m): linear growth instead of quadratic.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "O(n*m)",
+              "code": "for x in a:\n    if x in b:   # list\n        ..."
+            },
+            "right": {
+              "label": "O(n + m)",
+              "code": "bs = set(b)       # once\nfor x in a:\n    if x in bs:  # hash probe\n        ..."
+            }
+          }
+        }
+      },
+      {
+        "title": "Other accidental quadratics",
+        "body": "`s += piece` in a loop can copy the growing string each time; `lst.insert(0, x)` or `lst.pop(0)` shift every item; `list.remove(x)` inside a loop scans and shifts; `sorted()` inside a loop re-sorts each pass. Each hides an O(n) step inside an O(n) loop."
+      },
+      {
+        "title": "Constants matter less than growth",
+        "body": "Micro-tweaks change the constant factor, maybe 10-30%. Changing O(n²) to O(n) changes how the cost grows, which for big inputs is the difference between seconds and hours. Fix the complexity first, then tune."
+      }
+    ],
+    "takeaway": "Look for loops hidden inside operations like `in`, `insert` and `remove`. Choosing a structure whose operations are O(1) beats any amount of micro-optimisation once the input grows."
+  }
 }
