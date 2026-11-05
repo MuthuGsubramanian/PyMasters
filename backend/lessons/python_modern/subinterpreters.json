@@ -152,5 +152,105 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A subinterpreter is a separate Python runtime state inside the same process, with its own modules, sys and builtins, and since CPython 3.12 its own GIL; objects are not shared, so values cross between interpreters by copying or through queues.",
+    "steps": [
+      {
+        "title": "One process, several interpreters",
+        "body": "`interpreters.create()` (Python 3.14's `concurrent.interpreters`, PEP 734) builds a new interpreter state: a fresh `sys.modules`, its own `__main__`, its own builtins. Since CPython 3.12 (PEP 684) each interpreter can also have its own GIL, so two interpreters can run Python bytecode at the same time.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "proc",
+                "label": "one OS process"
+              },
+              {
+                "id": "i0",
+                "label": "main interpreter + GIL"
+              },
+              {
+                "id": "i1",
+                "label": "subinterpreter 1 + GIL"
+              },
+              {
+                "id": "i2",
+                "label": "subinterpreter 2 + GIL"
+              }
+            ],
+            "edges": [
+              {
+                "from": "proc",
+                "to": "i0",
+                "label": "contains"
+              },
+              {
+                "from": "proc",
+                "to": "i1",
+                "label": "contains"
+              },
+              {
+                "from": "proc",
+                "to": "i2",
+                "label": "contains"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "exec runs code in that interpreter",
+        "body": "`interp.exec('x = 40 + 2')` runs the source text in the subinterpreter's `__main__` module, in the calling thread. `x` exists only there; the main interpreter never sees it. A second `exec` in the same interpreter can use `x`, which is why the lesson's print shows 42.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "subinterpreter __main__",
+                "variables": {
+                  "x": "42"
+                }
+              },
+              {
+                "name": "main interpreter __main__",
+                "variables": {
+                  "interp": "<Interpreter 1>",
+                  "x": "(not defined)"
+                }
+              }
+            ],
+            "caption": "Each interpreter has its own namespace"
+          }
+        }
+      },
+      {
+        "title": "Data crosses by copy, not by reference",
+        "body": "Python objects belong to one interpreter. `interp.prepare_main(task_id=3)` copies simple shareable values (such as int, str, bytes, None and tuples of them) into the subinterpreter's `__main__`. For ongoing communication, `interpreters.create_queue()` passes such values between interpreters.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Threads",
+              "code": "share all objects\nneed locks for shared state"
+            },
+            "right": {
+              "label": "Subinterpreters",
+              "code": "share nothing by default\ncopy values or use queues"
+            }
+          }
+        }
+      },
+      {
+        "title": "Parallel with threads",
+        "body": "In the lesson, several threads each create an interpreter and run work in it. Because each interpreter has its own GIL, CPU-bound work in different interpreters runs in parallel, while start-up stays cheaper than launching processes. `concurrent.futures.InterpreterPoolExecutor` packages this pattern."
+      },
+      {
+        "title": "Limits to know",
+        "body": "Extension modules must support multiple interpreters (and the per-interpreter GIL) to be imported in a subinterpreter; ones that do not raise ImportError. Each interpreter imports its own copies of modules, so memory use grows with every interpreter you create."
+      }
+    ],
+    "takeaway": "Subinterpreters give you process-like isolation inside one process: separate modules, separate GILs, nothing shared. Pass plain data across and they can use several cores without the cost of separate processes."
+  }
 }
