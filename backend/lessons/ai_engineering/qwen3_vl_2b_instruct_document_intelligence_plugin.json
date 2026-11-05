@@ -203,5 +203,65 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Qwen3-VL turns a document image into visual tokens with its vision encoder, places them in the same sequence as your text prompt, and the language model generates the requested JSON; the plugin then parses and cross-checks the fields.",
+    "steps": [
+      {
+        "title": "Pixels become visual tokens",
+        "body": "The processor resizes the image and cuts it into small patches. A Vision Transformer encodes them, neighbouring patch features are merged, and a projector maps them into the language model's embedding space. Bigger images produce more visual tokens and cost more compute.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "receipt image"
+              },
+              {
+                "label": "patches"
+              },
+              {
+                "label": "vision encoder"
+              },
+              {
+                "label": "merge + project",
+                "detail": "visual tokens"
+              },
+              {
+                "label": "LLM",
+                "detail": "reads image + prompt"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Image and text share one context",
+        "body": "The chat message contains an image entry and a text entry. The visual tokens are inserted where the image placeholder sits, so attention can connect 'total' in your prompt with the region of the image that shows the total."
+      },
+      {
+        "title": "Ask for a schema",
+        "body": "The prompt names the fields, for example {\"merchant\": str, \"date\": str, \"total\": float, \"items\": [{\"name\": str, \"price\": float}]}, and asks for JSON only. Deterministic decoding (do_sample=False) makes repeated runs give the same extraction."
+      },
+      {
+        "title": "Parse and verify",
+        "body": "Extract the JSON block, json.loads it, and check it: required keys present, numbers parse, and the item prices add up to the total within a small tolerance. A mismatch flags a misread digit for review.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "items: 120.00 + 45.50 + 30.00 = 195.50",
+              "total field: 195.50",
+              "check: OK"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Wrap it as a plugin",
+        "body": "A DocumentPlugin class keeps one schema per document type (receipt, invoice), loads the model once, and exposes extract(image, doc_type). Everything runs locally, so documents never leave the machine."
+      }
+    ],
+    "takeaway": "A vision-language model reads documents by turning the image into tokens the language model can attend to. The reliability comes from asking for a schema and checking the numbers afterwards."
+  }
 }

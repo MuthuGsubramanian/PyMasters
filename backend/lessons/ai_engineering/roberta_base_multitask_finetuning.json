@@ -201,5 +201,74 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "One pre-trained RoBERTa encoder can serve several tasks by attaching different small heads: a classifier on the <s> token's vector for sentence-level labels such as topic or sentiment, and a per-token classifier for named entities.",
+    "steps": [
+      {
+        "title": "The encoder gives one vector per token",
+        "body": "Input text becomes byte-level BPE tokens wrapped as <s> ... </s>. The 12-layer encoder outputs a 768-d vector for each token, already full of context from pre-training."
+      },
+      {
+        "title": "Sequence classification head",
+        "body": "RobertaForSequenceClassification takes the <s> vector, passes it through a dense layer with tanh, then a linear layer to num_labels logits. Softmax and cross-entropy against the label train it; sentiment is the same head with labels like negative / neutral / positive.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "tokens"
+              },
+              {
+                "label": "encoder",
+                "detail": "768-d per token"
+              },
+              {
+                "label": "<s> vector"
+              },
+              {
+                "label": "dense + tanh"
+              },
+              {
+                "label": "logits per class"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Token classification head",
+        "body": "RobertaForTokenClassification applies a linear layer to every token's vector, giving a tag such as B-PER, I-PER or O per token. Words split into several sub-tokens get the label on the first piece, and the rest are set to -100 so the loss ignores them.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "NER labels",
+            "data": [
+              "O",
+              "B-PER",
+              "I-PER",
+              "O",
+              "B-ORG"
+            ],
+            "labels": [
+              "Today",
+              " Asha",
+              " Kumar",
+              " joined",
+              " Infosys"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Fine-tuning updates everything",
+        "body": "The Trainer runs forward, loss, backward and an AdamW step with a small learning rate (around 2e-5 is common). Both the new head and the pre-trained encoder weights move, adapting the representations to the task."
+      },
+      {
+        "title": "Sharing one backbone",
+        "body": "In true multi-task training one encoder feeds several heads; batches from each task are mixed and their losses are added. Related tasks help each other, and you serve one encoder instead of three models."
+      }
+    ],
+    "takeaway": "Pre-training gives the representations; a task head only learns how to read them. Swap the head to change the task, share the encoder to save cost."
+  }
 }

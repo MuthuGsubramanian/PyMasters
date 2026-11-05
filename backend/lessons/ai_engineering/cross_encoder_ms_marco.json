@@ -236,5 +236,91 @@
       "correct": 0
     }
   ],
-  "uth_example": "query = \"speed up pandas joins\"\ndocs = [\"speed up your car\", \"make pandas joins faster\", \"pandas merge is slow\"]\nSYN = {\"faster\": \"speed\", \"merge\": \"joins\"}        # meaning only visible when read together\n\ndef bi_score(q, d):                  # bi-encoder: texts compared separately, word overlap\n    return len(set(q.split()) & set(d.split()))\n\ndef cross_score(q, d):               # cross-encoder: reads query AND doc as one input\n    dw = {SYN.get(w, w) for w in d.split()}\n    qw = q.split()\n    matched = sum(1 for w in qw if w in dw)\n    return matched + (2 if \"pandas\" in qw and \"pandas\" in dw else 0)\n\nstage1 = sorted(docs, key=lambda d: bi_score(query, d), reverse=True)     # fast recall\nscores = {d: cross_score(query, d) for d in stage1}                       # slow, precise\nstage2 = sorted(stage1, key=scores.get, reverse=True)\nprint(\"bi-encoder order:   \", stage1)\nprint(\"cross-encoder order:\", stage2, scores)\n"
+  "uth_example": "query = \"speed up pandas joins\"\ndocs = [\"speed up your car\", \"make pandas joins faster\", \"pandas merge is slow\"]\nSYN = {\"faster\": \"speed\", \"merge\": \"joins\"}        # meaning only visible when read together\n\ndef bi_score(q, d):                  # bi-encoder: texts compared separately, word overlap\n    return len(set(q.split()) & set(d.split()))\n\ndef cross_score(q, d):               # cross-encoder: reads query AND doc as one input\n    dw = {SYN.get(w, w) for w in d.split()}\n    qw = q.split()\n    matched = sum(1 for w in qw if w in dw)\n    return matched + (2 if \"pandas\" in qw and \"pandas\" in dw else 0)\n\nstage1 = sorted(docs, key=lambda d: bi_score(query, d), reverse=True)     # fast recall\nscores = {d: cross_score(query, d) for d in stage1}                       # slow, precise\nstage2 = sorted(stage1, key=scores.get, reverse=True)\nprint(\"bi-encoder order:   \", stage1)\nprint(\"cross-encoder order:\", stage2, scores)\n",
+  "under_the_hood": {
+    "summary": "A cross-encoder feeds the query and one document into the same Transformer as a single sequence, lets every query token attend to every document token, and turns the [CLS] output into one relevance score; it must run once per query-document pair.",
+    "steps": [
+      {
+        "title": "Bi-encoders never read the pair together",
+        "body": "all-MiniLM-L6-v2 compresses the query and each document separately into 384 numbers and only compares the summaries. A detail the summary dropped can never influence the score."
+      },
+      {
+        "title": "One joint input",
+        "body": "The cross-encoder builds '[CLS] query [SEP] document [SEP]' and runs it through 6 MiniLM layers. In every layer, query tokens attend to document tokens and the reverse, so 'pandas join' can directly check whether the passage talks about merge performance.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "input sequence",
+            "data": [
+              "[CLS]",
+              "speed",
+              "up",
+              "pandas",
+              "joins",
+              "[SEP]",
+              "use",
+              "merge",
+              "on",
+              "indexed",
+              "keys",
+              "[SEP]"
+            ],
+            "highlight": [
+              0
+            ]
+          }
+        }
+      },
+      {
+        "title": "A head turns it into a score",
+        "body": "A linear layer on the [CLS] output produces one number, a relevance logit. Higher means more relevant; it is not a probability unless you apply a sigmoid. The model learned this from MS MARCO, about a million real search queries with passages marked relevant by people."
+      },
+      {
+        "title": "The cost: one pass per pair",
+        "body": "Nothing can be precomputed because the score depends on the query. Scoring 50 candidates means 50 forward passes; scoring a million documents per query is out of reach, which is why the cross-encoder only reranks.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Bi-encoder",
+              "code": "encode docs once\n1 encode per query\nfast, approximate"
+            },
+            "right": {
+              "label": "Cross-encoder",
+              "code": "nothing precomputed\n1 pass per (query, doc)\nslow, precise"
+            }
+          }
+        }
+      },
+      {
+        "title": "Recall then rerank",
+        "body": "Vector search nominates the top 50, the cross-encoder rescores them, and the top 5 go to the LLM. The reranker can only promote what stage one handed it, so if the answer is not in the 50, widen stage one.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "query"
+              },
+              {
+                "label": "bi-encoder",
+                "detail": "top 50"
+              },
+              {
+                "label": "cross-encoder",
+                "detail": "50 scores"
+              },
+              {
+                "label": "sort"
+              },
+              {
+                "label": "top 5 to LLM"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Cross-encoders are accurate because they read the query and document together, and expensive for the same reason. Use them on a short list, never the whole corpus."
+  }
 }

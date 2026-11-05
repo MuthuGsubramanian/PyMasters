@@ -203,5 +203,72 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "The monitor asks a Chronos forecaster for many possible futures from the recent window, turns them into a prediction band such as the 5th to 95th percentile, and flags a live value as anomalous when it falls outside that band.",
+    "steps": [
+      {
+        "title": "Forecast from a rolling window",
+        "body": "Every time a new point arrives, the last N values (for example 24 hourly readings) become the context. The model predicts the next value without being trained on this metric."
+      },
+      {
+        "title": "Many samples, not one guess",
+        "body": "The ChronosPipeline used here samples many plausible future paths. The spread of those samples is the model's uncertainty: wide when the history is noisy, narrow when it is regular."
+      },
+      {
+        "title": "Turn samples into a band",
+        "body": "Take quantiles of the samples at each step, for example np.quantile(samples, [0.05, 0.5, 0.95]). The median is the expected value, and the 5-95 band is the normal range for this moment, which adapts to daily cycles automatically.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "forecast for next hour",
+            "data": [
+              41.0,
+              50.2,
+              60.5
+            ],
+            "labels": [
+              "p05",
+              "median",
+              "p95"
+            ],
+            "title": "Illustrative band"
+          }
+        }
+      },
+      {
+        "title": "Compare the live value",
+        "body": "If the real reading is 78, it is above p95 and flagged as a spike; 52 is inside and ignored. A score such as distance outside the band divided by band width can rank how severe each alert is.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "last 24 points"
+              },
+              {
+                "label": "sample futures"
+              },
+              {
+                "label": "quantile band",
+                "detail": "p05..p95"
+              },
+              {
+                "label": "live value outside?",
+                "detail": "alert"
+              },
+              {
+                "label": "append, slide window"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Tune the false-alarm rate",
+        "body": "A 5-95 band means about 10% of normal points fall outside by chance, so alerts usually require the value to be outside a wider band or outside for several consecutive points. Sensitivity is a trade between missed incidents and noisy pages."
+      }
+    ],
+    "takeaway": "Anomaly detection with a probabilistic forecaster is 'expected range versus reality'. The band comes from the model's own uncertainty, so thresholds adapt to each metric's rhythm."
+  }
 }

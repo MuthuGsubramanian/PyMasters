@@ -199,5 +199,69 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Chronos treats forecasting like language modelling: the series is scaled by its mean absolute value, values are mapped to a fixed set of bins that act as tokens, and a Transformer predicts future tokens, sampled many times to give a distribution.",
+    "steps": [
+      {
+        "title": "Scale the history",
+        "body": "Series differ in units, so the context is divided by its mean absolute value. Sales of [100, 120, 110] and temperatures of [10, 12, 11] look the same after scaling, which lets one model handle both."
+      },
+      {
+        "title": "Quantize values into tokens",
+        "body": "The original Chronos models map each scaled value to one of 4,096 uniform bins, so a series becomes a sequence of token ids. Forecasting is now next-token prediction over a vocabulary of bins.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "raw values"
+              },
+              {
+                "label": "/ mean |x|",
+                "detail": "scale"
+              },
+              {
+                "label": "bin index",
+                "detail": "token id"
+              },
+              {
+                "label": "T5 Transformer",
+                "detail": "predict next bins"
+              },
+              {
+                "label": "de-scale",
+                "detail": "back to units"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Sample future paths",
+        "body": "pipeline.predict(context, prediction_length=6, num_samples=100) samples 100 futures token by token. Each sample is mapped back from bin centres and multiplied by the scale.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "forecast shape",
+            "data": [
+              "series: 1",
+              "samples: 100",
+              "steps: 6"
+            ],
+            "title": "Output tensor [1, 100, 6]"
+          }
+        }
+      },
+      {
+        "title": "Quantiles give intervals",
+        "body": "np.quantile over the samples gives, for example, the 10th, 50th and 90th percentile at each future step. The median is the point forecast; the 10-90 band is an 80% prediction interval."
+      },
+      {
+        "title": "Zero-shot because of pre-training",
+        "body": "The model was pre-trained on a large collection of real and synthetic series, so it has seen trends, seasonality and spikes before. Newer Chronos versions such as Chronos-Bolt and Chronos-2 work on patches of values and output quantiles directly, which is faster than sampling, but the idea of a pre-trained forecaster is the same."
+      }
+    ],
+    "takeaway": "Chronos reframes numbers as tokens, so a language-model architecture can forecast any series it was never trained on. Read the output as a distribution, not a single line."
+  }
 }

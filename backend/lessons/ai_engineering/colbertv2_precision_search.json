@@ -213,5 +213,74 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "ColBERTv2's late interaction keeps per-token vectors and lets each query token pick its best match, so specific terms and multiple constraints in a query each have to be satisfied, while compression with centroids plus small residuals keeps the index affordable.",
+    "steps": [
+      {
+        "title": "Pooling blurs specifics",
+        "body": "A single-vector model averages a whole passage into one point. 'ImportError when a module is missing' and 'TypeError in a function call' both land near 'Python error', so a query that cares about one specific error type can retrieve the wrong one."
+      },
+      {
+        "title": "Each query token must find a partner",
+        "body": "With MaxSim, the score is the sum over query tokens of their best similarity to any document token. If a query mentions 'TypeError' and 'decorator', a document matching only 'TypeError' misses the second term's contribution and ranks lower.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "best match per query token",
+            "data": [
+              0.93,
+              0.21,
+              0.88
+            ],
+            "labels": [
+              "TypeError",
+              "decorator",
+              "argument"
+            ],
+            "highlight": [
+              1
+            ],
+            "title": "A weak token pulls the total down"
+          }
+        }
+      },
+      {
+        "title": "Negation is still hard",
+        "body": "Token matching helps with specific terms, but a query like 'errors that are NOT about imports' still contains 'imports', which matches import documents. Reliable exclusion usually needs a filter step after retrieval, as the lesson's multi-constraint search does."
+      },
+      {
+        "title": "Compressed token vectors",
+        "body": "ColBERTv2 clusters all token vectors into centroids. Each token is then stored as a centroid id plus its residual (the difference) quantized to 1 or 2 bits per dimension, which shrinks the index several-fold with little quality loss.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "token vector",
+                "detail": "128-d"
+              },
+              {
+                "label": "nearest centroid",
+                "detail": "id"
+              },
+              {
+                "label": "residual",
+                "detail": "vector - centroid"
+              },
+              {
+                "label": "quantize",
+                "detail": "1-2 bits per dim"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Fast candidate generation",
+        "body": "At search time the engine first uses the centroids to find passages likely to contain good matches, then decompresses and scores only those with full MaxSim. Libraries such as RAGatouille wrap this indexing and search in a few calls."
+      }
+    ],
+    "takeaway": "Late interaction makes every query term count. Use it where precision on specific terms matters, and handle true negation with an explicit filter."
+  }
 }

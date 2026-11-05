@@ -213,5 +213,83 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A readiness harness loads Qwen3-0.6B and records three things on the target machine: memory added to the process, latency and tokens per second across repeated runs, and pass rates on task cases with checkable answers, then compares each with a threshold.",
+    "steps": [
+      {
+        "title": "Memory: measure the process",
+        "body": "psutil reads the process's resident memory (RSS) before and after loading. The difference covers weights, roughly 2 bytes per parameter in bf16 or 4 in float32, plus runtime buffers; generation adds a KV cache that grows with context length.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "rss before",
+                "value": "~300 MB"
+              },
+              {
+                "variable": "rss after load",
+                "value": "~1.5-2.5 GB"
+              },
+              {
+                "variable": "added",
+                "value": "weights + buffers"
+              }
+            ],
+            "title": "Illustrative; depends on dtype"
+          }
+        }
+      },
+      {
+        "title": "Latency: repeat and warm up",
+        "body": "Time n_runs generations of max_tokens=50 with time.perf_counter. Discard the first run, which pays one-off costs, and report median latency and generated tokens divided by seconds."
+      },
+      {
+        "title": "Two numbers users feel",
+        "body": "Time to first token comes from processing the prompt; tokens per second comes from the decode loop. A short prompt with slow decode feels different from a long prompt with fast decode, so record both when you can.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "prompt"
+              },
+              {
+                "label": "prefill",
+                "detail": "time to first token"
+              },
+              {
+                "label": "decode loop",
+                "detail": "tokens / second"
+              },
+              {
+                "label": "total latency"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Quality: cases with checkable answers",
+        "body": "Each test case lists strings that a correct answer must contain, for example '4' for 'What is 2 + 2?'. Pass rate is passed / total; checking per category shows whether the model is weak at arithmetic, facts or formatting.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "arithmetic  4/5",
+              "python      5/5",
+              "facts       3/5",
+              "overall     12/15 = 80%"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Decide with thresholds",
+        "body": "Write the requirements down before running, for example memory under 2 GB, median latency under 3 s, pass rate over 75%. The model is ready only if all pass on the device it will actually run on."
+      }
+    ],
+    "takeaway": "Deploying a small model is an engineering decision, so measure memory, speed and accuracy on the real hardware and compare with thresholds you set in advance."
+  }
 }

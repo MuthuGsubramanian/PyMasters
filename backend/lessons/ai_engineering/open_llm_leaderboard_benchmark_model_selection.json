@@ -211,5 +211,78 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "The Open LLM Leaderboard ran every model through the same benchmark harness with fixed prompts, rescaled each benchmark so random guessing scores 0, and averaged them; selection combines those scores with a memory estimate of parameters x bytes per weight.",
+    "steps": [
+      {
+        "title": "One harness, same settings",
+        "body": "Scores came from EleutherAI's lm-evaluation-harness with identical prompts, few-shot counts and scoring for every model. That is what makes rows comparable; numbers copied from different papers often are not."
+      },
+      {
+        "title": "How a benchmark is scored",
+        "body": "Multiple-choice tasks compare the log-likelihood the model assigns to each answer option and count the highest as its choice. Generation tasks, such as math, check whether the produced answer matches exactly. Instruction-following tasks check verifiable rules in the response.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "v2 benchmark set",
+            "data": [
+              "IFEval",
+              "BBH",
+              "MATH Lvl 5",
+              "GPQA",
+              "MuSR",
+              "MMLU-PRO"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Normalise against chance",
+        "body": "A 4-option quiz gives 25% to random guessing. The leaderboard rescaled scores as (raw - random) / (max - random) x 100, so 0 means 'no better than guessing' and averages are not inflated by easy-to-guess tasks.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "raw 40% on 4-choice task",
+              "(40 - 25) / (100 - 25) x 100 = 20.0"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Estimate memory before downloading",
+        "body": "Weights need params x bits / 8 bytes, plus overhead for the KV cache and runtime (often about 20%). A 7B model is about 14 GB at 16-bit and about 3.5 GB at 4-bit, before overhead, which decides what fits a 16 GB laptop.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "leaderboard rows"
+              },
+              {
+                "label": "RAM estimate",
+                "detail": "params x bits / 8 x 1.2"
+              },
+              {
+                "label": "fits?"
+              },
+              {
+                "label": "weight benchmarks",
+                "detail": "by your tasks"
+              },
+              {
+                "label": "pick"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Weight the benchmarks you need",
+        "body": "An assistant that must follow formats should weight IFEval heavily; a tutor for maths should weight MATH. A weighted average over relevant columns ranks models for your use, not for the leaderboard's."
+      }
+    ],
+    "takeaway": "Comparable benchmark numbers come from one harness and chance-corrected scores. Filter by what fits in memory, weight what you need, and confirm with your own prompts."
+  }
 }

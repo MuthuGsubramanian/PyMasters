@@ -207,5 +207,64 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "The Smol Training Playbook decides each choice for a small model by running cheap ablations, then pre-trains in stages that shift the data mixture toward higher-quality code and maths, extends the context length, and finishes with post-training for instructions and preferences.",
+    "steps": [
+      {
+        "title": "Ablate small, decide big",
+        "body": "Instead of guessing, the team trains small proxy models on fewer tokens and changes one thing at a time (tokenizer, attention type, data mix, learning rate), comparing evaluation scores. Only changes that win at small scale are used for the full run.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "baseline config"
+              },
+              {
+                "label": "change one thing"
+              },
+              {
+                "label": "train small proxy"
+              },
+              {
+                "label": "evaluate"
+              },
+              {
+                "label": "keep if better"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Architecture from those ablations",
+        "body": "SmolLM3 (about 3B parameters) uses grouped-query attention to shrink the KV cache and skips rotary position encoding in some layers (NoPE) to help long-context behaviour. Each was adopted because ablations showed no quality loss or a gain."
+      },
+      {
+        "title": "Data mixture changes over time",
+        "body": "Pre-training on about 11 trillion tokens runs in stages. Early stages are mostly web text; later stages raise the share of high-quality code, maths and reasoning data, so the model finishes learning on the best material.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "mixture shift (illustrative)",
+            "data": [
+              "stage 1: mostly web",
+              "stage 2: + code, maths",
+              "stage 3: highest-quality code, maths, reasoning"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Extend the context",
+        "body": "A short final phase trains on longer sequences, adjusting the position settings, so the model handles long inputs without paying long-context cost for the whole run."
+      },
+      {
+        "title": "Post-training",
+        "body": "Supervised fine-tuning on instruction and reasoning examples teaches the chat format; preference optimisation then nudges outputs toward answers people prefer. Evaluation runs throughout to catch regressions, and failures are documented as carefully as successes."
+      }
+    ],
+    "takeaway": "Good small models come from disciplined process: test every choice cheaply, save the best data for last, and only then spend the big compute."
+  }
 }

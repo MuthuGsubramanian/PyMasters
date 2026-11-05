@@ -215,5 +215,70 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "One BGE-M3 forward pass produces token vectors that three heads reuse: the [CLS] vector for dense similarity, a learned weight per token for sparse lexical matching, and per-token vectors for ColBERT-style late interaction.",
+    "steps": [
+      {
+        "title": "One encoder, three outputs",
+        "body": "The text goes through the XLM-RoBERTa-based encoder once. Every output head reads the same final token states, so asking for all three representations costs barely more than asking for one.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "text"
+              },
+              {
+                "label": "encoder",
+                "detail": "token states"
+              },
+              {
+                "label": "dense",
+                "detail": "CLS, 1024-d"
+              },
+              {
+                "label": "sparse",
+                "detail": "weight per token"
+              },
+              {
+                "label": "multi-vector",
+                "detail": "vector per token"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Dense: one vector per text",
+        "body": "The normalised [CLS] vector is compared by dot product. It captures overall meaning and is what a plain vector database stores."
+      },
+      {
+        "title": "Sparse: learned term weights",
+        "body": "A small linear layer plus ReLU gives each token a weight, so 'decorators' might get 0.31 and 'the' nearly 0. The lexical score adds query weight x document weight for every token the two texts share, like a learned BM25.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "lexical weights",
+            "data": {
+              "python": 0.24,
+              "decorators": 0.31,
+              "modify": 0.12,
+              "function": 0.19
+            },
+            "title": "Illustrative per-token weights"
+          }
+        }
+      },
+      {
+        "title": "ColBERT: late interaction with MaxSim",
+        "body": "Each token keeps its own vector. For every query token, take its best dot product over all document tokens, then average those maxima. Specific query words must each find a match, which helps on precise, multi-part questions."
+      },
+      {
+        "title": "Combine the scores",
+        "body": "The final relevance can be a weighted sum such as 0.4 x dense + 0.2 x sparse + 0.4 x colbert. A common pattern retrieves candidates cheaply with dense or sparse, then re-scores the shortlist with the heavier multi-vector score."
+      }
+    ],
+    "takeaway": "Dense, sparse and multi-vector are three views of the same token states. Using more than one covers each other's blind spots: meaning, exact words, and per-token precision."
+  }
 }

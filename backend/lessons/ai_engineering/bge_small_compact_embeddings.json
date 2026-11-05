@@ -201,5 +201,53 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "bge-small-en-v1.5 is a 12-layer, 384-wide encoder of about 33 million parameters that uses the [CLS] token's normalised vector as the embedding, and expects short retrieval queries to carry an instruction prefix that documents do not.",
+    "steps": [
+      {
+        "title": "Small by width, not by depth",
+        "body": "The model keeps 12 Transformer layers but a hidden size of 384, giving about 33.4M parameters, roughly 130 MB in float32. Its vectors are 384-dimensional, the same storage cost per chunk as MiniLM."
+      },
+      {
+        "title": "CLS pooling",
+        "body": "Unlike MiniLM's mean pooling, BGE uses the final vector of the [CLS] token, then L2-normalises it. The training taught that one position to summarise the sentence.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Mean pooling (MiniLM)",
+              "code": "average all token vectors\n(mask out padding)"
+            },
+            "right": {
+              "label": "CLS pooling (BGE)",
+              "code": "take token 0's vector\nthen normalise"
+            }
+          }
+        }
+      },
+      {
+        "title": "Asymmetric retrieval with a prefix",
+        "body": "Queries are short and documents long, so BGE was trained with an instruction on the query side: 'Represent this sentence for searching relevant passages: '. Prepend it to queries only; passages are encoded as-is. For v1.5 the prefix is optional but often helps short queries.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "query -> 'Represent this sentence for searching relevant passages: lazy iteration in python'",
+              "doc   -> 'Python generators yield values lazily'"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Trained contrastively",
+        "body": "BGE models were trained on large sets of text pairs with a contrastive objective: pull each query toward its passage, push it away from others in the batch. That is why the dot product of two normalised vectors reflects relevance."
+      },
+      {
+        "title": "Choose a backend",
+        "body": "The same weights load from SafeTensors into PyTorch or run as an ONNX graph. ONNX Runtime typically lowers CPU latency; the vectors stay the same, so the index does not need rebuilding."
+      }
+    ],
+    "takeaway": "Compact embedders keep quality by training well, not by being wide. Use the model the way it was trained: CLS pooling, normalisation, and the query-side prefix."
+  }
 }

@@ -369,5 +369,86 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A RAG pipeline splits documents into chunks, embeds each chunk with all-MiniLM-L6-v2, embeds the question the same way, takes the top-k chunks by cosine similarity, and pastes them into the prompt so the LLM answers from that evidence.",
+    "steps": [
+      {
+        "title": "Chunk the documents",
+        "body": "Whole documents make blurry vectors and may exceed the 256-token input limit. Splitting into chunks of a few sentences gives each vector one focused idea; here 2-sentence chunks produce 3 chunks for the policy text."
+      },
+      {
+        "title": "Index: one vector per chunk",
+        "body": "model.encode(chunks) returns a tensor of shape [3, 384]. This is done once at ingestion time and stored with the chunk text.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "Indexed 3 chunks -> torch.Size([3, 384])"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Retrieve: cosine top-k",
+        "body": "The question 'Can I get my money back?' is encoded with the same model and compared with every chunk. util.cos_sim gives one score per chunk; torch.topk with k=2 picks the two best, even though the refund chunk never contains the word 'money'.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "cos_sim(question, chunk)",
+            "data": [
+              0.62,
+              0.18,
+              0.41
+            ],
+            "labels": [
+              "refunds",
+              "shipping",
+              "returns"
+            ],
+            "highlight": [
+              0,
+              2
+            ],
+            "title": "Illustrative scores, top_k = 2"
+          }
+        }
+      },
+      {
+        "title": "Augment the prompt",
+        "body": "The selected chunks are pasted into a template: 'Answer using only the context below. Context: ... Question: ...'. The LLM now has the facts in front of it instead of relying on what it memorised."
+      },
+      {
+        "title": "Generate",
+        "body": "Any LLM can produce the answer, local or hosted. Because the answer comes from the provided text, you can show the source chunks to the user, and updating knowledge means re-indexing documents rather than retraining a model.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "chunk"
+              },
+              {
+                "label": "embed",
+                "detail": "384-d"
+              },
+              {
+                "label": "retrieve",
+                "detail": "top-k"
+              },
+              {
+                "label": "augment",
+                "detail": "prompt"
+              },
+              {
+                "label": "generate",
+                "detail": "LLM"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "RAG turns a closed-book model into an open-book one. Retrieval quality sets the ceiling: the LLM can only use the chunks the embedder found."
+  }
 }
