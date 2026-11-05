@@ -33,5 +33,90 @@
     {"q": {"en": "How does the gateway close the loop with data-residency obligations?"}, "options": {"en": ["By encrypting all prompts with a single global key", "It cannot — residency is a storage-only concern", "Residency-aware routing: pinning requests from a jurisdiction to model endpoints in permitted regions", "By deleting audit logs weekly"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["llmops", "ai_governance", "ai_platform_selection"], "concepts_required": ["ai_platform_selection", "functions"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 25, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A GenAI gateway is a proxy every model call passes through: it authenticates the calling app, applies quota and safety policy, routes to a provider and model with fallback on errors, and logs tokens, latency and cost per team before returning the response.",
+    "steps": [
+      {
+        "title": "One front door for every model",
+        "body": "Apps call one gateway API with their own identity instead of holding provider keys. The gateway keeps the provider credentials, so keys are never spread across teams.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "App calls gateway (app identity)",
+                "type": "input"
+              },
+              {
+                "label": "Auth + team lookup",
+                "type": "process"
+              },
+              {
+                "label": "Quota / budget check",
+                "type": "process"
+              },
+              {
+                "label": "Input guardrails (PII, policy)",
+                "type": "process"
+              },
+              {
+                "label": "Route to provider + model",
+                "type": "process"
+              },
+              {
+                "label": "Log tokens, cost, latency",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "A request through the gateway"
+          }
+        }
+      },
+      {
+        "title": "Routing and fallback",
+        "body": "A route maps a logical name like 'chat-default' to a primary deployment and fallbacks. On a 429 or timeout from the primary, the gateway retries on the next target, so one provider's throttling does not reach users.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "route chat-default: [provider A model X, provider B model Y]",
+              "try A: 429 Too Many Requests",
+              "try B: 200 OK (1.4 s)",
+              "log: team=support fallback=true tokens=1,920"
+            ],
+            "caption": "Fallback in action (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Budgets per team",
+        "body": "Each request's token usage is counted against the team's budget. When a team passes its limit, the gateway can return 429, downgrade to a cheaper model or alert, according to policy."
+      },
+      {
+        "title": "Canary models like code",
+        "body": "A new model version gets a small share of traffic for a route, say 5%. The gateway tags those requests so evaluations and error rates can be compared before shifting more traffic.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Big-bang switch",
+              "code": "all traffic moves at once\nregressions hit everyone"
+            },
+            "right": {
+              "label": "Gateway canary",
+              "code": "5% -> 25% -> 100%\ncompare evals at each step"
+            },
+            "description": "Releasing a new model"
+          }
+        }
+      },
+      {
+        "title": "The gateway must not become the outage",
+        "body": "Because everything flows through it, the gateway needs redundancy, low added latency and a plan for its own failure. Keep it a thin policy layer, not a place for business logic."
+      }
+    ],
+    "takeaway": "Central control without central bottlenecks: put identity, quotas, routing and logging in the gateway, keep it thin and highly available, and release new models through it gradually."
+  }
 }

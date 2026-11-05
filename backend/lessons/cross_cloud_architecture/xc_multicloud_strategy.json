@@ -33,5 +33,87 @@
     {"q": {"en": "Which pattern do mature enterprises most often converge on?"}, "options": {"en": ["Perfectly symmetrical active/active across three clouds", "One anchor cloud plus explicitly justified, documented exceptions", "Rotating primary cloud every fiscal year", "Choosing clouds per developer preference"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["multi_cloud_strategy", "cloud_cost_management"], "concepts_required": ["cloud_fundamentals", "dictionaries"], "difficulty": "advanced", "engagement_type": "conceptual", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A sound multi-cloud decision is made per workload, not per company: hard constraints filter the options first, then weighted criteria such as data gravity, differentiating services and team skills score what is left, and the cost of operating a second cloud is counted honestly.",
+    "steps": [
+      {
+        "title": "Decide per workload",
+        "body": "'Are we multi-cloud?' has no useful answer. 'Where should the fraud model and its data run?' does. Each workload gets its own placement decision, and the estate becomes multi-cloud only where workloads justify it."
+      },
+      {
+        "title": "Hard constraints filter first",
+        "body": "Requirements that cannot be traded away remove options before any scoring: data must stay in-country, a regulator requires a specific certification, an acquired company is already on another cloud.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Workload: fraud scoring",
+                "type": "input"
+              },
+              {
+                "label": "Filter: residency, regulation, contracts",
+                "type": "process"
+              },
+              {
+                "label": "Score remaining clouds",
+                "type": "process"
+              },
+              {
+                "label": "Add cost of a second platform",
+                "type": "process"
+              },
+              {
+                "label": "Decision + written rationale",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Placement decision for one workload"
+          }
+        }
+      },
+      {
+        "title": "Weighted scoring decides the rest",
+        "body": "Criteria such as where the data already lives, which provider has the differentiating service, and what the team already knows get weights. Each provider is scored 1-5 per criterion and the weighted sums are compared.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "criterion        weight  Cloud A  Cloud B",
+              "data gravity     0.4     5        2",
+              "unique service   0.3     3        5",
+              "team skills      0.3     5        2",
+              "weighted total           4.4      2.9"
+            ],
+            "caption": "Weighted score for one workload (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "The second cloud has a fixed cost",
+        "body": "Running a second provider means another landing zone, identity federation, network links, security tooling, on-call skills and egress fees. That fixed cost must be beaten by the workload's benefit, not just its score.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Visible",
+              "code": "the new service you wanted"
+            },
+            "right": {
+              "label": "Hidden",
+              "code": "landing zone, identity, network,\nsecurity tooling, skills, egress"
+            },
+            "description": "What a second cloud really adds"
+          }
+        }
+      },
+      {
+        "title": "Bad reasons fail the test",
+        "body": "'Avoid lock-in' or 'resilience' without a concrete failure scenario usually produce duplicated platforms that are each half-run. They rarely survive the scoring once hidden costs are listed."
+      }
+    ],
+    "takeaway": "Multi-cloud should be the result of workload decisions, never a goal in itself. Write the constraints, scores and hidden costs down so the decision can be reviewed later."
+  }
 }
