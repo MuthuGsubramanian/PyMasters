@@ -76,3 +76,34 @@ def test_private_ips_skip_geo():
     # ipaddress module — use a real public address for the negative case.
     assert _is_private("8.8.8.8") is False
     assert _is_private("not-an-ip") is True  # fail-safe: treat as private
+
+
+class _CFRequest(_StubRequest):
+    def __init__(self, country=None, region=None, city=None, forwarded="203.0.113.9"):
+        super().__init__(forwarded=forwarded)
+        for k, v in (("cf-ipcountry", country), ("cf-region", region), ("cf-ipcity", city)):
+            if v:
+                self.headers[k] = v
+
+
+def _geo(db):
+    conn = sqlite3.connect(db)
+    row = conn.execute("SELECT country, region, city FROM login_events ORDER BY created_at DESC LIMIT 1").fetchone()
+    conn.close()
+    return row
+
+
+def test_login_geo_comes_from_cloudflare_headers_and_no_ip_leaves_the_server(db, monkeypatch):
+    # Security review L14 (2026-11-05): the visitor IP went to ip-api.com over plain HTTP. Cloudflare already
+    # tells us the country (and region/city when visitor location headers are on), so nothing is sent out.
+    import requests
+    monkeypatch.setattr(requests, "get", lambda *a, **k: (_ for _ in ()).throw(AssertionError("outbound geo call")))
+    record_login("u1", _CFRequest(country="IN", region="Tamil Nadu", city="Chennai"), db_path=db)
+    assert _geo(db) == ("IN", "Tamil Nadu", "Chennai")
+
+
+def test_unknown_or_tor_country_codes_are_not_stored(db):
+    record_login("u1", _CFRequest(country="XX"), db_path=db)
+    assert _geo(db) == (None, None, None)
+    record_login("u1", _CFRequest(country="T1"), db_path=db)
+    assert _geo(db) == (None, None, None)
