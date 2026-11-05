@@ -474,5 +474,96 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "An object's attributes live in its own __dict__, while methods and class attributes live in the class's dict; attribute lookup checks the instance first and then the class, which is why class attributes are shared.",
+    "steps": [
+      {
+        "title": "Two dicts, two levels",
+        "body": "After `class Dog: species = 'canine'` and `rex = Dog('Rex')`, the class dict holds `species`, `__init__` and the methods, and `rex.__dict__` holds only what `__init__` assigned through `self`, such as `{'name': 'Rex'}`.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Dog.__dict__ (shared)",
+              "code": "species: 'canine'\n__init__: <function>\nbark: <function>"
+            },
+            "right": {
+              "label": "rex.__dict__ (per object)",
+              "code": "name: 'Rex'\nage: 3"
+            }
+          }
+        }
+      },
+      {
+        "title": "Reading an attribute: instance, then class",
+        "body": "`rex.name` is found in `rex.__dict__`. `rex.species` is not there, so Python moves on to the class and finds it in `Dog.__dict__`. If neither has it, you get AttributeError. Every Dog sees the same `species` object.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "rex.species",
+                "detail": "look in rex.__dict__"
+              },
+              {
+                "label": "not found",
+                "detail": "look in Dog.__dict__"
+              },
+              {
+                "label": "found",
+                "detail": "'canine'"
+              },
+              {
+                "label": "nowhere",
+                "detail": "AttributeError"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Assignment always writes to the instance",
+        "body": "`rex.species = 'wolf'` does not change the class. It adds a new key to `rex.__dict__` that shadows the class value for `rex` only. `Dog.species = 'wolf'` changes it for every instance that has not shadowed it.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "rex.species",
+                "values": [
+                  "'canine'",
+                  "'wolf'"
+                ]
+              },
+              {
+                "variable": "fido.species",
+                "values": [
+                  "'canine'",
+                  "'canine'"
+                ]
+              },
+              {
+                "variable": "Dog.species",
+                "values": [
+                  "'canine'",
+                  "'canine'"
+                ]
+              }
+            ],
+            "caption": "Before and after rex.species = 'wolf'"
+          }
+        }
+      },
+      {
+        "title": "self is the object being used",
+        "body": "`rex.bark()` finds `bark` on the class and calls it with `rex` as the first argument, so inside `bark` the name `self` refers to `rex`. `Dog.bark(rex)` does exactly the same thing written out."
+      },
+      {
+        "title": "The mutable class attribute trap",
+        "body": "If a class defines `tricks = []` and a method does `self.tricks.append(t)`, there is no assignment to `self.tricks`, so the lookup finds the class's single list and every dog shares it. Create per-object lists in `__init__` instead."
+      }
+    ],
+    "takeaway": "Instances hold data, classes hold behaviour and shared defaults. Reads fall back from instance to class; writes stay on the instance. That one rule explains both class attributes and their most common bug."
   }
 }

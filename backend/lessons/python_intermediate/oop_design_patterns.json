@@ -474,5 +474,88 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Python implements classic patterns with its own mechanisms: a Singleton by caching the instance in __new__ or by module import caching, a Factory with a dict of classes, an Observer with a list of callbacks, and a Strategy by passing functions.",
+    "steps": [
+      {
+        "title": "Singleton through __new__",
+        "body": "`Singleton()` calls `__new__` before `__init__`. The lesson's version stores the first instance in the class attribute `_instance` and returns that same object on every later call, so `a is b` is True. Note that `__init__` still runs on each call, re-initialising the shared object.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "class Singleton:\n    _instance = None\n    def __new__(cls):\n        if cls._instance is None:\n            cls._instance = super().__new__(cls)\n        return cls._instance",
+            "highlightSequence": [
+              4,
+              5,
+              6
+            ],
+            "stepDescriptions": [
+              {
+                "description": "First call: no instance stored yet."
+              },
+              {
+                "description": "Allocate one object and remember it on the class."
+              },
+              {
+                "description": "Every call returns the same object."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Modules are already singletons",
+        "body": "A module is executed once and cached in `sys.modules`, so every `import config` gets the same module object. Putting shared state in a module is the simplest Pythonic singleton."
+      },
+      {
+        "title": "Factory: a dict from names to classes",
+        "body": "Because classes are objects, a factory can be a dict lookup: `SHAPES = {'circle': Circle, 'square': Square}` then `SHAPES[kind](size)`. Adding a type means adding one entry, with no if/elif chain.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "'circle'": "Circle",
+              "'square'": "Square",
+              "'triangle'": "Triangle"
+            },
+            "label": "SHAPES registry"
+          }
+        }
+      },
+      {
+        "title": "Observer: a list of callables",
+        "body": "The subject keeps `self._listeners = []`. `subscribe(fn)` appends a function or bound method, and `notify(event)` loops over the list calling each one. Bound methods carry their object, so `subscribe(logger.on_event)` remembers which logger to call.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "subject.notify('saved')",
+                "detail": "loop over listeners"
+              },
+              {
+                "label": "email.send('saved')",
+                "detail": "called"
+              },
+              {
+                "label": "log.write('saved')",
+                "detail": "called"
+              },
+              {
+                "label": "cache.clear('saved')",
+                "detail": "called"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Strategy: pass the function",
+        "body": "In Python a strategy rarely needs a class hierarchy. `sorted(items, key=by_price)` or `checkout(cart, discount=festival_discount)` swaps behaviour by passing a different function object, because functions are first-class values."
+      }
+    ],
+    "takeaway": "Many classic patterns shrink in Python because classes, functions and modules are ordinary objects you can store and pass. Use the language's mechanisms first and reach for heavier structures only when they pay off."
   }
 }

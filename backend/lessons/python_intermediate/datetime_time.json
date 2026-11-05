@@ -396,5 +396,85 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A datetime stores calendar fields plus an optional tzinfo, a timedelta stores only days, seconds and microseconds, and arithmetic between aware datetimes is done by converting through UTC offsets.",
+    "steps": [
+      {
+        "title": "A datetime is a bundle of fields",
+        "body": "`datetime(2026, 11, 5, 9, 30)` stores year, month, day, hour, minute, second and microsecond, plus a `tzinfo` that is None for a naive datetime. It is immutable: `replace()` and arithmetic return new objects.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "year": 2026,
+              "month": 11,
+              "day": 5,
+              "hour": 9,
+              "minute": 30,
+              "tzinfo": "None (naive)"
+            },
+            "label": "datetime(2026, 11, 5, 9, 30)"
+          }
+        }
+      },
+      {
+        "title": "timedelta normalises to three numbers",
+        "body": "`timedelta(hours=36, minutes=90)` is stored as days=1, seconds=48600, microseconds=0. Weeks, hours and minutes are converted on creation. There is no 'month' unit, because months have different lengths.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "timedelta(hours=36, minutes=90)",
+                "values": [
+                  "days=1",
+                  "seconds=48600",
+                  "microseconds=0"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Naive vs aware",
+        "body": "A naive datetime has no time zone, so Python cannot know which instant it means. An aware one carries a tzinfo, such as `ZoneInfo('Asia/Kolkata')`, which can report the UTC offset for that date (+05:30). Comparing a naive and an aware datetime raises TypeError.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Naive",
+              "code": "datetime(2026, 11, 5, 9, 30)\n.utcoffset() -> None"
+            },
+            "right": {
+              "label": "Aware",
+              "code": "datetime(2026, 11, 5, 9, 30,\n  tzinfo=ZoneInfo('Asia/Kolkata'))\n.utcoffset() -> 5:30:00"
+            }
+          }
+        }
+      },
+      {
+        "title": "Arithmetic between zones goes through UTC",
+        "body": "Subtracting two aware datetimes in different zones subtracts each one's UTC offset first, so the result is the real elapsed time. `astimezone(ZoneInfo('Europe/London'))` keeps the instant and changes only the wall-clock fields."
+      },
+      {
+        "title": "Parsing and formatting with codes",
+        "body": "`strftime('%d %b %Y')` walks the format string and replaces each directive with a field: %d is the day, %b the abbreviated month name, %Y the 4-digit year. `strptime` does the reverse and raises ValueError if the text does not fit the pattern. `time.time()` instead returns seconds since the Unix epoch (1970-01-01 UTC) as a float.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> d.strftime('%d %b %Y %H:%M')",
+              "'05 Nov 2026 09:30'",
+              ">>> datetime.strptime('05/11/2026', '%d/%m/%Y')",
+              "datetime.datetime(2026, 11, 5, 0, 0)"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Store and compute in aware datetimes (ideally UTC), convert to local time only for display, and remember that timedelta has days, seconds and microseconds but no months."
   }
 }

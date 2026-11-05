@@ -390,5 +390,84 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A Path object is pure string handling until you ask for I/O: the / operator and properties work on the path text, and only methods like exists(), read_text() or glob() call the operating system.",
+    "steps": [
+      {
+        "title": "Path() picks the flavour",
+        "body": "`Path('data')` returns a PosixPath on Linux and macOS, or a WindowsPath on Windows. The flavour decides the separator ('/' or '\\\\') and case rules. Your code stays the same on every platform.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "On Linux",
+              "code": "Path('data') / 'a.csv'\n-> PosixPath('data/a.csv')"
+            },
+            "right": {
+              "label": "On Windows",
+              "code": "Path('data') / 'a.csv'\n-> WindowsPath('data\\\\a.csv')"
+            }
+          }
+        }
+      },
+      {
+        "title": "/ is __truediv__",
+        "body": "`base / 'reports' / 'nov.csv'` works because Path defines `__truediv__`. Each `/` returns a new Path that joins the parts; no file system access happens and the files do not need to exist."
+      },
+      {
+        "title": "Properties split the text",
+        "body": "`p = Path('/home/asha/reports/nov.csv')` gives `p.name == 'nov.csv'`, `p.stem == 'nov'`, `p.suffix == '.csv'` and `p.parent == Path('/home/asha/reports')`. These are computed from the stored parts, not from the disk.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "tuple",
+            "data": [
+              "'/'",
+              "'home'",
+              "'asha'",
+              "'reports'",
+              "'nov.csv'"
+            ],
+            "highlight": [
+              4
+            ],
+            "label": "p.parts  (name = last part)"
+          }
+        }
+      },
+      {
+        "title": "I/O methods call the OS",
+        "body": "`p.exists()` calls `os.stat`, `p.read_text()` opens the file, reads it all and closes it, and `p.mkdir(parents=True, exist_ok=True)` creates missing folders. These are thin wrappers over the same system calls `os` and `open` use.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "pure: / name suffix parent",
+                "detail": "no disk access"
+              },
+              {
+                "label": "exists() stat()",
+                "detail": "os.stat"
+              },
+              {
+                "label": "read_text() write_text()",
+                "detail": "open, read/write, close"
+              },
+              {
+                "label": "glob() iterdir()",
+                "detail": "os.scandir"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "glob walks directories lazily",
+        "body": "`Path('.').glob('**/*.py')` returns a generator. It lists directories with `os.scandir`, matches each name against the pattern and yields matching Paths as it finds them, descending into subfolders for `**`. Turn it into a list only if you need all results at once."
+      }
+    ],
+    "takeaway": "Keep path manipulation and file access separate in your head: building and splitting Path objects is cheap text work, and only the I/O methods touch the disk."
   }
 }

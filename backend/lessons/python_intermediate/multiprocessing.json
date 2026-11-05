@@ -417,5 +417,116 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Pool.map pickles your function reference and each chunk of arguments, sends them through pipes to separate worker processes with their own interpreters and GILs, and pickles the results back in order.",
+    "steps": [
+      {
+        "title": "Workers are separate processes",
+        "body": "`Pool(4)` starts four child processes. Each runs its own Python interpreter with its own memory and its own GIL, so four CPU-bound tasks really run on four cores at once. On Linux, children are created by fork by default; Windows and macOS use spawn, which starts fresh interpreters that re-import your main module.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "main",
+                "label": "main process"
+              },
+              {
+                "id": "w1",
+                "label": "worker 1 (own GIL)"
+              },
+              {
+                "id": "w2",
+                "label": "worker 2 (own GIL)"
+              },
+              {
+                "id": "w3",
+                "label": "worker 3 (own GIL)"
+              },
+              {
+                "id": "w4",
+                "label": "worker 4 (own GIL)"
+              }
+            ],
+            "edges": [
+              {
+                "from": "main",
+                "to": "w1",
+                "label": "pipe"
+              },
+              {
+                "from": "main",
+                "to": "w2",
+                "label": "pipe"
+              },
+              {
+                "from": "main",
+                "to": "w3",
+                "label": "pipe"
+              },
+              {
+                "from": "main",
+                "to": "w4",
+                "label": "pipe"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Work is pickled and sent",
+        "body": "`pool.map(square_sum, numbers)` splits `numbers` into chunks. For each chunk it pickles a task containing a reference to `square_sum` (by module and name, not its code) and the arguments, and writes the bytes to a queue that workers read. That is why the function must be defined at module top level.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "pickle(task)",
+                "detail": "function name + chunk of args"
+              },
+              {
+                "label": "send bytes",
+                "detail": "task queue (pipe)"
+              },
+              {
+                "label": "worker unpickles",
+                "detail": "imports function by name, runs it"
+              },
+              {
+                "label": "pickle(result)",
+                "detail": "sent back"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Results come back in order",
+        "body": "Each worker pickles its results and sends them back. The pool collects them and reassembles the list in the order of the input, even if worker 3 finished before worker 1. `imap_unordered` gives results as they finish instead."
+      },
+      {
+        "title": "The overhead is real",
+        "body": "Starting processes, pickling and copying data cost time. For tiny tasks the overhead can exceed the work, so parallel ends up slower than sequential. Large CPU-heavy tasks with small inputs and outputs gain the most.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Good fit",
+              "code": "4 x sum of a million squares\nsmall input, small output\nCPU-bound"
+            },
+            "right": {
+              "label": "Poor fit",
+              "code": "a million tiny additions\nhuge arrays sent each time\nI/O-bound waiting"
+            }
+          }
+        }
+      },
+      {
+        "title": "The __main__ guard",
+        "body": "With spawn, every worker imports your main script. Without `if __name__ == '__main__':` around the Pool code, each worker would try to start its own pool. The guard ensures only the parent creates workers."
+      }
+    ],
+    "takeaway": "Multiprocessing buys true parallelism by running separate interpreters and paying for it with pickling and process start-up. Send big chunks of CPU work with small data, and guard your entry point."
   }
 }
