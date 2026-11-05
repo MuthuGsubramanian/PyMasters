@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { render } from '../games/__tests__/render.js';
 
@@ -11,10 +11,13 @@ vi.mock('../components/LanguageSelector', () => ({ default: () => <div data-test
 import Onboarding from '../pages/Onboarding';
 
 const EMOJI = /\p{Extended_Pictographic}/u;
-const mount = () => render(<MemoryRouter><Onboarding /></MemoryRouter>);
+// Unmount after each test so no animation frame or timer renders after the environment is torn down.
+let mounted = [];
+const mount = () => { const r = render(<MemoryRouter><Onboarding /></MemoryRouter>); mounted.push(r); return r; };
 
 describe('onboarding without emoji', () => {
   beforeEach(() => { document.body.innerHTML = ''; localStorage.clear(); });
+  afterEach(() => { mounted.forEach((r) => r.unmount()); mounted = []; });
 
   it.each([['individual'], ['organization']])('%s onboarding has no emoji and gives every option an icon', (type) => {
     mockUser = { id: 'u1', name: 'Asha', account_type: type };

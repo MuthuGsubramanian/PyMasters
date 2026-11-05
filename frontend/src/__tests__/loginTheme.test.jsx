@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { render } from '../games/__tests__/render.js';
 
@@ -28,11 +28,16 @@ function offenders(root) {
 
 const buttonWith = (root, txt) => [...root.querySelectorAll('button')].find((b) => b.textContent.includes(txt));
 
+// Unmount after each test so no animation frame or timer renders after the environment is torn down.
+let mounted = [];
+const mount = () => { const r = render(<MemoryRouter><Login /></MemoryRouter>); mounted.push(r); return r; };
+
 describe('Login follows the light/dark theme', () => {
   beforeEach(() => { document.body.innerHTML = ''; });
+  afterEach(() => { mounted.forEach((r) => r.unmount()); mounted = []; });
 
   it('sign-in uses theme tokens, no fixed dark palette, gradients or glass blur', () => {
-    const { container } = render(<MemoryRouter><Login /></MemoryRouter>);
+    const { container } = mount();
     const root = container.firstElementChild;
     expect(root.className).toMatch(/bg-bg-base/);
     expect(container.querySelector('h2').className).toMatch(/text-text-primary/);
@@ -42,7 +47,7 @@ describe('Login follows the light/dark theme', () => {
   });
 
   it('the sign-up account-type and organisation steps use theme tokens too', async () => {
-    const r = render(<MemoryRouter><Login /></MemoryRouter>);
+    const r = mount();
     // AnimatePresence mode="wait" swaps steps after the exit animation.
     const settle = () => r.act(async () => { await new Promise((ok) => setTimeout(ok, 600)); });
     r.click(buttonWith(r.container, 'Sign up'));
