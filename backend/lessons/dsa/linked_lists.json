@@ -403,5 +403,121 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A linked list is a chain of separate node objects, each holding a value and a reference to the next node; the list itself only remembers the head.",
+    "steps": [
+      {
+        "title": "Nodes live anywhere in memory",
+        "body": "Each Node(data) is its own small object, created wherever the memory allocator finds space. Node A does not sit next to node B; it just stores a reference to it in its next attribute. The last node's next is None, which marks the end of the chain.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "head",
+                "detail": "points to node 10"
+              },
+              {
+                "label": "10",
+                "detail": "next -> 20"
+              },
+              {
+                "label": "20",
+                "detail": "next -> 30"
+              },
+              {
+                "label": "30",
+                "detail": "next -> None"
+              }
+            ],
+            "title": "head -> 10 -> 20 -> 30 -> None",
+            "direction": "right"
+          }
+        }
+      },
+      {
+        "title": "Finding the k-th item means walking",
+        "body": "There is no address arithmetic like an array has. To reach index 3 you start at head and follow next three times, so access by position is O(n). The loop is just `node = node.next` until you have counted far enough.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "node = head",
+                "explanation": "Start at the first node."
+              },
+              {
+                "code": "for _ in range(k):",
+                "explanation": "Repeat k times..."
+              },
+              {
+                "code": "    node = node.next",
+                "explanation": "...following one reference each time."
+              },
+              {
+                "code": "return node.data",
+                "explanation": "k hops later we reach the item: O(k)."
+              }
+            ],
+            "title": "Walking to index k"
+          }
+        }
+      },
+      {
+        "title": "Inserting at the head is two assignments",
+        "body": "To push 5 at the front: create new = Node(5), set new.next = head, then head = new. No other node moves, so it is O(1) no matter how long the chain is. Compare that with list.insert(0, 5), which shifts every slot.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              10,
+              20,
+              30
+            ],
+            "title": "Insert 5 at the head: only references change",
+            "operations": [
+              {
+                "action": "insert",
+                "index": 0,
+                "value": 5
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Deleting is re-pointing around a node",
+        "body": "To delete 20 from 10 -> 20 -> 30, you find the node before it (10) and set 10.next = 20.next, which is 30. Nothing points to the 20 node any more, so CPython's reference counting frees it. Finding the predecessor still costs a walk, so delete-by-value is O(n) even though the unlink itself is O(1).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              10,
+              20,
+              30
+            ],
+            "title": "prev.next = target.next skips node 20",
+            "operations": [
+              {
+                "action": "highlight",
+                "index": 1
+              },
+              {
+                "action": "remove",
+                "index": 1
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why Python lists usually win",
+        "body": "Every node carries the overhead of a full object plus a next reference, and nodes scattered across memory are slower for the CPU cache than one contiguous block. Linked lists shine when you insert or delete at known positions very often; collections.deque uses linked blocks of items for exactly that reason at its two ends."
+      }
+    ],
+    "takeaway": "A linked list trades fast indexing for cheap re-linking: O(1) to splice at a node you already hold, O(n) to find a position."
   }
 }

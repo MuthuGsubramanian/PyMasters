@@ -228,5 +228,75 @@
       "correct": 3
     }
   ],
-  "uth_example": "import random\n\ndraft_tokens = [                         # (token, p_draft, p_target)\n    (\"The\", 0.60, 0.70),\n    (\"quick\", 0.50, 0.45),\n    (\"purple\", 0.40, 0.05),              # the small model guessed badly\n    (\"fox\", 0.30, 0.60),\n]\nrng = random.Random(3)                   # fixed seed, so the run is repeatable\n\naccepted = []\nfor token, p_draft, p_target in draft_tokens:\n    accept_prob = min(1.0, p_target / p_draft)\n    u = round(rng.random(), 3)\n    if u < accept_prob:\n        accepted.append(token)\n    else:\n        accepted.append(\"<resample>\")    # the target model picks this token instead\n        break                            # later drafts are thrown away\nprint(\"kept:\", accepted)\n"
+  "uth_example": "import random\n\ndraft_tokens = [                         # (token, p_draft, p_target)\n    (\"The\", 0.60, 0.70),\n    (\"quick\", 0.50, 0.45),\n    (\"purple\", 0.40, 0.05),              # the small model guessed badly\n    (\"fox\", 0.30, 0.60),\n]\nrng = random.Random(3)                   # fixed seed, so the run is repeatable\n\naccepted = []\nfor token, p_draft, p_target in draft_tokens:\n    accept_prob = min(1.0, p_target / p_draft)\n    u = round(rng.random(), 3)\n    if u < accept_prob:\n        accepted.append(token)\n    else:\n        accepted.append(\"<resample>\")    # the target model picks this token instead\n        break                            # later drafts are thrown away\nprint(\"kept:\", accepted)\n",
+  "under_the_hood": {
+    "summary": "A draft model proposes a token with probability p_draft; the target model accepts it with probability min(1, p_target / p_draft) or else resamples from the leftover distribution, so the output follows exactly the target model's distribution.",
+    "steps": [
+      {
+        "title": "Why the big model is slow",
+        "body": "Each generated token needs one full forward pass of the large model, and that pass is mostly limited by reading its weights from memory. Checking several tokens in one pass costs about the same as generating one."
+      },
+      {
+        "title": "Draft, then verify in parallel",
+        "body": "The draft model proposes a few tokens quickly. The target model then runs once over the prompt plus all drafted tokens and gets its probability for each drafted token at each position.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "draft model",
+                "detail": "proposes tokens"
+              },
+              {
+                "label": "target model",
+                "detail": "one pass over all"
+              },
+              {
+                "label": "accept / reject each"
+              },
+              {
+                "label": "stop at first rejection"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The acceptance rule",
+        "body": "accept_prob = min(1, p_target / p_draft). If the target likes the token at least as much as the draft did, it is always accepted. With p_draft = 0.6 and p_target = 0.3, accept_prob = 0.5; a uniform random u = 0.42 is below 0.5, so it is accepted.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "p_draft = 0.6, p_target = 0.3",
+              "accept_prob = min(1, 0.3 / 0.6) = 0.5",
+              "u = 0.42 < 0.5 -> accepted"
+            ]
+          }
+        }
+      },
+      {
+        "title": "On rejection, resample the leftover",
+        "body": "If rejected, the token is replaced by a sample from max(0, p_target - p_draft), renormalised over the vocabulary. That puts back exactly the probability the draft under-weighted."
+      },
+      {
+        "title": "Why the output is unchanged",
+        "body": "Accepting with probability min(1, p_t / p_d) and otherwise sampling the leftover makes the final token distribution exactly p_target. Speculative decoding is therefore a pure speed-up: same distribution, fewer slow passes.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Draft proposes",
+              "code": "fast, small model\np_draft per token"
+            },
+            "right": {
+              "label": "Target decides",
+              "code": "accept with min(1, p_t / p_d)\nelse resample leftover"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "The accept/reject rule lets a cheap model do most of the guessing while the expensive model keeps full control of the output distribution."
+  }
 }

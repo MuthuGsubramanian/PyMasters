@@ -202,5 +202,79 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "For visual Q&A, each image is encoded into visual tokens and placed in the conversation; with two images both token sets sit in one context so the model can compare them, follow-ups reuse the message history, and grounding answers come back as coordinates in text.",
+    "steps": [
+      {
+        "title": "Several images, one sequence",
+        "body": "A message can contain image A, image B and a question. Each image is encoded separately into its own block of visual tokens, and all of them plus the question form one input sequence for the language model.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "input sequence",
+            "data": [
+              "[system]",
+              "<image A tokens>",
+              "<image B tokens>",
+              "'Which room is cleaner?'"
+            ],
+            "highlight": [
+              1,
+              2
+            ]
+          }
+        }
+      },
+      {
+        "title": "Comparison happens in attention",
+        "body": "Because both images are in the same context, attention can relate tokens of image A to tokens of image B while generating. A system prompt asking to cite specific details from each image pushes the answer toward evidence."
+      },
+      {
+        "title": "Follow-ups reuse the history",
+        "body": "For 'and what about the lighting?', the previous user message (with its images) and the model's answer are kept in the messages list. The model is stateless, so the full history, image tokens included, is processed again on each turn unless a cache is used."
+      },
+      {
+        "title": "Grounding as text",
+        "body": "Asked to locate an object, the model writes coordinates in its text output, for example a JSON box. Your code parses the numbers and maps them to the image's pixel size; check the model card for whether coordinates are absolute or on a normalised scale.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "Q: Where is the red mug?",
+              "A: {\"label\": \"red mug\", \"bbox\": [412, 230, 498, 341]}",
+              "-> draw box after scaling to image size"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Control the token budget",
+        "body": "Visual tokens grow with image resolution, and every extra image adds more. Setting the processor's minimum and maximum pixels caps the cost, trading fine detail for speed on a small 2B model.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "set max pixels"
+              },
+              {
+                "label": "encode images"
+              },
+              {
+                "label": "ask question"
+              },
+              {
+                "label": "parse answer / boxes"
+              },
+              {
+                "label": "keep history"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Visual Q&A is ordinary chat where some tokens come from images. Multi-image comparison, follow-ups and grounding all follow from that one idea, limited by the visual token budget."
+  }
 }

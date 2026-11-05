@@ -202,5 +202,76 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "all-MiniLM-L6-v2 tokenizes a sentence, runs it through 6 small Transformer layers, averages the token vectors into one 384-number embedding and normalises it; search is then a cosine-similarity ranking of the query vector against every document vector.",
+    "steps": [
+      {
+        "title": "Tokenize with WordPiece",
+        "body": "The model uses BERT's uncased WordPiece vocabulary of 30,522 entries. Input longer than 256 word pieces is truncated, so very long documents must be split before encoding or their tail is silently ignored."
+      },
+      {
+        "title": "Six layers, 384 dimensions",
+        "body": "Each token passes through 6 Transformer layers with hidden size 384, about 22.7 million parameters in total. The result is one 384-dimensional vector per token, each informed by the other tokens through attention."
+      },
+      {
+        "title": "Mean pooling gives one sentence vector",
+        "body": "The token vectors are averaged, skipping padding using the attention mask, then divided by their length (L2-normalised) so every embedding has length 1. The sentence is now a point on a 384-dimensional sphere.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "text"
+              },
+              {
+                "label": "WordPiece ids",
+                "detail": "<= 256"
+              },
+              {
+                "label": "6 layers",
+                "detail": "384-d per token"
+              },
+              {
+                "label": "mean pool"
+              },
+              {
+                "label": "normalise",
+                "detail": "length 1"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Cosine similarity ranks documents",
+        "body": "Cosine similarity is dot(a, b) / (|a| |b|); for normalised vectors it is just the dot product. 'how to make my code faster' and 'performance optimization techniques' share no words but score high because the model was trained to place paraphrases close together.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "cosine to query",
+            "data": [
+              0.71,
+              0.12,
+              0.05
+            ],
+            "labels": [
+              "perf tips",
+              "baking",
+              "football"
+            ],
+            "highlight": [
+              0
+            ],
+            "title": "Illustrative scores; highest wins"
+          }
+        }
+      },
+      {
+        "title": "Index once, query many times",
+        "body": "Documents are encoded once and stored as an N x 384 matrix. A query costs one encode plus a single matrix-vector product, so ranking 10,000 documents is 3.84 million multiply-adds, trivial on a CPU."
+      }
+    ],
+    "takeaway": "Semantic search is two steps: turn every text into a unit vector with the same model, then sort by dot product. All the 'understanding' lives in how the model places vectors."
+  }
 }

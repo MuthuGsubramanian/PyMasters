@@ -180,5 +180,72 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "On edge devices bge-small-en-v1.5 is exported to ONNX and its weights are quantized to int8, about a quarter of the float32 size; each voice or text command is embedded and matched by cosine similarity against a small table of pre-embedded commands.",
+    "steps": [
+      {
+        "title": "Export to a runtime-friendly graph",
+        "body": "Optimum exports the model to ONNX so it runs on ONNX Runtime without PyTorch, which is lighter to install and faster on ARM CPUs such as a Raspberry Pi's."
+      },
+      {
+        "title": "Dynamic int8 quantization",
+        "body": "Each weight matrix is stored as 8-bit integers plus a float scale: w is approximately scale x q, with q in -128..127. 33M weights drop from about 130 MB (4 bytes each) to roughly a quarter of that, about 34 MB (1 byte each), and integer matrix multiplies are cheaper on CPU.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "model size (approx.)",
+            "data": [
+              "~130 MB fp32",
+              "~34 MB int8"
+            ],
+            "labels": [
+              "before",
+              "after"
+            ],
+            "highlight": [
+              1
+            ]
+          }
+        }
+      },
+      {
+        "title": "Check the accuracy cost",
+        "body": "Rounding every weight to one of 256 levels shifts the vectors slightly. Encode a test set with both versions and compare cosine similarity between matching vectors; values typically stay close to 1.0, but measure rather than assume."
+      },
+      {
+        "title": "Intent matching by nearest command",
+        "body": "Command phrases like 'Turn on living room lights' are embedded once and stored with their action ids. A new utterance such as 'lights on in the lounge' is embedded and compared with all of them; the best cosine above a threshold picks the action, otherwise the assistant asks again.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "utterance"
+              },
+              {
+                "label": "tokenize"
+              },
+              {
+                "label": "int8 ONNX model",
+                "detail": "384-d"
+              },
+              {
+                "label": "cosine vs command table"
+              },
+              {
+                "label": "best > threshold?",
+                "detail": "run action or ask"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Keep memory flat",
+        "body": "Encoding in small batches and streaming results keeps peak RAM predictable, and the command table is only N x 384 floats. Everything runs offline, so it keeps working when the internet is down."
+      }
+    ],
+    "takeaway": "Edge deployment is three moves: a lean runtime, fewer bits per weight, and a small pre-embedded table to match against. Always measure the quality drop that quantization causes."
+  }
 }

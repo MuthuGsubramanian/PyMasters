@@ -229,5 +229,65 @@
       "correct": 2
     }
   ],
-  "uth_example": "import json\n\ndef convert_currency(amount, rate):\n    return round(amount * rate, 2)\n\ndef word_count(text):\n    return len(text.split())\n\nregistry = {\"convert_currency\": convert_currency, \"word_count\": word_count}\n\nmodel_output = '[{\"name\": \"convert_currency\", \"args\": {\"amount\": 120, \"rate\": 0.012}},' \\\n               ' {\"name\": \"word_count\", \"args\": {\"text\": \"tools turn talk into action\"}},' \\\n               ' {\"name\": \"launch_rocket\", \"args\": {}}]'\n\nresults = []\nfor call in json.loads(model_output):\n    fn = registry.get(call[\"name\"])\n    if fn is None:\n        results.append({\"tool\": call[\"name\"], \"error\": \"unknown tool\"})\n        continue\n    results.append({\"tool\": call[\"name\"], \"result\": fn(**call[\"args\"])})\nprint(results)\n"
+  "uth_example": "import json\n\ndef convert_currency(amount, rate):\n    return round(amount * rate, 2)\n\ndef word_count(text):\n    return len(text.split())\n\nregistry = {\"convert_currency\": convert_currency, \"word_count\": word_count}\n\nmodel_output = '[{\"name\": \"convert_currency\", \"args\": {\"amount\": 120, \"rate\": 0.012}},' \\\n               ' {\"name\": \"word_count\", \"args\": {\"text\": \"tools turn talk into action\"}},' \\\n               ' {\"name\": \"launch_rocket\", \"args\": {}}]'\n\nresults = []\nfor call in json.loads(model_output):\n    fn = registry.get(call[\"name\"])\n    if fn is None:\n        results.append({\"tool\": call[\"name\"], \"error\": \"unknown tool\"})\n        continue\n    results.append({\"tool\": call[\"name\"], \"result\": fn(**call[\"args\"])})\nprint(results)\n",
+  "under_the_hood": {
+    "summary": "The model's tool call is data, a name and a JSON object of arguments; the dispatcher looks the name up in a registry of allowed Python functions, rejects unknown names, calls the function with the arguments as keywords, and returns the result.",
+    "steps": [
+      {
+        "title": "The model only asks",
+        "body": "With tools enabled, the model may reply with a structured call like {'name': 'add', 'args': {'a': 2, 'b': 3}} instead of text. Nothing has been executed yet; this is just output."
+      },
+      {
+        "title": "A registry of allowed functions",
+        "body": "registry = {'add': add, 'get_weather': get_weather} maps exposed names to real functions. Only names in this dict can ever run, which is the security boundary between model output and your system.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "add": "add(a, b)",
+              "get_weather": "get_weather(city)"
+            },
+            "title": "registry"
+          }
+        }
+      },
+      {
+        "title": "Look up, then call",
+        "body": "name = call['name']; if name not in registry: raise ValueError(f'unknown tool {name}'); return registry[name](**call['args']). The ** unpacks the argument dict into keyword arguments.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "call: {'name':'add','args':{'a':2,'b':3}}",
+              "dispatch -> add(a=2, b=3) -> 5",
+              "call: {'name':'fly',...} -> ValueError: unknown tool 'fly'"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Never eval model output",
+        "body": "Running eval() or exec() on the model's text would execute anything it writes, including something injected by a malicious document. A registry lookup can only run functions you chose.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Naive",
+              "code": "eval(model_output)\nruns anything\nunsafe"
+            },
+            "right": {
+              "label": "Dispatcher",
+              "code": "registry lookup\nunknown -> reject\npredictable"
+            }
+          }
+        }
+      },
+      {
+        "title": "Return the result to the model",
+        "body": "The return value (or an error message) is sent back as a tool-result message tied to the call's id, and the model continues. Validating argument types against the tool's schema before calling catches bad arguments early."
+      }
+    ],
+    "takeaway": "Tool calling is a lookup table between names the model may say and functions your code will run. The registry is both the mechanism and the safety boundary."
+  }
 }

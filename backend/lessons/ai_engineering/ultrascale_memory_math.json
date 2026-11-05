@@ -221,5 +221,63 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Mixed-precision Adam training stores about 16 bytes per parameter (bf16 weights and gradients, fp32 master weights and two Adam moments), so a 7B model needs 112 GB before activations; ZeRO stages divide parts of that by the number of data-parallel GPUs.",
+    "steps": [
+      {
+        "title": "Sixteen bytes per parameter",
+        "body": "bf16 weights 2 + bf16 gradients 2 + fp32 master weights 4 + Adam first moment 4 + Adam second moment 4 = 16 bytes. Times 7 billion parameters gives 112 GB, already more than one 80 GB GPU.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "bytes per parameter",
+            "data": [
+              2,
+              2,
+              4,
+              4,
+              4
+            ],
+            "labels": [
+              "weights",
+              "grads",
+              "master",
+              "adam m",
+              "adam v"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Activations: the second mountain",
+        "body": "The forward pass stores intermediate values for backprop. Per layer it is roughly s x b x h x (34 + 5 x a x s / h) bytes; with h = 4096, a = 32, s = 4096, b = 1 that is about 3 GB, so 32 layers hold about 100 GB. Activation recomputation trades extra compute to drop most of it."
+      },
+      {
+        "title": "ZeRO shards optimizer state, then more",
+        "body": "With N data-parallel GPUs, ZeRO-1 splits the 12 optimizer bytes, ZeRO-2 also splits gradients, ZeRO-3 also splits weights. Per GPU: 4 + 12/N, 2 + 14/N, and 16/N bytes per parameter.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "7B model, N = 8 GPUs (model state only)",
+              "ZeRO-0: 112.0 GB",
+              "ZeRO-1:  38.5 GB",
+              "ZeRO-2:  26.25 GB",
+              "ZeRO-3:  14.0 GB"
+            ]
+          }
+        }
+      },
+      {
+        "title": "The price is communication",
+        "body": "Sharded state must be gathered when needed: ZeRO-3 all-gathers each layer's weights before its forward and backward pass and reduce-scatters gradients after. Memory falls, network traffic rises, and overlap with compute decides whether it is worth it."
+      },
+      {
+        "title": "Other axes divide differently",
+        "body": "Tensor parallelism splits each layer's matrices across GPUs, cutting weights and activations per GPU; pipeline parallelism gives each GPU a slice of the layers. Real setups combine them so every line item fits."
+      }
+    ],
+    "takeaway": "Training memory is arithmetic: 16 bytes per parameter plus activations. Once you can write the bill, each parallelism strategy is just a way to divide a specific line of it."
+  }
 }

@@ -213,5 +213,103 @@
       "correct": 2
     }
   ],
-  "uth_example": "from collections import defaultdict\n\nsales = [\n    {\"region\": \"south\", \"rep\": \"Asha\", \"amount\": 120},\n    {\"region\": \"north\", \"rep\": \"Ravi\", \"amount\": 80},\n    {\"region\": \"south\", \"rep\": \"Meena\", \"amount\": 200},\n    {\"region\": \"west\", \"rep\": \"Kiran\", \"amount\": 50},\n    {\"region\": \"north\", \"rep\": \"Arun\", \"amount\": 95},\n]\n\nby_region = defaultdict(list)\nfor sale in sales:\n    by_region[sale[\"region\"]].append(sale)\n\nreport = {region: sum(s[\"amount\"] for s in rows) for region, rows in by_region.items()}\ntop = max(report, key=report.get)\nprint(dict(report))\nprint(\"top region:\", top, \"reps:\", [s[\"rep\"] for s in by_region[top]])\n"
+  "uth_example": "from collections import defaultdict\n\nsales = [\n    {\"region\": \"south\", \"rep\": \"Asha\", \"amount\": 120},\n    {\"region\": \"north\", \"rep\": \"Ravi\", \"amount\": 80},\n    {\"region\": \"south\", \"rep\": \"Meena\", \"amount\": 200},\n    {\"region\": \"west\", \"rep\": \"Kiran\", \"amount\": 50},\n    {\"region\": \"north\", \"rep\": \"Arun\", \"amount\": 95},\n]\n\nby_region = defaultdict(list)\nfor sale in sales:\n    by_region[sale[\"region\"]].append(sale)\n\nreport = {region: sum(s[\"amount\"] for s in rows) for region, rows in by_region.items()}\ntop = max(report, key=report.get)\nprint(dict(report))\nprint(\"top region:\", top, \"reps:\", [s[\"rep\"] for s in by_region[top]])\n",
+  "under_the_hood": {
+    "summary": "Group-by is one pass over the records: compute each record's key, hash it to find that key's list in a dict, and append the record; the dict ends up holding one bucket per distinct key.",
+    "steps": [
+      {
+        "title": "Compute the key",
+        "body": "key_fn turns a record into the label it belongs under. For words grouped by first letter, key_fn('bee') returns 'b'. The key must be hashable (a str, int or tuple), because it will become a dict key."
+      },
+      {
+        "title": "setdefault finds or creates the bucket",
+        "body": "buckets.setdefault('b', []) hashes 'b' once and looks for it. If it is missing, it stores the new empty list under 'b'; either way it returns the list that is now in the dict. The .append(item) then mutates that very list in place, so no second lookup is needed.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "buckets = {}",
+                "explanation": "Start with no buckets."
+              },
+              {
+                "code": "for item in items:",
+                "explanation": "One pass over the records."
+              },
+              {
+                "code": "    key = key_fn(item)",
+                "explanation": "e.g. 'bee' -> 'b'"
+              },
+              {
+                "code": "    buckets.setdefault(key, []).append(item)",
+                "explanation": "Find or create the list, then append to it."
+              }
+            ],
+            "title": "The bucket-fill loop"
+          }
+        }
+      },
+      {
+        "title": "Watch the buckets fill",
+        "body": "Grouping ['ant', 'bee', 'bear', 'cat', 'ape'] by first letter: 'ant' creates bucket 'a'; 'bee' creates 'b'; 'bear' finds the existing 'b' list; 'cat' creates 'c'; 'ape' joins 'a'. Order inside each bucket is the order the records arrived.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "item",
+                "values": [
+                  "ant",
+                  "bee",
+                  "bear",
+                  "cat",
+                  "ape"
+                ]
+              },
+              {
+                "variable": "buckets",
+                "values": [
+                  "{a:[ant]}",
+                  "{a:[ant], b:[bee]}",
+                  "{a:[ant], b:[bee, bear]}",
+                  "{a:[ant], b:[bee, bear], c:[cat]}",
+                  "{a:[ant, ape], b:[bee, bear], c:[cat]}"
+                ]
+              }
+            ],
+            "title": "One pass, three buckets"
+          }
+        }
+      },
+      {
+        "title": "Why it is O(n)",
+        "body": "Each record costs one key computation, one dict lookup (O(1) on average) and one list append (amortised O(1)). So 1,000,000 records take about 1,000,000 cheap steps, with no sorting needed. A database's hash aggregate and pandas' groupby use the same idea at a larger scale."
+      },
+      {
+        "title": "defaultdict does the setdefault for you",
+        "body": "collections.defaultdict(list) calls list() through its __missing__ hook the first time a key is read, so buckets[key].append(item) works directly. Once the buckets exist, aggregating is easy: {k: len(v) for k, v in buckets.items()} counts, and sum over each bucket totals.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "a": [
+                "ant",
+                "ape"
+              ],
+              "b": [
+                "bee",
+                "bear"
+              ],
+              "c": [
+                "cat"
+              ]
+            },
+            "title": "Result: {key: [items]}"
+          }
+        }
+      }
+    ],
+    "takeaway": "Whenever you hear 'per something', think dict of lists: one hash lookup per record, and every record lands in its bucket in a single pass."
+  }
 }

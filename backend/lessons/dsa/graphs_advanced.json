@@ -475,5 +475,139 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Dijkstra keeps a min-heap of (distance, node) pairs and always settles the closest unsettled node next; topological sort repeatedly removes nodes that have no incoming edges left.",
+    "steps": [
+      {
+        "title": "Start with everything at infinity",
+        "body": "distances = {node: inf} except the source, which is 0, and the heap holds [(0, 'A')]. A distance is a best-known guess that can only go down. The heap will always give us the node with the smallest guess.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "A",
+                "values": [
+                  0
+                ]
+              },
+              {
+                "variable": "B",
+                "values": [
+                  "inf"
+                ]
+              },
+              {
+                "variable": "C",
+                "values": [
+                  "inf"
+                ]
+              },
+              {
+                "variable": "D",
+                "values": [
+                  "inf"
+                ]
+              }
+            ],
+            "title": "Initial distances from A"
+          }
+        }
+      },
+      {
+        "title": "Pop the closest, relax its edges",
+        "body": "Pop (0, A). For each edge A->B of weight 4 and A->C of weight 1, check: is 0 + weight better than the current guess? Yes for both, so B becomes 4 and C becomes 1, and (4, B) and (1, C) are pushed. This check-and-improve step is called relaxation.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "(1, 'C')",
+              "(4, 'B')"
+            ],
+            "title": "Heap after relaxing A's edges",
+            "operations": [
+              {
+                "action": "highlight",
+                "index": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Shorter routes replace old guesses",
+        "body": "Next pop is (1, C) because it is smallest. C->B has weight 2, and 1 + 2 = 3 beats 4, so B drops to 3 and (3, B) is pushed. The old (4, B) stays in the heap; when it is popped later, 4 > distances['B'], so it is skipped as stale.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "A",
+                "values": [
+                  0
+                ]
+              },
+              {
+                "variable": "B",
+                "values": [
+                  "inf",
+                  4,
+                  3
+                ]
+              },
+              {
+                "variable": "C",
+                "values": [
+                  "inf",
+                  1
+                ]
+              },
+              {
+                "variable": "D",
+                "values": [
+                  "inf"
+                ]
+              }
+            ],
+            "title": "B improves via C"
+          }
+        }
+      },
+      {
+        "title": "Why non-negative weights matter",
+        "body": "Once a node is popped with the smallest distance, no later path can beat it, because every remaining path starts from a node at least that far and only adds non-negative weights. A negative edge breaks that promise, which is why Bellman-Ford is used instead. With a heap the cost is O((V + E) log V)."
+      },
+      {
+        "title": "Topological sort: peel off nodes with no prerequisites",
+        "body": "Kahn's algorithm counts incoming edges for each node of a directed acyclic graph. Every node with count 0 goes into a queue. Pop one, add it to the order, and subtract 1 from each neighbour's count; any neighbour that hits 0 joins the queue.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "shirt",
+                "detail": "in-degree 0"
+              },
+              {
+                "label": "tie",
+                "detail": "needs shirt"
+              },
+              {
+                "label": "jacket",
+                "detail": "needs tie"
+              }
+            ],
+            "title": "Each item appears after everything it depends on"
+          }
+        }
+      },
+      {
+        "title": "A cycle shows up as leftovers",
+        "body": "If the graph has a cycle, the nodes on it never reach in-degree 0, so the output ends up shorter than the number of nodes. Checking len(order) == len(graph) is how Kahn's algorithm detects that no valid order exists."
+      }
+    ],
+    "takeaway": "Both algorithms are a loop over a 'ready' structure: a min-heap of tentative distances for Dijkstra, a queue of zero-in-degree nodes for topological sort."
   }
 }

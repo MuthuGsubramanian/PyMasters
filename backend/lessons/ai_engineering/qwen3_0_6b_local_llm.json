@@ -240,5 +240,63 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Qwen3-0.6B can reason before answering: with thinking enabled in the chat template it writes its reasoning inside <think>...</think> and then the reply, and your code splits the two by finding the closing </think> token.",
+    "steps": [
+      {
+        "title": "One flag in the template",
+        "body": "tokenizer.apply_chat_template(messages, add_generation_prompt=True, enable_thinking=True) produces the prompt. With enable_thinking=False the template inserts an empty <think></think> block, so the model skips straight to the answer."
+      },
+      {
+        "title": "The model writes its own scratchpad",
+        "body": "In thinking mode, generated text starts with <think>, followed by step-by-step reasoning, then </think> and the final answer. The reasoning is ordinary generated tokens: it costs time and counts toward max_new_tokens.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "<think>",
+              "17 x 3: 10 x 3 = 30, 7 x 3 = 21, 30 + 21 = 51.",
+              "</think>",
+              "17 x 3 = 51."
+            ]
+          }
+        }
+      },
+      {
+        "title": "Split at the closing tag",
+        "body": "The Qwen3 model card's example searches the output ids from the end for the </think> token id (151668) and splits there: everything before is thinking, everything after is the reply shown to the user.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "output ids"
+              },
+              {
+                "label": "find last </think>"
+              },
+              {
+                "label": "thinking part",
+                "detail": "log or hide"
+              },
+              {
+                "label": "answer part",
+                "detail": "show"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Different sampling per mode",
+        "body": "The model card recommends different settings for each mode, for example temperature 0.6 and top_p 0.95 for thinking, 0.7 and 0.8 for non-thinking, and warns that greedy decoding in thinking mode can cause endless repetition."
+      },
+      {
+        "title": "A chat loop on a small machine",
+        "body": "Keep a messages list, append each user turn and each assistant answer (without the thinking text, to save context), and re-apply the template every turn. Users can switch per turn with /think or /no_think in their message."
+      }
+    ],
+    "takeaway": "Thinking mode is just extra generated text with markers around it. Turn it on for hard questions, off for quick ones, and always strip it before storing the conversation."
+  }
 }

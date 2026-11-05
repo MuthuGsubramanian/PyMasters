@@ -151,5 +151,67 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Evaluation-driven development runs every prompt, model or pipeline version over a fixed set of input-expected cases, scores each output with a scorer function, and compares the aggregate score with the previous version before shipping.",
+    "steps": [
+      {
+        "title": "A dataset of cases",
+        "body": "Each EvalCase holds an input, what a good output must contain, and tags such as 'geography' or 'math'. Start with 20-50 real examples, including the failures users actually hit."
+      },
+      {
+        "title": "Run the task over every case",
+        "body": "run_eval calls task_fn(case.input) for each case and scorer_fn(output, case.expected) to get a score between 0 and 1. Results are stored per case, so you can see which ones failed, not just the average.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "dataset"
+              },
+              {
+                "label": "task_fn",
+                "detail": "prompt + model"
+              },
+              {
+                "label": "scorer_fn",
+                "detail": "0..1"
+              },
+              {
+                "label": "aggregate",
+                "detail": "mean, by tag"
+              },
+              {
+                "label": "compare",
+                "detail": "vs last version"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Choose scorers that fit",
+        "body": "Exact match fits short factual answers; 'contains' fits answers with an essential keyword; numeric tolerance fits calculations. Open-ended text is often scored by an LLM-as-judge with a rubric, which should itself be spot-checked against human judgement."
+      },
+      {
+        "title": "Non-determinism needs repeats",
+        "body": "With temperature above 0 the same input can pass on one run and fail on the next. Running each case several times, or at temperature 0 for the regression suite, separates real changes from noise."
+      },
+      {
+        "title": "Gate changes on the score",
+        "body": "A new prompt is accepted only if its score is at least the old one overall and per tag. A drop in one tag, say math from 0.9 to 0.6, is caught even when the overall average looks fine.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "v1: overall 0.82  geography 0.95  math 0.90",
+              "v2: overall 0.84  geography 1.00  math 0.60",
+              "verdict: reject v2 (math regressed)"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Evals are the test suite of AI features. Without a fixed dataset and scorer you cannot tell whether a change helped, and with one every change becomes a measurable experiment."
+  }
 }

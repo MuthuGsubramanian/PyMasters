@@ -170,5 +170,61 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "import math\n\nquery = [1, 0, 1, 0]                      # the word \"it\"\nkeys = {\"cat\": [1, 0, 1, 0], \"milk\": [0, 1, 0, 1], \"drank\": [1, 1, 0, 0]}\nvalues = {\"cat\": [10, 0], \"milk\": [0, 10], \"drank\": [5, 5]}\nd = len(query)\n\nscores = {w: sum(q * k for q, k in zip(query, vec)) / math.sqrt(d) for w, vec in keys.items()}\nexps = {w: math.exp(s) for w, s in scores.items()}\ntotal = sum(exps.values())\nweights = {w: round(e / total, 3) for w, e in exps.items()}\n\noutput = [0.0, 0.0]\nfor w, weight in weights.items():\n    output = [o + weight * v for o, v in zip(output, values[w])]\nprint(\"weights:\", weights)\nprint(\"output:\", [round(o, 2) for o in output])\n"
+  "uth_example": "import math\n\nquery = [1, 0, 1, 0]                      # the word \"it\"\nkeys = {\"cat\": [1, 0, 1, 0], \"milk\": [0, 1, 0, 1], \"drank\": [1, 1, 0, 0]}\nvalues = {\"cat\": [10, 0], \"milk\": [0, 10], \"drank\": [5, 5]}\nd = len(query)\n\nscores = {w: sum(q * k for q, k in zip(query, vec)) / math.sqrt(d) for w, vec in keys.items()}\nexps = {w: math.exp(s) for w, s in scores.items()}\ntotal = sum(exps.values())\nweights = {w: round(e / total, 3) for w, e in exps.items()}\n\noutput = [0.0, 0.0]\nfor w, weight in weights.items():\n    output = [o + weight * v for o, v in zip(output, values[w])]\nprint(\"weights:\", weights)\nprint(\"output:\", [round(o, 2) for o in output])\n",
+  "under_the_hood": {
+    "summary": "A query is compared with every key by dot product, the scores are divided by sqrt(d_k), softmax turns them into weights, and the output is the weighted sum of the value vectors.",
+    "steps": [
+      {
+        "title": "Score: one dot product per key",
+        "body": "With Q = [1,0,1,0] and keys K1 = [1,0,1,0], K2 = [0,1,0,1], K3 = [1,1,0,0], the dot products are 2, 0 and 1. A dot product is large when two vectors point the same way, so it serves as a relevance score."
+      },
+      {
+        "title": "Scale by the square root of d_k",
+        "body": "If query and key entries have variance 1, their dot product over d_k dimensions has variance d_k, so scores grow with dimension. Dividing by sqrt(4) = 2 gives [1.0, 0.0, 0.5]. With d_k = 64 the divisor is 8; without it softmax saturates and its gradients become almost zero.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "scaled scores",
+            "data": [
+              1.0,
+              0.0,
+              0.5
+            ],
+            "labels": [
+              "K1",
+              "K2",
+              "K3"
+            ],
+            "highlight": [
+              0
+            ]
+          }
+        }
+      },
+      {
+        "title": "Softmax turns scores into weights",
+        "body": "softmax([1.0, 0.0, 0.5]) = [0.506, 0.186, 0.307]. The best-matching key gets the largest share, but the others still contribute, which keeps the whole operation differentiable."
+      },
+      {
+        "title": "Blend the values",
+        "body": "With values V1 = [10, 0], V2 = [0, 10], V3 = [5, 5], the output is 0.506*V1 + 0.186*V2 + 0.307*V3 = [6.6, 3.39]. The query asked a question and received a mixture of answers, weighted by relevance.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "scores  = [2, 0, 1]",
+              "scaled  = [1.0, 0.0, 0.5]",
+              "weights = [0.506, 0.186, 0.307]",
+              "output  = [6.6, 3.39]"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Do all queries at once with matrices",
+        "body": "Stack the queries into Q (n x d_k) and the keys into K. Then Q @ K.T is an n x n score matrix, softmax runs per row, and multiplying by V (n x d_v) gives all n outputs in two matrix multiplications. That is why attention runs so well on GPUs, and also why its cost grows with n squared."
+      }
+    ],
+    "takeaway": "softmax(QK^T / sqrt(d_k)) V is just score, scale, normalise, blend. The sqrt(d_k) is not decoration: it keeps softmax out of its flat, gradient-free regions."
+  }
 }

@@ -460,5 +460,114 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A binary search tree keeps every left subtree smaller and every right subtree larger than its node, so each comparison during search or insert discards one whole subtree.",
+    "steps": [
+      {
+        "title": "The ordering rule",
+        "body": "For every node, all values in its left subtree are smaller and all values in its right subtree are larger. Inserting 8, 4, 12, 2, 6, 10, 14 in that order builds a perfectly balanced tree of height 2 with 8 at the root.",
+        "visual": {
+          "type": "TreeVisualizer",
+          "props": {
+            "data": [
+              8,
+              4,
+              12,
+              2,
+              6,
+              10,
+              14
+            ],
+            "title": "BST built from 8, 4, 12, 2, 6, 10, 14"
+          }
+        }
+      },
+      {
+        "title": "Search: one comparison per level",
+        "body": "To find 6: compare with 8, smaller, go left to 4; compare with 4, larger, go right to 6; found. Three comparisons out of seven nodes. Each step discards the other subtree, so a balanced tree with n nodes needs about log2(n) comparisons.",
+        "visual": {
+          "type": "TreeVisualizer",
+          "props": {
+            "data": [
+              8,
+              4,
+              12,
+              2,
+              6,
+              10,
+              14
+            ],
+            "operations": [
+              "search"
+            ],
+            "operationArgs": [
+              {
+                "value": 6
+              }
+            ],
+            "title": "search(6): 8 -> 4 -> 6"
+          }
+        }
+      },
+      {
+        "title": "Insert follows the same path",
+        "body": "Insert walks exactly like a search until it falls off the tree at a None child, then attaches the new node there. Inserting 5 goes 8 -> left to 4 -> right to 6 -> left of 6 is empty, so 5 becomes 6's left child. Existing nodes never move.",
+        "visual": {
+          "type": "TreeVisualizer",
+          "props": {
+            "data": [
+              8,
+              4,
+              12,
+              2,
+              6,
+              10,
+              14
+            ],
+            "operations": [
+              "insert"
+            ],
+            "operationArgs": [
+              {
+                "value": 5
+              }
+            ],
+            "title": "insert(5) lands as the left child of 6"
+          }
+        }
+      },
+      {
+        "title": "Inorder walk comes out sorted",
+        "body": "Inorder visits left subtree, node, right subtree. Because everything on the left is smaller and everything on the right is larger, the values come out in ascending order: 2, 4, 6, 8, 10, 12, 14. That is a free O(n) sort of the stored keys.",
+        "visual": {
+          "type": "TreeVisualizer",
+          "props": {
+            "data": [
+              8,
+              4,
+              12,
+              2,
+              6,
+              10,
+              14
+            ],
+            "operations": [
+              "inorder"
+            ],
+            "title": "Inorder traversal"
+          }
+        }
+      },
+      {
+        "title": "Delete has three cases",
+        "body": "A leaf is just unlinked. A node with one child is replaced by that child. A node with two children copies in its inorder successor (the smallest value in its right subtree) and then deletes that successor, which has at most one child."
+      },
+      {
+        "title": "Shape decides speed",
+        "body": "Insert 1, 2, 3, 4, 5 in sorted order and every node goes to the right: the tree becomes a linked list of height 4 and search becomes O(n). Self-balancing trees (AVL, red-black) rotate nodes after inserts to keep the height near log2(n)."
+      }
+    ],
+    "takeaway": "A BST is binary search frozen into a tree: O(log n) when it stays balanced, O(n) when inserts arrive in sorted order."
   }
 }

@@ -39,6 +39,7 @@ import useReducedMotion from '../hooks/useReducedMotion';
 import useCodeTrace from '../hooks/useCodeTrace';
 import TraceViewer from '../components/TraceViewer';
 import UnderTheHood from '../components/animations/UnderTheHood';
+import TopicUnderTheHood from '../components/animations/TopicUnderTheHood';
 import { useTranslation } from '../i18n';
 
 // Display labels for the F5 "not available in your language yet" notice.
@@ -881,15 +882,29 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
     // popup, because it runs in the one-at-a-time sandbox and ML examples need up to 25 s to import.
     const { t } = useTranslation(language);
     const lessonId = lesson?.id;
-    const hasUth = !!lesson?.has_under_the_hood;
+    // With authored topic content (`lesson.under_the_hood`) the popup has two tabs: "How it works" (the
+    // default, already in the lesson payload, no fetch) and "Python's view" (the trace, fetched on first open).
+    const uthTopic = lesson?.under_the_hood && typeof lesson.under_the_hood === 'object' ? lesson.under_the_hood : null;
+    const hasUthTrace = lesson?.has_uth_trace !== false;
+    const hasUth = !!lesson?.has_under_the_hood || !!uthTopic;
     const [uth, setUth] = useState(null);              // { id, status: 'loading' | 'ready' | 'error', data }
     const [showUth, setShowUth] = useState(false);
+    const [uthTab, setUthTab] = useState('topic');     // 'topic' | 'python' (only with topic content)
     const uthButtonRef = useRef(null);
     const uthCloseRef = useRef(null);
     useEffect(() => { setShowUth(false); }, [lessonId]);
     const uthState = uth && uth.id === lessonId ? uth : null;
+    const showUthTopic = !!uthTopic && (uthTab === 'topic' || !hasUthTrace);
     const openUth = () => {
         setShowUth(true);
+        if (uthTopic) { setUthTab('topic'); return; }
+        loadUthTrace();
+    };
+    const openUthPython = () => {
+        setUthTab('python');
+        loadUthTrace();
+    };
+    const loadUthTrace = () => {
         if (uthState && uthState.status !== 'error') return;      // loading or loaded: fetch once per lesson
         const id = lessonId;
         setUth({ id, status: 'loading' });
@@ -1059,7 +1074,11 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
                         </div>
                         <div className="flex-1 min-w-0">
                             <h3 className="text-sm font-bold text-white tracking-wide">{t('uth.ui_title', 'Under the hood')}</h3>
-                            <p className="text-xs text-slate-400 mt-0.5">{t('uth.ui_open_hint', 'See the names and objects Python keeps in memory')}</p>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                                {uthTopic
+                                    ? t('uth.ui_open_hint_topic', 'See how this works inside, step by step')
+                                    : t('uth.ui_open_hint', 'See the names and objects Python keeps in memory')}
+                            </p>
                         </div>
                     </div>
                 </button>
@@ -1069,7 +1088,7 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
 
             {/* ── Popup: Under the hood ── */}
             <AnimatePresence>
-                {showUth && uthState && (
+                {showUth && (uthTopic || uthState) && (
                     <motion.div
                         className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm"
                         initial={reducedMotion ? false : { opacity: 0 }}
@@ -1103,8 +1122,37 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
                                     <X size={18} />
                                 </button>
                             </div>
-                            <div className="flex-1 min-h-0 min-w-0 overflow-y-auto p-3 sm:p-4 dark-scrollbar">
-                                {uthState.status === 'ready' ? (
+                            {uthTopic && hasUthTrace && (
+                                <div role="tablist" aria-label={t('uth.ui_title', 'Under the hood')} className="flex flex-shrink-0 gap-1 overflow-x-auto border-b border-white/10 px-2">
+                                    {[['topic', t('uth.ui_tab_topic', 'How it works'), () => setUthTab('topic')],
+                                      ['python', t('uth.ui_tab_python', "Python's view"), openUthPython]].map(([name, label, onOpen]) => (
+                                        <button
+                                            key={name}
+                                            type="button"
+                                            role="tab"
+                                            id={`uth-tab-${name}`}
+                                            aria-selected={uthTab === name}
+                                            aria-controls="uth-panel"
+                                            onClick={onOpen}
+                                            className={`min-h-[44px] shrink-0 whitespace-nowrap px-4 text-sm font-semibold border-b-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 ${uthTab === name ? 'border-cyan-400 text-white' : 'border-transparent text-slate-300 hover:text-white'}`}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                            <div
+                                id="uth-panel"
+                                {...(uthTopic && hasUthTrace ? { role: 'tabpanel', 'aria-labelledby': `uth-tab-${uthTab}` } : {})}
+                                className="flex-1 min-h-0 min-w-0 overflow-y-auto p-3 sm:p-4 dark-scrollbar"
+                            >
+                                {/* Hidden, not unmounted, on "Python's view" so the learner's step is kept. */}
+                                {uthTopic && (
+                                    <div hidden={!showUthTopic}>
+                                        <TopicUnderTheHood key={lessonId} content={uthTopic} language={language} />
+                                    </div>
+                                )}
+                                {showUthTopic || !uthState ? null : uthState.status === 'ready' ? (
                                     <UnderTheHood code={uthState.data?.code} trace={uthState.data} language={language} />
                                 ) : uthState.status === 'loading' ? (
                                     <p role="status" className="flex items-center gap-2 py-6 text-sm text-slate-300">
@@ -1116,7 +1164,7 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
                                         <p>{t('uth.ui_load_failed', 'Could not run the example right now. The code runner may be busy.')}</p>
                                         <button
                                             type="button"
-                                            onClick={openUth}
+                                            onClick={loadUthTrace}
                                             className="min-h-[44px] rounded-lg bg-cyan-500/15 px-4 text-sm font-semibold text-cyan-200 hover:bg-cyan-500/25 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60"
                                         >
                                             {t('uth.ui_retry', 'Try again')}

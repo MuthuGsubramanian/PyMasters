@@ -200,5 +200,68 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "ColBERTv2 stores a small vector for every token of every document; at query time each query token finds its best-matching document token (MaxSim), and the document's score is the sum of those best matches.",
+    "steps": [
+      {
+        "title": "Ingest and split local files",
+        "body": "The indexer walks a directory, reads .txt, .md and .py files, and splits long ones into passages. Each passage is short enough for the encoder's document length limit, so no text is silently cut off."
+      },
+      {
+        "title": "One vector per token",
+        "body": "colbertv2.0 is a BERT-base encoder (about 110M parameters) with a final linear layer down to 128 dimensions. A 100-token passage becomes a 100 x 128 matrix of normalised vectors, instead of one vector for the whole passage.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "passage -> token vectors",
+            "data": [
+              "'close' -> 128-d",
+              "'the' -> 128-d",
+              "'session' -> 128-d",
+              "'in' -> 128-d",
+              "'finally' -> 128-d"
+            ],
+            "title": "Every token keeps its own vector"
+          }
+        }
+      },
+      {
+        "title": "Persist the index",
+        "body": "The token matrices and passage texts are written to disk (JSON in this lesson, compressed binary files in the official library), so the expensive encoding runs once. Later searches just load the index."
+      },
+      {
+        "title": "Score with MaxSim",
+        "body": "The query is encoded the same way (padded to a fixed length with [MASK] tokens, which act as soft query expansion). For each query token take the maximum dot product over all passage tokens, then sum those maxima. A passage scores high only if every important query word finds a close partner.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "query tokens: [sqlalchemy, session, leak]",
+              "best match per token: 0.91, 0.88, 0.74",
+              "MaxSim score = 0.91 + 0.88 + 0.74 = 2.53"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why it stays local",
+        "body": "Everything, model, index and scoring, runs on your CPU, so files never leave the machine. The cost is index size: storing a vector per token is far larger than one vector per passage, which is why ColBERTv2 compresses them.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Single-vector index",
+              "code": "1 vector per passage\nsmall, fast\nloses token detail"
+            },
+            "right": {
+              "label": "ColBERT index",
+              "code": "1 vector per token\nlarger, compressed\nkeeps token detail"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "ColBERT delays the comparison until query time and does it token by token. You pay in index size and get precision that a single pooled vector cannot reach."
+  }
 }

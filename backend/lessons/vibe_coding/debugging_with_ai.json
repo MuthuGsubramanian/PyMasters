@@ -161,5 +161,124 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Debugging works by narrowing the search space with evidence: the traceback names the exact line and exception, a minimal reproduction removes unrelated code, and each experiment confirms or rules out one hypothesis, which is the same information the AI needs instead of guessing.",
+    "steps": [
+      {
+        "title": "A traceback is a map to the failure",
+        "body": "Read it from the bottom: the last line gives the exception type and message, and the frame just above it is where it was raised. Frames higher up show the chain of calls that led there, most recent call last. 'It doesn't work' discards all of that.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "Traceback (most recent call last):",
+              "  File \"report.py\", line 42, in <module>",
+              "    print(summarise(rows))",
+              "  File \"report.py\", line 18, in summarise",
+              "    return total / len(rows)",
+              "ZeroDivisionError: division by zero"
+            ],
+            "title": "Bottom line: what. Frame above: where."
+          }
+        }
+      },
+      {
+        "title": "Without evidence, the model can only guess",
+        "body": "Given only the function and 'fix it', the model has to pattern-match on what bugs usually look like in similar code. Each guess changes something plausible, and each rewrite moves you further from the original. That is the confident-fix spiral: activity without information.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Starved prompt",
+              "code": "this doesn't work, fix it\n[function pasted]"
+            },
+            "right": {
+              "label": "Evidence prompt",
+              "code": "summarise(rows) raises ZeroDivisionError at line 18\nwhen rows == [] (traceback below).\nExpected: return 0 for no rows.\nWhat I tried: rows has 0 items at that point."
+            },
+            "title": "What the AI receives"
+          }
+        }
+      },
+      {
+        "title": "Shrink to a minimal reproduction",
+        "body": "Cut the failing case down until removing anything more makes the bug disappear: summarise([]) alone. A three-line reproduction runs in a second, removes unrelated suspects, and often makes the cause obvious before you even ask."
+      },
+      {
+        "title": "One hypothesis, one experiment",
+        "body": "State a hypothesis ('rows is empty when the filter removes every line'), then test it with a print, an assert or a breakpoint at the suspect line. The result rules the hypothesis in or out. Each round cuts the space of possible causes, like a binary search over the code.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "obs",
+                "label": "exact error + traceback",
+                "type": "start"
+              },
+              {
+                "id": "hyp",
+                "label": "form one hypothesis"
+              },
+              {
+                "id": "exp",
+                "label": "run one experiment"
+              },
+              {
+                "id": "conf",
+                "label": "confirmed?",
+                "type": "decision"
+              },
+              {
+                "id": "fix",
+                "label": "fix the cause, add a test",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "obs",
+                "to": "hyp"
+              },
+              {
+                "from": "hyp",
+                "to": "exp"
+              },
+              {
+                "from": "exp",
+                "to": "conf"
+              },
+              {
+                "from": "conf",
+                "to": "hyp",
+                "label": "no: new hypothesis"
+              },
+              {
+                "from": "conf",
+                "to": "fix",
+                "label": "yes"
+              }
+            ],
+            "executionPath": [
+              "obs",
+              "hyp",
+              "exp",
+              "conf",
+              "hyp",
+              "exp",
+              "conf",
+              "fix"
+            ],
+            "title": "The disciplined debugging loop"
+          }
+        }
+      },
+      {
+        "title": "Lock the fix with a test",
+        "body": "Once the cause is clear, the fix is usually small: handle the empty case. Add assert summarise([]) == 0 so the exact bug you just spent time on is checked on every future run, including after the next AI rewrite."
+      }
+    ],
+    "takeaway": "Debugging is evidence in, uncertainty out. Give the AI the traceback, a minimal repro and your hypothesis, and it becomes a fast reasoning partner instead of a confident guesser."
+  }
 }

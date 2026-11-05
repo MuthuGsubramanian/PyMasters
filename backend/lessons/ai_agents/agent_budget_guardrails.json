@@ -247,5 +247,67 @@
       "correct": 3
     }
   ],
-  "uth_example": "RISKY = {\"delete_file\"}\nplan = [(\"search\", {\"q\": \"flights\"}, 3), (\"search\", {\"q\": \"flights\"}, 3),\n        (\"search\", {\"q\": \"flights\"}, 3), (\"delete_file\", {\"path\": \"notes\"}, 1)]\nmax_cents, max_repeats = 8, 2\nspent, seen, log = 0, {}, []\n\ndef approver(tool, args):\n    return False          # a human said no\n\nfor tool, args, cost in plan:\n    if spent + cost > max_cents:\n        log.append(\"STOP: budget\"); break\n    sig = (tool, tuple(sorted(args.items())))\n    seen[sig] = seen.get(sig, 0) + 1\n    if seen[sig] > max_repeats:\n        log.append(\"STOP: loop on \" + tool); break\n    if tool in RISKY and not approver(tool, args):\n        log.append(\"BLOCKED \" + tool); continue\n    spent += cost\n    log.append(f\"ran {tool} ({cost}c)\")\n\nprint(log, \"spent:\", spent)\n"
+  "uth_example": "RISKY = {\"delete_file\"}\nplan = [(\"search\", {\"q\": \"flights\"}, 3), (\"search\", {\"q\": \"flights\"}, 3),\n        (\"search\", {\"q\": \"flights\"}, 3), (\"delete_file\", {\"path\": \"notes\"}, 1)]\nmax_cents, max_repeats = 8, 2\nspent, seen, log = 0, {}, []\n\ndef approver(tool, args):\n    return False          # a human said no\n\nfor tool, args, cost in plan:\n    if spent + cost > max_cents:\n        log.append(\"STOP: budget\"); break\n    sig = (tool, tuple(sorted(args.items())))\n    seen[sig] = seen.get(sig, 0) + 1\n    if seen[sig] > max_repeats:\n        log.append(\"STOP: loop on \" + tool); break\n    if tool in RISKY and not approver(tool, args):\n        log.append(\"BLOCKED \" + tool); continue\n    spent += cost\n    log.append(f\"ran {tool} ({cost}c)\")\n\nprint(log, \"spent:\", spent)\n",
+  "under_the_hood": {
+    "summary": "Guardrails sit between the model's proposed tool call and the tool: each call is checked against a step and cost budget, a counter of repeated identical calls, and an approval list for risky tools before anything runs.",
+    "steps": [
+      {
+        "title": "Intercept every call",
+        "body": "The guard is a function wrapped around dispatch: the model proposes (tool, args), the guard decides run or block, and only then is the tool executed. Because it is ordinary code, it cannot be talked out of its rules by the model's text.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "proposed call"
+              },
+              {
+                "label": "budget left?"
+              },
+              {
+                "label": "repeated too often?"
+              },
+              {
+                "label": "risky and unapproved?"
+              },
+              {
+                "label": "run tool"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Budget: check before spending",
+        "body": "Keep counters for steps and cents. The check is if spent + cost > max_cents: stop, done before the call, so the limit can never be exceeded by one expensive final step. Real systems also cap tokens and wall-clock time the same way."
+      },
+      {
+        "title": "Loop detection with a call signature",
+        "body": "Turn each call into a hashable signature, (tool, tuple(sorted(args.items()))), and count it in a dict. If the same signature appears a third time the agent is stuck, for example repeating search('x'), and the guard halts or tells the model to change approach.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "('search', (('q','x'),))": 3,
+              "('read', (('path','a.txt'),))": 1
+            },
+            "highlight": [
+              0
+            ],
+            "title": "Counts per signature; 3 = loop"
+          }
+        }
+      },
+      {
+        "title": "Approval gate for side effects",
+        "body": "Tools that delete, pay or send are listed as risky. The guard runs them only if a human has approved that exact call; otherwise it returns 'BLOCKED: not approved' as the tool result, which the model can read and report."
+      },
+      {
+        "title": "Blocks become messages, not crashes",
+        "body": "Each refusal is fed back as a tool result. The loop keeps its normal shape, the model learns why the action failed, and the trace shows exactly where the guard stepped in."
+      }
+    ],
+    "takeaway": "Never rely on the prompt alone to keep an agent safe. A few lines of deterministic code in front of the tools enforce cost, stop loops and keep a human on destructive actions."
+  }
 }

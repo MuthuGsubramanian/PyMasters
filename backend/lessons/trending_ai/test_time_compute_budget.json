@@ -242,5 +242,73 @@
       "correct": 3
     }
   ],
-  "uth_example": "budget = 100.0                               # compute units available per question\nmodels = {\"small\": {\"cost\": 4.0, \"solve_rate\": 0.35},\n          \"large\": {\"cost\": 25.0, \"solve_rate\": 0.70}}\n\nplan = {}\nfor name, m in models.items():\n    samples = int(budget // m[\"cost\"])\n    p_any = 1 - (1 - m[\"solve_rate\"]) ** samples   # chance at least one sample is right\n    plan[name] = {\"samples\": samples, \"p_at_least_one_correct\": round(p_any, 3)}\n\nfor name, row in plan.items():\n    print(f\"{name:6} {row}\")\nprint(\"with a good verifier, many cheap samples can beat a few expensive ones\")\n"
+  "uth_example": "budget = 100.0                               # compute units available per question\nmodels = {\"small\": {\"cost\": 4.0, \"solve_rate\": 0.35},\n          \"large\": {\"cost\": 25.0, \"solve_rate\": 0.70}}\n\nplan = {}\nfor name, m in models.items():\n    samples = int(budget // m[\"cost\"])\n    p_any = 1 - (1 - m[\"solve_rate\"]) ** samples   # chance at least one sample is right\n    plan[name] = {\"samples\": samples, \"p_at_least_one_correct\": round(p_any, 3)}\n\nfor name, row in plan.items():\n    print(f\"{name:6} {row}\")\nprint(\"with a good verifier, many cheap samples can beat a few expensive ones\")\n",
+  "under_the_hood": {
+    "summary": "With a fixed inference budget, a model that costs 14 times less per sample can draw 14 samples for the price of one large-model sample, and combining those samples by voting or a verifier can match or beat the single large answer on some tasks.",
+    "steps": [
+      {
+        "title": "Budget in sample units",
+        "body": "Express compute per sample relative to the small model: small = 1.0, large = 14.0. With a budget of 14.0, samples = budget // cost gives 14 small samples or 1 large one.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "budget = 14.0",
+              "small: 14.0 // 1.0  = 14 samples",
+              "large: 14.0 // 14.0 = 1 sample"
+            ]
+          }
+        }
+      },
+      {
+        "title": "How extra samples become accuracy",
+        "body": "The 14 samples are combined: majority vote for answers that can be compared, or best-of-N with a verifier that scores each one. A single large sample has no such second chance."
+      },
+      {
+        "title": "Probability of at least one success",
+        "body": "If one small sample is right with probability p, at least one of N is right with 1 - (1 - p)^N. With p = 0.3, 14 samples give 1 - 0.7^14 = 0.993. Turning that coverage into a correct final answer still depends on a good selector.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "P(at least one correct), p = 0.3",
+            "data": [
+              0.3,
+              0.832,
+              0.993
+            ],
+            "labels": [
+              "N=1",
+              "N=5",
+              "N=14"
+            ],
+            "highlight": [
+              2
+            ]
+          }
+        }
+      },
+      {
+        "title": "When it works and when it does not",
+        "body": "Research on compute-optimal test-time scaling found small models with extra samples can rival much larger ones on easier and medium problems. On the hardest problems, where the small model is almost never right, more samples do not help and the larger model wins.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Large x 1",
+              "code": "best on hard problems\none shot, no selection"
+            },
+            "right": {
+              "label": "Small x 14",
+              "code": "strong on easy/medium\nneeds vote or verifier"
+            }
+          }
+        }
+      },
+      {
+        "title": "Decide per problem",
+        "body": "A practical system estimates difficulty and spends accordingly: few samples for easy questions, more samples or a larger model for hard ones. Compute becomes a dial per request rather than a fixed model choice."
+      }
+    ],
+    "takeaway": "Inference compute can be spent on size or on samples. Many cheap samples plus a good selector can match a bigger model, but only where the small model can solve the problem sometimes."
+  }
 }

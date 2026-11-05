@@ -318,5 +318,72 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "sentence-transformers' encode runs all-MiniLM-L6-v2 to get one 384-number vector per sentence, and util.semantic_search computes cosine similarity between the query vector and every corpus vector and returns the top hits sorted by score.",
+    "steps": [
+      {
+        "title": "A sentence becomes a direction",
+        "body": "Each sentence is mapped to a point in 384-dimensional space. The model was trained on over a billion sentence pairs so that texts with the same meaning point in similar directions, whatever words they use."
+      },
+      {
+        "title": "Corpus vectors are computed once",
+        "body": "corpus_embeddings = model.encode(corpus, convert_to_tensor=True) produces an N x 384 tensor. This is the expensive part and is done at indexing time, not per query.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "corpus_embeddings shape",
+            "data": [
+              "N rows (one per sentence)",
+              "384 columns"
+            ],
+            "title": "One row per document"
+          }
+        }
+      },
+      {
+        "title": "Cosine similarity compares directions",
+        "body": "cos(a, b) = (a . b) / (|a| |b|), from -1 to 1. Length is divided out, so a long and a short sentence about the same topic still match. For 'a film about a sinking ship', 'Titanic' scores well above 'a cooking show'.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "a . b",
+                "value": "sum of products"
+              },
+              {
+                "variable": "|a| |b|",
+                "value": "product of lengths"
+              },
+              {
+                "variable": "cosine",
+                "value": "(a . b) / (|a| |b|)"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "semantic_search does the ranking",
+        "body": "util.semantic_search(query_emb, corpus_embeddings, top_k=3) computes all cosine scores in one matrix operation, keeps the top 3 per query and returns them as {corpus_id, score} dicts, best first.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "query: 'a film about a sinking ship'",
+              "0.611  Titanic is a movie about a ship disaster",
+              "0.180  A documentary about oceans",
+              "(illustrative scores)"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Scores are relative",
+        "body": "A cosine of 0.6 is not a probability. Compare scores within one query to rank results, and pick any 'good enough' threshold by checking real queries for this model."
+      }
+    ],
+    "takeaway": "Semantic search is geometry: meaning becomes direction, relevance becomes the cosine between directions. The model's training is what makes those directions meaningful."
+  }
 }

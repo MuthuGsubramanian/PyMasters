@@ -214,5 +214,68 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "The same all-MiniLM-L6-v2 weights can be exported to other runtimes such as ONNX; each runtime executes the identical graph of matrix operations, so as long as tokenization, mean pooling and normalisation are reproduced, the vectors match to rounding.",
+    "steps": [
+      {
+        "title": "A model is weights plus a graph",
+        "body": "The checkpoint holds the numbers; the framework supplies the code that runs them. Exporting to ONNX traces the PyTorch forward pass into a portable graph of operators (MatMul, Add, Softmax, LayerNorm) with the weights embedded."
+      },
+      {
+        "title": "Runtimes optimise the same graph",
+        "body": "ONNX Runtime fuses operators, for example attention or LayerNorm into single kernels, and picks CPU-specific instructions. The arithmetic is the same, so outputs typically agree with PyTorch to about 1e-5, which leaves cosine scores effectively unchanged.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "PyTorch",
+              "code": "eager Python ops\ngreat for training\nmore per-call overhead"
+            },
+            "right": {
+              "label": "ONNX Runtime",
+              "code": "static fused graph\ninference only\nleaner CPU serving"
+            }
+          }
+        }
+      },
+      {
+        "title": "Pooling must be reproduced",
+        "body": "An exported transformer often outputs token embeddings only. sentence-transformers' encode adds mean pooling and normalisation on top, so a custom runtime must apply the attention-mask-weighted mean and L2 normalisation itself or the vectors will not match the index."
+      },
+      {
+        "title": "Batching and padding",
+        "body": "Inputs in a batch are padded to the longest one, and padded positions still cost compute. Sorting texts by length before batching keeps padding small; encode() does this internally, which is a large part of its speed.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "sort by length"
+              },
+              {
+                "label": "batch",
+                "detail": "pad to longest"
+              },
+              {
+                "label": "forward",
+                "detail": "any runtime"
+              },
+              {
+                "label": "mean pool + normalise"
+              },
+              {
+                "label": "restore order"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Cache repeated texts",
+        "body": "Hashing the exact text (for example with SHA-256) gives a key for a vector cache. Re-ingesting unchanged documents or repeated queries then skips the model entirely. Verify parity once by encoding a test set in each runtime and checking cosine near 1.0."
+      }
+    ],
+    "takeaway": "Switching runtimes changes speed, not meaning, provided every stage of the pipeline is the same. Test parity once, then pick the runtime that fits the deployment."
+  }
 }

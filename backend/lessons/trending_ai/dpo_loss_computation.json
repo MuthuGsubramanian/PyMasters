@@ -249,5 +249,83 @@
       "correct": 0
     }
   ],
-  "uth_example": "from math import exp, log\n\nbatch = [                                   # (r_chosen, r_rejected) implicit rewards\n    (0.30, -0.10),\n    (0.05, 0.20),                           # the policy prefers the WRONG answer here\n    (0.80, -0.40),\n]\n\nlosses = []\nfor r_chosen, r_rejected in batch:\n    margin = r_chosen - r_rejected\n    prob = 1 / (1 + exp(-margin))           # P(chosen beats rejected)\n    losses.append(round(-log(prob), 4))\n\nbatch_loss = sum(losses) / len(losses)\nworst = losses.index(max(losses))\nprint(\"per-pair loss:\", losses)\nprint(\"batch loss:\", round(batch_loss, 4), \"| hardest pair:\", batch[worst])\n"
+  "uth_example": "from math import exp, log\n\nbatch = [                                   # (r_chosen, r_rejected) implicit rewards\n    (0.30, -0.10),\n    (0.05, 0.20),                           # the policy prefers the WRONG answer here\n    (0.80, -0.40),\n]\n\nlosses = []\nfor r_chosen, r_rejected in batch:\n    margin = r_chosen - r_rejected\n    prob = 1 / (1 + exp(-margin))           # P(chosen beats rejected)\n    losses.append(round(-log(prob), 4))\n\nbatch_loss = sum(losses) / len(losses)\nworst = losses.index(max(losses))\nprint(\"per-pair loss:\", losses)\nprint(\"batch loss:\", round(batch_loss, 4), \"| hardest pair:\", batch[worst])\n",
+  "under_the_hood": {
+    "summary": "The DPO loss for a preference pair is -log(sigmoid(margin)), the negative log of the policy's modelled probability that the chosen answer beats the rejected one; it is averaged over a batch and minimised by ordinary gradient descent.",
+    "steps": [
+      {
+        "title": "Loss per pair",
+        "body": "With margin 0.54, sigmoid gives 0.6318 and the loss is -log(0.6318) = 0.4592. If the margin were large and positive the loss would approach 0; if it were negative the loss would grow quickly.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "margin = 0.27 - (-0.27) = 0.54",
+              "P = sigmoid(0.54) = 0.6318",
+              "loss = -log(0.6318) = 0.4592"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Average over the batch",
+        "body": "Pairs with margins 0.54, -0.35 and 1.1 give losses 0.4592, 0.8834 and 0.2873. The batch loss is their mean, 0.5433. The pair the policy currently gets backwards contributes the most.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "per-pair loss",
+            "data": [
+              0.4592,
+              0.8834,
+              0.2873
+            ],
+            "labels": [
+              "m=0.54",
+              "m=-0.35",
+              "m=1.1"
+            ],
+            "highlight": [
+              1
+            ]
+          }
+        }
+      },
+      {
+        "title": "What the gradient does",
+        "body": "The gradient raises log pi_policy of the chosen completion and lowers that of the rejected one, scaled by beta and by how wrong the pair currently is (1 - sigmoid(margin)). Pairs already ranked correctly with confidence barely move the weights."
+      },
+      {
+        "title": "No sampling, no reward model",
+        "body": "Every term comes from log-probabilities of fixed, pre-collected completions under the policy and the frozen reference. Training is a supervised loop over the preference dataset, with no generation during training and no RL machinery.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "pair (x, chosen, rejected)"
+              },
+              {
+                "label": "4 log-probs",
+                "detail": "policy + ref"
+              },
+              {
+                "label": "rewards -> margin"
+              },
+              {
+                "label": "loss = -log sigmoid"
+              },
+              {
+                "label": "backprop policy"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Watch for over-optimisation",
+        "body": "Pushing margins ever higher can lower the probability of both completions, or drift far from the reference. beta, the number of epochs and evaluation on held-out preferences keep this in check."
+      }
+    ],
+    "takeaway": "DPO is binary cross-entropy on 'chosen beats rejected', where the logit is the reward margin. That is the whole loss behind preference tuning without RL."
+  }
 }

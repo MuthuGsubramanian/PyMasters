@@ -170,5 +170,82 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A refactor must keep every input producing the same output, so you first pin the current behaviour with characterisation tests, let the AI restructure the code, and rerun the tests; any behaviour change, like a >= quietly becoming >, shows up as a failing case.",
+    "steps": [
+      {
+        "title": "Refactoring is a promise about outputs",
+        "body": "Same inputs, same outputs, different insides. The promise covers every input, including the odd ones the original code handled on purpose: an empty list, a value exactly on a boundary, None. Prettier code that changes any of those outputs is a rewrite, not a refactor."
+      },
+      {
+        "title": "Pin current behaviour first",
+        "body": "Characterisation tests record what the code does now, even if it looks odd. For shipping_fee(order_total): assert shipping_fee(0) == 5, shipping_fee(499) == 5, shipping_fee(500) == 0, shipping_fee(501) == 0. The boundary at exactly 500 is the case most likely to be lost.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "input",
+                "values": [
+                  0,
+                  499,
+                  500,
+                  501
+                ]
+              },
+              {
+                "variable": "original output",
+                "values": [
+                  5,
+                  5,
+                  0,
+                  0
+                ]
+              }
+            ],
+            "title": "Behaviour recorded before any change"
+          }
+        }
+      },
+      {
+        "title": "The AI rewrite looks better",
+        "body": "The original said if total >= 500: return 0. The AI's tidy version uses return 0 if total > 500 else 5, with nicer names and less nesting. Reading it, nothing looks wrong; the change is one character in a comparison.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Before (ugly, correct)",
+              "code": "def shipping_fee(total):\n    if total >= 500:\n        return 0\n    return 5"
+            },
+            "right": {
+              "label": "After (clean, changed)",
+              "code": "def shipping_fee(total: int) -> int:\n    return 0 if total > 500 else 5"
+            },
+            "title": "Spot the behaviour change"
+          }
+        }
+      },
+      {
+        "title": "The tests catch what eyes miss",
+        "body": "Rerunning the pinned tests: 0, 499 and 501 still pass, but shipping_fee(500) now returns 5 instead of 0, so that assertion fails and names the exact input. The computer compared every recorded case; you only had to read one failure.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "FAILED test_shipping.py::test_boundary - assert 5 == 0",
+              " +  where 5 = shipping_fee(500)",
+              "1 failed, 3 passed in 0.01s"
+            ],
+            "title": "The boundary test fails"
+          }
+        }
+      },
+      {
+        "title": "Small steps, green between",
+        "body": "Ask for one refactoring at a time (rename, extract a function, remove nesting) and run the tests after each. When something goes red you know which small step did it, and git restore takes you back to the last green state."
+      }
+    ],
+    "takeaway": "Tests are what make an AI refactor safe: they turn 'did anything change?' from a reading exercise into a list of failing inputs."
+  }
 }

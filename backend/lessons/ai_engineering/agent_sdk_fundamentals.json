@@ -281,5 +281,76 @@
       "correct": 0
     }
   ],
-  "uth_example": "class Agent:\n    def __init__(self, tools, max_turns, allow):\n        self.tools, self.max_turns, self.allow = tools, max_turns, allow\n        self.history = []\n\n    def run(self, question, plans):\n        self.history.append({\"role\": \"user\", \"content\": question})\n        for turn, plan in enumerate(plans[: self.max_turns], 1):\n            if plan[\"type\"] == \"final\":\n                return plan[\"text\"], turn\n            if not self.allow(plan[\"name\"]):                 # permission hook\n                result = f\"denied: {plan['name']}\"\n            else:\n                result = self.tools[plan[\"name\"]](**plan[\"args\"])\n            self.history.append({\"role\": \"tool\", \"content\": result})\n        return \"gave up: turn limit\", self.max_turns\n\nplans = [{\"type\": \"tool\", \"name\": \"rm_rf\", \"args\": {}},\n         {\"type\": \"tool\", \"name\": \"add\", \"args\": {\"a\": 4, \"b\": 5}},\n         {\"type\": \"final\", \"text\": \"4 + 5 = 9\"}]\nagent = Agent({\"add\": lambda a, b: a + b}, max_turns=4, allow=lambda name: name != \"rm_rf\")\nanswer, turns = agent.run(\"What is 4 + 5?\", plans)\nprint(answer, \"in\", turns, \"turns;\", agent.history[1:])\n"
+  "uth_example": "class Agent:\n    def __init__(self, tools, max_turns, allow):\n        self.tools, self.max_turns, self.allow = tools, max_turns, allow\n        self.history = []\n\n    def run(self, question, plans):\n        self.history.append({\"role\": \"user\", \"content\": question})\n        for turn, plan in enumerate(plans[: self.max_turns], 1):\n            if plan[\"type\"] == \"final\":\n                return plan[\"text\"], turn\n            if not self.allow(plan[\"name\"]):                 # permission hook\n                result = f\"denied: {plan['name']}\"\n            else:\n                result = self.tools[plan[\"name\"]](**plan[\"args\"])\n            self.history.append({\"role\": \"tool\", \"content\": result})\n        return \"gave up: turn limit\", self.max_turns\n\nplans = [{\"type\": \"tool\", \"name\": \"rm_rf\", \"args\": {}},\n         {\"type\": \"tool\", \"name\": \"add\", \"args\": {\"a\": 4, \"b\": 5}},\n         {\"type\": \"final\", \"text\": \"4 + 5 = 9\"}]\nagent = Agent({\"add\": lambda a, b: a + b}, max_turns=4, allow=lambda name: name != \"rm_rf\")\nanswer, turns = agent.run(\"What is 4 + 5?\", plans)\nprint(answer, \"in\", turns, \"turns;\", agent.history[1:])\n",
+  "under_the_hood": {
+    "summary": "An agent SDK wraps a stateless chat-completion call in a loop it manages for you: it registers tools and their schemas, dispatches the model's tool calls, appends observations to a persistent history, and stops on a final answer or a limit.",
+    "steps": [
+      {
+        "title": "A raw API call is one request, one reply",
+        "body": "The model endpoint keeps no memory and runs no code. Each call sends the full message list and gets back either text or a request to call a tool. Anything beyond that single exchange, retries, tool execution, history, is your code's job."
+      },
+      {
+        "title": "The tool registry",
+        "body": "The SDK keeps a mapping from tool name to function plus a JSON Schema for its arguments. The schemas are sent with every request so the model knows what it may call; the functions stay on your side.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "add": "fn(a: int, b: int)",
+              "read_file": "fn(path: str)"
+            },
+            "title": "Registry: name -> function + schema"
+          }
+        }
+      },
+      {
+        "title": "Plan, act, observe",
+        "body": "The loop asks the model for its next step. If the reply is a tool call such as add(a=6, b=7), the dispatcher runs it and appends the observation 13 to the history; the model is called again and can now give the final answer '13'.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "plan(history) -> tool_call add {'a': 6, 'b': 7}",
+              "call_tool('add', ...) -> 13",
+              "history += observation 13",
+              "plan(history) -> final_answer '13'"
+            ]
+          }
+        }
+      },
+      {
+        "title": "State that outlives one call",
+        "body": "Because the history list is owned by the SDK session, a second user turn continues the same conversation with all earlier tool results visible. Production SDKs also trim or summarise that history when it nears the context limit."
+      },
+      {
+        "title": "What production SDKs add on top",
+        "body": "Agent SDKs, such as Anthropic's Claude Agent SDK, typically also ship built-in tools (files, shell, search), permission checks before a tool runs, hooks around tool calls, and limits on turns. Each is a layer around the same plan-act-observe loop.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "registry",
+                "detail": "what can be called"
+              },
+              {
+                "label": "loop",
+                "detail": "plan -> act -> observe"
+              },
+              {
+                "label": "history",
+                "detail": "state across turns"
+              },
+              {
+                "label": "guards",
+                "detail": "permissions, limits"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "An Agent SDK is not new intelligence; it is the loop, the dispatcher and the history you would otherwise rewrite for every project. Knowing that loop makes SDK behaviour predictable."
+  }
 }

@@ -243,5 +243,73 @@
       "correct": 1
     }
   ],
-  "uth_example": "candidates = [\n    \"def avg(xs): return sum(xs) / len(xs)\",\n    \"def avg(xs): return sum(xs) // len(xs)\",\n    \"def avg(xs): return sum(xs) / len(xs) if xs else 0.0\",\n]\ntests = [([2, 4], 3.0), ([1, 2], 1.5), ([], 0.0)]\n\ndef verifier(source):                       # the reward: fraction of tests passed\n    scope = {}\n    exec(source, scope)\n    passed = 0\n    for args, want in tests:\n        try:\n            passed += scope[\"avg\"](args) == want\n        except ZeroDivisionError:\n            pass\n    return passed / len(tests)\n\nscores = [round(verifier(c), 2) for c in candidates]\nbest = max(range(len(candidates)), key=lambda i: scores[i])\nprint(\"scores:\", scores)\nprint(\"winner:\", candidates[best])\n"
+  "uth_example": "candidates = [\n    \"def avg(xs): return sum(xs) / len(xs)\",\n    \"def avg(xs): return sum(xs) // len(xs)\",\n    \"def avg(xs): return sum(xs) / len(xs) if xs else 0.0\",\n]\ntests = [([2, 4], 3.0), ([1, 2], 1.5), ([], 0.0)]\n\ndef verifier(source):                       # the reward: fraction of tests passed\n    scope = {}\n    exec(source, scope)\n    passed = 0\n    for args, want in tests:\n        try:\n            passed += scope[\"avg\"](args) == want\n        except ZeroDivisionError:\n            pass\n    return passed / len(tests)\n\nscores = [round(verifier(c), 2) for c in candidates]\nbest = max(range(len(candidates)), key=lambda i: scores[i])\nprint(\"scores:\", scores)\nprint(\"winner:\", candidates[best])\n",
+  "under_the_hood": {
+    "summary": "Best-of-N samples N independent answers to the same prompt, gives each one a score from a verifier such as a reward model or unit tests, and returns the single highest-scoring answer; it spends N times the generation compute to pick a better output.",
+    "steps": [
+      {
+        "title": "Sample N candidates",
+        "body": "The same prompt is run N times with temperature above 0, so each run takes a different path. For a coding task, one of ten attempts might contain the correct fix even if most do not."
+      },
+      {
+        "title": "Score each one",
+        "body": "A verifier gives one number per candidate: a reward model's predicted quality, the fraction of unit tests passed, or a rule-based checker. The quality of best-of-N is capped by how well this score tracks real quality.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "verifier scores",
+            "data": [
+              0.62,
+              0.91,
+              0.77
+            ],
+            "labels": [
+              "ans1",
+              "ans2",
+              "ans3"
+            ],
+            "highlight": [
+              1
+            ]
+          }
+        }
+      },
+      {
+        "title": "Keep the argmax",
+        "body": "Walk the scores tracking the best index, or use max(range(n), key=scores.__getitem__). The answer with 0.91 wins; the gain over the average of 0.767 is 0.14 for this prompt.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "scores: [0.62, 0.91, 0.77]",
+              "best_of_n -> 'ans2' (score 0.91)",
+              "gain over average -> 0.14"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Different from majority voting",
+        "body": "Self-consistency counts identical final answers, which fails when the right answer appears once. Best-of-N needs no agreement, only a score, so it can pick a rare correct sample, but it can also pick a wrong answer the verifier happens to like.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Self-consistency",
+              "code": "compare answers by equality\nno scorer needed\npopular answer wins"
+            },
+            "right": {
+              "label": "Best-of-N",
+              "code": "compare by score\nneeds a verifier\nhighest score wins"
+            }
+          }
+        }
+      },
+      {
+        "title": "Cost and diminishing returns",
+        "body": "Compute grows linearly with N, while the chance that the best sample improves shrinks as N grows. With an imperfect reward model, very large N can also find answers that exploit the scorer, which is why N is usually kept modest."
+      }
+    ],
+    "takeaway": "Best-of-N converts extra inference compute into quality, as long as the verifier is trustworthy. The verifier, not N, sets the ceiling."
+  }
 }

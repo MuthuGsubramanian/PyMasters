@@ -223,5 +223,76 @@
       "correct": 2
     }
   ],
-  "uth_example": "def draft(state):\n    state[\"draft\"] = f\"Reply to: {state['ticket']}\"\n    state[\"attempts\"] += 1\n    return state\n\ndef review(state):\n    state[\"approved\"] = state[\"attempts\"] >= 2        # reviewer wants one revision\n    return state\n\ndef send(state):\n    state[\"sent\"] = True\n    return state\n\nnodes = {\"draft\": draft, \"review\": review, \"send\": send}\nedges = {\"draft\": \"review\",\n         \"review\": lambda s: \"send\" if s[\"approved\"] else \"draft\",   # conditional edge\n         \"send\": \"END\"}\n\nstate = {\"ticket\": \"refund for order 9\", \"attempts\": 0, \"approved\": False, \"sent\": False}\ncurrent, path = \"draft\", []\nwhile current != \"END\":\n    path.append(current)\n    state = nodes[current](state)\n    nxt = edges[current]\n    current = nxt(state) if callable(nxt) else nxt\nprint(\" -> \".join(path))\nprint(state)\n"
+  "uth_example": "def draft(state):\n    state[\"draft\"] = f\"Reply to: {state['ticket']}\"\n    state[\"attempts\"] += 1\n    return state\n\ndef review(state):\n    state[\"approved\"] = state[\"attempts\"] >= 2        # reviewer wants one revision\n    return state\n\ndef send(state):\n    state[\"sent\"] = True\n    return state\n\nnodes = {\"draft\": draft, \"review\": review, \"send\": send}\nedges = {\"draft\": \"review\",\n         \"review\": lambda s: \"send\" if s[\"approved\"] else \"draft\",   # conditional edge\n         \"send\": \"END\"}\n\nstate = {\"ticket\": \"refund for order 9\", \"attempts\": 0, \"approved\": False, \"sent\": False}\ncurrent, path = \"draft\", []\nwhile current != \"END\":\n    path.append(current)\n    state = nodes[current](state)\n    nxt = edges[current]\n    current = nxt(state) if callable(nxt) else nxt\nprint(\" -> \".join(path))\nprint(state)\n",
+  "under_the_hood": {
+    "summary": "A tiny graph engine keeps a current node name and a state dict, runs that node's function to get a new state, looks up the next node in an edges map (or asks a router function), and repeats until it reaches 'END'.",
+    "steps": [
+      {
+        "title": "Three data structures",
+        "body": "nodes maps a name to a function state -> state, edges maps a name to the next name, and state is a plain dict. The whole 'graph' is two dictionaries.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "nodes": "{'add': add, 'double': double}",
+              "edges": "{'add': 'double', 'double': 'END'}"
+            },
+            "title": "The graph is data"
+          }
+        }
+      },
+      {
+        "title": "The run loop",
+        "body": "current = start; while current != 'END': state = nodes[current](state); current = edges[current]. Each pass runs exactly one node, so the engine is a state machine whose position is the current node name."
+      },
+      {
+        "title": "Trace one run",
+        "body": "Starting from {'n': 3}, 'add' returns {'n': 4}, the edge leads to 'double', which returns {'n': 8}, and its edge is 'END'. Printing the state after every node gives a step-by-step trace for free.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "state {'n': 3}",
+              "  add    -> {'n': 4}",
+              "  double -> {'n': 8}",
+              "  END",
+              "final: {'n': 8}"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Conditional edges are functions",
+        "body": "If an edge value is a callable instead of a string, the engine calls it with the state and uses the returned name. 'retry if state[\"ok\"] is False else \"END\"' turns the graph into a loop with an exit condition.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "run node"
+              },
+              {
+                "label": "edge is str?",
+                "detail": "go there"
+              },
+              {
+                "label": "edge is function?",
+                "detail": "router(state) -> name"
+              },
+              {
+                "label": "END?",
+                "detail": "stop"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Guard against infinite loops",
+        "body": "A loop edge can cycle forever if its condition never changes, so real engines count steps and stop at a limit. LangGraph calls this the recursion limit; the same few lines protect this tiny engine."
+      }
+    ],
+    "takeaway": "Agent graphs are a while-loop over a dict of functions. Once you see the engine, branching, retries and approval steps are just different edge functions."
+  }
 }

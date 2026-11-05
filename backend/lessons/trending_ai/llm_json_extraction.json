@@ -229,5 +229,87 @@
       "correct": 0
     }
   ],
-  "uth_example": "import json\n\nreply = 'Sure! Here is the data:\\n```json\\n{\"name\": \"Asha\", \"skills\": {\"python\": 5, \"sql\": 3}}\\n```\\nLet me know {if} you need more.'\n\nstart = reply.index(\"{\")\ndepth = 0\nfor i in range(start, len(reply)):\n    ch = reply[i]\n    if ch in \"{}\":\n        depth += 1 if ch == \"{\" else -1\n        if depth == 0:\n            end = i + 1\n            break\n\nraw = reply[start:end]\ndata = json.loads(raw)\nprint(raw)\nprint(data[\"name\"], \"knows\", list(data[\"skills\"]))\n"
+  "uth_example": "import json\n\nreply = 'Sure! Here is the data:\\n```json\\n{\"name\": \"Asha\", \"skills\": {\"python\": 5, \"sql\": 3}}\\n```\\nLet me know {if} you need more.'\n\nstart = reply.index(\"{\")\ndepth = 0\nfor i in range(start, len(reply)):\n    ch = reply[i]\n    if ch in \"{}\":\n        depth += 1 if ch == \"{\" else -1\n        if depth == 0:\n            end = i + 1\n            break\n\nraw = reply[start:end]\ndata = json.loads(raw)\nprint(raw)\nprint(data[\"name\"], \"knows\", list(data[\"skills\"]))\n",
+  "under_the_hood": {
+    "summary": "To pull JSON out of a chatty reply, find the first '{', walk forward counting +1 for each '{' and -1 for each '}' (ignoring braces inside strings), stop when the count returns to zero, and pass exactly that span to json.loads.",
+    "steps": [
+      {
+        "title": "Why json.loads fails",
+        "body": "Replies like 'Sure! ```json {\"ok\": true} ``` Done' contain prose and code fences. json.loads on the whole string raises JSONDecodeError at the first character, 'S'."
+      },
+      {
+        "title": "Find the start",
+        "body": "reply.index('{') gives the position of the first opening brace. Everything before it, the greeting and the fence, is skipped.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "reply: 'Sure! {\"ok\": true} thanks!'",
+              "start = reply.index('{') -> 6"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Track depth to find the end",
+        "body": "Walk from start: '{' adds 1, '}' subtracts 1. Nested objects push the depth higher and back down. The moment depth returns to 0, the matching closing brace has been found and the object is complete.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "depth while scanning",
+            "data": [
+              1,
+              2,
+              2,
+              1,
+              0
+            ],
+            "labels": [
+              "{",
+              "{",
+              "x",
+              "}",
+              "}"
+            ],
+            "highlight": [
+              4
+            ],
+            "title": "Depth 0 = end of object"
+          }
+        }
+      },
+      {
+        "title": "Strings can contain braces",
+        "body": "A value like \"use {x}\" contains braces that are not structure. A robust extractor tracks whether it is inside a double-quoted string, honouring backslash escapes, and ignores braces there."
+      },
+      {
+        "title": "Parse, then validate",
+        "body": "json.loads(reply[start:end + 1]) gives a dict. It may still have missing or wrongly typed fields, so the next step is schema validation; when the provider offers constrained JSON output, use it to avoid needing this rescue at all.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "reply text"
+              },
+              {
+                "label": "first '{'"
+              },
+              {
+                "label": "depth scan",
+                "detail": "skip strings"
+              },
+              {
+                "label": "slice"
+              },
+              {
+                "label": "json.loads -> validate"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Extraction is a tiny parser: find the start, count depth, stop at zero. It rescues most chatty replies, and validation catches the rest."
+  }
 }

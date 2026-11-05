@@ -436,5 +436,129 @@
       "testing_devops"
     ]
   },
-  "uth_example": "from graphlib import TopologicalSorter\n\ncompose = {\n    \"web\": {\"build\": \".\", \"ports\": [\"8000:8000\"], \"depends_on\": [\"db\", \"cache\"],\n            \"environment\": {\"DATABASE_HOST\": \"db\", \"REDIS_HOST\": \"cache\"}},\n    \"db\": {\"image\": \"postgres:16\", \"depends_on\": []},\n    \"cache\": {\"image\": \"redis:7\", \"depends_on\": []},\n}\n\nstart_order = list(TopologicalSorter(\n    {name: svc[\"depends_on\"] for name, svc in compose.items()}).static_order())\n\nnetwork = {name: f\"172.18.0.{i + 2}\" for i, name in enumerate(compose)}   # service-name DNS\nweb_env = compose[\"web\"][\"environment\"]\nresolved = {key: network[host] for key, host in web_env.items()}\nhost_port, container_port = compose[\"web\"][\"ports\"][0].split(\":\")\n\nprint(\"docker compose up starts:\", start_order)\nprint(\"web reaches:\", resolved, \"| browser uses localhost:\" + host_port)\n"
+  "uth_example": "from graphlib import TopologicalSorter\n\ncompose = {\n    \"web\": {\"build\": \".\", \"ports\": [\"8000:8000\"], \"depends_on\": [\"db\", \"cache\"],\n            \"environment\": {\"DATABASE_HOST\": \"db\", \"REDIS_HOST\": \"cache\"}},\n    \"db\": {\"image\": \"postgres:16\", \"depends_on\": []},\n    \"cache\": {\"image\": \"redis:7\", \"depends_on\": []},\n}\n\nstart_order = list(TopologicalSorter(\n    {name: svc[\"depends_on\"] for name, svc in compose.items()}).static_order())\n\nnetwork = {name: f\"172.18.0.{i + 2}\" for i, name in enumerate(compose)}   # service-name DNS\nweb_env = compose[\"web\"][\"environment\"]\nresolved = {key: network[host] for key, host in web_env.items()}\nhost_port, container_port = compose[\"web\"][\"ports\"][0].split(\":\")\n\nprint(\"docker compose up starts:\", start_order)\nprint(\"web reaches:\", resolved, \"| browser uses localhost:\" + host_port)\n",
+  "under_the_hood": {
+    "summary": "docker compose up reads the YAML, creates a private network for the project, starts one container per service on it with a built-in DNS so services find each other by name, and attaches the declared volumes.",
+    "steps": [
+      {
+        "title": "One file becomes a set of resources",
+        "body": "A docker-compose.yml with services web, api and db is turned into concrete resources named after the project (by default the folder name): a network such as shop_default, containers such as shop-api-1, and named volumes such as shop_pgdata.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "network: shop_default",
+              "container: shop-web-1",
+              "container: shop-api-1",
+              "container: shop-db-1",
+              "volume: shop_pgdata"
+            ],
+            "title": "What `docker compose up` creates"
+          }
+        }
+      },
+      {
+        "title": "Service names become host names",
+        "body": "Every container joins the project network, and Docker's embedded DNS server answers lookups for service names with that container's IP. So the Flask app connects to postgresql://db:5432 and 'db' resolves to the database container. Nothing on that network is reachable from the host unless you publish a port with ports: ['8000:8000'].",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "api container",
+                "detail": "connect to db:5432"
+              },
+              {
+                "label": "embedded DNS",
+                "detail": "'db' -> 172.18.0.3"
+              },
+              {
+                "label": "db container",
+                "detail": "Postgres listening on 5432"
+              }
+            ],
+            "title": "How the API finds the database",
+            "direction": "right"
+          }
+        }
+      },
+      {
+        "title": "depends_on orders starts, not readiness",
+        "body": "depends_on: [db] makes Compose start the db container before api. But Postgres may need a few seconds after its process starts before it accepts connections. With a healthcheck on db and depends_on: db: condition: service_healthy, Compose waits until the health check passes before starting api.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "db",
+                "label": "start db container",
+                "type": "start"
+              },
+              {
+                "id": "hc",
+                "label": "healthcheck passing?",
+                "type": "decision"
+              },
+              {
+                "id": "wait",
+                "label": "wait and retry"
+              },
+              {
+                "id": "api",
+                "label": "start api"
+              },
+              {
+                "id": "web",
+                "label": "start web",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "db",
+                "to": "hc"
+              },
+              {
+                "from": "hc",
+                "to": "wait",
+                "label": "no"
+              },
+              {
+                "from": "wait",
+                "to": "hc"
+              },
+              {
+                "from": "hc",
+                "to": "api",
+                "label": "yes"
+              },
+              {
+                "from": "api",
+                "to": "web"
+              }
+            ],
+            "executionPath": [
+              "db",
+              "hc",
+              "wait",
+              "hc",
+              "api",
+              "web"
+            ],
+            "title": "Start order with condition: service_healthy"
+          }
+        }
+      },
+      {
+        "title": "Named volumes keep the data",
+        "body": "volumes: - pgdata:/var/lib/postgresql/data mounts the named volume where Postgres writes its files. docker compose down removes the containers and the network, but named volumes stay, so the next up finds the same data. docker compose down -v removes the volumes too."
+      },
+      {
+        "title": "Configuration flows in through the environment",
+        "body": "environment: and env_file: set variables inside each container, and ${VAR} in the YAML is filled in from your shell or a .env file next to the compose file when Compose reads it. The same image can then point at a test or production database without being rebuilt."
+      }
+    ],
+    "takeaway": "Compose is a declarative wrapper around networks, containers and volumes. The key facts: service names are DNS names, depends_on is only start order unless you add a health check, and named volumes outlive down."
+  }
 }

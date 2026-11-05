@@ -70,6 +70,35 @@ function measureGaps() {
   return Object.fromEntries(Object.entries(gaps).map(([t, s]) => [t, [...s].sort()]));
 }
 
+// Every visual of every lesson's `under_the_hood` topic explainer ("How it works"): new content,
+// so no known gaps are allowed: each key must reach the learner.
+function topicVisuals() {
+  const out = [];
+  for (const file of jsonFiles(LESSONS_DIR)) {
+    const lesson = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const steps = lesson?.under_the_hood?.steps;
+    if (!Array.isArray(steps)) continue;
+    steps.forEach((s, i) => {
+      if (s && s.visual) out.push([`${path.basename(file, '.json')} steps[${i}] ${s.visual.type}`, s.visual]);
+    });
+  }
+  return out;
+}
+
+const TOPIC_VISUALS = topicVisuals();
+
+describe('under_the_hood topic visuals meet the contract', () => {
+  it('finds topic visuals to check', () => {
+    expect(TOPIC_VISUALS.length).toBeGreaterThan(0);
+  });
+
+  it.each(TOPIC_VISUALS)('%s', (_name, visual) => {
+    expect(CONTRACT[canonicalType(visual.type)], `unknown type ${visual.type}`).toBeTruthy();
+    expect(visual.props && typeof visual.props === 'object').toBe(true);
+    expect(droppedKeys(visual.type, visual.props)).toEqual([]);
+  });
+});
+
 describe('normalize data contract over every lesson', () => {
   it('keeps normalizeProps importable from AnimationRenderer', () => {
     expect(typeof normalizeProps).toBe('function');

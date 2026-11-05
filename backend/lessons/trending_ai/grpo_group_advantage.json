@@ -235,5 +235,72 @@
       "correct": 1
     }
   ],
-  "uth_example": "completions = {\"A\": 0.9, \"B\": 0.4, \"C\": 0.4, \"D\": 0.1}   # rewards for one prompt's group\neps = 1e-4\n\nrewards = list(completions.values())\nmean_r = sum(rewards) / len(rewards)\nstd_r = (sum((r - mean_r) ** 2 for r in rewards) / len(rewards)) ** 0.5\n\nadvantages = {}\nfor name, reward in completions.items():\n    advantages[name] = round((reward - mean_r) / (std_r + eps), 4)\n\nprint(\"group mean:\", round(mean_r, 3), \"std:\", round(std_r, 3))\nprint(advantages)        # above average -> pushed up, below -> pushed down\n"
+  "uth_example": "completions = {\"A\": 0.9, \"B\": 0.4, \"C\": 0.4, \"D\": 0.1}   # rewards for one prompt's group\neps = 1e-4\n\nrewards = list(completions.values())\nmean_r = sum(rewards) / len(rewards)\nstd_r = (sum((r - mean_r) ** 2 for r in rewards) / len(rewards)) ** 0.5\n\nadvantages = {}\nfor name, reward in completions.items():\n    advantages[name] = round((reward - mean_r) / (std_r + eps), 4)\n\nprint(\"group mean:\", round(mean_r, 3), \"std:\", round(std_r, 3))\nprint(advantages)        # above average -> pushed up, below -> pushed down\n",
+  "under_the_hood": {
+    "summary": "GRPO samples a group of completions for one prompt, scores each, and uses each completion's reward minus the group mean, divided by the group standard deviation, as its advantage, replacing PPO's learned value network.",
+    "steps": [
+      {
+        "title": "PPO needed a critic",
+        "body": "Policy-gradient methods need a baseline to judge whether an outcome was better or worse than expected. PPO trains a separate value network for this, which is roughly as large as the policy and must be trained alongside it."
+      },
+      {
+        "title": "Sample a group",
+        "body": "GRPO instead samples G completions for the same prompt, for example 4, and scores them with a reward model or a rule-based checker such as 'is the final maths answer correct'. Rewards here are [0.9, 0.6, 0.3, 0.1].",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "rewards for one prompt",
+            "data": [
+              0.9,
+              0.6,
+              0.3,
+              0.1
+            ],
+            "labels": [
+              "y1",
+              "y2",
+              "y3",
+              "y4"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Normalise within the group",
+        "body": "Mean = 0.475 and standard deviation = 0.3031. The advantage is A_i = (r_i - mean) / std, so y1 gets (0.9 - 0.475) / 0.3031 = 1.4017 and y4 gets -1.2372. The group itself is the baseline.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "mean = 0.475, std = 0.3031",
+              "A(y1) = 0.425 / 0.3031 = 1.4017",
+              "A(y4) = -0.375 / 0.3031 = -1.2372"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Every token shares the advantage",
+        "body": "For outcome rewards, each token of completion y_i gets the same advantage A_i. Tokens of better-than-average completions become more likely, worse ones less likely, and advantages within a group sum to zero."
+      },
+      {
+        "title": "Edge cases",
+        "body": "If all G completions get the same reward, std is 0 and every advantage is 0 (an epsilon avoids dividing by zero), so that prompt teaches nothing. Dividing by std also gives very easy and very hard prompts as much weight as others, a bias some later variants remove.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "PPO",
+              "code": "value network as baseline\nextra model to train"
+            },
+            "right": {
+              "label": "GRPO",
+              "code": "group mean as baseline\nG samples per prompt"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "GRPO's baseline is free: compare each answer with its siblings for the same prompt. That removes the critic and made large-scale RL on reasoning tasks much cheaper."
+  }
 }

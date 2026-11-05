@@ -231,5 +231,79 @@
       "correct": 2
     }
   ],
-  "uth_example": "text = \"Refunds take 5 days. Shipping is free over 50. Returns need a receipt.\"\nsize, overlap = 30, 10\n\nchunks = []\nstep = size - overlap\nfor start in range(0, len(text), step):\n    chunks.append(text[start:start + size])\n    if start + size >= len(text):\n        break\n\nno_overlap = [text[i:i + size] for i in range(0, len(text), size)]\nfor c in chunks:\n    print(repr(c))\nprint(\"without overlap the fact is cut:\", repr(no_overlap[0]), \"|\", repr(no_overlap[1]))\n"
+  "uth_example": "text = \"Refunds take 5 days. Shipping is free over 50. Returns need a receipt.\"\nsize, overlap = 30, 10\n\nchunks = []\nstep = size - overlap\nfor start in range(0, len(text), step):\n    chunks.append(text[start:start + size])\n    if start + size >= len(text):\n        break\n\nno_overlap = [text[i:i + size] for i in range(0, len(text), size)]\nfor c in chunks:\n    print(repr(c))\nprint(\"without overlap the fact is cut:\", repr(no_overlap[0]), \"|\", repr(no_overlap[1]))\n",
+  "under_the_hood": {
+    "summary": "Fixed-size chunking slides a window of `size` characters across the text, advancing by size - overlap each time, so consecutive chunks share `overlap` characters and a sentence cut at one boundary appears whole in the neighbouring chunk.",
+    "steps": [
+      {
+        "title": "Why chunk",
+        "body": "Embedding models accept limited input, and a vector for a whole document blurs many topics together. Smaller focused chunks give sharper vectors and let retrieval return just the relevant passage."
+      },
+      {
+        "title": "The sliding window",
+        "body": "step = size - overlap; for start in range(0, len(text), step): chunks.append(text[start:start + size]). With size 10 and overlap 2 the window advances 8 characters at a time.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "chunks (size 10, overlap 2)",
+            "data": [
+              "'the quick '",
+              "'k brown fo'",
+              "'fox jumps'"
+            ],
+            "title": "Shared characters at each boundary"
+          }
+        }
+      },
+      {
+        "title": "What overlap buys",
+        "body": "If a key sentence straddles a boundary, without overlap each half lands in a different chunk and neither matches well. With overlap at least as long as the sentence, one chunk contains it whole."
+      },
+      {
+        "title": "What overlap costs",
+        "body": "More overlap means more chunks for the same text: the count is roughly len(text) / (size - overlap). Overlap of 20% of size adds about 25% more chunks to embed and store.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Big overlap",
+              "code": "safer boundaries\nmore chunks\nhigher cost"
+            },
+            "right": {
+              "label": "No overlap",
+              "code": "fewest chunks\nideas split in half\nmissed facts"
+            }
+          }
+        }
+      },
+      {
+        "title": "Better boundaries",
+        "body": "Characters ignore meaning, so frameworks also split on structure: paragraphs first, then sentences, then words, merging pieces up to the size limit. Many measure size in tokens rather than characters to match the embedder's limit.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "document"
+              },
+              {
+                "label": "split on structure",
+                "detail": "paragraph, sentence"
+              },
+              {
+                "label": "merge up to size"
+              },
+              {
+                "label": "add overlap"
+              },
+              {
+                "label": "embed each chunk"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Chunking decides what can ever be retrieved. Size sets focus, overlap protects boundaries, and both are cheap to tune compared with the damage of getting them wrong."
+  }
 }

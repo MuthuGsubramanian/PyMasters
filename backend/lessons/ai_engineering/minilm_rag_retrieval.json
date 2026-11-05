@@ -243,5 +243,73 @@
       "correct": 3
     }
   ],
-  "uth_example": "chunk_vecs = {                                  # pretend these came from the embedder\n    \"Reset your password from the login page.\": [0.9, 0.1, 0.0],\n    \"Invoices are emailed monthly.\": [0.1, 0.9, 0.1],\n    \"Our office has a cafe.\": [0.0, 0.2, 0.9],\n}\nTHRESHOLD = 0.35\n\ndef retrieve(q_vec, k=2):\n    scored = [(sum(a * b for a, b in zip(q_vec, v)), text) for text, v in chunk_vecs.items()]\n    scored.sort(reverse=True)\n    if scored[0][0] < THRESHOLD:\n        return \"No relevant context found.\"\n    return [text for score, text in scored[:k]]\n\npassword_q = [0.95, 0.05, 0.0]                  # \"How do I reset my password?\"\nweather_q = [0.1, 0.1, 0.1]                     # \"Will it rain tomorrow?\"\nprint(retrieve(password_q))\nprint(retrieve(weather_q))\n"
+  "uth_example": "chunk_vecs = {                                  # pretend these came from the embedder\n    \"Reset your password from the login page.\": [0.9, 0.1, 0.0],\n    \"Invoices are emailed monthly.\": [0.1, 0.9, 0.1],\n    \"Our office has a cafe.\": [0.0, 0.2, 0.9],\n}\nTHRESHOLD = 0.35\n\ndef retrieve(q_vec, k=2):\n    scored = [(sum(a * b for a, b in zip(q_vec, v)), text) for text, v in chunk_vecs.items()]\n    scored.sort(reverse=True)\n    if scored[0][0] < THRESHOLD:\n        return \"No relevant context found.\"\n    return [text for score, text in scored[:k]]\n\npassword_q = [0.95, 0.05, 0.0]                  # \"How do I reset my password?\"\nweather_q = [0.1, 0.1, 0.1]                     # \"Will it rain tomorrow?\"\nprint(retrieve(password_q))\nprint(retrieve(weather_q))\n",
+  "under_the_hood": {
+    "summary": "The retriever chunks documents with a sliding window, stores normalised all-MiniLM-L6-v2 vectors, computes dot-product scores against the query vector, takes the top k, and refuses to return context when even the best score is below a threshold.",
+    "steps": [
+      {
+        "title": "Why chunk at all",
+        "body": "Feeding a whole document makes one blurry topic average, and anything past 256 tokens is truncated. Small overlapping windows give each vector one idea and keep boundary sentences intact in at least one chunk."
+      },
+      {
+        "title": "Dot product equals cosine here",
+        "body": "With normalize_embeddings=True every vector has length 1, so util.dot_score(q_vec, chunk_vecs) gives exactly the cosine similarity with fewer operations. Vector databases rely on this shortcut too.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "|q_vec|",
+                "value": "1.0"
+              },
+              {
+                "variable": "|chunk_vec|",
+                "value": "1.0"
+              },
+              {
+                "variable": "dot(q, c)",
+                "value": "= cos(q, c)"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Top-k always returns something",
+        "body": "scores.topk(3) returns three chunks even if the question is about cooking and the corpus is networking docs. Passed to the LLM, those irrelevant chunks invite a confident, wrong answer."
+      },
+      {
+        "title": "A score threshold",
+        "body": "If the best score is below a cut-off, for example around 0.3-0.4 for this model (tune it on your data), return 'no relevant context found' instead. An honest empty retrieval is better than noise.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "encode query"
+              },
+              {
+                "label": "dot scores"
+              },
+              {
+                "label": "top-k"
+              },
+              {
+                "label": "best >= threshold?",
+                "detail": "else: no context"
+              },
+              {
+                "label": "context to LLM"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Retrieval runs every query",
+        "body": "Because each question triggers an encode and a scoring pass, the embedder's speed matters. A 22M-parameter model scoring thousands of 384-d vectors takes milliseconds on a laptop CPU."
+      }
+    ],
+    "takeaway": "The LLM never searches; the retriever decides what it sees. Normalise, take top-k, and add a threshold so 'nothing relevant' is a possible answer."
+  }
 }

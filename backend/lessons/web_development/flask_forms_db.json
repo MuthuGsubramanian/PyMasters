@@ -456,5 +456,131 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A submitted form arrives as a URL-encoded POST body that Flask parses into request.form; Flask-WTF checks a hidden CSRF token and the validators, and SQLAlchemy turns db.session.add plus commit into a parameterised INSERT inside a transaction.",
+    "steps": [
+      {
+        "title": "The form becomes a POST body",
+        "body": "When the user submits, the browser sends POST /register with Content-Type: application/x-www-form-urlencoded and a body such as username=asha&email=asha%40mail.com&csrf_token=IjQ1.... Flask parses that body into request.form, a MultiDict of strings.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "POST /register HTTP/1.1",
+              "Content-Type: application/x-www-form-urlencoded",
+              "",
+              "username=asha&email=asha%40mail.com&csrf_token=IjQ1..."
+            ],
+            "title": "What the browser sends"
+          }
+        }
+      },
+      {
+        "title": "CSRF token: proof the form came from you",
+        "body": "When the page was rendered, Flask-WTF generated a random token, stored it in the user's signed session and wrote it into a hidden <input name='csrf_token'>. On POST it compares the submitted token with the session one. A forged form on another site cannot read your page, so it cannot know the token, and its POST is rejected."
+      },
+      {
+        "title": "validate_on_submit runs every validator",
+        "body": "form.validate_on_submit() is True only if the request is a submission (POST) and every field passes its validators: DataRequired rejects empty strings, Email checks the address format, Length(min=3) checks size. Failures are collected in form.errors so the template can show them next to each field.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "post",
+                "label": "POST arrives",
+                "type": "start"
+              },
+              {
+                "id": "csrf",
+                "label": "CSRF token matches?",
+                "type": "decision"
+              },
+              {
+                "id": "valid",
+                "label": "all validators pass?",
+                "type": "decision"
+              },
+              {
+                "id": "save",
+                "label": "save to database"
+              },
+              {
+                "id": "redirect",
+                "label": "redirect to a GET page",
+                "type": "end"
+              },
+              {
+                "id": "rerender",
+                "label": "re-render form with errors",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "post",
+                "to": "csrf"
+              },
+              {
+                "from": "csrf",
+                "to": "valid",
+                "label": "yes"
+              },
+              {
+                "from": "csrf",
+                "to": "rerender",
+                "label": "no"
+              },
+              {
+                "from": "valid",
+                "to": "save",
+                "label": "yes"
+              },
+              {
+                "from": "valid",
+                "to": "rerender",
+                "label": "no"
+              },
+              {
+                "from": "save",
+                "to": "redirect"
+              }
+            ],
+            "executionPath": [
+              "post",
+              "csrf",
+              "valid",
+              "save",
+              "redirect"
+            ],
+            "title": "Handling one submission"
+          }
+        }
+      },
+      {
+        "title": "The ORM turns objects into SQL",
+        "body": "db.session.add(User(username='asha', email=...)) only marks the object as pending. db.session.commit() flushes it as INSERT INTO user (username, email) VALUES (?, ?) with the values passed separately as parameters, then commits the transaction. Because values never become part of the SQL text, input like ' OR 1=1 -- is stored as plain data.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Python",
+              "code": "user = User(username='asha',\n            email='asha@mail.com')\ndb.session.add(user)\ndb.session.commit()"
+            },
+            "right": {
+              "label": "SQL sent to the database",
+              "code": "BEGIN\nINSERT INTO user (username, email)\n  VALUES (?, ?)   -- ('asha', 'asha@mail.com')\nCOMMIT"
+            },
+            "title": "What add + commit becomes"
+          }
+        }
+      },
+      {
+        "title": "Redirect after POST",
+        "body": "After a successful save the view returns redirect(url_for('success')). The browser then makes a fresh GET, so pressing refresh repeats the harmless GET instead of re-submitting the form and inserting a duplicate row."
+      }
+    ],
+    "takeaway": "Form handling is a pipeline: parse the POST body, check the CSRF token, run validators, then let the ORM send parameterised SQL in a transaction, and redirect so a refresh is safe."
   }
 }

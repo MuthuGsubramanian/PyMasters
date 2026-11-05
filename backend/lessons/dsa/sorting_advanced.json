@@ -565,5 +565,124 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Merge sort and quick sort split the problem, sort the pieces recursively and combine them in O(n) per level; Python's sorted() uses TimSort, which finds existing sorted runs and merges them.",
+    "steps": [
+      {
+        "title": "Merge sort: split until trivially sorted",
+        "body": "merge_sort([38, 27, 43, 3]) splits into [38, 27] and [43, 3], then into single items. A list of length 1 is already sorted, which is the base case. Halving n items reaches size 1 after about log2(n) levels.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "merge_sort([38])",
+                "variables": {
+                  "returns": "[38]"
+                }
+              },
+              {
+                "name": "merge_sort([38, 27])",
+                "variables": {
+                  "waiting": "left half"
+                }
+              },
+              {
+                "name": "merge_sort([38, 27, 43, 3])",
+                "variables": {
+                  "waiting": "left half"
+                }
+              }
+            ],
+            "title": "Recursion goes down the left side first"
+          }
+        }
+      },
+      {
+        "title": "Merging two sorted lists is linear",
+        "body": "merge([27, 38], [3, 43]) keeps one index in each list and repeatedly takes the smaller front item: 3, then 27, then 38, then 43. Each comparison places one item, so merging n items costs O(n). With log n levels, the total is O(n log n), every time.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [],
+            "title": "merge([27, 38], [3, 43])",
+            "operations": [
+              {
+                "action": "append",
+                "value": 3
+              },
+              {
+                "action": "append",
+                "value": 27
+              },
+              {
+                "action": "append",
+                "value": 38
+              },
+              {
+                "action": "append",
+                "value": 43
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Quick sort: partition around a pivot",
+        "body": "Pick a pivot, say 7 in [3, 9, 7, 1, 8]. Partition puts smaller values left and larger values right: [3, 1] + [7] + [9, 8]. The pivot is now in its final position, and the two sides are sorted recursively. No merge step is needed.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              3,
+              1,
+              7,
+              9,
+              8
+            ],
+            "title": "After partitioning on pivot 7",
+            "highlight": [
+              2
+            ]
+          }
+        }
+      },
+      {
+        "title": "Pivot choice decides the speed",
+        "body": "Good pivots split roughly in half, giving O(n log n) on average. Always picking the first item of an already sorted list splits off just one item each time, giving n levels and O(n²). Random or median-of-three pivots make that worst case very unlikely."
+      },
+      {
+        "title": "TimSort: find runs, then merge",
+        "body": "list.sort() and sorted() scan for runs that are already ascending (or strictly descending, which get reversed). Short runs are extended to a minimum length (typically 32 to 64) with insertion sort, then runs are merged pairwise; since CPython 3.11 the merge order follows the powersort policy. Already sorted input is one run, so it costs O(n).",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "scan",
+                "detail": "find natural runs"
+              },
+              {
+                "label": "extend",
+                "detail": "insertion sort up to minrun"
+              },
+              {
+                "label": "merge",
+                "detail": "merge runs, galloping when one side wins often"
+              }
+            ],
+            "title": "How TimSort works"
+          }
+        }
+      },
+      {
+        "title": "Stable by design",
+        "body": "When two items compare equal, merging takes from the left run first, so TimSort is stable. That is why you can sort records by name and then by grade, and students with equal grades stay in name order."
+      }
+    ],
+    "takeaway": "Divide and conquer turns n² into n log n. Python's TimSort adds one more trick: real data often has sorted runs already, and it uses them."
   }
 }

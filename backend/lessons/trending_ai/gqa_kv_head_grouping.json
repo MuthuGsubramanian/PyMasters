@@ -243,5 +243,73 @@
       "correct": 2
     }
   ],
-  "uth_example": "num_query_heads, num_kv_heads = 8, 2\ngroup_size = num_query_heads // num_kv_heads\n\nkv_heads = [{\"id\": g, \"serves\": []} for g in range(num_kv_heads)]\nfor q in range(num_query_heads):\n    group = q // group_size                     # contiguous blocks share one K/V head\n    kv_heads[group][\"serves\"].append(f\"q{q}\")\n\nfor head in kv_heads:\n    print(f\"KV head {head['id']} serves {head['serves']}\")\nprint(f\"cache holds {num_kv_heads} K/V heads instead of {num_query_heads}\")\n"
+  "uth_example": "num_query_heads, num_kv_heads = 8, 2\ngroup_size = num_query_heads // num_kv_heads\n\nkv_heads = [{\"id\": g, \"serves\": []} for g in range(num_kv_heads)]\nfor q in range(num_query_heads):\n    group = q // group_size                     # contiguous blocks share one K/V head\n    kv_heads[group][\"serves\"].append(f\"q{q}\")\n\nfor head in kv_heads:\n    print(f\"KV head {head['id']} serves {head['serves']}\")\nprint(f\"cache holds {num_kv_heads} K/V heads instead of {num_query_heads}\")\n",
+  "under_the_hood": {
+    "summary": "Grouped-query attention keeps many query heads but only a few key/value heads; query head h uses KV head h // group_size, so each group of query heads shares one cached set of keys and values.",
+    "steps": [
+      {
+        "title": "MHA, MQA and GQA",
+        "body": "Multi-head attention gives every query head its own K and V head. Multi-query attention shares a single K/V head across all query heads. Grouped-query attention sits in between: num_kv_heads groups, each shared by several query heads.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "MHA (8 q, 8 kv)",
+              "code": "group_size = 1\n8 KV heads cached"
+            },
+            "right": {
+              "label": "GQA (8 q, 2 kv)",
+              "code": "group_size = 4\n2 KV heads cached"
+            }
+          }
+        }
+      },
+      {
+        "title": "Map a query head to its group",
+        "body": "group_size = num_query_heads // num_kv_heads. With 8 query heads and 2 KV heads the group size is 4, so heads 0-3 read KV head 0 and heads 4-7 read KV head 1. kv_group_for_query_head(5, 8, 2) returns 5 // 4 = 1.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "query head -> KV head",
+            "data": [
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              1,
+              1
+            ],
+            "labels": [
+              "q0",
+              "q1",
+              "q2",
+              "q3",
+              "q4",
+              "q5",
+              "q6",
+              "q7"
+            ],
+            "highlight": [
+              5
+            ]
+          }
+        }
+      },
+      {
+        "title": "Attention per query head is unchanged",
+        "body": "Each query head still computes its own softmax(q K^T / sqrt(d)) V; it just reads K and V from its group's shared head. Different query heads can still attend to different positions."
+      },
+      {
+        "title": "Why quality holds up",
+        "body": "MQA's single K/V must serve every query head and can lose quality. A handful of KV heads gives back most of MHA's flexibility, and existing MHA checkpoints can be converted by averaging the KV heads within each group and briefly continuing training."
+      },
+      {
+        "title": "Where it is used",
+        "body": "Llama 2 70B, Llama 3, Mistral and Qwen models use GQA, for example 32 query heads with 8 KV heads. The payoff is in the KV cache, which only stores the KV heads."
+      }
+    ],
+    "takeaway": "GQA decouples how many ways a model can look (query heads) from how much it must remember (KV heads). Integer division by the group size is the whole mapping."
+  }
 }

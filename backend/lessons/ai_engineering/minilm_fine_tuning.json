@@ -242,5 +242,97 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Fine-tuning all-MiniLM-L6-v2 with MultipleNegativesRankingLoss feeds batches of (anchor, positive) pairs, treats every other positive in the batch as a negative, and nudges the weights so each anchor's own positive wins the batch's similarity contest.",
+    "steps": [
+      {
+        "title": "Pairs you already have",
+        "body": "FAQ questions and their rewordings, tickets solved by the same article, or a search and the result a user clicked all make anchor-positive pairs. A few thousand pairs is a usable training set; no explicit negatives are required."
+      },
+      {
+        "title": "The batch is a multiple-choice exam",
+        "body": "With batch_size=32, all 32 anchors and 32 positives are encoded. The 32 x 32 matrix of cosine similarities has the correct pairs on its diagonal; each row is a 32-way choice where 31 options are wrong.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "similarity matrix (3 x 3 slice)",
+            "data": [
+              [
+                0.82,
+                0.1,
+                0.05
+              ],
+              [
+                0.12,
+                0.64,
+                0.2
+              ],
+              [
+                0.03,
+                0.15,
+                0.77
+              ]
+            ],
+            "labels": [
+              "anchor 1",
+              "anchor 2",
+              "anchor 3"
+            ],
+            "highlight": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                2
+              ]
+            ],
+            "title": "Diagonal = own positive"
+          }
+        }
+      },
+      {
+        "title": "Cross-entropy on the diagonal",
+        "body": "Scores are multiplied by a scale (20 by default) and passed through softmax per row; the loss is -log of the diagonal probability. Gradients raise the diagonal similarity and lower the rest, pulling 'card keeps bouncing' toward 'payment declined'."
+      },
+      {
+        "title": "Bigger batches, harder exam",
+        "body": "More pairs per batch means more negatives per anchor and usually better results, limited by memory. Duplicate or near-duplicate pairs in one batch create false negatives, so de-duplicate the training set."
+      },
+      {
+        "title": "Same model, new opinions",
+        "body": "Training changes weights, not shape: still 6 layers, about 22M parameters, 384-dimensional output, same speed. Every stored document must be re-embedded with the new model before searching.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "mine pairs"
+              },
+              {
+                "label": "batch of 32"
+              },
+              {
+                "label": "32 x 32 cosine matrix"
+              },
+              {
+                "label": "softmax loss",
+                "detail": "diagonal wins"
+              },
+              {
+                "label": "re-embed corpus"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "In-batch negatives make fine-tuning cheap: positives are all you collect, and the batch supplies the rest. Re-index afterwards, because the whole vector space has moved."
+  }
 }

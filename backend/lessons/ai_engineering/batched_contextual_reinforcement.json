@@ -189,5 +189,64 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "As modelled in this lesson, Batched Contextual Reinforcement trains reasoning with RL on batches that deliberately mix easy and hard problems, and rewards correctness plus a bonus for using fewer reasoning tokens than the batch average.",
+    "steps": [
+      {
+        "title": "Long chains of thought cost tokens",
+        "body": "A reasoning model is billed and timed per generated token. If it writes 800 tokens of thinking for '2 + 3', most of that is waste; a fixed length penalty cuts tokens but also cuts the long reasoning hard problems need."
+      },
+      {
+        "title": "Mix difficulty inside each batch",
+        "body": "Problems are sorted by difficulty, split into an easy half and a hard half, and each batch takes some from both, then shuffles. Every update therefore sees short and long reasoning side by side.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "one batch",
+            "data": [
+              "easy",
+              "hard",
+              "easy",
+              "hard",
+              "hard",
+              "easy",
+              "easy",
+              "hard"
+            ],
+            "highlight": [
+              1,
+              3,
+              4,
+              7
+            ],
+            "title": "Half easy, half hard, shuffled"
+          }
+        }
+      },
+      {
+        "title": "A batch-relative efficiency bonus",
+        "body": "Reward = correctness (1.0 if right, -0.5 if wrong) + 0.3 x max(0, 1 - tokens / batch_avg_tokens). Being shorter than the batch average earns a bonus, but only within the context of what that batch needed, not against a global constant.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "correct, 120 tokens, batch avg 400 -> 1.0 + 0.3 x 0.70 = 1.21",
+              "correct, 600 tokens, batch avg 400 -> 1.0 + 0 = 1.00",
+              "wrong,    80 tokens, batch avg 400 -> -0.5 + 0.3 x 0.80 = -0.26"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Correctness still dominates",
+        "body": "Because a wrong answer loses 1.5 relative to a right one and the efficiency bonus is at most 0.3, the policy never profits from being short and wrong on hard problems. It learns to spend tokens where they change the answer."
+      },
+      {
+        "title": "The prompt-level version",
+        "body": "Without any training you can borrow the idea: give few-shot examples where easy questions have short reasoning and hard ones have long reasoning. The examples demonstrate proportional effort the same way the mixed batch does."
+      }
+    ],
+    "takeaway": "Efficiency is learned best as a relative signal: reward brevity compared with similar work, keep correctness worth far more, and the model calibrates its thinking length."
+  }
 }

@@ -152,5 +152,70 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "An LLM API call is an HTTPS request carrying a model name, a list of role-tagged messages and limits; the provider applies a chat template, tokenizes, generates tokens, and returns the text with a stop reason and token usage, optionally streamed as server-sent events.",
+    "steps": [
+      {
+        "title": "Authentication and request",
+        "body": "The SDK reads an API key from an environment variable and sends it as a header with a JSON body. The body names the model, the messages, and limits such as max_tokens; nothing about previous calls is remembered on the server for you."
+      },
+      {
+        "title": "Same idea, different shapes",
+        "body": "OpenAI's Chat Completions puts the system prompt as a message with role 'system'. Anthropic's Messages API takes system as a separate field and requires max_tokens. Google's Gemini API uses 'contents' made of 'parts', with the reply role called 'model'.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "OpenAI / Anthropic",
+              "code": "messages=[{role, content}]\nsystem: message vs field"
+            },
+            "right": {
+              "label": "Google Gemini",
+              "code": "contents=[{role, parts}]\nroles: user / model"
+            }
+          }
+        }
+      },
+      {
+        "title": "Inside the provider",
+        "body": "The messages are rendered into one token sequence with special role markers, the prompt is processed in one parallel pass, and then tokens are generated one at a time until a stop sequence, the end-of-turn token, or max_tokens."
+      },
+      {
+        "title": "Streaming",
+        "body": "With stream=True the server sends each new chunk of text as a server-sent event as soon as it is generated. The total time is similar, but the user sees the first words after the first token instead of after the last.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "request"
+              },
+              {
+                "label": "prefill",
+                "detail": "whole prompt"
+              },
+              {
+                "label": "token 1",
+                "detail": "streamed"
+              },
+              {
+                "label": "token 2",
+                "detail": "streamed"
+              },
+              {
+                "label": "... stop",
+                "detail": "usage reported"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Read the metadata",
+        "body": "Responses report input and output token counts and why generation stopped, for example 'end_turn' or 'stop' versus hitting the token limit. A reply cut off by max_tokens is incomplete; check the stop reason before trusting it, and retry 429 and 5xx errors with backoff."
+      }
+    ],
+    "takeaway": "All three APIs are the same transaction: messages in, tokens generated, text and usage out. Learn the mapping of fields once and switching providers is mostly renaming."
+  }
 }

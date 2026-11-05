@@ -219,5 +219,68 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "GPT-2 turns text into byte-level BPE token ids, adds learned position embeddings, runs 12 causal Transformer blocks, projects the last position to 50,257 logits, picks a token, appends it and repeats.",
+    "steps": [
+      {
+        "title": "Tokens and positions",
+        "body": "The tokenizer maps text to ids from a 50,257-entry byte-level BPE vocabulary. Each id selects a 768-d row of the token embedding, and a learned position embedding (one row for each of 1,024 positions) is added to it.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "gpt2 (small)",
+            "data": [
+              "vocab 50,257",
+              "context 1,024",
+              "d_model 768",
+              "12 layers",
+              "12 heads",
+              "~124M params"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Twelve causal blocks",
+        "body": "Each block is pre-LayerNorm masked self-attention plus a 768 -> 3,072 -> 768 GELU feed-forward network, each with a residual add. The causal mask keeps every position from seeing later ones."
+      },
+      {
+        "title": "Logits from tied weights",
+        "body": "After a final LayerNorm the last position's vector is multiplied by the transpose of the token embedding matrix, the same weights used at the input, giving one logit per vocabulary entry. Softmax turns them into next-token probabilities."
+      },
+      {
+        "title": "Generation is a loop",
+        "body": "Pick a token (argmax for greedy, or sample with temperature and top-k), append it to the input, and run again. generate() does this with a KV cache so earlier positions are not recomputed.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "'The future of AI is' -> ' a'",
+              "'The future of AI is a' -> ' very'",
+              "'The future of AI is a very' -> ' exciting'"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Same recipe as modern LLMs",
+        "body": "Llama-style models keep the decoder-only design and change details: RoPE instead of learned positions, RMSNorm instead of LayerNorm, SwiGLU feed-forward, grouped-query attention, and far more parameters and data.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "GPT-2 (2019)",
+              "code": "learned positions\nLayerNorm, GELU\n1,024 context"
+            },
+            "right": {
+              "label": "Llama-style models",
+              "code": "RoPE\nRMSNorm, SwiGLU, GQA\nmuch longer context"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "GPT-2 is the whole decoder-only idea in a size you can inspect: embed, stack causal blocks, project to the vocabulary, sample, repeat."
+  }
 }

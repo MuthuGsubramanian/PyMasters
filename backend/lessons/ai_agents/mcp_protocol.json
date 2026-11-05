@@ -150,5 +150,61 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "MCP is a JSON-RPC 2.0 protocol: a host's client connects to a server over stdio or HTTP, they exchange initialize messages, the client lists the server's tools, resources and prompts, and tool calls become tools/call requests whose results are given to the model.",
+    "steps": [
+      {
+        "title": "Three roles",
+        "body": "The host is the AI application (an IDE or chat app). Inside it, one MCP client keeps a connection to each MCP server. A server is a small program exposing tools, resources and prompts for one system, such as files, a database or Slack.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "host app",
+                "detail": "talks to the model"
+              },
+              {
+                "label": "MCP client",
+                "detail": "one per server"
+              },
+              {
+                "label": "MCP server",
+                "detail": "files, DB, Slack"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Transport and handshake",
+        "body": "A local server is usually started as a subprocess speaking over stdin/stdout; remote servers use HTTP. The client sends an initialize request with its protocol version and capabilities, the server answers with its own, and the client sends an initialized notification."
+      },
+      {
+        "title": "Discovery",
+        "body": "The client calls tools/list and gets each tool's name, description and a JSON Schema for its input. With FastMCP the decorator @mcp.tool() builds that schema from the function's type hints and docstring, so def add(a: float, b: float) becomes a tool with two number arguments."
+      },
+      {
+        "title": "A tool call end to end",
+        "body": "The host passes the discovered tools to the model. When the model asks for add(a=2, b=3), the client sends a JSON-RPC request with method tools/call and those arguments; the server runs the function and returns a result whose content holds the text '5', which the host appends to the conversation.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "-> {\"jsonrpc\":\"2.0\",\"id\":7,\"method\":\"tools/call\",",
+              "    \"params\":{\"name\":\"add\",\"arguments\":{\"a\":2,\"b\":3}}}",
+              "<- {\"jsonrpc\":\"2.0\",\"id\":7,",
+              "    \"result\":{\"content\":[{\"type\":\"text\",\"text\":\"5\"}]}}"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Resources and prompts",
+        "body": "Resources are readable data addressed by URI (resources/list, resources/read), chosen by the application. Prompts are reusable templates (prompts/list, prompts/get), usually picked by the user. Tools are the part the model itself decides to invoke."
+      }
+    ],
+    "takeaway": "MCP standardises the plumbing between an agent and its tools: one handshake, one discovery format and one call format, so a server written once works in any MCP host."
+  }
 }

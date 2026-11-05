@@ -249,5 +249,86 @@
       "correct": 0
     }
   ],
-  "uth_example": "ttl = 300                                    # seconds the cache lives after each use\ntraffic = {\n    \"busy hour\": [0, 40, 95, 180, 260, 330, 400],\n    \"quiet evening\": [0, 420, 900, 1500, 1620],\n}\n\nresults = {}\nfor name, arrivals in traffic.items():\n    last_touch, hits = None, []\n    for t in arrivals:\n        hit = last_touch is not None and t - last_touch <= ttl\n        hits.append(hit)\n        last_touch = t                       # every call refreshes the TTL\n    results[name] = (hits, round(sum(hits) / len(hits), 2))\n\nfor name, (hits, rate) in results.items():\n    print(f\"{name:13} hit rate {rate}: {['hit' if h else 'miss' for h in hits]}\")\n"
+  "uth_example": "ttl = 300                                    # seconds the cache lives after each use\ntraffic = {\n    \"busy hour\": [0, 40, 95, 180, 260, 330, 400],\n    \"quiet evening\": [0, 420, 900, 1500, 1620],\n}\n\nresults = {}\nfor name, arrivals in traffic.items():\n    last_touch, hits = None, []\n    for t in arrivals:\n        hit = last_touch is not None and t - last_touch <= ttl\n        hits.append(hit)\n        last_touch = t                       # every call refreshes the TTL\n    results[name] = (hits, round(sum(hits) / len(hits), 2))\n\nfor name, (hits, rate) in results.items():\n    print(f\"{name:13} hit rate {rate}: {['hit' if h else 'miss' for h in hits]}\")\n",
+  "under_the_hood": {
+    "summary": "A cached prefix expires if no request uses it within its time-to-live, and each hit resets the timer; the hit rate therefore depends on the gaps between calls, so bursty traffic gets many hits while evenly spread traffic slower than the TTL gets none.",
+    "steps": [
+      {
+        "title": "The cache has a clock",
+        "body": "Each entry has a TTL, for example 5 minutes (300 s). On a hit the clock restarts, so a steady stream of requests keeps the entry alive indefinitely."
+      },
+      {
+        "title": "Simulate arrivals",
+        "body": "Track last_touch. For each arrival time t: if no cache exists or t - last_touch > ttl, it is a miss (the prefix is rebuilt and written); otherwise a hit. Either way last_touch = t.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "arrival t"
+              },
+              {
+                "label": "gap = t - last_touch"
+              },
+              {
+                "label": "gap <= ttl?",
+                "detail": "hit, else miss"
+              },
+              {
+                "label": "last_touch = t"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Bursty traffic",
+        "body": "Arrivals at 0, 100, 250, 700, 720 with ttl = 300: miss, hit (gap 100), hit (gap 150), miss (gap 450), hit (gap 20). Three hits out of five, a 60% hit rate.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "hits",
+            "data": [
+              "MISS",
+              "HIT",
+              "HIT",
+              "MISS",
+              "HIT"
+            ],
+            "labels": [
+              "t=0",
+              "t=100",
+              "t=250",
+              "t=700",
+              "t=720"
+            ],
+            "highlight": [
+              1,
+              2,
+              4
+            ]
+          }
+        }
+      },
+      {
+        "title": "Evenly spread traffic",
+        "body": "Arrivals every 400 s (0, 400, 800, 1200, 1600) with ttl = 300 never find the cache alive: 0% hits. Every call pays the write premium and gets nothing back, worse than not caching at all.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "arrivals=[0, 400, 800, 1200, 1600] ttl=300",
+              "-> MISS MISS MISS MISS MISS",
+              "hit rate = 0%"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Engineering around it",
+        "body": "Batch related requests together, choose a longer TTL when gaps are long, or, where allowed, send a cheap request to keep a hot prefix alive. Measure the actual hit rate from the cache-read token counts the API reports."
+      }
+    ],
+    "takeaway": "Hit rate is a property of timing, not just volume. Compare the typical gap between calls with the TTL before counting on cache savings."
+  }
 }

@@ -167,5 +167,79 @@
     "category": "transformers",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Multi-head attention splits d_model into h smaller heads, runs scaled dot-product attention in each with its own projections, concatenates the head outputs back to d_model and mixes them with one output matrix W_o.",
+    "steps": [
+      {
+        "title": "Project, then split into heads",
+        "body": "In the original Transformer d_model = 512 and h = 8, so each head works in d_k = 512 / 8 = 64 dimensions. In practice Q, K and V are projected once to 512 and then reshaped into 8 slices of 64, which is the same as 8 separate small projections.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "Q for one token (d_model = 8, h = 2)",
+            "data": [
+              [
+                0.2,
+                -0.1,
+                0.7,
+                0.4
+              ],
+              [
+                0.9,
+                0.0,
+                -0.3,
+                0.5
+              ]
+            ],
+            "labels": [
+              "head 1",
+              "head 2"
+            ],
+            "title": "Head 1 takes dims 0-3, head 2 takes dims 4-7"
+          }
+        }
+      },
+      {
+        "title": "Each head attends on its own",
+        "body": "Each head computes softmax(Q_h K_h^T / sqrt(64)) V_h with its own weights, producing its own n x n pattern. After training, heads often specialise: one tracks the previous token, one links a verb to its subject, one follows coreference."
+      },
+      {
+        "title": "Same cost as one big head",
+        "body": "8 heads of 64 do the same multiply-adds as 1 head of 512, because the per-head work is 1/8 the size. You buy several attention patterns per layer for roughly the price of one."
+      },
+      {
+        "title": "Concatenate in order, then mix",
+        "body": "The 8 head outputs of 64 numbers are laid back-to-back into a 512-vector, in head order. W_o (512 x 512) then mixes them so information found by one head can combine with another's before the result is added to the residual stream.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "split",
+                "detail": "512 -> 8 x 64"
+              },
+              {
+                "label": "attend",
+                "detail": "8 patterns in parallel"
+              },
+              {
+                "label": "concat",
+                "detail": "8 x 64 -> 512"
+              },
+              {
+                "label": "W_o",
+                "detail": "mix heads"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Modern variants share keys and values",
+        "body": "Llama 2 70B and many later models use grouped-query attention: several query heads share one key/value head. The query side keeps many perspectives while the KV cache shrinks by the group factor."
+      }
+    ],
+    "takeaway": "Heads are parallel, smaller attentions that look for different relationships at the same total cost. Split, attend, concatenate, project: the shapes always return to d_model so blocks can stack."
+  }
 }

@@ -264,5 +264,56 @@
       "correct": 2
     }
   ],
-  "uth_example": "TOOLS = {\"lookup\": lambda city: {\"Paris\": 18}.get(city, 0),\n         \"to_f\": lambda c: c * 9 / 5 + 32}\ncalls = [{\"name\": \"lookup\", \"args\": {\"city\": \"Paris\"}},\n         {\"name\": \"to_f\", \"args\": {\"c\": 18}}]\n\ntrace = []\nfor call in calls:\n    result = TOOLS[call[\"name\"]](**call[\"args\"])\n    trace.append({\"tool\": call[\"name\"], \"args\": call[\"args\"], \"result\": result})\n\nchecks = [\n    (\"used lookup\", lambda t: any(s[\"tool\"] == \"lookup\" for s in t)),\n    (\"no shell\", lambda t: all(s[\"tool\"] != \"shell\" for s in t)),\n    (\"under 2 steps\", lambda t: len(t) < 2),\n]\nfailed = [label for label, check in checks if not check(trace)]\nprint(\"steps:\", len(trace), \"failed checks:\", failed)\n"
+  "uth_example": "TOOLS = {\"lookup\": lambda city: {\"Paris\": 18}.get(city, 0),\n         \"to_f\": lambda c: c * 9 / 5 + 32}\ncalls = [{\"name\": \"lookup\", \"args\": {\"city\": \"Paris\"}},\n         {\"name\": \"to_f\", \"args\": {\"c\": 18}}]\n\ntrace = []\nfor call in calls:\n    result = TOOLS[call[\"name\"]](**call[\"args\"])\n    trace.append({\"tool\": call[\"name\"], \"args\": call[\"args\"], \"result\": result})\n\nchecks = [\n    (\"used lookup\", lambda t: any(s[\"tool\"] == \"lookup\" for s in t)),\n    (\"no shell\", lambda t: all(s[\"tool\"] != \"shell\" for s in t)),\n    (\"under 2 steps\", lambda t: len(t) < 2),\n]\nfailed = [label for label, check in checks if not check(trace)]\nprint(\"steps:\", len(trace), \"failed checks:\", failed)\n",
+  "under_the_hood": {
+    "summary": "Each tool call an agent makes is recorded as a trace step (tool, args, result, latency); evaluation is then ordinary assertions over that list, run per scenario, and the suite reports a pass rate.",
+    "steps": [
+      {
+        "title": "Record every step",
+        "body": "Wrap tool dispatch so each call appends {'tool', 'args', 'result', 'ms'} to a list. Latency is the clock read after minus before; this lesson uses a fake clock so the numbers are the same on every run.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "trace",
+            "data": [
+              "lookup(city='Pune') 120ms",
+              "calculate(expr='2**10') 15ms",
+              "final: 1024"
+            ],
+            "title": "A trace is a list of steps"
+          }
+        }
+      },
+      {
+        "title": "Write checks over the trace",
+        "body": "Checks are small functions returning True or False: the right tool was called, no forbidden tool appeared, the step count is within a limit, the total latency is within budget. Each failing check is reported by its label."
+      },
+      {
+        "title": "Why the final answer is not enough",
+        "body": "An agent can return the correct 1024 after also calling delete_file nobody asked for. Grading only the answer marks it correct; the trace check 'no forbidden tool' catches it.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Answer only",
+              "code": "answer: 1024\nverdict: PASS"
+            },
+            "right": {
+              "label": "Trace checks",
+              "code": "steps: calculate, delete_file\nforbidden tool used\nverdict: FAIL"
+            }
+          }
+        }
+      },
+      {
+        "title": "Run a suite, compute a pass rate",
+        "body": "Each scenario pairs an input with its checks. Run them all, count passes, divide by the total. Four scenarios with two passing give 50 percent, and the failed labels tell you what to fix."
+      },
+      {
+        "title": "Make it a regression gate",
+        "body": "Because the suite is deterministic, it can run on every prompt or code change. If the pass rate drops, the change is held back; that is evaluation-driven development applied to agents."
+      }
+    ],
+    "takeaway": "Agents are judged by what they did, not only what they said. Record a trace, assert over it, and track the pass rate like a test suite."
+  }
 }

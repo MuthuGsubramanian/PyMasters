@@ -407,5 +407,131 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "The login endpoint checks a bcrypt hash and returns a JWT signed with HMAC-SHA256; later requests send it in an Authorization header, and a dependency verifies the signature and expiry before any protected endpoint runs.",
+    "steps": [
+      {
+        "title": "Login checks the bcrypt hash",
+        "body": "OAuth2PasswordRequestForm reads username and password from a form-encoded POST /token. bcrypt verification takes the salt and cost factor stored in the hash (for example $2b$12$...), hashes the attempt the same way and compares. Cost 12 means 2^12 rounds of key setup, so each guess is deliberately slow."
+      },
+      {
+        "title": "A JWT is three base64url parts",
+        "body": "The token is header.payload.signature. The header {\"alg\":\"HS256\",\"typ\":\"JWT\"} encodes to eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. The payload holds claims like {\"sub\": \"asha\", \"exp\": 1767225600}. Both are only encoded, not encrypted: anyone can decode and read them.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "header: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+              "payload: {\"sub\": \"asha\", \"exp\": ...} encoded",
+              "signature: HMAC-SHA256(header.payload, SECRET_KEY)"
+            ],
+            "title": "token = header . payload . signature"
+          }
+        }
+      },
+      {
+        "title": "The signature is what makes it trustworthy",
+        "body": "signature = HMAC-SHA256(base64url(header) + '.' + base64url(payload), SECRET_KEY). Change one character of the payload, say sub to 'admin', and the recomputed signature no longer matches. Without the secret key nobody can produce a valid signature for the altered payload.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Genuine token",
+              "code": "payload: sub = 'asha'\nsignature computed with SECRET_KEY\n-> verifies"
+            },
+            "right": {
+              "label": "Tampered token",
+              "code": "payload: sub = 'admin'\nold signature kept\n-> recomputed HMAC differs, rejected"
+            },
+            "title": "Why editing the payload fails"
+          }
+        }
+      },
+      {
+        "title": "Each request is checked by a dependency",
+        "body": "The client sends Authorization: Bearer <token>. OAuth2PasswordBearer extracts it (401 if missing), then get_current_user decodes it: recompute the signature, compare, check that exp is in the future, read sub and load the user. Any endpoint that declares user = Depends(get_current_user) runs only after all of that succeeds.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "req",
+                "label": "request with Bearer token",
+                "type": "start"
+              },
+              {
+                "id": "present",
+                "label": "token present?",
+                "type": "decision"
+              },
+              {
+                "id": "sig",
+                "label": "signature valid and not expired?",
+                "type": "decision"
+              },
+              {
+                "id": "user",
+                "label": "load user from sub"
+              },
+              {
+                "id": "ok",
+                "label": "endpoint runs",
+                "type": "end"
+              },
+              {
+                "id": "r401",
+                "label": "401 Unauthorized",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "req",
+                "to": "present"
+              },
+              {
+                "from": "present",
+                "to": "sig",
+                "label": "yes"
+              },
+              {
+                "from": "present",
+                "to": "r401",
+                "label": "no"
+              },
+              {
+                "from": "sig",
+                "to": "user",
+                "label": "yes"
+              },
+              {
+                "from": "sig",
+                "to": "r401",
+                "label": "no"
+              },
+              {
+                "from": "user",
+                "to": "ok"
+              }
+            ],
+            "executionPath": [
+              "req",
+              "present",
+              "sig",
+              "user",
+              "ok"
+            ],
+            "title": "get_current_user"
+          }
+        }
+      },
+      {
+        "title": "Stateless has a price",
+        "body": "The server stores nothing per token, which is why JWTs scale easily across many servers. The flip side is that a stolen token stays valid until exp, because there is no session row to delete. That is why access tokens are kept short-lived (minutes) and sent only over HTTPS."
+      }
+    ],
+    "takeaway": "A JWT is readable by anyone but forgeable by no one without the key. Verify the signature and expiry on every request, keep tokens short-lived, and never put secrets in the payload."
   }
 }

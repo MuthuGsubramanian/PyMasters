@@ -151,5 +151,82 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Polars stores data in Apache Arrow columns and evaluates expressions in a Rust engine across all CPU cores; in lazy mode it first builds a query plan, optimises it by pushing filters and column selection down to the scan, and only then reads and computes.",
+    "steps": [
+      {
+        "title": "Columnar memory",
+        "body": "Each column is one contiguous Arrow buffer of a single type, plus a validity bitmap for nulls. Summing 'salary' walks one tight array, which suits CPU caches and SIMD instructions far better than row-by-row Python objects.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "columns",
+            "data": {
+              "name": [
+                "Alice",
+                "Bob",
+                "Charlie"
+              ],
+              "dept": [
+                "Eng",
+                "Mkt",
+                "Eng"
+              ],
+              "salary": [
+                95000,
+                78000,
+                120000
+              ]
+            },
+            "title": "One buffer per column"
+          }
+        }
+      },
+      {
+        "title": "Expressions, not Python loops",
+        "body": "pl.col('salary').mean().over('dept') is a description of work, not code that runs per row. Polars compiles expressions into Rust kernels, so no Python is executed per element."
+      },
+      {
+        "title": "Parallel by default",
+        "body": "Independent expressions in one select or with_columns, and groups in a group_by, are spread over a thread pool sized to your CPU cores. You get multi-core speed without writing threads."
+      },
+      {
+        "title": "Lazy plans get optimised",
+        "body": "pl.scan_csv('sales.csv').filter(revenue > 1000).group_by('region').agg(...) builds a plan without reading anything. collect() lets the optimiser push the filter into the CSV scan and read only the needed columns, so far less data is loaded.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "scan_csv",
+                "detail": "nothing read yet"
+              },
+              {
+                "label": "filter",
+                "detail": "pushed into scan"
+              },
+              {
+                "label": "select",
+                "detail": "only needed columns"
+              },
+              {
+                "label": "group_by + agg",
+                "detail": "parallel"
+              },
+              {
+                "label": "collect()",
+                "detail": "execute"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "See the plan",
+        "body": "lazy_frame.explain() prints the optimised plan, showing where predicates and projections were pushed down. Eager DataFrame methods are convenient for exploration; lazy is better for large files and pipelines."
+      }
+    ],
+    "takeaway": "Polars is fast because of three choices: columnar Arrow memory, expressions run in parallel Rust, and a lazy optimiser that avoids reading what you do not need."
+  }
 }

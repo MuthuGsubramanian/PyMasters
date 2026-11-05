@@ -213,5 +213,71 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "import math\n\nK = [[1, 0], [0, 1], [1, 1]]\nV = [[1, 2], [3, 4], [5, 6]]\nQ = [[1, 1], [0, 2], [2, 0]]\n\ndef attend(q, keys, vals):\n    s = [math.exp(sum(a * b for a, b in zip(q, k)) / math.sqrt(len(q))) for k in keys]\n    w = [x / sum(s) for x in s]\n    return [round(sum(wi * v[j] for wi, v in zip(w, vals)), 3) for j in range(len(vals[0]))]\n\ncache_k, cache_v, outputs, work = [], [], [], {\"cached\": 0, \"naive\": 0}\nfor t in range(3):\n    cache_k.append(K[t])                      # only the NEW token's K and V are computed\n    cache_v.append(V[t])\n    work[\"cached\"] += 1\n    work[\"naive\"] += t + 1                    # naive loop recomputes the whole prefix\n    outputs.append(attend(Q[t], cache_k, cache_v))\n\nprint(outputs)\nprint(\"K/V computations:\", work)\n"
+  "uth_example": "import math\n\nK = [[1, 0], [0, 1], [1, 1]]\nV = [[1, 2], [3, 4], [5, 6]]\nQ = [[1, 1], [0, 2], [2, 0]]\n\ndef attend(q, keys, vals):\n    s = [math.exp(sum(a * b for a, b in zip(q, k)) / math.sqrt(len(q))) for k in keys]\n    w = [x / sum(s) for x in s]\n    return [round(sum(wi * v[j] for wi, v in zip(w, vals)), 3) for j in range(len(vals[0]))]\n\ncache_k, cache_v, outputs, work = [], [], [], {\"cached\": 0, \"naive\": 0}\nfor t in range(3):\n    cache_k.append(K[t])                      # only the NEW token's K and V are computed\n    cache_v.append(V[t])\n    work[\"cached\"] += 1\n    work[\"naive\"] += t + 1                    # naive loop recomputes the whole prefix\n    outputs.append(attend(Q[t], cache_k, cache_v))\n\nprint(outputs)\nprint(\"K/V computations:\", work)\n",
+  "under_the_hood": {
+    "summary": "During generation each token's key and value are computed once, stored per layer, and reused; every new step computes only the new token's q, k, v and attends that one query over the cached keys and values.",
+    "steps": [
+      {
+        "title": "Naive generation repeats work",
+        "body": "Without a cache, producing token t re-runs the whole prefix of t tokens through every layer. Generating n tokens processes 1 + 2 + ... + n = n(n+1)/2 token positions: 10 for 4 tokens, 500,500 for 1,000."
+      },
+      {
+        "title": "Past keys and values never change",
+        "body": "Under the causal mask, token 3's key and value depend only on tokens 1-3. When token 4 arrives they are exactly the same as before, so recomputing them is pure waste."
+      },
+      {
+        "title": "Append, then attend",
+        "body": "Each step: run only the newest token through the layers; in each layer compute its q, k and v, append k and v to that layer's cache, and compute softmax(q K_cache^T / sqrt(d_k)) V_cache. Output is identical to the naive version.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "K cache (one layer, one head)",
+            "data": [
+              "k1",
+              "k2",
+              "k3",
+              "k4"
+            ],
+            "highlight": [
+              3
+            ],
+            "title": "Step 4 appends only k4"
+          }
+        }
+      },
+      {
+        "title": "Prefill, then decode",
+        "body": "Serving engines split work into two phases. Prefill pushes the whole prompt through in parallel and fills the cache; decode then adds one token per step. Prefill is compute-bound, decode is mostly bound by reading the cache and weights from memory.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "prefill",
+                "detail": "prompt in parallel, fill cache"
+              },
+              {
+                "label": "decode step",
+                "detail": "1 new token"
+              },
+              {
+                "label": "append k, v"
+              },
+              {
+                "label": "attend over cache"
+              },
+              {
+                "label": "sample next token"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The cost moves into memory",
+        "body": "The cache holds 2 (K and V) x layers x kv_heads x head_dim numbers per token. For Llama 2 7B (32 layers, 32 heads of 128) in fp16 that is 2 x 32 x 4096 x 2 bytes = 0.5 MiB per token, so 4,096 tokens take about 2 GiB."
+      }
+    ],
+    "takeaway": "The KV cache trades memory for compute: n token passes instead of n(n+1)/2, with the cache size growing linearly in context length. That memory bill is what techniques like GQA and sliding windows attack."
+  }
 }

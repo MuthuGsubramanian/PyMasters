@@ -204,5 +204,61 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "The EIC-style pipeline loads arXiv papers, splits them with a recursive character splitter, embeds chunks into a vector store, retrieves the top matches for a question, and asks a local LLM to answer only from those chunks while citing the papers they came from.",
+    "steps": [
+      {
+        "title": "Load papers with metadata",
+        "body": "ArxivLoader downloads papers and keeps metadata such as title and arXiv id with each document. That metadata travels with every chunk, which is what makes citations possible later."
+      },
+      {
+        "title": "Recursive character splitting",
+        "body": "RecursiveCharacterTextSplitter tries to split on paragraph breaks first, then line breaks, then spaces, until each piece is under chunk_size characters, with chunk_overlap characters repeated between neighbours. Paragraphs stay intact whenever they fit.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "split on blank lines"
+              },
+              {
+                "label": "too big? split on newlines"
+              },
+              {
+                "label": "still too big? spaces"
+              },
+              {
+                "label": "chunks <= chunk_size",
+                "detail": "+ overlap"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Embed and store",
+        "body": "A Hugging Face sentence-embedding model turns each chunk into a vector and a vector store (FAISS or Chroma) indexes them. Physics text is dense with jargon, so a model that handles scientific vocabulary, or a fine-tuned one, improves recall."
+      },
+      {
+        "title": "Retrieve and prompt",
+        "body": "The question is embedded, the retriever returns the k most similar chunks, and the prompt template says 'You are a physics research assistant. Use the context... If unsure, say so.' The chunks and their sources are inserted into it.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "Q: What luminosity is the EIC designed for?",
+              "retrieved: 4 chunks from 3 papers",
+              "answer cites: [arXiv id of each source]"
+            ]
+          }
+        }
+      },
+      {
+        "title": "A local LLM generates",
+        "body": "LlamaCpp runs a quantized open model on local hardware. Grounding in retrieved text and returning source ids lets researchers check every claim, which matters more in science than fluent prose."
+      }
+    ],
+    "takeaway": "Domain RAG is the generic pipeline plus care for the domain: chunk on document structure, keep metadata for citations, and tell the model to stay inside the context."
+  }
 }

@@ -200,5 +200,70 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "all-mpnet-base-v2 runs 12 layers at width 768 versus MiniLM's 6 at 384, so it spends several times more compute and twice the vector storage per chunk to place texts more precisely; a two-stage setup uses the cheap model to recall and the precise one to re-score.",
+    "steps": [
+      {
+        "title": "Where the cost difference comes from",
+        "body": "A Transformer layer's work grows roughly with hidden size squared. mpnet has twice the layers and twice the width of MiniLM, so per token it does several times more multiply-adds (about 110M versus 22.7M parameters)."
+      },
+      {
+        "title": "Storage doubles with dimensions",
+        "body": "A float32 vector costs 4 bytes per dimension: 1,536 bytes for 384-d and 3,072 bytes for 768-d. For one million chunks that is about 1.5 GB versus 3.1 GB of index, before any index overhead.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "bytes per vector",
+            "data": [
+              1536,
+              3072
+            ],
+            "labels": [
+              "MiniLM 384-d",
+              "mpnet 768-d"
+            ],
+            "highlight": [
+              1
+            ]
+          }
+        }
+      },
+      {
+        "title": "Measure on your own queries",
+        "body": "Run both models over the same corpus and question set and compare where the known-correct chunk ranks. If mpnet moves it from rank 4 to rank 1 often enough to matter, the cost is worth it; if rankings match, keep the faster model."
+      },
+      {
+        "title": "Vectors from different models are not comparable",
+        "body": "MiniLM and mpnet produce coordinates in unrelated spaces, so a MiniLM query vector must never be scored against mpnet document vectors. The dual-tier pattern works because stage two re-encodes the query and the candidate texts with mpnet before scoring them.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "MiniLM index",
+                "detail": "fast recall of candidates"
+              },
+              {
+                "label": "candidate texts"
+              },
+              {
+                "label": "mpnet re-encode",
+                "detail": "query + candidates"
+              },
+              {
+                "label": "dot product",
+                "detail": "precise order"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Same weights, many runtimes",
+        "body": "Either model can be served from PyTorch, ONNX or OpenVINO, loaded from SafeTensors files. Those change load time and CPU speed, not the vectors, so the quality comparison you ran still holds."
+      }
+    ],
+    "takeaway": "Bigger embedders buy precision with compute and storage. Benchmark on your data, and if you mix models, keep each model's vectors in its own space."
+  }
 }

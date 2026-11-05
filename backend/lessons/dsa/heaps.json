@@ -391,5 +391,110 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "heapq keeps a plain list arranged so every parent is no larger than its children; push sifts the new item up and pop moves the last item to the root and sifts it down.",
+    "steps": [
+      {
+        "title": "A tree stored in a list",
+        "body": "A heap is a complete binary tree laid out level by level in an array. The node at index i has children at 2i+1 and 2i+2 and its parent at (i-1)//2. There are no node objects or pointers: [1, 2, 8, 3, 5] is a tree with 1 at the root, 2 and 8 below it, and 3 and 5 under the 2.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              1,
+              2,
+              8,
+              3,
+              5
+            ],
+            "title": "Index i -> children 2i+1 and 2i+2",
+            "labels": [
+              "[0] root",
+              "[1]",
+              "[2]",
+              "[3] child of 1",
+              "[4] child of 1"
+            ],
+            "highlight": [
+              0
+            ]
+          }
+        }
+      },
+      {
+        "title": "The heap rule is local",
+        "body": "A min-heap only promises heap[i] <= its two children. Siblings are not ordered, so the list is not sorted. That weaker rule is cheap to maintain, and it is enough to guarantee the smallest item is always at heap[0], readable in O(1)."
+      },
+      {
+        "title": "heappush: add at the end, sift up",
+        "body": "heappush(h, 0) on [1, 2, 8, 3, 5] appends 0 at index 5. Its parent is index 2 (value 8), and 0 < 8, so they swap. At index 2 the parent is index 0 (value 1), 0 < 1, swap again. Now 0 is the root: [0, 2, 1, 3, 5, 8]. At most one swap per level, so O(log n).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              1,
+              2,
+              8,
+              3,
+              5
+            ],
+            "title": "heappush(h, 0) then sift up: 0 swaps with 8, then with 1",
+            "operations": [
+              {
+                "action": "append",
+                "value": 0
+              },
+              {
+                "action": "highlight",
+                "index": 2
+              },
+              {
+                "action": "highlight",
+                "index": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "heappop: move the last item to the root, sift down",
+        "body": "heappop returns h[0]. To fill the hole, the last item is moved to index 0 and pushed down, swapping with its smaller child until both children are larger. Popping [1, 2, 8, 3, 5] returns 1: 5 moves to the root, swaps with the smaller child 2, then with 3, and the heap becomes [2, 3, 8, 5]. Again O(log n).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              5,
+              2,
+              8,
+              3
+            ],
+            "title": "After moving 5 to the root: swap with smaller child 2, then 3",
+            "operations": [
+              {
+                "action": "highlight",
+                "index": 0
+              },
+              {
+                "action": "highlight",
+                "index": 1
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "heapify builds a heap in O(n)",
+        "body": "heapify does not push items one by one. It sifts down every parent from the last one ((n//2)-1) back to the root. For [5, 3, 8, 1, 2]: 3 swaps with 1, then 5 swaps with 1 and then with 2, giving [1, 2, 8, 3, 5]. Most nodes are near the bottom and move very little, so the total is O(n)."
+      },
+      {
+        "title": "Max-heap by negation",
+        "body": "heapq is only a min-heap. To get the largest first, push -value and negate again when you pop: pushing 3, 1, 4, 1, 5 as negatives puts -5 at the root, and -heappop(h) gives 5. Tuples like (priority, item) work too, because tuples compare element by element."
+      }
+    ],
+    "takeaway": "A heap gives you the minimum in O(1) and insert/remove in O(log n) using nothing but index arithmetic on a list. That is the engine behind priority queues and Dijkstra."
   }
 }

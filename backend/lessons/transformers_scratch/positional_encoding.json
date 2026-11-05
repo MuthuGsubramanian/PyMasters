@@ -170,5 +170,86 @@
     "category": "transformers",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Attention is a weighted sum and ignores order, so a position vector built from sines and cosines at many frequencies is added to each token embedding, giving every position a unique, smoothly varying fingerprint.",
+    "steps": [
+      {
+        "title": "Attention alone cannot tell order",
+        "body": "Self-attention scores pairs by dot products and sums value vectors; shuffling the input just shuffles the output rows. 'dog bites man' and 'man bites dog' contain the same three embeddings, so without extra information they produce the same set of outputs."
+      },
+      {
+        "title": "Each position gets its own vector",
+        "body": "For position pos and dimension pair i, the original Transformer uses sin(pos / 10000^(2i/d)) for the even index and cos of the same angle for the odd index. The vector has the same length d as the embedding, so it can simply be added element by element."
+      },
+      {
+        "title": "Low dimensions tick fast, high dimensions tick slowly",
+        "body": "In pair 0 the angle grows by 1 radian per position, so it cycles every 2*pi, about 6.3 positions. With d = 512 the last pair's angle grows by roughly 1/10000 per position, so it cycles about every 63,000 positions. Read together, the pairs work like the hands of a clock: fast hands for fine position, slow hands for coarse position.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "PE (d = 4)",
+            "data": [
+              [
+                0.0,
+                1.0,
+                0.0,
+                1.0
+              ],
+              [
+                0.841,
+                0.54,
+                0.01,
+                1.0
+              ],
+              [
+                0.909,
+                -0.416,
+                0.02,
+                1.0
+              ]
+            ],
+            "labels": [
+              "pos 0",
+              "pos 1",
+              "pos 2"
+            ],
+            "highlight": [
+              [
+                1,
+                0
+              ],
+              [
+                2,
+                0
+              ]
+            ],
+            "title": "Dims 0-1 change quickly, dims 2-3 barely move"
+          }
+        }
+      },
+      {
+        "title": "The position is added, not appended",
+        "body": "x = embedding(token) + PE(pos). The same token at positions 3 and 7 now enters the first layer as two different vectors. Adding keeps d unchanged; the model learns to use some directions mostly for meaning and others mostly for position."
+      },
+      {
+        "title": "Relative offsets become a rotation",
+        "body": "Because sin(a + b) and cos(a + b) are fixed linear combinations of sin a and cos a, PE(pos + k) is a fixed rotation of PE(pos) in each pair. A layer can therefore learn 'look k tokens back' as one linear map. Modern models such as Llama take this idea further with RoPE, rotating queries and keys directly instead of adding a vector.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Sinusoidal (2017)",
+              "code": "x = emb + PE(pos)\nadded once at the input"
+            },
+            "right": {
+              "label": "RoPE (Llama, Qwen)",
+              "code": "rotate q and k by angle pos*theta_i\napplied in every attention layer"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Order enters a Transformer only through position signals. Sinusoidal encoding gives every position a unique multi-frequency pattern, and its rotation property is the seed of the RoPE scheme used by most current LLMs."
+  }
 }

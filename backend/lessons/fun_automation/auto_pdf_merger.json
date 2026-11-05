@@ -306,5 +306,101 @@
     ],
     "category": "automation",
     "path_memberships": []
+  },
+  "under_the_hood": {
+    "summary": "A PDF is a set of numbered objects plus a cross-reference table of byte offsets; PdfReader uses that table to find each page object, and PdfWriter copies those pages and everything they reference into a new file with a fresh table.",
+    "steps": [
+      {
+        "title": "A PDF is objects plus an index",
+        "body": "Inside a PDF are numbered objects: a catalog, a page tree, page objects, content streams with drawing commands, fonts and images. At the end of the file, startxref points to a cross-reference table listing the byte offset of every object, so a reader can jump straight to object 12 without scanning.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "trailer / startxref",
+                "detail": "where the xref table is"
+              },
+              {
+                "label": "xref table",
+                "detail": "object number -> byte offset"
+              },
+              {
+                "label": "catalog",
+                "detail": "/Root of the document"
+              },
+              {
+                "label": "page tree",
+                "detail": "/Pages with /Kids"
+              },
+              {
+                "label": "page object",
+                "detail": "/Contents, /Resources (fonts, images)"
+              }
+            ],
+            "title": "How a reader finds a page"
+          }
+        }
+      },
+      {
+        "title": "PdfReader reads from the end",
+        "body": "PdfReader('a.pdf') jumps to the end of the file, reads the xref table, then follows the catalog to the page tree. reader.pages is a list-like view of the page objects; the page contents are only parsed when you touch them."
+      },
+      {
+        "title": "Adding a page copies its dependencies",
+        "body": "writer.add_page(page) copies the page object into the writer, and with it every object the page refers to: its content stream, fonts, images. Each copied object gets a new object number in the output so numbers from a.pdf and b.pdf cannot clash.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "writer = PdfWriter()",
+                "explanation": "An empty document."
+              },
+              {
+                "code": "for name in ['a.pdf', 'b.pdf']:",
+                "explanation": "Each input file in order."
+              },
+              {
+                "code": "    for page in PdfReader(name).pages:",
+                "explanation": "Every page of that file."
+              },
+              {
+                "code": "        writer.add_page(page)",
+                "explanation": "Copy the page and the objects it uses."
+              },
+              {
+                "code": "with open('merged.pdf', 'wb') as f: writer.write(f)",
+                "explanation": "Write objects, a new xref table and trailer."
+              }
+            ],
+            "title": "The merge loop"
+          }
+        }
+      },
+      {
+        "title": "Writing builds a new index",
+        "body": "writer.write(f) writes each object, records the byte offset where it starts, then writes a fresh xref table and a trailer that points to it. The file must be opened in binary mode 'wb', because offsets are counted in bytes and the content streams are binary data.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "a.pdf p1",
+              "a.pdf p2",
+              "b.pdf p1",
+              "b.pdf p2",
+              "b.pdf p3"
+            ],
+            "title": "merged.pdf page tree, in the order added"
+          }
+        }
+      },
+      {
+        "title": "Library names",
+        "body": "PyPDF2 was renamed: its development continues as pypdf, with the same PdfReader and PdfWriter classes. Encrypted inputs must be opened with reader.decrypt(password) before their pages can be copied."
+      }
+    ],
+    "takeaway": "Merging PDFs is not gluing files together. It is copying page objects and their resources into a new object graph and writing a new index, which is why the result opens correctly."
   }
 }

@@ -250,5 +250,71 @@
       "correct": 2
     }
   ],
-  "uth_example": "image = [[10, 20], [30, 40]]            # 2x2 grey image\nmask = [[0, 1], [0, 1]]                 # right column is \"cat\"\nboxes = [(1, 0, 2, 2)]                  # x_min, y_min, x_max, y_max\n\ndef resize2x(grid):                     # nearest neighbour: labels stay labels\n    return [[v for v in row for _ in (0, 1)] for row in grid for _ in (0, 1)]\n\ndef brighten(grid, delta):\n    return [[min(255, v + delta) for v in row] for row in grid]\n\ndef compose(image, mask, boxes):\n    out = {\"image\": resize2x(image), \"mask\": resize2x(mask),\n           \"bboxes\": [tuple(c * 2 for c in b) for b in boxes]}\n    out[\"image\"] = brighten(out[\"image\"], 50)       # pixel-only: mask untouched\n    return out\n\nout = compose(image, mask, boxes)\nprint(\"image row 0:\", out[\"image\"][0])\nprint(\"mask row 0: \", out[\"mask\"][0], \"| box:\", out[\"bboxes\"])\n"
+  "uth_example": "image = [[10, 20], [30, 40]]            # 2x2 grey image\nmask = [[0, 1], [0, 1]]                 # right column is \"cat\"\nboxes = [(1, 0, 2, 2)]                  # x_min, y_min, x_max, y_max\n\ndef resize2x(grid):                     # nearest neighbour: labels stay labels\n    return [[v for v in row for _ in (0, 1)] for row in grid for _ in (0, 1)]\n\ndef brighten(grid, delta):\n    return [[min(255, v + delta) for v in row] for row in grid]\n\ndef compose(image, mask, boxes):\n    out = {\"image\": resize2x(image), \"mask\": resize2x(mask),\n           \"bboxes\": [tuple(c * 2 for c in b) for b in boxes]}\n    out[\"image\"] = brighten(out[\"image\"], 50)       # pixel-only: mask untouched\n    return out\n\nout = compose(image, mask, boxes)\nprint(\"image row 0:\", out[\"image\"][0])\nprint(\"mask row 0: \", out[\"mask\"][0], \"| box:\", out[\"bboxes\"])\n",
+  "under_the_hood": {
+    "summary": "AlbumentationsX samples each transform's random parameters once per call and applies those same values to the image, its mask, boxes and keypoints, converting coordinates with the matching geometry and dropping boxes that fall outside.",
+    "steps": [
+      {
+        "title": "The silent bug: two random draws",
+        "body": "If the image is flipped by one random call and the boxes by another, they disagree half the time. Training does not crash; the labels just point at background, and accuracy collapses without an error message."
+      },
+      {
+        "title": "Sample parameters once",
+        "body": "On each call, a transform first picks its random values, for example 'flip = True' or 'crop x=40, y=10, 200 x 200'. That parameter set is then reused for every target passed in the same call: image=, mask=, bboxes=, keypoints=."
+      },
+      {
+        "title": "Apply the same geometry to each target",
+        "body": "A horizontal flip of a 300-pixel-wide image maps a box [x_min=50, x_max=120] to [180, 250], because new x = 300 - old x and the min and max swap. Masks are warped like the image but with nearest-neighbour interpolation so class ids are never blended.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Box before flip",
+              "code": "x_min=50, x_max=120\nimage width 300"
+            },
+            "right": {
+              "label": "Box after flip",
+              "code": "x_min=300-120=180\nx_max=300-50=250"
+            }
+          }
+        }
+      },
+      {
+        "title": "Crops update and filter boxes",
+        "body": "A crop shifts every coordinate by the crop offset and clips boxes to the new borders. BboxParams such as min_visibility drop boxes that lost too much area, and their labels in label_fields are dropped with them, so boxes and labels stay aligned.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "sample params",
+                "detail": "once"
+              },
+              {
+                "label": "image",
+                "detail": "pixels warped"
+              },
+              {
+                "label": "mask",
+                "detail": "nearest neighbour"
+              },
+              {
+                "label": "boxes",
+                "detail": "coords shifted + clipped"
+              },
+              {
+                "label": "filter",
+                "detail": "min_visibility"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Formats are declared, not guessed",
+        "body": "You tell the pipeline whether boxes are pascal_voc (x_min, y_min, x_max, y_max in pixels), coco (x, y, w, h) or yolo (normalised centre and size). It converts internally, transforms, and converts back to your format."
+      }
+    ],
+    "takeaway": "Correct augmentation is one random draw shared by every target. Let the library own that draw and the coordinate maths, and the image and its labels can never drift apart."
+  }
 }
