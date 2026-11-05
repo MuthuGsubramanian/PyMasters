@@ -289,20 +289,20 @@ export default function Home() {
                         <img src={PymastersGlyph} alt="" className="w-8 h-8" style={{ filter: 'drop-shadow(0 0 6px rgba(124,58,237,0.6))' }} />
                         <span className="font-display font-bold text-base sm:text-lg tracking-tight text-white">PYMASTERS</span>
                     </Link>
-                    <div className="hidden sm:flex items-center gap-6">
-                        <a href="#curriculum" className="text-sm text-slate-300 hover:text-white transition-colors">Curriculum</a>
-                        <a href="#how-it-works" className="text-sm text-slate-300 hover:text-white transition-colors">How it works</a>
-                        <a href="#organizations" className="text-sm text-slate-300 hover:text-white transition-colors">For organisations</a>
-                        <button onClick={() => openSupport('issue')} className="text-sm text-slate-300 hover:text-white transition-colors">Support</button>
-                        <Link to="/pricing" className="text-sm text-slate-300 hover:text-white transition-colors">Pricing</Link>
+                    <div className="hidden sm:flex items-center gap-4 lg:gap-6">
+                        <a href="#curriculum" className="hidden lg:inline whitespace-nowrap text-sm text-slate-300 hover:text-white transition-colors">Curriculum</a>
+                        <a href="#how-it-works" className="hidden lg:inline whitespace-nowrap text-sm text-slate-300 hover:text-white transition-colors">How it works</a>
+                        <a href="#organizations" className="hidden lg:inline whitespace-nowrap text-sm text-slate-300 hover:text-white transition-colors">For organisations</a>
+                        <button onClick={() => openSupport('issue')} className="hidden lg:inline whitespace-nowrap text-sm text-slate-300 hover:text-white transition-colors">Support</button>
+                        <Link to="/pricing" className="whitespace-nowrap text-sm text-slate-300 hover:text-white transition-colors">Pricing</Link>
                         {user ? (
-                            <Link to="/dashboard" className="text-sm text-slate-300 hover:text-white transition-colors">Dashboard</Link>
+                            <Link to="/dashboard" className="whitespace-nowrap text-sm text-slate-300 hover:text-white transition-colors">Dashboard</Link>
                         ) : (
-                            <Link to="/login" className="text-sm text-slate-300 hover:text-white transition-colors">Sign In</Link>
+                            <Link to="/login" className="whitespace-nowrap text-sm text-slate-300 hover:text-white transition-colors">Sign In</Link>
                         )}
                         <Link
                             to={ctaTarget}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold text-white bg-purple-600 hover:bg-purple-500 transition-colors"
+                            className="inline-flex items-center gap-2 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold text-white bg-purple-600 hover:bg-purple-500 transition-colors"
                         >
                             {user ? 'Continue' : 'Get Started'}
                             <ArrowRight size={14} />

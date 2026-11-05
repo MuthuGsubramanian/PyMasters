@@ -98,3 +98,32 @@ def test_support_button_waits_until_past_the_hero_on_phones(phone):
     phone.evaluate("window.scrollTo(0, 900)")
     fab.wait_for(state="visible", timeout=5000)
     assert phone.evaluate("document.documentElement.scrollWidth") <= 390
+
+
+_NAV_CHECK = r"""() => {
+  const nav = document.querySelector('nav');
+  const logo = nav.querySelector('a[aria-label="PyMasters home"]').getBoundingClientRect();
+  const links = [...nav.querySelectorAll('a, button')].filter(e => e.offsetParent && !e.matches('a[aria-label="PyMasters home"]'));
+  const lines = e => { const tops = new Set(); const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT);
+    for (let n = w.nextNode(); n; n = w.nextNode()) { if (!n.textContent.trim()) continue;
+      const r = document.createRange(); r.selectNodeContents(n);
+      [...r.getClientRects()].filter(b => b.width > 1).forEach(b => tops.add(Math.round(b.top / 4))); }
+    return tops.size; };
+  const wrapped = links.filter(e => lines(e) > 1).map(e => e.textContent.trim());
+  const overlapping = links.filter(e => { const r = e.getBoundingClientRect(); return r.left < logo.right && r.right > logo.left; })
+                           .map(e => e.textContent.trim());
+  return {wrapped, overlapping};
+}"""
+
+
+@pytest.mark.parametrize("width", [640, 768, 1024, 1440])
+def test_top_nav_fits_on_tablets_and_laptops(browser, width):
+    # Live check 2026-11-05: at 640-1023 px the seven nav items squeezed until four of them wrapped onto 2-3
+    # lines and the logo ran into "Curriculum". Section links now appear from lg; no item may wrap.
+    ctx = browser.new_context(viewport={"width": width, "height": 900})
+    page = ctx.new_page()
+    page.goto(f"{BASE}/", wait_until="domcontentloaded")
+    page.wait_for_selector("nav a[aria-label='PyMasters home']", timeout=30000)
+    r = page.evaluate(_NAV_CHECK)
+    assert r == {"wrapped": [], "overlapping": []}, (width, r)
+    ctx.close()
