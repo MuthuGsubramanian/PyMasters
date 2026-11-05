@@ -13,6 +13,7 @@ ignored and the challenge is graded by its expected_output. The probe runs once 
 """
 import hashlib
 import re
+import secrets
 
 from vaathiyaar.execution import run_code_subprocess
 
@@ -79,10 +80,19 @@ def grade_submission(student_code: str, expected_output: str, test_code: str | N
         if verdict:
             harness = None
     if harness:
-        result = run_code_subprocess(student_code + "\n\n" + harness, seed_files=sandbox_files)
-        success = result["exit_code"] == 0
+        # The harness must run to its end: exiting early (sys.exit / os._exit) also gives exit code 0. A marker
+        # that is new for every run is printed after the harness and stripped before the learner sees the output.
+        marker = f"__pm_checked_{secrets.token_hex(16)}__"
+        result = run_code_subprocess(student_code + "\n\n" + harness + f"\nprint({marker!r}, flush=True)\n",
+                                     seed_files=sandbox_files)
+        raw = result["output"] or ""
+        finished = marker in raw            # may share a line with output that ended without a newline
+        output = raw.replace(marker + "\n", "").replace(marker, "")
+        success = result["exit_code"] == 0 and finished
+        error = "" if success else (result["error"] or (
+            "Your program stopped before the checks could run. Remove exit() / sys.exit() and run it again."))
         # On failure, surface the assertion/exception (its message names the exact unmet requirement).
-        return {"success": success, "output": result["output"], "error": "" if success else result["error"]}
+        return {"success": success, "output": output, "error": error}
     result = run_code_subprocess(student_code, seed_files=sandbox_files)
     exec_error = result["error"] if result["exit_code"] != 0 else ""
     return {"success": result["exit_code"] == 0 and output_matches(result["output"], expected_output),

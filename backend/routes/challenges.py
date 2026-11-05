@@ -10,6 +10,7 @@ solution submission, and a leaderboard of top completions.
 import os
 import ast
 import json
+import secrets
 import sqlite3
 import datetime
 from typing import List, Optional, Tuple
@@ -144,13 +145,16 @@ def grade_submission(challenge: dict, code: str) -> dict:
         return {"passed": ok, "passed_count": 1 if ok else 0, "total": 1, "results": [],
                 "message": "Ran successfully." if ok else "Your code raised an error."}
 
+    # A marker that is new for every run: a fixed one could be printed by the submission itself, followed by
+    # an exit, to fake an all-passed result (security review L1).
+    sentinel = f"{_GRADE_SENTINEL}{secrets.token_hex(16)}__"
     program = code + "\n" + (_HARNESS_TMPL % {
         "tests": repr(json.dumps(tests)),
-        "sentinel": _GRADE_SENTINEL,
+        "sentinel": sentinel,
     })
     res = run_code_subprocess(program, timeout=10)
     out = res.get("output", "") or ""
-    idx = out.rfind(_GRADE_SENTINEL)
+    idx = out.rfind(sentinel)
     total = len(tests)
     if idx == -1:
         err = (res.get("error") or "").strip()
@@ -160,7 +164,7 @@ def grade_submission(challenge: dict, code: str) -> dict:
                else "No output from your solution.")
         return {"passed": False, "passed_count": 0, "total": total, "results": [], "message": msg.strip()}
     try:
-        results = json.loads(out[idx + len(_GRADE_SENTINEL):].splitlines()[0])
+        results = json.loads(out[idx + len(sentinel):].splitlines()[0])
     except Exception:
         return {"passed": False, "passed_count": 0, "total": total, "results": [],
                 "message": "Could not evaluate your solution."}
