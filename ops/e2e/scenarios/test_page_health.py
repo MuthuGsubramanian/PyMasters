@@ -50,7 +50,7 @@ def test_page_health(route, vp, users, logged_in_page, browser):
     page.goto(f"{BASE}{url}", wait_until="networkidle", timeout=45000)
     # Wait on content, not the clock: lazy route chunks can land after networkidle on a busy runner.
     try:
-        page.wait_for_function("document.body.innerText.trim().length > 40", timeout=15000)
+        page.wait_for_function("() => document.body.innerText.trim().length > 40", timeout=15000)
     except Exception:  # noqa: BLE001 — the assertion below reports the near-empty page
         pass
     sw, cw = page.evaluate("[document.documentElement.scrollWidth, document.documentElement.clientWidth]")

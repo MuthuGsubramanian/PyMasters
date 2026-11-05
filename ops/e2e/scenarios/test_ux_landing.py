@@ -46,7 +46,7 @@ def test_audience_links_reach_their_sections(phone):
         assert 0 <= box["y"] < 844, f"{label} did not bring '{heading}' into view: {box}"
         phone.wait_for_timeout(1600)  # let the link's settle re-checks finish before going back up
         phone.evaluate("window.scrollTo({ top: 0, behavior: 'instant' })")
-        phone.wait_for_function("window.scrollY === 0")
+        phone.wait_for_function("() => window.scrollY === 0")
     assert not phone.problems, phone.problems[:3]
 
 
@@ -87,7 +87,7 @@ def test_how_a_lesson_works_replaces_the_feature_cards(browser, width, height):
     if width >= 640:
         page.evaluate("window.scrollTo({ top: 0, behavior: 'instant' })")
         page.get_by_role("link", name="How it works").first.click()
-        page.wait_for_function("document.getElementById('how-it-works').getBoundingClientRect().top < innerHeight / 2")
+        page.wait_for_function("() => document.getElementById('how-it-works').getBoundingClientRect().top < innerHeight / 2")
     ctx.close()
 
 

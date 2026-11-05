@@ -55,7 +55,7 @@ def test_warmup_card_is_dark_and_readable_after_switching_to_dark_mode(logged_in
     card = page.locator("div.rounded-2xl", has=page.get_by_role("heading", name="5-minute warm-up")).first
     card.wait_for(timeout=20000)
     page.get_by_role("button", name="Switch to dark mode").first.click()
-    page.wait_for_function("document.documentElement.classList.contains('dark')")
+    page.wait_for_function("() => document.documentElement.classList.contains('dark')")
     page.wait_for_timeout(400)   # colour transitions settle
 
     bg = _painted_luminance(page, card)
