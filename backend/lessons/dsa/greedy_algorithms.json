@@ -463,5 +463,106 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A greedy algorithm sorts or ranks the choices once, then takes the best-looking one at each step and never revisits it; it is correct only when that local choice can always be part of an optimal answer.",
+    "steps": [
+      {
+        "title": "Sort by the right key",
+        "body": "For activity selection the key is the end time. Meetings (1,3), (2,5), (3,6), (5,7), (6,8), (8,10) sorted by end let you scan once from the earliest finish. Sorting costs O(n log n) and dominates the run time."
+      },
+      {
+        "title": "Take it if it fits, never look back",
+        "body": "Keep last_end. Take (1,3), last_end = 3. (2,5) starts before 3, skip. (3,6) starts at 3, take it, last_end = 6. (5,7) overlaps, skip. (6,8) take, (8,10) take. Result: 4 meetings in one O(n) pass.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "meeting",
+                "values": [
+                  "(1,3)",
+                  "(2,5)",
+                  "(3,6)",
+                  "(5,7)",
+                  "(6,8)",
+                  "(8,10)"
+                ]
+              },
+              {
+                "variable": "decision",
+                "values": [
+                  "take",
+                  "skip",
+                  "take",
+                  "skip",
+                  "take",
+                  "take"
+                ]
+              },
+              {
+                "variable": "last_end",
+                "values": [
+                  3,
+                  3,
+                  6,
+                  6,
+                  8,
+                  10
+                ]
+              }
+            ],
+            "title": "One pass over meetings sorted by end time"
+          }
+        }
+      },
+      {
+        "title": "Why earliest-end is safe",
+        "body": "Swap argument: take any optimal schedule and replace its first meeting with the one that ends earliest. It ends no later, so everything after still fits and the count is unchanged. Repeating that argument shows the greedy choice never loses."
+      },
+      {
+        "title": "Fractional knapsack: best ratio first",
+        "body": "When you may take part of an item, sort by value / weight and fill the bag from the top of that list, taking a fraction of the last item that does not fully fit. Every unit of capacity gets the highest value available, so greedy is optimal here.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "sort by value/weight",
+                "detail": "highest ratio first"
+              },
+              {
+                "label": "take whole items",
+                "detail": "while they fit"
+              },
+              {
+                "label": "take a fraction",
+                "detail": "of the next item to fill the gap"
+              }
+            ],
+            "title": "Fractional knapsack"
+          }
+        }
+      },
+      {
+        "title": "When greedy fails",
+        "body": "Coin change with US coins [25, 10, 5, 1] works greedily, but with coins [1, 3, 4] and amount 6, greedy takes 4 + 1 + 1 = 3 coins while 3 + 3 = 2 coins is optimal. Taking the largest coin first is not always safe; that problem needs dynamic programming.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Greedy (largest first)",
+              "code": "6 -> 4, left 2\n2 -> 1, left 1\n1 -> 1, left 0\n3 coins"
+            },
+            "right": {
+              "label": "Optimal (DP)",
+              "code": "6 -> 3 + 3\n2 coins"
+            },
+            "title": "Coins [1, 3, 4], amount 6"
+          }
+        }
+      }
+    ],
+    "takeaway": "Greedy is fast because it never backtracks, and that is also its risk. Before trusting it, check that the local choice can always be swapped into an optimal solution."
   }
 }

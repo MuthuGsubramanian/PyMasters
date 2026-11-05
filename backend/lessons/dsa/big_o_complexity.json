@@ -485,5 +485,119 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Big O counts how many basic operations an algorithm does as a function of the input size n, then keeps only the fastest-growing term.",
+    "steps": [
+      {
+        "title": "Count operations, not seconds",
+        "body": "Each basic step (a comparison, an assignment, reading arr[i]) costs roughly the same small amount of time. So instead of timing code, we count steps. Summing a list of 1,000 numbers does about 1,000 additions; summing 2,000 numbers does about 2,000."
+      },
+      {
+        "title": "Turn the loops into a formula",
+        "body": "A single loop over n items gives about n steps. Two nested loops that compare every pair give n*(n-1)/2 comparisons: for n = 1,000 that is 499,500. Write the count as a formula in n, for example 3n² + 5n + 2.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "for i in range(n):",
+                "explanation": "Outer loop runs n times."
+              },
+              {
+                "code": "    for j in range(i + 1, n):",
+                "explanation": "Inner loop runs n-1, n-2, ... 1 times."
+              },
+              {
+                "code": "        if a[i] == a[j]: ...",
+                "explanation": "Total comparisons: n*(n-1)/2, which grows like n²."
+              }
+            ],
+            "title": "Counting the work in a pair check"
+          }
+        }
+      },
+      {
+        "title": "Keep only the term that wins",
+        "body": "For large n the biggest term swamps the rest. At n = 1,000,000, 3n² is 3 trillion while 5n is only 5 million, so 3n² + 5n + 2 is called O(n²). Constant factors like the 3 are also dropped, because they depend on the machine, not on the algorithm."
+      },
+      {
+        "title": "Compare how the classes grow",
+        "body": "Put the common classes side by side as n grows by 10x each time. O(log n) barely moves, O(n) grows 10x, and O(n²) grows 100x. That gap is why the class matters more than any micro-optimisation.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "title": "Steps needed as n grows",
+            "x_labels": [
+              "n=10",
+              "n=100",
+              "n=1,000",
+              "n=1,000,000"
+            ],
+            "comparisons": [
+              {
+                "label": "O(log n)",
+                "values": [
+                  3,
+                  7,
+                  10,
+                  20
+                ]
+              },
+              {
+                "label": "O(n)",
+                "values": [
+                  10,
+                  100,
+                  1000,
+                  1000000
+                ]
+              },
+              {
+                "label": "O(n log n)",
+                "values": [
+                  33,
+                  664,
+                  9966,
+                  19931569
+                ]
+              },
+              {
+                "label": "O(n²)",
+                "values": [
+                  100,
+                  10000,
+                  1000000,
+                  "10^12"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Halving gives log n",
+        "body": "When each step throws away half of the remaining input, the number of steps is how many times you can halve n before reaching 1. Since 2^20 = 1,048,576, a million items need only about 20 halvings. That is where O(log n) comes from in binary search and balanced trees."
+      },
+      {
+        "title": "Built-ins have a Big O too",
+        "body": "One line of Python can hide a loop. `x in my_list` scans item by item, so it is O(n); `x in my_set` hashes x and jumps to a slot, so it is O(1) on average. Calling the O(n) version inside another loop quietly makes the whole thing O(n²).",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "O(n): list membership",
+              "code": "for item in my_list:\n    if item == x: return True\nreturn False"
+            },
+            "right": {
+              "label": "O(1) average: set membership",
+              "code": "slot = hash(x) % table_size\ncheck that slot (and a few probes)"
+            },
+            "title": "Same question, different mechanism"
+          }
+        }
+      }
+    ],
+    "takeaway": "Big O is a statement about growth: double the input and see what happens to the work. Pick the algorithm with the slower-growing class first, and only then worry about constants."
   }
 }

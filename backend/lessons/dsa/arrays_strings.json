@@ -419,5 +419,110 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A Python list is a dynamic array of pointers stored side by side in memory, with spare capacity so appends are cheap; a str is an immutable block of characters.",
+    "steps": [
+      {
+        "title": "One block of references",
+        "body": "In CPython a list object holds a pointer to one contiguous block of slots, and each slot holds a reference to a Python object. Because the slots are the same size and side by side, arr[i] is found by simple arithmetic: start address + i * 8 bytes on a 64-bit machine. That is why indexing is O(1).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              10,
+              20,
+              30,
+              40,
+              50
+            ],
+            "title": "arr = [10, 20, 30, 40, 50]",
+            "label": "Slots are side by side; arr[3] is start + 3 slots",
+            "operations": [
+              {
+                "action": "highlight",
+                "index": 3
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Spare capacity makes append cheap",
+        "body": "The block is usually bigger than the list. Appending one item at a time, CPython 3.13 grows the capacity 4, 8, 16, 24, 32, 40, 52, 64... (about 12.5% extra each time). Most appends just fill a spare slot; only occasionally is a bigger block allocated and the references copied, so append is amortised O(1).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              10,
+              20,
+              30,
+              40
+            ],
+            "title": "len 4, capacity 4 -> append(50) reallocates to capacity 8",
+            "operations": [
+              {
+                "action": "append",
+                "value": 50
+              },
+              {
+                "action": "append",
+                "value": 60
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Inserting at the front shifts everything",
+        "body": "arr.insert(0, 5) has to move every existing reference one slot to the right to open a gap at index 0. With n items that is n moves, so insert and delete near the front are O(n). Removing from the end with pop() moves nothing.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              10,
+              20,
+              30,
+              40,
+              50
+            ],
+            "title": "insert(0, 5): every slot shifts right",
+            "operations": [
+              {
+                "action": "insert",
+                "index": 0,
+                "value": 5
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Slices copy",
+        "body": "arr[1:4] builds a brand-new list and copies 3 references into it, so a slice costs O(k) for k items. The new list shares the same element objects, but changing the slice's slots does not touch the original list."
+      },
+      {
+        "title": "Strings are immutable character arrays",
+        "body": "A str stores its characters in one block, using 1, 2 or 4 bytes per character depending on the widest character in it (PEP 393). Because a str can never change, s.upper() or s + 'x' always builds a new string. Building a string with += in a loop can copy the growing text again and again; ''.join(parts) measures the total size once and copies each piece exactly once.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Repeated +=",
+              "code": "s = ''\nfor w in words:\n    s += w   # may copy s each time"
+            },
+            "right": {
+              "label": "join",
+              "code": "s = ''.join(words)\n# one allocation, each piece copied once"
+            },
+            "title": "Building a string from many pieces"
+          }
+        }
+      }
+    ],
+    "takeaway": "Lists are fast at the end and slow at the front because of the contiguous block underneath. Strings never change in place, so build them with join, not repeated +=."
   }
 }
