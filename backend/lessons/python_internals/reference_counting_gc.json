@@ -162,5 +162,85 @@
     "category": "python_internals",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Every CPython object stores a count of references to it; the count changes as names, containers and frames take or drop references, the object is freed the moment it hits zero, and a separate generational collector finds unreachable cycles.",
+    "steps": [
+      {
+        "title": "A counter in every object header",
+        "body": "Each object begins with `ob_refcnt`. Binding a name, putting the object in a list, or passing it as an argument adds 1 (Py_INCREF); deleting a name, removing it from a container or a frame ending subtracts 1 (Py_DECREF). `sys.getrefcount(x)` shows the count, plus one for its own argument.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "refcount of the list",
+                "values": [
+                  "1",
+                  "2",
+                  "3",
+                  "2",
+                  "1",
+                  "0"
+                ]
+              }
+            ],
+            "caption": "x = []; y = x; d = {'k': x}; del y; del d; del x"
+          }
+        }
+      },
+      {
+        "title": "Zero means freed immediately",
+        "body": "When a DECREF brings the count to 0, CPython calls the type's deallocator right away: it runs `__del__` if defined, decrements everything the object refers to, and returns the memory. That is why files opened without `with` usually close as soon as the last name is dropped in CPython.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "del x",
+                "detail": "Py_DECREF"
+              },
+              {
+                "label": "refcnt == 0?",
+                "detail": "yes"
+              },
+              {
+                "label": "tp_dealloc",
+                "detail": "release contents, then memory"
+              },
+              {
+                "label": "contained objects",
+                "detail": "their counts drop too"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Cycles never reach zero",
+        "body": "`a = []; a.append(a); del a` leaves a list that refers to itself. Its count is still 1 although nothing in your program can reach it. Parent/child objects that point to each other have the same problem. Reference counting alone would leak them."
+      },
+      {
+        "title": "The generational collector finds cycles",
+        "body": "The `gc` module tracks container objects in three generations. In CPython 3.11 a collection of generation 0 runs when allocations minus deallocations exceed 700 (`gc.get_threshold()` is (700, 10, 10)). It subtracts references that come from inside the tracked set; objects left with zero external references are unreachable garbage and are freed. Survivors move to an older generation that is scanned less often.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "gen 0: new containers (threshold 700)",
+              "gen 1: survived once (every 10 gen-0 runs)",
+              "gen 2: long-lived (after 10 gen-1 runs, plus a heuristic)"
+            ],
+            "label": "gc generations in CPython 3.11"
+          }
+        }
+      },
+      {
+        "title": "Weak references avoid ownership",
+        "body": "A `weakref.ref(obj)` points to an object without raising its count, so caches and back-pointers do not keep objects alive or create cycles. When the object dies, the weak reference returns None."
+      }
+    ],
+    "takeaway": "CPython frees most memory instantly through reference counts, and the cycle collector cleans up the rest. Avoid accidental cycles and rely on `with` for resources, because other Pythons do not free objects immediately."
+  }
 }

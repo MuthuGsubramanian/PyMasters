@@ -168,5 +168,78 @@
     "category": "python_internals",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "CPython pre-creates the integers -5 to 256 and reuses them, interns many identifier-like strings, and merges equal constants within one compiled code object, so `is` can be True for equal values by accident, never by promise.",
+    "steps": [
+      {
+        "title": "The small-int cache",
+        "body": "At start-up CPython 3.11 creates one object for every integer from -5 to 256. Any operation that yields one of these values returns the shared object instead of allocating a new one. So `a = 256; b = 256; a is b` is True everywhere.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "-5",
+              "-4",
+              "...",
+              "0",
+              "1",
+              "...",
+              "255",
+              "256"
+            ],
+            "highlight": [
+              3,
+              4
+            ],
+            "label": "preallocated small ints"
+          }
+        }
+      },
+      {
+        "title": "257 is a new object each time",
+        "body": "Outside that range a new int object is created whenever one is computed. In the REPL, `a = 257` and `b = 257` on separate lines produce two objects, so `a is b` is False while `a == b` is True.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> a = 257",
+              ">>> b = 257",
+              ">>> a is b",
+              "False",
+              ">>> a == b",
+              "True"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Constants in one code object are merged",
+        "body": "When `x = 257; y = 257` are compiled together, for example in one function or one script, the compiler stores the constant 257 once in the code object's `co_consts`, so both names get the same object and `x is y` is True. Same values, different result: it depends on how the code was compiled, which is why you cannot rely on it."
+      },
+      {
+        "title": "String interning",
+        "body": "CPython interns strings that look like identifiers when they appear as constants, plus all attribute and variable names, so dict lookups by name can compare pointers quickly. `sys.intern(s)` lets you intern any string yourself. Strings built at run time, like `''.join(['he', 'llo'])`, are usually separate objects.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Often the same object",
+              "code": "'hello' is 'hello'\n# constants, identifier-like\nsys.intern(s1) is sys.intern(s2)"
+            },
+            "right": {
+              "label": "Usually different objects",
+              "code": "''.join(['he','llo']) is 'hello'\ninput() results\n'hello world!' built at run time"
+            }
+          }
+        }
+      },
+      {
+        "title": "Use == for values, is for identity",
+        "body": "`is` compares object identity (in CPython, the memory address). Use it only for singletons like `None`, `True`, `False` or sentinel objects. For values use `==`. Since 3.8 the compiler even warns: `SyntaxWarning: \"is\" with a literal. Did you mean \"==\"?`"
+      }
+    ],
+    "takeaway": "Caching and interning are memory and speed optimisations that make `is` look like `==` for some values. They are implementation details; compare values with ==, and keep is for None and other singletons."
+  }
 }

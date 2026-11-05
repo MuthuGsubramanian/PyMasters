@@ -167,5 +167,84 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "class GIL:\n    def __init__(self):\n        self.holder = None\n        self.timeline = []\n\ndef worker(name, steps):\n    for i in range(steps):\n        yield f\"{name}:{i}\"          # one slice of Python bytecode\n\ngil = GIL()\nthreads = {\"A\": worker(\"A\", 3), \"B\": worker(\"B\", 3)}\nwhile threads:\n    for name in list(threads):\n        gil.holder = name            # only one thread holds the lock\n        try:\n            gil.timeline.append(next(threads[name]))\n        except StopIteration:\n            del threads[name]\n    gil.holder = None\n\nprint(\"turns, never parallel:\", gil.timeline)\n"
+  "uth_example": "class GIL:\n    def __init__(self):\n        self.holder = None\n        self.timeline = []\n\ndef worker(name, steps):\n    for i in range(steps):\n        yield f\"{name}:{i}\"          # one slice of Python bytecode\n\ngil = GIL()\nthreads = {\"A\": worker(\"A\", 3), \"B\": worker(\"B\", 3)}\nwhile threads:\n    for name in list(threads):\n        gil.holder = name            # only one thread holds the lock\n        try:\n            gil.timeline.append(next(threads[name]))\n        except StopIteration:\n            del threads[name]\n    gil.holder = None\n\nprint(\"turns, never parallel:\", gil.timeline)\n",
+  "under_the_hood": {
+    "summary": "In standard CPython a thread must hold the Global Interpreter Lock to run bytecode; a waiting thread sets a drop request after the 5 ms switch interval, the running thread releases the lock at its next check, and blocking I/O releases it voluntarily.",
+    "steps": [
+      {
+        "title": "Why the lock exists",
+        "body": "CPython's reference counts and many internal structures are not safe to change from two threads at once. Rather than locking every object, CPython uses one lock for the whole interpreter: only the thread holding the GIL may execute Python bytecode or touch Python objects."
+      },
+      {
+        "title": "The switch interval",
+        "body": "A thread that wants the GIL waits on a condition variable with a timeout of `sys.getswitchinterval()`, 0.005 seconds by default. If the timeout expires and the GIL is still busy, it sets a 'please drop the GIL' flag in the interpreter's eval breaker.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "thread B waits",
+                "detail": "up to 5 ms"
+              },
+              {
+                "label": "timeout",
+                "detail": "set drop request"
+              },
+              {
+                "label": "thread A's eval loop checks",
+                "detail": "between instructions"
+              },
+              {
+                "label": "A releases GIL",
+                "detail": "B acquires and runs"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The running thread checks between instructions",
+        "body": "The evaluation loop checks the eval breaker at certain points, such as backward jumps and function calls. When it sees the drop request, the running thread releases the GIL and waits to get it back, so CPU-bound threads take turns roughly every 5 ms.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "GIL holder over time (ms)",
+                "values": [
+                  "A 0-5",
+                  "B 5-10",
+                  "A 10-15",
+                  "B 15-20"
+                ]
+              }
+            ],
+            "caption": "Two CPU-bound threads alternate; total time does not drop"
+          }
+        }
+      },
+      {
+        "title": "Blocking calls release it voluntarily",
+        "body": "`socket.recv`, `time.sleep`, file reads and many C extensions (NumPy, hashlib on large inputs, zlib) release the GIL around the slow C work and re-acquire it afterwards. During that time other threads run Python, which is why threads speed up I/O-heavy programs.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "CPU-bound pure Python",
+              "code": "4 threads x number crunching\n-> one runs at a time\n-> about as slow as 1 thread"
+            },
+            "right": {
+              "label": "I/O-bound or GIL-releasing C",
+              "code": "4 threads x network waits\n-> waits overlap\n-> close to 4x throughput"
+            }
+          }
+        }
+      },
+      {
+        "title": "Ways around it",
+        "body": "For CPU-bound Python use `multiprocessing` or `ProcessPoolExecutor` (one GIL per process), push hot loops into C code that releases the GIL, or try the free-threaded build introduced in CPython 3.13 (PEP 703), which removes the GIL at some single-thread cost."
+      }
+    ],
+    "takeaway": "The GIL makes one thread run Python at a time, handing off every few milliseconds or at blocking calls. Threads help when you wait; processes or GIL-free code help when you compute."
+  }
 }
