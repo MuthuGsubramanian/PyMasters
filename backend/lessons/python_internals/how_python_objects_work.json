@@ -167,5 +167,76 @@
     "category": "python_internals",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Every value in Python is an object with an identity, a type and a value; variables are only names that point to those objects, and CPython counts the names so it knows when an object can be freed.",
+    "steps": [
+      {
+        "title": "Every object has an identity, a type and a value",
+        "body": "When Python runs `a = [1, 2]`, it builds a list object in memory. `id(a)` gives its identity, a number that no other live object shares (in CPython it is the memory address). `type(a)` gives its type, `list`, which decides what the object can do. Its value is the contents, `[1, 2]`.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "title": "Three things every object has",
+            "nodes": [
+              {
+                "label": "a = [1, 2]",
+                "children": [
+                  "Identity: id(a), compared with is",
+                  "Type: type(a) is list",
+                  "Value: [1, 2], compared with =="
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "A variable is a name that points to an object",
+        "body": "A name is not a box that holds the list. `a = [1, 2]` stores the name `a` in the namespace together with a reference to the list object. `b = a` copies that reference, not the list, so `a` and `b` are two names for the same object and `id(a) == id(b)` is True."
+      },
+      {
+        "title": "is compares identity, == compares value",
+        "body": "Take `a = [1, 2, 3]` and `c = [1, 2, 3]`. They are two separate list objects that hold equal items, so `a == c` is True because list equality compares the items, but `a is c` is False because the ids differ. Use `is` for identity checks such as `x is None`, and `==` for comparing values.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left_label": "a == c (same value?)",
+            "left_content": ">>> a = [1, 2, 3]\n>>> c = [1, 2, 3]\n>>> a == c\nTrue",
+            "right_label": "a is c (same object?)",
+            "right_content": ">>> a is c\nFalse\n>>> id(a) == id(c)\nFalse",
+            "description": "Equal contents do not make two objects one object."
+          }
+        }
+      },
+      {
+        "title": "Mutating an object vs rebinding a name",
+        "body": "With `b = a`, the call `b.append(99)` changes the one shared list, so `a` shows `[1, 2, 99]` too. `b = b + [7]` is different: `+` builds a new list and the name `b` is moved to it, while `a` keeps pointing to the old one. Careful: `b += [7]` on a list extends it in place, so `a` sees that change."
+      },
+      {
+        "title": "CPython counts the references to each object",
+        "body": "Every CPython object stores a reference count: how many names, list slots and other references point to it. `b = a` adds one and `del b` removes one. When the count reaches zero, the object is freed at once. `sys.getrefcount(a)` reports one extra, because passing `a` to the function adds a temporary reference.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "title": "Watching the count change",
+            "lines": [
+              ">>> import sys",
+              ">>> a = [1, 2]",
+              ">>> sys.getrefcount(a)",
+              "2",
+              ">>> b = a",
+              ">>> sys.getrefcount(a)",
+              "3",
+              ">>> del b",
+              ">>> sys.getrefcount(a)",
+              "2"
+            ],
+            "description": "One for the name a, one for the argument; b = a adds a third. Exact numbers can differ between Python versions."
+          }
+        }
+      }
+    ],
+    "takeaway": "Names point to objects; they do not contain them. Use `is` to ask whether two names share one object and `==` to ask whether two values are equal, and remember that mutating a shared object is seen through every name that points to it."
+  }
 }

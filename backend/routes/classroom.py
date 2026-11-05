@@ -1085,8 +1085,11 @@ def get_lesson(
         )
 
     # Cheap check (no code runs) so the intro can offer "Under the hood"; the trace itself runs on click.
+    # The popup has a "How it works" tab (the authored `under_the_hood` topic explainer, shipped in this
+    # payload) and a "Python's view" tab (the heap trace of the example code, `has_uth_trace`).
     from vaathiyaar.lesson_code import example_code
-    lesson["has_under_the_hood"] = example_code(lesson) is not None
+    lesson["has_uth_trace"] = example_code(lesson) is not None
+    lesson["has_under_the_hood"] = lesson["has_uth_trace"] or isinstance(lesson.get("under_the_hood"), dict)
 
     # Personalise only for the VERIFIED caller (security fix 2026-11-02): the ?user_id= param used to load
     # any user's profile (language, skill, mastery) and trigger translations on their behalf.
