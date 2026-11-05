@@ -229,5 +229,77 @@
       "correct": 3
     }
   ],
-  "uth_example": "reply = \"\"\"Thought: I need the total of the cart.\n```py\ncart = [{\"item\": \"pen\", \"price\": 20, \"qty\": 3}, {\"item\": \"book\", \"price\": 150, \"qty\": 1}]\ntotal = sum(line[\"price\"] * line[\"qty\"] for line in cart)\nfinal_answer = f\"Cart total is {total}\"\n```\n\"\"\"\n\nfence = \"`\" * 3 + \"py\"\nstart = reply.index(fence) + len(fence)\nend = reply.index(\"`\" * 3, start)\ncode = reply[start:end].strip()\n\nsandbox = {}                          # the agent's action runs as real Python\nexec(code, sandbox)\nobservation = {k: v for k, v in sandbox.items() if k in (\"total\", \"final_answer\")}\nprint(len(code.splitlines()), \"lines of code executed\")\nprint(observation)\n"
+  "uth_example": "reply = \"\"\"Thought: I need the total of the cart.\n```py\ncart = [{\"item\": \"pen\", \"price\": 20, \"qty\": 3}, {\"item\": \"book\", \"price\": 150, \"qty\": 1}]\ntotal = sum(line[\"price\"] * line[\"qty\"] for line in cart)\nfinal_answer = f\"Cart total is {total}\"\n```\n\"\"\"\n\nfence = \"`\" * 3 + \"py\"\nstart = reply.index(fence) + len(fence)\nend = reply.index(\"`\" * 3, start)\ncode = reply[start:end].strip()\n\nsandbox = {}                          # the agent's action runs as real Python\nexec(code, sandbox)\nobservation = {k: v for k, v in sandbox.items() if k in (\"total\", \"final_answer\")}\nprint(len(code.splitlines()), \"lines of code executed\")\nprint(observation)\n",
+  "under_the_hood": {
+    "summary": "A code-action agent asks the model to reply with a Python code block, extracts the code from between the fences, executes it in a restricted environment where the tools are ordinary functions, and feeds the printed output back as the next observation.",
+    "steps": [
+      {
+        "title": "The action is a program",
+        "body": "Instead of one JSON tool call per turn, the model writes code such as 'result = mul(6, 7)' or a loop that calls search() three times and filters the results. One action can combine several tools with variables, loops and conditions."
+      },
+      {
+        "title": "Extract the code block",
+        "body": "The harness finds the opening ```py fence, skips past it, and finds the next closing ``` after that. Everything between is the code; any chat text around it is ignored.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "model: 'Sure! ```py\\nresult = 6 * 7\\n``` done'",
+              "extract_code -> 'result = 6 * 7'",
+              "run -> observation: 42"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Run it with tools in scope",
+        "body": "The code is executed with the tool functions injected into its namespace, and stdout or the final value is captured as the observation. Frameworks such as smolagents restrict which imports and operations the code may use, or run it in a sandbox.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "model reply"
+              },
+              {
+                "label": "extract ```py block"
+              },
+              {
+                "label": "execute",
+                "detail": "tools as functions"
+              },
+              {
+                "label": "capture output"
+              },
+              {
+                "label": "append observation"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Errors are observations too",
+        "body": "If the code raises, the traceback text is returned to the model as the observation. The model can read 'NameError: name x is not defined' and fix its next block, the same self-correction loop a human uses."
+      },
+      {
+        "title": "Why it often beats JSON",
+        "body": "Code expresses composition directly: one action can do what would take several JSON round-trips, and models have seen enormous amounts of code during training. The cost is safety: executing model-written code must be sandboxed.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "JSON tool call",
+              "code": "{'tool': 'mul', 'a': 6, 'b': 7}\none call per turn\nno loops or branches"
+            },
+            "right": {
+              "label": "Code action",
+              "code": "result = mul(6, 7)\nmany calls per turn\nfull Python control flow"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Code actions replace a rigid call format with a programming language. More expressive actions mean fewer turns, but the executor must be locked down."
+  }
 }

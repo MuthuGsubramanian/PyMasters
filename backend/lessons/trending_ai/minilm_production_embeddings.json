@@ -249,5 +249,91 @@
       "correct": 0
     }
   ],
-  "uth_example": "calls = {\"model\": 0}\n\ndef fake_encode(texts):                    # stands in for model.encode(batch)\n    calls[\"model\"] += 1\n    return {t: [round(len(t) / 10, 2), -0.5, 0.25] for t in texts}\n\ncache = {}\n\ndef embed(texts):\n    missing = [t for t in dict.fromkeys(texts) if t not in cache]\n    if missing:\n        cache.update(fake_encode(missing))  # one batched call for all new texts\n    return [cache[t] for t in texts]\n\nembed([\"reset password\", \"billing help\"])\nembed([\"billing help\", \"reset password\", \"billing help\"])     # all cache hits\n\nvec = cache[\"reset password\"]\nscale = max(abs(x) for x in vec) / 127     # int8: 1 byte per number instead of 4\nq = [round(x / scale) for x in vec]\napprox = [round(i * scale, 3) for i in q]\nprint(\"model calls:\", calls[\"model\"], \"| cached texts:\", len(cache))\nprint(\"float:\", vec, \"-> int8:\", q, \"-> back:\", approx)\n"
+  "uth_example": "calls = {\"model\": 0}\n\ndef fake_encode(texts):                    # stands in for model.encode(batch)\n    calls[\"model\"] += 1\n    return {t: [round(len(t) / 10, 2), -0.5, 0.25] for t in texts}\n\ncache = {}\n\ndef embed(texts):\n    missing = [t for t in dict.fromkeys(texts) if t not in cache]\n    if missing:\n        cache.update(fake_encode(missing))  # one batched call for all new texts\n    return [cache[t] for t in texts]\n\nembed([\"reset password\", \"billing help\"])\nembed([\"billing help\", \"reset password\", \"billing help\"])     # all cache hits\n\nvec = cache[\"reset password\"]\nscale = max(abs(x) for x in vec) / 127     # int8: 1 byte per number instead of 4\nq = [round(x / scale) for x in vec]\napprox = [round(i * scale, 3) for i in q]\nprint(\"model calls:\", calls[\"model\"], \"| cached texts:\", len(cache))\nprint(\"float:\", vec, \"-> int8:\", q, \"-> back:\", approx)\n",
+  "under_the_hood": {
+    "summary": "A production wrapper around all-MiniLM-L6-v2 caches vectors by a hash of each text, encodes only cache misses in batches, stacks results into one matrix, and can store or compute in int8 to cut memory roughly fourfold with a small accuracy cost.",
+    "steps": [
+      {
+        "title": "Cache by content hash",
+        "body": "key = sha256(text). If the key is in the cache, reuse the stored vector; otherwise encode it. Re-running nightly ingestion over mostly unchanged documents then encodes only what changed.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "texts"
+              },
+              {
+                "label": "hash each"
+              },
+              {
+                "label": "cache hit?",
+                "detail": "reuse vector"
+              },
+              {
+                "label": "misses",
+                "detail": "encode in batches"
+              },
+              {
+                "label": "store + return"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Batch the misses",
+        "body": "Encoding 64 texts in one call uses the hardware far better than 64 single calls, because one matrix multiply serves all of them. encode(texts, batch_size=64) also sorts by length internally to reduce padding."
+      },
+      {
+        "title": "The index is one matrix",
+        "body": "Vectors are stacked into an N x 384 float32 numpy array: 1,536 bytes per row, so 100,000 chunks take about 154 MB. A query is one matrix-vector product over it.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "rows",
+                "value": "100,000"
+              },
+              {
+                "variable": "dims",
+                "value": "384"
+              },
+              {
+                "variable": "float32",
+                "value": "4 bytes"
+              },
+              {
+                "variable": "index",
+                "value": "~154 MB"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "int8 quantization",
+        "body": "Store each vector as int8 with a scale: q = round(x / scale), where scale maps the value range onto -127..127. The index shrinks from 4 bytes to 1 byte per number, about 38 MB for 100,000 chunks. Dequantize (q x scale) or score in int8 directly.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "float32 index",
+              "code": "4 bytes per value\n~154 MB / 100k chunks"
+            },
+            "right": {
+              "label": "int8 index",
+              "code": "1 byte per value\n~38 MB / 100k chunks"
+            }
+          }
+        }
+      },
+      {
+        "title": "Measure the ranking change",
+        "body": "Rounding moves scores slightly, which can swap close neighbours. Compare the top-k results of float32 and int8 search on real queries; if overlap stays high, keep the smaller index."
+      }
+    ],
+    "takeaway": "In production the model stays the same; the engineering is in caching, batching and storage precision. Each one cuts cost without touching the embeddings' meaning."
+  }
 }

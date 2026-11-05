@@ -237,5 +237,61 @@
       "correct": 2
     }
   ],
-  "uth_example": "def tokens(text):\n    return len(text.split()) + 1\n\nsystem = \"You are a cooking assistant\"\nhistory = [\n    \"user: how long to boil eggs\",\n    \"bot: about 9 minutes for hard boiled eggs\",\n    \"user: and soft boiled\",\n    \"bot: around 6 minutes then cool in water\",\n    \"user: can I use the same pot for rice\",\n]\nwindow = 30\nbudget = window - tokens(system)              # the system prompt is always sent\n\nkept, used = [], 0\nfor msg in reversed(history):                 # newest first\n    cost = tokens(msg)\n    if used + cost > budget:\n        break\n    kept.insert(0, msg)\n    used += cost\n\nprint(f\"kept {len(kept)} of {len(history)} messages, {used + tokens(system)}/{window} tokens\")\nprint(kept)\n"
+  "uth_example": "def tokens(text):\n    return len(text.split()) + 1\n\nsystem = \"You are a cooking assistant\"\nhistory = [\n    \"user: how long to boil eggs\",\n    \"bot: about 9 minutes for hard boiled eggs\",\n    \"user: and soft boiled\",\n    \"bot: around 6 minutes then cool in water\",\n    \"user: can I use the same pot for rice\",\n]\nwindow = 30\nbudget = window - tokens(system)              # the system prompt is always sent\n\nkept, used = [], 0\nfor msg in reversed(history):                 # newest first\n    cost = tokens(msg)\n    if used + cost > budget:\n        break\n    kept.insert(0, msg)\n    used += cost\n\nprint(f\"kept {len(kept)} of {len(history)} messages, {used + tokens(system)}/{window} tokens\")\nprint(kept)\n",
+  "under_the_hood": {
+    "summary": "Before each call the app counts tokens per message, walks the history from newest to oldest adding messages while the total stays within the budget, stops at the first one that does not fit, and sends the kept messages in their original order.",
+    "steps": [
+      {
+        "title": "The window is shared",
+        "body": "The context window holds the system prompt, the history and the model's reply. So the budget for history is the window minus the system prompt minus the tokens reserved for the answer (max_tokens); forgetting the last part makes replies cut off."
+      },
+      {
+        "title": "Count tokens per message",
+        "body": "Each message's cost is measured with the model's tokenizer (or estimated, roughly 4 characters per English token). Here the messages cost 40, 30, 25 and 20 tokens, oldest to newest.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "message costs",
+            "data": [
+              40,
+              30,
+              25,
+              20
+            ],
+            "labels": [
+              "m1",
+              "m2",
+              "m3",
+              "m4"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Keep the newest that fit",
+        "body": "With a budget of 60, walk backwards: m4 (20, total 20), m3 (25, total 45), m2 would make 75 > 60, so stop. Keep [m3, m4] and restore their original order before sending.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "budget 60 | msgs (40, 30, 25, 20)",
+              "m4: 20 -> total 20 keep",
+              "m3: 25 -> total 45 keep",
+              "m2: 30 -> total 75 stop",
+              "-> ['m3', 'm4']"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why stop instead of skipping",
+        "body": "Taking a smaller, older message after skipping a bigger newer one would leave a hole in the conversation. Stopping at the first misfit keeps a contiguous recent tail, which the model can follow."
+      },
+      {
+        "title": "What production adds",
+        "body": "The system prompt is always kept, pinned facts can be protected, and dropped turns are often summarised into one short message, so old context survives in compressed form instead of vanishing."
+      }
+    ],
+    "takeaway": "Context budgeting is a greedy walk from the newest message backwards. Reserve room for the reply, keep a contiguous tail, and summarise what falls off."
+  }
 }

@@ -223,5 +223,72 @@
       "correct": 1
     }
   ],
-  "uth_example": "window = 4\ncache, memory_log = [], []\n\nconversation = \"hi how are you today I am fine thanks for asking\".split()\nfor t, token in enumerate(conversation):\n    cache.append((t, token))                 # new key/value for this token\n    if len(cache) > window:\n        cache = cache[-window:]              # evict the oldest\n    memory_log.append(len(cache))\n\nprint(\"cache now:\", cache)\nprint(\"cache size per step:\", memory_log)\nprint(\"the model can no longer attend to:\", conversation[: len(conversation) - window])\n"
+  "uth_example": "window = 4\ncache, memory_log = [], []\n\nconversation = \"hi how are you today I am fine thanks for asking\".split()\nfor t, token in enumerate(conversation):\n    cache.append((t, token))                 # new key/value for this token\n    if len(cache) > window:\n        cache = cache[-window:]              # evict the oldest\n    memory_log.append(len(cache))\n\nprint(\"cache now:\", cache)\nprint(\"cache size per step:\", memory_log)\nprint(\"the model can no longer attend to:\", conversation[: len(conversation) - window])\n",
+  "under_the_hood": {
+    "summary": "A sliding-window cache keeps the keys and values of only the most recent `window` tokens and evicts the oldest whenever a new token is added, so memory stays fixed while attention can only reach back that many tokens.",
+    "steps": [
+      {
+        "title": "Unbounded growth",
+        "body": "A normal KV cache grows by one entry per token forever. An hour-long chat or a streaming transcript would eventually exceed any GPU's memory."
+      },
+      {
+        "title": "Keep the last window",
+        "body": "After appending the new token's K and V, if the cache holds more than window entries, keep only cache[-window:]. With window = 3, [1, 2, 3, 4, 5, 6] becomes [4, 5, 6].",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "cache after eviction",
+            "data": [
+              4,
+              5,
+              6
+            ],
+            "labels": [
+              "tok4",
+              "tok5",
+              "tok6"
+            ],
+            "title": "window = 3; tokens 1-3 evicted"
+          }
+        }
+      },
+      {
+        "title": "A ring buffer in practice",
+        "body": "Real implementations do not shift arrays; they write position p into slot p mod window, overwriting the oldest entry. Memory is allocated once and never grows.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "window = 4096 slots",
+              "token 4096 -> slot 0 (overwrites token 0)",
+              "token 4097 -> slot 1",
+              "memory: constant"
+            ]
+          }
+        }
+      },
+      {
+        "title": "What is lost, and what is not",
+        "body": "A token can no longer attend directly to anything older than the window. In models like Mistral 7B, stacked layers still pass information further back indirectly, since each layer's window starts from outputs that already mixed in earlier tokens."
+      },
+      {
+        "title": "Attention sinks",
+        "body": "Simply dropping the very first tokens can destabilise models trained with full attention, because they put large attention weight on the first positions. StreamingLLM-style caches keep a few initial 'sink' tokens plus the recent window.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Plain sliding window",
+              "code": "keep last W tokens\nfirst tokens evicted"
+            },
+            "right": {
+              "label": "Sink + window",
+              "code": "keep first few tokens\n+ last W tokens"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "A sliding window caps the cache at a constant size by forgetting the oldest tokens. You trade direct long-range recall for memory that never grows."
+  }
 }

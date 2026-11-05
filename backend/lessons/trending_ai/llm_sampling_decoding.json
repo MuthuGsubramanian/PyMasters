@@ -244,5 +244,85 @@
       "correct": 3
     }
   ],
-  "uth_example": "import math\nimport random\n\nvocab = [\"pizza\", \"pasta\", \"salad\", \"soup\", \"cake\"]\nlogits = [3.2, 2.9, 1.0, 0.5, -1.0]\n\ngreedy = vocab[max(range(len(logits)), key=lambda i: logits[i])]\n\ndef probs(T):\n    exps = [math.exp(x / T) for x in logits]\n    return [round(e / sum(exps), 3) for e in exps]\n\ntop_k = sorted(range(len(logits)), key=lambda i: logits[i], reverse=True)[:2]\nrng = random.Random(7)                      # fixed seed: same \"random\" pick every run\nsampled = rng.choices([vocab[i] for i in top_k], weights=[probs(1.0)[i] for i in top_k])[0]\n\nprint(\"greedy:\", greedy)\nprint(\"T=0.5:\", probs(0.5), \"| T=2:\", probs(2.0))\nprint(\"top-2 candidates:\", [vocab[i] for i in top_k], \"-> sampled:\", sampled)\n"
+  "uth_example": "import math\nimport random\n\nvocab = [\"pizza\", \"pasta\", \"salad\", \"soup\", \"cake\"]\nlogits = [3.2, 2.9, 1.0, 0.5, -1.0]\n\ngreedy = vocab[max(range(len(logits)), key=lambda i: logits[i])]\n\ndef probs(T):\n    exps = [math.exp(x / T) for x in logits]\n    return [round(e / sum(exps), 3) for e in exps]\n\ntop_k = sorted(range(len(logits)), key=lambda i: logits[i], reverse=True)[:2]\nrng = random.Random(7)                      # fixed seed: same \"random\" pick every run\nsampled = rng.choices([vocab[i] for i in top_k], weights=[probs(1.0)[i] for i in top_k])[0]\n\nprint(\"greedy:\", greedy)\nprint(\"T=0.5:\", probs(0.5), \"| T=2:\", probs(2.0))\nprint(\"top-2 candidates:\", [vocab[i] for i in top_k], \"-> sampled:\", sampled)\n",
+  "under_the_hood": {
+    "summary": "At each step the model outputs a logit for every vocabulary token; the decoding strategy picks one, either the maximum (greedy) or a random draw from a softmax after dividing logits by a temperature and keeping only the top-k tokens.",
+    "steps": [
+      {
+        "title": "The model hands you scores",
+        "body": "For a 4-token toy vocabulary the logits might be [1.0, 3.0, 2.0, 0.5]. The model's job ends here; choosing a token is the decoder's job, and different choices give different text from the same model.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "logits",
+            "data": [
+              1.0,
+              3.0,
+              2.0,
+              0.5
+            ],
+            "labels": [
+              "t0",
+              "t1",
+              "t2",
+              "t3"
+            ],
+            "highlight": [
+              1
+            ]
+          }
+        }
+      },
+      {
+        "title": "Greedy: take the maximum",
+        "body": "argmax picks token 1 every time. Output is deterministic and good for extraction or code, but long greedy outputs can fall into loops because the same context keeps producing the same choice."
+      },
+      {
+        "title": "Temperature reshapes the odds",
+        "body": "Divide logits by T before softmax. T < 1 sharpens toward the top token, T > 1 flattens so unlikely tokens get chosen more often, and T approaching 0 becomes greedy."
+      },
+      {
+        "title": "Top-k cuts the tail",
+        "body": "Keep only the k highest logits and set the rest to -inf. With k = 2, only tokens 1 and 2 are eligible; softmax over [3.0, 2.0] gives [0.731, 0.269], and the draw happens between those two only.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "logits: [1.0, 3.0, 2.0, 0.5]",
+              "greedy -> token 1",
+              "top-2 eligible -> {1, 2}",
+              "probs after softmax -> [0.731, 0.269]"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Draw and repeat",
+        "body": "A random number picks a token according to those probabilities; it is appended and the model runs again. Top-p (nucleus) sampling works the same way but keeps the smallest set of tokens whose probabilities sum to p.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "logits"
+              },
+              {
+                "label": "/ temperature"
+              },
+              {
+                "label": "top-k / top-p filter"
+              },
+              {
+                "label": "softmax"
+              },
+              {
+                "label": "sample, append, repeat"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "The model proposes; the decoder disposes. Greedy, temperature and top-k are three small transformations of one score vector, and they decide how predictable the text is."
+  }
 }

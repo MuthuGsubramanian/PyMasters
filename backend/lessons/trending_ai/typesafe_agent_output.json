@@ -229,5 +229,76 @@
       "correct": 3
     }
   ],
-  "uth_example": "import json\n\nschema = {\"name\": str, \"age\": int, \"member\": bool}\nreplies = [\n    '{\"name\": \"Asha\", \"age\": \"42\", \"member\": true}',\n    '{\"name\": \"Ravi\", \"member\": false}',\n    '{\"name\": \"Kiran\", \"age\": \"forty\", \"member\": true}',\n]\n\naccepted, rejected = [], []\nfor raw in replies:\n    data = json.loads(raw)\n    try:\n        clean = {}\n        for field, typ in schema.items():\n            if field not in data:\n                raise ValueError(f\"missing {field}\")\n            clean[field] = typ(data[field])          # coerce \"42\" -> 42\n        accepted.append(clean)\n    except ValueError as err:\n        rejected.append((data[\"name\"], str(err)))\n\nprint(\"accepted:\", accepted)\nprint(\"rejected:\", rejected)                      # retry these with the error message\n"
+  "uth_example": "import json\n\nschema = {\"name\": str, \"age\": int, \"member\": bool}\nreplies = [\n    '{\"name\": \"Asha\", \"age\": \"42\", \"member\": true}',\n    '{\"name\": \"Ravi\", \"member\": false}',\n    '{\"name\": \"Kiran\", \"age\": \"forty\", \"member\": true}',\n]\n\naccepted, rejected = [], []\nfor raw in replies:\n    data = json.loads(raw)\n    try:\n        clean = {}\n        for field, typ in schema.items():\n            if field not in data:\n                raise ValueError(f\"missing {field}\")\n            clean[field] = typ(data[field])          # coerce \"42\" -> 42\n        accepted.append(clean)\n    except ValueError as err:\n        rejected.append((data[\"name\"], str(err)))\n\nprint(\"accepted:\", accepted)\nprint(\"rejected:\", rejected)                      # retry these with the error message\n",
+  "under_the_hood": {
+    "summary": "A type-safe agent checks the model's output against a schema before using it: every required field must be present, values are coerced to the declared type where safe ('42' -> 42) and rejected where not ('forty-two'), and only a validated object is passed on.",
+    "steps": [
+      {
+        "title": "A schema is a contract",
+        "body": "schema = {'name': str, 'age': int} states which fields must exist and what type each must have. Downstream code is written against this contract, not against whatever the model happened to produce."
+      },
+      {
+        "title": "Check presence",
+        "body": "Walk the schema; for each field missing from the model's data raise ValueError('missing age'). A missing field is caught here instead of as a KeyError deep in the application.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "model output dict"
+              },
+              {
+                "label": "all fields present?"
+              },
+              {
+                "label": "coerce types"
+              },
+              {
+                "label": "valid -> typed object"
+              },
+              {
+                "label": "invalid -> error"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Coerce where it is safe",
+        "body": "int('42') succeeds, so '42' becomes 42. int('forty-two') raises, so the value is rejected rather than guessed. Pydantic's default (lax) mode follows the same idea: it converts unambiguous representations and refuses the rest.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "validate({'name':'Ada','age':'42'}) -> {'name': 'Ada', 'age': 42}",
+              "validate({'name':'Ada','age':'forty-two'}) -> ValueError",
+              "validate({'name':'Ada'}) -> ValueError: missing 'age'"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Turn failures into retries",
+        "body": "Frameworks such as Pydantic AI send the validation error back to the model ('age: input should be a valid integer') and ask again, up to a retry limit. Most format mistakes are fixed on the second try."
+      },
+      {
+        "title": "Typed all the way down",
+        "body": "After validation the value is a real int and the object matches the schema, so type checkers and the rest of the code can rely on it. The untrusted text never reaches the database directly.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Raw LLM output",
+              "code": "{'age': '42'}\nuntyped, untrusted"
+            },
+            "right": {
+              "label": "Validated",
+              "code": "{'age': 42}\nreal int, safe to use"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Treat model output like user input: validate against a schema, coerce only what is unambiguous, and retry or fail loudly on the rest."
+  }
 }

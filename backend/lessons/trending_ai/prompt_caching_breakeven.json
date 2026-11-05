@@ -241,5 +241,78 @@
       "correct": 3
     }
   ],
-  "uth_example": "READ = 0.1                                  # a cache hit costs 10% of the normal price\noptions = {\"5-minute cache\": 1.25, \"1-hour cache\": 2.0}   # write multipliers\n\nbreakeven = {}\nfor name, write_mult in options.items():\n    for n in range(1, 21):\n        uncached = n * 1.0\n        cached = write_mult + (n - 1) * READ\n        if cached < uncached:\n            breakeven[name] = (n, round(cached, 2), uncached)\n            break\n\nfor name, (n, cached, uncached) in breakeven.items():\n    print(f\"{name}: pays off at call {n} ({cached} vs {uncached} prompt-costs)\")\n"
+  "uth_example": "READ = 0.1                                  # a cache hit costs 10% of the normal price\noptions = {\"5-minute cache\": 1.25, \"1-hour cache\": 2.0}   # write multipliers\n\nbreakeven = {}\nfor name, write_mult in options.items():\n    for n in range(1, 21):\n        uncached = n * 1.0\n        cached = write_mult + (n - 1) * READ\n        if cached < uncached:\n            breakeven[name] = (n, round(cached, 2), uncached)\n            break\n\nfor name, (n, cached, uncached) in breakeven.items():\n    print(f\"{name}: pays off at call {n} ({cached} vs {uncached} prompt-costs)\")\n",
+  "under_the_hood": {
+    "summary": "On providers that charge a premium to write a cache entry, caching pays off once the read discounts on later calls exceed that premium: with a 1.25x write and 0.1x reads it wins from the second call, with a 2x write from the third.",
+    "steps": [
+      {
+        "title": "The first call writes",
+        "body": "The first request with a new prefix must process it fully and store it. On Anthropic's API, for example, writing a 5-minute cache entry costs 1.25x the base input rate and a 1-hour entry 2x; later reads cost 0.1x. Other providers price caching differently, some with no write premium."
+      },
+      {
+        "title": "Cost of n calls",
+        "body": "With caching: write + (n - 1) x 0.1 for the prefix. Without: n x 1.0. Compare the two for n = 1, 2, 3 and find the first n where caching is cheaper.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "1.25x write:",
+              "n=1: 1.25 vs 1.0 -> caching loses",
+              "n=2: 1.35 vs 2.0 -> caching wins",
+              "2.0x write:",
+              "n=2: 2.10 vs 2.0 -> loses",
+              "n=3: 2.20 vs 3.0 -> wins"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Breakeven calls",
+        "body": "cache_breakeven_calls(1.25) = 2 and cache_breakeven_calls(2.0) = 3. After breakeven, each extra call saves 0.9 of the prefix cost.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "breakeven (calls)",
+            "data": [
+              2,
+              3
+            ],
+            "labels": [
+              "5-min (1.25x)",
+              "1-hour (2x)"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Choose the TTL by traffic",
+        "body": "The longer TTL costs more to write but survives longer gaps between calls. If calls arrive every minute, the 5-minute cache is refreshed constantly and is cheaper; if they come every 20 minutes, only the 1-hour cache is still there to be read."
+      },
+      {
+        "title": "When not to cache",
+        "body": "A prefix used exactly once costs more with a write premium than without. Mark for caching only content that will genuinely repeat, such as system prompts, tool definitions and shared documents.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "expected reuses"
+              },
+              {
+                "label": "write premium"
+              },
+              {
+                "label": "breakeven n"
+              },
+              {
+                "label": "reuses > n?",
+                "detail": "cache it"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Caching has a cover charge. A one-line loop finds the breakeven, and for any prefix reused even a few times the discount quickly dominates."
+  }
 }

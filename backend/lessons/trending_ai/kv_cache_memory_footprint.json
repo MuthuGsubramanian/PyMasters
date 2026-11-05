@@ -228,5 +228,101 @@
       "correct": 0
     }
   ],
-  "uth_example": "models = {\n    \"small-1B\": {\"layers\": 16, \"heads\": 16, \"head_dim\": 64},\n    \"mid-8B\": {\"layers\": 32, \"heads\": 32, \"head_dim\": 128},\n}\nbytes_fp16 = 2\n\ntable = []\nfor name, m in models.items():\n    per_token = 2 * m[\"layers\"] * m[\"heads\"] * m[\"head_dim\"] * bytes_fp16   # K and V\n    for seq_len in [4_096, 128_000]:\n        gb = round(per_token * seq_len / 1e9, 2)\n        table.append((name, seq_len, per_token, gb))\n\nfor name, seq_len, per_token, gb in table:\n    print(f\"{name:9} {seq_len:>7} tokens: {per_token:>7} B/token -> {gb} GB\")\n"
+  "uth_example": "models = {\n    \"small-1B\": {\"layers\": 16, \"heads\": 16, \"head_dim\": 64},\n    \"mid-8B\": {\"layers\": 32, \"heads\": 32, \"head_dim\": 128},\n}\nbytes_fp16 = 2\n\ntable = []\nfor name, m in models.items():\n    per_token = 2 * m[\"layers\"] * m[\"heads\"] * m[\"head_dim\"] * bytes_fp16   # K and V\n    for seq_len in [4_096, 128_000]:\n        gb = round(per_token * seq_len / 1e9, 2)\n        table.append((name, seq_len, per_token, gb))\n\nfor name, seq_len, per_token, gb in table:\n    print(f\"{name:9} {seq_len:>7} tokens: {per_token:>7} B/token -> {gb} GB\")\n",
+  "under_the_hood": {
+    "summary": "For every token, every layer stores one key and one value vector per KV head, so the cache costs 2 x layers x kv_heads x head_dim x bytes per value for each token, growing linearly with the context length.",
+    "steps": [
+      {
+        "title": "What is stored",
+        "body": "In each layer and for each KV head, the cache keeps a key vector and a value vector of head_dim numbers for every token seen so far. Nothing is shared across layers, because each layer computes its own K and V."
+      },
+      {
+        "title": "Per-token cost",
+        "body": "per_token = 2 x num_layers x num_heads x head_dim x bytes. For 32 layers, 32 heads, head_dim 128 in bf16: 2 x 32 x 32 x 128 x 2 = 524,288 bytes, exactly 0.5 MiB per token.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "K and V",
+                "value": "2"
+              },
+              {
+                "variable": "layers",
+                "value": "32"
+              },
+              {
+                "variable": "heads",
+                "value": "32"
+              },
+              {
+                "variable": "head_dim",
+                "value": "128"
+              },
+              {
+                "variable": "bytes (bf16)",
+                "value": "2"
+              },
+              {
+                "variable": "per token",
+                "value": "524,288 B"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Multiply by the context",
+        "body": "At 4,096 tokens: 524,288 x 4,096 = 2.15 GB. At 8,192 tokens it doubles to 4.29 GB. The relation is linear: double the conversation, double the cache.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "cache size (bf16)",
+            "data": [
+              "2.15 GB",
+              "4.29 GB",
+              "17.2 GB"
+            ],
+            "labels": [
+              "4K tokens",
+              "8K tokens",
+              "32K tokens"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Batch multiplies it again",
+        "body": "A server holding 16 conversations at 4K tokens each needs 16 caches, about 34 GB for this shape, often more than the model's own weights. That is why long-context serving is memory-bound."
+      },
+      {
+        "title": "The levers",
+        "body": "Each factor in the formula is a design knob: fewer KV heads (GQA, MQA), fewer bytes per value (int8 or fp8 KV cache), fewer tokens kept (sliding windows), or paging the cache in blocks so memory is not reserved for unused length.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "fewer KV heads",
+                "detail": "GQA"
+              },
+              {
+                "label": "fewer bytes",
+                "detail": "int8/fp8 cache"
+              },
+              {
+                "label": "fewer tokens",
+                "detail": "sliding window"
+              },
+              {
+                "label": "no waste",
+                "detail": "paged blocks"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "The KV cache bill is one multiplication. Learn it, and every long-context technique reads as an attack on one of its factors."
+  }
 }

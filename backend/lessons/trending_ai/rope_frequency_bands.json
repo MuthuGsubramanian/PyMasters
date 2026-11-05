@@ -243,5 +243,75 @@
       "correct": 3
     }
   ],
-  "uth_example": "head_dim, base = 8, 10_000\npairs = range(head_dim // 2)\n\nthetas = {i: round(base ** (-(2 * i) / head_dim), 6) for i in pairs}\n\nangles = {}\nfor pos in [1, 10, 100]:\n    angles[pos] = [round(pos * thetas[i], 4) for i in pairs]\n\nprint(\"rotation speed per pair:\", thetas)\nfor pos, a in angles.items():\n    print(f\"position {pos:>3}: angles {a}\")      # pair 0 spins fast, pair 3 barely moves\n"
+  "uth_example": "head_dim, base = 8, 10_000\npairs = range(head_dim // 2)\n\nthetas = {i: round(base ** (-(2 * i) / head_dim), 6) for i in pairs}\n\nangles = {}\nfor pos in [1, 10, 100]:\n    angles[pos] = [round(pos * thetas[i], 4) for i in pairs]\n\nprint(\"rotation speed per pair:\", thetas)\nfor pos, a in angles.items():\n    print(f\"position {pos:>3}: angles {a}\")      # pair 0 spins fast, pair 3 barely moves\n",
+  "under_the_hood": {
+    "summary": "RoPE splits each query and key head vector into pairs of numbers and rotates pair i by the angle position x theta_i, where theta_i = base^(-2i / head_dim); low pairs rotate fast and high pairs rotate slowly, like clock hands at different speeds.",
+    "steps": [
+      {
+        "title": "Rotate, do not add",
+        "body": "Classic positional encoding adds a vector to the embedding once. RoPE leaves embeddings alone and, inside every attention layer, rotates the query and key vectors by an angle that depends on their position, just before the dot product."
+      },
+      {
+        "title": "Pairs of dimensions",
+        "body": "A head vector of head_dim = 128 numbers is treated as 64 two-dimensional pairs. Each pair is rotated like a point on a plane by its own angle.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "head vector as pairs",
+            "data": [
+              "(x0, x1)",
+              "(x2, x3)",
+              "...",
+              "(x126, x127)"
+            ],
+            "labels": [
+              "pair 0",
+              "pair 1",
+              "...",
+              "pair 63"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Each pair has its own frequency",
+        "body": "theta_i = base^(-2i / head_dim) with base = 10000. Pair 0 has theta = 1.0 radian per position, pair 32 has 0.01, pair 63 about 0.000115.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "rope_theta(0, 128)  -> 1.0",
+              "rope_theta(32, 128) -> 0.01",
+              "rope_theta(63, 128) -> 0.000115"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Angle grows with position",
+        "body": "At position pos, pair i is rotated by pos x theta_i. Pair 0 swings 1 radian per token, so it distinguishes nearby tokens; pair 63 barely moves over thousands of tokens, so it tracks coarse, long-range position.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "angle at pos = 100",
+            "data": [
+              100.0,
+              1.0,
+              0.0115
+            ],
+            "labels": [
+              "pair 0",
+              "pair 32",
+              "pair 63"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Same frequencies, every layer and head",
+        "body": "The rotation has no learned parameters; the frequencies are fixed by base and head_dim. Llama, Qwen and Mistral all use this scheme, differing mainly in the base value."
+      }
+    ],
+    "takeaway": "RoPE encodes position as rotation, with a spectrum of speeds across dimension pairs. Fast pairs resolve fine position; slow pairs cover long distances."
+  }
 }

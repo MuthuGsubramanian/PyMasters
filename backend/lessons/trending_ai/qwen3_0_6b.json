@@ -316,5 +316,73 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Running Qwen3-0.6B on a laptop CPU means its roughly 1.2 GB of bf16 weights must be read from memory for every generated token, so speed is set mostly by memory bandwidth; a chat template frames the conversation and a thinking switch decides whether it reasons first.",
+    "steps": [
+      {
+        "title": "Load once",
+        "body": "AutoModelForCausalLM.from_pretrained('Qwen/Qwen3-0.6B') reads the weights into RAM, about 1.2 GB at 2 bytes per parameter. A 4-bit build brings that to roughly 0.4 GB, small enough for phones and single-board computers."
+      },
+      {
+        "title": "ChatML framing",
+        "body": "apply_chat_template wraps messages as <|im_start|>user ... <|im_end|> and opens an assistant turn. The model was trained on exactly this format, which is how it knows where your question ends and its answer begins.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "<|im_start|>user",
+              "Explain recursion in one line.<|im_end|>",
+              "<|im_start|>assistant"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why decoding speed is about bandwidth",
+        "body": "Each new token needs one pass through all layers, which reads essentially every weight once. If a laptop moves about 20 GB/s from RAM, 1.2 GB per token caps generation near 16 tokens per second, before any compute cost. Halving bytes per weight roughly doubles that ceiling.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "weights read per token",
+                "value": "~1.2 GB"
+              },
+              {
+                "variable": "memory bandwidth",
+                "value": "~20 GB/s (example)"
+              },
+              {
+                "variable": "upper bound",
+                "value": "~16 tokens/s"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Thinking on or off",
+        "body": "With enable_thinking=True the model writes <think>...</think> reasoning before answering, which helps on maths and logic but costs extra tokens, and on a CPU tokens are the expensive part. Turn it off for quick replies.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Thinking on",
+              "code": "<think> reasoning </think> answer\nbetter on hard questions\nmore tokens, slower"
+            },
+            "right": {
+              "label": "Thinking off",
+              "code": "answer directly\nfast, cheap\nfine for simple chat"
+            }
+          }
+        }
+      },
+      {
+        "title": "Offline and private",
+        "body": "After the first download nothing leaves the machine: no API key, no per-token bill. The constraints become RAM, bandwidth and the limits of a small model's knowledge."
+      }
+    ],
+    "takeaway": "On a laptop, an LLM's speed is mostly how fast memory can stream its weights. Small, quantized models stream faster, which is why sub-1B models feel usable on CPUs."
+  }
 }

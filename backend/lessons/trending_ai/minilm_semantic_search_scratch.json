@@ -233,5 +233,76 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Semantic search from scratch encodes every document once into normalised 384-d vectors, encodes the query the same way, takes dot products with all documents, and returns the indices of the highest scores.",
+    "steps": [
+      {
+        "title": "Why this small model",
+        "body": "all-MiniLM-L6-v2 has about 22.7M parameters, 6 layers and 384-d output, so it encodes text quickly on a plain CPU. Smaller vectors also mean a smaller index and faster scoring."
+      },
+      {
+        "title": "Encode the documents",
+        "body": "doc_vecs = model.encode(docs, normalize_embeddings=True) returns an array of shape (len(docs), 384) where every row has length 1.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "doc_vecs",
+            "data": [
+              "row 0: 384 floats",
+              "row 1: 384 floats",
+              "row 2: 384 floats"
+            ],
+            "title": "Shape (3, 384)"
+          }
+        }
+      },
+      {
+        "title": "Score with one product",
+        "body": "scores = doc_vecs @ q_vec gives one number per document. Because every vector has length 1, each score is the cosine similarity between the query and that document."
+      },
+      {
+        "title": "Rank",
+        "body": "np.argsort(-scores)[:k] returns the indices of the k best documents. A query like 'speed up my python' ranks 'performance optimisation tips' first even with no words in common.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "scores = [0.08, 0.64, 0.31]",
+              "ranking = [1, 2, 0]",
+              "(illustrative)"
+            ]
+          }
+        }
+      },
+      {
+        "title": "From script to index",
+        "body": "Save doc_vecs with np.save and the texts alongside, and the next run skips encoding. For millions of vectors, an approximate nearest-neighbour index (such as FAISS or HNSW) replaces the full product while keeping the same scores.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "docs"
+              },
+              {
+                "label": "encode once",
+                "detail": "save"
+              },
+              {
+                "label": "query encode"
+              },
+              {
+                "label": "dot products"
+              },
+              {
+                "label": "argsort top-k"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "The whole engine is encode, multiply, sort. Everything production adds, saving, ANN indexes, is about doing those three steps at scale."
+  }
 }

@@ -250,5 +250,58 @@
       "correct": 2
     }
   ],
-  "uth_example": "model = {\"layers\": 32, \"d\": 4096}\nplans = {\n    \"q,v only\": {\"matrices\": 2, \"r\": 8},\n    \"q,k,v,o\": {\"matrices\": 4, \"r\": 8},\n    \"q,k,v,o r=64\": {\"matrices\": 4, \"r\": 64},\n}\n\nfull = model[\"layers\"] * 4 * model[\"d\"] ** 2         # full fine-tune of attention\nbudget = {}\nfor name, p in plans.items():\n    lora = model[\"layers\"] * p[\"matrices\"] * p[\"r\"] * (2 * model[\"d\"])\n    budget[name] = (lora, round(lora / full * 100, 3))\n\nprint(f\"full attention fine-tune: {full:,} params\")\nfor name, (params, pct) in budget.items():\n    print(f\"{name:14} {params:>11,} params = {pct}%\")\n"
+  "uth_example": "model = {\"layers\": 32, \"d\": 4096}\nplans = {\n    \"q,v only\": {\"matrices\": 2, \"r\": 8},\n    \"q,k,v,o\": {\"matrices\": 4, \"r\": 8},\n    \"q,k,v,o r=64\": {\"matrices\": 4, \"r\": 64},\n}\n\nfull = model[\"layers\"] * 4 * model[\"d\"] ** 2         # full fine-tune of attention\nbudget = {}\nfor name, p in plans.items():\n    lora = model[\"layers\"] * p[\"matrices\"] * p[\"r\"] * (2 * model[\"d\"])\n    budget[name] = (lora, round(lora / full * 100, 3))\n\nprint(f\"full attention fine-tune: {full:,} params\")\nfor name, (params, pct) in budget.items():\n    print(f\"{name:14} {params:>11,} params = {pct}%\")\n",
+  "under_the_hood": {
+    "summary": "Applied to the Q, K, V and O projections of every layer, LoRA trains L x 4 x r x (d + d) parameters instead of L x 4 x d x d; for 32 layers, d = 4096 and r = 8 that is 8.4 million versus 2.1 billion, about 0.39%.",
+    "steps": [
+      {
+        "title": "Count the target matrices",
+        "body": "Each layer has four d x d attention projections (Q, K, V, O). A 32-layer model with d = 4096 has 128 of them. Many recipes also add LoRA to the MLP matrices, which changes the count but not the method."
+      },
+      {
+        "title": "LoRA per matrix",
+        "body": "For one d x d matrix at rank 8: 8 x (4096 + 4096) = 65,536 parameters. Multiply by 4 matrices and 32 layers: 8,388,608.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "per matrix = 8 x (4096 + 4096) = 65,536",
+              "lora_total = 32 x 4 x 65,536 = 8,388,608",
+              "full_total = 32 x 4 x 4096 x 4096 = 2,147,483,648"
+            ]
+          }
+        }
+      },
+      {
+        "title": "The percentage",
+        "body": "8,388,608 / 2,147,483,648 = 0.39%. Fewer than 1 in 250 of these weights receive gradients.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "trainable params",
+            "data": [
+              "2,147,483,648",
+              "8,388,608"
+            ],
+            "labels": [
+              "full (Q,K,V,O)",
+              "LoRA r=8"
+            ],
+            "highlight": [
+              1
+            ]
+          }
+        }
+      },
+      {
+        "title": "Where the memory goes",
+        "body": "With Adam each trainable parameter also needs gradient and two moment estimates. Freezing 99.6% of these matrices removes that state for them; the frozen base still needs memory for its weights and for activations during backprop."
+      },
+      {
+        "title": "Push it further with QLoRA",
+        "body": "Storing the frozen base in 4-bit and training LoRA adapters on top is QLoRA. Base weights shrink to a quarter of bf16, which is how mid-sized models are fine-tuned on a single consumer GPU."
+      }
+    ],
+    "takeaway": "Whole-model LoRA trains well under 1% of the targeted weights. The budget is a product of layers, matrices and rank, so each is a knob you can turn."
+  }
 }

@@ -242,5 +242,78 @@
       "correct": 3
     }
   ],
-  "uth_example": "d, k = 4096, 4096\ntable = []\nfor r in [4, 8, 16, 64]:\n    full = d * k\n    lora = r * (d + k)                     # B is d x r, A is r x k\n    table.append({\"rank\": r, \"lora_params\": lora,\n                  \"fraction\": f\"{lora / full:.3%}\", \"smaller_by\": round(full / lora)})\n\nfor row in table:\n    print(row)\n\ntiny_B = [[1], [2], [3]]                   # rank-1 update for a 3x3 matrix\ntiny_A = [[1, 0, -1]]\nupdate = [[b[0] * a for a in tiny_A[0]] for b in tiny_B]\nprint(\"rank-1 update from 6 numbers:\", update)\n"
+  "uth_example": "d, k = 4096, 4096\ntable = []\nfor r in [4, 8, 16, 64]:\n    full = d * k\n    lora = r * (d + k)                     # B is d x r, A is r x k\n    table.append({\"rank\": r, \"lora_params\": lora,\n                  \"fraction\": f\"{lora / full:.3%}\", \"smaller_by\": round(full / lora)})\n\nfor row in table:\n    print(row)\n\ntiny_B = [[1], [2], [3]]                   # rank-1 update for a 3x3 matrix\ntiny_A = [[1, 0, -1]]\nupdate = [[b[0] * a for a in tiny_A[0]] for b in tiny_B]\nprint(\"rank-1 update from 6 numbers:\", update)\n",
+  "under_the_hood": {
+    "summary": "LoRA freezes a weight matrix W (d x k) and learns its update as the product of two thin matrices B (d x r) and A (r x k), so the trainable parameters drop from d x k to r x (d + k) while the layer computes W x + B A x.",
+    "steps": [
+      {
+        "title": "A full update is huge",
+        "body": "Fine-tuning one 4,096 x 4,096 attention matrix the normal way means training 16,777,216 numbers, plus optimizer state for each. Across every matrix in every layer this approaches pre-training memory."
+      },
+      {
+        "title": "Low rank: a thin bottleneck",
+        "body": "LoRA writes the update as delta_W = B A, with B of shape d x r and A of shape r x k, and r small (8 or 16). Any product like this has rank at most r, the bet being that useful fine-tuning updates live in a low-dimensional subspace.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "shapes (d = k = 4096, r = 8)",
+            "data": [
+              "W: 4096 x 4096 (frozen)",
+              "B: 4096 x 8",
+              "A: 8 x 4096"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Count the parameters",
+        "body": "Full: d x k = 16,777,216. LoRA: r x (d + k) = 8 x 8,192 = 65,536. That is 256 times fewer trainable numbers for this matrix.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "lora_parameter_count(4096, 4096, 8)",
+              "full = 16,777,216",
+              "lora = 65,536",
+              "reduction = 256x"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Start as a no-op",
+        "body": "A is initialised with small random values and B with zeros, so B A = 0 and the model behaves exactly like the base model at step 0. Training then grows the update from nothing."
+      },
+      {
+        "title": "The forward pass",
+        "body": "h = W x + B (A x). Computing A x first produces an r-dimensional vector, which B maps back to d dimensions; this is cheap, and gradients flow only into A and B, never into W.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "x"
+              },
+              {
+                "label": "W x",
+                "detail": "frozen path"
+              },
+              {
+                "label": "A x",
+                "detail": "down to r"
+              },
+              {
+                "label": "B (A x)",
+                "detail": "back up to d"
+              },
+              {
+                "label": "sum"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "LoRA trains a thin detour around a frozen matrix. Rank r sets the detour's width and the parameter count; the base weights never change."
+  }
 }

@@ -243,5 +243,66 @@
       "correct": 1
     }
   ],
-  "uth_example": "rate = 3.00 / 1_000_000                    # $ per input token (illustrative)\nprefix = 20_000                            # long system prompt, reused every call\nquestions = {\"short\": 50, \"medium\": 800, \"long\": 6_000}\n\nreport = {}\nfor name, new_tokens in questions.items():\n    no_cache = (prefix + new_tokens) * rate\n    cached = prefix * rate * 0.1 + new_tokens * rate\n    report[name] = {\"no_cache\": round(no_cache, 4), \"cached\": round(cached, 4),\n                    \"saved\": f\"{(1 - cached / no_cache) * 100:.1f}%\"}\n\nfor name, row in report.items():\n    print(f\"{name:7} {row}\")\n"
+  "uth_example": "rate = 3.00 / 1_000_000                    # $ per input token (illustrative)\nprefix = 20_000                            # long system prompt, reused every call\nquestions = {\"short\": 50, \"medium\": 800, \"long\": 6_000}\n\nreport = {}\nfor name, new_tokens in questions.items():\n    no_cache = (prefix + new_tokens) * rate\n    cached = prefix * rate * 0.1 + new_tokens * rate\n    report[name] = {\"no_cache\": round(no_cache, 4), \"cached\": round(cached, 4),\n                    \"saved\": f\"{(1 - cached / no_cache) * 100:.1f}%\"}\n\nfor name, row in report.items():\n    print(f\"{name:7} {row}\")\n",
+  "under_the_hood": {
+    "summary": "With prompt caching the provider keeps the model's processed state (the KV cache) for a prompt prefix it has already seen; a later request starting with exactly the same prefix reuses that state instead of recomputing it, and the cached tokens are billed at a steep discount.",
+    "steps": [
+      {
+        "title": "Repeated prefixes are repeated work",
+        "body": "A support bot may send the same 20,000-token system prompt and documents before every 50-token question. Without caching, the model reprocesses all 20,050 tokens on every call."
+      },
+      {
+        "title": "What gets cached",
+        "body": "Processing a prompt produces keys and values for every token in every layer. Because of the causal mask, a prefix's K/V depend only on that prefix, so they can be stored and reused for any request that begins with the identical tokens.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "request"
+              },
+              {
+                "label": "prefix matches cache?"
+              },
+              {
+                "label": "yes: load stored K/V"
+              },
+              {
+                "label": "process only new tokens"
+              },
+              {
+                "label": "generate"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The match must be exact",
+        "body": "Caching works on the exact token sequence from the start of the prompt. Changing one character early, such as a timestamp in the system prompt, changes everything after it and causes a miss, so put stable content first and variable content last."
+      },
+      {
+        "title": "Cost arithmetic",
+        "body": "Providers bill cache reads at a fraction of the normal input rate; on Anthropic's API, for example, a cache read costs 0.1x the base input price. 20,000 cached tokens at 0.1x plus 50 new tokens at 1x bills like 2,050 tokens instead of 20,050, about 90% less on input.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "No cache",
+              "code": "20,000 prefix x 1.0\n+ 50 new x 1.0\n= 20,050 token-units"
+            },
+            "right": {
+              "label": "Cache hit",
+              "code": "20,000 prefix x 0.1\n+ 50 new x 1.0\n= 2,050 token-units"
+            }
+          }
+        }
+      },
+      {
+        "title": "Latency drops too",
+        "body": "Skipping the prefix's prefill means the first output token arrives sooner, often much sooner for long prefixes. Output tokens are still generated and billed normally."
+      }
+    ],
+    "takeaway": "Prompt caching reuses the K/V state of an identical prefix. Order prompts stable-first so the prefix matches, and long repeated contexts become cheap and fast."
+  }
 }

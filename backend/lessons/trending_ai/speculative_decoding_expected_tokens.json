@@ -226,5 +226,90 @@
       "correct": 1
     }
   ],
-  "uth_example": "def expected_tokens(alpha, k):\n    return round((1 - alpha ** (k + 1)) / (1 - alpha), 2)\n\nacceptance = {\"weak draft model\": 0.5, \"good draft model\": 0.8}\ntable = {}\nfor name, alpha in acceptance.items():\n    table[name] = {k: expected_tokens(alpha, k) for k in [1, 2, 4, 8]}\n\nfor name, row in table.items():\n    print(f\"{name:17} tokens per target pass by K: {row}\")\nprint(\"more drafts help only while the draft model keeps guessing right\")\n"
+  "uth_example": "def expected_tokens(alpha, k):\n    return round((1 - alpha ** (k + 1)) / (1 - alpha), 2)\n\nacceptance = {\"weak draft model\": 0.5, \"good draft model\": 0.8}\ntable = {}\nfor name, alpha in acceptance.items():\n    table[name] = {k: expected_tokens(alpha, k) for k in [1, 2, 4, 8]}\n\nfor name, row in table.items():\n    print(f\"{name:17} tokens per target pass by K: {row}\")\nprint(\"more drafts help only while the draft model keeps guessing right\")\n",
+  "under_the_hood": {
+    "summary": "If each of K drafted tokens is accepted independently with probability alpha and checking stops at the first rejection, one target pass yields on average (1 - alpha^(K+1)) / (1 - alpha) tokens, including the bonus token the target always contributes.",
+    "steps": [
+      {
+        "title": "A round of speculation",
+        "body": "The draft proposes K tokens. The target checks them in order; the first rejection ends the round. Whatever happens, the target also produces one token of its own at the stopping point, because it computed that distribution anyway."
+      },
+      {
+        "title": "A geometric series",
+        "body": "The round yields 1 token with probability (1 - alpha), 2 with probability alpha (1 - alpha), and so on up to K + 1 when all K are accepted. Summing gives 1 + alpha + alpha^2 + ... + alpha^K = (1 - alpha^(K+1)) / (1 - alpha).",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "numerator",
+                "value": "1 - alpha^(K+1)"
+              },
+              {
+                "variable": "denominator",
+                "value": "1 - alpha"
+              },
+              {
+                "variable": "E[tokens]",
+                "value": "numerator / denominator"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Plug in numbers",
+        "body": "alpha = 0.8, K = 4: (1 - 0.8^5) / 0.2 = (1 - 0.32768) / 0.2 = 3.36 tokens per target pass. alpha = 0.4, K = 4: (1 - 0.01024) / 0.6 = 1.65.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "E[tokens] per target pass (K = 4)",
+            "data": [
+              1.65,
+              3.36
+            ],
+            "labels": [
+              "alpha 0.4",
+              "alpha 0.8"
+            ],
+            "highlight": [
+              1
+            ]
+          }
+        }
+      },
+      {
+        "title": "The ceiling",
+        "body": "Even with perfect acceptance the round gives at most K + 1 tokens, and as K grows the series approaches 1 / (1 - alpha): 5 for alpha = 0.8. Beyond a few drafted tokens, extra K adds little."
+      },
+      {
+        "title": "Real speed-up includes the draft's cost",
+        "body": "Each round also runs the draft model K times. The wall-clock gain is the expected tokens per round divided by (target pass time + K draft passes), so a draft that is accurate but nearly as slow as the target gains nothing.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "alpha",
+                "detail": "draft-target agreement"
+              },
+              {
+                "label": "K drafted"
+              },
+              {
+                "label": "E[tokens] per pass"
+              },
+              {
+                "label": "minus draft cost"
+              },
+              {
+                "label": "net speed-up"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Speculative decoding's payoff is a geometric series in the acceptance rate. A well-matched, cheap draft model and a moderate K give most of the benefit."
+  }
 }
