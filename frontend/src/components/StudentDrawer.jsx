@@ -145,7 +145,7 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
                           placeholder={`Add ${groupLabel.toLowerCase()}`}
                           aria-label={`Add ${groupLabel.toLowerCase()}`}
                           disabled={savingTags}
-                          className="text-[11px] px-2 py-0.5 rounded-full border border-border-default bg-bg-surface w-28 focus:outline-none focus:ring-1 focus:ring-cyan-400 disabled:opacity-50"
+                          className="text-xs px-2 py-0.5 rounded-full border border-border-default bg-bg-surface w-28 focus:outline-none focus:ring-1 focus:ring-cyan-400 disabled:opacity-50"
                         />
                         <button onClick={addTag} disabled={savingTags} aria-label="Add tag" className="text-cyan-600 hover:text-cyan-700">
                           {savingTags ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
@@ -159,9 +159,9 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
 
               {/* Summary */}
               <div className="p-5 grid grid-cols-3 gap-3 border-b border-border-default text-center">
-                <div><Zap size={14} className="mx-auto text-cyan-500 mb-1" /><div className="text-lg font-bold text-text-primary">{s?.xp ?? 0}</div><div className="text-[10px] text-text-muted uppercase tracking-wide">XP</div></div>
-                <div><Trophy size={14} className="mx-auto text-amber-500 mb-1" /><div className="text-lg font-bold text-text-primary">{s?.lessons_completed ?? 0}</div><div className="text-[10px] text-text-muted uppercase tracking-wide">Lessons</div></div>
-                <div><AlertTriangle size={14} className="mx-auto text-red-500 mb-1" /><div className="text-lg font-bold text-text-primary">{s?.struggle_total ?? 0}</div><div className="text-[10px] text-text-muted uppercase tracking-wide">Struggles</div></div>
+                <div><Zap size={14} className="mx-auto text-cyan-500 mb-1" /><div className="text-lg font-bold text-text-primary">{s?.xp ?? 0}</div><div className="text-xs text-text-muted uppercase tracking-wide">XP</div></div>
+                <div><Trophy size={14} className="mx-auto text-amber-500 mb-1" /><div className="text-lg font-bold text-text-primary">{s?.lessons_completed ?? 0}</div><div className="text-xs text-text-muted uppercase tracking-wide">Lessons</div></div>
+                <div><AlertTriangle size={14} className="mx-auto text-red-500 mb-1" /><div className="text-lg font-bold text-text-primary">{s?.struggle_total ?? 0}</div><div className="text-xs text-text-muted uppercase tracking-wide">Struggles</div></div>
               </div>
               <div className="px-5 py-2 text-xs text-text-muted border-b border-border-default">Last active: {relTime(s?.last_active)}</div>
 
@@ -178,9 +178,9 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
                         <div className="flex-1 h-2.5 bg-bg-elevated rounded-full overflow-hidden">
                           <div className={`h-full rounded-full ${masteryColor(m.mastery_level)}`} style={{ width: `${Math.round((Number(m.mastery_level) || 0) * 100)}%` }} />
                         </div>
-                        <span className="text-[11px] text-text-muted w-9 text-right">{Math.round((Number(m.mastery_level) || 0) * 100)}%</span>
+                        <span className="text-xs text-text-muted w-9 text-right">{Math.round((Number(m.mastery_level) || 0) * 100)}%</span>
                         {(m.struggle_count || 0) > 0 && (
-                          <span className="text-[10px] text-red-500 font-bold w-7 text-right">⚠{m.struggle_count}</span>
+                          <span className="text-xs text-red-500 font-bold w-7 text-right">⚠{m.struggle_count}</span>
                         )}
                       </div>
                     ))}

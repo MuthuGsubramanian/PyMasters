@@ -83,7 +83,7 @@ function ConceptChip({ concept, onSelect, selected }) {
       <MasteryRing value={concept.mastery} size={30} />
       <span className="min-w-0">
         <span className="block truncate text-sm font-medium text-text-primary">{concept.name}</span>
-        <span className="block text-[11px] text-text-muted">{tone.label}</span>
+        <span className="block text-xs text-text-muted">{tone.label}</span>
       </span>
     </button>
   );

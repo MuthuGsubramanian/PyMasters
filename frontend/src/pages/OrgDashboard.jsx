@@ -1002,7 +1002,7 @@ export default function OrgDashboard() {
                                 disabled={actionLoading === memberId}
                                 variant="danger"
                                 size="sm"
-                                className="px-2 py-1 text-[10px]"
+                                className="px-2 py-1 text-xs"
                               >
                                 Confirm
                               </Button>
@@ -1010,7 +1010,7 @@ export default function OrgDashboard() {
                                 onClick={() => setConfirmRemove(null)}
                                 variant="ghost"
                                 size="sm"
-                                className="px-2 py-1 text-[10px]"
+                                className="px-2 py-1 text-xs"
                               >
                                 Cancel
                               </Button>
@@ -1163,12 +1163,12 @@ export default function OrgDashboard() {
                         <RoleBadge role={inv?.role || 'member'} />
                         {inv?.token && (
                           <div className="flex items-center gap-1">
-                            <span className="text-[10px] font-mono text-text-muted truncate max-w-[120px]">{String(inv.token)}</span>
+                            <span className="text-xs font-mono text-text-muted truncate max-w-[120px]">{String(inv.token)}</span>
                             <CopyButton text={inv.token} />
                           </div>
                         )}
                         {inv?.expires_at && (
-                          <span className={`text-[10px] ${(inv?.status === 'expired' || inv?.expired) ? 'text-red-500' : 'text-text-muted'}`}>
+                          <span className={`text-xs ${(inv?.status === 'expired' || inv?.expired) ? 'text-red-500' : 'text-text-muted'}`}>
                             Exp: {new Date(inv.expires_at).toLocaleDateString()}
                           </span>
                         )}
@@ -1285,7 +1285,7 @@ export default function OrgDashboard() {
                                     <Badge key={g} variant="primary">{g}</Badge>
                                   ))}
                                   {(s.groups || []).length > 3 && (
-                                    <span className="text-[10px] text-text-muted">+{s.groups.length - 3}</span>
+                                    <span className="text-xs text-text-muted">+{s.groups.length - 3}</span>
                                   )}
                                 </div>
                               </TD>
@@ -1349,7 +1349,7 @@ export default function OrgDashboard() {
                               transition={{ duration: 0.8, ease: 'easeOut' }}
                               className="h-full bg-gradient-primary rounded-lg flex items-center justify-end pr-2"
                             >
-                              <span className="text-[10px] font-bold text-white">{count}</span>
+                              <span className="text-xs font-bold text-white">{count}</span>
                             </motion.div>
                           </div>
                         </div>

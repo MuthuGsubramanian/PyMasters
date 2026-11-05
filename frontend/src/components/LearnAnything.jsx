@@ -143,7 +143,7 @@ export default function LearnAnything({ userId, onLessonReady, onOpenLesson, ini
                                 transition={{ ease: 'easeOut', duration: 0.6 }}
                             />
                         </div>
-                        <p className="mt-1.5 text-[11px] text-slate-500 dark:text-text-muted">This usually takes 1–3 minutes. Hang tight — your lesson opens automatically when it's ready.</p>
+                        <p className="mt-1.5 text-xs text-slate-500 dark:text-text-muted">This usually takes 1–3 minutes. Hang tight — your lesson opens automatically when it's ready.</p>
                     </motion.div>
                 ) : (
                     <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-3">
@@ -168,14 +168,14 @@ export default function LearnAnything({ userId, onLessonReady, onOpenLesson, ini
                         )}
                         {matches.length > 0 && (
                             <div className="mt-2.5">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-text-muted mb-1.5">Already in the curriculum — open instead:</p>
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-text-muted mb-1.5">Already in the curriculum — open instead:</p>
                                 <div className="flex flex-wrap gap-1.5">
                                     {matches.map((m) => (
                                         <button
                                             key={m.id}
                                             type="button"
                                             onClick={() => onOpenLesson(m)}
-                                            className="text-[11px] px-2.5 py-1 rounded-full bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/25 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-500/20 transition-colors"
+                                            className="text-xs px-2.5 py-1 rounded-full bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/25 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-100 dark:hover:bg-cyan-500/20 transition-colors"
                                         >
                                             {en(m.title)}
                                         </button>
@@ -185,7 +185,7 @@ export default function LearnAnything({ userId, onLessonReady, onOpenLesson, ini
                         )}
                         <div className="mt-2 flex flex-wrap gap-1.5">
                             {SUGGESTIONS.map((s) => (
-                                <button key={s} onClick={() => setTopic(s)} className="text-[11px] px-2.5 py-1 rounded-full bg-white dark:bg-bg-elevated border border-purple-200 dark:border-border-default text-purple-600 dark:text-accent-primary hover:bg-purple-50 dark:hover:bg-bg-inset transition-colors">
+                                <button key={s} onClick={() => setTopic(s)} className="text-xs px-2.5 py-1 rounded-full bg-white dark:bg-bg-elevated border border-purple-200 dark:border-border-default text-purple-600 dark:text-accent-primary hover:bg-purple-50 dark:hover:bg-bg-inset transition-colors">
                                     {s}
                                 </button>
                             ))}

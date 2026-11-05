@@ -137,7 +137,7 @@ export default function SupportModal({ open, onClose, initialTab = 'access', use
                                             <div className="flex items-center gap-2 rounded-xl border border-border-strong bg-bg-elevated px-3 py-2.5">
                                                 <FileText size={16} className="text-accent-primary shrink-0" aria-hidden="true" />
                                                 <span className="text-xs text-text-secondary truncate flex-1">{file.name}</span>
-                                                <span className="text-[10px] text-text-muted shrink-0">{Math.max(1, Math.round(file.size / 1024))} KB</span>
+                                                <span className="text-xs text-text-muted shrink-0">{Math.max(1, Math.round(file.size / 1024))} KB</span>
                                                 <button type="button" aria-label={t('support.remove_file', 'Remove file')}
                                                     onClick={() => { setFile(null); if (fileRef.current) fileRef.current.value = ''; }}
                                                     className="p-1 rounded-md text-text-muted hover:text-red-500 hover:bg-bg-surface">

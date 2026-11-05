@@ -105,7 +105,7 @@ function DifficultyBadge({ level }) {
     };
     const c = config[level] || config.beginner;
     return (
-        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${c.bg} ${c.text} ${c.border}`}>
+        <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${c.bg} ${c.text} ${c.border}`}>
             {level}
         </span>
     );
@@ -143,7 +143,7 @@ function PathCard({ path, index, onClick, isRecommended }) {
                 {isRecommended && (
                     <div className="flex items-center gap-1.5 mb-3 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/25 dark:text-amber-300">
                         <Sparkles size={12} className="text-amber-500 flex-shrink-0" />
-                        <span className="text-[10px] font-bold tracking-wide">Vaathiyaar recommends this for you!</span>
+                        <span className="text-xs font-bold tracking-wide">Vaathiyaar recommends this for you!</span>
                     </div>
                 )}
                 <div className="flex items-start justify-between mb-3">
@@ -154,7 +154,7 @@ function PathCard({ path, index, onClick, isRecommended }) {
                         <div className="relative">
                             <ProgressRing progress={progress} size={40} strokeWidth={3} />
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <span className="text-[9px] font-bold text-text-secondary">{progress}%</span>
+                                <span className="text-xs font-bold text-text-secondary">{progress}%</span>
                             </div>
                         </div>
                     )}
@@ -164,7 +164,7 @@ function PathCard({ path, index, onClick, isRecommended }) {
                     {path.name || path.title}
                 </h3>
 
-                <div className="flex items-center gap-3 text-[10px] text-text-muted mb-3">
+                <div className="flex items-center gap-3 text-xs text-text-muted mb-3">
                     <span className="flex items-center gap-1">
                         <BookOpen size={10} />
                         <AnimatedNumber value={path.lesson_count || path.lessons?.length || 0} /> {(path.lesson_count || path.lessons?.length || 0) === 1 ? 'lesson' : 'lessons'}
@@ -271,7 +271,7 @@ function PathList() {
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
                                     <TrendingUp size={16} className="text-cyan-500" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Active Path</span>
+                                    <span className="text-xs font-bold uppercase tracking-widest text-text-muted">Active Path</span>
                                 </div>
                                 <h3 className="text-xl font-bold text-text-primary font-display mb-1">
                                     {activePath.name || activePath.title}
@@ -529,7 +529,7 @@ function PathDetail() {
                 {/* Progress bar */}
                 <div className="px-8 py-4 flex items-center justify-between">
                     <div className="flex-1 mr-6">
-                        <div className="flex justify-between text-[10px] font-mono text-text-muted mb-1">
+                        <div className="flex justify-between text-xs font-mono text-text-muted mb-1">
                             <span>{completedIds.size} / {lessons.length} completed</span>
                             {remainingHours && <span>~{remainingHours}h remaining</span>}
                         </div>
@@ -612,7 +612,7 @@ function PathDetail() {
                                             {lesson.title || lesson.name || `Lesson ${idx + 1}`}
                                         </h3>
                                         {isInserted && (
-                                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-purple-700 bg-purple-50 border border-purple-200 dark:text-purple-300 dark:bg-purple-500/10 dark:border-purple-500/30 rounded-full px-1.5 py-0.5">
+                                            <span className="inline-flex items-center gap-0.5 text-xs font-bold text-purple-700 bg-purple-50 border border-purple-200 dark:text-purple-300 dark:bg-purple-500/10 dark:border-purple-500/30 rounded-full px-1.5 py-0.5">
                                                 <Sparkles size={8} /> Personalized
                                             </span>
                                         )}
@@ -626,7 +626,7 @@ function PathDetail() {
                                 <div className="flex items-center gap-3 flex-shrink-0">
                                     {lesson.xp_reward && (
                                         <span className={clsx(
-                                            'text-[10px] font-bold rounded-full px-2.5 py-1 border',
+                                            'text-xs font-bold rounded-full px-2.5 py-1 border',
                                             isCompleted
                                                 ? 'text-green-700 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-500/10 dark:border-green-500/25'
                                                 : 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-500/10 dark:border-amber-500/25'

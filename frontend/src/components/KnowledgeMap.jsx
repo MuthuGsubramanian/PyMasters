@@ -137,7 +137,7 @@ export default function KnowledgeMap({ data }) {
                         {nodes.length} concepts across {categories.length} categories
                     </p>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
                     <span className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-green-500" /> Strong
                     </span>
@@ -260,7 +260,7 @@ export default function KnowledgeMap({ data }) {
                                     x={node.x}
                                     y={node.y + (isSelected ? 28 : 24)}
                                     textAnchor="middle"
-                                    className="text-[9px] font-bold fill-slate-500 select-none"
+                                    className="text-xs font-bold fill-slate-500 select-none"
                                 >
                                     {(node.name || node.concept || node.id).length > 14
                                         ? (node.name || node.concept || node.id).slice(0, 12) + '...'

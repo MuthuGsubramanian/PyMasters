@@ -120,7 +120,7 @@ export default function OrgRequestsPanel({ orgId }) {
                             <div key={r.id} className="p-3 flex items-center gap-2">
                                 <span className="text-sm text-text-secondary flex-1">{summary(r)}</span>
                                 <Badge variant={r.status === 'pending' ? 'warning' : r.status === 'approved' ? 'success' : 'danger'}>{r.status}</Badge>
-                                {r.admin_note && <span className="text-[11px] text-text-muted italic max-w-[40%] truncate" title={r.admin_note}>{r.admin_note}</span>}
+                                {r.admin_note && <span className="text-xs text-text-muted italic max-w-[40%] truncate" title={r.admin_note}>{r.admin_note}</span>}
                             </div>
                         ))}
                     </Card>

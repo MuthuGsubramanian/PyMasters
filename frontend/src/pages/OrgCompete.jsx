@@ -129,7 +129,7 @@ function Competitions({ orgId, isManager, meId }) {
                                 </div>
                                 <div className="text-right shrink-0">
                                     <div className="text-lg font-extrabold text-cyan-600 dark:text-cyan-400">{s.my_completed}/{s.challenge_count}</div>
-                                    <div className="text-[10px] text-text-muted">your progress</div>
+                                    <div className="text-xs text-text-muted">your progress</div>
                                 </div>
                             </div>
                         </button>
@@ -210,7 +210,7 @@ function CreateForm({ orgId, onDone, onCancel }) {
                                 </div>
                                 <div className="min-w-0 flex-1">
                                     <p className="text-sm text-text-primary truncate">{c.title}</p>
-                                    <p className="text-[11px] text-text-muted">{c.difficulty} · {c.category} · {c.xp_reward} XP</p>
+                                    <p className="text-xs text-text-muted">{c.difficulty} · {c.category} · {c.xp_reward} XP</p>
                                 </div>
                             </button>
                         ))}
@@ -260,7 +260,7 @@ function SetLeaderboard({ orgId, set, meId, onBack }) {
                             </div>
                             <div className="text-right">
                                 <p className="text-sm font-bold text-text-primary">{row.solved}/{row.total}</p>
-                                <p className="text-[10px] text-text-muted">{row.xp} XP</p>
+                                <p className="text-xs text-text-muted">{row.xp} XP</p>
                             </div>
                         </div>
                     ))}
@@ -299,7 +299,7 @@ function OrgRanking({ orgId, meId }) {
                     </div>
                     <div className="text-right">
                         <p className="text-sm font-bold text-text-primary">{row.xp}</p>
-                        <p className="text-[10px] text-text-muted">XP</p>
+                        <p className="text-xs text-text-muted">XP</p>
                     </div>
                 </div>
             ))}

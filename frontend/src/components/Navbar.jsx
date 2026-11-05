@@ -46,11 +46,11 @@ export default function Navbar() {
                             {isCustomBrand ? portalName : 'PYMASTERS'}
                         </h1>
                         {showPoweredBy ? (
-                            <p className="text-[10px] text-gray-400 tracking-wide">
+                            <p className="text-xs text-gray-400 tracking-wide">
                                 Powered by <span className="font-mono font-bold text-cyan-400">PyMasters</span>
                             </p>
                         ) : (
-                            <p className="text-[10px] text-cyan-400 tracking-[0.2em] uppercase font-bold">
+                            <p className="text-xs text-cyan-400 tracking-[0.2em] uppercase font-bold">
                                 {user.points > 1000 ? 'Architect Class' : user.points > 500 ? 'Engineer Class' : 'Cadet Class'}
                             </p>
                         )}
@@ -62,7 +62,7 @@ export default function Navbar() {
                         <Trophy size={14} className="text-yellow-400" />
                         <div className="flex flex-col leading-none">
                             <span className="font-mono text-yellow-100 font-bold text-sm">{user.points || 0} XP</span>
-                            <span className="text-[9px] text-gray-500 uppercase">Current Score</span>
+                            <span className="text-xs text-gray-500 uppercase">Current Score</span>
                         </div>
                     </div>
 

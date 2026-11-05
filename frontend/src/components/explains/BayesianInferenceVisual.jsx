@@ -226,7 +226,7 @@ export default function BayesianInferenceVisual({ stepIndex = 0 }) {
             {interactive && (
                 <div className="flex-shrink-0 pt-2 space-y-1.5">
                     <div className="flex items-center gap-3">
-                        <label htmlFor="bayes-n" className="text-[11px] font-mono text-text-muted flex-shrink-0">
+                        <label htmlFor="bayes-n" className="text-xs font-mono text-text-muted flex-shrink-0">
                             visitors seen: {n}
                         </label>
                         <input
@@ -236,7 +236,7 @@ export default function BayesianInferenceVisual({ stepIndex = 0 }) {
                             aria-label="Number of visitors observed so far"
                         />
                     </div>
-                    <p className="text-[11px] text-text-muted">Drag to replay all 60 visits, one at a time, and watch the curve update.</p>
+                    <p className="text-xs text-text-muted">Drag to replay all 60 visits, one at a time, and watch the curve update.</p>
                 </div>
             )}
         </div>

@@ -276,7 +276,7 @@ export default function GlobalSearch() {
                 placeholder="Search pages, topics, settings..."
                 className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted outline-none"
               />
-              <kbd className="hidden sm:flex items-center gap-0.5 text-[10px] font-mono text-text-muted bg-bg-elevated border border-border-default rounded px-1.5 py-0.5">
+              <kbd className="hidden sm:flex items-center gap-0.5 text-xs font-mono text-text-muted bg-bg-elevated border border-border-default rounded px-1.5 py-0.5">
                 ESC
               </kbd>
             </div>
@@ -299,7 +299,7 @@ export default function GlobalSearch() {
                 const Icon = CATEGORY_ICONS[cat] || BookOpen;
                 return (
                   <div key={cat}>
-                    <div className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-text-muted flex items-center gap-1.5">
+                    <div className="px-4 pt-3 pb-1 text-xs font-bold uppercase tracking-widest text-text-muted flex items-center gap-1.5">
                       <Icon size={11} />
                       {cat}
                     </div>
@@ -333,7 +333,7 @@ export default function GlobalSearch() {
             </div>
 
             {/* Footer hints */}
-            <div className="flex items-center gap-4 px-4 h-10 border-t border-border-default text-[10px] text-text-muted bg-bg-elevated/60">
+            <div className="flex items-center gap-4 px-4 h-10 border-t border-border-default text-xs text-text-muted bg-bg-elevated/60">
               <span className="flex items-center gap-1">
                 <ArrowUp size={10} />
                 <ArrowDown size={10} />
@@ -344,12 +344,12 @@ export default function GlobalSearch() {
                 open
               </span>
               <span className="flex items-center gap-1">
-                <span className="font-mono text-[9px] bg-bg-elevated rounded px-1">ESC</span>
+                <span className="font-mono text-xs bg-bg-elevated rounded px-1">ESC</span>
                 close
               </span>
               <span className="ml-auto flex items-center gap-1">
                 <Command size={10} />
-                <span className="font-mono text-[9px]">K</span>
+                <span className="font-mono text-xs">K</span>
               </span>
             </div>
           </motion.div>

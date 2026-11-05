@@ -195,7 +195,7 @@ export default function ReleaseNotes() {
                             </p>
 
                             {/* Version pill */}
-                            <div className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-mono font-bold text-white/90 bg-white/15 rounded-full px-3 py-1">
+                            <div className="mt-3 inline-flex items-center gap-1.5 text-xs font-mono font-bold text-white/90 bg-white/15 rounded-full px-3 py-1">
                                 <Rocket size={11} />
                                 v{release.version} &middot; {release.date}
                             </div>

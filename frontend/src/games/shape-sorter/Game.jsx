@@ -54,7 +54,7 @@ export default function Game({ item, onAnswer, disabled, reducedMotion }) {
             aria-current={cursor === i ? 'true' : undefined}
             className={`min-h-14 rounded-xl border bg-bg-surface px-3 py-2 flex flex-col items-center justify-center gap-1 focus-visible:ring-2 ring-accent-primary disabled:opacity-60 ${cursor === i ? 'border-accent-primary shadow-cyan' : 'border-border-default hover:border-accent-primary'}`}>
             <code className="font-mono text-sm text-text-primary">{b}</code>
-            <kbd className="text-[10px] text-text-muted" aria-hidden="true">{i + 1}</kbd>
+            <kbd className="text-xs text-text-muted" aria-hidden="true">{i + 1}</kbd>
           </button>
         ))}
       </div>

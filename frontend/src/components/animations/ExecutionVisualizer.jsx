@@ -209,7 +209,7 @@ export default function ExecutionVisualizer({
                   {isActive ? <span className="inline-block animate-[pulse_1s_ease-in-out_infinite]">▶</span> : ''}
                 </span>
                 <span className={`w-8 text-right select-none mr-4 text-xs tabular-nums transition-all duration-300 ${
-                  isActive ? 'text-cyan-400 font-medium' : 'text-code-foreground/30'
+                  isActive ? 'text-cyan-400 font-medium' : 'text-code-foreground/60'
                 }`}>
                   {lineNum}
                 </span>

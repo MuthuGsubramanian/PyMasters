@@ -294,7 +294,7 @@ export default function TimeSeriesForecastingVisual({ stepIndex = 0 }) {
             {interactive && (
                 <div className="flex-shrink-0 pt-2 space-y-1.5">
                     <div className="flex items-center gap-3">
-                        <label htmlFor="ts-window" className="text-[11px] font-mono text-text-muted flex-shrink-0">
+                        <label htmlFor="ts-window" className="text-xs font-mono text-text-muted flex-shrink-0">
                             window = {maWindow} mo
                         </label>
                         <input

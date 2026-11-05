@@ -30,7 +30,7 @@ export default function MisconceptionRadar() {
                 <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center"><Radar size={18} /></div>
                 <div>
                     <h3 className="font-bold text-sm text-text-primary">Watch out for</h3>
-                    <p className="text-[11px] text-text-muted">The errors you've hit most in the last {data.window_days} days</p>
+                    <p className="text-xs text-text-muted">The errors you've hit most in the last {data.window_days} days</p>
                 </div>
             </div>
             <div className="p-3 space-y-1.5">
@@ -39,7 +39,7 @@ export default function MisconceptionRadar() {
                         <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
                                 <span className="text-sm font-semibold text-text-primary">{it.label}</span>
-                                <span className="ml-2 font-mono text-[11px] text-rose-600">{it.type} ×{it.count}</span>
+                                <span className="ml-2 font-mono text-xs text-rose-600">{it.type} ×{it.count}</span>
                             </div>
                             {it.lesson && (
                                 <button onClick={() => navigate(`/dashboard/classroom?lesson=${encodeURIComponent(it.lesson)}`)}

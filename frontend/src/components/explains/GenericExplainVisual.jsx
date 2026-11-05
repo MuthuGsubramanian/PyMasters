@@ -25,8 +25,8 @@ export default function GenericExplainVisual({ steps = [], stepIndex = 0 }) {
                                     isActive
                                         ? 'w-8 h-8 text-white text-xs shadow-glow'
                                         : done
-                                        ? 'w-5 h-5 text-white text-[10px]'
-                                        : 'w-5 h-5 text-text-muted text-[10px] bg-bg-inset'
+                                        ? 'w-5 h-5 text-white text-xs'
+                                        : 'w-5 h-5 text-text-muted text-xs bg-bg-inset'
                                 }`}
                                 style={isActive || done ? { background: 'var(--gradient-primary)' } : undefined}
                             >
@@ -46,7 +46,7 @@ export default function GenericExplainVisual({ steps = [], stepIndex = 0 }) {
             {/* Active step, shown large — the "picture" that evolves as you scroll */}
             <div className="flex-1 min-w-0 flex flex-col justify-center">
                 <div className="panel rounded-2xl p-5 lg:p-7 bg-gradient-card">
-                    <div className="text-[11px] font-bold uppercase tracking-widest text-accent-primary mb-2">
+                    <div className="text-xs font-bold uppercase tracking-widest text-accent-primary mb-2">
                         Step {active + 1} of {list.length || 1}
                     </div>
                     <h3 className="text-xl lg:text-2xl font-bold font-display text-text-primary leading-snug break-words">

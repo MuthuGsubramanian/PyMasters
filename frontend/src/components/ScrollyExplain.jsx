@@ -203,7 +203,7 @@ export default function ScrollyExplain({ title, subtitle, minutes, steps, Visual
                 <h1 className="text-3xl lg:text-4xl font-bold font-display text-text-primary tracking-tight">{title}</h1>
                 <p className="text-sm text-text-secondary mt-2 leading-relaxed">{subtitle}</p>
                 {minutes && (
-                    <p className="text-[11px] text-text-muted mt-2 flex items-center gap-1">
+                    <p className="text-xs text-text-muted mt-2 flex items-center gap-1">
                         <Clock size={11} /> {minutes} min · scroll to explore
                     </p>
                 )}

@@ -90,9 +90,9 @@ export default function UserAdminDrawer({ adminId, targetId, onClose, onChanged,
               {error ? <div className="px-5 py-2 text-xs text-red-500">{String(error)}</div> : null}
 
               <div className="p-5 grid grid-cols-3 gap-3 border-b border-border-default text-center">
-                <div><Zap size={14} className="mx-auto text-cyan-500 mb-1" /><div className="text-lg font-bold text-text-primary">{d.points}</div><div className="text-[10px] text-text-muted uppercase">XP</div></div>
-                <div><Trophy size={14} className="mx-auto text-amber-500 mb-1" /><div className="text-lg font-bold text-text-primary">{d.lessons_completed}</div><div className="text-[10px] text-text-muted uppercase">Lessons</div></div>
-                <div><div className="text-sm font-bold text-text-primary mt-3">{relTime(d.last_active)}</div><div className="text-[10px] text-text-muted uppercase">Last active</div></div>
+                <div><Zap size={14} className="mx-auto text-cyan-500 mb-1" /><div className="text-lg font-bold text-text-primary">{d.points}</div><div className="text-xs text-text-muted uppercase">XP</div></div>
+                <div><Trophy size={14} className="mx-auto text-amber-500 mb-1" /><div className="text-lg font-bold text-text-primary">{d.lessons_completed}</div><div className="text-xs text-text-muted uppercase">Lessons</div></div>
+                <div><div className="text-sm font-bold text-text-primary mt-3">{relTime(d.last_active)}</div><div className="text-xs text-text-muted uppercase">Last active</div></div>
               </div>
 
               {editing ? (
@@ -138,7 +138,7 @@ export default function UserAdminDrawer({ adminId, targetId, onClose, onChanged,
                 <Button variant="ghost" size="sm" disabled={busy==='revoke'} onClick={()=>act('revoke',()=>adminRevokeSessions(adminId,targetId))} className="py-2"><LogOut size={14}/>Revoke</Button>
                 {!d.break_glass ? (
                   <Button variant="ghost" size="sm" disabled={busy==='super'} onClick={()=>act('super',()=>adminSetSuperAdmin(adminId,targetId,!d.is_super_admin))} className="py-2"><Shield size={14}/>{d.is_super_admin ? 'Revoke admin' : 'Make admin'}</Button>
-                ) : <div className="text-[10px] text-text-muted flex items-center justify-center">env admin · locked</div>}
+                ) : <div className="text-xs text-text-muted flex items-center justify-center">env admin · locked</div>}
                 {!d.break_glass && d.id !== adminId ? (
                   <div className="col-span-2">
                     {confirmDel === d.username ? (

@@ -333,7 +333,7 @@ export default function RegularizationVisual({ stepIndex = 0 }) {
             {mode === 'interactive' && (
                 <div className="flex-shrink-0 pt-2 space-y-2">
                     <div className="flex items-center gap-3">
-                        <label htmlFor="reg-lambda" className="text-[11px] font-mono text-text-muted flex-shrink-0 w-20">
+                        <label htmlFor="reg-lambda" className="text-xs font-mono text-text-muted flex-shrink-0 w-20">
                             λ = {lambda < 0.01 ? lambda.toExponential(1) : lambda.toFixed(2)}
                         </label>
                         <input id="reg-lambda" type="range" min="0" max="500" value={raw}

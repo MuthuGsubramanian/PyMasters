@@ -479,7 +479,7 @@ export default function Playground() {
                                 <FolderOpen size={13} />
                                 <span className="hidden sm:inline">My files</span>
                             </button>
-                            <span className="hidden sm:inline whitespace-nowrap text-xs text-code-foreground/50 font-mono ml-1">Python 3</span>
+                            <span className="hidden sm:inline whitespace-nowrap text-xs text-code-foreground/60 font-mono ml-1">Python 3</span>
                         </div>
                     </div>
 
@@ -514,7 +514,7 @@ export default function Playground() {
                                     {running ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
                                     {running ? 'Running...' : 'Run Code'}
                                 </button>
-                                <span className="text-xs text-code-foreground/50 font-mono hidden xl:inline whitespace-nowrap">Ctrl+Enter</span>
+                                <span className="text-xs text-code-foreground/60 font-mono hidden xl:inline whitespace-nowrap">Ctrl+Enter</span>
                                 <button
                                     onClick={handleVisualize}
                                     disabled={tracing || !code.trim()}
@@ -547,7 +547,7 @@ export default function Playground() {
 
                             {/* Package installer */}
                             <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-t border-white/[0.04] flex-shrink-0">
-                                <span className="text-xs text-code-foreground/50 font-mono flex-shrink-0 whitespace-nowrap">pip install</span>
+                                <span className="text-xs text-code-foreground/60 font-mono flex-shrink-0 whitespace-nowrap">pip install</span>
                                 <input
                                     type="text"
                                     value={installPkg}

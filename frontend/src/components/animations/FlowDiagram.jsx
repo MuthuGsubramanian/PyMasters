@@ -18,7 +18,7 @@ function NodeBox({ node, isActive, isPast }) {
   if (isActive) {
     colorClasses = 'bg-cyan-500/15 border-cyan-400/60 text-cyan-100 shadow-[0_0_20px_rgba(56,189,248,0.25)] scale-105';
   } else if (isPast) {
-    colorClasses = 'bg-white/[0.04] border-white/10 text-code-foreground/50';
+    colorClasses = 'bg-white/[0.04] border-white/10 text-code-foreground/60';
   }
 
   return (
@@ -56,7 +56,7 @@ function Arrow({ edge, isActive, isPast }) {
       }`} />
       {label && (
         <span className={`text-xs mt-0.5 transition-all duration-300 ${
-          isActive ? 'text-cyan-300' : 'text-code-foreground/50'
+          isActive ? 'text-cyan-300' : 'text-code-foreground/60'
         }`}>
           {label}
         </span>

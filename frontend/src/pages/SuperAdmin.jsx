@@ -155,18 +155,18 @@ function SocialStudioTab() {
                         {jobs.map((j) => (
                             <div key={j.id} className="rounded-xl border border-border-default bg-bg-elevated/50 px-3.5 py-2.5">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                    <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${JOB_STATUS_STYLE[j.status] || ''}`}>
+                                    <span className={`text-xs font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${JOB_STATUS_STYLE[j.status] || ''}`}>
                                         {j.status}
                                     </span>
                                     <span className="text-sm font-medium text-text-primary truncate flex-1 min-w-0" title={j.topic}>{j.topic}</span>
-                                    <span className="text-[10px] text-text-muted">{j.channels.join(' + ')}</span>
-                                    <span className="text-[10px] text-text-muted">{relMinutes(j.created_at)}</span>
+                                    <span className="text-xs text-text-muted">{j.channels.join(' + ')}</span>
+                                    <span className="text-xs text-text-muted">{relMinutes(j.created_at)}</span>
                                 </div>
                                 {j.style_notes && (
-                                    <p className="text-[11px] text-text-muted mt-1 truncate" title={j.style_notes}>Style: {j.style_notes}</p>
+                                    <p className="text-xs text-text-muted mt-1 truncate" title={j.style_notes}>Style: {j.style_notes}</p>
                                 )}
                                 {j.result && (
-                                    <div className="text-[11px] text-text-secondary mt-1.5 space-y-0.5">
+                                    <div className="text-xs text-text-secondary mt-1.5 space-y-0.5">
                                         {j.result.youtube_urls && Object.entries(j.result.youtube_urls).map(([k, u]) => u && (
                                             <a key={k} href={u} target="_blank" rel="noreferrer" className="block text-accent-primary hover:underline">▶ {k}: {u}</a>
                                         ))}
@@ -227,7 +227,7 @@ function OpsActivityPanel({ adminId }) {
     <Card className="p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-bold text-text-secondary flex items-center gap-1.5"><Rocket size={14} /> Ops activity — last 7 days</h3>
-        <span className="text-[11px] text-text-muted">LinkedIn · YouTube · analysis & QA loops</span>
+        <span className="text-xs text-text-muted">LinkedIn · YouTube · analysis & QA loops</span>
       </div>
       {rows === null ? <div className="h-12 rounded-lg bg-bg-elevated animate-pulse" /> :
        rows.length === 0 ? (
@@ -236,7 +236,7 @@ function OpsActivityPanel({ adminId }) {
         <ul className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
           {rows.map((a) => (
             <li key={a.id} className="flex items-center gap-2 text-xs">
-              <span className={`shrink-0 px-1.5 py-0.5 rounded-md border font-bold uppercase tracking-wide text-[9px] ${OPS_SOURCE_STYLE[a.source] || 'bg-bg-elevated text-text-muted border-border-default'}`}>{a.source}</span>
+              <span className={`shrink-0 px-1.5 py-0.5 rounded-md border font-bold uppercase tracking-wide text-xs ${OPS_SOURCE_STYLE[a.source] || 'bg-bg-elevated text-text-muted border-border-default'}`}>{a.source}</span>
               {a.url
                 ? <a href={a.url} target="_blank" rel="noreferrer" className="truncate text-text-secondary hover:text-accent-primary">{a.title}</a>
                 : <span className="truncate text-text-secondary">{a.title}</span>}
@@ -258,7 +258,7 @@ function UsageChart({ series }) {
         <Card className="p-4">
             <div className="flex items-center justify-between mb-3">
                 <h3 className="text-sm font-bold text-text-secondary">Activity — last {series.length} days</h3>
-                <div className="flex items-center gap-3 text-[11px] text-text-muted">
+                <div className="flex items-center gap-3 text-xs text-text-muted">
                     <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-accent-primary" /> Signups</span>
                     <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-purple-400" /> Active</span>
                 </div>
@@ -308,7 +308,7 @@ function ViewAsPanel({ adminId, target, onExit }) {
                 <div key={m.topic} className="flex items-center gap-2 mb-1.5">
                   <span className="text-xs text-text-secondary w-32 truncate">{m.topic}</span>
                   <div className="flex-1 h-2 bg-bg-elevated rounded-full overflow-hidden"><div className="h-full bg-accent-primary" style={{ width: `${Math.round((Number(m.mastery_level)||0)*100)}%` }} /></div>
-                  <span className="text-[11px] text-text-muted w-9 text-right">{Math.round((Number(m.mastery_level)||0)*100)}%</span>
+                  <span className="text-xs text-text-muted w-9 text-right">{Math.round((Number(m.mastery_level)||0)*100)}%</span>
                 </div>
               ))}
             </Card>
@@ -542,7 +542,7 @@ export default function SuperAdmin() {
                                             <TD>
                                                 <div className="text-xs text-text-secondary whitespace-nowrap">{relMinutes(u.last_seen_at)}</div>
                                                 {u.last_login_from && (
-                                                    <div className="text-[10px] text-text-muted flex items-center gap-0.5 whitespace-nowrap">
+                                                    <div className="text-xs text-text-muted flex items-center gap-0.5 whitespace-nowrap">
                                                         <MapPin size={9} aria-hidden="true" />{u.last_login_from}
                                                     </div>
                                                 )}

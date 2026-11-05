@@ -132,7 +132,7 @@ export default function XGBoostVisual({ stepIndex = 0 }) {
             {/* Interactive controls */}
             {interactive && (
                 <div className="flex-shrink-0 pt-2 flex items-center gap-3">
-                    <label htmlFor="xgb-k" className="text-[11px] font-mono text-text-muted flex-shrink-0">
+                    <label htmlFor="xgb-k" className="text-xs font-mono text-text-muted flex-shrink-0">
                         trees = {userK}
                     </label>
                     <input id="xgb-k" type="range" min="1" max={MAX_TREES} value={userK}

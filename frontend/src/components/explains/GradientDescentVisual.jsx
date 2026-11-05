@@ -183,7 +183,7 @@ export default function GradientDescentVisual({ stepIndex }) {
             {interactive && (
                 <div className="flex-shrink-0 pt-2 space-y-2">
                     <div className="flex items-center gap-3">
-                        <label htmlFor="gd-lr" className="text-[11px] font-mono text-text-muted flex-shrink-0">
+                        <label htmlFor="gd-lr" className="text-xs font-mono text-text-muted flex-shrink-0">
                             η = {(lr / 100).toFixed(2)}
                         </label>
                         <input

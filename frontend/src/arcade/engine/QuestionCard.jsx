@@ -102,7 +102,7 @@ export function QuestionCard({ item, onAnswer, timerMs = 20000, disabled = false
           {choices.map((c, i) => (
             <button key={i} type="button" data-choice={i} disabled={disabled} onClick={() => pick(i)}
               className="min-h-12 rounded-xl border border-border-default bg-bg-surface px-3 py-2 text-left flex items-center gap-2 hover:border-accent-primary focus-visible:ring-2 ring-accent-primary disabled:opacity-60">
-              <kbd className="text-[10px] text-text-muted border border-border-default rounded px-1" aria-hidden="true">{i + 1}</kbd>
+              <kbd className="text-xs text-text-muted border border-border-default rounded px-1" aria-hidden="true">{i + 1}</kbd>
               <code className="font-mono text-sm text-text-primary whitespace-pre-wrap break-words">{c}</code>
             </button>
           ))}

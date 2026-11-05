@@ -197,7 +197,7 @@ export default function DataStructure({
             <div
               key={`${idx}-${item}`}
               ref={(el) => (itemRefs.current[String(idx)] = el)}
-              className="flex flex-col items-center"
+              className="flex flex-col items-center min-w-0 max-w-full"
             >
               {/* Index label */}
               <div className="text-xs text-text-muted mb-1 font-mono tabular-nums">
@@ -205,7 +205,8 @@ export default function DataStructure({
               </div>
               {/* Value cell(s): a matrix row is a row of cells */}
               {Array.isArray(item) ? (
-                <div className="flex gap-1">
+                // A wide row scrolls inside the card on a phone instead of being clipped by it.
+                <div data-matrix-row className="flex gap-1 overflow-x-auto max-w-full pb-1">
                   {item.map((cell, c) => {
                     const on = cellPairs.has(`${idx},${c}`) || wholeItems.has(idx) || idx === highlightIdx;
                     return (

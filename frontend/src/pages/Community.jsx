@@ -133,7 +133,7 @@ function Leaderboard({ meId, orgId }) {
                                 <p className="text-sm font-bold text-text-primary">
                                     {scope === 'streak' ? `${row.metric}🔥` : `${row.xp}`}
                                 </p>
-                                <p className="text-[10px] text-text-muted">{scope === 'streak' ? 'day streak' : 'XP'}</p>
+                                <p className="text-xs text-text-muted">{scope === 'streak' ? 'day streak' : 'XP'}</p>
                             </div>
                         </div>
                     ))}
@@ -220,7 +220,7 @@ function Members({ meId, orgId }) {
                                 <p className="text-sm font-semibold text-text-primary truncate flex items-center gap-1.5">
                                     <span className="truncate">{m.name}</span>
                                     {m.follows_you && (
-                                        <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-bg-inset text-text-secondary">
+                                        <span className="shrink-0 px-1.5 py-0.5 rounded text-xs font-semibold bg-bg-inset text-text-secondary">
                                             Follows you
                                         </span>
                                     )}

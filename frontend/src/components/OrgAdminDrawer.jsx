@@ -120,18 +120,18 @@ export default function OrgAdminDrawer({ adminId, orgId, onClose, onChanged }) {
               {tab === 'manage' && (
                 <div>
                   <div className="p-5 border-b border-border-default">
-                    <p className="text-[11px] text-text-muted mb-2">
+                    <p className="text-xs text-text-muted mb-2">
                       Product-level — platform admin only. Org admins cannot change these.
                     </p>
                     <div className="grid grid-cols-2 gap-2">
-                      <label className="text-[11px] text-text-muted">Plan
+                      <label className="text-xs text-text-muted">Plan
                         <select disabled={busy === 'plan'} value={d.plan}
                           onChange={(e) => act('plan', () => adminSetOrgPlan(adminId, orgId, e.target.value))}
                           className="input-neo py-2 text-sm mt-0.5">
                           {PLANS.map((p) => <option key={p} value={p}>{p}</option>)}
                         </select>
                       </label>
-                      <label className="text-[11px] text-text-muted">Type
+                      <label className="text-xs text-text-muted">Type
                         <select disabled={busy === 'type'} value={d.type}
                           onChange={(e) => act('type', () => adminSetOrgType(adminId, orgId, e.target.value))}
                           className="input-neo py-2 text-sm mt-0.5">
@@ -182,11 +182,11 @@ export default function OrgAdminDrawer({ adminId, orgId, onClose, onChanged }) {
               {/* CAPABILITIES matrix */}
               {tab === 'caps' && (
                 <div className="p-5">
-                  <p className="text-[11px] text-text-muted mb-3">
+                  <p className="text-xs text-text-muted mb-3">
                     What each org role may do. The last row is reserved to the platform admin —
                     org admins can only <em>request</em> it.
                   </p>
-                  <table className="w-full text-[11px]">
+                  <table className="w-full text-xs">
                     <thead>
                       <tr className="text-text-muted">
                         <th className="text-left font-semibold pb-2">Capability</th>
@@ -222,7 +222,7 @@ export default function OrgAdminDrawer({ adminId, orgId, onClose, onChanged }) {
                   ) : (
                     <ul className="space-y-1.5">
                       {audit.map((a) => (
-                        <li key={a.id} className="flex items-center gap-2 text-[11px]">
+                        <li key={a.id} className="flex items-center gap-2 text-xs">
                           <Badge variant="neutral">{a.action}</Badge>
                           <span className="text-text-secondary truncate flex-1">{a.actor_name}</span>
                           <span className="text-text-muted shrink-0">{rel(a.created_at)}</span>

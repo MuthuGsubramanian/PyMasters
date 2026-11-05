@@ -267,7 +267,7 @@ export default function ConfusionMatrixVisual({ stepIndex = 0 }) {
             {/* Interactive control */}
             {interactive && (
                 <div className="flex-shrink-0 pt-2 flex items-center gap-3">
-                    <label htmlFor="cm-threshold" className="text-[11px] font-mono text-text-muted flex-shrink-0">
+                    <label htmlFor="cm-threshold" className="text-xs font-mono text-text-muted flex-shrink-0">
                         threshold t = {userT.toFixed(2)}
                     </label>
                     <input id="cm-threshold" type="range" min="0" max="1" step="0.05" value={userT}
