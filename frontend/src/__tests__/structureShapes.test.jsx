@@ -226,3 +226,20 @@ describe('visual text is at least 12px and token coloured', () => {
     expect(text(html)).toContain('empty');
   });
 });
+
+describe('DataStructure: keyed structures have no positions', () => {
+  // Live check 2026-11-05 (ds_dicts How it works): every dict entry carried a list-style [0], [1] label.
+  it('a dict shows its key: value entries without [i] labels', () => {
+    const t = text(render({ type: 'DataStructure', structure: 'dict', data: { Images: '45 files', Videos: '12 files' } }));
+    expect(t).toContain("Images: '45 files'");
+    expect(t).not.toMatch(/\[0\]|\[1\]/);
+  });
+  it('a set shows no [i] labels either', () => {
+    const t = text(render({ type: 'DataStructure', structure: 'set', data: ['a', 'b'] }));
+    expect(t).not.toMatch(/\[0\]/);
+  });
+  it('a list keeps its index labels, and authored labels still win on a dict', () => {
+    expect(text(render({ type: 'DataStructure', structure: 'list', data: [1, 2] }))).toContain('[0]');
+    expect(text(render({ type: 'DataStructure', structure: 'dict', data: ['x: 1'], labels: ['key x'] }))).toContain('key x');
+  });
+});
