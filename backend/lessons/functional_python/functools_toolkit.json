@@ -167,5 +167,85 @@
     "category": "functional",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "lru_cache keeps a dict from a key built out of the call's arguments to the result, plus a linked list for least-recently-used order; partial stores pre-filled arguments; reduce folds with an accumulator; wraps copies metadata.",
+    "steps": [
+      {
+        "title": "lru_cache builds a key from the arguments",
+        "body": "When `fib(30)` is called through `@lru_cache`, the wrapper builds a hashable key from the positional and keyword arguments (with `typed=False`, 3 and 3.0 give the same key). It looks the key up in an internal dict. A hit returns the stored result without running `fib` at all.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "fib(30)",
+                "detail": "make key from args"
+              },
+              {
+                "label": "key in cache dict?",
+                "detail": "hit -> return stored result"
+              },
+              {
+                "label": "miss",
+                "detail": "call real fib(30)"
+              },
+              {
+                "label": "store",
+                "detail": "cache[key] = result"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why fib becomes fast",
+        "body": "Plain recursive `fib(n)` recomputes the same subproblems an exponential number of times. With the cache, each `fib(k)` is computed once and every later request is a dict hit, so `fib(30)` needs 31 real calls instead of over a million.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "fib.cache_info()",
+                "values": [
+                  "hits=0, misses=0",
+                  "hits=28, misses=31, currsize=31"
+                ]
+              }
+            ],
+            "caption": "Before and after fib(30) with @lru_cache(maxsize=None)"
+          }
+        }
+      },
+      {
+        "title": "The LRU list evicts old entries",
+        "body": "With a size limit (the default `maxsize` is 128), each entry is also linked into a circular doubly linked list. A hit moves the entry to the most-recent end; when the cache is full, a miss removes the entry at the least-recent end. `maxsize=None` (or `@cache`) skips the list and never evicts.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "linked list",
+            "data": [
+              "oldest: fib(2)",
+              "fib(5)",
+              "fib(9)",
+              "newest: fib(30)"
+            ],
+            "highlight": [
+              0
+            ],
+            "label": "next eviction on a miss when full"
+          }
+        }
+      },
+      {
+        "title": "partial and reduce",
+        "body": "`partial(multiply, 2)` returns an object that stores `multiply` and `(2,)`; calling it with 5 runs `multiply(2, 5)`. `reduce(f, [1, 2, 3, 4], 0)` keeps an accumulator: f(0, 1), then f(that, 2), and so on, returning the final accumulator."
+      },
+      {
+        "title": "Caching needs pure, hashable calls",
+        "body": "Because results are keyed by arguments, the function must return the same output for the same input, and every argument must be hashable: passing a list raises `TypeError: unhashable type: 'list'`. A cached method also keeps `self` alive in the cache."
+      }
+    ],
+    "takeaway": "functools builds functions from functions. lru_cache in particular is just a dict keyed by arguments plus an eviction list, so it is a perfect fit for pure functions with hashable inputs."
+  }
 }

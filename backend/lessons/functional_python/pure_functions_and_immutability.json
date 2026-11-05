@@ -169,5 +169,94 @@
     "category": "functional",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Arguments are passed as references to the caller's objects, so a function that mutates a list changes the caller's data; a pure function only reads its inputs and returns new objects, which makes it safe to cache, test and run in parallel.",
+    "steps": [
+      {
+        "title": "The caller's object is passed in",
+        "body": "In `ranked = sort_scores(my_scores)`, the parameter `scores` is bound to the very same list as `my_scores`. Python passes object references; there is no automatic copy.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "caller",
+                "label": "my_scores"
+              },
+              {
+                "id": "param",
+                "label": "scores (inside sort_scores)"
+              },
+              {
+                "id": "lst",
+                "label": "list [5, 2, 9, 1]"
+              }
+            ],
+            "edges": [
+              {
+                "from": "caller",
+                "to": "lst",
+                "label": "refers to"
+              },
+              {
+                "from": "param",
+                "to": "lst",
+                "label": "refers to"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Mutation leaks out",
+        "body": "`scores.sort()` reorders that shared list in place. After the call, both `ranked` and `my_scores` print `[1, 2, 5, 9]`, and they are the same object. The caller's original order is gone, which is a side effect.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Impure: sorts in place",
+              "code": "def sort_scores(scores):\n    scores.sort()\n    return scores\n# my_scores is now changed"
+            },
+            "right": {
+              "label": "Pure: returns a new list",
+              "code": "def sort_scores(scores):\n    return sorted(scores)\n# my_scores untouched"
+            }
+          }
+        }
+      },
+      {
+        "title": "Pure functions build new objects",
+        "body": "`sorted(scores)` copies the references into a new list and sorts that. The input is only read. Same input, same output, nothing else changed, so the function can be called in any order, any number of times."
+      },
+      {
+        "title": "Immutable types make purity easy",
+        "body": "Tuples, strings, frozensets and frozen dataclasses cannot be changed in place, so any 'change' produces a new object and the old value stays valid. Passing a tuple instead of a list guarantees the callee cannot mutate it.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "pure + hashable inputs",
+                "detail": "safe to memoise with lru_cache"
+              },
+              {
+                "label": "no shared mutation",
+                "detail": "safe to run in parallel"
+              },
+              {
+                "label": "output depends only on input",
+                "detail": "test with plain asserts"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Push side effects to the edges",
+        "body": "Real programs must print, write files and call APIs. Keep those in a thin outer layer and make the core logic pure: read the input, call pure functions, then perform the effects with their results."
+      }
+    ],
+    "takeaway": "Python passes references, so purity is a discipline you choose: read inputs, return new values, never mutate what you were given. In return you get code that is trivial to test, cache and parallelise."
+  }
 }

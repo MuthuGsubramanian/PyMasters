@@ -168,5 +168,115 @@
     "category": "functional",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "itertools tools are iterator objects that wrap other iterators, so a chain like chain -> accumulate -> islice pulls one item through all stages per next() call and stops the moment the last stage has enough.",
+    "steps": [
+      {
+        "title": "Building the pipeline costs nothing",
+        "body": "`stream = chain([1, 2, 3], [4, 5, 6])`, `running = accumulate(stream)` and `first3 = islice(running, 3)` only create three small iterator objects, each holding a reference to the one before it. No numbers have been added yet.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "i",
+                "label": "islice(n=3)"
+              },
+              {
+                "id": "a",
+                "label": "accumulate (total)"
+              },
+              {
+                "id": "c",
+                "label": "chain (current list)"
+              },
+              {
+                "id": "src",
+                "label": "[1,2,3] then [4,5,6]"
+              }
+            ],
+            "edges": [
+              {
+                "from": "i",
+                "to": "a",
+                "label": "next()"
+              },
+              {
+                "from": "a",
+                "to": "c",
+                "label": "next()"
+              },
+              {
+                "from": "c",
+                "to": "src",
+                "label": "next()"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "One next() pulls through every stage",
+        "body": "`list(first3)` calls `next(islice)`, which calls `next(accumulate)`, which calls `next(chain)`, which returns 1 from the first list. accumulate adds it to its running total and returns 1; islice passes it on. The next pull gives 2, so the total is 3; the third gives 6.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "chain gives",
+                "values": [
+                  "1",
+                  "2",
+                  "3"
+                ]
+              },
+              {
+                "variable": "accumulate total",
+                "values": [
+                  "1",
+                  "3",
+                  "6"
+                ]
+              },
+              {
+                "variable": "islice count",
+                "values": [
+                  "1",
+                  "2",
+                  "3"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Work stops early",
+        "body": "After three items islice stops asking. chain never touches the second list and accumulate never adds 4, 5 or 6. On an infinite source like `count()` this early stop is what makes the program finish."
+      },
+      {
+        "title": "groupby needs sorted input",
+        "body": "`groupby(rows, key=city)` walks the input once and starts a new group whenever the key changes from the previous item. It does not collect matching keys from across the whole input, so unsorted data gives repeated groups. Sort by the same key first.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Unsorted",
+              "code": "['Chennai', 'Pune', 'Chennai']\n-> Chennai, Pune, Chennai\n(3 groups)"
+            },
+            "right": {
+              "label": "sorted(..., key=city)",
+              "code": "['Chennai', 'Chennai', 'Pune']\n-> Chennai, Pune\n(2 groups)"
+            }
+          }
+        }
+      },
+      {
+        "title": "tee buffers what it shares",
+        "body": "`a, b = tee(it)` lets two consumers read one iterator. Items that `a` has read but `b` has not are kept in a buffer. If one copy runs far ahead, the buffer grows toward the whole stream, so `list()` is better when both will read everything."
+      }
+    ],
+    "takeaway": "An itertools pipeline is a chain of next() calls: one item flows through all stages, and nothing is computed that the last stage does not ask for. Mind the two exceptions that buffer: groupby's sort requirement and tee."
+  }
 }
