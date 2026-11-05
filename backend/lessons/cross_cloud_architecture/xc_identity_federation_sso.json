@@ -33,5 +33,104 @@
     {"q": {"en": "Why keep local break-glass accounts when everything is federated?"}, "options": {"en": ["Auditors require at least five local admins", "Federation is too slow for emergencies", "An IdP outage would otherwise lock you out of every cloud simultaneously", "Break-glass accounts are cheaper than federation"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["identity_federation", "zero_trust_architecture"], "concepts_required": ["azure_identity", "aws_identity", "gcp_identity"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Federation means the cloud trusts a signed statement from someone else: for people, the IdP signs a SAML assertion or OIDC ID token after login; for workloads, a platform such as GitHub signs an OIDC token that each cloud exchanges for short-lived credentials.",
+    "steps": [
+      {
+        "title": "SAML: a signed assertion via the browser",
+        "body": "The user opens the cloud console, which redirects to the IdP with an authentication request. After login and MFA, the IdP posts a signed XML assertion back with the user's identity and groups. The cloud checks the signature against the IdP's certificate.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "User opens cloud console",
+                "type": "input"
+              },
+              {
+                "label": "Redirect to IdP with AuthnRequest",
+                "type": "process"
+              },
+              {
+                "label": "IdP login + MFA",
+                "type": "process"
+              },
+              {
+                "label": "Signed assertion posted back",
+                "type": "process"
+              },
+              {
+                "label": "Signature verified, groups mapped to roles",
+                "type": "process"
+              },
+              {
+                "label": "Session starts",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "SAML sign-in, service-provider initiated"
+          }
+        }
+      },
+      {
+        "title": "OIDC: a signed JSON token",
+        "body": "OIDC uses an authorisation code exchanged for an ID token, a JWT. The receiver fetches the issuer's public keys from its JWKS endpoint and checks the signature plus iss, aud and exp claims.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "iss": "https://login.example-idp.com",
+              "aud": "cloud-console-app",
+              "sub": "user 8c1f...",
+              "groups": "cloud-admins",
+              "exp": "in 1 hour"
+            },
+            "caption": "Claims checked in an OIDC token"
+          }
+        }
+      },
+      {
+        "title": "Groups become roles",
+        "body": "Each cloud maps IdP groups to its own permissions: a permission set in AWS IAM Identity Center, a role assignment in Azure, an IAM binding in Google Cloud. Removing the user from the IdP group removes access everywhere."
+      },
+      {
+        "title": "Workloads federate without secrets",
+        "body": "A GitHub Actions job requests an OIDC token whose sub claim names the repo and branch. AWS STS AssumeRoleWithWebIdentity, Google Cloud STS via a workload identity pool, or an Entra federated credential checks issuer and subject and returns short-lived credentials.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "token.iss = https://token.actions.githubusercontent.com",
+              "token.sub = repo:acme/payments:ref:refs/heads/main",
+              "role trust policy requires sub = repo:acme/payments:ref:refs/heads/main -> match",
+              "STS returns credentials valid for 1 hour"
+            ],
+            "caption": "A deploy job federating into AWS"
+          }
+        }
+      },
+      {
+        "title": "Subject conditions are the security",
+        "body": "The trust only checks what you tell it to. A condition matching repo:acme/* lets every repository and branch in the org deploy to production. Pin the exact repo, branch or environment.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Too wide",
+              "code": "sub like repo:acme/*\nany repo, any branch -> prod"
+            },
+            "right": {
+              "label": "Pinned",
+              "code": "sub = repo:acme/payments:environment:prod\nonly that pipeline"
+            },
+            "description": "Trust condition"
+          }
+        }
+      }
+    ],
+    "takeaway": "One identity source, short-lived tokens everywhere. For workloads, the precision of the subject condition is the whole security boundary."
+  }
 }

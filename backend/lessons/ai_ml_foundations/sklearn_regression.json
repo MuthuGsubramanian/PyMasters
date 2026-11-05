@@ -375,5 +375,117 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "LinearRegression centres X and y, solves the least-squares problem for the slopes with a stable matrix routine, and then recovers the intercept from the means; scoring compares its squared errors to those of always predicting the mean.",
+    "steps": [
+      {
+        "title": "Centre first, then solve for slopes",
+        "body": "For x = [0, 1, 2] and y = [7, 10, 13], the means are 1 and 10. Centred, x becomes [-1, 0, 1] and y becomes [-3, 0, 3]. The slope is sum(x_c * y_c) / sum(x_c squared) = 6 / 2 = 3. With many features scikit-learn solves the same problem with a least-squares routine from SciPy.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                -1,
+                0,
+                1
+              ],
+              [
+                -3,
+                0,
+                3
+              ],
+              [
+                3,
+                0,
+                3
+              ]
+            ],
+            "labels": [
+              "x - mean",
+              "y - mean",
+              "product"
+            ],
+            "caption": "Centred data: slope = (3 + 0 + 3) / 2 = 3"
+          }
+        }
+      },
+      {
+        "title": "The intercept comes from the means",
+        "body": "Once the slope is known, intercept_ = y_mean - coef_ * x_mean = 10 - 3 * 1 = 7, so the model is y = 3x + 7, exactly the rule used to generate the story's synthetic data before noise was added. With noise the fitted values land close to 3 and 7 instead."
+      },
+      {
+        "title": "MSE and R² from the residuals",
+        "body": "Residuals are y - y_pred. mean_squared_error averages their squares, in squared units of y; its square root is in the same units as y. r2_score = 1 - SS_res / SS_tot compares to always predicting the mean: 0 means no better than the mean, 1 means perfect, and it can be negative for a model worse than the mean.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "y_pred = model.predict(X_test)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "residuals = y_test - y_pred",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "MSE = mean(residuals squared)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "SS_tot = sum((y_test - mean) squared)",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "R² = 1 - SS_res / SS_tot",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "How the regression scores are computed"
+          }
+        }
+      },
+      {
+        "title": "Polynomial regression is still linear",
+        "body": "make_pipeline(PolynomialFeatures(3), LinearRegression()) adds columns x squared and x cubed, then fits the same least-squares model on them. The curve bends in x, but the fit is linear in the weights. High degrees chase the noise: training R² rises while test R² falls."
+      },
+      {
+        "title": "Reading coefficients",
+        "body": "coef_[0] = 3 means each extra unit of x adds 3 to the prediction, holding other features fixed. When features have different units, compare coefficients only after standardising, and remember that correlated features can share or swap their effect in ways that make individual coefficients unstable."
+      }
+    ],
+    "takeaway": "Linear regression is least squares: centre, solve, recover the intercept. Judge it with error in the target's units (RMSE) and with R² on test data, and use polynomial features with care because they overfit quickly."
+  }
 }

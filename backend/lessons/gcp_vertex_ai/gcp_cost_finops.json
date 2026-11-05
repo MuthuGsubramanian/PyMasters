@@ -42,5 +42,82 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "vms = [\n    {\"name\": \"api-1\", \"vcpus\": 16, \"avg_cpu\": 0.11},\n    {\"name\": \"etl-1\", \"vcpus\": 8, \"avg_cpu\": 0.74},\n    {\"name\": \"dev-box\", \"vcpus\": 4, \"avg_cpu\": 0.02},\n]\nbudget, spent = 5000, 4620\nthresholds = [0.5, 0.9, 1.0]\n\nrecommendations = []\nfor vm in vms:\n    if vm[\"avg_cpu\"] < 0.05:\n        recommendations.append((vm[\"name\"], \"stop: idle\"))\n    elif vm[\"avg_cpu\"] < 0.3:\n        new_size = max(2, vm[\"vcpus\"] // 4)\n        recommendations.append((vm[\"name\"], f\"rightsize {vm['vcpus']} -> {new_size} vCPU\"))\n\nalerts = [f\"{int(t * 100)}% budget alert\" for t in thresholds if spent >= t * budget]\nprint(recommendations)\nprint(alerts)\n"
+  "uth_example": "vms = [\n    {\"name\": \"api-1\", \"vcpus\": 16, \"avg_cpu\": 0.11},\n    {\"name\": \"etl-1\", \"vcpus\": 8, \"avg_cpu\": 0.74},\n    {\"name\": \"dev-box\", \"vcpus\": 4, \"avg_cpu\": 0.02},\n]\nbudget, spent = 5000, 4620\nthresholds = [0.5, 0.9, 1.0]\n\nrecommendations = []\nfor vm in vms:\n    if vm[\"avg_cpu\"] < 0.05:\n        recommendations.append((vm[\"name\"], \"stop: idle\"))\n    elif vm[\"avg_cpu\"] < 0.3:\n        new_size = max(2, vm[\"vcpus\"] // 4)\n        recommendations.append((vm[\"name\"], f\"rightsize {vm['vcpus']} -> {new_size} vCPU\"))\n\nalerts = [f\"{int(t * 100)}% budget alert\" for t in thresholds if spent >= t * budget]\nprint(recommendations)\nprint(alerts)\n",
+  "under_the_hood": {
+    "summary": "Google Cloud meters usage per SKU per project, applies discounts such as committed use and sustained use, and streams the detailed records to a BigQuery export, while budgets compare spend with thresholds and send notifications without stopping anything.",
+    "steps": [
+      {
+        "title": "Usage becomes SKU line items",
+        "body": "Each resource reports usage against SKUs, such as N2 core hours in europe-west1. Billing prices each usage row and tags it with project, labels and service. The detailed export writes these rows to BigQuery.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "project": "ml-prod",
+              "service": "Vertex AI",
+              "sku": "online prediction node hours",
+              "labels.team": "recsys",
+              "credits": "committed use discount"
+            },
+            "caption": "One billing export row, simplified"
+          }
+        }
+      },
+      {
+        "title": "Labels and projects attribute cost",
+        "body": "Projects are the clean cost boundary; labels such as team=recsys split costs inside a project. Resources without labels show up as unlabelled cost you have to chase."
+      },
+      {
+        "title": "Discounts are applied automatically",
+        "body": "Committed use discounts apply to matching usage in each period, either for specific resources or a spend amount. Sustained use discounts apply automatically to eligible VM types that run for a large part of the month."
+      },
+      {
+        "title": "Budgets notify, they do not cap",
+        "body": "A Cloud Billing budget checks actual or forecast spend against thresholds (for example 50%, 90%, 100%) and sends email or a Pub/Sub message. To stop spend you must subscribe a function that acts, such as scaling a service down.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Spend reaches 90% of budget",
+                "type": "input"
+              },
+              {
+                "label": "Budget sends Pub/Sub message",
+                "type": "process"
+              },
+              {
+                "label": "Cloud Function receives it",
+                "type": "process"
+              },
+              {
+                "label": "Function scales down / alerts owner",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Budget to action"
+          }
+        }
+      },
+      {
+        "title": "Querying the export finds waste",
+        "body": "With billing data in BigQuery, a SQL query can rank cost by label, find idle endpoints that cost money every hour, or compute cost per prediction.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "team      cost_share",
+              "recsys    41%",
+              "search    27%",
+              "(no label) 12%  <- chase this"
+            ],
+            "caption": "Top cost by team this month (illustrative output)"
+          }
+        }
+      }
+    ],
+    "takeaway": "Visibility comes first: export billing to BigQuery and label everything. Budgets are alarms, and always-on ML endpoints are the classic silent cost."
+  }
 }

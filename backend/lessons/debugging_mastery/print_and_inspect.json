@@ -169,5 +169,81 @@
     "category": "debugging",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "print() converts each argument with str() and writes to sys.stdout, so it can hide the difference between '12' and 12; repr() and f'{x=}' show the real type, and breakpoint() starts pdb, which pauses the program through a per-line trace hook.",
+    "steps": [
+      {
+        "title": "print uses str(), which can hide types",
+        "body": "In the lesson, `order_total(['12', '8', '5'])` prints `1285`. With print, the string '1285' and the int 1285 look identical, so the bug (adding strings instead of numbers) stays invisible. `print(repr(subtotal))` prints `'1285'` with quotes, and the quotes give the type away.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "print(subtotal)",
+              "code": "1285\n# str or int? can't tell"
+            },
+            "right": {
+              "label": "print(repr(subtotal)), print(type(subtotal))",
+              "code": "'1285'\n<class 'str'>\n# it's a string"
+            }
+          }
+        }
+      },
+      {
+        "title": "f'{x=}' labels the value",
+        "body": "Since Python 3.8, `print(f'{subtotal=}')` prints `subtotal='1285'`: the expression text, an equals sign and the repr of the value. It is the fastest way to log several values without mixing them up."
+      },
+      {
+        "title": "Where the output goes",
+        "body": "print joins its arguments with `sep` (a space), adds `end` ('\\n') and writes to `sys.stdout`. When stdout is a terminal it is line-buffered, so each line appears at once; when output is piped or redirected it is block-buffered, so prints may show up late or out of order with stderr. `print(..., flush=True)` forces it out.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "print(a, b)",
+                "detail": "str(a), str(b)"
+              },
+              {
+                "label": "join with sep, add end",
+                "detail": "'a b\\n'"
+              },
+              {
+                "label": "sys.stdout buffer",
+                "detail": "terminal: per line; pipe: per block"
+              },
+              {
+                "label": "screen or file",
+                "detail": "visible"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "breakpoint() pauses the program",
+        "body": "`breakpoint()` calls `sys.breakpointhook()`, which by default starts pdb. pdb installs a trace function with `sys.settrace`, so the interpreter calls it on every new line. At each stop you can print variables (`p subtotal`), step into calls (`s`), go to the next line (`n`) or continue (`c`).",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "> order.py(4)order_total()",
+              "-> subtotal = subtotal + p",
+              "(Pdb) p subtotal, p",
+              "('12', '8')",
+              "(Pdb) p type(p)",
+              "<class 'str'>",
+              "(Pdb) c"
+            ]
+          }
+        }
+      },
+      {
+        "title": "inspect what you assume",
+        "body": "Every bug is a wrong belief about a value. Put the print or breakpoint exactly where the belief is used, print the type as well as the value, and remove the probes once you have the fact."
+      }
+    ],
+    "takeaway": "print shows str(); bugs often hide in the difference between str and repr. Print repr or use f'{x=}', flush when piping, and use breakpoint() when you need to look around at a paused moment."
+  }
 }

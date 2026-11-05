@@ -402,5 +402,128 @@
     "path_memberships": [
       "deep_learning"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A transformer turns tokens into vectors, adds position information, and passes them through repeated blocks where self-attention lets every token gather information from every other token at once, before a final layer predicts the output.",
+    "steps": [
+      {
+        "title": "Everyone listens at once",
+        "body": "An RNN reads token by token, so word 1 reaches word 50 only through 49 steps. In self-attention every token compares itself with every other token directly in one step, and all positions are computed in parallel, which suits GPUs and lets training scale to huge datasets.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "RNN",
+              "code": "one token at a time\ninformation passes step by step\nhard to parallelise"
+            },
+            "right": {
+              "label": "Transformer",
+              "code": "all tokens at once\nany token reaches any other in one step\nmatrix operations on GPUs"
+            },
+            "caption": "Sequential versus all-at-once"
+          }
+        }
+      },
+      {
+        "title": "Attention alone ignores order",
+        "body": "Self-attention treats its input as a set: shuffle the tokens and each one gets the same mix, just in a different row. 'Dog bites man' and 'man bites dog' would look alike. Position information must therefore be added to each token's embedding before the first block."
+      },
+      {
+        "title": "Sinusoidal positional encoding",
+        "body": "The original transformer adds a fixed pattern: dimension 2i of position pos gets sin(pos / 10000^(2i/d)) and dimension 2i+1 gets the cosine. For position 1 the first two dimensions are sin(1) = 0.841 and cos(1) = 0.540; for position 2 they are 0.909 and -0.416. Each position gets a unique signature, and many models now learn positions or use rotary encodings instead.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0.0,
+                1.0
+              ],
+              [
+                0.841,
+                0.54
+              ],
+              [
+                0.909,
+                -0.416
+              ]
+            ],
+            "labels": [
+              "pos 0",
+              "pos 1",
+              "pos 2"
+            ],
+            "caption": "First two positional-encoding dimensions"
+          }
+        }
+      },
+      {
+        "title": "Blocks refine the vectors",
+        "body": "Each block applies self-attention, so each token mixes in relevant context, then a feed-forward network that transforms every position separately, with residual connections and normalisation around both. After a dozen or more blocks, each token's vector reflects its meaning in this particular sentence.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "tokens -> embeddings",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "+ positional encoding",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "block: self-attention + feed-forward",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "... repeated N times",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "output layer",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "The transformer pipeline"
+          }
+        }
+      },
+      {
+        "title": "How GPT and Claude use it",
+        "body": "Chat models are decoder-only transformers: a causal mask lets each position attend only to earlier tokens, and the final layer scores every vocabulary token as the next one. Generation picks a token, appends it and runs again, reusing cached keys and values from earlier positions."
+      }
+    ],
+    "takeaway": "The transformer's advantage is direct, parallel communication between all tokens through attention, with positional encodings supplying order. Stack enough blocks, train on enough text, and next-token prediction becomes the language models you use today."
   }
 }

@@ -323,5 +323,78 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "On every call Python binds arguments to parameters in a fixed order: positionals fill slots left to right, keywords match by name, leftovers go to *args and **kwargs, and defaults fill the gaps.",
+    "steps": [
+      {
+        "title": "Positional arguments fill slots",
+        "body": "For `def order(item, qty=1, *extras, size='M', **notes)`, the call `order('tea', 2, 'sugar', 'milk', size='L', hot=True)` first puts 'tea' into `item` and 2 into `qty`, left to right."
+      },
+      {
+        "title": "Extra positionals become a tuple",
+        "body": "Positional values left over after the named slots are packed into a new tuple bound to `extras`: `('sugar', 'milk')`. If the function had no `*args`, Python would raise `TypeError: order() takes from 1 to 2 positional arguments but 4 were given`.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "tuple",
+            "data": [
+              "'sugar'",
+              "'milk'"
+            ],
+            "label": "extras",
+            "caption": "Leftover positionals are packed"
+          }
+        }
+      },
+      {
+        "title": "Keywords match by name",
+        "body": "`size='L'` is matched to the parameter named `size`. `size` comes after `*extras`, so it is keyword-only and can never be filled by position. A keyword that names a slot already filled raises `TypeError: got multiple values for argument`."
+      },
+      {
+        "title": "Unknown keywords become a dict",
+        "body": "Keywords with no matching parameter go into a new dict bound to `notes`: `{'hot': True}`. Without `**kwargs` the call fails with `unexpected keyword argument 'hot'`.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "order",
+                "variables": {
+                  "item": "'tea'",
+                  "qty": "2",
+                  "extras": "('sugar', 'milk')",
+                  "size": "'L'",
+                  "notes": "{'hot': True}"
+                }
+              }
+            ],
+            "caption": "The frame after binding"
+          }
+        }
+      },
+      {
+        "title": "Defaults are stored once on the function",
+        "body": "Default values are evaluated once, when `def` runs, and kept in `order.__defaults__` and `order.__kwdefaults__`. Unfilled slots take those stored objects. That is why a mutable default like `notes=[]` is shared between calls; use `None` and create the list inside.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Shared default",
+              "code": "def add(x, bag=[]):\n    bag.append(x); return bag\nadd(1); add(2)  # [1, 2]"
+            },
+            "right": {
+              "label": "Fresh each call",
+              "code": "def add(x, bag=None):\n    bag = [] if bag is None else bag\n    bag.append(x); return bag"
+            }
+          }
+        }
+      },
+      {
+        "title": "Unpacking at the call site",
+        "body": "`order(*['tea', 2], **{'size': 'S'})` does the reverse: `*` spreads a sequence into positional arguments and `**` spreads a dict into keyword arguments, before the same binding rules run."
+      }
+    ],
+    "takeaway": "Binding happens in one fixed order: positionals, *args, keywords, **kwargs, then defaults. Errors like 'multiple values' or 'unexpected keyword' are this algorithm telling you which rule failed."
+  }
 }

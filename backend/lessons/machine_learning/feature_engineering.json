@@ -351,5 +351,106 @@
     "path_memberships": [
       "ml_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Feature engineering adds new columns that put the useful pattern on the surface, so a simple model can reach it with a weighted sum instead of having to discover it.",
+    "steps": [
+      {
+        "title": "A linear model can only add weighted columns",
+        "body": "Linear and logistic regression compute w1*x1 + w2*x2 + ... + b. If the price depends on length times width, no setting of w1 and w2 recovers that product. Add area = length * width as a column and a single weight captures it exactly."
+      },
+      {
+        "title": "Polynomial features expand the columns",
+        "body": "PolynomialFeatures(degree=2) turns [a, b] into [1, a, b, a squared, a*b, b squared]. For the row [2, 3] that is [1, 2, 3, 4, 6, 9]. The model is still linear in its weights, so it trains the same way, but it can now draw curved boundaries in the original space.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                2,
+                3
+              ],
+              [
+                1,
+                2,
+                3,
+                4,
+                6,
+                9
+              ]
+            ],
+            "labels": [
+              "input [a, b]",
+              "[1, a, b, a², ab, b²]"
+            ],
+            "highlight": [
+              1
+            ],
+            "caption": "Degree-2 expansion of one row"
+          }
+        }
+      },
+      {
+        "title": "The column count explodes",
+        "body": "With n features and degree d the expansion has C(n + d, d) columns including the bias: 10 features at degree 2 give 66, at degree 3 they give 286. Many columns with few rows invite overfitting, so polynomial features usually go with regularisation or feature selection."
+      },
+      {
+        "title": "Dates and text become numbers you choose",
+        "body": "A timestamp means nothing to a model until you extract parts: df['date'].dt.month gives 1 to 12, and is_summer = month in {6, 7, 8} gives a 0/1 flag. Ratios like length / width and counts like 'orders in the last 30 days' work the same way: you decide which comparison matters.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "raw date 2024-06-20",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "dt.month -> 6",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "month in {6,7,8}? -> is_summer = 1",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "model weight learns the summer effect",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3"
+            ],
+            "caption": "One raw value becomes features a model can weigh"
+          }
+        }
+      },
+      {
+        "title": "Selection keeps the columns that carry signal",
+        "body": "SelectKBest(f_classif, k=5) scores each feature on its own with an ANOVA F-test and keeps the top five. Model-based selection reads a fitted model's coef_ or feature_importances_ instead. Either way, run selection inside cross-validation so the choice is not based on the test rows."
+      }
+    ],
+    "takeaway": "Good features move knowledge from your head into the data. A well-chosen ratio or product often beats a bigger model, but every added column also adds a chance to overfit, so validate each idea."
   }
 }

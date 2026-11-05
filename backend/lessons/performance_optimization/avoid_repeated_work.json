@@ -161,5 +161,128 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "from functools import lru_cache\n\ncalls = {\"plain\": 0, \"cached\": 0}\n\ndef fib(n):\n    calls[\"plain\"] += 1\n    return n if n < 2 else fib(n - 1) + fib(n - 2)\n\n@lru_cache(maxsize=None)\ndef fib_cached(n):\n    calls[\"cached\"] += 1\n    return n if n < 2 else fib_cached(n - 1) + fib_cached(n - 2)\n\nslow = fib(5)\nfast = fib_cached(5)\ntax = 0.18                                   # hoisted: computed once, not per item\nprices = [100, 250, 40]\nwith_tax = [round(p * (1 + tax), 2) for p in prices]\nprint(slow, fast, calls, with_tax)\n"
+  "uth_example": "from functools import lru_cache\n\ncalls = {\"plain\": 0, \"cached\": 0}\n\ndef fib(n):\n    calls[\"plain\"] += 1\n    return n if n < 2 else fib(n - 1) + fib(n - 2)\n\n@lru_cache(maxsize=None)\ndef fib_cached(n):\n    calls[\"cached\"] += 1\n    return n if n < 2 else fib_cached(n - 1) + fib_cached(n - 2)\n\nslow = fib(5)\nfast = fib_cached(5)\ntax = 0.18                                   # hoisted: computed once, not per item\nprices = [100, 250, 40]\nwith_tax = [round(p * (1 + tax), 2) for p in prices]\nprint(slow, fast, calls, with_tax)\n",
+  "under_the_hood": {
+    "summary": "CPython executes exactly what you write each time: it does not cache function results or move unchanging expressions out of loops, so caching, hoisting and precomputing are how you stop paying for the same work over and over.",
+    "steps": [
+      {
+        "title": "Naive recursion repeats calls",
+        "body": "`fib(5)` calls `fib(4)` and `fib(3)`; `fib(4)` calls `fib(3)` again, and so on. In total `fib(2)` is computed 3 times and `fib(1)` 5 times. The number of calls grows exponentially with n.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "f5",
+                "label": "fib(5)"
+              },
+              {
+                "id": "f4",
+                "label": "fib(4)"
+              },
+              {
+                "id": "f3a",
+                "label": "fib(3)"
+              },
+              {
+                "id": "f3b",
+                "label": "fib(3) again"
+              },
+              {
+                "id": "f2a",
+                "label": "fib(2)"
+              },
+              {
+                "id": "f2b",
+                "label": "fib(2) again"
+              }
+            ],
+            "edges": [
+              {
+                "from": "f5",
+                "to": "f4",
+                "label": "calls"
+              },
+              {
+                "from": "f5",
+                "to": "f3a",
+                "label": "calls"
+              },
+              {
+                "from": "f4",
+                "to": "f3b",
+                "label": "calls"
+              },
+              {
+                "from": "f4",
+                "to": "f2a",
+                "label": "calls"
+              },
+              {
+                "from": "f3a",
+                "to": "f2b",
+                "label": "calls"
+              }
+            ],
+            "caption": "Repeated subtrees in fib(5)"
+          }
+        }
+      },
+      {
+        "title": "Caching stores answers by argument",
+        "body": "`@lru_cache` keeps a dict from arguments to results. The first `fib(3)` computes and stores its answer; every later `fib(3)` is a dict hit. Each `fib(n)` is now computed once, so the work grows linearly. This only works for pure functions with hashable arguments."
+      },
+      {
+        "title": "No automatic hoisting",
+        "body": "Unlike many compilers, CPython does not move loop-invariant code out of loops. In `for row in rows: if row.city in set(allowed):` the set is rebuilt on every pass. Computing `allowed_set = set(allowed)` once before the loop does the same job a single time.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Recomputed each pass",
+              "code": "for row in rows:\n    limit = config.get('max') * 1.1\n    if row.city in set(allowed):\n        ..."
+            },
+            "right": {
+              "label": "Hoisted out",
+              "code": "limit = config.get('max') * 1.1\nallowed_set = set(allowed)\nfor row in rows:\n    if row.city in allowed_set:\n        ..."
+            }
+          }
+        }
+      },
+      {
+        "title": "Lookups repeat too",
+        "body": "Each `self.items.append(x)` inside a loop looks up `self`, then `items`, then `append`, every time. In very hot loops, binding `append = self.items.append` once can help; CPython 3.11's specialising interpreter already caches many of these lookups, so measure before doing it.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "work per pass",
+                "values": [
+                  "load self",
+                  "lookup .items",
+                  "lookup .append",
+                  "call"
+                ]
+              },
+              {
+                "variable": "after binding append once",
+                "values": [
+                  "-",
+                  "-",
+                  "-",
+                  "call"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Precompute tables",
+        "body": "When the same mapping is needed many times, build it up front: a dict from code to name, a list of squares, or a regex compiled once. One pass of preparation turns every later question into a lookup."
+      }
+    ],
+    "takeaway": "The interpreter will happily redo the same work a million times. Ask at every loop and call: has this been computed already? Cache pure results, hoist invariants, precompute lookups."
+  }
 }

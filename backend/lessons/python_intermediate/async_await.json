@@ -447,5 +447,99 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "`await` passes control down a chain of coroutines to a Future; the Future yields itself to the Task driving the chain, and when the Future gets a result its callback tells the Task to resume the whole chain.",
+    "steps": [
+      {
+        "title": "A Task drives a coroutine with send()",
+        "body": "`asyncio.create_task(order('table 1'))` wraps the coroutine in a Task and schedules its first step. A step calls `coro.send(None)`, which runs the coroutine's code until it suspends. The Task is the only thing that ever pushes the coroutine forward."
+      },
+      {
+        "title": "await delegates down the chain",
+        "body": "If `order()` awaits `cook()`, and `cook()` awaits `asyncio.sleep(2)`, the `send(None)` travels through all three frames, like nested function calls. It stops at the bottom, where something truly has to wait: a Future.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "sleep",
+                "variables": {
+                  "waits on": "Future (timer in 2s)"
+                }
+              },
+              {
+                "name": "cook",
+                "variables": {
+                  "paused at": "await asyncio.sleep(2)"
+                }
+              },
+              {
+                "name": "order",
+                "variables": {
+                  "paused at": "await cook()"
+                }
+              },
+              {
+                "name": "Task",
+                "variables": {
+                  "drives": "order() with send(None)"
+                }
+              }
+            ],
+            "caption": "One chain of awaits, suspended at the bottom"
+          }
+        }
+      },
+      {
+        "title": "The Future yields itself up",
+        "body": "An unfinished Future's `__await__` yields the Future object. That value travels back up through every frame to the Task's `send()` call. The Task sees a Future, registers a done callback on it, and returns control to the event loop."
+      },
+      {
+        "title": "Completion reschedules the Task",
+        "body": "Two seconds later the timer sets the Future's result. Setting a result schedules its done callbacks, so the Task's wake-up is placed on the loop's ready queue. On its next step the Task calls `send(None)` again; the value flows down to `sleep`, which returns, then `cook` continues, then `order`.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "Future.set_result()",
+                "detail": "schedule callbacks"
+              },
+              {
+                "label": "Task.__step",
+                "detail": "coro.send(None)"
+              },
+              {
+                "label": "sleep returns",
+                "detail": "cook resumes"
+              },
+              {
+                "label": "cook returns",
+                "detail": "order resumes"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "A coroutine that finishes sets the Task's result",
+        "body": "When `order()` returns, `send()` raises StopIteration carrying the return value. The Task catches it and becomes done with that result, which wakes anything that was awaiting the Task, such as `gather`.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Without a Task",
+              "code": "coro = order('t1')\n# just an object; never runs"
+            },
+            "right": {
+              "label": "With a Task",
+              "code": "task = asyncio.create_task(order('t1'))\n# loop runs it; await task gives result"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "await is not magic: it is yield-based delegation from a Task down to a Future and back. Only Futures truly wait; coroutines just pass the pause up and the result down."
   }
 }

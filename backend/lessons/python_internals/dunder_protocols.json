@@ -169,5 +169,82 @@
     "category": "python_internals",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "For `a + b` the interpreter calls type(a).__add__(a, b); if that returns NotImplemented it tries type(b).__radd__(b, a), first if b's type is a subclass of a's, and raises TypeError if both decline.",
+    "steps": [
+      {
+        "title": "Operators look up methods on the type",
+        "body": "`v1 + v2` compiles to BINARY_OP. At run time CPython looks up `__add__` on `type(v1)`, not on the instance, and calls it with both operands. Instance attributes named `__add__` are ignored; the data model always goes through the class.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "v1 + v2",
+                "detail": "BINARY_OP (+)"
+              },
+              {
+                "label": "type(v1).__add__(v1, v2)",
+                "detail": "result or NotImplemented"
+              },
+              {
+                "label": "type(v2).__radd__(v2, v1)",
+                "detail": "if the first declined"
+              },
+              {
+                "label": "both declined",
+                "detail": "TypeError"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "NotImplemented passes the turn",
+        "body": "If `Vector.__add__` receives an int it does not understand, it should `return NotImplemented` (a special singleton, not an exception). Python then asks the right operand through `int.__radd__`, and if that also returns NotImplemented, you get `TypeError: unsupported operand type(s) for +: 'Vector' and 'int'`.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Returns NotImplemented",
+              "code": "def __add__(self, other):\n    if not isinstance(other, Vector):\n        return NotImplemented\n# Python tries other.__radd__"
+            },
+            "right": {
+              "label": "Raises TypeError itself",
+              "code": "def __add__(self, other):\n    raise TypeError(...)\n# other side never gets a chance"
+            }
+          }
+        }
+      },
+      {
+        "title": "Reflected methods make 3 * v work",
+        "body": "`3 * v` first calls `int.__mul__(3, v)`, which returns NotImplemented because int does not know Vector. Python then calls `Vector.__rmul__(v, 3)`. Defining `__rmul__` is what lets your type appear on the right of an operator with a built-in type on the left."
+      },
+      {
+        "title": "Subclasses get the first try",
+        "body": "If the right operand's type is a subclass of the left operand's type and overrides the reflected method, Python calls the reflected method first. That lets a more specific type control mixed operations with its parent."
+      },
+      {
+        "title": "Protocols beyond arithmetic",
+        "body": "The same model covers everything: `len(x)` uses `__len__`, `x[i]` uses `__getitem__`, `for` uses `__iter__` (or falls back to `__getitem__` with 0, 1, 2...), `with` uses `__enter__`/`__exit__`, `bool(x)` uses `__bool__` then `__len__`. Implement the method and the syntax works.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "len(x)": "__len__",
+              "x[i]": "__getitem__",
+              "for i in x": "__iter__",
+              "x == y": "__eq__ / reflected __eq__",
+              "bool(x)": "__bool__, then __len__",
+              "with x": "__enter__ / __exit__"
+            },
+            "label": "Syntax -> special method"
+          }
+        }
+      }
+    ],
+    "takeaway": "The data model is a dispatch protocol: Python asks the left operand, lets it decline with NotImplemented, then asks the right one. Return NotImplemented for unknown types and your classes cooperate with everyone else's."
+  }
 }

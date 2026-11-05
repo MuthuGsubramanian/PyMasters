@@ -314,5 +314,99 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Filtering builds a boolean array with one True or False per row, combines conditions element by element, and then keeps the rows where the mask is True along with their original index labels.",
+    "steps": [
+      {
+        "title": "A comparison makes a mask",
+        "body": "With scores [88, 45, 92, 67], df['score'] > 70 runs one vectorised comparison and returns a boolean Series [True, False, True, False] carrying the same index 0 to 3. Nothing is filtered yet; the mask is just data.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                88,
+                45,
+                92,
+                67
+              ],
+              [
+                true,
+                false,
+                true,
+                false
+              ]
+            ],
+            "labels": [
+              "score",
+              "> 70"
+            ],
+            "highlight": [
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "caption": "The mask for score > 70"
+          }
+        }
+      },
+      {
+        "title": "df[mask] keeps the True rows",
+        "body": "When df[...] receives a boolean Series, pandas aligns it to the index and takes the rows marked True: Alice (0) and Charlie (2). The result keeps those labels, so its index is [0, 2]; reset_index(drop=True) renumbers it if you need 0, 1."
+      },
+      {
+        "title": "Combine with & and |, in parentheses",
+        "body": "(df['score'] > 70) & df['passed'] works element by element: [T, F, T, F] & [T, F, T, T] = [T, F, T, F]. Python's and and or try to turn the whole Series into one bool and raise 'truth value of a Series is ambiguous'. The parentheses matter because & binds more tightly than >.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                true,
+                false,
+                true,
+                false
+              ],
+              [
+                true,
+                false,
+                true,
+                true
+              ],
+              [
+                true,
+                false,
+                true,
+                false
+              ]
+            ],
+            "labels": [
+              "score > 70",
+              "passed",
+              "&"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "Element-wise AND of two masks"
+          }
+        }
+      },
+      {
+        "title": "isin and between are mask builders too",
+        "body": "df['city'].isin(['Chennai', 'Delhi']) puts the list into a hash set and checks each row against it, and df['score'].between(60, 90) builds two comparisons and ANDs them. ~mask flips every value, so df[~mask] keeps the rows the filter rejected."
+      },
+      {
+        "title": "query parses a string into the same masks",
+        "body": "df.query('score > 70 and passed') parses the expression, looks up column names, and evaluates it, using the numexpr engine when that library is installed. Inside query, 'and' and 'or' are allowed because the parser translates them. @name inserts a Python variable."
+      }
+    ],
+    "takeaway": "Every filter is a boolean mask aligned to the index. Build masks with comparisons, combine them with & | ~ in parentheses, and use df.loc[mask, 'col'] = value when you want to change only the selected rows."
+  }
 }

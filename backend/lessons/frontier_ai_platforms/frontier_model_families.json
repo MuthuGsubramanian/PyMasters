@@ -49,5 +49,86 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Each lab ships its models as tiers of one family, with a large, a balanced and a fast model trained on shared recipes, then exposes them through dated versions and moving aliases, so an app picks a tier per task and pins a version to keep behaviour stable.",
+    "steps": [
+      {
+        "title": "One family, several sizes",
+        "body": "A lab trains a family of models that differ mainly in size and inference cost. Bigger models usually reason better on hard tasks; smaller ones answer faster and cost less per token. Claude Opus/Sonnet/Haiku, GPT and its mini variants, and Gemini Pro/Flash/Flash-Lite follow this pattern.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "flagship / deep reasoning": "Claude Opus, GPT flagship / o-series, Gemini Pro",
+              "balanced workhorse": "Claude Sonnet, GPT mainline, Gemini Flash",
+              "fast / economy": "Claude Haiku, GPT mini / nano, Gemini Flash-Lite"
+            },
+            "caption": "Tiering pattern across labs"
+          }
+        }
+      },
+      {
+        "title": "Size changes cost per token",
+        "body": "Every output token needs a forward pass through the whole model. More parameters means more computation per token, so the flagship tier costs more and usually generates more slowly than the economy tier."
+      },
+      {
+        "title": "Versions vs aliases",
+        "body": "A dated or numbered model ID points at one fixed snapshot. An alias such as a 'latest' name moves to newer snapshots over time. Pinning a snapshot keeps outputs stable; following an alias gets improvements but can change behaviour without a deploy.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Pinned snapshot",
+              "code": "same weights every call\nyou choose when to upgrade"
+            },
+            "right": {
+              "label": "Moving alias",
+              "code": "silently updated\nnew behaviour may appear any day"
+            },
+            "description": "How to reference a model"
+          }
+        }
+      },
+      {
+        "title": "Deprecation is a schedule",
+        "body": "Old snapshots are announced for retirement and then removed. Calls to a retired ID fail, so every pinned model needs an owner and an upgrade plan with a regression eval."
+      },
+      {
+        "title": "Route by task",
+        "body": "Production systems often send easy, high-volume work (classification, extraction) to the fast tier and only hard requests to the flagship, which cuts cost while keeping quality where it matters.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Incoming request",
+                "type": "input"
+              },
+              {
+                "label": "Classify difficulty (cheap model or rules)",
+                "type": "process"
+              },
+              {
+                "label": "Easy -> fast tier",
+                "type": "process"
+              },
+              {
+                "label": "Hard -> flagship tier",
+                "type": "process"
+              },
+              {
+                "label": "Answer",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "A simple tier router"
+          }
+        }
+      }
+    ],
+    "takeaway": "Think in tiers, not brand names. Pin versions in production, watch deprecation dates, and route each task to the cheapest tier that passes your evals."
+  }
 }

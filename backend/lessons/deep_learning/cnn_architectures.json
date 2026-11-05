@@ -368,5 +368,117 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Each landmark CNN changed how layers are stacked: LeNet proved the conv-pool pattern, AlexNet scaled it with ReLU and GPUs, VGG showed that small 3x3 filters stacked deep work better, and ResNet's skip connections let gradients pass through 50 to 152 layers.",
+    "steps": [
+      {
+        "title": "LeNet-5: convolution, pooling, then dense",
+        "body": "LeNet-5 took a 32 x 32 grayscale digit through two convolution and subsampling stages and then fully connected layers, about 60,000 parameters in total. The pattern, local filters with shared weights followed by shrinking the map, is still the skeleton of most CNNs.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              "32x32 input",
+              "conv 5x5 -> 6 maps",
+              "subsample",
+              "conv 5x5 -> 16 maps",
+              "subsample",
+              "dense -> 10 digits"
+            ],
+            "caption": "LeNet-5 data flow"
+          }
+        }
+      },
+      {
+        "title": "AlexNet: scale it up",
+        "body": "AlexNet (2012) used 5 convolution and 3 dense layers with about 60 million parameters, ReLU activations that train faster than tanh, dropout against overfitting, data augmentation, and two GPUs. Its large first filters (11 x 11, stride 4) shrank the 224-pixel input quickly."
+      },
+      {
+        "title": "VGG: small filters, more layers",
+        "body": "Two stacked 3 x 3 convolutions see a 5 x 5 region, and three see 7 x 7. With C channels in and out, three 3 x 3 layers use 27C² weights against 49C² for one 7 x 7, and add two extra ReLUs. VGG-16 applied this rule throughout: 13 conv and 3 dense layers, 138 million parameters, most of them in the dense layers.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "one 7x7 conv",
+              "code": "receptive field 7x7\n49 C² weights\n1 non-linearity"
+            },
+            "right": {
+              "label": "three 3x3 convs",
+              "code": "receptive field 7x7\n27 C² weights\n3 non-linearities"
+            },
+            "caption": "Why VGG stacks 3x3 filters"
+          }
+        }
+      },
+      {
+        "title": "ResNet: learn the change, keep the input",
+        "body": "A residual block outputs relu(F(x) + x): the layers learn a correction F added to their unchanged input. The derivative of F(x) + x with respect to x is F'(x) + 1, so during backpropagation the gradient always has a direct '+1' path around each block. That is what made 50- and 152-layer networks trainable.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "x",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "conv -> BN -> ReLU",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "conv -> BN",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "add the skip: F(x) + x",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "ReLU -> next block",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "A basic residual block"
+          }
+        }
+      },
+      {
+        "title": "Bottlenecks keep deep nets cheap",
+        "body": "ResNet-50 uses bottleneck blocks: a 1 x 1 conv shrinks 256 channels to 64, a 3 x 3 conv works at 64, and a 1 x 1 conv expands back to 256. That is 69,632 weights against 1,179,648 for two 3 x 3 convs at 256 channels, which is how ResNet-50 has about 25 million parameters, far fewer than VGG-16."
+      }
+    ],
+    "takeaway": "Architectures improved by making depth work: small filters for efficiency, ReLU and normalisation for trainability, and skip connections so gradients survive. Residual connections now appear in nearly every deep network, transformers included."
+  }
 }

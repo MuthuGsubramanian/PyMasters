@@ -434,5 +434,143 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A CIFAR-10 pipeline randomly flips and shifts every training image on the fly, normalises each colour channel, runs it through conv blocks with batch norm that shrink 32 x 32 to 4 x 4, and trains with cross-entropy, while test images skip augmentation.",
+    "steps": [
+      {
+        "title": "Augmentation creates new views each epoch",
+        "body": "RandomCrop(32, padding=4) pads the 32 x 32 image to 40 x 40 and cuts a random 32 x 32 window, shifting the content by up to 4 pixels. RandomHorizontalFlip mirrors it with probability 0.5. A plane flipped and shifted is still a plane, so the model learns features that do not depend on exact position. These run only on the training set.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "load 32 x 32 image",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "pad to 40 x 40, random 32 x 32 crop",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "flip left-right with p = 0.5",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "ToTensor: 0-255 -> 0-1",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "Normalize per channel",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "transform_train for one image"
+          }
+        }
+      },
+      {
+        "title": "Per-channel normalisation",
+        "body": "Normalize((0.4914, 0.4822, 0.4465), (0.2470, 0.2435, 0.2616)) subtracts each channel's dataset mean and divides by its std, so red, green and blue inputs are all centred near 0 with spread near 1. The same numbers must be used at test time and in deployment."
+      },
+      {
+        "title": "Batch norm inside each block",
+        "body": "BatchNorm2d(32) computes, for each of the 32 channels, the mean and variance over the batch and all pixel positions, normalises, then applies a learned scale and shift. During training it also keeps running averages; model.eval() switches to those averages so a single test image gets a stable result."
+      },
+      {
+        "title": "Shapes through the network",
+        "body": "With padding=1 the convolutions keep 32 x 32; each MaxPool2d(2, 2) halves it: 32 to 16 to 8 to 4. The last block outputs 128 channels of 4 x 4, flattened to 2,048 numbers, matching Linear(128 * 4 * 4, 256). Dropout2d(0.25) drops whole channels at random during training.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "input",
+                "3 x 32 x 32"
+              ],
+              [
+                "block 1 + pool",
+                "32 x 16 x 16"
+              ],
+              [
+                "block 2 + pool",
+                "64 x 8 x 8"
+              ],
+              [
+                "block 3 + pool",
+                "128 x 4 x 4"
+              ],
+              [
+                "flatten",
+                2048
+              ],
+              [
+                "fc",
+                "256 -> 10"
+              ]
+            ],
+            "labels": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            "caption": "CIFAR10CNN tensor shapes"
+          }
+        }
+      },
+      {
+        "title": "Evaluate per class, not just overall",
+        "body": "Test accuracy counts argmax matches over the 10,000 test images. A per-class breakdown usually shows that cats and dogs are confused with each other far more than planes and frogs; the confusion matrix tells you which classes need more data or a stronger model.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "training mode",
+              "code": "augmentation on\ndropout on\nbatch norm uses batch statistics"
+            },
+            "right": {
+              "label": "evaluation mode",
+              "code": "no augmentation\ndropout off\nbatch norm uses running averages"
+            },
+            "caption": "What changes between model.train() and model.eval()"
+          }
+        }
+      }
+    ],
+    "takeaway": "Most of a real image pipeline is about the data path: augmentation for variety, consistent normalisation, and the right train or eval mode. The network itself is a stack of conv-BN-ReLU blocks that trade spatial size for channels."
   }
 }

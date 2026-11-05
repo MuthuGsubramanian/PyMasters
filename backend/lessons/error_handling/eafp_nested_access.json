@@ -212,5 +212,80 @@
       "correct": 1
     }
   ],
-  "uth_example": "config = {\"db\": {\"primary\": {\"host\": \"10.0.0.5\", \"port\": 5432}}}\n\ndef lookup(data, path):\n    current = data\n    try:\n        for key in path:\n            current = current[key]\n    except (KeyError, TypeError):\n        return None\n    return current\n\nhost = lookup(config, [\"db\", \"primary\", \"host\"])\nmissing = lookup(config, [\"db\", \"replica\", \"host\"])\ntoo_deep = lookup(config, [\"db\", \"primary\", \"port\", \"x\"])\nprint(host, missing, too_deep)\n"
+  "uth_example": "config = {\"db\": {\"primary\": {\"host\": \"10.0.0.5\", \"port\": 5432}}}\n\ndef lookup(data, path):\n    current = data\n    try:\n        for key in path:\n            current = current[key]\n    except (KeyError, TypeError):\n        return None\n    return current\n\nhost = lookup(config, [\"db\", \"primary\", \"host\"])\nmissing = lookup(config, [\"db\", \"replica\", \"host\"])\ntoo_deep = lookup(config, [\"db\", \"primary\", \"port\", \"x\"])\nprint(host, missing, too_deep)\n",
+  "under_the_hood": {
+    "summary": "Since CPython 3.11 a try block costs almost nothing when no exception occurs, so EAFP pays only when a lookup fails, while LBYL repeats every lookup and can race with changes between the check and the use.",
+    "steps": [
+      {
+        "title": "LBYL does the work twice",
+        "body": "`if key in d and isinstance(d[key], dict) and inner in d[key]: value = d[key][inner]` hashes `key` and probes the dict three times, then once more for the real access. Each check is a separate operation, and the code grows with every level of nesting.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "LBYL (check first)",
+              "code": "if key in d and \\\n   isinstance(d[key], dict) and \\\n   inner in d[key]:\n    value = d[key][inner]\nelse:\n    value = None"
+            },
+            "right": {
+              "label": "EAFP (just try)",
+              "code": "try:\n    value = d[key][inner]\nexcept (KeyError, TypeError):\n    value = None"
+            }
+          }
+        }
+      },
+      {
+        "title": "EAFP does each lookup once",
+        "body": "`d[key][inner]` performs exactly the two lookups it needs. If both succeed, the result is used directly. In CPython 3.11, entering the try costs no extra instructions; the compiler records the protected range in an exception table instead.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "try:\n    value = d[key][inner]\nexcept (KeyError, TypeError):\n    value = None",
+            "highlightSequence": [
+              2,
+              3,
+              4
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Happy path: two subscript operations, nothing else."
+              },
+              {
+                "description": "On failure, the exception table sends control here; the tuple is checked with isinstance."
+              },
+              {
+                "description": "Fallback value for a missing or non-dict level."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The failure path is the expensive one",
+        "body": "When a key is missing, Python creates a KeyError object, records a traceback entry and searches the exception table. That is more costly than a failed `in` check. So EAFP is the better deal when failures are uncommon; if most lookups fail, `.get()` or a check can be faster.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "cost per lookup",
+                "values": [
+                  "hit: ~1 lookup",
+                  "miss: lookup + exception object + handler search"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "No gap for the world to change",
+        "body": "With LBYL there is a moment between `os.path.exists(p)` and `open(p)` when another process can delete the file (a time-of-check to time-of-use race). `try: open(p) except FileNotFoundError:` asks the OS once, so the answer cannot go stale."
+      },
+      {
+        "title": "Keep the try narrow",
+        "body": "Put only the risky operation inside the try and catch only the exceptions you expect. A broad try around many lines could catch a KeyError from an unrelated bug and hide it behind your fallback value."
+      }
+    ],
+    "takeaway": "EAFP is cheap when things usually work and avoids check-then-use races. Wrap the one operation that can fail, name the exceptions you expect, and let everything else surface."
+  }
 }

@@ -437,30 +437,6 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* ── PARTNERSHIP ── */}
-            <section id="partners" aria-labelledby="partners-title" className="relative px-4 sm:px-6 pb-8">
-                <div className="max-w-5xl mx-auto rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-5 sm:gap-8">
-                    <div className="shrink-0 rounded-xl bg-white px-5 py-4">
-                        <img src={OpenEdgEducationBadge} alt="OpenEDG Education Partner" width="689" height="246"
-                            className="h-14 sm:h-16 w-auto" loading="lazy" />
-                    </div>
-                    <div className="text-center sm:text-left">
-                        <h2 id="partners-title" className="text-white text-lg font-semibold">
-                            PyMasters is an official OpenEDG Python Institute Education Partner
-                        </h2>
-                        <p className="text-slate-300/90 text-sm leading-relaxed mt-1">
-                            OpenEDG Python Institute sets the vendor-neutral Python certifications recognised worldwide.
-                            Learn on PyMasters, then take the next step on the{' '}
-                            <a href={PI_CERT_PATH} target="_blank" rel="noopener noreferrer"
-                                className="text-cyan-300 underline underline-offset-4 hover:text-cyan-200">
-                                Python Institute certification path
-                            </a>
-                            {' '}— from PCEP and PCAP to the Data Science, Testing and AI tracks.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
             {/* ── FEATURES ── */}
             <section id="features" className="relative py-24 px-4 sm:px-6">
                 <div className="max-w-6xl mx-auto">
@@ -764,6 +740,30 @@ export default function Home() {
                         {user ? 'Continue Learning' : 'Begin for Free'}
                         <ArrowRight size={16} aria-hidden="true" />
                     </Link>
+                </div>
+            </section>
+
+            {/* ── PARTNERSHIP ── */}
+            <section id="partners" aria-labelledby="partners-title" className="relative px-4 sm:px-6 pb-12">
+                <div className="max-w-5xl mx-auto rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-5 sm:gap-8">
+                    <div className="shrink-0 rounded-xl bg-white px-5 py-4">
+                        <img src={OpenEdgEducationBadge} alt="OpenEDG Education Partner" width="689" height="246"
+                            className="h-14 sm:h-16 w-auto" loading="lazy" />
+                    </div>
+                    <div className="text-center sm:text-left">
+                        <h2 id="partners-title" className="text-white text-lg font-semibold">
+                            PyMasters is an official OpenEDG Python Institute Education Partner
+                        </h2>
+                        <p className="text-slate-300/90 text-sm leading-relaxed mt-1">
+                            OpenEDG Python Institute sets the vendor-neutral Python certifications recognised worldwide.
+                            Learn on PyMasters, then take the next step on the{' '}
+                            <a href={PI_CERT_PATH} target="_blank" rel="noopener noreferrer"
+                                className="text-cyan-300 underline underline-offset-4 hover:text-cyan-200">
+                                Python Institute certification path
+                            </a>
+                            {' '}— from PCEP and PCAP to the Data Science, Testing and AI tracks.
+                        </p>
+                    </div>
                 </div>
             </section>
 

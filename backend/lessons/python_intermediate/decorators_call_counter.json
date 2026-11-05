@@ -214,5 +214,104 @@
       "correct": 1
     }
   ],
-  "uth_example": "import functools\n\ndef logged(fn):\n    @functools.wraps(fn)\n    def wrapper(*args, **kwargs):\n        result = fn(*args, **kwargs)\n        wrapper.log.append(f\"{fn.__name__}{args} -> {result}\")\n        return result\n    wrapper.log = []\n    return wrapper\n\n@logged\ndef area(w, h):\n    return w * h\n\n@logged\ndef greet(name):\n    return \"hi \" + name\n\narea(3, 4)\narea(2, 5)\ngreet(\"Kavi\")\nprint(area.__name__, area.log)\nprint(greet.log)\n"
+  "uth_example": "import functools\n\ndef logged(fn):\n    @functools.wraps(fn)\n    def wrapper(*args, **kwargs):\n        result = fn(*args, **kwargs)\n        wrapper.log.append(f\"{fn.__name__}{args} -> {result}\")\n        return result\n    wrapper.log = []\n    return wrapper\n\n@logged\ndef area(w, h):\n    return w * h\n\n@logged\ndef greet(name):\n    return \"hi \" + name\n\narea(3, 4)\narea(2, 5)\ngreet(\"Kavi\")\nprint(area.__name__, area.log)\nprint(greet.log)\n",
+  "under_the_hood": {
+    "summary": "`@counted` runs once per decorated function and creates a fresh wrapper with its own `.calls` attribute; every call goes through that wrapper, which bumps the attribute and forwards the call.",
+    "steps": [
+      {
+        "title": "Decoration happens once",
+        "body": "When Python defines `greet` under `@counted`, it calls `counted(greet)` one time. Inside, a new `wrapper` function object is created and `wrapper.calls = 0` stores an attribute on it. The name `greet` is then rebound to that wrapper.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "def greet",
+                "detail": "function object"
+              },
+              {
+                "label": "counted(greet)",
+                "detail": "build wrapper"
+              },
+              {
+                "label": "wrapper.calls = 0",
+                "detail": "attribute stored"
+              },
+              {
+                "label": "greet = wrapper",
+                "detail": "name rebound"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Function objects have a __dict__",
+        "body": "Functions can carry custom attributes. `wrapper.calls = 0` puts `{'calls': 0}` into `wrapper.__dict__`, just like setting an attribute on an instance. Outside code can read it as `greet.calls`.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "calls": 0
+            },
+            "label": "wrapper.__dict__ right after decoration"
+          }
+        }
+      },
+      {
+        "title": "The wrapper finds itself through a closure",
+        "body": "Inside `wrapper`, the name `wrapper` is not a global; it is a local of `counted`. The compiler stores it in a closure cell, so each time the wrapper runs, `wrapper.calls += 1` reads the cell, finds the function object and updates its attribute.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "def counted(fn):\n    def wrapper(*args, **kwargs):\n        wrapper.calls += 1\n        return fn(*args, **kwargs)\n    wrapper.calls = 0\n    return wrapper",
+            "highlightSequence": [
+              5,
+              3,
+              4
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Runs once at decoration: start the count."
+              },
+              {
+                "description": "Every call: look up wrapper via its cell, then bump .calls."
+              },
+              {
+                "description": "Forward all arguments to the original and return its result."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Every call goes through the wrapper",
+        "body": "`greet(); greet(); greet()` runs the wrapper three times. Each pass increments the attribute, calls the original with the same arguments and returns its result unchanged.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "greet.calls",
+                "values": [
+                  "0",
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "data_type": "int"
+              }
+            ],
+            "caption": "After decoration and three calls"
+          }
+        }
+      },
+      {
+        "title": "Each decorated function gets its own counter",
+        "body": "Decorating `add` with `@counted` calls `counted` again, which creates a different wrapper with its own `__dict__`. `greet.calls` and `add.calls` never mix, because the state belongs to the wrapper object, not to `counted`."
+      }
+    ],
+    "takeaway": "State in a decorator belongs to the wrapper created for each function. Put counters, caches or timers on that wrapper (or in its closure) and every decorated function gets its own copy."
+  }
 }

@@ -35,5 +35,99 @@
   ],
   "tags": {"concepts_taught": ["azure_networking", "zero_trust_architecture"], "concepts_required": ["cloud_fundamentals", "azure_resource_management"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "import ipaddress\n\nhub = {\"name\": \"vnet-hub\", \"cidr\": ipaddress.ip_network(\"10.0.0.0/16\")}\nspokes = [{\"name\": \"vnet-web\", \"cidr\": ipaddress.ip_network(\"10.1.0.0/16\")},\n          {\"name\": \"vnet-data\", \"cidr\": ipaddress.ip_network(\"10.2.0.0/16\")}]\nnsg_web = [\n    {\"name\": \"allow-https\", \"priority\": 100, \"port\": 443, \"access\": \"Allow\"},\n    {\"name\": \"deny-all\", \"priority\": 4096, \"port\": None, \"access\": \"Deny\"},\n]\n\ndef nsg_decision(rules, port):\n    for rule in sorted(rules, key=lambda r: r[\"priority\"]):   # lowest number wins\n        if rule[\"port\"] in (port, None):\n            return rule[\"name\"], rule[\"access\"]\n\noverlap = any(s[\"cidr\"].overlaps(hub[\"cidr\"]) for s in spokes)\npeerings = [(hub[\"name\"], s[\"name\"]) for s in spokes]\nprint(\"address overlap:\", overlap, \"| peerings:\", peerings)\nprint(\"port 443:\", nsg_decision(nsg_web, 443), \"| port 22:\", nsg_decision(nsg_web, 22))\n"
+  "uth_example": "import ipaddress\n\nhub = {\"name\": \"vnet-hub\", \"cidr\": ipaddress.ip_network(\"10.0.0.0/16\")}\nspokes = [{\"name\": \"vnet-web\", \"cidr\": ipaddress.ip_network(\"10.1.0.0/16\")},\n          {\"name\": \"vnet-data\", \"cidr\": ipaddress.ip_network(\"10.2.0.0/16\")}]\nnsg_web = [\n    {\"name\": \"allow-https\", \"priority\": 100, \"port\": 443, \"access\": \"Allow\"},\n    {\"name\": \"deny-all\", \"priority\": 4096, \"port\": None, \"access\": \"Deny\"},\n]\n\ndef nsg_decision(rules, port):\n    for rule in sorted(rules, key=lambda r: r[\"priority\"]):   # lowest number wins\n        if rule[\"port\"] in (port, None):\n            return rule[\"name\"], rule[\"access\"]\n\noverlap = any(s[\"cidr\"].overlaps(hub[\"cidr\"]) for s in spokes)\npeerings = [(hub[\"name\"], s[\"name\"]) for s in spokes]\nprint(\"address overlap:\", overlap, \"| peerings:\", peerings)\nprint(\"port 443:\", nsg_decision(nsg_web, 443), \"| port 22:\", nsg_decision(nsg_web, 22))\n",
+  "under_the_hood": {
+    "summary": "Azure filters each packet through NSG rules in priority order (subnet NSG then NIC NSG inbound) and routes it using system routes plus your user-defined routes, which in hub-spoke send spoke traffic through a firewall in the hub.",
+    "steps": [
+      {
+        "title": "VNets and subnets",
+        "body": "A VNet such as 10.10.0.0/16 is split into subnets. Azure reserves 5 addresses in each subnet: the network address, three for Azure services (gateway and DNS) and the broadcast address. A /24 subnet gives 251 usable IPs."
+      },
+      {
+        "title": "NSG rules: lowest priority number wins",
+        "body": "Each NSG rule has a priority from 100 to 4096. Azure evaluates rules in ascending order and stops at the first match. Default rules at 65000 and above allow VNet-to-VNet and load balancer traffic and deny everything else inbound.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "100  Allow 443 from Internet        -> no match",
+              "200  Allow 22 from 10.0.0.0/8       -> no match (source is internet)",
+              "65000 AllowVnetInBound              -> no match",
+              "65500 DenyAllInBound                -> MATCH -> dropped"
+            ],
+            "caption": "Inbound TCP 22 from the internet to a VM"
+          }
+        }
+      },
+      {
+        "title": "Two NSGs, a fixed order",
+        "body": "Inbound traffic is checked by the subnet NSG first, then the NIC NSG; outbound is NIC first, then subnet. Both must allow the traffic. Most teams use only subnet NSGs to keep this predictable.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Packet arrives in VNet",
+                "type": "input"
+              },
+              {
+                "label": "Subnet NSG rules",
+                "type": "process"
+              },
+              {
+                "label": "NIC NSG rules",
+                "type": "process"
+              },
+              {
+                "label": "VM receives packet",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Inbound packet to a VM"
+          }
+        }
+      },
+      {
+        "title": "Peering is not transitive",
+        "body": "Spoke A peers with the hub and spoke B peers with the hub, but A cannot reach B through peering alone. A user-defined route 0.0.0.0/0 -> firewall private IP on each spoke subnet sends traffic to the hub firewall, which inspects and forwards it.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "VM in spoke A",
+              "UDR: next hop firewall",
+              "Azure Firewall in hub",
+              "Peering to spoke B",
+              "VM in spoke B"
+            ],
+            "edges": [
+              {
+                "from": "VM in spoke A",
+                "to": "UDR: next hop firewall"
+              },
+              {
+                "from": "UDR: next hop firewall",
+                "to": "Azure Firewall in hub"
+              },
+              {
+                "from": "Azure Firewall in hub",
+                "to": "Peering to spoke B"
+              },
+              {
+                "from": "Peering to spoke B",
+                "to": "VM in spoke B"
+              }
+            ],
+            "description": "Spoke-to-spoke through the hub"
+          }
+        }
+      },
+      {
+        "title": "Private endpoints and DNS",
+        "body": "A private endpoint puts a NIC with a private IP from your subnet in front of a PaaS service. A private DNS zone such as privatelink.blob.core.windows.net makes the normal hostname resolve to that private IP, so traffic never uses the public endpoint."
+      }
+    ],
+    "takeaway": "NSGs answer 'is it allowed?', routes answer 'where does it go?'. In hub-spoke, routes force traffic through the hub so one firewall sees it all."
+  }
 }

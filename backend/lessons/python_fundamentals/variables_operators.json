@@ -370,5 +370,136 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Python turns an expression into a tree by precedence, evaluates it left to right with jumps for and/or, and asks the operands' types to do each operation.",
+    "steps": [
+      {
+        "title": "Precedence builds a tree",
+        "body": "`2 + 3 * 4` is parsed into a tree where `*` sits below `+`, so 3*4 runs first and the result is 14. Parentheses change the tree, not the arithmetic rules. `**` binds tighter than unary minus, so `-2 ** 2` is -4.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "add",
+                "label": "+"
+              },
+              {
+                "id": "two",
+                "label": "2"
+              },
+              {
+                "id": "mul",
+                "label": "*"
+              },
+              {
+                "id": "three",
+                "label": "3"
+              },
+              {
+                "id": "four",
+                "label": "4"
+              }
+            ],
+            "edges": [
+              {
+                "from": "add",
+                "to": "two",
+                "label": "left"
+              },
+              {
+                "from": "add",
+                "to": "mul",
+                "label": "right"
+              },
+              {
+                "from": "mul",
+                "to": "three",
+                "label": "left"
+              },
+              {
+                "from": "mul",
+                "to": "four",
+                "label": "right"
+              }
+            ],
+            "caption": "Parse tree for 2 + 3 * 4"
+          }
+        }
+      },
+      {
+        "title": "Each operator becomes a bytecode",
+        "body": "The compiler emits a small instruction per operator. In CPython 3.11, `a * b` becomes `LOAD a, LOAD b, BINARY_OP (*)`. At run time BINARY_OP calls the left operand's type to do the work, so the same `*` repeats a string and multiplies numbers."
+      },
+      {
+        "title": "Floor division and modulo agree",
+        "body": "`//` rounds toward negative infinity and `%` takes the sign of the divisor, so `a == (a // b) * b + a % b` always holds. For example `-7 // 2` is -4 and `-7 % 2` is 1, because -4*2 + 1 = -7.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "-7 // 2",
+                "values": [
+                  "-4"
+                ],
+                "data_type": "int"
+              },
+              {
+                "variable": "-7 % 2",
+                "values": [
+                  "1"
+                ],
+                "data_type": "int"
+              },
+              {
+                "variable": "7 / 2",
+                "values": [
+                  "3.5"
+                ],
+                "data_type": "float"
+              }
+            ],
+            "caption": "Division results"
+          }
+        }
+      },
+      {
+        "title": "and / or short-circuit and return an operand",
+        "body": "`a and b` is compiled as a jump: if `a` is falsy, Python skips `b` completely and the result is `a` itself. `a or b` returns the first truthy operand. So `name or 'guest'` returns 'guest' when name is ''. These operators return objects, not just True/False.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "a and b or c",
+            "highlightSequence": [
+              1,
+              1,
+              1
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Load a; if it is falsy, jump straight to c."
+              },
+              {
+                "description": "a was truthy: load b; if b is truthy, the result is b and c never runs."
+              },
+              {
+                "description": "Otherwise c is loaded and returned."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Chained comparisons evaluate the middle once",
+        "body": "`0 < x < 10` means `0 < x and x < 10`, but x is evaluated only once. The bytecode copies x on the stack and stops early if the first comparison is False."
+      },
+      {
+        "title": "Augmented assignment may change in place",
+        "body": "`total += 5` calls `__iadd__` if the type has one, otherwise `__add__` and rebinds the name. For ints a new object is created; for a list, `items += [4]` extends the same list in place, which any other name pointing to it will see."
+      }
+    ],
+    "takeaway": "Operators are function calls in disguise: precedence decides the order, the left operand's type decides the meaning, and `and`/`or` can skip work entirely and hand back one of their operands."
+  }
 }

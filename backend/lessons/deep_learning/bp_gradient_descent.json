@@ -374,5 +374,134 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Gradient descent computes, for every weight, how much the loss would change if that weight moved a little, then moves all weights a small step in the opposite direction, scaled by the learning rate, and repeats.",
+    "steps": [
+      {
+        "title": "The loss is a surface over the weights",
+        "body": "Fix the training data and the loss depends only on the weights. With two weights you can picture a landscape: each (w1, w2) point has a height, the loss. Training means finding a low point on that surface without being able to see it, only feeling the slope where you stand."
+      },
+      {
+        "title": "The gradient is the slope per weight",
+        "body": "The partial derivative dL/dw says how fast the loss rises as w increases while the other weights stay fixed. Collect one per weight and you have the gradient, which points uphill. For the toy loss L = w², the gradient is 2w: at w = 10 it is 20, steep; near w = 0 it is almost flat."
+      },
+      {
+        "title": "One update on two weights",
+        "body": "Model y_hat = w1*x1 + w2*x2, one sample x = (1, 2), target 5, start w = (1, 1). Prediction 3, error -2, loss (3 - 5)² = 4. Gradients 2 * error * x = (-4, -8). With learning rate 0.1: w1 = 1 + 0.4 = 1.4 and w2 = 1 + 0.8 = 1.8. New prediction 1.4 + 3.6 = 5.0, loss 0.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "w1",
+                1,
+                -4,
+                1.4
+              ],
+              [
+                "w2",
+                1,
+                -8,
+                1.8
+              ]
+            ],
+            "labels": [
+              "weight",
+              "weight"
+            ],
+            "caption": "Columns: name, old value, gradient, new value (lr = 0.1)"
+          }
+        }
+      },
+      {
+        "title": "The learning rate sets the stride",
+        "body": "For L = w² from w = 10, each update is w = w - lr * 2w. With lr = 0.1 that multiplies w by 0.8: 10, 8, 6.4, 5.12, steadily down. With lr = 1.0 it multiplies by -1: 10, -10, 10, bouncing forever. With lr = 1.1 it multiplies by -1.2 and grows without limit: divergence.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "lr=0.1 : 10 -> 8 -> 6.4 -> 5.12   converging",
+              "lr=1.0 : 10 -> -10 -> 10 -> -10  stuck bouncing",
+              "lr=1.1 : 10 -> -12 -> 14.4 -> -17.28 diverging"
+            ],
+            "caption": "Same start, three learning rates"
+          }
+        }
+      },
+      {
+        "title": "Batches trade accuracy for speed",
+        "body": "The true gradient averages over every training example, which is slow for big data. Mini-batch gradient descent estimates it from, say, 64 random examples per step: noisier, but thousands of cheap steps beat a few exact ones, and the noise can even help escape poor flat regions.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "shuffle data",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "take a mini-batch",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "forward pass, loss",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "gradients (backprop)",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "w -= lr * grad",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "next batch",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "Mini-batch gradient descent"
+          }
+        }
+      }
+    ],
+    "takeaway": "Every weight moves by learning rate x its own slope, against the slope. That one rule, applied millions of times, is how networks learn; most training problems come down to the rate being too big, too small, or the gradients being poor."
+  }
 }

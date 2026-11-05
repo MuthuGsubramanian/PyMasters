@@ -42,5 +42,84 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "PRICE_PER_TB = 6.25                         # on-demand, illustrative\ntable = {                                   # partitioned by day: GB per partition\n    \"2025-03-01\": 120, \"2025-03-02\": 135, \"2025-03-03\": 128, \"2025-03-04\": 140,\n}\n\ndef dry_run(date_from=None):\n    parts = [d for d in table if date_from is None or d >= date_from]\n    gb = sum(table[d] for d in parts)\n    return {\"partitions\": len(parts), \"gb\": gb, \"cost\": round(gb / 1024 * PRICE_PER_TB, 2)}\n\nfull_scan = dry_run()\npruned = dry_run(date_from=\"2025-03-04\")    # WHERE event_date >= '2025-03-04'\nprint(\"no filter:   \", full_scan)\nprint(\"with filter: \", pruned)\n"
+  "uth_example": "PRICE_PER_TB = 6.25                         # on-demand, illustrative\ntable = {                                   # partitioned by day: GB per partition\n    \"2025-03-01\": 120, \"2025-03-02\": 135, \"2025-03-03\": 128, \"2025-03-04\": 140,\n}\n\ndef dry_run(date_from=None):\n    parts = [d for d in table if date_from is None or d >= date_from]\n    gb = sum(table[d] for d in parts)\n    return {\"partitions\": len(parts), \"gb\": gb, \"cost\": round(gb / 1024 * PRICE_PER_TB, 2)}\n\nfull_scan = dry_run()\npruned = dry_run(date_from=\"2025-03-04\")    # WHERE event_date >= '2025-03-04'\nprint(\"no filter:   \", full_scan)\nprint(\"with filter: \", pruned)\n",
+  "under_the_hood": {
+    "summary": "BigQuery stores each column separately in compressed files, splits a query into stages run by many parallel workers called slots with shuffles between stages, and only reads the columns and partitions the query actually needs.",
+    "steps": [
+      {
+        "title": "Storage is columnar",
+        "body": "Each column of a table is stored separately in a compressed columnar format on Google's distributed storage. SELECT user_id, amount reads only those two columns, no matter how many others exist.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Row store",
+              "code": "reads whole rows\nall 40 columns"
+            },
+            "right": {
+              "label": "BigQuery columnar",
+              "code": "reads only the amount column\na fraction of the bytes"
+            },
+            "description": "Bytes read for SELECT amount"
+          }
+        }
+      },
+      {
+        "title": "The query becomes a plan of stages",
+        "body": "BigQuery parses the SQL and builds stages: read and filter, partial aggregate, shuffle by key, final aggregate. The plan is visible in the execution details of every job.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "S00: read columns, filter rows",
+                "type": "input"
+              },
+              {
+                "label": "S01: partial aggregate per worker",
+                "type": "process"
+              },
+              {
+                "label": "Shuffle rows by group key",
+                "type": "process"
+              },
+              {
+                "label": "S02: final aggregate",
+                "type": "process"
+              },
+              {
+                "label": "Write result",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "A GROUP BY query's stages"
+          }
+        }
+      },
+      {
+        "title": "Slots run the work in parallel",
+        "body": "A slot is a unit of compute. Each stage is split into many units of work handed to available slots. More slots means more parallel work, which is why big queries finish in seconds."
+      },
+      {
+        "title": "Partitioning and clustering skip data",
+        "body": "A table partitioned by event_date lets WHERE event_date = '2026-11-01' read one partition. Clustering by customer_id sorts data in blocks, so a filter on customer_id skips blocks whose range cannot match.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "no filter on partition column:   This query will process 1.2 TB",
+              "WHERE event_date = '2026-11-01': This query will process 3.9 GB"
+            ],
+            "caption": "A dry run shows the effect (illustrative numbers)"
+          }
+        }
+      },
+      {
+        "title": "Two ways to pay for compute",
+        "body": "On-demand pricing charges by bytes processed, so pruning saves money directly. Capacity pricing (editions) reserves slots, so you pay for slot capacity and pruning saves time and frees slots for others."
+      }
+    ],
+    "takeaway": "In BigQuery, cost and speed follow bytes read. Select only needed columns, filter on the partition column, and check the dry-run estimate before running big queries."
+  }
 }

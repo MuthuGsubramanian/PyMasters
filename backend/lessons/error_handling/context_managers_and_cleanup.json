@@ -168,5 +168,102 @@
     "category": "error_handling",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "When several context managers are active, Python runs their __exit__ methods in reverse order of entry, passing each the exception in flight; ExitStack implements the same last-in-first-out unwinding for a number of resources known only at run time.",
+    "steps": [
+      {
+        "title": "Exit runs on every way out",
+        "body": "Whether the block ends normally, with return, break, or an exception, the with statement calls `__exit__`. In the lesson's `managed(log)` example, raising ValueError inside the block still appends 'closed' to the log before the exception reaches the outer `except`.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "log",
+                "values": [
+                  "[]",
+                  "['open']",
+                  "['open', 'closed']"
+                ]
+              }
+            ],
+            "caption": "Before entering, inside the block, after the ValueError"
+          }
+        }
+      },
+      {
+        "title": "Nested managers unwind in reverse",
+        "body": "`with open(a) as src, open(b, 'w') as dst:` enters `src` first and `dst` second. On the way out, `dst` closes first, then `src`. Each `__exit__` sees the exception (if any) and may suppress it; if the inner one suppresses it, the outer one sees a normal exit.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "enter src",
+                "detail": "1st"
+              },
+              {
+                "label": "enter dst",
+                "detail": "2nd"
+              },
+              {
+                "label": "block raises",
+                "detail": "exception in flight"
+              },
+              {
+                "label": "dst.__exit__",
+                "detail": "1st out"
+              },
+              {
+                "label": "src.__exit__",
+                "detail": "2nd out"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "ExitStack: a stack of callbacks",
+        "body": "`with ExitStack() as stack:` followed by `files = [stack.enter_context(open(p)) for p in paths]` enters each manager and pushes its `__exit__` onto an internal stack. When the with block ends, ExitStack pops and calls them last-in-first-out, even if one of them raises.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "stack",
+            "data": [
+              "close(c.txt)  <- runs first",
+              "close(b.txt)",
+              "close(a.txt)  <- runs last"
+            ],
+            "highlight": [
+              0
+            ],
+            "label": "ExitStack callbacks"
+          }
+        }
+      },
+      {
+        "title": "Cleanup errors do not hide the original",
+        "body": "If a cleanup step raises while an exception is already propagating, the new exception gets the original in its `__context__`, so the traceback shows both. ExitStack still calls the remaining callbacks."
+      },
+      {
+        "title": "Suppression is explicit",
+        "body": "An `__exit__` that returns True swallows the exception. `contextlib.suppress(FileNotFoundError)` does this only for the listed types; everything else continues to propagate. Most managers return None so errors are never silently lost.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "suppress",
+              "code": "with suppress(FileNotFoundError):\n    os.remove('tmp.txt')\n# missing file: ignored"
+            },
+            "right": {
+              "label": "plain try",
+              "code": "try:\n    os.remove('tmp.txt')\nexcept FileNotFoundError:\n    pass"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Context managers unwind like a stack: last in, first out, each one told about the exception in flight. That ordering is what makes nested resources and ExitStack release cleanly however the block ends."
+  }
 }

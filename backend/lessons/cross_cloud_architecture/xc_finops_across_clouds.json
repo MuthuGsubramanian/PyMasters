@@ -33,5 +33,100 @@
     {"q": {"en": "Why do amortized and actual cost views disagree, and what should you do about it?"}, "options": {"en": ["A billing bug; file a support ticket", "By design — upfront commitments are spread over time in amortized views; label the view per audience", "Currency conversion errors; always use EUR", "They never disagree"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["cloud_cost_management", "multi_cloud_strategy"], "concepts_required": ["dictionaries", "cloud_fundamentals"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 23, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Each cloud bills in its own format, so a cross-cloud FinOps pipeline ingests every provider's billing export, maps it into one schema such as FOCUS, allocates shared and untagged costs by rules, and divides the result by business volumes to get unit costs.",
+    "steps": [
+      {
+        "title": "Three dialects of the same bill",
+        "body": "AWS's Cost and Usage Report, Azure's cost exports and Google Cloud's BigQuery billing export describe the same ideas with different column names, discount models and granularity."
+      },
+      {
+        "title": "Normalise into one schema",
+        "body": "FOCUS defines common columns such as ProviderName, ServiceName, BilledCost, EffectiveCost, ChargePeriodStart and Tags. Each provider's rows are mapped into it, so one query works across all clouds.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "ProviderName": "Google Cloud",
+              "ServiceName": "Vertex AI",
+              "BilledCost": "as invoiced",
+              "EffectiveCost": "after amortised commitments",
+              "Tags.team": "recsys"
+            },
+            "caption": "One row after normalisation"
+          }
+        }
+      },
+      {
+        "title": "Billed vs effective cost",
+        "body": "BilledCost is what appears on the invoice, including large upfront commitment purchases. EffectiveCost spreads those purchases over the usage that benefited. Mixing the two double-counts or hides commitments.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "BilledCost",
+              "code": "big purchase on day 1\ncovered usage looks free"
+            },
+            "right": {
+              "label": "EffectiveCost",
+              "code": "purchase amortised daily\nusage carries its real share"
+            },
+            "description": "Same commitment, two columns"
+          }
+        }
+      },
+      {
+        "title": "Allocate what tags miss",
+        "body": "Untagged spend, shared clusters and network egress are split by rules, for example Kubernetes cost by pod requests per namespace, or a shared platform by each team's share of usage.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Ingest exports",
+                "type": "input"
+              },
+              {
+                "label": "Normalise to FOCUS",
+                "type": "process"
+              },
+              {
+                "label": "Apply tags",
+                "type": "process"
+              },
+              {
+                "label": "Split shared + untagged by rules",
+                "type": "process"
+              },
+              {
+                "label": "Cost per team and product",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Allocation pipeline"
+          }
+        }
+      },
+      {
+        "title": "Unit economics",
+        "body": "Divide allocated cost by a business metric from each product, such as cost per 1,000 API calls or per active customer, across all clouds. That number shows whether growth is efficient regardless of where it runs.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "product: search   cost (all clouds) / 1K queries",
+              "Sep: 0.84",
+              "Oct: 0.79",
+              "Nov: 1.12  <- investigate (egress spike between clouds)"
+            ],
+            "caption": "Unit cost across clouds (illustrative)"
+          }
+        }
+      }
+    ],
+    "takeaway": "Normalise first, or every comparison argues about columns. Track allocation coverage, use effective cost for decisions, and report cost per unit of business value."
+  }
 }

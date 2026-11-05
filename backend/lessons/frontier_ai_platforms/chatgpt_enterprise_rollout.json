@@ -49,5 +49,85 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A governed ChatGPT Enterprise rollout runs on identity plumbing: SAML single sign-on decides who can log in, SCIM provisioning creates, updates and removes accounts from your directory, and workspace settings control which features, connectors and GPTs each group gets.",
+    "steps": [
+      {
+        "title": "Claim the domain",
+        "body": "The workspace owner verifies the company email domain. From then on, sign-ups with that domain are tied to the company workspace instead of scattering into personal accounts."
+      },
+      {
+        "title": "SSO decides who gets in",
+        "body": "With SAML SSO, login goes to your IdP. The IdP applies its own MFA and conditional access, then sends a signed assertion back. Disabling a user in the IdP blocks their next login.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "User opens ChatGPT",
+                "type": "input"
+              },
+              {
+                "label": "Redirect to company IdP",
+                "type": "process"
+              },
+              {
+                "label": "MFA + conditional access",
+                "type": "process"
+              },
+              {
+                "label": "Signed SAML assertion",
+                "type": "process"
+              },
+              {
+                "label": "Workspace session",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Signing in to the workspace"
+          }
+        }
+      },
+      {
+        "title": "SCIM keeps accounts in sync",
+        "body": "SCIM provisioning lets the IdP push changes: new hires in the pilot group get accounts, group changes update access, leavers are deprovisioned. No one edits user lists by hand.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "POST  /Users          -> priya@acme.com created (group: pilot-finance)",
+              "PATCH /Groups/pilot   -> add 40 members (cohort 2)",
+              "PATCH /Users/123      -> active=false (leaver) -> access removed"
+            ],
+            "caption": "SCIM events from the IdP (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Settings by group",
+        "body": "Admins decide which connectors, GPT sharing and features are allowed, and can scope them to groups. Business data is excluded from model training by default under these plans."
+      },
+      {
+        "title": "Cohorts, then measure",
+        "body": "Roll out in waves: champions first, then departments with clear use cases. Measure active use, tasks per user and outcomes per cohort, not just logins, before opening the next wave.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Vanity metric",
+              "code": "seats activated\nlogins per week"
+            },
+            "right": {
+              "label": "Useful metric",
+              "code": "weekly active users\nhours saved on named tasks"
+            },
+            "description": "Measuring a cohort"
+          }
+        }
+      }
+    ],
+    "takeaway": "Wire identity first: domain, SSO and SCIM make access follow your directory automatically. Then expand in measured cohorts."
+  }
 }

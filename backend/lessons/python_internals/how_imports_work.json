@@ -167,5 +167,90 @@
     "category": "python_internals",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "`import m` checks sys.modules first; on a miss it asks each finder on sys.meta_path for a module spec, creates the module, puts it in sys.modules, and only then executes its code, which is what makes circular imports see half-built modules.",
+    "steps": [
+      {
+        "title": "The cache comes first",
+        "body": "The import statement calls `importlib.__import__`, which looks up the name in `sys.modules`. If it is there, the cached module object is returned immediately and no code runs. This is why a module's top-level prints appear only once, however many files import it."
+      },
+      {
+        "title": "Finders produce a spec",
+        "body": "On a miss, Python asks each finder in `sys.meta_path` in turn: built-in modules, frozen modules, then the PathFinder that searches `sys.path`. The first finder that recognises the name returns a ModuleSpec saying which loader to use and where the file is.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "sys.modules['m']?",
+                "detail": "hit -> return it"
+              },
+              {
+                "label": "sys.meta_path finders",
+                "detail": "BuiltinImporter, FrozenImporter, PathFinder"
+              },
+              {
+                "label": "ModuleSpec",
+                "detail": "name, loader, origin"
+              },
+              {
+                "label": "loader",
+                "detail": "create and exec module"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Insert into sys.modules, then execute",
+        "body": "The loader creates an empty module object and inserts it into `sys.modules` before running the module's code. For a .py file it uses a cached bytecode file in `__pycache__` (for example `m.cpython-311.pyc`) if it is newer than the source, otherwise it compiles and writes one.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "'sys'": "<module 'sys' (built-in)>",
+              "'os'": "<module 'os' from ...>",
+              "'m'": "<module 'm' (executing...)>"
+            },
+            "highlight": [
+              2
+            ],
+            "label": "sys.modules during import of m"
+          }
+        }
+      },
+      {
+        "title": "Why circular imports break",
+        "body": "If `a.py` does `import b` at the top and `b.py` does `from a import helper`, then while `a` is still executing, `b` finds `a` in sys.modules but `helper` is not defined yet. Python raises `ImportError: cannot import name 'helper' from partially initialized module 'a'`.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "b.py (executing)",
+                "variables": {
+                  "from a import helper": "a is in sys.modules, helper missing"
+                }
+              },
+              {
+                "name": "a.py (executing)",
+                "variables": {
+                  "line 1": "import b  <- paused here",
+                  "helper": "not defined yet"
+                }
+              }
+            ],
+            "caption": "a is half-built while b runs"
+          }
+        }
+      },
+      {
+        "title": "The name is bound last",
+        "body": "Finally the import statement binds a name in your namespace: `import pkg.sub` binds `pkg`, while `from pkg import sub` binds `sub`. Reloading needs `importlib.reload(m)`, which re-executes the code into the same module object."
+      }
+    ],
+    "takeaway": "Import is find, create, cache, execute, bind. Because the module is cached before its code runs, imports are fast and run once, and a circular import sees whatever the other module has defined so far."
+  }
 }

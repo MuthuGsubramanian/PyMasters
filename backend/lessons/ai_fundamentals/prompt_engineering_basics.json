@@ -339,5 +339,58 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A prompt works by narrowing what the model considers a likely continuation: every detail you add about task, audience, constraints and format removes possible answers you did not want.",
+    "steps": [
+      {
+        "title": "A prompt is the start of a document",
+        "body": "The model continues the conversation in the most probable way given everything it has read. 'Help me with food' is consistent with recipes, nutrition advice, restaurant lists and more, so the reply averages over them. The model cannot ask what you meant unless it is prompted to."
+      },
+      {
+        "title": "Each detail removes options",
+        "body": "'Suggest a 30-minute vegetarian dinner for 2 using ingredients from an Indian grocery store' adds four constraints: time, diet, servings, ingredients. Each one rules out a large share of possible replies, and what remains is close to what you wanted.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              "'Help me with food': any food topic",
+              "+ dinner recipe",
+              "+ vegetarian, 30 minutes",
+              "+ for 2, Indian grocery",
+              "a narrow, useful set of answers"
+            ],
+            "caption": "Specificity narrows the space"
+          }
+        }
+      },
+      {
+        "title": "Zero-shot relies on instruction tuning",
+        "body": "'Classify this review as positive or negative: The food was amazing!' works with no examples because chat models were fine-tuned on many instruction-and-answer pairs. Zero-shot is enough when the task and output format are common and clearly stated."
+      },
+      {
+        "title": "Few-shot shows, chain-of-thought explains",
+        "body": "Examples in the prompt show the exact format and labels you expect, and the model copies the pattern. Asking the model to reason step by step makes it write intermediate steps that later tokens can build on, which helps multi-step problems at the cost of longer replies.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Zero-shot",
+              "code": "instruction only\nshortest prompt\nworks for familiar tasks"
+            },
+            "right": {
+              "label": "Few-shot / chain-of-thought",
+              "code": "examples or worked steps\nlonger prompt\nbetter for unusual formats and multi-step logic"
+            },
+            "caption": "When to add more"
+          }
+        }
+      },
+      {
+        "title": "Iterate against real cases",
+        "body": "Write the prompt, run it on several realistic inputs, look at the failures, and change one thing at a time: a missing constraint, an ambiguous word, an example of the tricky case. Keeping those inputs as a small test set stops a fix for one case from breaking another."
+      }
+    ],
+    "takeaway": "Good prompting is removing ambiguity. State the task, audience, constraints and format; add examples or reasoning when the task is unusual; and test on real inputs instead of judging by a single reply."
   }
 }

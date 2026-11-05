@@ -14,7 +14,7 @@
   },
   "xp_reward": 75,
   "story_variants": {
-    "en": "## Vaathiyaar's Emergency Room\n\nVaathiyaar simulates a hospital ER. \"The sickest patient is seen first — not the one who arrived first. That's a heap!\"\n\n### What is a Heap?\n- A **complete binary tree** stored as an array\n- **Min-heap**: Parent ≤ Children (smallest at root)\n- **Max-heap**: Parent ≥ Children (largest at root)\n- Insert and extract are both **O(log n)**\n- Getting the min/max is **O(1)**\n\n### Python's heapq Module\n\n```python\nimport heapq\n\n# Min-heap operations\nnums = [5, 3, 8, 1, 2]\nheapq.heapify(nums)        # Convert list to min-heap: O(n)\nprint(nums)                 # [1, 2, 8, 5, 3]\n\nheapq.heappush(nums, 0)    # Insert 0: O(log n)\nprint(heapq.heappop(nums)) # Extract min (0): O(log n)\n\n# Get k smallest/largest\ndata = [10, 4, 5, 8, 6, 11, 26]\nprint(heapq.nsmallest(3, data))  # [4, 5, 6]\nprint(heapq.nlargest(3, data))   # [26, 11, 10]\n```\n\n### Max-Heap Trick\n\n```python\n# Python only has min-heap, negate values for max-heap\nmax_heap = []\nfor val in [3, 1, 4, 1, 5]:\n    heapq.heappush(max_heap, -val)\n\nlargest = -heapq.heappop(max_heap)  # 5\n```\n\n> **Key Concept:** Heaps are perfect for \"top K\" problems. Need the 3 largest? Use a min-heap of size 3!"
+    "en": "## Vaathiyaar's Emergency Room\n\nVaathiyaar simulates a hospital ER. \"The sickest patient is seen first — not the one who arrived first. That's a heap!\"\n\n### What is a Heap?\n- A **complete binary tree** stored as an array\n- **Min-heap**: Parent ≤ Children (smallest at root)\n- **Max-heap**: Parent ≥ Children (largest at root)\n- Insert and extract are both **O(log n)**\n- Getting the min/max is **O(1)**\n\n### Python's heapq Module\n\n```python\nimport heapq\n\n# Min-heap operations\nnums = [5, 3, 8, 1, 2]\nheapq.heapify(nums)        # Convert list to min-heap: O(n)\nprint(nums)                 # [1, 2, 8, 3, 5]\n\nheapq.heappush(nums, 0)    # Insert 0: O(log n)\nprint(heapq.heappop(nums)) # Extract min (0): O(log n)\n\n# Get k smallest/largest\ndata = [10, 4, 5, 8, 6, 11, 26]\nprint(heapq.nsmallest(3, data))  # [4, 5, 6]\nprint(heapq.nlargest(3, data))   # [26, 11, 10]\n```\n\n### Max-Heap Trick\n\n```python\n# Python only has min-heap, negate values for max-heap\nmax_heap = []\nfor val in [3, 1, 4, 1, 5]:\n    heapq.heappush(max_heap, -val)\n\nlargest = -heapq.heappop(max_heap)  # 5\n```\n\n> **Key Concept:** Heaps are perfect for \"top K\" problems. Need the 3 largest? Use a min-heap of size 3!"
   },
   "animation_sequence": [
     {
@@ -73,8 +73,8 @@
           "line": "print(nums)",
           "highlight": "print",
           "explanation": {
-            "en": "Output: [1, 2, 8, 5, 3] — smallest element (1) is at index 0",
-            "ta": "வெளியீடு: [1, 2, 8, 5, 3] — சிறிய உறுப்பு (1) index 0 ல் உள்ளது"
+            "en": "Output: [1, 2, 8, 3, 5] — smallest element (1) is at index 0",
+            "ta": "வெளியீடு: [1, 2, 8, 3, 5] — சிறிய உறுப்பு (1) index 0 ல் உள்ளது"
           }
         },
         {
@@ -196,7 +196,7 @@
       "type": "Terminal",
       "id": "output_display",
       "output": [
-        "[1, 2, 8, 5, 3]",
+        "[1, 2, 8, 3, 5]",
         "0",
         "[26, 11, 10]",
         "[4, 5, 6]"
@@ -232,7 +232,7 @@
               3
             ]
           },
-          "output": "Heapified: [1, 2, 8, 5, 3]",
+          "output": "Heapified: [1, 2, 8, 3, 5]",
           "explanation": "heapify rearranges in O(n). Smallest (1) at index 0"
         },
         {

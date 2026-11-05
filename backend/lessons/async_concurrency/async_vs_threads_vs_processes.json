@@ -168,5 +168,78 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "workloads = [\n    {\"name\": \"10k HTTP requests\", \"kind\": \"io\", \"async_lib\": True},\n    {\"name\": \"resize 500 images\", \"kind\": \"cpu\", \"async_lib\": False},\n    {\"name\": \"legacy DB driver\", \"kind\": \"io\", \"async_lib\": False},\n]\n\ndef choose_model(w):\n    if w[\"kind\"] == \"cpu\":\n        return \"processes\"       # escape the GIL, use every core\n    if w[\"async_lib\"]:\n        return \"asyncio\"         # one thread, thousands of waits\n    return \"threads\"             # blocking library, I/O-bound\n\nchoices = {}\nfor w in workloads:\n    choices[w[\"name\"]] = choose_model(w)\n\nfor name, model in choices.items():\n    print(f\"{name:20} -> {model}\")\n"
+  "uth_example": "workloads = [\n    {\"name\": \"10k HTTP requests\", \"kind\": \"io\", \"async_lib\": True},\n    {\"name\": \"resize 500 images\", \"kind\": \"cpu\", \"async_lib\": False},\n    {\"name\": \"legacy DB driver\", \"kind\": \"io\", \"async_lib\": False},\n]\n\ndef choose_model(w):\n    if w[\"kind\"] == \"cpu\":\n        return \"processes\"       # escape the GIL, use every core\n    if w[\"async_lib\"]:\n        return \"asyncio\"         # one thread, thousands of waits\n    return \"threads\"             # blocking library, I/O-bound\n\nchoices = {}\nfor w in workloads:\n    choices[w[\"name\"]] = choose_model(w)\n\nfor name, model in choices.items():\n    print(f\"{name:20} -> {model}\")\n",
+  "under_the_hood": {
+    "summary": "asyncio switches between tasks only at await points on one thread, threads are switched by the OS and in standard CPython take turns on the GIL, and processes are separate interpreters with their own GIL and memory that exchange data by pickling.",
+    "steps": [
+      {
+        "title": "Who decides when to switch",
+        "body": "In asyncio the task decides: it runs until it awaits. With threads the OS scheduler decides and can switch at any moment, while the GIL makes Python bytecode take turns (default switch interval 5 ms). Processes are scheduled by the OS independently on different cores.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Model",
+              "code": "asyncio\nthreads\nprocesses"
+            },
+            "right": {
+              "label": "Switching",
+              "code": "cooperative, only at await\npreemptive OS + GIL hand-off\nOS runs them truly in parallel"
+            }
+          }
+        }
+      },
+      {
+        "title": "What each unit costs",
+        "body": "A paused coroutine is a frame object on the heap, so a single loop can hold tens of thousands. Each thread needs an OS thread with its own stack. Each process needs a whole interpreter, imported modules and its own memory, so start-up is the slowest of the three.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "10,000 concurrent waits",
+                "values": [
+                  "asyncio: 10,000 frames, 1 thread",
+                  "threads: 10,000 OS threads",
+                  "processes: impractical"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "How data is shared",
+        "body": "Coroutines and threads share the same objects in memory. Coroutines cannot be interrupted between awaits, so many updates need no lock; threads can be, so shared updates need locks. Processes share nothing by default: arguments and results are pickled and sent through pipes."
+      },
+      {
+        "title": "Match the bottleneck",
+        "body": "The lesson's classifier follows from those mechanics: many network waits suit asyncio, a blocking library with no async version suits threads (the GIL is released while blocked), and CPU-heavy pure Python suits processes, because only they run Python bytecode on several cores at once in the standard build.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "10k HTTP requests",
+                "detail": "I/O-bound, async library -> asyncio"
+              },
+              {
+                "label": "blocking DB driver",
+                "detail": "I/O-bound, sync library -> threads"
+              },
+              {
+                "label": "image processing",
+                "detail": "CPU-bound -> processes"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "They combine",
+        "body": "Real programs mix them: an asyncio server runs a blocking call with `asyncio.to_thread`, or sends CPU-heavy work to a `ProcessPoolExecutor` through `loop.run_in_executor`, keeping the event loop responsive."
+      }
+    ],
+    "takeaway": "Ask what you are waiting on. Waiting on I/O: asyncio (or threads for blocking libraries). Waiting on the CPU: processes. The switching rules of each model explain the choice."
+  }
 }

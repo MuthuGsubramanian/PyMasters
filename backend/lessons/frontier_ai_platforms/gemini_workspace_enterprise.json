@@ -49,5 +49,86 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Gemini in Workspace answers from the user's own Gmail, Drive and Docs by retrieving only content that user can already open, then generating in the app; licence tier decides which features appear, and admin controls decide which apps and data sources are in play.",
+    "steps": [
+      {
+        "title": "Where the request starts",
+        "body": "A user asks Gemini in Gmail to 'summarise the thread with the auditors'. The request carries the user's identity and the current app context, such as the open email or document."
+      },
+      {
+        "title": "Retrieval respects existing permissions",
+        "body": "To use other files, Gemini searches Workspace content as that user. A document shared only with finance is invisible to Gemini when someone outside finance asks, because the search runs with the asker's access.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "User prompt in Gmail",
+                "type": "input"
+              },
+              {
+                "label": "Search Drive/Gmail as this user",
+                "type": "process"
+              },
+              {
+                "label": "Only files the user can open",
+                "type": "process"
+              },
+              {
+                "label": "Model generates with those sources",
+                "type": "process"
+              },
+              {
+                "label": "Answer shown in the app",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "A Workspace-grounded answer"
+          }
+        }
+      },
+      {
+        "title": "Oversharing becomes visible",
+        "body": "Permission inheritance cuts both ways: if a salary sheet is shared with 'anyone in the company', Gemini can surface it to anyone. Fixing sharing settings before rollout is part of the deployment.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Sheet shared org-wide",
+              "code": "Gemini can cite it\nfor any employee"
+            },
+            "right": {
+              "label": "Sheet shared with HR only",
+              "code": "invisible to everyone else\nGemini cannot use it"
+            },
+            "description": "Same question, two sharing states"
+          }
+        }
+      },
+      {
+        "title": "Licence tier gates features",
+        "body": "Which Gemini features appear in which apps depends on the Workspace edition and add-ons. Admins assign licences and can turn features on or off per organisational unit.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "user: sales OU, edition with Gemini features",
+              "Gmail: summarise thread  -> available",
+              "Meet: take notes         -> enabled for OU",
+              "NotebookLM                -> disabled by admin"
+            ],
+            "caption": "Feature availability check (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Data terms",
+        "body": "Under Workspace terms, content is not used to train models outside your organisation, and existing data-region and retention settings continue to apply to the underlying files."
+      }
+    ],
+    "takeaway": "In Workspace, Gemini sees exactly what the user can see. Clean up oversharing before rollout, because the AI will find it faster than any person."
+  }
 }

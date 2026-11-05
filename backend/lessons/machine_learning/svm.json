@@ -357,5 +357,83 @@
     "path_memberships": [
       "supervised_learning"
     ]
+  },
+  "under_the_hood": {
+    "summary": "An SVM looks for the line or hyperplane that separates the classes with the widest empty margin; only the closest points, the support vectors, decide where it goes, and kernels let it do this in a transformed space.",
+    "steps": [
+      {
+        "title": "The boundary and its margin",
+        "body": "A linear SVM predicts with the sign of f(x) = w·x + b. It requires f(x) >= 1 for one class and <= -1 for the other, so the margin edges are the lines f(x) = +1 and -1, a distance 2 / ||w|| apart. Maximising the margin means making ||w|| as small as possible while every point stays on its side."
+      },
+      {
+        "title": "Worked: w = (1, 1), b = -3",
+        "body": "Point (1, 1) gives f = 1 + 1 - 3 = -1, exactly on the negative margin edge; (2, 2) gives +1, on the positive edge. The margin width is 2 / sqrt(2) = 1.41, the same as the distance between those two points. They are the support vectors; moving any other point that stays outside the margin changes nothing.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "(1, 1)",
+                -1,
+                "support vector"
+              ],
+              [
+                "(2, 2)",
+                1,
+                "support vector"
+              ],
+              [
+                "(0, 0)",
+                -3,
+                "outside margin"
+              ],
+              [
+                "(4, 3)",
+                4,
+                "outside margin"
+              ]
+            ],
+            "labels": [
+              "pt",
+              "pt",
+              "pt",
+              "pt"
+            ],
+            "highlight": [
+              0,
+              1
+            ],
+            "caption": "f(x) = x1 + x2 - 3 for four points"
+          }
+        }
+      },
+      {
+        "title": "Soft margin: C prices the violations",
+        "body": "Real data overlaps, so each point may cross into the margin at a cost measured by the hinge loss max(0, 1 - y*f(x)). C sets the price: large C fits training points tightly with a narrow margin, small C accepts some violations for a wider, smoother margin."
+      },
+      {
+        "title": "The kernel trick",
+        "body": "The polynomial kernel k(x, z) = (x·z)² equals a dot product after mapping each 2-D point to (x1², sqrt(2)x1x2, x2²). For x = (1, 2) and z = (3, 1): x·z = 5, so k = 25, and the mapped vectors (1, 2.83, 4) and (9, 4.24, 1) also give 9 + 12 + 4 = 25. The SVM gets the curved boundary without ever building the new features.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Kernel route",
+              "code": "x·z = 1*3 + 2*1 = 5\nk = 5² = 25"
+            },
+            "right": {
+              "label": "Explicit features",
+              "code": "(1, 2.83, 4) · (9, 4.24, 1)\n= 9 + 12 + 4 = 25"
+            },
+            "caption": "Same number, two routes"
+          }
+        }
+      },
+      {
+        "title": "Predictions use only support vectors",
+        "body": "After training, f(x) = sum over support vectors of alpha_i * y_i * k(x_i, x) + b. With the default RBF kernel, k = exp(-gamma * ||x - x_i||²): a squared distance of 2 with gamma = 0.5 gives e^-1 = 0.37, so nearby support vectors dominate. Large gamma makes each one's influence very local and the boundary wiggly."
+      }
+    ],
+    "takeaway": "An SVM is decided by its hardest points. C sets how much it forgives, the kernel and gamma set what shapes the boundary can take; scale the features first, because the margin is measured in distances."
   }
 }

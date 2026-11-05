@@ -515,5 +515,112 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "`counter += 1` is several bytecode steps, and a thread switch between the read and the write loses updates; a Lock makes the whole read-modify-write run as one critical section.",
+    "steps": [
+      {
+        "title": "One line, several steps",
+        "body": "In CPython 3.11, `counter += 1` on a global compiles to roughly LOAD_GLOBAL counter, LOAD_CONST 1, BINARY_OP +=, STORE_GLOBAL counter. The GIL guarantees each instruction runs whole, but a different thread may run between any two of them.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "LOAD_GLOBAL  counter\nLOAD_CONST   1\nBINARY_OP    +=\nSTORE_GLOBAL counter",
+            "highlightSequence": [
+              1,
+              3,
+              4
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Read the current value (say 41)."
+              },
+              {
+                "description": "Compute 42 in this thread."
+              },
+              {
+                "description": "Write 42 back, even if another thread already wrote 42."
+              }
+            ],
+            "caption": "Bytecode for counter += 1"
+          }
+        }
+      },
+      {
+        "title": "How an update gets lost",
+        "body": "Thread A reads 41 and is switched out. Thread B reads 41, computes 42, stores 42. Thread A resumes and also stores 42. Two increments happened, but the counter grew by one. Run a million increments in two threads and the final total can come out short.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "thread A sees",
+                "values": [
+                  "41",
+                  "41",
+                  "-",
+                  "42"
+                ]
+              },
+              {
+                "variable": "thread B sees",
+                "values": [
+                  "-",
+                  "41",
+                  "42",
+                  "-"
+                ]
+              },
+              {
+                "variable": "counter",
+                "values": [
+                  "41",
+                  "41",
+                  "42",
+                  "42"
+                ]
+              }
+            ],
+            "caption": "Two increments, one lost"
+          }
+        }
+      },
+      {
+        "title": "A Lock serialises the critical section",
+        "body": "`with lock: counter += 1` calls `lock.acquire()` first. If another thread holds the lock, this thread blocks until it is released. So only one thread at a time executes the read-modify-write, and no update is lost.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "thread A: acquire",
+                "detail": "gets the lock"
+              },
+              {
+                "label": "thread B: acquire",
+                "detail": "blocks, waiting"
+              },
+              {
+                "label": "A: read, add, write; release",
+                "detail": "lock free"
+              },
+              {
+                "label": "B: acquires",
+                "detail": "reads the updated value"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Where the switches come from",
+        "body": "The running thread is asked to drop the GIL every 5 ms (`sys.getswitchinterval()`), and it always drops it during blocking I/O. That is why threads help I/O-bound programs: while one waits on the network, another runs."
+      },
+      {
+        "title": "Deadlocks and join",
+        "body": "If thread A holds lock 1 and waits for lock 2 while thread B holds 2 and waits for 1, both wait forever. Always acquire locks in the same order. `t.join()` makes the main thread wait for a thread to finish before reading its results."
+      }
+    ],
+    "takeaway": "The GIL protects the interpreter, not your data. Any read-modify-write on shared state needs a lock, because a switch can happen between bytecode instructions."
   }
 }

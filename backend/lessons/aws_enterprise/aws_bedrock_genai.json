@@ -34,5 +34,118 @@
   ],
   "tags": {"concepts_taught": ["aws_bedrock", "sagemaker", "aws_security"], "concepts_required": ["aws_data_platform", "aws_security"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 24, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "import re\n\nguardrail = {\"id\": \"gr-demo\", \"version\": \"2\", \"pii\": [\"EMAIL\", \"PHONE\"]}\nPATTERNS = {\"EMAIL\": r\"[\\w.]+@[\\w.]+\", \"PHONE\": r\"\\b\\d{3}-\\d{3}-\\d{4}\\b\"}\n\ndef fake_converse(model_id, messages):                 # stands in for bedrock.converse\n    return {\"output\": \"Contact Asha at asha@example.com or 555-123-4567.\",\n            \"usage\": {\"inputTokens\": 12, \"outputTokens\": 14}}\n\ndef apply_guardrail(text, config):\n    actions = []\n    for kind in config[\"pii\"]:\n        text, n = re.subn(PATTERNS[kind], \"{\" + kind + \"}\", text)\n        if n:\n            actions.append(f\"masked {n} {kind}\")\n    return text, actions\n\nresp = fake_converse(\"demo-model-v1\", [{\"role\": \"user\", \"content\": [{\"text\": \"Who do I call?\"}]}])\nsafe_text, trace = apply_guardrail(resp[\"output\"], guardrail)\nprint(safe_text)\nprint(trace, resp[\"usage\"])\n"
+  "uth_example": "import re\n\nguardrail = {\"id\": \"gr-demo\", \"version\": \"2\", \"pii\": [\"EMAIL\", \"PHONE\"]}\nPATTERNS = {\"EMAIL\": r\"[\\w.]+@[\\w.]+\", \"PHONE\": r\"\\b\\d{3}-\\d{3}-\\d{4}\\b\"}\n\ndef fake_converse(model_id, messages):                 # stands in for bedrock.converse\n    return {\"output\": \"Contact Asha at asha@example.com or 555-123-4567.\",\n            \"usage\": {\"inputTokens\": 12, \"outputTokens\": 14}}\n\ndef apply_guardrail(text, config):\n    actions = []\n    for kind in config[\"pii\"]:\n        text, n = re.subn(PATTERNS[kind], \"{\" + kind + \"}\", text)\n        if n:\n            actions.append(f\"masked {n} {kind}\")\n    return text, actions\n\nresp = fake_converse(\"demo-model-v1\", [{\"role\": \"user\", \"content\": [{\"text\": \"Who do I call?\"}]}])\nsafe_text, trace = apply_guardrail(resp[\"output\"], guardrail)\nprint(safe_text)\nprint(trace, resp[\"usage\"])\n",
+  "under_the_hood": {
+    "summary": "A Bedrock call travels from your IAM-signed request through optional guardrail checks to a model that AWS hosts, and Knowledge Bases and Agents are managed loops that add retrieval and tool calls around that same inference step.",
+    "steps": [
+      {
+        "title": "The call is an AWS API call",
+        "body": "You call bedrock-runtime with InvokeModel or the Converse API, signed with SigV4 like any AWS call. IAM decides whether this role may invoke this model ID. With an interface VPC endpoint (PrivateLink) the traffic stays on private IPs inside your VPC.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "App role signs Converse call",
+                "type": "input"
+              },
+              {
+                "label": "VPC interface endpoint",
+                "type": "process"
+              },
+              {
+                "label": "IAM: bedrock:InvokeModel allowed?",
+                "type": "process"
+              },
+              {
+                "label": "Guardrail checks the input",
+                "type": "process"
+              },
+              {
+                "label": "Model generates tokens",
+                "type": "process"
+              },
+              {
+                "label": "Guardrail checks the output",
+                "type": "process"
+              },
+              {
+                "label": "Response",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Path of one Converse request"
+          }
+        }
+      },
+      {
+        "title": "Guardrails wrap both directions",
+        "body": "If a guardrail is attached, the user input is checked first against denied topics, content filters, word lists and PII rules. A blocked input never reaches the model. The model's answer is then checked again, and PII can be masked rather than blocked."
+      },
+      {
+        "title": "Inference modes change how capacity is shared",
+        "body": "On-demand calls share capacity and are limited by per-model quotas. Provisioned throughput reserves dedicated model units for your account. Batch inference reads many prompts from S3 and writes results back later, trading latency for throughput.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "On-demand",
+              "code": "shared capacity\nper-token metering\nthrottled at your quota"
+            },
+            "right": {
+              "label": "Provisioned throughput",
+              "code": "dedicated model units\nbilled for the time reserved\npredictable throughput"
+            },
+            "description": "Two ways to get capacity"
+          }
+        }
+      },
+      {
+        "title": "Knowledge Bases run a RAG pipeline for you",
+        "body": "At ingestion, Bedrock reads documents from a source such as S3, splits them into chunks, embeds each chunk with an embedding model and writes the vectors to a vector store. At query time, RetrieveAndGenerate embeds the question, fetches the nearest chunks and passes them to the model with citations.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "S3 documents",
+              "Chunk",
+              "Embed",
+              "Vector store",
+              "Retrieve top chunks",
+              "Model answer with citations"
+            ],
+            "edges": [
+              {
+                "from": "S3 documents",
+                "to": "Chunk"
+              },
+              {
+                "from": "Chunk",
+                "to": "Embed"
+              },
+              {
+                "from": "Embed",
+                "to": "Vector store"
+              },
+              {
+                "from": "Vector store",
+                "to": "Retrieve top chunks"
+              },
+              {
+                "from": "Retrieve top chunks",
+                "to": "Model answer with citations"
+              }
+            ],
+            "description": "Knowledge Base ingestion and query"
+          }
+        }
+      },
+      {
+        "title": "Agents run a reason-act loop",
+        "body": "An agent sends your instructions and the action group schemas to the model. The model decides to call an action; Bedrock invokes your Lambda with the arguments, feeds the result back, and repeats until the model produces a final answer."
+      }
+    ],
+    "takeaway": "Bedrock is IAM plus a hosted model plus optional managed loops. Every layer you add (guardrail, retrieval, agent steps) means extra model or service calls, which adds latency and token cost."
+  }
 }

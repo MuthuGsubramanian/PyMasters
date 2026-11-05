@@ -170,5 +170,105 @@
     "estimated_minutes": 20,
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "logging.getLogger(name) returns a cached logger in a dotted-name tree; each call first compares its level with the logger's effective level, creates a LogRecord only if enabled, and passes it to handlers on the logger and its ancestors.",
+    "steps": [
+      {
+        "title": "Loggers form a tree by name",
+        "body": "`logging.getLogger('orders')` returns the same object every time you ask for 'orders', from a dict kept by the logging manager. Names with dots form a hierarchy: 'orders.payments' is a child of 'orders', which is a child of the root logger.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "root",
+                "label": "root logger (handlers from basicConfig)"
+              },
+              {
+                "id": "orders",
+                "label": "logger 'orders'"
+              },
+              {
+                "id": "pay",
+                "label": "logger 'orders.payments'"
+              }
+            ],
+            "edges": [
+              {
+                "from": "pay",
+                "to": "orders",
+                "label": "parent"
+              },
+              {
+                "from": "orders",
+                "to": "root",
+                "label": "parent"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The level check comes first",
+        "body": "`log.debug('raw payload: ...')` checks `isEnabledFor(DEBUG)`. The logger has no level of its own, so it uses the nearest ancestor's: the root was set to INFO by basicConfig. DEBUG (10) is below INFO (20), so the call returns immediately and no record is built.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "DEBUG 10",
+              "INFO 20",
+              "WARNING 30",
+              "ERROR 40",
+              "CRITICAL 50"
+            ],
+            "highlight": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "label": "Passes with level=INFO"
+          }
+        }
+      },
+      {
+        "title": "Records are built lazily",
+        "body": "For `log.info('order %s received', order_id)` that passes the check, logging creates a LogRecord with the message template, the args, time, logger name, file and line. The `%` formatting happens later, only when a handler formats the record. So pass arguments separately instead of building an f-string that is wasted when the level is off."
+      },
+      {
+        "title": "Handlers write the output",
+        "body": "The record is passed to every handler on the logger, then to handlers on each ancestor (propagation) up to the root. basicConfig added one StreamHandler to the root with the format `%(levelname)s:%(name)s:%(message)s`, so the output line is `INFO:orders:order 7 received`.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "log.info(...)",
+                "detail": "level check passes"
+              },
+              {
+                "label": "LogRecord",
+                "detail": "msg, args, time, line"
+              },
+              {
+                "label": "handlers on 'orders'",
+                "detail": "none"
+              },
+              {
+                "label": "propagate to root",
+                "detail": "StreamHandler formats and writes"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "One switch changes the volume",
+        "body": "Because filtering happens by level in the logger and handlers, changing `level=logging.DEBUG` in one place reveals every debug line without editing the code that logs. Handlers can also send records to files or other destinations."
+      }
+    ],
+    "takeaway": "Log calls are cheap when filtered out, because the level check happens before any work. Name loggers by module, pass arguments lazily, and control what you see in one configuration spot."
+  }
 }

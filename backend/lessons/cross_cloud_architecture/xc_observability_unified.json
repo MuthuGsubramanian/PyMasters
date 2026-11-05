@@ -33,5 +33,87 @@
     {"q": {"en": "Why is 100% trace sampling shipped cross-cloud a bad default?"}, "options": {"en": ["It violates the OTLP spec", "Traces expire in transit", "Telemetry egress costs and backend ingest scale with volume — tail-based sampling keeps errors and slow traces while dropping the boring majority", "Sampling is illegal in the EU"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["cloud_observability", "multi_cloud_strategy"], "concepts_required": ["cloud_fundamentals", "functions"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "OpenTelemetry gives every service the same API and wire format: SDKs create spans and metrics, a traceparent header carries the trace ID across services and clouds, and Collectors receive, process and export the data to whichever backends you choose.",
+    "steps": [
+      {
+        "title": "Instrument once",
+        "body": "Each service uses the OpenTelemetry SDK (or auto-instrumentation). HTTP servers, clients and database drivers create spans automatically, named and tagged by the semantic conventions, so 'http.response.status_code' means the same everywhere."
+      },
+      {
+        "title": "Context travels in a header",
+        "body": "When service A calls service B, the SDK adds a W3C traceparent header: version, 32-hex trace ID, 16-hex parent span ID and flags. B continues the same trace, even if it runs in another cloud.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01",
+              "version  00",
+              "trace-id 4bf92f3577b34da6a3ce929d0e0e4736 (shared by every span)",
+              "parent   00f067aa0ba902b7",
+              "flags    01 = sampled"
+            ],
+            "caption": "A traceparent header, decoded"
+          }
+        }
+      },
+      {
+        "title": "The Collector is a pipeline",
+        "body": "A Collector near the workload has receivers (OTLP in), processors (batching, attribute redaction, sampling) and exporters (to one or more backends). Changing backend is a Collector config change, not a code change.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Apps send OTLP",
+                "type": "input"
+              },
+              {
+                "label": "Receiver",
+                "type": "process"
+              },
+              {
+                "label": "Processors: batch, redact PII, sample",
+                "type": "process"
+              },
+              {
+                "label": "Exporters",
+                "type": "process"
+              },
+              {
+                "label": "Backend(s): your chosen tool, cloud-native stores",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Collector pipeline"
+          }
+        }
+      },
+      {
+        "title": "Sampling controls cost",
+        "body": "Head sampling decides at the first span (keep 10% of traces). Tail sampling waits until a trace finishes and keeps all errors and slow traces plus a fraction of the rest, which keeps the interesting ones.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Head sampling",
+              "code": "decide at start\ncheap, may drop the one error"
+            },
+            "right": {
+              "label": "Tail sampling",
+              "code": "decide after trace ends\nkeep all errors and slow traces"
+            },
+            "description": "Two sampling points"
+          }
+        }
+      },
+      {
+        "title": "Placement is a data decision",
+        "body": "Telemetry can contain personal data and crosses networks too. Redact in the local Collector, keep data in the right region, and remember telemetry egress costs like any other data."
+      }
+    ],
+    "takeaway": "Standardise on OpenTelemetry at the edges and keep backends swappable. One trace ID across clouds is what turns three dashboards into one incident view."
+  }
 }

@@ -201,5 +201,147 @@
     "category": "python_internals",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A closure captures the variable's cell, not its value, so the name is looked up when the inner function runs; functions made in a loop share one cell and all see the loop variable's last value.",
+    "steps": [
+      {
+        "title": "Name resolution follows LEGB",
+        "body": "The compiler classifies each name in a function as local, enclosing (free), global or built-in, based on where it is assigned. At run time locals are read from the frame's array, enclosing names from cells, and globals and built-ins from the module and builtins dicts.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "L",
+                "label": "Local (frame slots)"
+              },
+              {
+                "id": "E",
+                "label": "Enclosing (cells)"
+              },
+              {
+                "id": "G",
+                "label": "Global (module dict)"
+              },
+              {
+                "id": "B",
+                "label": "Built-ins dict"
+              }
+            ],
+            "edges": [
+              {
+                "from": "L",
+                "to": "E",
+                "label": "then"
+              },
+              {
+                "from": "E",
+                "to": "G",
+                "label": "then"
+              },
+              {
+                "from": "G",
+                "to": "B",
+                "label": "then"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Closures capture the variable",
+        "body": "In `fns = [lambda: i for i in range(3)]`, each lambda refers to `i` of the enclosing comprehension scope. CPython stores `i` in a single cell, and every lambda's `__closure__` points to that same cell. No value is copied when the lambda is created.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "f0",
+                "label": "lambda #0"
+              },
+              {
+                "id": "f1",
+                "label": "lambda #1"
+              },
+              {
+                "id": "f2",
+                "label": "lambda #2"
+              },
+              {
+                "id": "cell",
+                "label": "cell i"
+              }
+            ],
+            "edges": [
+              {
+                "from": "f0",
+                "to": "cell",
+                "label": "__closure__"
+              },
+              {
+                "from": "f1",
+                "to": "cell",
+                "label": "__closure__"
+              },
+              {
+                "from": "f2",
+                "to": "cell",
+                "label": "__closure__"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Late binding: read at call time",
+        "body": "The loop finishes with the cell holding 2. Only later, when you call each lambda, does it read the cell. So `[f() for f in fns]` gives `[2, 2, 2]`, not `[0, 1, 2]`.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "cell i during the loop",
+                "values": [
+                  "0",
+                  "1",
+                  "2"
+                ]
+              },
+              {
+                "variable": "f0(), f1(), f2() afterwards",
+                "values": [
+                  "2",
+                  "2",
+                  "2"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Fix: bind the value now",
+        "body": "`lambda i=i: i` evaluates the default when each lambda is created and stores it in that lambda's `__defaults__`, giving 0, 1, 2. `functools.partial(f, i)` also stores the current value. Both copy the value at creation instead of reading a shared cell later.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Shares one cell",
+              "code": "[lambda: i for i in range(3)]\n-> 2, 2, 2"
+            },
+            "right": {
+              "label": "Captures each value",
+              "code": "[lambda i=i: i for i in range(3)]\n-> 0, 1, 2"
+            }
+          }
+        }
+      },
+      {
+        "title": "global and nonlocal",
+        "body": "`global x` makes assignments inside a function write to the module dict. `nonlocal x` makes them write to the nearest enclosing function's cell. Without them, any assignment makes the name local for the entire function body."
+      }
+    ],
+    "takeaway": "Closures remember where a variable lives, not what it held. When you need a snapshot, bind it as a default argument or with partial at creation time."
+  }
 }

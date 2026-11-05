@@ -260,5 +260,78 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Writing goes into an in-memory buffer first; Python hands it to the operating system when the buffer fills, on flush() or on close(), and the OS writes it to disk later.",
+    "steps": [
+      {
+        "title": "The mode decides what open() does",
+        "body": "'w' creates the file or truncates an existing one to zero bytes the moment it opens, before you write anything. 'a' opens in append mode, so every write goes to the end. 'x' fails with FileExistsError if the file already exists, which protects you from overwriting.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Mode",
+              "code": "'w'\n'a'\n'x'"
+            },
+            "right": {
+              "label": "Effect at open()",
+              "code": "truncate to 0 bytes (or create)\nkeep content; writes go to the end\ncreate only; error if it exists"
+            }
+          }
+        }
+      },
+      {
+        "title": "write() fills a buffer",
+        "body": "`f.write('row 1\\n')` encodes the text (for example to UTF-8) and copies the bytes into a buffer in memory. It returns the number of characters written, but nothing has reached the OS yet, so another program reading the file right now may not see it.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "f.write(text)",
+                "detail": "encode to bytes"
+              },
+              {
+                "label": "buffer",
+                "detail": "collects bytes in memory"
+              },
+              {
+                "label": "flush / close / full",
+                "detail": "os write() call"
+              },
+              {
+                "label": "OS page cache",
+                "detail": "written to disk later"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "flush and close hand the bytes over",
+        "body": "`f.flush()` passes the buffered bytes to the operating system. `close()`, which a with block calls for you, flushes and then releases the file. If a program crashes before closing, the last buffered data can be lost."
+      },
+      {
+        "title": "The OS has its own cache",
+        "body": "Even after flush, the OS may keep the data in memory and write it to the physical disk a little later. For data that must survive a power cut, call `os.fsync(f.fileno())` after flush; databases do this."
+      },
+      {
+        "title": "CSV and JSON are formatters on top",
+        "body": "`csv.writer(f).writerow(['Asha', 30])` turns a row into text (`Asha,30\\r\\n`), quoting fields that contain commas, and calls `f.write`. `json.dump(data, f)` turns the dict into JSON text and writes it. Underneath, it is the same buffered write.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "Asha,30",
+              "\"Ravi, Jr.\",25",
+              "Meena,41"
+            ],
+            "caption": "csv quotes a field that contains a comma"
+          }
+        }
+      }
+    ],
+    "takeaway": "Writes are buffered: data is safe only after it is flushed and closed (and fsync'd if it must survive a crash). Choose the mode carefully, because 'w' empties the file the moment it opens."
+  }
 }

@@ -164,5 +164,113 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "import asyncio\nimport time\n\nasync def blocking_job(state):\n    time.sleep(0.05)                 # blocks the ONE event-loop thread\n    state[\"done\"] = True\n\nasync def offloaded_job(state):\n    await asyncio.sleep(0.05)        # stands in for: await asyncio.to_thread(slow_call)\n    state[\"done\"] = True\n\nasync def heartbeat(state):\n    while not state[\"done\"]:\n        state[\"ticks\"] += 1\n        await asyncio.sleep(0.01)\n\nasync def run(job):\n    state = {\"done\": False, \"ticks\": 0}\n    await asyncio.gather(heartbeat(state), job(state))\n    return state[\"ticks\"]\n\nfrozen = asyncio.run(run(blocking_job))\nsmooth = asyncio.run(run(offloaded_job))\nprint(\"heartbeats while blocking:\", frozen, \"| while offloaded:\", smooth)\n"
+  "uth_example": "import asyncio\nimport time\n\nasync def blocking_job(state):\n    time.sleep(0.05)                 # blocks the ONE event-loop thread\n    state[\"done\"] = True\n\nasync def offloaded_job(state):\n    await asyncio.sleep(0.05)        # stands in for: await asyncio.to_thread(slow_call)\n    state[\"done\"] = True\n\nasync def heartbeat(state):\n    while not state[\"done\"]:\n        state[\"ticks\"] += 1\n        await asyncio.sleep(0.01)\n\nasync def run(job):\n    state = {\"done\": False, \"ticks\": 0}\n    await asyncio.gather(heartbeat(state), job(state))\n    return state[\"ticks\"]\n\nfrozen = asyncio.run(run(blocking_job))\nsmooth = asyncio.run(run(offloaded_job))\nprint(\"heartbeats while blocking:\", frozen, \"| while offloaded:\", smooth)\n",
+  "under_the_hood": {
+    "summary": "asyncio.to_thread hands a blocking function to the loop's default ThreadPoolExecutor and awaits a future linked to it; the worker thread runs the call while the event loop keeps running, and completion is signalled back to the loop thread-safely.",
+    "steps": [
+      {
+        "title": "A blocking call stops the heartbeat",
+        "body": "The lesson's heartbeat coroutine wakes every 10 ms and counts. While another coroutine calls `time.sleep(0.05)` directly, the loop thread is stuck, so the heartbeat count stalls for those 50 ms. That frozen count is how you detect blocking code.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "heartbeats during the job",
+                "values": [
+                  "direct time.sleep: about 0",
+                  "asyncio.to_thread: about 5"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "to_thread runs it on a worker thread",
+        "body": "`await asyncio.to_thread(time.sleep, 0.05)` copies the current contextvars context, then calls `loop.run_in_executor(None, ...)`. With `None`, the loop uses its default ThreadPoolExecutor (created on first use, in CPython 3.11 with up to min(32, CPU count + 4) threads) and submits the call there.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "await to_thread(fn, *args)",
+                "detail": "copy contextvars"
+              },
+              {
+                "label": "run_in_executor(None, ...)",
+                "detail": "default ThreadPoolExecutor"
+              },
+              {
+                "label": "worker thread",
+                "detail": "runs fn; GIL released while blocked"
+              },
+              {
+                "label": "result",
+                "detail": "back to the loop"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Two futures, linked",
+        "body": "The executor returns a `concurrent.futures.Future` that belongs to the thread world. asyncio wraps it in an asyncio Future the coroutine can await. When the worker finishes, a callback uses `loop.call_soon_threadsafe` to set the asyncio future's result, which also wakes the selector if the loop was sleeping.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "co",
+                "label": "coroutine awaits"
+              },
+              {
+                "id": "af",
+                "label": "asyncio.Future"
+              },
+              {
+                "id": "cf",
+                "label": "concurrent.futures.Future"
+              },
+              {
+                "id": "wt",
+                "label": "worker thread"
+              }
+            ],
+            "edges": [
+              {
+                "from": "co",
+                "to": "af",
+                "label": "await"
+              },
+              {
+                "from": "af",
+                "to": "cf",
+                "label": "linked via wrap_future"
+              },
+              {
+                "from": "wt",
+                "to": "cf",
+                "label": "sets result"
+              },
+              {
+                "from": "cf",
+                "to": "af",
+                "label": "call_soon_threadsafe"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The loop keeps running",
+        "body": "While the worker thread sleeps or waits on a blocking driver, it has released the GIL, so the loop thread keeps running other coroutines, including the heartbeat. When the future completes, the awaiting coroutine resumes with the function's return value or exception."
+      },
+      {
+        "title": "Threads, not magic",
+        "body": "to_thread is for blocking I/O and libraries without async versions. CPU-heavy pure Python in a thread still competes for the GIL with the loop and slows it; send that work to a ProcessPoolExecutor with `loop.run_in_executor(pool, fn)` instead."
+      }
+    ],
+    "takeaway": "Never block the event loop thread. to_thread moves a blocking call onto a worker thread and turns its completion into an awaitable, so the rest of your async program keeps breathing."
+  }
 }

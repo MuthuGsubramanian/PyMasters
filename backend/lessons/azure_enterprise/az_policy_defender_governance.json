@@ -33,5 +33,89 @@
     {"q": {"en": "A DINE policy assignment is deployed but remediates nothing. The most likely cause is..."}, "options": {"en": ["DINE only works at tenant scope", "The assignment's managed identity lacks the RBAC roles needed to deploy the remediation", "DINE requires Defender for Cloud's paid tier", "Remediation only runs on Sundays"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["azure_security", "cloud_compliance"], "concepts_required": ["azure_resource_management", "azure_security"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Azure Policy hooks into every Resource Manager create or update request, evaluating effects such as Modify and Deny before the resource is written and AuditIfNotExists or DeployIfNotExists afterwards, then rescans existing resources on a regular cycle.",
+    "steps": [
+      {
+        "title": "A definition is an if/then rule",
+        "body": "A policy definition has an if block (conditions on resource properties, such as type is storage account and allowBlobPublicAccess is true) and a then block naming the effect: deny, audit, modify, append, auditIfNotExists or deployIfNotExists.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "if": "type == Microsoft.Storage/storageAccounts AND allowBlobPublicAccess == true",
+              "then.effect": "deny",
+              "assigned at": "MG Landing Zones",
+              "parameters": "effect (Audit | Deny)"
+            },
+            "caption": "A policy definition, simplified"
+          }
+        }
+      },
+      {
+        "title": "Effects run in a fixed order on a request",
+        "body": "During a PUT through Resource Manager, Disabled is checked first, then Append and Modify change the request, then Deny can reject it, then Audit records it. Only after the resource provider succeeds are AuditIfNotExists and DeployIfNotExists evaluated.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "PUT storage account",
+                "type": "input"
+              },
+              {
+                "label": "Append / Modify (change request)",
+                "type": "process"
+              },
+              {
+                "label": "Deny? -> reject with 403",
+                "type": "process"
+              },
+              {
+                "label": "Audit (log non-compliance)",
+                "type": "process"
+              },
+              {
+                "label": "Resource provider creates it",
+                "type": "process"
+              },
+              {
+                "label": "AINE / DINE checks related resources",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Policy during one PUT request"
+          }
+        }
+      },
+      {
+        "title": "DeployIfNotExists fixes plumbing",
+        "body": "A DINE policy such as 'send diagnostics to the central workspace' deploys the missing diagnostic setting using the assignment's managed identity. Existing resources are fixed by running a remediation task."
+      },
+      {
+        "title": "Compliance is rescanned",
+        "body": "Besides request-time checks, Azure Policy re-evaluates existing resources on a regular cycle and when assignments change, so resources created before a policy show up as non-compliant.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "scope: MG Landing Zones",
+              "storage accounts evaluated: 120",
+              "non-compliant: 9",
+              "next: fix, then switch the effect to Deny"
+            ],
+            "caption": "Compliance view after assigning 'deny public blob access' in Audit mode"
+          }
+        }
+      },
+      {
+        "title": "Defender for Cloud scores posture",
+        "body": "Defender for Cloud turns policy-based checks into recommendations and a secure score, and its paid plans add threat detection for servers, storage, databases and containers, raising security alerts."
+      }
+    ],
+    "takeaway": "Roll out a new policy in Audit first, look at the compliance results, then switch to Deny. Use DeployIfNotExists for plumbing nobody should have to remember."
+  }
 }
