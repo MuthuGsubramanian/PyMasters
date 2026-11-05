@@ -964,18 +964,21 @@ app.include_router(misconceptions_router)
 # NB: no "*" here. With allow_credentials=True, a wildcard makes Starlette echo
 # ANY caller's Origin back with Access-Control-Allow-Credentials, defeating the
 # same-origin policy for credentialed requests. Only explicit origins are allowed.
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "https://www.pymasters.net",
-    "https://pymasters.net",
-    "http://localhost:80",
-]
+_SITE_ORIGINS = ["https://pymasters.net", "https://www.pymasters.net"]
+_DEV_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://localhost:80"]
+
+
+def cors_origins(production: bool) -> list:
+    """Production serves the SPA and /api on the same origin, so only the real site may make credentialed
+    cross-origin calls; localhost origins would let a page on a visitor's own machine do so (review L12)."""
+    return list(_SITE_ORIGINS) if production else _DEV_ORIGINS + _SITE_ORIGINS
+
+
+from auth import is_production as _is_production  # noqa: E402
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=cors_origins(_is_production()),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -1014,6 +1017,10 @@ def _enforce_ip_limit(limiter, request, what: str) -> None:
                             headers={"Retry-After": str(wait)})
 
 # --- Models ---
+# New passwords (sign-up, change, reset) need at least this many characters; existing ones keep working (L5).
+MIN_PASSWORD_LENGTH = 8
+
+
 class UserRegister(BaseModel):
     username: str
     password: str
@@ -1167,6 +1174,8 @@ def register(user: UserRegister, request: Request = None):
         )
     if not user.password:
         raise HTTPException(status_code=422, detail="Password is required.")
+    if len(user.password) < MIN_PASSWORD_LENGTH:
+        raise HTTPException(status_code=422, detail=f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
 
     account_type = "organization" if user.account_type == "organization" else "individual"
     email = (user.email or "").strip()
@@ -1378,8 +1387,8 @@ def login(user: UserLogin, request: Request = None):
 @app.post("/api/auth/change-password")
 def change_password(req: ChangePasswordRequest, caller: str = Depends(get_current_user_id)):
     """Change the AUTHENTICATED user's password (identity from the JWT, not the body)."""
-    if not req.new_password or len(req.new_password) < 6:
-        raise HTTPException(status_code=400, detail="New password must be at least 6 characters.")
+    if not req.new_password or len(req.new_password) < MIN_PASSWORD_LENGTH:
+        raise HTTPException(status_code=400, detail=f"New password must be at least {MIN_PASSWORD_LENGTH} characters.")
     conn = sqlite3.connect(DB_PATH)
     try:
         cursor = conn.cursor()
@@ -1447,8 +1456,8 @@ def forgot_password(req: ForgotPasswordRequest, request: Request = None):
 @app.post("/api/auth/reset-password")
 def reset_password(req: ResetPasswordRequest):
     """Complete a password reset using a valid, unexpired token."""
-    if not req.new_password or len(req.new_password) < 6:
-        raise HTTPException(status_code=400, detail="New password must be at least 6 characters.")
+    if not req.new_password or len(req.new_password) < MIN_PASSWORD_LENGTH:
+        raise HTTPException(status_code=400, detail=f"New password must be at least {MIN_PASSWORD_LENGTH} characters.")
     from datetime import datetime
     conn = sqlite3.connect(DB_PATH)
     try:

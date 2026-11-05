@@ -15,7 +15,7 @@ def _signup(page, username, email):
     page.get_by_text("Individual Learner").click()
     page.get_by_placeholder("Enter your username").fill(username)
     page.get_by_placeholder("you@example.com").fill(email)
-    page.get_by_placeholder("Enter your password").fill(PASSWORD)
+    page.get_by_placeholder("At least 8 characters").fill(PASSWORD)
     page.get_by_role("button", name="Create Account").click()
 
 

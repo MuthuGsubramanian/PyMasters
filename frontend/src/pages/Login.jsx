@@ -495,7 +495,8 @@ export default function Login() {
                                                 onChange={e => setPassword(e.target.value)}
                                                 autoComplete={isLogin ? "current-password" : "new-password"}
                                                 className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-12 pr-12 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.06] transition-all duration-300 font-medium"
-                                                placeholder="Enter your password"
+                                                placeholder={isLogin ? 'Enter your password' : 'At least 8 characters'}
+                                                minLength={isLogin ? undefined : 8}
                                                 required
                                             />
                                             <button

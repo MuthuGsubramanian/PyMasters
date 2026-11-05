@@ -30,7 +30,7 @@ def test_login_and_signup_forms(visitor):
 
 def test_bad_tokens_explain_themselves(visitor):
     visitor.goto(f"{BASE}/reset-password/not-a-real-token", wait_until="networkidle")
-    visitor.get_by_placeholder("New password (min 6 characters)").fill("Another-Pass-2026!")
+    visitor.get_by_placeholder("New password (min 8 characters)").fill("Another-Pass-2026!")
     visitor.get_by_placeholder("Confirm new password").fill("Another-Pass-2026!")
     visitor.locator("button[type=submit]").click()
     visitor.get_by_text(BAD_LINK).first.wait_for(timeout=15000)

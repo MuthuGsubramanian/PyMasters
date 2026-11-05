@@ -110,7 +110,7 @@ def test_password_reset_flow(browser):
     assert resp.value.status == 200
     token = db("reset-token", u["email"])
     page.goto(f"{BASE}/reset-password/{token}", wait_until="networkidle")
-    page.get_by_placeholder("New password (min 6 characters)").fill(NEW_PASSWORD)
+    page.get_by_placeholder("New password (min 8 characters)").fill(NEW_PASSWORD)
     page.get_by_placeholder("Confirm new password").fill(NEW_PASSWORD)
     with page.expect_response(lambda r: "/api/auth/reset-password" in r.url) as resp:
         page.locator("button[type=submit]").click()
