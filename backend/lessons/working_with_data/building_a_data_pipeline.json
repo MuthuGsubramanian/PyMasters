@@ -171,5 +171,116 @@
     "category": "data",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A pipeline is a chain of small stages where each stage consumes the previous stage's rows; with generators, a single row flows through every stage before the next row is even read.",
+    "steps": [
+      {
+        "title": "Four stages, four jobs",
+        "body": "Ingest turns bytes into rows (csv.DictReader). Clean converts types and drops bad rows. Aggregate folds rows into a dict keyed by group. Output writes the summary (json.dump or csv.writer). Each stage only knows the shape of rows it receives and the shape it hands on.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "ingest",
+                "detail": "file -> dict rows of strings"
+              },
+              {
+                "label": "clean",
+                "detail": "strings -> typed rows, bad rows skipped"
+              },
+              {
+                "label": "aggregate",
+                "detail": "rows -> {region: total}"
+              },
+              {
+                "label": "output",
+                "detail": "summary -> report.json"
+              }
+            ],
+            "title": "Data changes shape at every stage",
+            "direction": "right"
+          }
+        }
+      },
+      {
+        "title": "Generators pull rows one at a time",
+        "body": "If clean() is written with yield, calling it does not run anything; it returns a generator. When aggregate's for loop asks for the next row, clean asks DictReader for its next row, converts it and yields it. Only the current row is in memory, so a 5 GB file uses about as much memory as a 5 KB one.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "def clean(rows, stats):",
+                "explanation": "A generator function: calling it runs nothing yet."
+              },
+              {
+                "code": "    for row in rows:",
+                "explanation": "Pulls one row from the reader only when asked."
+              },
+              {
+                "code": "        try: row['amount'] = float(row['amount'])",
+                "explanation": "Convert the type."
+              },
+              {
+                "code": "        except ValueError: stats['skipped'] += 1; continue",
+                "explanation": "Count and skip, do not crash."
+              },
+              {
+                "code": "        yield row",
+                "explanation": "Hand this one row downstream and pause here."
+              }
+            ],
+            "title": "A lazy cleaning stage"
+          }
+        }
+      },
+      {
+        "title": "Validate and skip, then count",
+        "body": "Real files contain rows like amount = 'N/A' or a missing region. The clean stage catches the ValueError or KeyError for that row, increments a skipped counter and moves on. At the end you report '998 rows loaded, 2 skipped', so data loss is visible instead of silent.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "row",
+                "values": [
+                  "#1 amount='120.5'",
+                  "#2 amount='N/A'",
+                  "#3 amount='80'"
+                ]
+              },
+              {
+                "variable": "result",
+                "values": [
+                  "kept 120.5",
+                  "skipped",
+                  "kept 80.0"
+                ]
+              },
+              {
+                "variable": "skipped",
+                "values": [
+                  0,
+                  1,
+                  1
+                ]
+              }
+            ],
+            "title": "Bad rows are counted, not fatal"
+          }
+        }
+      },
+      {
+        "title": "Aggregate folds rows into a dict",
+        "body": "totals = defaultdict(float); totals[row['region']] += row['amount'] adds each row into its region's running total. The dict has one entry per distinct region, so its size depends on the number of groups, not the number of rows."
+      },
+      {
+        "title": "Output is the only stage with side effects",
+        "body": "Keep reading and writing at the two ends. The middle stages are plain functions of their input, which means you can test clean() with a three-row list instead of a real file, and re-run the pipeline safely because nothing is written until the last step."
+      }
+    ],
+    "takeaway": "Small stages with clear row shapes, lazy generators between them, and a skipped-row count: that is what makes a data script reliable on files of any size."
+  }
 }

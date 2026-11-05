@@ -169,5 +169,119 @@
     "category": "data",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A date is stored as year, month and day and converted to a day count for arithmetic; a timedelta is stored as days, seconds and microseconds; timezones are extra information attached to a datetime.",
+    "steps": [
+      {
+        "title": "Strings compare letter by letter",
+        "body": "Strings are compared character by character. '2026-1-15' and '2026-06-09' match for 5 characters, then '1' is compared with '0', so '2026-1-15' < '2026-06-09' is False, even though 15 January comes before 9 June. String order only matches calendar order when every string uses the same zero-padded YYYY-MM-DD layout.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "As strings",
+              "code": "'2026-1-15' < '2026-06-09'\n# compares '1' with '0' -> False"
+            },
+            "right": {
+              "label": "As dates",
+              "code": "date(2026, 1, 15) < date(2026, 6, 9)\n# compares year, month, day -> True"
+            },
+            "title": "Same values, different answers"
+          }
+        }
+      },
+      {
+        "title": "Parsing turns text into fields",
+        "body": "datetime.strptime('09/06/2026', '%d/%m/%Y') matches the format directive by directive: %d reads 09, %m reads 06, %Y reads 2026, and the slashes must match literally. The result stores year=2026, month=6, day=9 as numbers and checks they form a real date, so '31/02/2026' raises ValueError.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "directive",
+                "values": [
+                  "%d",
+                  "/",
+                  "%m",
+                  "/",
+                  "%Y"
+                ]
+              },
+              {
+                "variable": "text matched",
+                "values": [
+                  "09",
+                  "/",
+                  "06",
+                  "/",
+                  "2026"
+                ]
+              },
+              {
+                "variable": "field",
+                "values": [
+                  "day=9",
+                  "literal",
+                  "month=6",
+                  "literal",
+                  "year=2026"
+                ]
+              }
+            ],
+            "title": "strptime('09/06/2026', '%d/%m/%Y')"
+          }
+        }
+      },
+      {
+        "title": "Arithmetic runs on day numbers",
+        "body": "Every date maps to an ordinal, a count of days where 1 January of year 1 is day 1: date(2026, 6, 9).toordinal() is 739776 and date(2026, 1, 15) is 739631. Subtracting gives 145, returned as timedelta(days=145). Adding days works the same way, so date(2026, 1, 31) + timedelta(days=30) correctly lands on 2026-03-02.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "date",
+                "values": [
+                  "2026-01-15",
+                  "2026-06-09"
+                ]
+              },
+              {
+                "variable": "toordinal()",
+                "values": [
+                  739631,
+                  739776
+                ]
+              }
+            ],
+            "title": "Dates as day counts: difference = 145 days"
+          }
+        }
+      },
+      {
+        "title": "timedelta normalises itself",
+        "body": "A timedelta keeps only days, seconds (0 to 86399) and microseconds. timedelta(hours=36) is stored as days=1, seconds=43200. timedelta(hours=-1) is stored as days=-1, seconds=82800, because only the days field may be negative.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "You write",
+              "code": "timedelta(hours=36)\ntimedelta(hours=-1)"
+            },
+            "right": {
+              "label": "Python stores",
+              "code": "days=1, seconds=43200\ndays=-1, seconds=82800"
+            },
+            "title": "Normalised storage"
+          }
+        }
+      },
+      {
+        "title": "Naive versus aware",
+        "body": "A datetime with tzinfo=None is naive: it does not say which timezone it means. Attaching timezone.utc or a ZoneInfo('Asia/Kolkata') makes it aware, and aware datetimes are compared and subtracted by first converting to UTC. Mixing the two in a comparison raises TypeError: can't compare offset-naive and offset-aware datetimes."
+      }
+    ],
+    "takeaway": "Parse strings into date objects as early as possible, do arithmetic on the objects (which really means on day counts), keep times in UTC, and format back to strings only for display."
+  }
 }
