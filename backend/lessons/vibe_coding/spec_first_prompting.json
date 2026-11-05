@@ -167,5 +167,175 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A spec written as concrete input/output assertions turns 'done' into a check the computer can run; the AI's code is then accepted only when every assertion passes, instead of when the output looks plausible.",
+    "steps": [
+      {
+        "title": "A vague request has many correct-looking answers",
+        "body": "'Make a URL slug' could keep commas, use underscores, keep capitals or collapse hyphens. Every one of those versions looks reasonable, so whichever the model picks, you cannot tell it is wrong until you discover what you actually wanted."
+      },
+      {
+        "title": "Write the assertions first",
+        "body": "Before prompting, write what must be true: slugify('Hello, World!') == 'hello-world', slugify('Python 3.12 Rocks!') == 'python-312-rocks', slugify(' A--B ') == 'a-b'. Each line removes a whole family of interpretations: punctuation dropped, digits kept, dots removed, repeated separators collapsed, edges trimmed.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "input",
+                "values": [
+                  "'Hello, World!'",
+                  "'Python 3.12 Rocks!'",
+                  "' A--B '"
+                ]
+              },
+              {
+                "variable": "must return",
+                "values": [
+                  "'hello-world'",
+                  "'python-312-rocks'",
+                  "'a-b'"
+                ]
+              },
+              {
+                "variable": "rule it pins",
+                "values": [
+                  "drop punctuation",
+                  "keep digits, drop dots",
+                  "collapse and trim hyphens"
+                ]
+              }
+            ],
+            "title": "The spec as examples"
+          }
+        }
+      },
+      {
+        "title": "How a passing implementation works",
+        "body": "One version that meets the spec: strip and lowercase the text, delete every character that is not a letter, digit, whitespace or hyphen with re.sub(r'[^a-z0-9\\s-]', '', t), turn every run of whitespace or hyphens into one hyphen with re.sub(r'[\\s-]+', '-', t), then strip('-') at the ends.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "step",
+                "values": [
+                  "start",
+                  "strip + lower",
+                  "delete other chars",
+                  "runs -> one '-'",
+                  "strip('-')"
+                ]
+              },
+              {
+                "variable": "' A--B '",
+                "values": [
+                  "' A--B '",
+                  "'a--b'",
+                  "'a--b'",
+                  "'a-b'",
+                  "'a-b'"
+                ]
+              },
+              {
+                "variable": "'Python 3.12 Rocks!'",
+                "values": [
+                  "'Python 3.12 Rocks!'",
+                  "'python 3.12 rocks!'",
+                  "'python 312 rocks'",
+                  "'python-312-rocks'",
+                  "'python-312-rocks'"
+                ]
+              }
+            ],
+            "title": "Tracing two inputs through the regex steps"
+          }
+        }
+      },
+      {
+        "title": "The loop: generate, run, compare",
+        "body": "Paste the assertions into the prompt and into the file. Run the AI's code; an AssertionError shows exactly which example fails. Feed that failure back, regenerate, run again. 'Done' is the moment the assertions are silent, not the moment the code looks clean.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "spec",
+                "label": "write assertions",
+                "type": "start"
+              },
+              {
+                "id": "gen",
+                "label": "AI writes slugify"
+              },
+              {
+                "id": "run",
+                "label": "run the assertions"
+              },
+              {
+                "id": "pass",
+                "label": "all pass?",
+                "type": "decision"
+              },
+              {
+                "id": "fix",
+                "label": "send the failing case back"
+              },
+              {
+                "id": "done",
+                "label": "done",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "spec",
+                "to": "gen"
+              },
+              {
+                "from": "gen",
+                "to": "run"
+              },
+              {
+                "from": "run",
+                "to": "pass"
+              },
+              {
+                "from": "pass",
+                "to": "fix",
+                "label": "no"
+              },
+              {
+                "from": "fix",
+                "to": "gen"
+              },
+              {
+                "from": "pass",
+                "to": "done",
+                "label": "yes"
+              }
+            ],
+            "executionPath": [
+              "spec",
+              "gen",
+              "run",
+              "pass",
+              "fix",
+              "gen",
+              "run",
+              "pass",
+              "done"
+            ],
+            "title": "Spec-first loop"
+          }
+        }
+      },
+      {
+        "title": "Specs outlive the prompt",
+        "body": "The assertions stay in the codebase as tests. When someone later asks the AI to 'clean up' slugify, the same checks immediately catch a version that, say, stops collapsing double hyphens."
+      }
+    ],
+    "takeaway": "Decide what done means as runnable examples before you prompt. The AI then has a precise target, and you have an automatic judge of whether it hit it."
+  }
 }

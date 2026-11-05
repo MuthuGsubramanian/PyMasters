@@ -150,5 +150,92 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Python only discovers most mistakes when a line actually runs, so each rung of the verification ladder makes more of the code run under conditions you chose, turning 'looks right' into a pass or fail the computer reports.",
+    "steps": [
+      {
+        "title": "Python checks late",
+        "body": "Python resolves names and attributes when a line executes, not when the file is loaded. A call to a method that does not exist, inside a branch you never reach, sits there silently. Reading the code cannot tell you it is broken; running that line can.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> import requests",
+              ">>> requests.get_json('https://api.example.com/users')",
+              "Traceback (most recent call last):",
+              "  File \"<stdin>\", line 1, in <module>",
+              "AttributeError: module 'requests' has no attribute 'get_json'"
+            ],
+            "title": "Rung 1: run it and the invented method dies at once"
+          }
+        }
+      },
+      {
+        "title": "Rung 2: edge cases run the other branches",
+        "body": "The happy path exercises one route through the code. An empty list, zero, a negative number or a duplicate pushes execution into the branches where AI code is weakest, such as average([]) dividing by zero. Each new input makes previously unexecuted lines run."
+      },
+      {
+        "title": "Rung 3: an assertion makes the check automatic",
+        "body": "assert average([2, 4]) == 3 encodes what you expect. If the code is wrong, Python raises AssertionError; if it is right, nothing happens. Now the check repeats every time you run the file, instead of depending on you re-reading output.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "assert average([2, 4]) == 3",
+                "explanation": "Pins the normal case."
+              },
+              {
+                "code": "assert average([5]) == 5",
+                "explanation": "Single item."
+              },
+              {
+                "code": "assert average([]) == 0",
+                "explanation": "Edge case: the AI version raised ZeroDivisionError here."
+              }
+            ],
+            "title": "Three lines that prove behaviour"
+          }
+        }
+      },
+      {
+        "title": "Rung 4: compare with the real API",
+        "body": "For any library call you cannot vouch for, ask the installed library itself: help(obj.method), inspect.signature(func), or the documentation for the version pip show reports. This catches calls that exist but take different arguments or return a different type than the AI assumed."
+      },
+      {
+        "title": "Rung 5: the test suite checks everything else",
+        "body": "Running the project's tests re-executes code you did not touch, so a change that quietly breaks another caller shows up as a failure there. Climb only as high as the risk requires, but always above 'it looks right'.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "rung",
+                "values": [
+                  "run it",
+                  "edge cases",
+                  "assertion",
+                  "check the docs",
+                  "full test suite"
+                ]
+              },
+              {
+                "variable": "catches",
+                "values": [
+                  "invented names, crashes",
+                  "empty/zero/negative bugs",
+                  "wrong results, every run",
+                  "wrong arguments or types",
+                  "breakage elsewhere"
+                ]
+              }
+            ],
+            "title": "What each rung catches"
+          }
+        }
+      }
+    ],
+    "takeaway": "Code is only verified on the lines that ran with inputs you checked. Make the computer run it and judge it; confidence that comes from reading is not evidence."
+  }
 }

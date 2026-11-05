@@ -165,5 +165,164 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Architecture is the set of decisions that constrain the code: module boundaries, data shapes, interfaces and which way dependencies point; when you fix those first, each AI-written piece has a small, checkable job and can be replaced without disturbing the rest.",
+    "steps": [
+      {
+        "title": "Decisions versus implementation",
+        "body": "Decisions are the things that are expensive to change later: what the modules are, what data looks like, what each function promises, where state lives. Implementation is the body of each function. The AI is fast at implementation; the decisions are yours.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "You decide",
+              "code": "modules: orders, payments, notify\nOrder fields and types\ncharge(order) -> Receipt\npayments never imports notify"
+            },
+            "right": {
+              "label": "AI implements",
+              "code": "body of charge()\nbody of send_receipt_email()\nthe SQL inside OrderRepository\nformatting helpers"
+            },
+            "title": "Who owns what"
+          }
+        }
+      },
+      {
+        "title": "Boundaries limit the blast radius",
+        "body": "If orders only talks to payments through charge(order) -> Receipt, the AI can rewrite the inside of payments freely and orders cannot break, as long as that signature and its tests hold. Without the boundary, a change in one place can ripple anywhere.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "api",
+                "label": "web API"
+              },
+              {
+                "id": "orders",
+                "label": "orders"
+              },
+              {
+                "id": "payments",
+                "label": "payments: charge(order) -> Receipt"
+              },
+              {
+                "id": "notify",
+                "label": "notify: send_receipt(receipt)"
+              },
+              {
+                "id": "db",
+                "label": "database"
+              }
+            ],
+            "edges": [
+              {
+                "from": "api",
+                "to": "orders",
+                "label": "calls"
+              },
+              {
+                "from": "orders",
+                "to": "payments",
+                "label": "charge()"
+              },
+              {
+                "from": "orders",
+                "to": "notify",
+                "label": "send_receipt()"
+              },
+              {
+                "from": "orders",
+                "to": "db",
+                "label": "repository"
+              },
+              {
+                "from": "payments",
+                "to": "db",
+                "label": "repository"
+              }
+            ],
+            "title": "Dependencies point one way"
+          }
+        }
+      },
+      {
+        "title": "Interfaces make AI output checkable",
+        "body": "When you hand the AI a signature, types and a docstring with examples, its output has a precise target and you can test it in isolation. 'Add payments' gives it nothing to be measured against; 'implement charge(order: Order) -> Receipt, raise PaymentDeclined on decline' does."
+      },
+      {
+        "title": "Keep the model in your head",
+        "body": "You should be able to sketch the system from memory: the main modules, the data that flows between them and the rules each must obey. If a new AI-written file does not fit that sketch, for example payments now importing notify, that is a design change you did not decide, and you catch it at review.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "design",
+                "label": "you: decide boundary and signature",
+                "type": "start"
+              },
+              {
+                "id": "impl",
+                "label": "AI: implement inside it"
+              },
+              {
+                "id": "fit",
+                "label": "fits your sketch and tests pass?",
+                "type": "decision"
+              },
+              {
+                "id": "keep",
+                "label": "keep",
+                "type": "end"
+              },
+              {
+                "id": "rework",
+                "label": "send back with the rule it broke"
+              }
+            ],
+            "edges": [
+              {
+                "from": "design",
+                "to": "impl"
+              },
+              {
+                "from": "impl",
+                "to": "fit"
+              },
+              {
+                "from": "fit",
+                "to": "keep",
+                "label": "yes"
+              },
+              {
+                "from": "fit",
+                "to": "rework",
+                "label": "no"
+              },
+              {
+                "from": "rework",
+                "to": "impl"
+              }
+            ],
+            "executionPath": [
+              "design",
+              "impl",
+              "fit",
+              "rework",
+              "impl",
+              "fit",
+              "keep"
+            ],
+            "title": "The architect's loop"
+          }
+        }
+      },
+      {
+        "title": "Guard against skill atrophy",
+        "body": "Write some parts yourself, especially the core logic and the tricky edge cases, and explain AI-written code in your own words before accepting. The ability to judge a design comes from having built designs; if you stop doing that, you lose the very skill that keeps the AI safe to use."
+      }
+    ],
+    "takeaway": "Let the AI type inside the boxes; you draw the boxes. Clear boundaries and interfaces are what make fast AI implementation safe to accept and cheap to replace."
+  }
 }

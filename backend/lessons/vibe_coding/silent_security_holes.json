@@ -162,5 +162,98 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Injection bugs happen when untrusted text is pasted into a string that another interpreter (the SQL engine, the shell, the file system) then parses as instructions; the safe patterns keep the data in a separate channel so it can never be parsed as code.",
+    "steps": [
+      {
+        "title": "An f-string builds code from data",
+        "body": "query = f\"SELECT * FROM users WHERE name = '{name}'\" makes one string. If name is x' OR '1'='1, the string becomes WHERE name = 'x' OR '1'='1'. The database parses the whole thing, sees an OR whose right side is always true, and returns every row.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "user types",
+                "detail": "x' OR '1'='1"
+              },
+              {
+                "label": "f-string",
+                "detail": "pasted into the SQL text"
+              },
+              {
+                "label": "SQL parser",
+                "detail": "reads quote, OR, comparison"
+              },
+              {
+                "label": "result",
+                "detail": "WHERE ... OR '1'='1' -> every row"
+              }
+            ],
+            "title": "How a string becomes a breach"
+          }
+        }
+      },
+      {
+        "title": "Parameters keep data out of the parser",
+        "body": "cursor.execute('SELECT * FROM users WHERE name = ?', (name,)) sends the SQL with a placeholder and the value separately. The statement is parsed before the value is bound, so the value can only ever be compared as a string; it can never add an OR.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Concatenated (unsafe)",
+              "code": "f\"... WHERE name = '{name}'\"\n# attacker controls the SQL structure"
+            },
+            "right": {
+              "label": "Parameterised (safe)",
+              "code": "\"... WHERE name = ?\", (name,)\n# name is one literal value, always"
+            },
+            "title": "Same query, two channels"
+          }
+        }
+      },
+      {
+        "title": "The shell is another parser",
+        "body": "os.system(f'ping {host}') hands the whole line to /bin/sh. With host = '8.8.8.8; rm -rf ~', the shell sees ; and runs a second command. subprocess.run(['ping', '-c', '1', host]) passes a list straight to the program with no shell, so host is a single argument whatever it contains.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "host value",
+                "values": [
+                  "8.8.8.8",
+                  "8.8.8.8; rm -rf ~"
+                ]
+              },
+              {
+                "variable": "os.system runs",
+                "values": [
+                  "ping 8.8.8.8",
+                  "ping 8.8.8.8, then rm -rf ~"
+                ]
+              },
+              {
+                "variable": "subprocess list runs",
+                "values": [
+                  "ping 8.8.8.8",
+                  "ping with one odd argument (fails safely)"
+                ]
+              }
+            ],
+            "title": "Shell string vs argument list"
+          }
+        }
+      },
+      {
+        "title": "Paths and secrets",
+        "body": "open(os.path.join('uploads', filename)) with filename = '../../etc/passwd' walks out of the folder, because the file system interprets .. as 'go up'. Resolve the path and check it is still inside uploads. Hard-coded API keys are a different leak: once committed, they live in git history even after you delete the line."
+      },
+      {
+        "title": "Why the AI writes these",
+        "body": "These patterns are short and common in old tutorials and answers, so they are highly probable continuations, and they work perfectly in a demo. None raises an error. Review every snippet that touches SQL, a shell, a file path, HTML output or a secret, and ask 'what if this input were hostile?'"
+      }
+    ],
+    "takeaway": "Never let untrusted text be parsed as code. Use parameters for SQL, argument lists for processes, resolved paths for files and environment variables for secrets, and check AI output for those patterns every time."
+  }
 }

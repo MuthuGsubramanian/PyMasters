@@ -168,5 +168,102 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Some bugs only appear under conditions a quick run never creates, such as thread timing, float rounding or a hostile input; where being wrong is expensive and hard to verify, AI code needs a test-first approach or a proven library.",
+    "steps": [
+      {
+        "title": "Two axes decide the risk",
+        "body": "Place each task by cost of being wrong (a typo in a log line versus a double charge) and by ease of verification (run it and see, versus wrong looks identical to right until a rare condition). Vibe coding is great where both are low; the dangerous corner is high cost plus hard to verify.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Vibe freely",
+              "code": "cost of a bug: low\nverify by running: easy\ne.g. a one-off script, a UI tweak, test data"
+            },
+            "right": {
+              "label": "Slow down",
+              "code": "cost of a bug: high\nverify by running: hard\ne.g. auth, payments, concurrency, crypto, migrations"
+            },
+            "title": "The two-axis map"
+          }
+        }
+      },
+      {
+        "title": "Race conditions pass every quick test",
+        "body": "balance = get(); balance -= amount; save(balance) works every time you run it alone. With two requests at once, both can read 100 before either saves, so two withdrawals of 30 leave 70 instead of 40. It only fails when the timing lines up, so a single test run proves nothing.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "time",
+                "values": [
+                  "t1",
+                  "t2",
+                  "t3",
+                  "t4"
+                ]
+              },
+              {
+                "variable": "request A",
+                "values": [
+                  "read 100",
+                  "",
+                  "save 70",
+                  ""
+                ]
+              },
+              {
+                "variable": "request B",
+                "values": [
+                  "",
+                  "read 100",
+                  "",
+                  "save 70"
+                ]
+              },
+              {
+                "variable": "stored balance",
+                "values": [
+                  100,
+                  100,
+                  70,
+                  70
+                ]
+              }
+            ],
+            "title": "Two withdrawals of 30, one lost"
+          }
+        }
+      },
+      {
+        "title": "Money and floats",
+        "body": "0.1 + 0.2 == 0.3 is False in Python, because binary floating point cannot store 0.1 exactly. Summing prices as floats drifts by fractions of a paisa that show up only after many transactions. Correct code uses integer cents or decimal.Decimal, and a plausible float version looks just as clean.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> 0.1 + 0.2",
+              "0.30000000000000004",
+              ">>> from decimal import Decimal",
+              ">>> Decimal('0.1') + Decimal('0.2')",
+              "Decimal('0.3')"
+            ],
+            "title": "Why money code needs care"
+          }
+        }
+      },
+      {
+        "title": "Security code fails silently",
+        "body": "A password check compared with == instead of a constant-time comparison, a token from random instead of secrets, or a JWT decoded without verifying the signature all pass every functional test. They only fail when an attacker shows up, which is exactly the condition you cannot reproduce by running the code."
+      },
+      {
+        "title": "What to do in the danger zone",
+        "body": "Use a battle-tested library (passlib or the framework's auth, Decimal, database transactions or row locks), write the tests first including the nasty cases, read every line the AI proposes, and keep changes small enough to review completely. Use the AI as an explainer and reviewer here, not as the author."
+      }
+    ],
+    "takeaway": "Run-it-and-see only verifies the conditions you happened to create. Where bugs hide in timing, rounding or attackers and the cost is high, slow down and lean on proven libraries and tests written first."
+  }
 }
