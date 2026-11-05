@@ -215,5 +215,113 @@
       "correct": 0
     }
   ],
-  "uth_example": "builds = [101, 102, 103, 104, 105, 106, 107, 108, 109, 110]\nbroken_from = 107                         # every build from here on is broken\n\ndef is_broken(build):\n    return build >= broken_from\n\nlow, high = 0, len(builds) - 1\nsteps = []\nwhile low < high:                         # find the FIRST broken build\n    mid = (low + high) // 2\n    steps.append(builds[mid])\n    if is_broken(builds[mid]):\n        high = mid                        # answer is mid or to the left\n    else:\n        low = mid + 1                     # answer is to the right\n\nprint(\"probed:\", steps)\nprint(\"first broken build:\", builds[low], \"found in\", len(steps), \"checks\")\n"
+  "uth_example": "builds = [101, 102, 103, 104, 105, 106, 107, 108, 109, 110]\nbroken_from = 107                         # every build from here on is broken\n\ndef is_broken(build):\n    return build >= broken_from\n\nlow, high = 0, len(builds) - 1\nsteps = []\nwhile low < high:                         # find the FIRST broken build\n    mid = (low + high) // 2\n    steps.append(builds[mid])\n    if is_broken(builds[mid]):\n        high = mid                        # answer is mid or to the left\n    else:\n        low = mid + 1                     # answer is to the right\n\nprint(\"probed:\", steps)\nprint(\"first broken build:\", builds[low], \"found in\", len(steps), \"checks\")\n",
+  "under_the_hood": {
+    "summary": "Binary search maintains the invariant 'if the target exists, it is between low and high', and every comparison with the middle element shrinks that range by half.",
+    "steps": [
+      {
+        "title": "The invariant",
+        "body": "Start with low = 0 and high = len(arr) - 1, the whole list. The promise the loop keeps is: if the target is anywhere, it is inside arr[low..high]. Every update must keep that promise true, and the loop ends when the range is empty (low > high)."
+      },
+      {
+        "title": "Probe the middle",
+        "body": "mid = (low + high) // 2. For arr = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91] and target 23, low = 0, high = 9, so mid = 4 and arr[4] = 16. Since 16 < 23 and the list is sorted, everything at index 4 or before is too small.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              2,
+              5,
+              8,
+              12,
+              16,
+              23,
+              38,
+              56,
+              72,
+              91
+            ],
+            "title": "First probe: mid = 4, arr[4] = 16 < 23",
+            "highlight": [
+              4
+            ]
+          }
+        }
+      },
+      {
+        "title": "Discard the half that cannot hold it",
+        "body": "Set low = mid + 1 = 5. The next mid is (5 + 9) // 2 = 7, arr[7] = 56 > 23, so high = 6. Then mid = 5 and arr[5] = 23: found in 3 probes. The + 1 and - 1 matter: without them the window can stop shrinking and loop forever.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "low",
+                "values": [
+                  0,
+                  5,
+                  5
+                ]
+              },
+              {
+                "variable": "high",
+                "values": [
+                  9,
+                  9,
+                  6
+                ]
+              },
+              {
+                "variable": "mid",
+                "values": [
+                  4,
+                  7,
+                  5
+                ]
+              },
+              {
+                "variable": "arr[mid]",
+                "values": [
+                  16,
+                  56,
+                  23
+                ]
+              }
+            ],
+            "title": "Each probe narrows the window"
+          }
+        }
+      },
+      {
+        "title": "Why about 20 steps for a million",
+        "body": "Each probe halves the remaining range. After k probes at most n / 2^k items remain, so the loop ends after about log2(n) probes: 10 for 1,000 items, 20 for 1,000,000, 30 for a billion.",
+        "visual": {
+          "type": "AlgorithmVisualizer",
+          "props": {
+            "algorithm": "binary_search",
+            "data": [
+              2,
+              5,
+              8,
+              12,
+              16,
+              23,
+              38,
+              56,
+              72,
+              91
+            ],
+            "target": 23,
+            "title": "Watch the window halve"
+          }
+        }
+      },
+      {
+        "title": "Not found means the window emptied",
+        "body": "Searching for 24 follows the same path, ends with low = 6 and high = 5, and returns -1. At that moment low is exactly where 24 would be inserted to keep the list sorted, which is the value bisect.bisect_left returns."
+      }
+    ],
+    "takeaway": "Binary search is three lines of logic around one invariant. Keep the range correct, always move low or high past mid, and you get O(log n) for free."
+  }
 }

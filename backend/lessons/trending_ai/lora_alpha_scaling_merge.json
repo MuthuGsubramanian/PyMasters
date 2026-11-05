@@ -243,5 +243,75 @@
       "correct": 3
     }
   ],
-  "uth_example": "W = [[0.50, -0.20], [0.10, 0.30]]        # frozen weights (2x2)\nB = [[0.4], [-0.2]]                      # 2 x r   (r = 1)\nA = [[0.5, 1.0]]                         # r x 2\nr = 1\n\ndef merge(alpha):\n    scale = alpha / r\n    merged = []\n    for i in range(2):\n        row = []\n        for j in range(2):\n            delta = sum(B[i][t] * A[t][j] for t in range(r)) * scale\n            row.append(round(W[i][j] + delta, 3))\n        merged.append(row)\n    return merged\n\nfor alpha in [0, 1, 4]:\n    print(f\"alpha={alpha}: {merge(alpha)}\")\n"
+  "uth_example": "W = [[0.50, -0.20], [0.10, 0.30]]        # frozen weights (2x2)\nB = [[0.4], [-0.2]]                      # 2 x r   (r = 1)\nA = [[0.5, 1.0]]                         # r x 2\nr = 1\n\ndef merge(alpha):\n    scale = alpha / r\n    merged = []\n    for i in range(2):\n        row = []\n        for j in range(2):\n            delta = sum(B[i][t] * A[t][j] for t in range(r)) * scale\n            row.append(round(W[i][j] + delta, 3))\n        merged.append(row)\n    return merged\n\nfor alpha in [0, 1, 4]:\n    print(f\"alpha={alpha}: {merge(alpha)}\")\n",
+  "under_the_hood": {
+    "summary": "LoRA scales its update B A by alpha / r before adding it to the frozen weight; after training the scaled update can be merged once into W, giving W' = W + (alpha / r) B A and a model with no extra inference cost.",
+    "steps": [
+      {
+        "title": "Why scale by alpha / r",
+        "body": "If the update were added raw, changing r would change its typical size, so learning rates tuned for one rank would not transfer. Dividing by r and multiplying by a chosen alpha keeps the update's strength roughly stable as r changes."
+      },
+      {
+        "title": "One entry of the update",
+        "body": "For W[i, j], take row i of B and column j of A (both length r) and compute their dot product. With b_row = [0.2, -0.1, 0.3] and a_row = [0.4, 0.5, -0.2]: 0.08 - 0.05 - 0.06 = -0.03.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "dot = 0.2 x 0.4 + (-0.1) x 0.5 + 0.3 x (-0.2) = -0.03"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Apply the scale and merge",
+        "body": "With alpha = 16 and r = 3, scale = 16 / 3 = 5.333, so delta = -0.03 x 5.333 = -0.16. If W[i, j] = 0.5, the merged weight is 0.34.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "dot",
+                "value": "-0.03"
+              },
+              {
+                "variable": "alpha / r",
+                "value": "16 / 3"
+              },
+              {
+                "variable": "delta",
+                "value": "-0.16"
+              },
+              {
+                "variable": "W[i, j]",
+                "value": "0.5 -> 0.34"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Merging removes the overhead",
+        "body": "During training the layer computes W x + (alpha / r) B A x, an extra small matmul. After merging, W' is an ordinary matrix of the original shape, so inference speed is exactly the base model's.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Unmerged adapter",
+              "code": "W + separate B, A\nextra matmul per layer\nswap adapters at runtime"
+            },
+            "right": {
+              "label": "Merged",
+              "code": "single W'\nno extra cost\none fixed fine-tune"
+            }
+          }
+        }
+      },
+      {
+        "title": "Keep adapters separate when useful",
+        "body": "Unmerged adapters are small files, so one base model can serve many fine-tunes by swapping B and A per request. Merging is best when one adapter will be used everywhere."
+      }
+    ],
+    "takeaway": "alpha / r is a volume knob that keeps LoRA updates comparable across ranks. Merging folds the update into W so deployment pays nothing extra."
+  }
 }

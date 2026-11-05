@@ -191,5 +191,81 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Skill internalization trains an agent with reinforcement learning while the skill text in its prompt is gradually removed, rewarding successful task completion so the procedure ends up stored in the weights instead of the context.",
+    "steps": [
+      {
+        "title": "Skills in context cost tokens every call",
+        "body": "An in-context skill is a bundle of instructions, tool schemas and examples pasted into the prompt, often hundreds to thousands of tokens. It is paid for on every request and only helps if the right skill was retrieved."
+      },
+      {
+        "title": "A fade schedule removes the crutch",
+        "body": "Training runs in phases with skill visibility such as [1.0, 0.75, 0.5, 0.25, 0.0]. In early phases the full skill text is in the prompt; later each procedure line is kept only with that probability, and in the last phase the model sees just the task.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "visibility per phase",
+            "data": [
+              1.0,
+              0.75,
+              0.5,
+              0.25,
+              0.0
+            ],
+            "labels": [
+              "p1",
+              "p2",
+              "p3",
+              "p4",
+              "p5"
+            ],
+            "highlight": [
+              4
+            ]
+          }
+        }
+      },
+      {
+        "title": "Reward success, more so without help",
+        "body": "As this lesson models it, the reward is correctness (+1 or -1), plus an autonomy bonus of (1 - visibility) when the task succeeds with less skill text, plus a small efficiency term for using fewer tokens. Weighted sums like 1.0, 0.4 and 0.2 set how much each counts."
+      },
+      {
+        "title": "Policy-gradient updates move the knowledge",
+        "body": "An RL algorithm such as PPO or GRPO raises the probability of the action sequences that earned high reward. When the prompt no longer contains the procedure but the reward still requires it, the only way to keep scoring is for the weights to encode it.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "task + partial skill",
+                "detail": "prompt"
+              },
+              {
+                "label": "agent acts",
+                "detail": "tool calls"
+              },
+              {
+                "label": "reward",
+                "detail": "success, autonomy, tokens"
+              },
+              {
+                "label": "update weights",
+                "detail": "RL step"
+              },
+              {
+                "label": "less skill text",
+                "detail": "next phase"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "When to internalize and when to retrieve",
+        "body": "Internalized skills cost zero prompt tokens and cannot be mis-retrieved, but changing them needs another training round. Stable, frequent skills suit internalization; rare or fast-changing ones are better left as retrieved context."
+      }
+    ],
+    "takeaway": "Withdraw the instructions slowly while still rewarding the outcome, and the model is pushed to carry the procedure itself. That is the general recipe behind turning prompts into weights."
+  }
 }

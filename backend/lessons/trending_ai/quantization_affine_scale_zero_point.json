@@ -249,5 +249,81 @@
       "correct": 3
     }
   ],
-  "uth_example": "weights = [-0.62, -0.10, 0.0, 0.33, 1.27]\nmin_val, max_val = min(weights), max(weights)\n\nscale = (max_val - min_val) / 255\nzero_point = round(-min_val / scale)          # the int that stands for 0.0\n\nrows = []\nfor x in weights:\n    q = max(0, min(255, round(x / scale + zero_point)))\n    back = (q - zero_point) * scale\n    rows.append({\"x\": x, \"q\": q, \"back\": round(back, 4), \"error\": round(abs(back - x), 4)})\n\nprint(\"scale:\", round(scale, 5), \"zero_point:\", zero_point)\nfor r in rows:\n    print(r)\n"
+  "uth_example": "weights = [-0.62, -0.10, 0.0, 0.33, 1.27]\nmin_val, max_val = min(weights), max(weights)\n\nscale = (max_val - min_val) / 255\nzero_point = round(-min_val / scale)          # the int that stands for 0.0\n\nrows = []\nfor x in weights:\n    q = max(0, min(255, round(x / scale + zero_point)))\n    back = (q - zero_point) * scale\n    rows.append({\"x\": x, \"q\": q, \"back\": round(back, 4), \"error\": round(abs(back - x), 4)})\n\nprint(\"scale:\", round(scale, 5), \"zero_point:\", zero_point)\nfor r in rows:\n    print(r)\n",
+  "under_the_hood": {
+    "summary": "Affine int8 quantization maps a real range [min, max] onto 256 integer steps with scale = (max - min) / 255 and an integer zero_point that represents 0.0; a value is stored as q = round(x / scale + zero_point) and recovered as (q - zero_point) x scale.",
+    "steps": [
+      {
+        "title": "Pick the range",
+        "body": "Look at the values to quantize, say weights between -2.0 and 6.0. The range is 8.0 wide and must be covered by the 256 values an 8-bit integer can hold."
+      },
+      {
+        "title": "Scale and zero-point",
+        "body": "scale = 8.0 / 255 = 0.0314, the real size of one integer step. zero_point = round(0 - min / scale) = round(63.75) = 64, the integer that stands for exactly 0.0, so zero (common in padding and ReLU outputs) is represented without error.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "min, max",
+                "value": "-2.0, 6.0"
+              },
+              {
+                "variable": "scale",
+                "value": "0.0314"
+              },
+              {
+                "variable": "zero_point",
+                "value": "64"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Quantize a value",
+        "body": "x = 1.0 gives q = round(1.0 / 0.0314 + 64) = round(31.875 + 64) = 96, stored in one byte instead of four. Values outside the range are clamped to the nearest end.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "integer line",
+            "data": [
+              0,
+              64,
+              96,
+              255
+            ],
+            "labels": [
+              "-2.0",
+              "0.0",
+              "~1.0",
+              "6.0"
+            ],
+            "highlight": [
+              2
+            ]
+          }
+        }
+      },
+      {
+        "title": "Dequantize and measure error",
+        "body": "(96 - 64) x 0.0314 = 1.0039. The error of 0.0039 is under half a step, the most rounding can cost for in-range values; values outside the range are clamped and can be off by more.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "quantize(1.0)   -> 96",
+              "dequantize(96)  -> 1.0039",
+              "error           -> 0.0039 (< scale / 2 = 0.0157)"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Symmetric variant",
+        "body": "Many weight quantizers use symmetric quantization instead: zero_point = 0 and scale = max(|x|) / 127. It is simpler and faster to compute with, at the cost of wasting some codes when the range is lopsided like this one."
+      }
+    ],
+    "takeaway": "Quantization stores where a number sits inside a known range, at one of 256 positions. Scale sets the step size, the zero-point keeps 0.0 exact, and the error is at most half a step."
+  }
 }

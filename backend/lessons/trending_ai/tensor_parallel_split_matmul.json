@@ -247,5 +247,113 @@
       "correct": 3
     }
   ],
-  "uth_example": "x = [[1, 2, 3, 4]]                          # one token, hidden size 4\nW = [[1, 0, 2, 1],\n     [0, 1, 1, 0],\n     [1, 1, 0, 2],\n     [2, 0, 1, 1]]\n\ndef matmul(a, b):\n    return [[sum(a[i][t] * b[t][j] for t in range(len(b))) for j in range(len(b[0]))]\n            for i in range(len(a))]\n\nW0, W1 = [row[:2] for row in W], [row[2:] for row in W]   # column split across 2 GPUs\ny0, y1 = matmul(x, W0), matmul(x, W1)\ny_tensor_parallel = [y0[0] + y1[0]]                        # concatenate the halves\n\ny_single_gpu = matmul(x, W)\nprint(\"GPU0:\", y0, \"GPU1:\", y1)\nprint(\"joined:\", y_tensor_parallel, \"| one GPU:\", y_single_gpu)\n"
+  "uth_example": "x = [[1, 2, 3, 4]]                          # one token, hidden size 4\nW = [[1, 0, 2, 1],\n     [0, 1, 1, 0],\n     [1, 1, 0, 2],\n     [2, 0, 1, 1]]\n\ndef matmul(a, b):\n    return [[sum(a[i][t] * b[t][j] for t in range(len(b))) for j in range(len(b[0]))]\n            for i in range(len(a))]\n\nW0, W1 = [row[:2] for row in W], [row[2:] for row in W]   # column split across 2 GPUs\ny0, y1 = matmul(x, W0), matmul(x, W1)\ny_tensor_parallel = [y0[0] + y1[0]]                        # concatenate the halves\n\ny_single_gpu = matmul(x, W)\nprint(\"GPU0:\", y0, \"GPU1:\", y1)\nprint(\"joined:\", y_tensor_parallel, \"| one GPU:\", y_single_gpu)\n",
+  "under_the_hood": {
+    "summary": "Tensor parallelism splits one weight matrix across workers: splitting W by columns lets each worker compute a slice of the outputs, which are concatenated; splitting by rows gives each worker partial sums that are added with an all-reduce.",
+    "steps": [
+      {
+        "title": "y = x @ W can be cut two ways",
+        "body": "Each output column of y depends on one column of W; each row of W contributes a partial sum to every output. So W can be split by columns (outputs) or by rows (inputs), and the two need different communication."
+      },
+      {
+        "title": "Column split: concatenate",
+        "body": "Worker 0 keeps the first two columns of W, worker 1 the last two. Both need the full x. Worker 0 computes [[7, 5], [16, 11]], worker 1 [[4, 10], [13, 25]], and concatenating gives the full result [[7, 5, 4, 10], [16, 11, 13, 25]] (an all-gather).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "column-parallel outputs",
+            "data": [
+              [
+                7,
+                5,
+                4,
+                10
+              ],
+              [
+                16,
+                11,
+                13,
+                25
+              ]
+            ],
+            "labels": [
+              "row 0",
+              "row 1"
+            ],
+            "highlight": [
+              [
+                0,
+                2
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                1,
+                3
+              ]
+            ],
+            "title": "Left half from worker 0, right half from worker 1"
+          }
+        }
+      },
+      {
+        "title": "Row split: sum",
+        "body": "Worker 0 keeps the first rows of W and the matching columns of x, worker 1 the rest. Each computes a full-size partial result; the true y is their element-wise sum, done with an all-reduce.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Column-parallel",
+              "code": "needs full x\noutputs are slices\ncombine: all-gather"
+            },
+            "right": {
+              "label": "Row-parallel",
+              "code": "needs a slice of x\noutputs are partial sums\ncombine: all-reduce"
+            }
+          }
+        }
+      },
+      {
+        "title": "Chain them in an MLP",
+        "body": "In a Transformer MLP the first matrix is split by columns and the second by rows. The first layer's output slice is exactly the input slice the second needs, so no communication happens in between, and one all-reduce at the end completes the block.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "x (full)"
+              },
+              {
+                "label": "W1 column split",
+                "detail": "local slice"
+              },
+              {
+                "label": "activation",
+                "detail": "local"
+              },
+              {
+                "label": "W2 row split",
+                "detail": "partial sums"
+              },
+              {
+                "label": "all-reduce",
+                "detail": "full output"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why it stays inside a node",
+        "body": "That all-reduce happens in every layer, in the forward and the backward pass, so tensor parallelism needs very fast links such as NVLink. Across slower network links, pipeline or data parallelism is used instead."
+      }
+    ],
+    "takeaway": "Column splits produce slices, row splits produce sums. Pairing them puts one all-reduce per block, which is the core trick of tensor parallelism."
+  }
 }

@@ -419,5 +419,151 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Flask stores a salted, slow hash instead of the password, keeps the logged-in user's id in a cookie signed with SECRET_KEY, and Flask-Login reloads that user on every request so login_required can check it.",
+    "steps": [
+      {
+        "title": "Hash, never store",
+        "body": "generate_password_hash('s3cret') picks a random salt and runs a deliberately slow key-derivation function; Werkzeug 3 defaults to scrypt (older versions used pbkdf2:sha256). The result looks like scrypt:32768:8:1$<salt>$<hash>: the method, its cost settings, the salt and the hash, all in one string.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Stored in the database",
+              "code": "scrypt:32768:8:1$Xq3...$9f1c..."
+            },
+            "right": {
+              "label": "Never stored",
+              "code": "s3cret"
+            },
+            "title": "What the users table holds"
+          }
+        }
+      },
+      {
+        "title": "Checking a password repeats the work",
+        "body": "check_password_hash(stored, attempt) reads the method, cost and salt from the stored string, hashes the attempt the same way and compares the two results in constant time. The salt makes identical passwords hash differently, and the slowness makes guessing millions of passwords expensive for an attacker who steals the table."
+      },
+      {
+        "title": "The session is a signed cookie",
+        "body": "login_user(user) puts the user's id into session['_user_id']. At the end of the request Flask serialises the session, signs it with an HMAC using SECRET_KEY (via itsdangerous) and sends it as a Set-Cookie header. The browser can read the contents, but cannot change them without breaking the signature, so do not put secrets in the session.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "login_user(user)",
+                "detail": "session['_user_id'] = '7'"
+              },
+              {
+                "label": "serialise + sign",
+                "detail": "HMAC with SECRET_KEY"
+              },
+              {
+                "label": "Set-Cookie: session=...",
+                "detail": "stored by the browser"
+              },
+              {
+                "label": "next request",
+                "detail": "Cookie header sent back"
+              }
+            ],
+            "title": "How a login survives between requests"
+          }
+        }
+      },
+      {
+        "title": "Each request reloads the user",
+        "body": "On every request Flask verifies the cookie signature and loads the session. Flask-Login reads _user_id and calls your @login_manager.user_loader function, which fetches User 7 from the database. That object becomes current_user for the rest of the request.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "req",
+                "label": "request arrives",
+                "type": "start"
+              },
+              {
+                "id": "sig",
+                "label": "cookie signature valid?",
+                "type": "decision"
+              },
+              {
+                "id": "load",
+                "label": "user_loader(7)"
+              },
+              {
+                "id": "anon",
+                "label": "anonymous user"
+              },
+              {
+                "id": "check",
+                "label": "@login_required: authenticated?",
+                "type": "decision"
+              },
+              {
+                "id": "view",
+                "label": "run the view",
+                "type": "end"
+              },
+              {
+                "id": "login",
+                "label": "redirect to login page",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "req",
+                "to": "sig"
+              },
+              {
+                "from": "sig",
+                "to": "load",
+                "label": "yes"
+              },
+              {
+                "from": "sig",
+                "to": "anon",
+                "label": "no"
+              },
+              {
+                "from": "load",
+                "to": "check"
+              },
+              {
+                "from": "anon",
+                "to": "check"
+              },
+              {
+                "from": "check",
+                "to": "view",
+                "label": "yes"
+              },
+              {
+                "from": "check",
+                "to": "login",
+                "label": "no"
+              }
+            ],
+            "executionPath": [
+              "req",
+              "sig",
+              "load",
+              "check",
+              "view"
+            ],
+            "title": "login_required on each request"
+          }
+        }
+      },
+      {
+        "title": "Logout and the secret key",
+        "body": "logout_user() removes the id from the session, so the next cookie the server sends no longer names a user. Anyone who learns SECRET_KEY can forge a session for any user id, so it must be long, random and kept out of the code repository."
+      }
+    ],
+    "takeaway": "Flask auth is three mechanisms: slow salted hashes for passwords, an HMAC-signed cookie for the session, and a user loader that turns the id in that cookie back into a user on every request."
   }
 }

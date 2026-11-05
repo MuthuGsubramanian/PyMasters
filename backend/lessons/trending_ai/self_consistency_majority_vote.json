@@ -243,5 +243,72 @@
       "correct": 2
     }
   ],
-  "uth_example": "from collections import Counter\n\nquestion = \"A shop sells pens at 3 for 10. How much for 12 pens?\"\nreasoning_paths = [\n    (\"12 / 3 = 4 packs, 4 * 10\", \"40\"),\n    (\"each pen 3.33, 12 * 3.33\", \"39.96\"),\n    (\"4 packs of 3, 4 * 10\", \"40\"),\n    (\"12 * 10 / 3\", \"40\"),\n    (\"3 + 10 = 13 per pen?\", \"156\"),\n]\n\nanswers = [ans for _, ans in reasoning_paths]\ncounts = Counter(answers)\nwinner, votes = counts.most_common(1)[0]\nconfidence = votes / len(answers)\nprint(counts)\nprint(f\"answer {winner} with {confidence:.0%} agreement\")\n"
+  "uth_example": "from collections import Counter\n\nquestion = \"A shop sells pens at 3 for 10. How much for 12 pens?\"\nreasoning_paths = [\n    (\"12 / 3 = 4 packs, 4 * 10\", \"40\"),\n    (\"each pen 3.33, 12 * 3.33\", \"39.96\"),\n    (\"4 packs of 3, 4 * 10\", \"40\"),\n    (\"12 * 10 / 3\", \"40\"),\n    (\"3 + 10 = 13 per pen?\", \"156\"),\n]\n\nanswers = [ans for _, ans in reasoning_paths]\ncounts = Counter(answers)\nwinner, votes = counts.most_common(1)[0]\nconfidence = votes / len(answers)\nprint(counts)\nprint(f\"answer {winner} with {confidence:.0%} agreement\")\n",
+  "under_the_hood": {
+    "summary": "Self-consistency samples the same question several times at a non-zero temperature, extracts each run's final answer, and returns the most common one; independent reasoning errors tend to scatter while correct paths tend to agree.",
+    "steps": [
+      {
+        "title": "Sample several reasoning paths",
+        "body": "Run the prompt N times, for example 5, with temperature around 0.7 so each run reasons differently. Each run produces a chain of thought ending in a final answer."
+      },
+      {
+        "title": "Extract only the final answers",
+        "body": "The reasoning text is ignored for voting; only the final answer is compared, after normalising formats so '42', '42.0' and 'forty-two' count as the same. Here the answers are ['42', '41', '42', '42', '40'].",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "final answers",
+            "data": [
+              "42",
+              "41",
+              "42",
+              "42",
+              "40"
+            ],
+            "highlight": [
+              0,
+              2,
+              3
+            ]
+          }
+        }
+      },
+      {
+        "title": "Count and pick the majority",
+        "body": "collections.Counter(answers) gives {'42': 3, '41': 1, '40': 1}. The most common answer, '42', wins, and 3 / 5 = 60% is a rough confidence signal.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "Counter -> {'42': 3, '41': 1, '40': 1}",
+              "majority_vote -> '42'",
+              "vote_confidence -> 60.0%"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why voting helps",
+        "body": "Different wrong paths usually reach different wrong answers, while correct paths converge on the same one. So the right answer tends to collect votes even if no single run is reliable."
+      },
+      {
+        "title": "Limits",
+        "body": "It needs answers that can be compared exactly (numbers, options), costs N times the compute, and fails when the model is consistently wrong in the same way. Ties need a rule, such as picking the earliest or sampling more.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Single sample",
+              "code": "1 path\na fluke goes unnoticed\ncheapest"
+            },
+            "right": {
+              "label": "Self-consistency (N=5)",
+              "code": "5 paths\nscattered errors outvoted\n5x compute"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Self-consistency trades compute for reliability by letting independent attempts vote. It works best on tasks with a single checkable final answer."
+  }
 }

@@ -253,5 +253,66 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "The recommender turns leaderboard rows into data, removes every model that breaks a hard constraint (parameter budget, vector dimensions, max input tokens versus chunk size), and returns the remaining model with the best Retrieval nDCG@10.",
+    "steps": [
+      {
+        "title": "Rows as dataclasses",
+        "body": "Each model becomes a Model(name, params_m, dims, max_tokens, retrieval, mean). Having these as typed fields makes filtering and sorting plain Python."
+      },
+      {
+        "title": "Hard constraints remove options",
+        "body": "A CPU box might allow at most 400M parameters, an index budget at most 1,024 dimensions, and a 512-token chunker needs max_tokens >= 512. Any model failing one rule is dropped, however good its score.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "all rows"
+              },
+              {
+                "label": "params <= budget"
+              },
+              {
+                "label": "dims <= limit"
+              },
+              {
+                "label": "max_tokens >= chunk"
+              },
+              {
+                "label": "best retrieval wins"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Sort by the task you ship",
+        "body": "Among the survivors, sort by retrieval, not by the overall mean. A model with the higher mean can lose here because its strength is classification or clustering.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Sort by overall mean",
+              "code": "may pick a 7B GPU model\nor a classification specialist"
+            },
+            "right": {
+              "label": "Filter, then sort by retrieval",
+              "code": "only runnable models\nbest at the RAG task"
+            }
+          }
+        }
+      },
+      {
+        "title": "Why max_tokens matters",
+        "body": "If a model accepts only 256 tokens and your chunks are 512, half of every chunk is silently truncated and never embedded. Checking max_tokens against chunk size prevents a quality loss the leaderboard cannot show."
+      },
+      {
+        "title": "Return a reason, not just a name",
+        "body": "Reporting why each candidate was dropped (too big, too many dims, too short a context) makes the recommendation auditable and shows which constraint to relax if no model qualifies."
+      }
+    ],
+    "takeaway": "A good model choice is a filter followed by a sort. Encode the constraints and the right model falls out, with the reasons attached."
+  }
 }

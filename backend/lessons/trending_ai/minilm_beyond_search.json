@@ -234,5 +234,85 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Once texts are all-MiniLM-L6-v2 vectors, other tasks become geometry: zero-shot classification assigns the label whose description vector is most similar, and deduplication flags pairs whose cosine similarity is above a threshold.",
+    "steps": [
+      {
+        "title": "One space, many jobs",
+        "body": "Every text is a 384-d unit vector in the same space. Search compares a query with documents; classification compares a text with label descriptions; deduplication compares documents with each other. Same model, different comparisons."
+      },
+      {
+        "title": "Zero-shot labels",
+        "body": "Write each label as a short description, such as 'a billing or payment problem' and 'a login or password problem', and embed them. For each ticket, the label with the highest cosine wins. No training examples are needed.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "cosine to label descriptions",
+            "data": [
+              0.58,
+              0.21,
+              0.09
+            ],
+            "labels": [
+              "billing",
+              "login",
+              "shipping"
+            ],
+            "highlight": [
+              0
+            ],
+            "title": "'My card was charged twice' (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Semantic deduplication",
+        "body": "Compute the similarity matrix of all documents with one matrix product (N x 384 times 384 x N). Pairs above a threshold such as 0.9 are near-duplicates even when the wording differs.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "sims = vecs @ vecs.T          # N x N, diagonal = 1.0",
+              "pairs = where(sims > 0.9, i < j)",
+              "-> ('How do I reset my password?', 'Forgot password, how to reset?')"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Thresholds need calibration",
+        "body": "Cosine values are not probabilities, and their typical range depends on the model and domain. Pick thresholds by checking a few dozen labelled pairs, and add a 'no label' outcome when the best score is low."
+      },
+      {
+        "title": "Clustering without labels",
+        "body": "Feed the vectors to k-means or a density-based clusterer and topics fall out as groups. Inspect a few members of each cluster to name it.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "texts"
+              },
+              {
+                "label": "encode",
+                "detail": "384-d"
+              },
+              {
+                "label": "compare",
+                "detail": "labels / each other"
+              },
+              {
+                "label": "threshold or argmax"
+              },
+              {
+                "label": "label, dedup, cluster"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Good embeddings turn many NLP tasks into nearest-neighbour questions. Describe labels in words, choose thresholds from data, and no training is required."
+  }
 }

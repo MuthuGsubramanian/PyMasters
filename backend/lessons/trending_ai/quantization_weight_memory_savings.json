@@ -234,5 +234,80 @@
       "correct": 2
     }
   ],
-  "uth_example": "gpu_gb = 80\nmodel_params = {\"Llama-70B\": 70e9, \"MoE-400B\": 400e9}\nbytes_per = {\"fp32\": 4, \"bf16\": 2, \"int8\": 1, \"int4\": 0.5}\n\ntable = {}\nfor model, params in model_params.items():\n    table[model] = {}\n    for fmt, b in bytes_per.items():\n        gb = round(params * b / 1e9, 1)\n        table[model][fmt] = (gb, -(-gb // gpu_gb))      # GPUs needed (ceil)\n\nfor model, row in table.items():\n    print(model)\n    for fmt, (gb, gpus) in row.items():\n        print(f\"  {fmt:5} {gb:7} GB -> {int(gpus)} x 80GB GPU\")\n"
+  "uth_example": "gpu_gb = 80\nmodel_params = {\"Llama-70B\": 70e9, \"MoE-400B\": 400e9}\nbytes_per = {\"fp32\": 4, \"bf16\": 2, \"int8\": 1, \"int4\": 0.5}\n\ntable = {}\nfor model, params in model_params.items():\n    table[model] = {}\n    for fmt, b in bytes_per.items():\n        gb = round(params * b / 1e9, 1)\n        table[model][fmt] = (gb, -(-gb // gpu_gb))      # GPUs needed (ceil)\n\nfor model, row in table.items():\n    print(model)\n    for fmt, (gb, gpus) in row.items():\n        print(f\"  {fmt:5} {gb:7} GB -> {int(gpus)} x 80GB GPU\")\n",
+  "under_the_hood": {
+    "summary": "A model file is its parameter count times bytes per parameter, so storing weights in 8 or 4 bits instead of 16 halves or quarters the memory needed, which decides whether a model fits on a given GPU and how many GPUs a huge one needs.",
+    "steps": [
+      {
+        "title": "Bytes per parameter",
+        "body": "fp32 uses 4 bytes, bf16 or fp16 2, int8 1, and int4 half a byte. These are the only numbers needed to size a model's weights.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "7B model weights",
+            "data": [
+              28.0,
+              14.0,
+              7.0,
+              3.5
+            ],
+            "labels": [
+              "fp32 GB",
+              "bf16 GB",
+              "int8 GB",
+              "int4 GB"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Multiply",
+        "body": "quantized_size_gb(7e9, 2) = 14.0 GB; int8 gives 7.0 GB and int4 3.5 GB. Halving the bytes halves the whole model, which is why 4-bit versions fit consumer GPUs that cannot hold the bf16 original."
+      },
+      {
+        "title": "Scale it up",
+        "body": "A one-trillion-parameter model needs 2 TB in bf16 and 0.5 TB in int4. On 80 GB GPUs that is at least 25 GPUs versus at least 7 just to hold the weights, before any KV cache.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "1e12 params x 2 bytes   = 2,000 GB -> >= 25 x 80 GB GPUs",
+              "1e12 params x 0.5 bytes = 500 GB   -> >= 7 x 80 GB GPUs"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Low-bit formats carry metadata",
+        "body": "Real 4-bit formats store a scale (and sometimes a zero-point) per group of weights, so the effective size is a bit above 4 bits per weight, for example around 4.5 with groups of 32 and 16-bit scales."
+      },
+      {
+        "title": "What you trade",
+        "body": "Fewer bits mean rounding error in every weight. 8-bit is usually close to lossless for inference; 4-bit with good group-wise methods typically loses a little quality; below that, losses grow quickly. Always evaluate the quantized model on your task.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "params"
+              },
+              {
+                "label": "x bytes/param"
+              },
+              {
+                "label": "+ scales overhead"
+              },
+              {
+                "label": "divide by GPU memory"
+              },
+              {
+                "label": "GPUs needed"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Model size is parameters times bytes. Quantization changes the bytes, and with them the hardware bill, at a measurable cost in accuracy."
+  }
 }

@@ -199,5 +199,62 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "BERT hides about 15% of the tokens in a sentence and trains a 12-layer bidirectional Transformer to predict them from the words on both sides; fill-mask at inference is the same head scoring all 30,522 vocabulary entries for the [MASK] position.",
+    "steps": [
+      {
+        "title": "Tokenize with WordPiece, add special tokens",
+        "body": "'The capital of France is [MASK].' is lower-cased and split into WordPiece tokens, wrapped as [CLS] ... [SEP]. The uncased vocabulary has 30,522 entries; unknown words split into pieces marked with ##.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "tokens",
+            "data": [
+              "[CLS]",
+              "the",
+              "capital",
+              "of",
+              "france",
+              "is",
+              "[MASK]",
+              ".",
+              "[SEP]"
+            ],
+            "highlight": [
+              6
+            ]
+          }
+        }
+      },
+      {
+        "title": "Every token sees both directions",
+        "body": "bert-base has 12 layers, hidden size 768 and 12 heads (about 110M parameters). There is no causal mask, so the [MASK] position attends to 'capital', 'france' and the full stop at once."
+      },
+      {
+        "title": "The masking recipe",
+        "body": "During pre-training 15% of positions are chosen. Of those, 80% become [MASK], 10% become a random token and 10% stay unchanged, so the model cannot assume that only [MASK] positions matter. Loss is cross-entropy on the chosen positions only.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "of the 15% chosen",
+            "data": [
+              "80% -> [MASK]",
+              "10% -> random token",
+              "10% -> unchanged"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Fill-mask is a softmax over the vocabulary",
+        "body": "The final vector at the [MASK] position goes through the MLM head, whose output matrix is tied to the input embeddings, giving 30,522 logits. Softmax turns them into probabilities, and the pipeline returns the top 5 such as 'paris'."
+      },
+      {
+        "title": "Transfer to other tasks",
+        "body": "For fine-tuning the MLM head is dropped and a small task head is attached, typically on the [CLS] vector for classification or on every token for tagging. The pre-trained layers already encode bidirectional context, so a few thousand labelled examples go a long way."
+      }
+    ],
+    "takeaway": "BERT learns language by filling in blanks using context from both sides. That makes it strong at understanding text, and the reason it is not a left-to-right text generator."
+  }
 }

@@ -241,5 +241,79 @@
       "correct": 3
     }
   ],
-  "uth_example": "eps = 0.2\nsamples = [                     # (probability ratio new/old, advantage)\n    (1.05, 1.4),                # small step on a good sample\n    (1.60, 1.4),                # big jump on a good sample -> clipped\n    (0.50, -0.9),               # big drop on a bad sample -> clipped\n    (0.95, -0.9),\n]\n\nrows = []\nfor ratio, adv in samples:\n    unclipped = ratio * adv\n    clipped = max(1 - eps, min(1 + eps, ratio)) * adv\n    rows.append({\"ratio\": ratio, \"adv\": adv, \"objective\": round(min(unclipped, clipped), 3),\n                 \"was_clipped\": clipped < unclipped})\n\nfor r in rows:\n    print(r)\nprint(\"group objective:\", round(sum(r[\"objective\"] for r in rows) / len(rows), 3))\n"
+  "uth_example": "eps = 0.2\nsamples = [                     # (probability ratio new/old, advantage)\n    (1.05, 1.4),                # small step on a good sample\n    (1.60, 1.4),                # big jump on a good sample -> clipped\n    (0.50, -0.9),               # big drop on a bad sample -> clipped\n    (0.95, -0.9),\n]\n\nrows = []\nfor ratio, adv in samples:\n    unclipped = ratio * adv\n    clipped = max(1 - eps, min(1 + eps, ratio)) * adv\n    rows.append({\"ratio\": ratio, \"adv\": adv, \"objective\": round(min(unclipped, clipped), 3),\n                 \"was_clipped\": clipped < unclipped})\n\nfor r in rows:\n    print(r)\nprint(\"group objective:\", round(sum(r[\"objective\"] for r in rows) / len(rows), 3))\n",
+  "under_the_hood": {
+    "summary": "GRPO multiplies each completion's advantage by the probability ratio pi_new / pi_old, but also computes the ratio clipped to [1 - eps, 1 + eps] and takes the smaller of the two products, so one update cannot move the policy too far on any sample.",
+    "steps": [
+      {
+        "title": "The probability ratio",
+        "body": "ratio = pi_new(y|x) / pi_old(y|x), computed per token as exp(new log-prob - old log-prob). 1.0 means unchanged; 1.35 means the update made this completion 35% more likely than the policy that sampled it."
+      },
+      {
+        "title": "The unclipped push",
+        "body": "ratio x A rewards making high-advantage completions more likely. With ratio 1.35 and A = 1.4017 that is 1.8923, and nothing stops the optimiser from pushing the ratio far higher on a lucky sample."
+      },
+      {
+        "title": "Clip, then take the minimum",
+        "body": "With eps = 0.2 the ratio is clipped to 1.2, giving 1.2 x 1.4017 = 1.6820. The surrogate is min(1.8923, 1.6820) = 1.6820. Once the ratio passes 1.2, further increases earn nothing, so their gradient is zero.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "unclipped = 1.35 x 1.4017 = 1.8923",
+              "clipped   = 1.20 x 1.4017 = 1.6820",
+              "surrogate = min(...) = 1.6820"
+            ]
+          }
+        }
+      },
+      {
+        "title": "It works in both directions",
+        "body": "For a negative advantage the minimum picks the more pessimistic term, so the policy cannot gain by pushing a bad completion's probability far below 1 - eps either. Clipping limits step size, whatever the sign.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "clip range (eps = 0.2)",
+            "data": [
+              "0.8",
+              "1.0",
+              "1.2"
+            ],
+            "labels": [
+              "1 - eps",
+              "no change",
+              "1 + eps"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Average over the group",
+        "body": "The objective averages the per-token surrogates over all completions in the group (and over prompts), then gradient ascent maximises it. This is PPO's clipping, reused unchanged; GRPO only changed where the advantage comes from.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "old policy samples group"
+              },
+              {
+                "label": "advantages"
+              },
+              {
+                "label": "new log-probs -> ratio"
+              },
+              {
+                "label": "min(ratio A, clip A)"
+              },
+              {
+                "label": "average, gradient step"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Clipping turns 'push toward good samples' into 'push, but only a little per update'. It is what keeps policy-gradient training stable when a few samples have large advantages."
+  }
 }

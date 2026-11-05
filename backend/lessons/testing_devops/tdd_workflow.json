@@ -447,5 +447,134 @@
     "path_memberships": [
       "testing_devops"
     ]
+  },
+  "under_the_hood": {
+    "summary": "TDD runs a short loop: write one test that fails for the right reason, write the least code that makes the whole suite pass, then restructure the code while the suite stays green.",
+    "steps": [
+      {
+        "title": "Red proves the test can fail",
+        "body": "Write test_fizzbuzz_fizz: assert fizzbuzz(3) == 'Fizz' before fizzbuzz exists. Running it gives NameError, then once a stub exists, an AssertionError. Seeing it fail confirms the test really checks something; a test that passes before the feature exists is testing nothing.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "FAILED test_fizzbuzz.py::test_fizzbuzz_fizz",
+              "E   NameError: name 'fizzbuzz' is not defined",
+              "1 failed in 0.01s"
+            ],
+            "title": "Red"
+          }
+        }
+      },
+      {
+        "title": "Green with the least code",
+        "body": "Write just enough to pass: if n % 3 == 0: return 'Fizz', otherwise return str(n). It is incomplete on purpose. The next test, fizzbuzz(5) == 'Buzz', will fail and force the next branch, so every line of code exists because a test demanded it.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "test added",
+                "values": [
+                  "fizz (3)",
+                  "buzz (5)",
+                  "fizzbuzz (15)",
+                  "number (7)"
+                ]
+              },
+              {
+                "variable": "code it forced",
+                "values": [
+                  "n % 3 branch",
+                  "n % 5 branch",
+                  "n % 15 branch first",
+                  "return str(n)"
+                ]
+              }
+            ],
+            "title": "Each test drives one piece of behaviour"
+          }
+        }
+      },
+      {
+        "title": "Refactor under protection",
+        "body": "With all tests green you can restructure, for example build the word from 'Fizz' * (n % 3 == 0) + 'Buzz' * (n % 5 == 0). Run the suite after every small change. If it goes red, the last edit broke behaviour and you undo just that edit."
+      },
+      {
+        "title": "The loop is minutes long",
+        "body": "Each turn of red, green and refactor is small: one behaviour, a few lines of code. Short loops mean that when a test fails you only have a few lines to look at, and you always have a recent green state to return to.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "red",
+                "label": "write a failing test",
+                "type": "start"
+              },
+              {
+                "id": "green",
+                "label": "minimum code to pass"
+              },
+              {
+                "id": "refactor",
+                "label": "clean up, tests stay green"
+              },
+              {
+                "id": "more",
+                "label": "more behaviour needed?",
+                "type": "decision"
+              },
+              {
+                "id": "done",
+                "label": "done",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "red",
+                "to": "green"
+              },
+              {
+                "from": "green",
+                "to": "refactor"
+              },
+              {
+                "from": "refactor",
+                "to": "more"
+              },
+              {
+                "from": "more",
+                "to": "red",
+                "label": "yes"
+              },
+              {
+                "from": "more",
+                "to": "done",
+                "label": "no"
+              }
+            ],
+            "executionPath": [
+              "red",
+              "green",
+              "refactor",
+              "more",
+              "red",
+              "green",
+              "refactor",
+              "more",
+              "done"
+            ],
+            "title": "The TDD loop"
+          }
+        }
+      },
+      {
+        "title": "Tests become the specification",
+        "body": "After a few rounds the test file reads like a list of rules: 3 gives Fizz, 5 gives Buzz, 15 gives FizzBuzz, 7 gives '7'. Anyone changing the code later gets that specification checked automatically."
+      }
+    ],
+    "takeaway": "TDD is not 'tests first' for its own sake: the failing test proves the check works, the minimal code keeps scope tight, and the green suite makes refactoring safe."
   }
 }

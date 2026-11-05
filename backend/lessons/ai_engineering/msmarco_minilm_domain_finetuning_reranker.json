@@ -213,5 +213,73 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Fine-tuning the ms-marco-MiniLM-L6-v2 cross-encoder continues training its single relevance output on your own (query, passage, label) examples with binary cross-entropy, so pairs your domain considers relevant get higher logits than the generic model gave them.",
+    "steps": [
+      {
+        "title": "Labelled pairs from your domain",
+        "body": "Each training example is a query, a passage and a label: 1.0 for relevant, 0.0 for not. 'ORM session leak' with 'Close SQLAlchemy sessions in a finally block' is a positive; the same query with a generic pooling article can be a hard negative.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "training rows",
+            "data": [
+              "('ORM session leak', 'close sessions in finally', 1.0)",
+              "('ORM session leak', 'tune pool_size', 0.0)"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Start from the pre-trained reranker",
+        "body": "CrossEncoder('cross-encoder/ms-marco-MiniLM-L6-v2') loads weights already trained on MS MARCO web queries. Fine-tuning only adjusts them, so a few hundred to a few thousand domain pairs can shift its judgement without forgetting how to rank in general."
+      },
+      {
+        "title": "The training step",
+        "body": "Each pair is encoded jointly as [CLS] query [SEP] passage [SEP]; the head outputs a logit; binary cross-entropy with logits compares sigmoid(logit) to the label. Gradients update both the head and the encoder layers.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "(query, passage, label)"
+              },
+              {
+                "label": "joint encode"
+              },
+              {
+                "label": "logit"
+              },
+              {
+                "label": "BCE vs label"
+              },
+              {
+                "label": "update weights"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Hard negatives teach the most",
+        "body": "Random negatives are easy to reject and teach little. Passages that a bi-encoder retrieves for the query but are not the answer force the reranker to learn the fine distinction your domain cares about."
+      },
+      {
+        "title": "Prove it with a before/after metric",
+        "body": "Rerank the same held-out queries with the generic and the fine-tuned model and compare MRR. Keep the fine-tune only if it improves, and check that general queries did not get worse.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "Generic   MRR@10: 0.61",
+              "Finetuned MRR@10: 0.78",
+              "(illustrative numbers)"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "A reranker learns relevance from labelled pairs. Your own hard negatives and a before/after metric are what turn a generic web reranker into a domain one."
+  }
 }

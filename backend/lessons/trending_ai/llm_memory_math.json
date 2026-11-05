@@ -254,5 +254,81 @@
       "correct": 0
     }
   ],
-  "uth_example": "laptop_ram_gb = 16\nmodels = {\"3B\": 3e9, \"8B\": 8e9, \"14B\": 14e9}\nprecisions = {\"fp16\": 16, \"int8\": 8, \"q4\": 4}\n\nfits = {}\nfor name, params in models.items():\n    for prec, bits in precisions.items():\n        weights = params * bits / 8\n        total_gb = round(weights * 1.2 / 1e9, 1)       # +20% for KV cache and runtime\n        fits[(name, prec)] = (total_gb, total_gb <= laptop_ram_gb)\n\nfor (name, prec), (gb, ok) in fits.items():\n    print(f\"{name:4} {prec:5} {gb:5} GB {'fits' if ok else 'too big'}\")\n"
+  "uth_example": "laptop_ram_gb = 16\nmodels = {\"3B\": 3e9, \"8B\": 8e9, \"14B\": 14e9}\nprecisions = {\"fp16\": 16, \"int8\": 8, \"q4\": 4}\n\nfits = {}\nfor name, params in models.items():\n    for prec, bits in precisions.items():\n        weights = params * bits / 8\n        total_gb = round(weights * 1.2 / 1e9, 1)       # +20% for KV cache and runtime\n        fits[(name, prec)] = (total_gb, total_gb <= laptop_ram_gb)\n\nfor (name, prec), (gb, ok) in fits.items():\n    print(f\"{name:4} {prec:5} {gb:5} GB {'fits' if ok else 'too big'}\")\n",
+  "under_the_hood": {
+    "summary": "A model's weight memory is parameters times bytes per weight (4 for fp32, 2 for bf16, 1 for int8, 0.5 for int4), and running it needs roughly 20% more for the KV cache, activations and runtime; compare that total with your RAM or VRAM.",
+    "steps": [
+      {
+        "title": "Bytes per weight",
+        "body": "bits / 8 gives bytes: fp32 4, bf16 2, int8 1, int4 0.5. A parameter is just a number stored at that precision.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "bytes per weight",
+            "data": [
+              4,
+              2,
+              1,
+              0.5
+            ],
+            "labels": [
+              "fp32",
+              "bf16",
+              "int8",
+              "int4"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Multiply by the parameter count",
+        "body": "A 7-billion-parameter model: 7e9 x 2 = 14 GB in bf16, 7 GB in int8, 3.5 GB in int4. A 12B model in int4 is 6 GB of weights."
+      },
+      {
+        "title": "Add overhead",
+        "body": "Generation also needs the KV cache, temporary activations and the runtime itself. A rule of thumb is about 20% on top for short contexts: 3.5 GB x 1.2 = 4.2 GB for a 7B int4 model. Long contexts need more, because the KV cache grows with every token.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "params=7e9 bits=4",
+              "weights = 7e9 x 0.5 = 3.5 GB",
+              "with ~20% overhead -> 4.2 GB"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Compare with the machine",
+        "body": "If the total exceeds VRAM, layers spill to system RAM and run much slower; if it exceeds RAM, the OS swaps to disk and generation crawls. Leave headroom for the operating system and other apps."
+      },
+      {
+        "title": "Speed follows the same bytes",
+        "body": "Each generated token requires reading essentially all the weights from memory, so fewer bytes per weight also means faster decoding on memory-bound hardware. Quantization therefore helps both 'will it fit' and 'how fast'.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "params"
+              },
+              {
+                "label": "x bytes/weight"
+              },
+              {
+                "label": "+ ~20%"
+              },
+              {
+                "label": "<= RAM/VRAM?"
+              },
+              {
+                "label": "fits or quantize further"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Will it fit is arithmetic: parameters x bytes, plus overhead. Quantization is the main lever, and it speeds up decoding too."
+  }
 }

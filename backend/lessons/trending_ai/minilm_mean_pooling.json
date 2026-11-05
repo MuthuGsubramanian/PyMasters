@@ -235,5 +235,92 @@
       "correct": 2
     }
   ],
-  "uth_example": "batch = {                                   # token vectors from the transformer (dim 3)\n    \"I love Python\": [[0.2, 0.8, 0.1], [0.9, 0.1, 0.4], [0.5, 0.5, 0.9], [0.0, 0.0, 0.0]],\n    \"Hi\": [[0.7, 0.3, 0.2], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],\n}\nmasks = {\"I love Python\": [1, 1, 1, 0], \"Hi\": [1, 0, 0, 0]}   # 0 = padding\n\nsentence_vecs = {}\nfor text, tokens in batch.items():\n    mask = masks[text]\n    summed = [sum(vec[d] * m for vec, m in zip(tokens, mask)) for d in range(3)]\n    count = sum(mask)                       # divide by REAL tokens, not padded length\n    sentence_vecs[text] = [round(s / count, 3) for s in summed]\n\nnaive = [round(sum(v[d] for v in batch[\"Hi\"]) / 4, 3) for d in range(3)]\nprint(sentence_vecs)\nprint(\"without the mask 'Hi' would shrink to\", naive)\n"
+  "uth_example": "batch = {                                   # token vectors from the transformer (dim 3)\n    \"I love Python\": [[0.2, 0.8, 0.1], [0.9, 0.1, 0.4], [0.5, 0.5, 0.9], [0.0, 0.0, 0.0]],\n    \"Hi\": [[0.7, 0.3, 0.2], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]],\n}\nmasks = {\"I love Python\": [1, 1, 1, 0], \"Hi\": [1, 0, 0, 0]}   # 0 = padding\n\nsentence_vecs = {}\nfor text, tokens in batch.items():\n    mask = masks[text]\n    summed = [sum(vec[d] * m for vec, m in zip(tokens, mask)) for d in range(3)]\n    count = sum(mask)                       # divide by REAL tokens, not padded length\n    sentence_vecs[text] = [round(s / count, 3) for s in summed]\n\nnaive = [round(sum(v[d] for v in batch[\"Hi\"]) / 4, 3) for d in range(3)]\nprint(sentence_vecs)\nprint(\"without the mask 'Hi' would shrink to\", naive)\n",
+  "under_the_hood": {
+    "summary": "all-MiniLM-L6-v2's transformer outputs one 384-d vector per token; mean pooling multiplies them by the attention mask, sums, divides by the number of real tokens, and the result is L2-normalised to become the sentence embedding.",
+    "steps": [
+      {
+        "title": "Tokens and the attention mask",
+        "body": "The tokenizer turns a batch of sentences into ids padded to the same length, plus an attention_mask with 1 for real tokens and 0 for padding. '[CLS] hello world [SEP] [PAD] [PAD]' has mask [1, 1, 1, 1, 0, 0].",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "attention_mask",
+            "data": [
+              1,
+              1,
+              1,
+              1,
+              0,
+              0
+            ],
+            "labels": [
+              "[CLS]",
+              "hello",
+              "world",
+              "[SEP]",
+              "[PAD]",
+              "[PAD]"
+            ],
+            "highlight": [
+              4,
+              5
+            ]
+          }
+        }
+      },
+      {
+        "title": "One vector per token",
+        "body": "AutoModel returns last_hidden_state with shape [batch, seq_len, 384]. There is no sentence vector yet, just a contextual vector at every position, including the padding positions."
+      },
+      {
+        "title": "Masked mean",
+        "body": "Expand the mask to [batch, seq_len, 384], multiply it with the token vectors so padding becomes zero, sum over seq_len, and divide by mask.sum() (clamped to at least 1e-9). Padding therefore has no influence on the average.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "last_hidden_state",
+                "detail": "[B, L, 384]"
+              },
+              {
+                "label": "x mask",
+                "detail": "zero the padding"
+              },
+              {
+                "label": "sum over L"
+              },
+              {
+                "label": "/ real-token count"
+              },
+              {
+                "label": "normalize",
+                "detail": "length 1"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Normalise",
+        "body": "F.normalize(emb, p=2, dim=1) divides each vector by its length. This is part of the model's sentence-transformers pipeline, and it is what makes dot product equal cosine similarity."
+      },
+      {
+        "title": "Check against encode()",
+        "body": "The hand-built vector should match model.encode(sentence) from sentence-transformers to within floating-point noise. Forgetting the mask or the normalisation gives vectors that look plausible but score differently.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "manual = mean_pool(out, mask); manual = normalize(manual)",
+              "ref    = model.encode(sentence)",
+              "np.allclose(manual, ref, atol=1e-5) -> True"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Sentence embeddings are a pooling decision on top of token vectors. For this model it is a masked mean followed by normalisation, and getting the mask right is the whole trick."
+  }
 }

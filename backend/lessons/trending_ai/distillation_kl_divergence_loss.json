@@ -244,5 +244,67 @@
       "correct": 2
     }
   ],
-  "uth_example": "from math import exp, log\n\ndef soften(logits, T):\n    exps = [exp(x / T) for x in logits]\n    return [e / sum(exps) for e in exps]\n\nteacher_logits = [6.0, 2.5, 0.5]          # cat, fox, car\nstudents = {\"close student\": [5.0, 2.0, 0.8], \"confused student\": [1.0, 3.0, 2.0]}\nT = 2.0\np = soften(teacher_logits, T)\n\nlosses = {}\nfor name, logits in students.items():\n    q = soften(logits, T)\n    kl = sum(pi * log(pi / qi) for pi, qi in zip(p, q) if pi > 0)\n    losses[name] = round(kl * T ** 2, 4)       # T^2 keeps gradients comparable\n\nprint(\"teacher (soft):\", [round(x, 3) for x in p])\nprint(losses)\n"
+  "uth_example": "from math import exp, log\n\ndef soften(logits, T):\n    exps = [exp(x / T) for x in logits]\n    return [e / sum(exps) for e in exps]\n\nteacher_logits = [6.0, 2.5, 0.5]          # cat, fox, car\nstudents = {\"close student\": [5.0, 2.0, 0.8], \"confused student\": [1.0, 3.0, 2.0]}\nT = 2.0\np = soften(teacher_logits, T)\n\nlosses = {}\nfor name, logits in students.items():\n    q = soften(logits, T)\n    kl = sum(pi * log(pi / qi) for pi, qi in zip(p, q) if pi > 0)\n    losses[name] = round(kl * T ** 2, 4)       # T^2 keeps gradients comparable\n\nprint(\"teacher (soft):\", [round(x, 3) for x in p])\nprint(losses)\n",
+  "under_the_hood": {
+    "summary": "The soft-target loss measures how far the student's softened distribution q is from the teacher's p with KL(p || q) = sum p_i log(p_i / q_i), multiplied by T^2 so its gradients stay comparable in size to the ordinary loss.",
+    "steps": [
+      {
+        "title": "Two softened distributions",
+        "body": "At T = 4 the teacher gives p = [0.4942, 0.2998, 0.206] and the student gives q = [0.4192, 0.3265, 0.2543] for the same image. They agree on the top class but differ in how much they spread over the others.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "teacher p vs student q",
+            "data": [
+              [
+                0.4942,
+                0.4192
+              ],
+              [
+                0.2998,
+                0.3265
+              ],
+              [
+                0.206,
+                0.2543
+              ]
+            ],
+            "labels": [
+              "cat",
+              "dog",
+              "fox"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Term by term",
+        "body": "For each class add p_i x log(p_i / q_i). Where the student under-predicts a class the teacher likes (cat: 0.4942 vs 0.4192), the term is positive; where it over-predicts, the term is negative. Weighting by p_i focuses on what the teacher thinks is likely."
+      },
+      {
+        "title": "The total is zero only on a match",
+        "body": "KL is always at least 0 and equals 0 only when q = p for every class. Here the sum is about 0.0124, a small but non-zero gap the optimizer will push down.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "KL(p || q) = 0.4942 log(0.4942/0.4192)",
+              "          + 0.2998 log(0.2998/0.3265)",
+              "          + 0.206  log(0.206/0.2543)",
+              "          = 0.0124"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why multiply by T squared",
+        "body": "Softening by T makes the gradients of the soft loss about 1/T^2 as large. Multiplying by T^2 (16 here, giving about 0.198) restores their scale so the soft and hard losses can be blended with a simple weight."
+      },
+      {
+        "title": "Direction matters",
+        "body": "KL(p || q) is not symmetric. Using the teacher as p means the student is penalised most for giving low probability to classes the teacher considers plausible, which is the behaviour distillation wants."
+      }
+    ],
+    "takeaway": "KL divergence is the single number that says how differently the student distributes belief compared with the teacher. Zero means identical; T^2 keeps its gradient on the same scale as normal training."
+  }
 }

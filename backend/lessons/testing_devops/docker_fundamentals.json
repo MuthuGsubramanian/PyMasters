@@ -407,5 +407,91 @@
     "path_memberships": [
       "testing_devops"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A Docker image is a stack of read-only filesystem layers, one per build instruction; a container is a process on the host kernel that sees those layers plus a thin writable layer, isolated with namespaces and limited with cgroups.",
+    "steps": [
+      {
+        "title": "Each instruction makes a layer",
+        "body": "FROM python:3.12-slim starts from that image's layers. COPY requirements.txt . adds a layer holding that one file. RUN pip install -r requirements.txt adds a layer with the installed packages. Each layer records only the changes made by its instruction, and each is identified by a content hash.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "python:3.12-slim (base layers)",
+              "COPY requirements.txt",
+              "RUN pip install",
+              "COPY . .",
+              "CMD (metadata only)"
+            ],
+            "title": "Image layers, bottom to top",
+            "labels": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ]
+          }
+        }
+      },
+      {
+        "title": "The build cache reuses unchanged layers",
+        "body": "On rebuild, Docker checks each instruction in order: if the instruction and its input files are unchanged, it reuses the cached layer. Once one step changes, every step after it is rebuilt. That is why requirements.txt is copied and installed before COPY . . : editing app.py then only rebuilds the last layer, not the slow pip install.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "COPY . . first",
+              "code": "COPY . .\nRUN pip install -r requirements.txt\n# any code edit re-runs pip install"
+            },
+            "right": {
+              "label": "requirements first",
+              "code": "COPY requirements.txt .\nRUN pip install -r requirements.txt\nCOPY . .\n# code edit: only last layer rebuilds"
+            },
+            "title": "Order decides what the cache can keep"
+          }
+        }
+      },
+      {
+        "title": "A container is a process, not a VM",
+        "body": "docker run starts your CMD as an ordinary Linux process on the host's kernel. Namespaces give it its own view: its own process IDs (your app is PID 1 inside), network interfaces, hostname and filesystem root. cgroups cap how much CPU and memory it can use. There is no second operating system booting, which is why containers usually start in a second or less."
+      },
+      {
+        "title": "Layers are stacked with one writable layer on top",
+        "body": "The image's layers are mounted read-only and merged into one view (overlayfs on most Linux hosts). The container gets a thin writable layer on top; when your app changes a file, it is copied up into that layer first. Ten containers from the same image share the same read-only layers on disk.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "writable layer",
+                "detail": "per container, deleted with it"
+              },
+              {
+                "label": "COPY . .",
+                "detail": "read-only"
+              },
+              {
+                "label": "RUN pip install",
+                "detail": "read-only, shared"
+              },
+              {
+                "label": "python:3.12-slim",
+                "detail": "read-only, shared"
+              }
+            ],
+            "title": "What a running container sees",
+            "direction": "up"
+          }
+        }
+      },
+      {
+        "title": "Volumes live outside the container",
+        "body": "The writable layer disappears when the container is removed. A volume (docker run -v data:/app/data) mounts a directory that Docker manages outside the layer stack, so database files or uploads written there survive restarts, rebuilds and removal of the container."
+      }
+    ],
+    "takeaway": "Images are cached layers, containers are isolated processes with a throwaway top layer. Order your Dockerfile for the cache and put anything you must keep in a volume."
   }
 }

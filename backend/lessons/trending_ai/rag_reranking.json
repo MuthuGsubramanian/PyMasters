@@ -230,5 +230,85 @@
       "correct": 2
     }
   ],
-  "uth_example": "query = \"can I return shoes after 30 days\"\nstage1 = [                                  # fast vector search: roughly right\n    (\"Shoe size guide\", 0.82),\n    (\"Return policy: 30 days for all items\", 0.79),\n    (\"Shoes on sale this week\", 0.77),\n    (\"Late returns need manager approval\", 0.70),\n]\n\ndef stem(text):\n    return {w.rstrip(\"s\") for w in text.lower().replace(\":\", \"\").split()}\n\ndef reranker(q, doc):                       # slower, reads query and doc together\n    qw, words = stem(q), stem(doc)\n    return round(len(qw & words) + 0.5 * (\"return\" in doc.lower()), 2)\n\nrescored = [(doc, reranker(query, doc)) for doc, _ in stage1]\nrescored.sort(key=lambda p: p[1], reverse=True)\ntop2 = [doc for doc, _ in rescored[:2]]\nprint(\"vector order:  \", [d for d, _ in stage1])\nprint(\"reranked top-2:\", top2)\n"
+  "uth_example": "query = \"can I return shoes after 30 days\"\nstage1 = [                                  # fast vector search: roughly right\n    (\"Shoe size guide\", 0.82),\n    (\"Return policy: 30 days for all items\", 0.79),\n    (\"Shoes on sale this week\", 0.77),\n    (\"Late returns need manager approval\", 0.70),\n]\n\ndef stem(text):\n    return {w.rstrip(\"s\") for w in text.lower().replace(\":\", \"\").split()}\n\ndef reranker(q, doc):                       # slower, reads query and doc together\n    qw, words = stem(q), stem(doc)\n    return round(len(qw & words) + 0.5 * (\"return\" in doc.lower()), 2)\n\nrescored = [(doc, reranker(query, doc)) for doc, _ in stage1]\nrescored.sort(key=lambda p: p[1], reverse=True)\ntop2 = [doc for doc, _ in rescored[:2]]\nprint(\"vector order:  \", [d for d, _ in stage1])\nprint(\"reranked top-2:\", top2)\n",
+  "under_the_hood": {
+    "summary": "Two-stage retrieval first takes a wide candidate list by fast vector similarity, then re-scores each candidate with a slower, more accurate model, sorts by the new scores and keeps the true top-k for the prompt.",
+    "steps": [
+      {
+        "title": "Stage 1 is fast but blurry",
+        "body": "Cosine search over precomputed vectors scans millions of chunks in milliseconds, but each chunk was summarised into one vector before the query existed, so the best passage may land at rank 7 instead of 1."
+      },
+      {
+        "title": "Ask for more than you need",
+        "body": "Retrieve top-50 rather than top-3. The goal of stage 1 is recall: make sure the right passage is somewhere in the list.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "stage 1 order",
+            "data": [
+              "doc_a (0.2)",
+              "doc_b (0.9)",
+              "doc_c (0.5)"
+            ],
+            "labels": [
+              "1",
+              "2",
+              "3"
+            ],
+            "highlight": [
+              1
+            ],
+            "title": "Reranker scores shown; doc_b buried"
+          }
+        }
+      },
+      {
+        "title": "Stage 2 scores pairs",
+        "body": "A reranker, typically a cross-encoder, reads the query and one candidate together and outputs a relevance score. It is too slow for the whole corpus but fine for 50 pairs."
+      },
+      {
+        "title": "Sort and cut",
+        "body": "Pair each candidate with its new score, sort descending, keep the top k: doc_b (0.9) then doc_c (0.5); doc_a is dropped. Only these go into the LLM's prompt.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "retrieve -> 50 candidates (fast, blurry)",
+              "rerank   -> top 2: ['doc_b', 'doc_c']",
+              "prompt   -> 2 strong passages instead of 50 weak ones"
+            ]
+          }
+        }
+      },
+      {
+        "title": "The recall ceiling",
+        "body": "The reranker can only reorder what stage 1 returned. If the right passage was not in the 50, no reranker can recover it, so tune stage 1 size by checking how often the answer is inside the candidate list.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "query"
+              },
+              {
+                "label": "vector search",
+                "detail": "top-50"
+              },
+              {
+                "label": "reranker",
+                "detail": "score pairs"
+              },
+              {
+                "label": "sort"
+              },
+              {
+                "label": "top-k to LLM"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Retrieve for recall, rerank for precision. The split lets an accurate but slow model work only where it matters."
+  }
 }

@@ -417,5 +417,104 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Each CRUD request gets its own database session from a yield dependency; Pydantic validates the JSON body, SQLAlchemy turns the session's add, query and delete calls into SQL inside a transaction, and response_model shapes what goes back.",
+    "steps": [
+      {
+        "title": "A session per request",
+        "body": "def get_db(): db = SessionLocal(); try: yield db; finally: db.close(). An endpoint that declares db: Session = Depends(get_db) makes FastAPI run get_db up to the yield, pass in the session, and run the finally block after the response is ready. Each request gets its own session and it is always closed, even when an exception occurs.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "def get_db():",
+                "explanation": "A dependency with a yield."
+              },
+              {
+                "code": "    db = SessionLocal()",
+                "explanation": "Runs before the endpoint."
+              },
+              {
+                "code": "    try: yield db",
+                "explanation": "The endpoint receives db here."
+              },
+              {
+                "code": "    finally: db.close()",
+                "explanation": "Runs after the endpoint, always."
+              }
+            ],
+            "title": "Dependency lifecycle"
+          }
+        }
+      },
+      {
+        "title": "Two models for two jobs",
+        "body": "The Pydantic ItemCreate(name: str, price: float) describes what clients may send and is validated automatically; the SQLAlchemy Item class describes the table. Keeping them separate means a client cannot set fields like id or owner_id just by including them in the JSON."
+      },
+      {
+        "title": "Create: add, commit, refresh",
+        "body": "POST /items with {\"name\": \"Pen\", \"price\": 1.5}: FastAPI validates it into ItemCreate, the endpoint builds Item(**data.model_dump()), db.add marks it pending, db.commit() sends INSERT INTO items (name, price) VALUES (?, ?) and commits, and db.refresh(item) runs a SELECT to load the id the database generated.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Endpoint code",
+              "code": "item = Item(**data.model_dump())\ndb.add(item)\ndb.commit()\ndb.refresh(item)\nreturn item"
+            },
+            "right": {
+              "label": "SQL sent",
+              "code": "BEGIN\nINSERT INTO items (name, price) VALUES (?, ?)\nCOMMIT\nSELECT ... FROM items WHERE items.id = ?"
+            },
+            "title": "What one create request sends to the database"
+          }
+        }
+      },
+      {
+        "title": "Read, update, delete map to SQL",
+        "body": "GET /items/5 runs SELECT ... WHERE id = ?; if no row comes back the endpoint raises HTTPException(status_code=404), which FastAPI turns into {\"detail\": \"Item not found\"} with status 404. PATCH loads the row, sets attributes, and commit sends an UPDATE for only the changed columns. DELETE calls db.delete(item) and commit sends a DELETE.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "request",
+                "values": [
+                  "POST /items",
+                  "GET /items/5",
+                  "PATCH /items/5",
+                  "DELETE /items/5"
+                ]
+              },
+              {
+                "variable": "SQL",
+                "values": [
+                  "INSERT",
+                  "SELECT",
+                  "SELECT then UPDATE",
+                  "SELECT then DELETE"
+                ]
+              },
+              {
+                "variable": "status",
+                "values": [
+                  "201",
+                  "200 or 404",
+                  "200",
+                  "204"
+                ]
+              }
+            ],
+            "title": "CRUD to SQL to status code"
+          }
+        }
+      },
+      {
+        "title": "response_model filters the output",
+        "body": "@app.post('/items', response_model=ItemOut, status_code=201) makes FastAPI convert the returned ORM object through ItemOut, keeping only its declared fields. A hashed_password or internal flag on the ORM object is dropped instead of leaking into the JSON."
+      }
+    ],
+    "takeaway": "A solid CRUD API is a pipeline per request: dependency gives a session, Pydantic guards the input, the ORM issues SQL in a transaction, and response_model guards the output."
   }
 }

@@ -457,5 +457,130 @@
     "path_memberships": [
       "testing_devops"
     ]
+  },
+  "under_the_hood": {
+    "summary": "logger.info() first checks the level, then builds a LogRecord with the time, place and message, and passes it to each handler on the logger and its parents; each handler filters by its own level and formats the record before writing it.",
+    "steps": [
+      {
+        "title": "Loggers form a tree by name",
+        "body": "logging.getLogger(__name__) in shop/db.py returns the logger named 'shop.db'. Dots make a hierarchy: 'shop.db' is a child of 'shop', which is a child of the root logger. Calling getLogger with the same name anywhere in the program returns the very same object.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "root",
+                "label": "root logger (handlers set by basicConfig)"
+              },
+              {
+                "id": "shop",
+                "label": "'shop'"
+              },
+              {
+                "id": "db",
+                "label": "'shop.db'"
+              },
+              {
+                "id": "api",
+                "label": "'shop.api'"
+              }
+            ],
+            "edges": [
+              {
+                "from": "root",
+                "to": "shop",
+                "label": ""
+              },
+              {
+                "from": "shop",
+                "to": "db",
+                "label": ""
+              },
+              {
+                "from": "shop",
+                "to": "api",
+                "label": ""
+              }
+            ],
+            "title": "Logger hierarchy"
+          }
+        }
+      },
+      {
+        "title": "The level check comes first",
+        "body": "logger.debug('loaded %s rows', n) first compares DEBUG (10) with the logger's effective level, inherited from the nearest ancestor that sets one. If the level is INFO (20), the call returns immediately: the message is never formatted, which is why passing arguments separately is cheaper than an f-string.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "call",
+                "values": [
+                  "debug (10)",
+                  "info (20)",
+                  "warning (30)",
+                  "error (40)"
+                ]
+              },
+              {
+                "variable": "effective level INFO (20)",
+                "values": [
+                  "dropped",
+                  "emitted",
+                  "emitted",
+                  "emitted"
+                ]
+              }
+            ],
+            "title": "Level threshold"
+          }
+        }
+      },
+      {
+        "title": "A LogRecord captures the context",
+        "body": "If the level passes, logging creates a LogRecord with the logger name, level, message template and args, a timestamp, the file name, line number and function name, and the thread. Format strings like %(asctime)s %(name)s %(levelname)s %(message)s read those fields later."
+      },
+      {
+        "title": "Records flow up to the handlers",
+        "body": "The record goes to every handler attached to 'shop.db', then, because propagate is True by default, to the handlers of 'shop' and then the root. Each handler has its own level and formatter: a StreamHandler at INFO writing to stderr and a FileHandler at DEBUG writing to app.log can receive the same record and output it differently.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "logger.info(...)",
+                "detail": "level check passes"
+              },
+              {
+                "label": "LogRecord",
+                "detail": "time, name, line, message"
+              },
+              {
+                "label": "'shop.db' handlers",
+                "detail": "none attached"
+              },
+              {
+                "label": "root handlers",
+                "detail": "StreamHandler (INFO) + FileHandler (DEBUG)"
+              },
+              {
+                "label": "formatter",
+                "detail": "record -> text line"
+              }
+            ],
+            "title": "Life of one log call"
+          }
+        }
+      },
+      {
+        "title": "basicConfig configures the root once",
+        "body": "logging.basicConfig(level=logging.INFO, format=...) adds a handler to the root logger only if it has none yet; a second call does nothing unless you pass force=True. Libraries should only call getLogger and leave handlers to the application, so the application decides where every message goes."
+      },
+      {
+        "title": "From logs to monitoring",
+        "body": "Structured logs, for example one JSON object per line with fields like level, request_id and duration_ms, can be searched and counted by a log system. Counting ERROR records per minute and alerting when the count jumps turns logs into monitoring."
+      }
+    ],
+    "takeaway": "A log call is cheap when filtered out and rich when kept: level check, LogRecord, then handlers up the logger tree. Configure handlers once at the top of the application and just call getLogger(__name__) everywhere else."
   }
 }

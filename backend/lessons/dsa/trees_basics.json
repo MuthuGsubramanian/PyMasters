@@ -469,5 +469,135 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A tree is a set of node objects where each node holds a value and references to its children; traversals visit them by recursion, using the call stack to remember the way back.",
+    "steps": [
+      {
+        "title": "Nodes linked downward",
+        "body": "Each TreeNode has val, left and right. The root is the one node nothing points to; a leaf has left and right both None. The tree 1 -> (2 -> 4, 5), 3 is five objects linked by references, with height 2 (the longest root-to-leaf path has 2 edges).",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "n1",
+                "label": "1 (root)"
+              },
+              {
+                "id": "n2",
+                "label": "2"
+              },
+              {
+                "id": "n3",
+                "label": "3 (leaf)"
+              },
+              {
+                "id": "n4",
+                "label": "4 (leaf)"
+              },
+              {
+                "id": "n5",
+                "label": "5 (leaf)"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n1",
+                "to": "n2",
+                "label": "left"
+              },
+              {
+                "from": "n1",
+                "to": "n3",
+                "label": "right"
+              },
+              {
+                "from": "n2",
+                "to": "n4",
+                "label": "left"
+              },
+              {
+                "from": "n2",
+                "to": "n5",
+                "label": "right"
+              }
+            ],
+            "title": "The example tree"
+          }
+        }
+      },
+      {
+        "title": "A traversal is recursion on both children",
+        "body": "inorder(node) does three things: inorder(node.left), visit node, inorder(node.right). The base case is node is None, which simply returns. Preorder visits before the two calls and postorder after them; the only difference is where the 'visit' line sits."
+      },
+      {
+        "title": "The call stack remembers the path",
+        "body": "While visiting 4, the calls for 1 and 2 are still waiting on the call stack. When inorder(4) returns, Python resumes inorder(2) exactly where it left off, prints 2, then goes right to 5. The stack depth equals the depth of the current node, so a tree of height h needs h + 1 frames.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "inorder(4)",
+                "variables": {
+                  "node": 4
+                }
+              },
+              {
+                "name": "inorder(2)",
+                "variables": {
+                  "node": 2,
+                  "next": "visit 2"
+                }
+              },
+              {
+                "name": "inorder(1)",
+                "variables": {
+                  "node": 1,
+                  "next": "visit 1"
+                }
+              }
+            ],
+            "title": "Frames while visiting node 4"
+          }
+        }
+      },
+      {
+        "title": "Three orders from the same walk",
+        "body": "For the example tree: preorder (root, left, right) gives 1, 2, 4, 5, 3; inorder (left, root, right) gives 4, 2, 5, 1, 3; postorder (left, right, root) gives 4, 5, 2, 3, 1. Each node is visited exactly once, so every traversal is O(n).",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "preorder",
+                "values": [
+                  "1 2 4 5 3"
+                ]
+              },
+              {
+                "variable": "inorder",
+                "values": [
+                  "4 2 5 1 3"
+                ]
+              },
+              {
+                "variable": "postorder",
+                "values": [
+                  "4 5 2 3 1"
+                ]
+              }
+            ],
+            "title": "Same tree, three visit orders"
+          }
+        }
+      },
+      {
+        "title": "Level order uses a queue instead",
+        "body": "Breadth-first (level order) visits 1, then 2 and 3, then 4 and 5. It replaces the recursion with a deque: pop a node from the left, visit it, append its children on the right. The queue holds one level's worth of nodes at a time."
+      }
+    ],
+    "takeaway": "Trees are just references plus recursion. Where you place the 'visit' step relative to the two recursive calls decides the order you get."
   }
 }

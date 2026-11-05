@@ -216,5 +216,55 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "The production pipeline splits every document into word windows small enough for the model's 128-token limit, batch-encodes all languages into one 384-d index, and measures cross-lingual quality with precision@k on queries whose correct passages are known.",
+    "steps": [
+      {
+        "title": "The 128-token ceiling",
+        "body": "paraphrase-multilingual-MiniLM-L12-v2 truncates input at 128 tokens. Its SentencePiece tokenizer often splits non-English words into several pieces, so a 120-word Tamil paragraph can exceed the limit while a 120-word English one might not."
+      },
+      {
+        "title": "Chunk by words with overlap",
+        "body": "chunk_text(text, max_words=80, overlap=20) emits windows of 80 words that start every 60 words. 80 words keeps most languages under 128 tokens, and the 20-word overlap protects sentences on boundaries.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "windows (words)",
+            "data": [
+              "0-79",
+              "60-139",
+              "120-199"
+            ],
+            "title": "max_words 80, overlap 20"
+          }
+        }
+      },
+      {
+        "title": "Batch-encode a mixed corpus",
+        "body": "All chunks, whatever their language, go through model.encode in batches into a single N x 384 matrix with metadata (source, language). A query in any language searches the whole matrix at once."
+      },
+      {
+        "title": "Backend choice without changing vectors",
+        "body": "Loading the weights from SafeTensors is fast and safe (no pickle code execution); exporting to ONNX can speed up CPU inference. Verify parity by checking that vectors from both backends have cosine close to 1."
+      },
+      {
+        "title": "Evaluate cross-lingual retrieval",
+        "body": "Build test queries in several languages, each with the id of its correct passage. precision@k is the share of the top-k results that are relevant; compare it per language to find where the model is weak.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "lang  precision@3",
+              "en    0.93",
+              "fr    0.90",
+              "ta    0.80",
+              "(illustrative)"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Multilingual RAG in production is mostly about token limits and measurement: chunk for the hardest script, index everything together, and check quality per language."
+  }
 }

@@ -200,5 +200,85 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "ELECTRA trains a small generator to fill masked tokens and a larger discriminator to label every token as original or replaced; the two losses are added (discriminator weighted by 50), and only the discriminator is kept.",
+    "steps": [
+      {
+        "title": "Mask, then fill with the generator",
+        "body": "About 15% of positions are masked. A small masked-language-model generator, a fraction of the discriminator's size, predicts each one and a token is sampled from its distribution, producing plausible replacements such as 'the chef ate the meal' -> 'the chef cooked the meal'.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "corrupted sentence",
+            "data": [
+              "the",
+              "chef",
+              "cooked",
+              "the",
+              "meal"
+            ],
+            "highlight": [
+              2
+            ],
+            "title": "'ate' was masked and replaced by a sample"
+          }
+        }
+      },
+      {
+        "title": "The discriminator labels every token",
+        "body": "The discriminator reads the corrupted sentence and predicts, for each position, 'original' or 'replaced' with binary cross-entropy. If the generator happens to sample the true word, that position is labelled original."
+      },
+      {
+        "title": "Learning from all tokens, not 15%",
+        "body": "BERT's loss only covers the masked 15% of positions. ELECTRA's discriminator gets a training signal at 100% of positions, which is the main reason it reaches a given quality with less compute.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "BERT MLM",
+              "code": "loss on ~15% of tokens\npredict the word"
+            },
+            "right": {
+              "label": "ELECTRA discriminator",
+              "code": "loss on 100% of tokens\noriginal or replaced?"
+            }
+          }
+        }
+      },
+      {
+        "title": "Cooperative, not adversarial",
+        "body": "Total loss = L_MLM(generator) + 50 x L_disc. Sampling is not differentiable, so no gradient flows from the discriminator into the generator; the generator just gets better at ordinary MLM, which makes its replacements harder to spot. Unlike a GAN, nobody is trying to fool anyone."
+      },
+      {
+        "title": "Shared embeddings, then discard",
+        "body": "Generator and discriminator share the token embeddings, so the generator's MLM signal also improves the discriminator's input layer. After pre-training the generator is thrown away and google/electra-base-discriminator is fine-tuned like BERT.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "mask 15%"
+              },
+              {
+                "label": "generator samples",
+                "detail": "replacements"
+              },
+              {
+                "label": "discriminator",
+                "detail": "per-token real or replaced"
+              },
+              {
+                "label": "loss = MLM + 50 x disc"
+              },
+              {
+                "label": "keep discriminator"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "ELECTRA turns pre-training into a detection task over every token. Denser signal per sentence means a better encoder for the same compute."
+  }
 }

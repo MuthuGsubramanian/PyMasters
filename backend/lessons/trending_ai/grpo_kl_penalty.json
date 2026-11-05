@@ -236,5 +236,81 @@
       "correct": 0
     }
   ],
-  "uth_example": "import math\n\nbeta = 0.04\nsteps = [                         # (logp under trained policy, logp under frozen reference)\n    (-1.20, -1.20),               # identical: no penalty\n    (-0.90, -1.30),\n    (-0.20, -2.50),               # drifted far from the reference\n]\n\nrows = []\nfor logp_theta, logp_ref in steps:\n    ratio = math.exp(logp_ref - logp_theta)\n    kl = ratio - math.log(ratio) - 1          # always >= 0\n    surrogate = 0.8\n    rows.append({\"kl\": round(kl, 4), \"objective\": round(surrogate - beta * kl, 4)})\n\nfor r in rows:\n    print(r)\n"
+  "uth_example": "import math\n\nbeta = 0.04\nsteps = [                         # (logp under trained policy, logp under frozen reference)\n    (-1.20, -1.20),               # identical: no penalty\n    (-0.90, -1.30),\n    (-0.20, -2.50),               # drifted far from the reference\n]\n\nrows = []\nfor logp_theta, logp_ref in steps:\n    ratio = math.exp(logp_ref - logp_theta)\n    kl = ratio - math.log(ratio) - 1          # always >= 0\n    surrogate = 0.8\n    rows.append({\"kl\": round(kl, 4), \"objective\": round(surrogate - beta * kl, 4)})\n\nfor r in rows:\n    print(r)\n",
+  "under_the_hood": {
+    "summary": "GRPO subtracts beta times an estimate of the KL divergence between the training policy and a frozen reference model from its objective; the per-token estimator ratio - log(ratio) - 1, with ratio = pi_ref / pi_theta, is never negative and is zero only when the two agree.",
+    "steps": [
+      {
+        "title": "Clipping limits steps, not distance",
+        "body": "Each clipped update is small, but thousands of small updates in the same direction can carry the policy far from where it started, toward outputs that score well but read badly. A penalty on total distance from the reference prevents that."
+      },
+      {
+        "title": "A cheap per-token estimate",
+        "body": "Exact KL over all possible completions is intractable. GRPO uses the estimator k3 = ratio - log(ratio) - 1 with ratio = exp(logp_ref - logp_theta), computed for each sampled token from two log-probabilities."
+      },
+      {
+        "title": "Worked example",
+        "body": "logp_theta = -2.1 and logp_ref = -2.4 give ratio = exp(-0.3) = 0.7408. The estimate is 0.7408 - log(0.7408) - 1 = 0.7408 + 0.3 - 1 = 0.0408. If the two log-probs were equal, ratio = 1 and the penalty is exactly 0.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "ratio = exp(-2.4 - (-2.1)) = 0.7408",
+              "KL_est = 0.7408 - log(0.7408) - 1 = 0.0408",
+              "equal log-probs -> ratio 1 -> 0.0"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Never negative",
+        "body": "The function f(r) = r - log r - 1 has its minimum at r = 1 where it is 0, and is positive everywhere else. So every token where the policy differs from the reference adds a penalty, in either direction.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "r - log r - 1",
+            "data": [
+              0.193,
+              0.0408,
+              0.0,
+              0.095
+            ],
+            "labels": [
+              "r=0.5",
+              "r=0.74",
+              "r=1",
+              "r=1.5"
+            ],
+            "highlight": [
+              2
+            ]
+          }
+        }
+      },
+      {
+        "title": "The full objective",
+        "body": "objective = clipped surrogate - beta x KL estimate, averaged over tokens. beta trades reward against staying close to the reference; some recent recipes set it very small or drop it for verifiable-reward tasks.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "clipped surrogate"
+              },
+              {
+                "label": "- beta x KL estimate"
+              },
+              {
+                "label": "average over tokens"
+              },
+              {
+                "label": "gradient ascent"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "The KL term is a leash to the reference model: a non-negative per-token cost that grows as the policy drifts. Clipping controls each step; KL controls the journey."
+  }
 }

@@ -202,5 +202,75 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "CLIP has an image encoder and a text encoder trained so matching image-caption pairs get high cosine similarity; a visual search index stores one normalised 768-d image vector per photo, and a text query is encoded and ranked against them by dot product.",
+    "steps": [
+      {
+        "title": "The image becomes patch tokens",
+        "body": "clip-vit-large-patch14 resizes an image to 224 x 224 and cuts it into 14 x 14-pixel patches: 16 x 16 = 256 patches plus a class token. A 24-layer Vision Transformer processes them like words in a sentence.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "image grid",
+            "data": [
+              "224 / 14 = 16 per side",
+              "16 x 16 = 256 patches",
+              "+1 class token = 257"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Both towers project into one space",
+        "body": "The image's class-token vector and the text's end-of-text vector are each multiplied by a projection matrix to 768 dimensions and normalised. Captions are limited to 77 tokens."
+      },
+      {
+        "title": "Contrastive training made the space shared",
+        "body": "During training a batch of N image-caption pairs forms an N x N similarity matrix. Cross-entropy pushes the diagonal (true pairs) up and everything else down, in both directions. After about 400 million pairs, 'a dog on a beach' and a photo of one land close together.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "N images",
+                "detail": "image encoder"
+              },
+              {
+                "label": "N captions",
+                "detail": "text encoder"
+              },
+              {
+                "label": "N x N cosine matrix"
+              },
+              {
+                "label": "loss",
+                "detail": "diagonal should win"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Index the photo library",
+        "body": "Encode every photo once and stack the vectors into an N x 768 matrix saved to disk with the file paths. This is the expensive step; queries reuse it."
+      },
+      {
+        "title": "Search and auto-tag",
+        "body": "A text query is encoded, normalised and multiplied against the matrix; the highest scores are the best matches. Auto-tagging runs it the other way: score each photo against a list of tag phrases and keep tags above a threshold.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "query: 'sunset over water'",
+              "0.31  beach_evening.jpg",
+              "0.27  harbor.jpg",
+              "0.12  office.jpg"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "CLIP turns cross-modal search into ordinary vector search: one shared space, cosine similarity, top-k. Indexing is paid once; every query is a single matrix-vector product."
+  }
 }

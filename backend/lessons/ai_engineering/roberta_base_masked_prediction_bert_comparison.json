@@ -200,5 +200,53 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "RoBERTa keeps BERT's encoder architecture but changes the training recipe: masks are re-sampled every time a sentence is seen, the next-sentence task is dropped, batches and data are much larger, and text is tokenized with byte-level BPE.",
+    "steps": [
+      {
+        "title": "Same network shape",
+        "body": "roberta-base has 12 layers, hidden size 768 and 12 heads like bert-base. Its larger 50K-entry vocabulary makes it about 125M parameters instead of 110M; the difference is almost all in the embedding table."
+      },
+      {
+        "title": "Dynamic masking",
+        "body": "BERT's original preprocessing fixed the masked positions in advance, so the model saw the same masks repeatedly. RoBERTa samples a new 15% mask each time a sequence is fed in, so over many epochs every token gets a chance to be predicted.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "BERT (static)",
+              "code": "masks chosen once in preprocessing\nsame blanks reused"
+            },
+            "right": {
+              "label": "RoBERTa (dynamic)",
+              "code": "new random mask\nevery time a sequence is used"
+            }
+          }
+        }
+      },
+      {
+        "title": "No next-sentence prediction",
+        "body": "BERT also trained on 'does sentence B follow A?'. RoBERTa's experiments found removing it and packing full sentences up to 512 tokens worked as well or better, so the only objective is masked-token prediction."
+      },
+      {
+        "title": "Byte-level BPE and <mask>",
+        "body": "RoBERTa uses GPT-2-style byte-level BPE with case preserved, so 'Paris' and ' Paris' (with a leading space) are different tokens, and the mask token is written <mask> instead of [MASK]. Fill-mask results therefore often start with a space marker.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "BERT:    the capital of france is [MASK] .  -> paris",
+              "RoBERTa: The capital of France is <mask>.   -> ' Paris'"
+            ]
+          }
+        }
+      },
+      {
+        "title": "More data, bigger batches",
+        "body": "RoBERTa trained on about 160 GB of text versus BERT's 16 GB, with batches of 8,000 sequences, for longer. The lesson of the paper: BERT was undertrained, and the recipe mattered as much as the architecture."
+      }
+    ],
+    "takeaway": "RoBERTa shows that training choices alone, dynamic masks, no NSP, more data and bigger batches, can beat an identical architecture trained less carefully."
+  }
 }

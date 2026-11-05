@@ -205,5 +205,75 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Reranking takes a short candidate list from fast vector search, scores every (question, candidate) pair with a cross-encoder, and reorders the list by those scores before the best few are passed to the LLM.",
+    "steps": [
+      {
+        "title": "Stage one optimises for recall",
+        "body": "The bi-encoder search is asked for more candidates than you need, for example 20 or 50, because it is cheap and its ordering is approximate. The goal is only that the right passage is somewhere in the list."
+      },
+      {
+        "title": "Build pairs",
+        "body": "For the query 'How does photosynthesis work?' each candidate becomes a pair (query, candidate). model.predict(pairs) runs them in batches through the cross-encoder; max_length=512 caps the combined token count, truncating long passages.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "pairs",
+            "data": [
+              "(q, 'Plants convert light into chemical energy...')",
+              "(q, 'The Calvin cycle fixes CO2...')",
+              "(q, 'Photosynthesis was named in 1893...')"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Score and reorder",
+        "body": "Each pair gets one relevance logit. Sorting by it often moves a passage that explains the mechanism above one that merely repeats the keyword, which is what bi-encoder similarity tends to reward.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "before: [history, mechanism, calvin]",
+              "scores: history 2.1, mechanism 8.7, calvin 6.4",
+              "after:  [mechanism, calvin, history]"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Keep the top few",
+        "body": "Only the top 3-5 reranked passages are put in the prompt. Fewer, better passages reduce prompt tokens and leave the LLM less irrelevant text to be misled by."
+      },
+      {
+        "title": "Budget the latency",
+        "body": "Rerank cost grows linearly with the number of candidates. If 50 pairs take too long on CPU, rerank 20; measure how often the best answer was beyond the cut-off to find the right size.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "retrieve 20-50",
+                "detail": "bi-encoder"
+              },
+              {
+                "label": "pair with query"
+              },
+              {
+                "label": "cross-encoder scores"
+              },
+              {
+                "label": "sort"
+              },
+              {
+                "label": "top 3-5 to prompt"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Retrieve wide and cheap, then rerank narrow and precise. The two-stage split gives cross-encoder quality at bi-encoder cost."
+  }
 }

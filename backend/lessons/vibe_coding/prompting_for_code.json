@@ -166,5 +166,100 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "The model writes the most probable code given the prompt it sees; every fact about your project that the prompt leaves out gets filled with the most common choice from training data, which is where mismatched names, fields and libraries come from.",
+    "steps": [
+      {
+        "title": "Missing facts become defaults",
+        "body": "Ask for 'a function to total a user's orders' and the model must invent the order shape. The most common pattern in public code is something like order.price as a float, so that is what you get, even if your field is amount_cents as an int. Each unstated fact is a guess drawn from the average of the internet.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "fact you did not state",
+                "values": [
+                  "field name",
+                  "money type",
+                  "data source",
+                  "library"
+                ]
+              },
+              {
+                "variable": "model's likely default",
+                "values": [
+                  "order.price",
+                  "float dollars",
+                  "an ORM call it invents",
+                  "whatever is most common"
+                ]
+              },
+              {
+                "variable": "your project",
+                "values": [
+                  "order.amount_cents",
+                  "int cents",
+                  "a list passed in",
+                  "SQLAlchemy 2.0"
+                ]
+              }
+            ],
+            "title": "Where a lazy prompt goes wrong"
+          }
+        }
+      },
+      {
+        "title": "Context changes the probabilities",
+        "body": "Paste class Order with amount_cents: int into the prompt and the most likely continuation now uses order.amount_cents, because the model conditions on everything in its context. You are not persuading it with magic words; you are changing what the most probable code is.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Lazy prompt",
+              "code": "Write a function to fetch a user's orders\nand total them."
+            },
+            "right": {
+              "label": "Loaded prompt",
+              "code": "Python 3.12. Order is a dataclass:\n  id: int, user_id: int, amount_cents: int\nWrite total_cents(orders: list[Order]) -> int.\nReturn 0 for an empty list. No new dependencies.\nExample: [Order(1, 7, 250), Order(2, 7, 100)] -> 350"
+            },
+            "title": "Same request, different context"
+          }
+        }
+      },
+      {
+        "title": "Five ingredients remove five guesses",
+        "body": "Goal and signature (what exactly to write), data shapes (real field names and types), environment (Python and library versions), constraints (no new packages, must be pure), and an input/output example. Each one replaces a default the model would otherwise pick."
+      },
+      {
+        "title": "Examples pin behaviour",
+        "body": "An example like [Order(1, 7, 250), Order(2, 7, 100)] -> 350 rules out whole families of wrong answers: dollars instead of cents, filtering by the wrong user, returning a float. It also gives you a ready-made assertion to run on whatever comes back.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "result = total_cents([Order(1, 7, 250), Order(2, 7, 100)])",
+                "explanation": "The example from the prompt."
+              },
+              {
+                "code": "assert result == 350",
+                "explanation": "Cents, an int, both orders counted."
+              },
+              {
+                "code": "assert total_cents([]) == 0",
+                "explanation": "The empty case you asked for."
+              }
+            ],
+            "title": "The prompt's example becomes the check"
+          }
+        }
+      },
+      {
+        "title": "Smaller asks, fewer guesses",
+        "body": "One function with a clear signature has few unknowns. 'Build the orders feature' has hundreds, and the model fills all of them at once. Splitting the work keeps each prompt's guesses few enough that you can state the facts that matter."
+      }
+    ],
+    "takeaway": "A good code prompt is a list of facts that would otherwise be guessed. Supply the shapes, versions, constraints and an example, and the most probable code becomes the code you need."
+  }
 }

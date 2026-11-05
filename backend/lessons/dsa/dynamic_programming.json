@@ -442,5 +442,139 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Dynamic programming fills a table where each cell is the answer to a smaller subproblem, computed from cells already filled, so every subproblem is solved exactly once.",
+    "steps": [
+      {
+        "title": "Define what one cell means",
+        "body": "For coin change with coins [1, 5, 10], let dp[a] be the fewest coins that make amount a. The final answer is dp[13]. Getting this definition right is most of the work: it decides the table's shape and what each cell depends on."
+      },
+      {
+        "title": "Seed the base case",
+        "body": "dp[0] = 0, because zero coins make amount 0. Every other cell starts at infinity, meaning 'not reachable yet'. The table has 14 cells, for amounts 0 to 13.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              0,
+              "inf",
+              "inf",
+              "inf",
+              "inf",
+              "inf",
+              "inf",
+              "inf",
+              "inf",
+              "inf",
+              "inf",
+              "inf",
+              "inf",
+              "inf"
+            ],
+            "title": "dp before filling",
+            "labels": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              "10",
+              "11",
+              "12",
+              "13"
+            ],
+            "highlight": [
+              0
+            ]
+          }
+        }
+      },
+      {
+        "title": "The recurrence looks back",
+        "body": "dp[a] = min(dp[a - c] + 1) over each coin c <= a. To make 6: use a 1 after dp[5] = 1, or a 5 after dp[1] = 1, so dp[6] = 2. Each cell needs only cells to its left, so filling from 1 upward always has the inputs ready.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "for a in range(1, 14):",
+                "explanation": "Fill amounts in increasing order."
+              },
+              {
+                "code": "    for c in coins:",
+                "explanation": "Try each coin as the last one used."
+              },
+              {
+                "code": "        if c <= a:",
+                "explanation": ""
+              },
+              {
+                "code": "            dp[a] = min(dp[a], dp[a - c] + 1)",
+                "explanation": "Best of 'what I had' and 'dp[a-c] plus this coin'."
+              }
+            ],
+            "title": "Filling the coin-change table"
+          }
+        }
+      },
+      {
+        "title": "The filled table",
+        "body": "After the loop: dp[10] = 1, dp[11] = 2, dp[12] = 3, dp[13] = 4 (10 + 1 + 1 + 1). The whole fill is amount x number of coins = 13 x 3 = 39 small steps, instead of trying every combination of coins.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              1,
+              2,
+              3,
+              4,
+              5,
+              1,
+              2,
+              3,
+              4
+            ],
+            "title": "dp after filling: dp[13] = 4",
+            "labels": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7",
+              "8",
+              "9",
+              "10",
+              "11",
+              "12",
+              "13"
+            ],
+            "highlight": [
+              13
+            ]
+          }
+        }
+      },
+      {
+        "title": "Two-dimensional tables",
+        "body": "Some problems need two indexes. In 0/1 knapsack, dp[i][w] is the best value using the first i items with capacity w; for longest common subsequence, dp[i][j] compares prefixes of two strings. The idea is identical: each cell is built from a few already-filled neighbours."
+      }
+    ],
+    "takeaway": "DP is recursion with the repeats removed: name the subproblem, set the base case, write the recurrence, then fill the table in an order where inputs are always ready."
   }
 }

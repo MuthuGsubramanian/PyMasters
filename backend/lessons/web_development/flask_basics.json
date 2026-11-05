@@ -439,5 +439,88 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "@app.route adds a URL rule to Flask's url_map; when a request comes in through WSGI, Flask matches the path and method against that map, calls your view with the captured values, and turns its return value into a response.",
+    "steps": [
+      {
+        "title": "The decorator fills a routing table",
+        "body": "@app.route('/user/<name>') runs at import time. It adds a Rule for '/user/<name>' to app.url_map with the endpoint name 'profile' (the function's name), and stores app.view_functions['profile'] = profile. Nothing is called yet; the app has just learned a mapping.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "'/' -> index",
+              "'/user/<name>' -> profile",
+              "'/static/<path:filename>' -> static"
+            ],
+            "title": "app.url_map after imports"
+          }
+        }
+      },
+      {
+        "title": "WSGI calls the app with a dict",
+        "body": "The server (the dev server, or Gunicorn in production) turns the raw HTTP request into a dict called environ, with keys like REQUEST_METHOD = 'GET' and PATH_INFO = '/user/asha', and calls app(environ, start_response). That single call is the WSGI interface every Python web framework speaks.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "browser",
+                "detail": "GET /user/asha"
+              },
+              {
+                "label": "WSGI server",
+                "detail": "build environ dict"
+              },
+              {
+                "label": "app(environ, start_response)",
+                "detail": "Flask entry point"
+              },
+              {
+                "label": "response",
+                "detail": "status, headers, body bytes"
+              }
+            ],
+            "title": "One request through WSGI",
+            "direction": "right"
+          }
+        }
+      },
+      {
+        "title": "Match the URL, then call the view",
+        "body": "Flask pushes a request context (that is what makes the global request object point at this request), then asks the url_map to match PATH_INFO and the method. '/user/asha' matches '/user/<name>' with name = 'asha', so Flask calls profile(name='asha'). No match raises a 404, and a wrong method a 405.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "@app.route('/user/<name>')",
+                "explanation": "Registered once at import."
+              },
+              {
+                "code": "def profile(name):",
+                "explanation": "Called with name='asha' from the URL."
+              },
+              {
+                "code": "    return f'Hello, {name}!'",
+                "explanation": "A str return value..."
+              }
+            ],
+            "title": "From URL to function call"
+          }
+        }
+      },
+      {
+        "title": "Return values become responses",
+        "body": "make_response converts what the view returns: a str becomes a 200 response with Content-Type text/html; a dict becomes JSON; a (body, 404) tuple sets the status. Flask then calls start_response('200 OK', headers) and hands back the body bytes for the server to send."
+      },
+      {
+        "title": "Templates render on the server",
+        "body": "render_template('home.html', user=u) finds the file in the templates folder, has Jinja2 compile it into Python code (cached after the first time), and runs it with your variables, escaping < and > in values by default. The browser only ever receives the finished HTML."
+      }
+    ],
+    "takeaway": "Flask is a routing table plus a WSGI callable: the decorator registers rules, each request is matched against them, and whatever your function returns is converted into an HTTP response."
   }
 }

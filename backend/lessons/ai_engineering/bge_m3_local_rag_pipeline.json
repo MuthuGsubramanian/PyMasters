@@ -214,5 +214,53 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A local hybrid RAG index scores each document twice, once by cosine similarity of BGE-M3 dense vectors and once by exact term overlap, blends the two scores, and passes the top documents into an LLM prompt.",
+    "steps": [
+      {
+        "title": "Dense vectors from BGE-M3",
+        "body": "Loaded through sentence-transformers, BAAI/bge-m3 returns one normalised 1,024-dimensional vector per text, built on an XLM-RoBERTa encoder that covers 100+ languages and inputs up to 8,192 tokens."
+      },
+      {
+        "title": "A sparse, keyword view",
+        "body": "Dense vectors can blur exact identifiers such as 'ERR_42' or a function name. A sparse score counts weighted matches of the actual terms shared by query and document, which rewards exact hits. BGE-M3 can emit learned per-token weights for this through its FlagEmbedding API; a simple term-overlap index captures the same idea.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Dense",
+              "code": "meaning, paraphrases\n'wrap a function' ~ 'decorator'"
+            },
+            "right": {
+              "label": "Sparse",
+              "code": "exact terms\n'ERR_42' must appear"
+            }
+          }
+        }
+      },
+      {
+        "title": "Blend the two scores",
+        "body": "For each document, hybrid = w x dense + (1 - w) x sparse, after putting both on a similar scale. With w = 0.7 a document that is semantically close and also contains the exact keyword rises above one that is only one of the two.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "doc A: dense 0.82, sparse 0.10 -> 0.7*0.82 + 0.3*0.10 = 0.604",
+              "doc B: dense 0.74, sparse 0.60 -> 0.7*0.74 + 0.3*0.60 = 0.698"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Build the grounded prompt",
+        "body": "The top_k documents are joined as bullet points under 'Context:', followed by the question and an instruction to answer only from the context. That prompt goes to a local LLM."
+      },
+      {
+        "title": "Everything stays on the machine",
+        "body": "Model weights are downloaded once; encoding, scoring and generation then run offline. The trade-off is local compute: bge-m3 has about 568M parameters, much heavier than MiniLM-class embedders."
+      }
+    ],
+    "takeaway": "Hybrid retrieval combines two kinds of evidence, meaning and exact words. Most RAG misses on names and codes are fixed by adding the sparse half."
+  }
 }

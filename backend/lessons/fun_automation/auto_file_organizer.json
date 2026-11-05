@@ -334,5 +334,111 @@
     ],
     "category": "automation",
     "path_memberships": []
+  },
+  "under_the_hood": {
+    "summary": "The organizer lists directory entries, maps each file's extension to a category folder, and moves it; on the same disk a move only rewrites a directory entry, so no file data is copied.",
+    "steps": [
+      {
+        "title": "Listing reads directory entries",
+        "body": "A folder on disk is itself a small table of entries: a name plus a pointer to the file's data (an inode on Linux and macOS). Path('Downloads').iterdir() asks the OS for those entries and yields one Path per name. It does not open or read the files themselves, so listing 200 files is fast."
+      },
+      {
+        "title": "Extension -> category is a dict lookup",
+        "body": "For 'Holiday.JPG', path.suffix is '.JPG'; lowering it gives '.jpg'. A dict built once, such as {'.jpg': 'Images', '.png': 'Images', '.pdf': 'Documents'}, maps it to 'Images' in one O(1) lookup. Unknown suffixes fall through to a default like 'Others' with .get(ext, 'Others').",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              ".jpg": "Images",
+              ".png": "Images",
+              ".pdf": "Documents",
+              ".mp4": "Videos",
+              ".zip": "Archives"
+            },
+            "title": "Built once, looked up for every file"
+          }
+        }
+      },
+      {
+        "title": "mkdir(exist_ok=True) makes it safe to re-run",
+        "body": "Before moving, the script creates the target folder. exist_ok=True means 'do nothing if it is already there' instead of raising FileExistsError, so running the organizer twice is harmless. parents=True also creates any missing parent folders."
+      },
+      {
+        "title": "A move on the same disk is a rename",
+        "body": "shutil.move first tries os.rename. When source and target are on the same filesystem, rename just removes the name from the Downloads entry table and adds it to the Images table; the file's bytes never move, so even a 4 GB video moves instantly. Across drives, rename fails and shutil.move falls back to copying the data and then deleting the original.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Same filesystem",
+              "code": "os.rename:\n- add entry 'Images/Holiday.jpg'\n- remove entry 'Holiday.jpg'\nfile data untouched"
+            },
+            "right": {
+              "label": "Different filesystem",
+              "code": "copy every byte to the new disk\nthen delete the original\n(slow for big files)"
+            },
+            "title": "What shutil.move actually does"
+          }
+        }
+      },
+      {
+        "title": "Watch out for name clashes",
+        "body": "If Images/report.pdf already exists, the behaviour depends on the OS: on Linux and macOS a rename silently replaces the existing file, while on Windows it raises an error. A careful organizer checks target.exists() first and adds a suffix such as report (1).pdf.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "check",
+                "label": "target exists?",
+                "type": "decision"
+              },
+              {
+                "id": "move",
+                "label": "shutil.move(src, target)"
+              },
+              {
+                "id": "rename",
+                "label": "pick 'report (1).pdf'"
+              },
+              {
+                "id": "done",
+                "label": "done",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "check",
+                "to": "move",
+                "label": "no"
+              },
+              {
+                "from": "check",
+                "to": "rename",
+                "label": "yes"
+              },
+              {
+                "from": "rename",
+                "to": "move"
+              },
+              {
+                "from": "move",
+                "to": "done"
+              }
+            ],
+            "executionPath": [
+              "check",
+              "rename",
+              "move",
+              "done"
+            ],
+            "title": "Avoid overwriting"
+          }
+        }
+      }
+    ],
+    "takeaway": "Organizing files is mostly moving names between directory tables. Know that a same-disk move is a cheap rename and that it can overwrite silently, and your script will be both fast and safe."
   }
 }

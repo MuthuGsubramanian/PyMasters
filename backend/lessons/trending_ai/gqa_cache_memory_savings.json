@@ -242,5 +242,58 @@
       "correct": 1
     }
   ],
-  "uth_example": "layers, head_dim, seq_len, bytes_fp16 = 32, 128, 32_000, 2\nquery_heads = 32\ndesigns = {\"MHA\": 32, \"GQA-8\": 8, \"MQA\": 1}          # number of KV heads\n\nreport = {}\nfor name, kv_heads in designs.items():\n    total = 2 * layers * kv_heads * head_dim * seq_len * bytes_fp16\n    report[name] = {\n        \"cache_gb\": round(total / 1e9, 2),\n        \"saved\": f\"{(1 - kv_heads / query_heads) * 100:.1f}%\",\n    }\n\nfor name, row in report.items():\n    print(f\"{name:6} {row}\")\n"
+  "uth_example": "layers, head_dim, seq_len, bytes_fp16 = 32, 128, 32_000, 2\nquery_heads = 32\ndesigns = {\"MHA\": 32, \"GQA-8\": 8, \"MQA\": 1}          # number of KV heads\n\nreport = {}\nfor name, kv_heads in designs.items():\n    total = 2 * layers * kv_heads * head_dim * seq_len * bytes_fp16\n    report[name] = {\n        \"cache_gb\": round(total / 1e9, 2),\n        \"saved\": f\"{(1 - kv_heads / query_heads) * 100:.1f}%\",\n    }\n\nfor name, row in report.items():\n    print(f\"{name:6} {row}\")\n",
+  "under_the_hood": {
+    "summary": "The KV cache stores only the key/value heads, so its size is 2 x layers x num_kv_heads x head_dim x tokens x bytes; cutting 32 KV heads to 8 under GQA cuts the cache by 75% while all 32 query heads keep working.",
+    "steps": [
+      {
+        "title": "The formula uses KV heads",
+        "body": "bytes = 2 (K and V) x num_layers x num_kv_heads x head_dim x seq_len x bytes_per_value. Query heads never appear: queries are computed fresh for the current token and are not cached."
+      },
+      {
+        "title": "Plug in a Llama-3-8B shape",
+        "body": "32 layers, head_dim 128, 4,096 tokens, bf16 (2 bytes). With 32 KV heads (plain MHA) the cache is 2 x 32 x 32 x 128 x 4096 x 2 = 2.15 GB. With GQA's 8 KV heads it is 0.54 GB.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "KV cache at 4,096 tokens",
+            "data": [
+              "2.15 GB",
+              "0.54 GB"
+            ],
+            "labels": [
+              "32 KV heads",
+              "8 KV heads"
+            ],
+            "highlight": [
+              1
+            ]
+          }
+        }
+      },
+      {
+        "title": "Savings = 1 - kv / query heads",
+        "body": "8 / 32 = 0.25, so the cache is 25% of the MHA size, a 75% saving. The same ratio holds at every context length, because the cache grows linearly with seq_len.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "savings = 1 - 8 / 32 = 0.75",
+              "4K tokens: 2.15 GB -> 0.54 GB",
+              "32K tokens: 17.2 GB -> 4.3 GB"
+            ]
+          }
+        }
+      },
+      {
+        "title": "What the saving buys",
+        "body": "Freed memory can hold longer contexts or more concurrent requests in a serving batch. Decoding is usually limited by reading the cache from memory, so a smaller cache also speeds up each token."
+      },
+      {
+        "title": "Two knobs, two jobs",
+        "body": "Query heads govern how many attention patterns the model can form; KV heads govern memory. GQA lets designers keep the first high and the second low, instead of trading one directly for the other."
+      }
+    ],
+    "takeaway": "Fewer KV heads means a proportionally smaller cache. For long contexts that is the difference between fitting on a GPU and not."
+  }
 }

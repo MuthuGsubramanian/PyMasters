@@ -415,5 +415,148 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "The browser parses HTML into a DOM tree and CSS into rule sets, matches selectors to elements, resolves conflicts by specificity and order, then lays out each element as a box of content, padding, border and margin before painting.",
+    "steps": [
+      {
+        "title": "HTML becomes a tree",
+        "body": "The parser reads the HTML text and builds the DOM: html contains head and body, body contains header, main and footer, and so on. Each tag becomes an element node and the text between tags becomes text nodes. The parser is forgiving: a missing </p> is closed for you.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "html",
+                "label": "html"
+              },
+              {
+                "id": "head",
+                "label": "head"
+              },
+              {
+                "id": "body",
+                "label": "body"
+              },
+              {
+                "id": "title",
+                "label": "title"
+              },
+              {
+                "id": "header",
+                "label": "header"
+              },
+              {
+                "id": "main",
+                "label": "main"
+              },
+              {
+                "id": "h1",
+                "label": "h1#title.heading"
+              }
+            ],
+            "edges": [
+              {
+                "from": "html",
+                "to": "head",
+                "label": ""
+              },
+              {
+                "from": "html",
+                "to": "body",
+                "label": ""
+              },
+              {
+                "from": "head",
+                "to": "title",
+                "label": ""
+              },
+              {
+                "from": "body",
+                "to": "header",
+                "label": ""
+              },
+              {
+                "from": "body",
+                "to": "main",
+                "label": ""
+              },
+              {
+                "from": "main",
+                "to": "h1",
+                "label": ""
+              }
+            ],
+            "title": "The DOM for a simple page"
+          }
+        }
+      },
+      {
+        "title": "Selectors are matched against the tree",
+        "body": "For each element the browser finds every CSS rule whose selector matches it. h1 matches by tag, .heading by class, #title by id, and main h1 matches an h1 anywhere inside main. Browsers read compound selectors from right to left: for main h1 they start from each h1 and look up its ancestors for a main."
+      },
+      {
+        "title": "Specificity settles conflicts",
+        "body": "If several rules set color on the same h1, the most specific selector wins: an id selector beats any number of classes, and a class beats any number of tag names. Only when specificity is equal does the rule that comes later in the CSS win. Inline style attributes beat all of these, and !important overrides normal rules.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "selector",
+                "values": [
+                  "h1",
+                  ".heading",
+                  "main h1",
+                  "#title"
+                ]
+              },
+              {
+                "variable": "specificity (id, class, tag)",
+                "values": [
+                  "0,0,1",
+                  "0,1,0",
+                  "0,0,2",
+                  "1,0,0"
+                ]
+              },
+              {
+                "variable": "wins?",
+                "values": [
+                  "no",
+                  "no",
+                  "no",
+                  "yes"
+                ]
+              }
+            ],
+            "title": "Four rules set color on the same h1"
+          }
+        }
+      },
+      {
+        "title": "Every element is a box",
+        "body": "Layout gives each element a box made of the content, then padding, then border, then margin. With the default box-sizing: content-box, width: 200px plus padding: 20px plus border: 2px makes a 244px-wide box. box-sizing: border-box makes the 200px include the padding and border, which is why many stylesheets set it everywhere.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "box-sizing: content-box",
+              "code": "width 200 + padding 2x20 + border 2x2\n= 244px wide"
+            },
+            "right": {
+              "label": "box-sizing: border-box",
+              "code": "width 200 includes padding and border\n= 200px wide (content 156px)"
+            },
+            "title": "Same CSS numbers, different box"
+          }
+        }
+      },
+      {
+        "title": "Layout, then paint",
+        "body": "With styles computed, the browser lays out boxes in normal flow: block elements such as div and p stack vertically, inline elements such as span and a flow along a line. Then it paints pixels. Changing a size triggers layout again; changing only a colour needs just a repaint, which is cheaper."
+      }
+    ],
+    "takeaway": "HTML gives the tree, CSS selects nodes in it, specificity decides which rule wins, and the box model decides how big each node really is."
   }
 }

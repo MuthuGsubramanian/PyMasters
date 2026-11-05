@@ -161,5 +161,72 @@
     "category": "transformers",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "In self-attention every token's embedding is multiplied by three learned matrices to make its own query, key and value, and each token's new vector is a softmax-weighted mix of every token's value.",
+    "steps": [
+      {
+        "title": "One input, three projections",
+        "body": "Stack the n token vectors into X (n x d_model). Three learned matrices give Q = X W_q, K = X W_k, V = X W_v. The same token plays all three roles: what it looks for (Q), how it advertises itself (K), and what it hands over (V).",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "X",
+                "detail": "n x d_model"
+              },
+              {
+                "label": "Q = X W_q"
+              },
+              {
+                "label": "K = X W_k"
+              },
+              {
+                "label": "V = X W_v"
+              }
+            ],
+            "title": "Three views of the same tokens"
+          }
+        }
+      },
+      {
+        "title": "Every token scores every token",
+        "body": "Q @ K.T gives an n x n matrix: row i holds token i's scores against all tokens, including itself. For 3 tokens that is 9 scores; for 4,096 tokens it is about 16.8 million per head, which is why long contexts are expensive."
+      },
+      {
+        "title": "Row-wise softmax gives who-attends-to-whom",
+        "body": "After dividing by sqrt(d_k), softmax runs across each row. With identity projections and tokens [1,0], [0,1], [1,1], token 0's scaled scores are [0.707, 0, 0.707] and its weights are [0.401, 0.198, 0.401]: it attends equally to itself and to token 2, which share its first dimension.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "attention row 0",
+            "data": [
+              0.401,
+              0.198,
+              0.401
+            ],
+            "labels": [
+              "tok 0",
+              "tok 1",
+              "tok 2"
+            ],
+            "highlight": [
+              0,
+              2
+            ]
+          }
+        }
+      },
+      {
+        "title": "Each token becomes a blend",
+        "body": "Output row i is the weighted sum of all value rows using row i's weights. So ' bank' in 'river bank' pulls in part of the value of ' river' and comes out leaning toward the geography meaning, while the same embedding in 'bank loan' leans the other way."
+      },
+      {
+        "title": "Encoder vs decoder is one mask",
+        "body": "BERT-style encoders let every token see every other token. GPT-style decoders set scores for later positions to -inf before softmax so a token sees only itself and the past. The projections and the arithmetic are otherwise identical."
+      }
+    ],
+    "takeaway": "Self-attention turns context-blind embeddings into context-aware ones. Learned W_q, W_k and W_v decide what counts as relevant; the n x n weight matrix is the model's routing table for that layer."
+  }
 }

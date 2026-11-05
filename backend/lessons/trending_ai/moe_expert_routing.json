@@ -223,5 +223,76 @@
       "correct": 2
     }
   ],
-  "uth_example": "import math\n\nexperts = [\"math\", \"code\", \"french\", \"poetry\", \"biology\", \"law\"]\ntokens = {\"integral\": [2.5, 1.1, -0.5, 0.2, 0.0, -1.0],\n          \"bonjour\": [-0.8, 0.1, 3.0, 1.2, -0.2, 0.0]}\nk = 2\n\nrouting = {}\nfor token, scores in tokens.items():\n    top = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]\n    exps = [math.exp(scores[i]) for i in top]\n    weights = [round(e / sum(exps), 2) for e in exps]      # mix only the chosen experts\n    routing[token] = list(zip([experts[i] for i in top], weights))\n\nfor token, picks in routing.items():\n    print(f\"{token:9} -> {picks}\")\nprint(f\"active experts per token: {k} of {len(experts)}\")\n"
+  "uth_example": "import math\n\nexperts = [\"math\", \"code\", \"french\", \"poetry\", \"biology\", \"law\"]\ntokens = {\"integral\": [2.5, 1.1, -0.5, 0.2, 0.0, -1.0],\n          \"bonjour\": [-0.8, 0.1, 3.0, 1.2, -0.2, 0.0]}\nk = 2\n\nrouting = {}\nfor token, scores in tokens.items():\n    top = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:k]\n    exps = [math.exp(scores[i]) for i in top]\n    weights = [round(e / sum(exps), 2) for e in exps]      # mix only the chosen experts\n    routing[token] = list(zip([experts[i] for i in top], weights))\n\nfor token, picks in routing.items():\n    print(f\"{token:9} -> {picks}\")\nprint(f\"active experts per token: {k} of {len(experts)}\")\n",
+  "under_the_hood": {
+    "summary": "In a Mixture-of-Experts layer a small router scores every expert for each token, only the top-k experts (often 2) run on that token, and their outputs are added together weighted by the router's normalised scores.",
+    "steps": [
+      {
+        "title": "Experts replace the feed-forward block",
+        "body": "In an MoE Transformer, the dense feed-forward network in some or all layers is replaced by many smaller feed-forward 'experts'. Attention layers are usually shared; the experts hold most of the parameters."
+      },
+      {
+        "title": "The router scores experts per token",
+        "body": "A linear layer maps the token's vector to one logit per expert, for example [0.1, 0.7, 0.2, 0.9] for 4 experts. This happens independently for every token, so neighbouring tokens can go to different experts.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "router scores",
+            "data": [
+              0.1,
+              0.7,
+              0.2,
+              0.9
+            ],
+            "labels": [
+              "e0",
+              "e1",
+              "e2",
+              "e3"
+            ],
+            "highlight": [
+              1,
+              3
+            ]
+          }
+        }
+      },
+      {
+        "title": "Top-k selection",
+        "body": "Only the k best experts run; with k = 2 that is experts 3 and 1. Their scores are renormalised (often by a softmax over the selected ones) and the token's output is the weighted sum of the two expert outputs. Experts 0 and 2 do no work for this token.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "gate: [0.1, 0.7, 0.2, 0.9]",
+              "route(k=2) -> [3, 1]",
+              "output = w3 * E3(x) + w1 * E1(x)"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Total versus active parameters",
+        "body": "Memory must hold every expert, but compute per token uses only the selected ones. Mixtral 8x7B, for example, has about 47B total parameters but roughly 13B active per token, so it runs at the speed of a much smaller dense model.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Dense model",
+              "code": "every parameter used\nfor every token"
+            },
+            "right": {
+              "label": "MoE, top-2",
+              "code": "all experts in memory\nonly 2 run per token"
+            }
+          }
+        }
+      },
+      {
+        "title": "Keeping the load balanced",
+        "body": "If the router sends most tokens to a few experts, the others never learn and some GPUs sit idle. Training adds an auxiliary load-balancing loss (or a bias adjustment) that pushes the router toward using experts evenly, and capacity limits cap how many tokens one expert takes per batch."
+      }
+    ],
+    "takeaway": "MoE decouples knowledge capacity (total parameters) from per-token cost (active parameters). The router, and keeping it balanced, is the heart of it."
+  }
 }

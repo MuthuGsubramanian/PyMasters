@@ -663,5 +663,76 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Bubble, selection and insertion sort all grow a sorted region one element at a time using adjacent comparisons and swaps, which is why they all cost O(n²) in the worst case.",
+    "steps": [
+      {
+        "title": "Bubble sort: the biggest sinks to the end",
+        "body": "Each pass compares neighbours arr[j] and arr[j+1] and swaps them if they are out of order. After pass 1 the largest value has been carried to the last position; after pass k the last k slots are final. A pass with no swaps means the list is sorted and the loop can stop early.",
+        "visual": {
+          "type": "AlgorithmVisualizer",
+          "props": {
+            "algorithm": "bubble_sort",
+            "data": [
+              5,
+              3,
+              8,
+              1,
+              9,
+              2
+            ],
+            "title": "Bubble sort, pass by pass"
+          }
+        }
+      },
+      {
+        "title": "Selection sort: find the minimum, swap once",
+        "body": "For each position i, scan the unsorted part for the smallest value and swap it into place. It always does n*(n-1)/2 comparisons, even on sorted input, but only n - 1 swaps, which matters when writes are expensive.",
+        "visual": {
+          "type": "AlgorithmVisualizer",
+          "props": {
+            "algorithm": "selection_sort",
+            "data": [
+              5,
+              3,
+              8,
+              1,
+              9,
+              2
+            ],
+            "title": "Selection sort"
+          }
+        }
+      },
+      {
+        "title": "Insertion sort: slide each card into place",
+        "body": "Take the next value as key and shift larger values in the sorted prefix one slot right until the gap is where the key belongs. On [1, 2, 3, 5, 4] only the 4 moves, one step. On nearly sorted data it is close to O(n), which is why Python's own TimSort uses it for short runs.",
+        "visual": {
+          "type": "AlgorithmVisualizer",
+          "props": {
+            "algorithm": "insertion_sort",
+            "data": [
+              5,
+              3,
+              8,
+              1,
+              9,
+              2
+            ],
+            "title": "Insertion sort"
+          }
+        }
+      },
+      {
+        "title": "Counting the comparisons",
+        "body": "With 6 items, a full bubble or selection sort makes 5 + 4 + 3 + 2 + 1 = 15 comparisons, that is n*(n-1)/2. For 1,000 items it is 499,500. That quadratic count is the cost of comparing only neighbours or rescanning the whole unsorted part each time."
+      },
+      {
+        "title": "Stability: equal items keep their order",
+        "body": "A stable sort never reorders two items that compare equal. Bubble and insertion sort only swap strictly out-of-order neighbours, so they are stable. Selection sort's long-distance swap can jump an item past its equal twin, so it is not. Stability matters when you sort records by one field after another."
+      }
+    ],
+    "takeaway": "These three sorts show the building blocks (compare, swap, shift) clearly, but their O(n²) cost is why real code calls sorted(), which is O(n log n)."
   }
 }

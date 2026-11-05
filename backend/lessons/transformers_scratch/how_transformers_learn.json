@@ -168,5 +168,75 @@
     "category": "transformers",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A Transformer predicts a probability for every vocabulary token at every position, cross-entropy measures how little probability the true next token got, backprop computes each weight's gradient, and an optimizer nudges all weights to reduce that loss.",
+    "steps": [
+      {
+        "title": "Forward: logits for every position",
+        "body": "After the last block, an output layer turns each position's vector into one logit per vocabulary entry (50,257 for GPT-2). Softmax converts them to probabilities. Thanks to the causal mask, one sequence of length n gives n predictions at once.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "tokens"
+              },
+              {
+                "label": "embed + blocks"
+              },
+              {
+                "label": "logits",
+                "detail": "1 per vocab entry"
+              },
+              {
+                "label": "softmax"
+              },
+              {
+                "label": "loss",
+                "detail": "-log p(true token)"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Loss: minus log of the right answer",
+        "body": "Cross-entropy at one position is -log p(correct token). If the model gave the right token 0.7 the loss is 0.357; at 0.2 it is 1.609; at 0.01 it is 4.61. The loss for the batch is the average over all positions.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "p(correct) -> loss",
+            "data": [
+              0.357,
+              1.609,
+              4.605
+            ],
+            "labels": [
+              "p=0.7",
+              "p=0.2",
+              "p=0.01"
+            ],
+            "highlight": [
+              2
+            ],
+            "title": "Confident and wrong is punished hardest"
+          }
+        }
+      },
+      {
+        "title": "A useful baseline number",
+        "body": "A model that guesses uniformly over 50,257 tokens has loss ln(50257) = 10.82. That is roughly where a fresh GPT-2-sized model starts; training curves fall from there, and exp(loss) is the perplexity."
+      },
+      {
+        "title": "Backward: one gradient per weight",
+        "body": "Backpropagation applies the chain rule from the loss back through the softmax, every block, and into the embedding rows that were used, producing a gradient for every parameter. The gradient of cross-entropy with respect to the logits is simply probabilities minus the one-hot target."
+      },
+      {
+        "title": "Update, then repeat",
+        "body": "An optimizer such as AdamW moves each weight a small step against its gradient, scaled by the learning rate (often around 1e-4 to 6e-4 for pre-training, with warmup and decay). Repeat this over billions of tokens and grammar, facts and patterns emerge, because they all reduce next-token loss."
+      }
+    ],
+    "takeaway": "Everything a pre-trained Transformer knows came from one signal: raise the log-probability of the token that actually came next. Loss tells how wrong, gradients tell which way, the optimizer takes the step."
+  }
 }

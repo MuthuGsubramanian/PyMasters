@@ -201,5 +201,64 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A small model is made to emit JSON by putting the schema and examples in the prompt, generating with low randomness, extracting the first JSON object, validating it, and retrying with the error message; tool calls are the same JSON naming a function and its arguments.",
+    "steps": [
+      {
+        "title": "Schema in the prompt",
+        "body": "The system prompt shows the exact JSON shape, for example {\"name\": str, \"age\": int}, and one or two filled examples. Small models copy formats well when they have seen them, much less well from a description alone."
+      },
+      {
+        "title": "Generate conservatively",
+        "body": "Greedy decoding or a low temperature makes the model follow the most likely continuation, which for a primed format is usually the format. Thinking mode is often disabled here so the reply is just the JSON."
+      },
+      {
+        "title": "Extract, parse, validate",
+        "body": "A regex finds the first {...} block in the reply, json.loads parses it, and the code checks required keys and types. Anything else, such as prose around the JSON or a missing key, counts as a failure.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "raw reply"
+              },
+              {
+                "label": "regex: first {...}"
+              },
+              {
+                "label": "json.loads"
+              },
+              {
+                "label": "check keys, types"
+              },
+              {
+                "label": "ok or retry with error"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Retry with the error",
+        "body": "On failure, the error message ('missing key age') is appended to the conversation and the model is asked again. One or two retries fix most format slips; a cap stops infinite loops."
+      },
+      {
+        "title": "Tool calls are JSON too",
+        "body": "List tools with names and argument descriptions; ask the model to answer with {\"tool\": ..., \"args\": {...}}. Your code looks up the tool, runs it and feeds the result back. Qwen3's own chat template also supports a tools list and wraps calls in <tool_call> tags.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "user:  What is 23 * 19?",
+              "model: {\"tool\": \"calculator\", \"args\": {\"expression\": \"23 * 19\"}}",
+              "tool:  437",
+              "model: 23 x 19 = 437"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Small models produce reliable structure when the format is shown, randomness is low, and code validates and retries. Never trust the raw text; parse it."
+  }
 }

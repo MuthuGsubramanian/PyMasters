@@ -208,5 +208,67 @@
       "correct": 2
     }
   ],
-  "uth_example": "workspace = {}                                        # stands in for the file system\nattempts = [\n    \"def add(a, b):\\n    return a - b\\n\",             # first draft has a bug\n    \"def add(a, b):\\n    return a + b\\n\",\n]\n\ndef run_tests(source):\n    scope = {}\n    exec(source, scope)\n    got = scope[\"add\"](2, 3)\n    return \"PASS\" if got == 5 else f\"FAIL: add(2, 3) returned {got}\"\n\nmemory = []\nfor draft in attempts:                               # write -> run -> read feedback\n    workspace[\"calc.py\"] = draft\n    result = run_tests(workspace[\"calc.py\"])\n    memory.append(result)\n    if result == \"PASS\":\n        break\n\nprint(memory)\n"
+  "uth_example": "workspace = {}                                        # stands in for the file system\nattempts = [\n    \"def add(a, b):\\n    return a - b\\n\",             # first draft has a bug\n    \"def add(a, b):\\n    return a + b\\n\",\n]\n\ndef run_tests(source):\n    scope = {}\n    exec(source, scope)\n    got = scope[\"add\"](2, 3)\n    return \"PASS\" if got == 5 else f\"FAIL: add(2, 3) returned {got}\"\n\nmemory = []\nfor draft in attempts:                               # write -> run -> read feedback\n    workspace[\"calc.py\"] = draft\n    result = run_tests(workspace[\"calc.py\"])\n    memory.append(result)\n    if result == \"PASS\":\n        break\n\nprint(memory)\n",
+  "under_the_hood": {
+    "summary": "A coding agent is an LLM in a loop with tools to read files, edit them and run commands; tool outputs such as test failures go back into its context, a memory layer keeps that context within limits, and a sandbox contains what the commands can touch.",
+    "steps": [
+      {
+        "title": "The LLM decides, tools do",
+        "body": "The backbone model sees the task, the conversation and tool results, and outputs the next action as a tool call: read_file('app.py'), write a patch, or run 'pytest -q'. It never touches the disk itself."
+      },
+      {
+        "title": "The tool system",
+        "body": "Each tool is a function with a schema. Edit tools usually replace an exact snippet or apply a diff rather than rewriting whole files, which keeps changes small and makes failed edits detectable.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "read_file": "path -> text",
+              "edit_file": "path, old, new",
+              "run": "cmd -> stdout, exit code"
+            },
+            "title": "Typical tool registry"
+          }
+        }
+      },
+      {
+        "title": "Feedback closes the loop",
+        "body": "After editing, the agent runs the tests. The output, for example '1 failed: expected 4, got 5', is appended to its context, and the next model call can read the error and fix it. This observe-fix cycle is the core of a coding agent.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "read code"
+              },
+              {
+                "label": "plan"
+              },
+              {
+                "label": "edit"
+              },
+              {
+                "label": "run tests",
+                "detail": "sandboxed"
+              },
+              {
+                "label": "read output",
+                "detail": "loop until green"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Memory keeps context under the limit",
+        "body": "Files and logs are large, so the agent truncates long outputs, keeps a scratchpad of key facts, and summarises older turns when the token count nears its limit. What is dropped is forgotten by the model."
+      },
+      {
+        "title": "A sandbox bounds the damage",
+        "body": "Commands run in a restricted environment, such as a container or a working directory with limited permissions, often with time limits and approval for risky actions. A wrong 'rm' or runaway loop then cannot harm the host."
+      }
+    ],
+    "takeaway": "Coding agents work because code gives fast, objective feedback. Model, tools, feedback loop, memory and sandbox are the five parts; each one fixes a specific failure of the others."
+  }
 }

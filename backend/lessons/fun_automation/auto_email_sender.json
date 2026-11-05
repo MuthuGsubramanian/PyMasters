@@ -257,5 +257,107 @@
     ],
     "category": "automation",
     "path_memberships": []
+  },
+  "under_the_hood": {
+    "summary": "smtplib holds a text conversation with a mail server: greet it, switch to an encrypted connection, log in, name the sender and recipients, then send the MIME message built by the email package.",
+    "steps": [
+      {
+        "title": "The message is headers plus a body",
+        "body": "MIMEText('Happy birthday, Asha!') builds a text message object; setting msg['Subject'], msg['From'] and msg['To'] adds header lines. msg.as_string() produces what really travels: header lines, a blank line, then the body, with Content-Type: text/plain; charset=\"us-ascii\" for plain English text, or utf-8 plus base64 encoding when the text contains characters such as é.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "Content-Type: text/plain; charset=\"us-ascii\"",
+              "MIME-Version: 1.0",
+              "Content-Transfer-Encoding: 7bit",
+              "Subject: Happy birthday!",
+              "From: me@example.com",
+              "To: asha@example.com",
+              "",
+              "Happy birthday, Asha!"
+            ],
+            "title": "msg.as_string()"
+          }
+        }
+      },
+      {
+        "title": "Connect and greet",
+        "body": "smtplib.SMTP('smtp.gmail.com', 587) opens a TCP connection and reads the server's 220 greeting. ehlo() announces your client and the server replies with its capabilities, such as STARTTLS and AUTH LOGIN PLAIN. Every reply starts with a 3-digit code: 2xx means OK, 4xx try later, 5xx refused."
+      },
+      {
+        "title": "STARTTLS encrypts the rest",
+        "body": "On port 587 the conversation starts in plain text. starttls() asks the server to upgrade, and both sides perform a TLS handshake; from then on everything, including your password, is encrypted. Port 465 is different: SMTP_SSL starts TLS immediately, before any SMTP command.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "220",
+                "detail": "server greeting"
+              },
+              {
+                "label": "EHLO",
+                "detail": "list capabilities"
+              },
+              {
+                "label": "STARTTLS",
+                "detail": "upgrade to TLS"
+              },
+              {
+                "label": "AUTH",
+                "detail": "log in with an app password"
+              },
+              {
+                "label": "MAIL FROM / RCPT TO",
+                "detail": "envelope sender and recipients"
+              },
+              {
+                "label": "DATA",
+                "detail": "send headers + body, end with a line '.'"
+              },
+              {
+                "label": "QUIT",
+                "detail": "close"
+              }
+            ],
+            "title": "One SMTP session"
+          }
+        }
+      },
+      {
+        "title": "The envelope is separate from the headers",
+        "body": "send_message() issues MAIL FROM:<you> and one RCPT TO:<address> for every recipient, then DATA followed by the message text. The server delivers to the RCPT TO addresses, not to whatever the To: header says, which is how Bcc works: Bcc recipients get an RCPT TO but no visible header."
+      },
+      {
+        "title": "Many emails, one connection",
+        "body": "Logging in costs a TLS handshake and an AUTH round trip, so a loop over 50 contacts should open one connection, log in once, call send_message 50 times and then quit. Gmail and other providers also rate-limit sending, and they need an app password rather than your normal password; keep it in an environment variable.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "with smtplib.SMTP('smtp.gmail.com', 587) as s:",
+                "explanation": "One TCP connection for the whole batch."
+              },
+              {
+                "code": "    s.starttls(); s.login(user, os.environ['APP_PW'])",
+                "explanation": "Encrypt, then authenticate once."
+              },
+              {
+                "code": "    for name, addr in contacts:",
+                "explanation": "Loop over the list."
+              },
+              {
+                "code": "        s.send_message(make_msg(name, addr))",
+                "explanation": "MAIL FROM / RCPT TO / DATA per message."
+              }
+            ],
+            "title": "Batching sends"
+          }
+        }
+      }
+    ],
+    "takeaway": "Sending email is a scripted SMTP conversation: encrypt, authenticate, then hand over an envelope and a MIME message. Reuse the connection and keep the password out of your code."
   }
 }
