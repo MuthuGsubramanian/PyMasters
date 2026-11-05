@@ -406,5 +406,146 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A Django request passes through the middleware stack, the URL resolver picks a view from urlpatterns, the view returns an HttpResponse, and the response travels back out through the middleware in reverse order.",
+    "steps": [
+      {
+        "title": "The WSGI handler builds a request object",
+        "body": "Whether you run manage.py runserver or Gunicorn, the server calls Django's WSGI handler with the environ dict. Django wraps it in an HttpRequest with request.method, request.path, request.GET, request.POST and request.COOKIES ready to use."
+      },
+      {
+        "title": "Middleware wraps every request",
+        "body": "settings.MIDDLEWARE is an ordered list, for example SecurityMiddleware, SessionMiddleware, CsrfViewMiddleware, AuthenticationMiddleware. Each one gets the request on the way in, in list order, and the response on the way out, in reverse order. That is how sessions are loaded and request.user is attached before your view ever runs.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "SecurityMiddleware",
+                "detail": "security headers"
+              },
+              {
+                "label": "SessionMiddleware",
+                "detail": "load request.session"
+              },
+              {
+                "label": "CsrfViewMiddleware",
+                "detail": "check token on POST"
+              },
+              {
+                "label": "AuthenticationMiddleware",
+                "detail": "set request.user"
+              },
+              {
+                "label": "view",
+                "detail": "your code"
+              },
+              {
+                "label": "back out",
+                "detail": "same list in reverse"
+              }
+            ],
+            "title": "The middleware onion"
+          }
+        }
+      },
+      {
+        "title": "The URL resolver picks the view",
+        "body": "Django imports ROOT_URLCONF and tries each entry in urlpatterns from top to bottom. path('posts/<int:pk>/', views.post_detail) matches /posts/7/, converts '7' to the int 7 and calls post_detail(request, pk=7). The first match wins; if nothing matches you get a 404.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "pattern tried",
+                "values": [
+                  "admin/",
+                  "posts/",
+                  "posts/<int:pk>/"
+                ]
+              },
+              {
+                "variable": "matches /posts/7/?",
+                "values": [
+                  "no",
+                  "no",
+                  "yes -> pk=7"
+                ]
+              }
+            ],
+            "title": "Resolving /posts/7/"
+          }
+        }
+      },
+      {
+        "title": "Model, Template, View",
+        "body": "Inside the view the work usually splits three ways: the model (the ORM) fetches data, the template turns data into HTML, and the view connects them and returns an HttpResponse. Django calls this MTV; the 'controller' role is played by the framework itself, the URL resolver plus middleware.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "url",
+                "label": "urls.py"
+              },
+              {
+                "id": "view",
+                "label": "View"
+              },
+              {
+                "id": "model",
+                "label": "Model (ORM)"
+              },
+              {
+                "id": "db",
+                "label": "Database"
+              },
+              {
+                "id": "tpl",
+                "label": "Template"
+              },
+              {
+                "id": "resp",
+                "label": "HttpResponse"
+              }
+            ],
+            "edges": [
+              {
+                "from": "url",
+                "to": "view",
+                "label": "calls"
+              },
+              {
+                "from": "view",
+                "to": "model",
+                "label": "queries"
+              },
+              {
+                "from": "model",
+                "to": "db",
+                "label": "SQL"
+              },
+              {
+                "from": "view",
+                "to": "tpl",
+                "label": "context"
+              },
+              {
+                "from": "tpl",
+                "to": "resp",
+                "label": "HTML"
+              }
+            ],
+            "title": "MTV in one request"
+          }
+        }
+      },
+      {
+        "title": "Projects contain apps",
+        "body": "startproject creates settings, the root urls.py and the WSGI/ASGI entry files. startapp creates a reusable package with its own models, views and migrations. An app does nothing until it is listed in INSTALLED_APPS; that list tells Django where to look for models, templates and admin registrations."
+      }
+    ],
+    "takeaway": "Every Django feature hangs off one path: middleware in, URL resolver, view, middleware out. Knowing that order explains where sessions, CSRF checks and request.user come from."
   }
 }

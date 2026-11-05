@@ -429,5 +429,80 @@
     "path_memberships": [
       "testing_devops"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A test is ordinary code that calls your code with a known input and raises an error if the result is wrong; a test runner executes many of them, records each pass or failure, and exits with a non-zero status if any failed.",
+    "steps": [
+      {
+        "title": "A test is a check that can raise",
+        "body": "def test_add(): assert add(2, 2) == 4 calls the real function and compares. If add returns 5, the assert raises AssertionError. That exception is the whole signal: no exception means pass, an exception means fail."
+      },
+      {
+        "title": "The runner catches and counts",
+        "body": "A runner such as pytest finds the test functions, calls each one inside a try/except, and records the outcome. One failing test does not stop the others. At the end it prints a summary and exits with status 0 if everything passed, or 1 if anything failed.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "tests/test_calc.py ..F.",
+              "FAILED tests/test_calc.py::test_add - assert 5 == 4",
+              "1 failed, 3 passed in 0.02s"
+            ],
+            "title": "The runner's report"
+          }
+        }
+      },
+      {
+        "title": "The exit code is what automation reads",
+        "body": "CI systems, git hooks and deploy scripts do not read the text output; they read the exit status. A non-zero status stops the pipeline, which is how a test written on Monday blocks a broken deploy on Friday without anyone watching.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "code change",
+                "detail": "someone edits add()"
+              },
+              {
+                "label": "run tests",
+                "detail": "runner calls every test"
+              },
+              {
+                "label": "exit status",
+                "detail": "0 = all pass, 1 = a failure"
+              },
+              {
+                "label": "gate",
+                "detail": "deploy only on 0"
+              }
+            ],
+            "title": "From assert to blocked deploy"
+          }
+        }
+      },
+      {
+        "title": "Why the pyramid has a wide base",
+        "body": "A unit test calls one function in memory and runs in about a millisecond. An integration test starts real pieces, like a database, and takes seconds. An end-to-end test drives the whole app through a browser and can take a minute, and it fails for more reasons (network, timing). So you write many unit tests, fewer integration tests and only a handful of end-to-end tests.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Unit test",
+              "code": "scope: one function\nspeed: ~1 ms\nfailure points to: one function"
+            },
+            "right": {
+              "label": "End-to-end test",
+              "code": "scope: whole system\nspeed: seconds to minutes\nfailure points to: anywhere"
+            },
+            "title": "Cost and precision differ"
+          }
+        }
+      },
+      {
+        "title": "Tests turn into a regression net",
+        "body": "Every test you keep is re-run on every change. A bug fixed once, with a test that reproduces it, cannot quietly come back, because the old test would fail the next time anyone reintroduces it."
+      }
+    ],
+    "takeaway": "Testing works because an assert turns 'wrong result' into an exception, the runner turns exceptions into an exit code, and automation acts on that exit code every single time."
   }
 }

@@ -469,5 +469,105 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Each pattern replaces a brute-force double loop with a single pass that keeps a little state (two indexes, a running sum, a fast and a slow pointer) and uses sorted order or arithmetic to skip work.",
+    "steps": [
+      {
+        "title": "Two pointers on a sorted array",
+        "body": "For two-sum on [1, 2, 4, 7, 11] with target 11: left = 0, right = 4 gives 1 + 11 = 12, too big, so right moves left. 1 + 7 = 8 too small, so left moves right. 2 + 7 = 9, left again; 4 + 7 = 11, found. Sorted order tells you which pointer to move, so it is O(n) instead of checking all pairs.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "left",
+                "values": [
+                  0,
+                  0,
+                  1,
+                  2
+                ]
+              },
+              {
+                "variable": "right",
+                "values": [
+                  4,
+                  3,
+                  3,
+                  3
+                ]
+              },
+              {
+                "variable": "sum",
+                "values": [
+                  12,
+                  8,
+                  9,
+                  11
+                ]
+              }
+            ],
+            "title": "Two pointers on [1, 2, 4, 7, 11]"
+          }
+        }
+      },
+      {
+        "title": "Sliding window reuses the previous sum",
+        "body": "For the best sum of k = 3 consecutive values, compute the first window once, then for each step add the value entering on the right and subtract the one leaving on the left. Each element is added once and removed once: O(n) instead of O(n x k).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              2,
+              1,
+              5,
+              1,
+              3,
+              2
+            ],
+            "title": "Window [5, 1, 3]: sum 9",
+            "highlight": [
+              2,
+              3,
+              4
+            ]
+          }
+        }
+      },
+      {
+        "title": "Fast and slow pointers find cycles",
+        "body": "In a linked list, slow moves one node per step and fast moves two. If there is a cycle, fast enters it and gains one node per step on slow, so they must meet; if there is none, fast reaches None. This is Floyd's algorithm: O(n) time and O(1) memory, with no visited set."
+      },
+      {
+        "title": "Prefix sums answer range queries instantly",
+        "body": "Build prefix where prefix[i] is the sum of the first i items. For arr = [1, 2, 3, 4, 5], prefix = [0, 1, 3, 6, 10, 15]. The sum of arr[1:4] is prefix[4] - prefix[1] = 10 - 1 = 9, one subtraction no matter how long the range.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              0,
+              1,
+              3,
+              6,
+              10,
+              15
+            ],
+            "title": "prefix for [1, 2, 3, 4, 5]: sum(arr[1:4]) = 10 - 1",
+            "highlight": [
+              1,
+              4
+            ]
+          }
+        }
+      },
+      {
+        "title": "Recognising which one applies",
+        "body": "Sorted array and a pair condition: two pointers. Contiguous subarray of fixed or flexible size: sliding window. Linked list cycle or middle node: fast and slow. Many range-sum queries on fixed data: prefix sums. Each spots the redundant work in the brute force and removes it."
+      }
+    ],
+    "takeaway": "Interview patterns are not tricks to memorise; each one is a way of carrying forward information so the inner loop disappears."
   }
 }

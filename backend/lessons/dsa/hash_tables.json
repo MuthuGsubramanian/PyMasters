@@ -394,5 +394,120 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A dict hashes each key to an integer, uses the low bits to pick a slot in a table, probes to another slot on a collision, and grows the table when it is about 2/3 full.",
+    "steps": [
+      {
+        "title": "Hash the key",
+        "body": "hash(key) turns the key into a large integer. Small ints hash to themselves (hash(42) == 42); strings get a value scrambled by a per-process random seed, so hash('Alice') changes between runs. Equal keys must give equal hashes, which is why only immutable types like str, int and tuple are allowed as keys."
+      },
+      {
+        "title": "Low bits pick a slot",
+        "body": "A new dict in CPython has 8 slots. The slot is hash % 8 (in practice hash & 7, the low 3 bits). If hash('Alice') ends in binary 101, 'Alice' goes to slot 5. Lookup repeats the same calculation and jumps straight there, which is why it is O(1) on average.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "'Alice'",
+              "",
+              ""
+            ],
+            "title": "8-slot table: hash('Alice') & 7 == 5",
+            "labels": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7"
+            ],
+            "highlight": [
+              5
+            ]
+          }
+        }
+      },
+      {
+        "title": "Collisions probe to another slot",
+        "body": "If 'Bob' also lands on slot 5, CPython does not chain a list there. It uses open addressing: it computes a new slot from the hash with j = (5*j + 1 + perturb) % size, where perturb feeds in more bits of the hash each round, and tries again. A lookup follows the same probe sequence and compares hashes, then keys, until it finds a match or an empty slot.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "",
+              "'Bob'",
+              "",
+              "",
+              "",
+              "'Alice'",
+              "",
+              ""
+            ],
+            "title": "'Bob' wanted slot 5, probed to slot 1",
+            "labels": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7"
+            ],
+            "highlight": [
+              1,
+              5
+            ]
+          }
+        }
+      },
+      {
+        "title": "Grow when about 2/3 full",
+        "body": "Probe chains get long when the table is crowded, so CPython keeps it at most about 2/3 full. An 8-slot table holds 5 entries; the 6th insert allocates a bigger table and re-inserts every key at its new slot. Resizing is O(n), but it happens rarely enough that inserts stay O(1) amortised.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "len(d)",
+                "values": [
+                  1,
+                  5,
+                  6,
+                  11,
+                  22
+                ]
+              },
+              {
+                "variable": "table slots",
+                "values": [
+                  8,
+                  8,
+                  16,
+                  32,
+                  64
+                ]
+              }
+            ],
+            "title": "Table grows as entries are added (CPython 3.13)"
+          }
+        }
+      },
+      {
+        "title": "Insertion order comes from a separate array",
+        "body": "Since Python 3.6 the dict keeps two arrays: a small sparse index table (the slots above) and a dense entries array of (hash, key, value) in insertion order. The slot stores only the position in the entries array. That makes the dict smaller and is why iteration follows insertion order."
+      }
+    ],
+    "takeaway": "O(1) dict lookup comes from hash -> slot -> compare. It degrades only when many keys collide, and it only works if a key's hash never changes while it is in the dict."
   }
 }

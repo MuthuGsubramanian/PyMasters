@@ -155,5 +155,144 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "def fake_ai(prompt):                       # canned \"generated\" code per request\n    return {\"slugify a title\": lambda s: s.lower().replace(\" \", \"-\"),\n            \"make it strip punctuation\": lambda s: \"\".join(\n                c for c in s.lower().replace(\" \", \"-\") if c.isalnum() or c == \"-\")}[prompt]\n\nchecks = [(\"Hello World\", \"hello-world\"), (\"Hi, there!\", \"hi-there\")]\nprompts = [\"slugify a title\", \"make it strip punctuation\"]\n\nhistory = []\nfor prompt in prompts:                     # describe -> generate -> RUN -> judge -> refine\n    candidate = fake_ai(prompt)\n    failures = [inp for inp, want in checks if candidate(inp) != want]\n    history.append({\"prompt\": prompt, \"failures\": failures})\n    if not failures:\n        break\n\nfor step in history:\n    print(step)\nprint(\"accepted after\", len(history), \"rounds\")\n"
+  "uth_example": "def fake_ai(prompt):                       # canned \"generated\" code per request\n    return {\"slugify a title\": lambda s: s.lower().replace(\" \", \"-\"),\n            \"make it strip punctuation\": lambda s: \"\".join(\n                c for c in s.lower().replace(\" \", \"-\") if c.isalnum() or c == \"-\")}[prompt]\n\nchecks = [(\"Hello World\", \"hello-world\"), (\"Hi, there!\", \"hi-there\")]\nprompts = [\"slugify a title\", \"make it strip punctuation\"]\n\nhistory = []\nfor prompt in prompts:                     # describe -> generate -> RUN -> judge -> refine\n    candidate = fake_ai(prompt)\n    failures = [inp for inp, want in checks if candidate(inp) != want]\n    history.append({\"prompt\": prompt, \"failures\": failures})\n    if not failures:\n        break\n\nfor step in history:\n    print(step)\nprint(\"accepted after\", len(history), \"rounds\")\n",
+  "under_the_hood": {
+    "summary": "Vibe coding is a loop: your plain-language intent goes into the model's context, the model generates code one token at a time, you run it, and what you observe becomes the next instruction; the levels differ only in how much of that loop the AI runs for you.",
+    "steps": [
+      {
+        "title": "Intent becomes context",
+        "body": "Your prompt, plus whatever code or files the tool attaches, is turned into tokens (word pieces) and placed in the model's context window. The model sees nothing else: not your screen, not files that were not attached, not what you meant but did not write."
+      },
+      {
+        "title": "Code comes out one token at a time",
+        "body": "The model repeatedly predicts a likely next token given everything before it, appends it and predicts again, until the answer is complete. It is not compiling or testing as it goes; a function is just a long sequence of individually likely tokens.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "prompt tokens",
+                "detail": "your words + attached code"
+              },
+              {
+                "label": "predict",
+                "detail": "most likely next token"
+              },
+              {
+                "label": "append",
+                "detail": "add it to the text"
+              },
+              {
+                "label": "repeat",
+                "detail": "until the answer ends"
+              }
+            ],
+            "title": "How a code answer is produced",
+            "direction": "right"
+          }
+        }
+      },
+      {
+        "title": "Running it closes the loop",
+        "body": "You run the code and look at what happens: output, an error, a wrong number. That observation is the only ground truth in the loop. Your next prompt ('it crashes on an empty list, here is the traceback') steers the next generation.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "intent",
+                "label": "describe what you want",
+                "type": "start"
+              },
+              {
+                "id": "gen",
+                "label": "AI generates code"
+              },
+              {
+                "id": "run",
+                "label": "you run it"
+              },
+              {
+                "id": "ok",
+                "label": "does it do what you meant?",
+                "type": "decision"
+              },
+              {
+                "id": "steer",
+                "label": "describe the gap"
+              },
+              {
+                "id": "done",
+                "label": "keep it, commit",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "intent",
+                "to": "gen"
+              },
+              {
+                "from": "gen",
+                "to": "run"
+              },
+              {
+                "from": "run",
+                "to": "ok"
+              },
+              {
+                "from": "ok",
+                "to": "steer",
+                "label": "no"
+              },
+              {
+                "from": "steer",
+                "to": "gen"
+              },
+              {
+                "from": "ok",
+                "to": "done",
+                "label": "yes"
+              }
+            ],
+            "executionPath": [
+              "intent",
+              "gen",
+              "run",
+              "ok",
+              "steer",
+              "gen",
+              "run",
+              "ok",
+              "done"
+            ],
+            "title": "The vibe coding loop"
+          }
+        }
+      },
+      {
+        "title": "The dial: who runs which step",
+        "body": "With autocomplete you write and it finishes lines. Prompt-a-function and prompt-a-feature hand it bigger chunks. In agentic mode the tool also runs commands, reads the output and edits again by itself, so the AI drives several turns of the loop before you look. The higher the dial, the more code arrives per check you make.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Autocomplete",
+              "code": "you: write most of the code\nAI: finish the line\nyou check: every few lines"
+            },
+            "right": {
+              "label": "Agentic",
+              "code": "you: describe the goal\nAI: edit files, run commands, retry\nyou check: at the end"
+            },
+            "title": "Same loop, different driver"
+          }
+        }
+      },
+      {
+        "title": "Where the risk comes from",
+        "body": "Each turn of the loop only checks what you actually ran. Code paths you never exercised were never verified, however finished they look. Vibe coding stays safe when the checks keep pace with the amount of code being generated."
+      }
+    ],
+    "takeaway": "Vibe coding is prediction plus feedback. The model supplies plausible code; only running and checking it turns plausible into correct, so stay the one who decides when the loop is done."
+  }
 }

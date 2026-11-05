@@ -385,5 +385,98 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "In production Nginx accepts the internet's connections, terminates TLS and serves static files, then forwards dynamic requests to Gunicorn, whose master process keeps several worker processes each running your WSGI app.",
+    "steps": [
+      {
+        "title": "Why not python app.py",
+        "body": "Flask's and Django's built-in servers are made for development: they run debug tooling, are not hardened against slow or malicious clients, and are not designed for heavy concurrent traffic. Production splits the job between a web server facing the internet and an application server running Python."
+      },
+      {
+        "title": "Nginx sits at the edge",
+        "body": "Nginx listens on ports 80 and 443, handles the TLS handshake with your certificate, serves /static/ files straight from disk, and buffers slow clients. For everything else, proxy_pass forwards the request to Gunicorn on 127.0.0.1:8000, adding headers such as X-Forwarded-For so the app still knows the client's IP.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "browser",
+                "detail": "https://myapp.com/orders"
+              },
+              {
+                "label": "Nginx :443",
+                "detail": "TLS, static files, buffering"
+              },
+              {
+                "label": "Gunicorn :8000",
+                "detail": "master + workers"
+              },
+              {
+                "label": "your app",
+                "detail": "app(environ, start_response)"
+              }
+            ],
+            "title": "The production request path",
+            "direction": "right"
+          }
+        }
+      },
+      {
+        "title": "Gunicorn forks workers",
+        "body": "gunicorn -w 4 app:app starts a master process that forks 4 worker processes. Each worker loads your app and, with the default sync worker, handles one request at a time. A common starting point is 2 x CPU cores + 1 workers. If a worker crashes or hangs past the timeout, the master kills and replaces it.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "process",
+                "values": [
+                  "master",
+                  "worker 1",
+                  "worker 2",
+                  "worker 3",
+                  "worker 4"
+                ]
+              },
+              {
+                "variable": "job",
+                "values": [
+                  "watch and restart workers",
+                  "request A",
+                  "request B",
+                  "idle",
+                  "request C"
+                ]
+              }
+            ],
+            "title": "gunicorn -w 4"
+          }
+        }
+      },
+      {
+        "title": "WSGI versus ASGI",
+        "body": "Flask and classic Django are WSGI apps: the server calls app(environ, start_response) once per request and waits. FastAPI is an ASGI app: the server awaits app(scope, receive, send), so one worker can juggle many requests that are waiting on I/O. Gunicorn can run ASGI apps with -k uvicorn.workers.UvicornWorker.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "WSGI (sync)",
+              "code": "Flask, Django\nserver calls app(environ, start_response)\none request per worker at a time"
+            },
+            "right": {
+              "label": "ASGI (async)",
+              "code": "FastAPI, Starlette\nserver awaits app(scope, receive, send)\nmany waiting requests per worker"
+            },
+            "title": "Two server interfaces"
+          }
+        }
+      },
+      {
+        "title": "Configuration comes from the environment",
+        "body": "The same code runs on your laptop and the server; what differs is set in environment variables: DEBUG=False, a long random SECRET_KEY, the DATABASE_URL. A process manager such as systemd starts Gunicorn at boot and restarts it if it exits, so the app stays up without anyone logged in."
+      }
+    ],
+    "takeaway": "Production is a relay: Nginx handles the internet, Gunicorn manages processes, and your app only answers WSGI or ASGI calls. Each layer does one job it is good at."
   }
 }

@@ -430,5 +430,84 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "An HTTP exchange is plain structured text sent over a TCP connection: a request line, headers, a blank line and an optional body go out, and a status line, headers, a blank line and a body come back.",
+    "steps": [
+      {
+        "title": "Find the server and connect",
+        "body": "For https://example.com/about the browser first resolves example.com to an IP address with DNS, then opens a TCP connection to port 443 and performs a TLS handshake so the rest is encrypted. Port 80 is used for plain http. Only then is any HTTP sent.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "DNS",
+                "detail": "example.com -> an IP address"
+              },
+              {
+                "label": "TCP",
+                "detail": "3-way handshake to port 443"
+              },
+              {
+                "label": "TLS",
+                "detail": "agree keys, check certificate"
+              },
+              {
+                "label": "HTTP",
+                "detail": "request and response"
+              }
+            ],
+            "title": "Before the first byte of HTTP",
+            "direction": "right"
+          }
+        }
+      },
+      {
+        "title": "The request is lines of text",
+        "body": "The first line names the method, the path and the version: GET /about HTTP/1.1. Header lines follow, such as Host: example.com, Accept: text/html and a Cookie if the browser has one. A blank line ends the headers; a POST would put its body (form fields or JSON) after it.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "GET /about HTTP/1.1",
+              "Host: example.com",
+              "Accept: text/html",
+              "User-Agent: Mozilla/5.0 ...",
+              "",
+              "(no body for GET)"
+            ],
+            "title": "What the browser sends"
+          }
+        }
+      },
+      {
+        "title": "The response mirrors it",
+        "body": "The server answers with a status line such as HTTP/1.1 200 OK, headers such as Content-Type: text/html; charset=utf-8 and Content-Length: 1256, a blank line, then exactly that many bytes of body. Content-Length (or chunked encoding) is how the client knows where the body ends.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "HTTP/1.1 200 OK",
+              "Content-Type: text/html; charset=utf-8",
+              "Content-Length: 1256",
+              "Set-Cookie: session=abc123; HttpOnly",
+              "",
+              "<!DOCTYPE html><html>..."
+            ],
+            "title": "What the server sends back"
+          }
+        }
+      },
+      {
+        "title": "Status codes are grouped by first digit",
+        "body": "2xx means success (200 OK, 201 Created), 3xx means look elsewhere (301 Moved Permanently with a Location header), 4xx means the client got something wrong (400, 401, 404), and 5xx means the server failed (500, 503). Clients branch on the first digit before reading anything else."
+      },
+      {
+        "title": "Stateless, so cookies carry state",
+        "body": "Each request stands alone: the server does not remember the previous one on its own. To keep you logged in, the server sends Set-Cookie: session=abc123 once, and the browser attaches Cookie: session=abc123 to every later request to that site. HTTP/2 and HTTP/3 send the same methods, headers and status codes in binary frames, but the meaning is unchanged."
+      }
+    ],
+    "takeaway": "Every web feature, from forms to APIs to logins, is built from this one exchange: a method, a path, headers and maybe a body in; a status, headers and a body out."
   }
 }

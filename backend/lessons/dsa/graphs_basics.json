@@ -487,5 +487,155 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A graph in Python is usually a dict mapping each node to its neighbours; BFS explores it level by level with a queue and DFS dives deep with a stack, both using a visited set.",
+    "steps": [
+      {
+        "title": "Adjacency list: a dict of lists",
+        "body": "graph = {'A': ['B', 'C'], 'B': ['A', 'D', 'E'], ...} stores, for every node, the list of nodes it connects to. Finding A's neighbours is one dict lookup. Space is O(V + E), which is why it beats a V x V matrix for sparse graphs such as road maps or social networks.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "A",
+                "label": "A"
+              },
+              {
+                "id": "B",
+                "label": "B"
+              },
+              {
+                "id": "C",
+                "label": "C"
+              },
+              {
+                "id": "D",
+                "label": "D"
+              },
+              {
+                "id": "E",
+                "label": "E"
+              },
+              {
+                "id": "F",
+                "label": "F"
+              }
+            ],
+            "edges": [
+              {
+                "from": "A",
+                "to": "B",
+                "label": ""
+              },
+              {
+                "from": "A",
+                "to": "C",
+                "label": ""
+              },
+              {
+                "from": "B",
+                "to": "D",
+                "label": ""
+              },
+              {
+                "from": "B",
+                "to": "E",
+                "label": ""
+              },
+              {
+                "from": "C",
+                "to": "F",
+                "label": ""
+              },
+              {
+                "from": "E",
+                "to": "F",
+                "label": ""
+              }
+            ],
+            "title": "The lesson's graph"
+          }
+        }
+      },
+      {
+        "title": "BFS: a queue makes it level by level",
+        "body": "Start with deque(['A']) and visited = {'A'}. Pop A, push its unvisited neighbours B and C. Pop B, push D and E. Pop C, push F. The queue hands out nodes in the order they were discovered, so BFS visits A, B, C, D, E, F: all nodes at distance 1, then distance 2.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "popped",
+                "values": [
+                  "A",
+                  "B",
+                  "C",
+                  "D",
+                  "E",
+                  "F"
+                ]
+              },
+              {
+                "variable": "queue after",
+                "values": [
+                  "[B, C]",
+                  "[C, D, E]",
+                  "[D, E, F]",
+                  "[E, F]",
+                  "[F]",
+                  "[]"
+                ]
+              }
+            ],
+            "title": "BFS from A"
+          }
+        }
+      },
+      {
+        "title": "The visited set stops loops",
+        "body": "B lists A as a neighbour, and E and F point at each other. Without a record of where you have been, BFS would bounce between them forever. Adding a node to the visited set when it is first discovered means every node enters the queue once, giving O(V + E) total work."
+      },
+      {
+        "title": "DFS: a stack dives first",
+        "body": "DFS swaps the queue for a stack, usually the call stack via recursion. From A it goes to B, then B's first unvisited neighbour D, hits a dead end, backs up to B, goes to E, then F, then C. Order: A, B, D, E, F, C.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "dfs('F')",
+                "variables": {
+                  "from": "E"
+                }
+              },
+              {
+                "name": "dfs('E')",
+                "variables": {
+                  "from": "B"
+                }
+              },
+              {
+                "name": "dfs('B')",
+                "variables": {
+                  "from": "A"
+                }
+              },
+              {
+                "name": "dfs('A')",
+                "variables": {}
+              }
+            ],
+            "title": "Call stack when DFS reaches F"
+          }
+        }
+      },
+      {
+        "title": "Shortest hops comes free with BFS",
+        "body": "Because BFS finishes every node at distance d before any at distance d + 1, the first time it reaches a node is along a path with the fewest edges. Record each node's parent when you discover it and you can walk back to rebuild that path."
+      }
+    ],
+    "takeaway": "Same graph, same visited set; the only difference between BFS and DFS is queue versus stack. That one choice decides the visiting order and what each is good for."
   }
 }

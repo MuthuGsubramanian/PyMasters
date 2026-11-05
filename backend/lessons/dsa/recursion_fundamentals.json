@@ -402,5 +402,93 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Each recursive call pushes a new frame with its own local variables onto the call stack; the base case stops the pushing and the returns unwind the stack, combining results on the way back.",
+    "steps": [
+      {
+        "title": "A call creates a fresh frame",
+        "body": "factorial(3) runs in a frame where n = 3. When it calls factorial(2), Python pauses the first frame and creates a new one where n = 2. The two n variables are separate, which is why recursion does not overwrite its own work."
+      },
+      {
+        "title": "Frames pile up until the base case",
+        "body": "factorial(4) calls factorial(3), which calls factorial(2), then factorial(1). factorial(1) hits the base case `if n <= 1: return 1` and makes no further call. At that moment four frames are on the stack, each waiting to multiply.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "factorial(1)",
+                "variables": {
+                  "n": 1,
+                  "returns": 1
+                }
+              },
+              {
+                "name": "factorial(2)",
+                "variables": {
+                  "n": 2,
+                  "waiting": "2 * ?"
+                }
+              },
+              {
+                "name": "factorial(3)",
+                "variables": {
+                  "n": 3,
+                  "waiting": "3 * ?"
+                }
+              },
+              {
+                "name": "factorial(4)",
+                "variables": {
+                  "n": 4,
+                  "waiting": "4 * ?"
+                }
+              }
+            ],
+            "title": "Deepest point of factorial(4)"
+          }
+        }
+      },
+      {
+        "title": "Unwinding combines the answers",
+        "body": "factorial(1) returns 1 and its frame is popped. factorial(2) resumes and returns 2 * 1 = 2, then factorial(3) returns 3 * 2 = 6, then factorial(4) returns 4 * 6 = 24. The work happens on the way back up.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "returned",
+                "values": [
+                  1,
+                  2,
+                  6,
+                  24
+                ]
+              },
+              {
+                "variable": "frames left",
+                "values": [
+                  3,
+                  2,
+                  1,
+                  0
+                ]
+              }
+            ],
+            "title": "Returns as the stack unwinds"
+          }
+        }
+      },
+      {
+        "title": "The recursion limit",
+        "body": "CPython stops runaway recursion with a depth limit, 1000 by default (sys.getrecursionlimit()). A missing or unreachable base case makes the stack grow until RecursionError: maximum recursion depth exceeded. Python does not optimise tail calls, so even a 'tail-recursive' function uses one frame per call."
+      },
+      {
+        "title": "Every step must shrink the problem",
+        "body": "A recursive case has to move toward the base case: n - 1 for factorial, a shorter list for sum_list(lst[1:]), half the range for binary search. If the argument never gets smaller, the base case is never reached."
+      }
+    ],
+    "takeaway": "Recursion is the call stack doing your bookkeeping: each frame remembers where it was, and the base case is the only thing that stops the stack growing."
   }
 }

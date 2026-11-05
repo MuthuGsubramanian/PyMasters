@@ -440,5 +440,97 @@
     "path_memberships": [
       "testing_devops"
     ]
+  },
+  "under_the_hood": {
+    "summary": "patch and monkeypatch temporarily replace an attribute on a real module or object with a stand-in, and restore the original afterwards; a Mock records every call so the test can check how it was used.",
+    "steps": [
+      {
+        "title": "Names are looked up at call time",
+        "body": "If weather.py does `import requests` and later calls requests.get(url), Python looks up the attribute get on the requests module each time the line runs. Replace that attribute before the call and your code will call the replacement without knowing it. All mocking rests on this.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "get_temp() runs",
+                "detail": "reaches requests.get(url)"
+              },
+              {
+                "label": "attribute lookup",
+                "detail": "requests module -> 'get'"
+              },
+              {
+                "label": "patched?",
+                "detail": "finds the Mock instead of the real function"
+              },
+              {
+                "label": "no network",
+                "detail": "Mock returns the canned response"
+              }
+            ],
+            "title": "Why replacing an attribute works"
+          }
+        }
+      },
+      {
+        "title": "Patch where it is used",
+        "body": "With `from requests import get` in weather.py, the name get is copied into the weather module. Patching requests.get then changes nothing for weather.py; you must patch 'weather.get'. The rule is: patch the name in the namespace where the code under test looks it up.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Wrong target",
+              "code": "# weather.py: from requests import get\npatch('requests.get')\n# weather.get still the real one"
+            },
+            "right": {
+              "label": "Right target",
+              "code": "patch('weather.get')\n# the name weather.py actually uses"
+            },
+            "title": "patch the lookup location"
+          }
+        }
+      },
+      {
+        "title": "A Mock invents attributes and records calls",
+        "body": "Mock() creates any attribute you touch on the fly, and calling it returns mock.return_value. Every call is recorded: mock.call_count, mock.call_args and mock_calls. So after the test you can assert mock_get.assert_called_once_with('https://api.example.com/temp').",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "action",
+                "values": [
+                  "m = Mock()",
+                  "m.return_value = 21",
+                  "m('Chennai')",
+                  "m.call_count",
+                  "m.call_args"
+                ]
+              },
+              {
+                "variable": "result",
+                "values": [
+                  "Mock object",
+                  "set",
+                  "21",
+                  "1",
+                  "call('Chennai')"
+                ]
+              }
+            ],
+            "title": "What a Mock remembers"
+          }
+        }
+      },
+      {
+        "title": "Restoring is the important half",
+        "body": "patch used as a decorator or with-block saves the original attribute and puts it back on exit. monkeypatch.setattr does the same, recording each change and undoing it at fixture teardown, in reverse order. Without the undo, one test's fake would leak into every test that runs after it."
+      },
+      {
+        "title": "conftest.py shares fixtures",
+        "body": "pytest automatically loads conftest.py files in the test folders and their parents, and every fixture defined there is available to tests in that directory tree without importing it. A shared fake_api fixture in tests/conftest.py can then be used by every test file."
+      }
+    ],
+    "takeaway": "Mocking is attribute replacement plus call recording plus guaranteed restore. Patch the name where your code looks it up, and assert on how the fake was called."
   }
 }

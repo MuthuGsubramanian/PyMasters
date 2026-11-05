@@ -427,5 +427,105 @@
     "path_memberships": [
       "testing_devops"
     ]
+  },
+  "under_the_hood": {
+    "summary": "unittest.main() loads every TestCase subclass, creates one instance per test_ method, runs setUp, the test and tearDown for each, and sorts the outcomes into passes, failures and errors.",
+    "steps": [
+      {
+        "title": "Discovery by naming",
+        "body": "unittest.main() looks in the module for classes that subclass unittest.TestCase, and inside each for methods whose names start with test. They run in alphabetical order of method name, not in the order you wrote them, so tests must not depend on each other."
+      },
+      {
+        "title": "One fresh instance per test",
+        "body": "For a class with test_add and test_divide, the loader builds two separate TestCase objects. Each gets its own setUp call, so anything setUp stores on self (like self.calc = Calculator()) is brand new for every test and cannot leak state from the previous one.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "setUp()",
+                "detail": "self.calc = Calculator()"
+              },
+              {
+                "label": "test_add()",
+                "detail": "run the assertions"
+              },
+              {
+                "label": "tearDown()",
+                "detail": "clean up, runs even if the test failed"
+              },
+              {
+                "label": "next test",
+                "detail": "new instance, setUp again"
+              }
+            ],
+            "title": "Lifecycle of each test method"
+          }
+        }
+      },
+      {
+        "title": "assert methods raise AssertionError",
+        "body": "self.assertEqual(add(2, 2), 5) compares the values and, when they differ, raises AssertionError with a message like 4 != 5. The assert methods exist mainly to build those helpful messages: assertIn, assertRaises and assertAlmostEqual each explain what went wrong in their own words."
+      },
+      {
+        "title": "Failure versus error",
+        "body": "The runner catches what the test raises. AssertionError counts as a failure (F): the code ran but gave the wrong answer. Any other exception, such as ZeroDivisionError or AttributeError, counts as an error (E): the test itself crashed. Both make the run unsuccessful.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ".F.E",
+              "======================================================================",
+              "FAIL: test_add (test_calc.TestCalc.test_add)",
+              "AssertionError: 4 != 5",
+              "----------------------------------------------------------------------",
+              "Ran 4 tests in 0.001s",
+              "",
+              "FAILED (failures=1, errors=1)"
+            ],
+            "title": "One character per test: . pass, F failure, E error"
+          }
+        }
+      },
+      {
+        "title": "Class-level setup",
+        "body": "setUpClass, a classmethod, runs once before all tests in the class, and tearDownClass once after. Use it for expensive shared resources, such as starting a test database, and keep per-test state in setUp so tests stay independent.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "hook",
+                "values": [
+                  "setUpClass",
+                  "setUp",
+                  "test_a",
+                  "tearDown",
+                  "setUp",
+                  "test_b",
+                  "tearDown",
+                  "tearDownClass"
+                ]
+              },
+              {
+                "variable": "runs",
+                "values": [
+                  "once",
+                  "per test",
+                  "",
+                  "per test",
+                  "per test",
+                  "",
+                  "per test",
+                  "once"
+                ]
+              }
+            ],
+            "title": "Call order for a class with two tests"
+          }
+        }
+      }
+    ],
+    "takeaway": "unittest's machinery is simple: fresh instance, setUp, test, tearDown, and an exception type that decides F or E. Knowing that makes test isolation and error messages easy to reason about."
   }
 }

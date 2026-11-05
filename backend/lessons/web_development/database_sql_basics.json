@@ -418,5 +418,87 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "SQLite compiles each SQL statement into a small program, binds your ? values separately, and runs it against tables stored as B-trees; indexes are extra B-trees that let a WHERE clause jump to rows instead of scanning them all.",
+    "steps": [
+      {
+        "title": "Tables are B-trees on disk",
+        "body": "Each SQLite table is stored as a B-tree keyed by its integer rowid (the INTEGER PRIMARY KEY). Finding id = 500 in a million rows walks a few levels of that tree instead of reading every row. The whole database is a single file, split into fixed-size pages (4096 bytes by default)."
+      },
+      {
+        "title": "Placeholders keep data out of the SQL",
+        "body": "cur.execute('SELECT * FROM users WHERE email = ?', (email,)) compiles the statement with a placeholder, then binds the value separately. The value can never change the statement's structure, so an email like x' OR '1'='1 is just compared as a string. Building SQL with f-strings mixes data into code and opens the door to SQL injection.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "f-string (unsafe)",
+              "code": "f\"... WHERE email = '{email}'\"\n# email = \"x' OR '1'='1\"\n# -> WHERE email = 'x' OR '1'='1'  (every row)"
+            },
+            "right": {
+              "label": "placeholder (safe)",
+              "code": "'... WHERE email = ?', (email,)\n# compared as one literal string\n# -> no match"
+            },
+            "title": "Why parameters matter"
+          }
+        }
+      },
+      {
+        "title": "Without an index, a full scan",
+        "body": "SELECT * FROM users WHERE email = ? with no index on email must read every row and test it. EXPLAIN QUERY PLAN reports SCAN users. After CREATE INDEX idx_users_email ON users(email), the plan becomes SEARCH users USING INDEX idx_users_email (email=?): a B-tree lookup, O(log n) instead of O(n).",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "sqlite> EXPLAIN QUERY PLAN SELECT * FROM users WHERE email = ?;",
+              "SCAN users",
+              "sqlite> CREATE INDEX idx_users_email ON users(email);",
+              "sqlite> EXPLAIN QUERY PLAN SELECT * FROM users WHERE email = ?;",
+              "SEARCH users USING INDEX idx_users_email (email=?)"
+            ],
+            "title": "The query plan changes"
+          }
+        }
+      },
+      {
+        "title": "JOIN matches rows by key",
+        "body": "orders has a user_id column that refers to users.id. SELECT users.name, orders.total FROM orders JOIN users ON users.id = orders.user_id pairs each order with its user. With the id as the users table's key, each match is a quick tree lookup, not a scan.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "orders row",
+                "values": [
+                  "(1, user_id=7, 250)",
+                  "(2, user_id=3, 90)"
+                ]
+              },
+              {
+                "variable": "matched users row",
+                "values": [
+                  "(7, 'Asha')",
+                  "(3, 'Ravi')"
+                ]
+              },
+              {
+                "variable": "result",
+                "values": [
+                  "Asha 250",
+                  "Ravi 90"
+                ]
+              }
+            ],
+            "title": "JOIN orders to users"
+          }
+        }
+      },
+      {
+        "title": "Transactions make changes all-or-nothing",
+        "body": "By default Python's sqlite3 module opens a transaction before an INSERT, UPDATE or DELETE, and nothing is permanent until conn.commit(). If the program crashes first, SQLite's journal lets it roll back to the last commit, so a half-finished money transfer never shows up. Using the connection as a with block commits on success and rolls back on an exception."
+      }
+    ],
+    "takeaway": "A database is fast and safe because of three mechanisms: B-tree storage and indexes for lookups, parameter binding for safe queries, and transactions for all-or-nothing changes."
   }
 }

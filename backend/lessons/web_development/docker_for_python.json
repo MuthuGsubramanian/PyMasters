@@ -402,5 +402,85 @@
       "web_development"
     ]
   },
-  "uth_example": "import hashlib\n\ndef digest(text):\n    return hashlib.sha256(text.encode()).hexdigest()[:6]\n\ndockerfile = [\"FROM python:3.12-slim\", \"WORKDIR /app\", \"COPY requirements.txt .\",\n              \"RUN pip install -r requirements.txt\", \"COPY . .\", \"CMD uvicorn main:app\"]\n\ndef build(files, cache):\n    parent, report = \"\", []\n    for step in dockerfile:\n        inputs = \"\"\n        if step.startswith(\"COPY requirements\"):\n            inputs = files[\"requirements.txt\"]\n        elif step == \"COPY . .\":\n            inputs = files[\"src\"]\n        layer = digest(parent + step + inputs)      # depends on everything above it\n        report.append(\"CACHED\" if layer in cache else \"built\")\n        cache.add(layer)\n        parent = layer\n    return report\n\ncache = set()\nfirst = build({\"requirements.txt\": \"fastapi==0.115\", \"src\": \"v1\"}, cache)\nsecond = build({\"requirements.txt\": \"fastapi==0.115\", \"src\": \"v2\"}, cache)\nprint(\"first build: \", first)\nprint(\"code change: \", second)          # pip install layer stays cached\n"
+  "uth_example": "import hashlib\n\ndef digest(text):\n    return hashlib.sha256(text.encode()).hexdigest()[:6]\n\ndockerfile = [\"FROM python:3.12-slim\", \"WORKDIR /app\", \"COPY requirements.txt .\",\n              \"RUN pip install -r requirements.txt\", \"COPY . .\", \"CMD uvicorn main:app\"]\n\ndef build(files, cache):\n    parent, report = \"\", []\n    for step in dockerfile:\n        inputs = \"\"\n        if step.startswith(\"COPY requirements\"):\n            inputs = files[\"requirements.txt\"]\n        elif step == \"COPY . .\":\n            inputs = files[\"src\"]\n        layer = digest(parent + step + inputs)      # depends on everything above it\n        report.append(\"CACHED\" if layer in cache else \"built\")\n        cache.add(layer)\n        parent = layer\n    return report\n\ncache = set()\nfirst = build({\"requirements.txt\": \"fastapi==0.115\", \"src\": \"v1\"}, cache)\nsecond = build({\"requirements.txt\": \"fastapi==0.115\", \"src\": \"v2\"}, cache)\nprint(\"first build: \", first)\nprint(\"code change: \", second)          # pip install layer stays cached\n",
+  "under_the_hood": {
+    "summary": "Containerising a Python app means building an image whose layers hold the interpreter, your installed dependencies and your code, then running it as an isolated process whose port is mapped to the host; a few Python-specific settings decide whether it behaves well inside.",
+    "steps": [
+      {
+        "title": "A slim base, then dependencies, then code",
+        "body": "FROM python:3.12-slim gives a Debian-based image with Python already installed. Copying requirements.txt and running pip install --no-cache-dir -r requirements.txt before COPY . . means the dependency layer is cached and reused until requirements.txt changes, and --no-cache-dir keeps pip's download cache out of the image.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "FROM python:3.12-slim",
+              "ENV PYTHONUNBUFFERED=1",
+              "COPY requirements.txt .",
+              "RUN pip install --no-cache-dir -r requirements.txt",
+              "COPY . .",
+              "CMD [\"gunicorn\", \"-b\", \"0.0.0.0:8000\", \"app:app\"]"
+            ],
+            "title": "A typical Python Dockerfile, top to bottom"
+          }
+        }
+      },
+      {
+        "title": "PYTHONUNBUFFERED makes logs appear",
+        "body": "When stdout is not a terminal, as inside a container, Python block-buffers print output, so lines can sit unseen in memory and be lost if the container is killed. Setting PYTHONUNBUFFERED=1 makes stdout and stderr unbuffered, so docker logs shows each line as it is written."
+      },
+      {
+        "title": "Bind to 0.0.0.0, then publish the port",
+        "body": "Inside the container, 127.0.0.1 means the container itself, so a server bound there cannot be reached from outside. Binding to 0.0.0.0:8000 listens on the container's network interface, and docker run -p 8000:8000 tells Docker to forward the host's port 8000 to it.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "browser",
+                "detail": "localhost:8000 on the host"
+              },
+              {
+                "label": "Docker port mapping",
+                "detail": "-p 8000:8000"
+              },
+              {
+                "label": "container interface",
+                "detail": "e.g. 172.17.0.2:8000"
+              },
+              {
+                "label": "gunicorn",
+                "detail": "bound to 0.0.0.0:8000"
+              }
+            ],
+            "title": "How a request reaches the app",
+            "direction": "right"
+          }
+        }
+      },
+      {
+        "title": "Exec-form CMD and signals",
+        "body": "CMD [\"gunicorn\", ...] in JSON (exec) form starts Gunicorn directly as PID 1. When docker stop sends SIGTERM, Gunicorn receives it and shuts down gracefully, finishing in-flight requests. The shell form CMD gunicorn ... runs under /bin/sh, which may not forward the signal, so Docker waits 10 seconds by default and then kills the process.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Shell form",
+              "code": "CMD gunicorn -b 0.0.0.0:8000 app:app\n# /bin/sh is PID 1\n# SIGTERM may not reach gunicorn"
+            },
+            "right": {
+              "label": "Exec form",
+              "code": "CMD [\"gunicorn\", \"-b\", \"0.0.0.0:8000\", \"app:app\"]\n# gunicorn is PID 1\n# graceful shutdown"
+            },
+            "title": "Who receives docker stop's SIGTERM"
+          }
+        }
+      },
+      {
+        "title": "Not a VM",
+        "body": "A virtual machine boots its own kernel on emulated hardware; a container is a normal process on the host kernel, fenced off with namespaces and cgroups. That is why a Python container starts in about the time Python itself takes to start, and why a Linux image needs a Linux kernel underneath (Docker Desktop provides a small VM for that on macOS and Windows)."
+      }
+    ],
+    "takeaway": "For Python in Docker remember four things: order layers for the cache, set PYTHONUNBUFFERED, bind to 0.0.0.0 and publish the port, and use exec-form CMD so shutdown is graceful."
+  }
 }

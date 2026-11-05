@@ -165,5 +165,110 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "The cost of finding a bug grows with the number of changes made since the last known-good state, so small diffs, a fast check after each one and a git commit at every green point keep each failure down to a few lines you can see and undo.",
+    "steps": [
+      {
+        "title": "A big diff hides the cause",
+        "body": "Ask for caching, retries and logging in one go and you get 200 new lines. When TypeError: 'NoneType' object is not subscriptable appears, any of those lines could be the cause, so you are back to reading everything you hoped to skip.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Big-bang loop",
+              "code": "1 prompt -> 200 changed lines\n1 run -> error\nsuspects: 200 lines"
+            },
+            "right": {
+              "label": "Tight loop",
+              "code": "1 prompt -> 15 changed lines\n1 run -> error\nsuspects: 15 lines"
+            },
+            "title": "Same bug, different search space"
+          }
+        }
+      },
+      {
+        "title": "Small change, fast check",
+        "body": "Add one capability per step: first caching, run the tests or the script, then retries, run again. Each check takes seconds, and when one fails, the cause is in the handful of lines changed since the last run.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "step",
+                "values": [
+                  "add cache",
+                  "add retry",
+                  "add logging"
+                ]
+              },
+              {
+                "variable": "lines changed",
+                "values": [
+                  15,
+                  20,
+                  10
+                ]
+              },
+              {
+                "variable": "check",
+                "values": [
+                  "pass",
+                  "FAIL",
+                  "-"
+                ]
+              },
+              {
+                "variable": "where to look",
+                "values": [
+                  "-",
+                  "these 20 lines",
+                  "-"
+                ]
+              }
+            ],
+            "title": "One failure, small suspect list"
+          }
+        }
+      },
+      {
+        "title": "A commit is a save point",
+        "body": "git commit records an exact snapshot of the files. After each green check, commit. Then git diff shows only what changed since the last green state, and git restore . (or git checkout -- .) throws away a bad AI edit and puts you back on that snapshot instantly.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "green",
+                "detail": "tests pass"
+              },
+              {
+                "label": "commit",
+                "detail": "save point"
+              },
+              {
+                "label": "AI change",
+                "detail": "small diff"
+              },
+              {
+                "label": "check",
+                "detail": "pass -> commit again, fail -> restore"
+              }
+            ],
+            "title": "Checkpoint loop",
+            "direction": "right"
+          }
+        }
+      },
+      {
+        "title": "Bisect finds the bad step",
+        "body": "If a bug is noticed several commits later, small commits make git bisect useful: it binary-searches the history, asking you to test the middle commit each time. With 32 commits since the last good one, it needs at most 5 tests to name the commit that introduced the bug."
+      },
+      {
+        "title": "Why tools reward small steps",
+        "body": "AI tools also work better on small requests: the relevant code fits in the context, there are fewer unstated decisions to guess, and you can actually read the diff. Speed comes from many short loops, not from one long leap."
+      }
+    ],
+    "takeaway": "Keep the distance between 'changed' and 'checked' short and commit every green state. Then every failure is small, local and undoable."
+  }
 }

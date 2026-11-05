@@ -170,5 +170,97 @@
     "category": "data",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "open() asks the operating system for a file descriptor, then stacks a byte buffer and a text decoder on top of it; with guarantees the buffer is flushed and the descriptor released.",
+    "steps": [
+      {
+        "title": "The OS hands back a number",
+        "body": "open('notes.txt', 'w', encoding='utf-8') makes a system call (open on Linux) and gets back a small integer, the file descriptor, for example 3. Mode 'w' passes the truncate flag, so the file is emptied right there, before you write a single byte. Each process may hold only a limited number of descriptors (often 1024 by default on Linux), which is why leaking them eventually crashes a long loop."
+      },
+      {
+        "title": "Three layers in one object",
+        "body": "In text mode Python builds a stack: FileIO talks to the descriptor, a BufferedWriter (or BufferedReader) collects bytes in a buffer (io.DEFAULT_BUFFER_SIZE is 8192 bytes), and a TextIOWrapper converts str to bytes with your encoding and translates newlines. The object you get back is the top layer.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "TextIOWrapper",
+                "detail": "str <-> bytes using encoding='utf-8'"
+              },
+              {
+                "label": "BufferedWriter",
+                "detail": "collects bytes, about 8 KiB at a time"
+              },
+              {
+                "label": "FileIO",
+                "detail": "raw read/write system calls on fd 3"
+              },
+              {
+                "label": "Operating system",
+                "detail": "page cache, then disk"
+              }
+            ],
+            "title": "What f = open(..., 'w', encoding='utf-8') really is"
+          }
+        }
+      },
+      {
+        "title": "write() usually does not touch the disk",
+        "body": "f.write('hello\\n') encodes the text to 6 bytes and copies them into the buffer. Only when the buffer fills, or you call flush() or close(), are the bytes sent to the OS with a write system call. If the program crashes before that, the last few writes can be lost.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "call",
+                "values": [
+                  "f.write('hello\\n')",
+                  "more small writes",
+                  "buffer full, flush() or close()"
+                ]
+              },
+              {
+                "variable": "where the bytes are",
+                "values": [
+                  "in Python's buffer",
+                  "still in Python's buffer",
+                  "handed to the OS by a write system call"
+                ]
+              }
+            ],
+            "title": "Buffering: writes collect first, then go out together"
+          }
+        }
+      },
+      {
+        "title": "with calls close() for you",
+        "body": "A with block calls the file's __exit__ method when the block ends, whether normally or through an exception. __exit__ calls close(), which flushes the buffer and releases the descriptor. That is why the with form cannot leak a file or lose buffered data."
+      },
+      {
+        "title": "Encoding decides the bytes",
+        "body": "'café' is 4 characters but 5 bytes in UTF-8, because é becomes two bytes (0xC3 0xA9). If you do not pass encoding=, many Python versions use the platform's locale default, which may not be UTF-8 on Windows. Reading with the wrong encoding raises UnicodeDecodeError or silently shows garbled text, so always say encoding='utf-8'.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Text you write",
+              "code": "'café'  (4 characters)"
+            },
+            "right": {
+              "label": "Bytes on disk (UTF-8)",
+              "code": "63 61 66 C3 A9  (5 bytes)"
+            },
+            "title": "Same text, two views"
+          }
+        }
+      },
+      {
+        "title": "Iterating reads line by line",
+        "body": "for line in f: pulls a chunk into the buffer and hands out one line at a time, so a 10 GB log uses only a few kilobytes of memory. f.read() instead builds one giant string of the whole file."
+      }
+    ],
+    "takeaway": "A file object is a buffer and a decoder wrapped around an OS handle. Use with so it is always flushed and closed, and always name the encoding."
+  }
 }

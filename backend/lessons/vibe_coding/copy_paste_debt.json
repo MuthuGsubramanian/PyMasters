@@ -170,5 +170,105 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Comprehension debt grows each time code is merged without being understood; it compounds because later fixes are built on code nobody can explain, and long AI sessions add to it when earlier code falls out of the model's context and gets re-written as duplicates.",
+    "steps": [
+      {
+        "title": "Each unread accept is a small loan",
+        "body": "Lines shipped grow with every accept; lines you could explain only grow when you read and understand. The gap between them is comprehension debt. Forty accepts in an afternoon can add hundreds of lines while understanding barely moves.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "accepts",
+                "values": [
+                  5,
+                  20,
+                  40
+                ]
+              },
+              {
+                "variable": "lines shipped",
+                "values": [
+                  120,
+                  480,
+                  960
+                ]
+              },
+              {
+                "variable": "lines you could explain",
+                "values": [
+                  100,
+                  180,
+                  220
+                ]
+              }
+            ],
+            "title": "The gap widens (illustrative afternoon)"
+          }
+        }
+      },
+      {
+        "title": "How it compounds",
+        "body": "When unexplained code breaks, you cannot reason about the fix, so you ask the AI. It patches code it also does not remember writing, adding more lines you do not understand. Each round increases the debt the next bug will have to be paid from.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "accept without reading",
+                "detail": "it works today"
+              },
+              {
+                "label": "breaks on a new input",
+                "detail": "weeks later"
+              },
+              {
+                "label": "can't explain it",
+                "detail": "so ask the AI"
+              },
+              {
+                "label": "AI patches blindly",
+                "detail": "more unread code"
+              },
+              {
+                "label": "next bug is harder",
+                "detail": "the loop repeats"
+              }
+            ],
+            "title": "The doom loop"
+          }
+        }
+      },
+      {
+        "title": "Context rot creates duplicates",
+        "body": "In a long session the earliest messages eventually fall out of the model's context window or get summarised. The helper format_price() written in hour one is no longer visible in hour three, so the model writes price_to_str() with slightly different rounding. Now two functions do the same job differently.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Hour 1",
+              "code": "def format_price(cents):\n    return f'Rs {cents / 100:.2f}'"
+            },
+            "right": {
+              "label": "Hour 3 (helper no longer in context)",
+              "code": "def price_to_str(amount):\n    return 'Rs ' + str(round(amount, 1))"
+            },
+            "title": "Same job, written twice, behaving differently"
+          }
+        }
+      },
+      {
+        "title": "Detecting the debt",
+        "body": "Signs: you cannot explain a function without re-reading it line by line, the same logic appears under different names, a fix in one place leaves a bug in its twin, and grep finds several near-identical helpers. Search for duplicates before asking for a new helper."
+      },
+      {
+        "title": "Paying it down",
+        "body": "Read and explain each module in your own words, delete the duplicate and route callers to one function, and add tests that pin what the code must do. Then keep the debt small: read before accepting, and start a fresh session with a short summary of existing helpers when the old one gets long."
+      }
+    ],
+    "takeaway": "Code you cannot explain is a loan against your future debugging time. Read before accepting, consolidate duplicates, and keep the model aware of what already exists."
+  }
 }

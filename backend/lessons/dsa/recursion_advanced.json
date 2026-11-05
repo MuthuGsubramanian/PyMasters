@@ -402,5 +402,138 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Memoization stores each subproblem's answer in a dict keyed by its arguments, so a repeated call becomes a lookup and the exponential call tree collapses to one call per distinct input.",
+    "steps": [
+      {
+        "title": "Naive fib repeats itself",
+        "body": "fib(5) calls fib(4) and fib(3); fib(4) calls fib(3) again. fib(3) is computed twice, fib(2) three times, and the repetition doubles at every level. fib(30) makes 2,692,537 calls to compute only 31 distinct values.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "f5",
+                "label": "fib(5)"
+              },
+              {
+                "id": "f4",
+                "label": "fib(4)"
+              },
+              {
+                "id": "f3a",
+                "label": "fib(3)"
+              },
+              {
+                "id": "f3b",
+                "label": "fib(3) again"
+              },
+              {
+                "id": "f2a",
+                "label": "fib(2)"
+              },
+              {
+                "id": "f2b",
+                "label": "fib(2) again"
+              }
+            ],
+            "edges": [
+              {
+                "from": "f5",
+                "to": "f4",
+                "label": ""
+              },
+              {
+                "from": "f5",
+                "to": "f3b",
+                "label": ""
+              },
+              {
+                "from": "f4",
+                "to": "f3a",
+                "label": ""
+              },
+              {
+                "from": "f4",
+                "to": "f2a",
+                "label": ""
+              },
+              {
+                "from": "f3b",
+                "to": "f2b",
+                "label": ""
+              }
+            ],
+            "title": "The same subproblems appear on many branches"
+          }
+        }
+      },
+      {
+        "title": "Check the notebook before computing",
+        "body": "A memo is a dict. On each call, if n is in memo, return memo[n] immediately; otherwise compute it, store memo[n] = result, then return. The second time fib(3) is asked for, it costs one dict lookup instead of a whole subtree.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "if n in memo:",
+                "explanation": "Have we solved this before?"
+              },
+              {
+                "code": "    return memo[n]",
+                "explanation": "Yes: O(1) dict lookup, no recursion."
+              },
+              {
+                "code": "result = fib(n-1) + fib(n-2)",
+                "explanation": "No: compute it once."
+              },
+              {
+                "code": "memo[n] = result",
+                "explanation": "Write it in the notebook."
+              },
+              {
+                "code": "return result",
+                "explanation": ""
+              }
+            ],
+            "title": "Memoized fib"
+          }
+        }
+      },
+      {
+        "title": "From exponential to linear",
+        "body": "With the memo every n from 0 to 30 is computed exactly once, and each computation does O(1) work plus two lookups. The total drops from about 1.6^n calls to O(n). The price is O(n) memory for the cache.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "fib(30) calls, naive",
+                "values": [
+                  2692537
+                ]
+              },
+              {
+                "variable": "distinct values computed, memoized",
+                "values": [
+                  31
+                ]
+              }
+            ],
+            "title": "Same answer, very different work"
+          }
+        }
+      },
+      {
+        "title": "@lru_cache does it for you",
+        "body": "functools.lru_cache wraps the function and keeps a dict keyed by the call's arguments. The default maxsize is 128, evicting the least recently used entry when full; maxsize=None (or @functools.cache in 3.9+) never evicts. Arguments must be hashable, so lists cannot be passed in."
+      },
+      {
+        "title": "Bottom-up removes the recursion",
+        "body": "Top-down memoization still recurses, so fib(5000) can hit the 1000-frame recursion limit. Bottom-up DP fills the table in order, from fib(0) and fib(1) upward, with a plain loop, and for fib you only need to keep the last two values: O(n) time, O(1) memory."
+      }
+    ],
+    "takeaway": "Memoize when the same arguments come back again and again. The cache turns a tree of repeated calls into a single pass over the distinct subproblems."
   }
 }

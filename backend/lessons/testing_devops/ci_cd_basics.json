@@ -464,5 +464,149 @@
       "testing_devops"
     ]
   },
-  "uth_example": "workflow = {\n    \"on\": {\"push\": [\"main\"], \"pull_request\": [\"main\"]},\n    \"steps\": [\"checkout\", \"setup-python\", \"install\", \"pytest\", \"flake8\"],\n}\nstep_results = {\"checkout\": True, \"setup-python\": True, \"install\": True,\n                \"pytest\": False, \"flake8\": True}\n\ndef run_pipeline(event, branch):\n    if branch not in workflow[\"on\"].get(event, []):\n        return \"skipped\", []\n    log = []\n    for step in workflow[\"steps\"]:\n        ok = step_results[step]\n        log.append(f\"{step}: {'ok' if ok else 'FAILED'}\")\n        if not ok:\n            return \"red - merge blocked\", log\n    return \"green - ready to deploy\", log\n\nstatus, log = run_pipeline(\"push\", \"main\")\nprint(status)\nprint(log)\nprint(run_pipeline(\"push\", \"feature-x\")[0])\n"
+  "uth_example": "workflow = {\n    \"on\": {\"push\": [\"main\"], \"pull_request\": [\"main\"]},\n    \"steps\": [\"checkout\", \"setup-python\", \"install\", \"pytest\", \"flake8\"],\n}\nstep_results = {\"checkout\": True, \"setup-python\": True, \"install\": True,\n                \"pytest\": False, \"flake8\": True}\n\ndef run_pipeline(event, branch):\n    if branch not in workflow[\"on\"].get(event, []):\n        return \"skipped\", []\n    log = []\n    for step in workflow[\"steps\"]:\n        ok = step_results[step]\n        log.append(f\"{step}: {'ok' if ok else 'FAILED'}\")\n        if not ok:\n            return \"red - merge blocked\", log\n    return \"green - ready to deploy\", log\n\nstatus, log = run_pipeline(\"push\", \"main\")\nprint(status)\nprint(log)\nprint(run_pipeline(\"push\", \"feature-x\")[0])\n",
+  "under_the_hood": {
+    "summary": "A push sends an event to GitHub, which matches it against the workflow files in .github/workflows, starts a fresh runner machine for each job, and runs the steps in order; any step that exits non-zero fails the job and marks the commit red.",
+    "steps": [
+      {
+        "title": "An event triggers the workflow",
+        "body": "When you push, GitHub reads every YAML file in .github/workflows at that commit. A file with on: [push, pull_request] matches, so GitHub creates a workflow run tied to that exact commit SHA.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "git push",
+                "detail": "commit abc123 arrives"
+              },
+              {
+                "label": "match on:",
+                "detail": "push / pull_request"
+              },
+              {
+                "label": "create run",
+                "detail": "one per matching workflow"
+              },
+              {
+                "label": "queue jobs",
+                "detail": "each waits for a runner"
+              }
+            ],
+            "title": "From push to workflow run"
+          }
+        }
+      },
+      {
+        "title": "Each job gets a clean machine",
+        "body": "runs-on: ubuntu-latest asks for a fresh virtual machine with a standard set of tools. Nothing from a previous run is there: no installed packages, no files. That is why CI catches 'works on my machine' problems: only what the workflow installs exists.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "runner state",
+                "values": [
+                  "fresh VM",
+                  "after checkout",
+                  "after setup-python",
+                  "after pip install",
+                  "after pytest"
+                ]
+              },
+              {
+                "variable": "contains",
+                "values": [
+                  "base image only",
+                  "+ your repo at abc123",
+                  "+ Python 3.12",
+                  "+ your dependencies",
+                  "+ test results"
+                ]
+              }
+            ],
+            "title": "The runner fills up step by step"
+          }
+        }
+      },
+      {
+        "title": "Steps run in order on that machine",
+        "body": "uses: actions/checkout@v4 runs a published action that clones your repository at the commit. uses: actions/setup-python@v5 installs Python. run: lines are shell commands. All steps of a job share the same machine and file system, so files from one step are there for the next."
+      },
+      {
+        "title": "Exit codes decide pass or fail",
+        "body": "Every step is a process with an exit status. pytest exits 1 when a test fails, so that step fails, the remaining steps are skipped by default, and the job is marked failed. The result is reported back to the commit and pull request as a status check.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "checkout",
+                "label": "checkout"
+              },
+              {
+                "id": "setup",
+                "label": "setup-python"
+              },
+              {
+                "id": "install",
+                "label": "pip install -r requirements.txt"
+              },
+              {
+                "id": "test",
+                "label": "pytest exit 0?",
+                "type": "decision"
+              },
+              {
+                "id": "pass",
+                "label": "job passed",
+                "type": "end"
+              },
+              {
+                "id": "fail",
+                "label": "job failed, later steps skipped",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "checkout",
+                "to": "setup"
+              },
+              {
+                "from": "setup",
+                "to": "install"
+              },
+              {
+                "from": "install",
+                "to": "test"
+              },
+              {
+                "from": "test",
+                "to": "pass",
+                "label": "yes"
+              },
+              {
+                "from": "test",
+                "to": "fail",
+                "label": "no"
+              }
+            ],
+            "executionPath": [
+              "checkout",
+              "setup",
+              "install",
+              "test",
+              "fail"
+            ],
+            "title": "A failing test stops the job"
+          }
+        }
+      },
+      {
+        "title": "Delivery and deployment build on CI",
+        "body": "Continuous delivery adds a job that, once tests pass, produces a release-ready artifact such as a Docker image. Continuous deployment goes one step further and ships it automatically. Jobs run in parallel unless one declares needs: on another, which is how 'deploy only after test' is expressed."
+      }
+    ],
+    "takeaway": "CI is just your test command run on a clean machine for every push, with the exit code wired to a red or green mark. Everything else is configuration around that."
+  }
 }
