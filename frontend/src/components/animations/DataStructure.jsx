@@ -8,6 +8,9 @@ const STRUCTURE_THEMES = {
   tuple: { accent: '#f59e0b', label: 'tuple', open: '(', close: ')', icon: '📦' },
 };
 
+// Keyed / unordered structures: entries have no position, so no [i] label.
+const KEYED = new Set(['dict', 'set']);
+
 export default function DataStructure({
   structure = 'list',
   data = [],
@@ -199,10 +202,12 @@ export default function DataStructure({
               ref={(el) => (itemRefs.current[String(idx)] = el)}
               className="flex flex-col items-center min-w-0 max-w-full"
             >
-              {/* Index label */}
-              <div className="text-xs text-text-muted mb-1 font-mono tabular-nums">
-                {labels[idx] != null ? String(labels[idx]) : `[${idx}]`}
-              </div>
+              {/* Index label (dicts and sets have no positions: only an authored label) */}
+              {(labels[idx] != null || !KEYED.has(structure)) && (
+                <div className="text-xs text-text-muted mb-1 font-mono tabular-nums">
+                  {labels[idx] != null ? String(labels[idx]) : `[${idx}]`}
+                </div>
+              )}
               {/* Value cell(s): a matrix row is a row of cells */}
               {Array.isArray(item) ? (
                 // A wide row scrolls inside the card on a phone instead of being clipped by it.
