@@ -134,7 +134,7 @@ export default function JoinOrg() {
                         </div>
                         <input className="input-neo" placeholder="Your full name" value={name} onChange={(e) => setName(e.target.value)} required />
                         <input className="input-neo" placeholder="Choose a username" value={username} onChange={(e) => setUsername(e.target.value)} required />
-                        <input className="input-neo" type="password" placeholder="Create a password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
+                        <input className="input-neo" type="password" placeholder="Create a password (at least 8 characters)" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
                         <button type="submit" disabled={busy} className="btn-neo btn-neo-primary w-full justify-center py-3">
                             {busy ? <Loader2 size={16} className="animate-spin" /> : <><GraduationCap size={16} /> Create account & join</>}
                         </button>

@@ -571,7 +571,7 @@ export default function Profile() {
 
     const handleChangePassword = async () => {
         if (!curPw || !newPw) { setToast({ message: 'Fill in all password fields', type: 'error' }); return; }
-        if (newPw.length < 6) { setToast({ message: 'New password must be at least 6 characters', type: 'error' }); return; }
+        if (newPw.length < 8) { setToast({ message: 'New password must be at least 8 characters', type: 'error' }); return; }
         if (newPw !== confirmPw) { setToast({ message: 'New passwords do not match', type: 'error' }); return; }
         setPwSaving(true);
         try {
@@ -1172,10 +1172,10 @@ export default function Profile() {
                                     placeholder="Current password" autoComplete="current-password" className="input-neo" />
                             )}
                         </FormField>
-                        <FormField label="New Password" hint="At least 6 characters">
+                        <FormField label="New Password" hint="At least 8 characters">
                             {(id) => (
                                 <input id={id} type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)}
-                                    placeholder="New password (min 6 characters)" autoComplete="new-password" className="input-neo" />
+                                    placeholder="New password (min 8 characters)" autoComplete="new-password" className="input-neo" />
                             )}
                         </FormField>
                         <FormField label="Confirm New Password">

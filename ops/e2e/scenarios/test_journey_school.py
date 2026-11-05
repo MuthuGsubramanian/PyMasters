@@ -22,7 +22,7 @@ def _teacher_signs_up(page, org_type, suffix):
     page.get_by_role("button", name="Next: Create Admin Account").click()
     page.get_by_placeholder("Enter your username").fill(f"e2e_t_{suffix}")
     page.get_by_placeholder("you@example.com").fill(f"e2e_t_{suffix}@example.com")
-    page.get_by_placeholder("Enter your password").fill(PASSWORD)
+    page.get_by_placeholder("At least 8 characters").fill(PASSWORD)
     page.get_by_role("button", name="Create Organization & Account").click()
     page.wait_for_url("**/onboarding", timeout=30000)
     for label in ("11-50 learners", "K-12 Students" if org_type == "school" else "University Students",

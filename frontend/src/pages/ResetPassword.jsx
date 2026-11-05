@@ -16,7 +16,7 @@ export default function ResetPassword() {
     const submit = async (e) => {
         e.preventDefault();
         setErr('');
-        if (pw.length < 6) { setErr('Password must be at least 6 characters.'); return; }
+        if (pw.length < 8) { setErr('Password must be at least 8 characters.'); return; }
         if (pw !== confirm) { setErr('Passwords do not match.'); return; }
         setBusy(true);
         try {
@@ -52,7 +52,7 @@ export default function ResetPassword() {
                                 <AlertCircle size={16} className="mt-0.5 flex-shrink-0" /> {err}
                             </div>
                         )}
-                        <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="New password (min 6 characters)" autoComplete="new-password" autoFocus
+                        <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="New password (min 8 characters)" autoComplete="new-password" autoFocus
                             className="w-full px-4 py-2.5 rounded-xl border border-border-default bg-bg-surface text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-focus focus:ring-1 focus:ring-border-focus" />
                         <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Confirm new password" autoComplete="new-password"
                             className="w-full px-4 py-2.5 rounded-xl border border-border-default bg-bg-surface text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-focus focus:ring-1 focus:ring-border-focus" />
