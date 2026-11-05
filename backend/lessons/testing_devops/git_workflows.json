@@ -443,5 +443,98 @@
     "path_memberships": [
       "testing_devops"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Git stores commits as snapshots that point to their parent; a branch is just a file holding one commit hash, so branching is instant, merging joins histories with a new commit, and rebasing copies commits onto a new base.",
+    "steps": [
+      {
+        "title": "Commits point backwards",
+        "body": "Each commit stores a snapshot of the tree, the author, a message and the hash of its parent. The hash (like 3f2a9c1) is computed from all of that, so changing anything in history produces a different hash. main is a chain A <- B <- C.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "A",
+                "detail": "first commit"
+              },
+              {
+                "label": "B",
+                "detail": "parent: A"
+              },
+              {
+                "label": "C",
+                "detail": "parent: B, main points here"
+              }
+            ],
+            "title": "History is a chain of parent links",
+            "direction": "right"
+          }
+        }
+      },
+      {
+        "title": "A branch is a movable label",
+        "body": "git checkout -b feature/login writes the current commit's hash into .git/refs/heads/feature/login and points HEAD at that branch. No files are copied. When you commit, Git creates the new commit with the old one as parent and moves only the current branch's label forward.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "event",
+                "values": [
+                  "checkout -b feature/login",
+                  "commit D",
+                  "commit E"
+                ]
+              },
+              {
+                "variable": "main",
+                "values": [
+                  "C",
+                  "C",
+                  "C"
+                ]
+              },
+              {
+                "variable": "feature/login",
+                "values": [
+                  "C",
+                  "D",
+                  "E"
+                ]
+              }
+            ],
+            "title": "Only the checked-out branch moves"
+          }
+        }
+      },
+      {
+        "title": "Merging: fast-forward or merge commit",
+        "body": "If main has not moved since you branched, git merge feature/login just slides main's label forward to E: a fast-forward, no new commit. If main gained commit F meanwhile, Git finds the merge base C, combines both sets of changes (a three-way merge) and records a merge commit M with two parents, F and E.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Fast-forward",
+              "code": "main: A-B-C\nfeature: C-D-E\nresult: main -> E (no new commit)"
+            },
+            "right": {
+              "label": "Three-way merge",
+              "code": "main: A-B-C-F\nfeature: C-D-E\nresult: M with parents F and E"
+            },
+            "title": "Two kinds of merge"
+          }
+        }
+      },
+      {
+        "title": "Rebasing rewrites commits",
+        "body": "git rebase main on the feature branch takes D and E, and replays their changes on top of F, creating new commits D' and E' with new hashes because their parent changed. History becomes a straight line, but anyone who already pulled the old D and E now has diverging copies, which is why you do not rebase branches others are using."
+      },
+      {
+        "title": "A pull request lives on the server",
+        "body": "A PR is not a Git object. It is a GitHub (or GitLab) record that says 'merge branch feature/login into main', shows the diff from the merge base, runs CI on the branch, and collects reviews. Clicking merge runs one of the strategies above on the server: merge commit, squash (all changes as one new commit) or rebase."
+      }
+    ],
+    "takeaway": "Branches are cheap because they are just pointers to commits. Merging adds a commit that joins two histories; rebasing creates new commits, so keep it to branches only you use."
   }
 }

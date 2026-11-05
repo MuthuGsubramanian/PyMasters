@@ -447,5 +447,93 @@
       "testing_devops"
     ]
   },
-  "uth_example": "import tomllib\n\npyproject = \"\"\"\n[build-system]\nrequires = [\"setuptools>=68.0\", \"wheel\"]\nbuild-backend = \"setuptools.build_meta\"\n\n[project]\nname = \"pymasters-utils\"\nversion = \"1.0.0\"\nrequires-python = \">=3.10\"\ndependencies = [\"click>=8.0\"]\n\"\"\"\n\nmeta = tomllib.loads(pyproject)\nproject = meta[\"project\"]\nmajor, minor, patch = (int(p) for p in project[\"version\"].split(\".\"))\nnext_version = f\"{major}.{minor + 1}.0\"                     # a new feature release\nwheel = f\"{project['name'].replace('-', '_')}-{project['version']}-py3-none-any.whl\"\nprint(\"backend:\", meta[\"build-system\"][\"build-backend\"])\nprint(\"wheel:\", wheel, \"| next release:\", next_version)\n"
+  "uth_example": "import tomllib\n\npyproject = \"\"\"\n[build-system]\nrequires = [\"setuptools>=68.0\", \"wheel\"]\nbuild-backend = \"setuptools.build_meta\"\n\n[project]\nname = \"pymasters-utils\"\nversion = \"1.0.0\"\nrequires-python = \">=3.10\"\ndependencies = [\"click>=8.0\"]\n\"\"\"\n\nmeta = tomllib.loads(pyproject)\nproject = meta[\"project\"]\nmajor, minor, patch = (int(p) for p in project[\"version\"].split(\".\"))\nnext_version = f\"{major}.{minor + 1}.0\"                     # a new feature release\nwheel = f\"{project['name'].replace('-', '_')}-{project['version']}-py3-none-any.whl\"\nprint(\"backend:\", meta[\"build-system\"][\"build-backend\"])\nprint(\"wheel:\", wheel, \"| next release:\", next_version)\n",
+  "under_the_hood": {
+    "summary": "python -m build reads pyproject.toml, runs the declared build backend in an isolated environment and produces an sdist and a wheel; twine uploads those files to PyPI, and pip later downloads the matching wheel and unpacks it into site-packages.",
+    "steps": [
+      {
+        "title": "pyproject.toml names the builder",
+        "body": "The [build-system] table says which tool builds the package, for example requires = ['setuptools>=61'] and build-backend = 'setuptools.build_meta'. The [project] table (PEP 621) holds the name, version, dependencies and Python version range. Front-ends like pip and build only talk to the backend through standard hooks (PEP 517)."
+      },
+      {
+        "title": "build runs the backend in isolation",
+        "body": "python -m build creates a temporary virtual environment, installs only what [build-system] requires, then calls the backend's build_sdist and build_wheel hooks. Isolation means a package that builds on your laptop only because some tool happened to be installed will fail here, which is what you want.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "read pyproject.toml",
+                "detail": "[build-system] + [project]"
+              },
+              {
+                "label": "isolated venv",
+                "detail": "install setuptools"
+              },
+              {
+                "label": "build_sdist",
+                "detail": "dist/mylib-0.1.0.tar.gz"
+              },
+              {
+                "label": "build_wheel",
+                "detail": "dist/mylib-0.1.0-py3-none-any.whl"
+              }
+            ],
+            "title": "What python -m build does"
+          }
+        }
+      },
+      {
+        "title": "A wheel is a zip with metadata",
+        "body": "The .whl file is a zip archive. It contains your package files ready to copy, plus a mylib-0.1.0.dist-info folder with METADATA (name, version, dependencies), WHEEL (format info) and RECORD (every file with its hash). The filename tags py3-none-any mean: any Python 3, no compiled ABI, any platform.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "mylib/__init__.py",
+              "mylib/core.py",
+              "mylib-0.1.0.dist-info/METADATA",
+              "mylib-0.1.0.dist-info/WHEEL",
+              "mylib-0.1.0.dist-info/RECORD"
+            ],
+            "title": "Inside mylib-0.1.0-py3-none-any.whl"
+          }
+        }
+      },
+      {
+        "title": "twine uploads, PyPI keeps it forever",
+        "body": "twine upload dist/* checks the metadata and sends each file to PyPI over HTTPS, authenticated with an API token. A filename can be uploaded only once: even if you delete a release, PyPI will not accept the same version file again. That is why every change needs a new version number such as 0.1.1."
+      },
+      {
+        "title": "pip install unpacks the wheel",
+        "body": "pip install mylib asks PyPI's index for the available files, picks the newest version that satisfies your constraints and a wheel whose tags fit your Python and platform, resolves its dependencies the same way, then extracts the files into site-packages and writes RECORD so pip uninstall knows exactly what to delete.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "query index",
+                "detail": "list files for 'mylib'"
+              },
+              {
+                "label": "choose",
+                "detail": "newest compatible version and tags"
+              },
+              {
+                "label": "resolve deps",
+                "detail": "repeat for each dependency"
+              },
+              {
+                "label": "install",
+                "detail": "unzip into site-packages, write RECORD"
+              }
+            ],
+            "title": "What pip install does"
+          }
+        }
+      }
+    ],
+    "takeaway": "Packaging is a pipeline of standard files: pyproject.toml in, sdist and wheel out, a wheel is just a zip with metadata, and pip unzips it. Bump the version for every upload, because PyPI files are immutable."
+  }
 }

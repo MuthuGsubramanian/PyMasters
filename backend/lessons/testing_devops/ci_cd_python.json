@@ -436,5 +436,103 @@
       "testing_devops"
     ]
   },
-  "uth_example": "from itertools import product\n\njobs = {\n    \"lint\": {\"needs\": [], \"matrix\": {}},\n    \"test\": {\"needs\": [\"lint\"], \"matrix\": {\"python\": [\"3.11\", \"3.12\"], \"os\": [\"ubuntu\"]}},\n    \"deploy\": {\"needs\": [\"test\"], \"matrix\": {}},\n}\ncoverage, fail_under = 84, 80\n\nruns = []\nfor name, job in jobs.items():                   # needs: run in dependency order\n    keys = list(job[\"matrix\"])\n    combos = list(product(*job[\"matrix\"].values())) or [()]\n    for combo in combos:\n        runs.append(f\"{name} {dict(zip(keys, combo)) if combo else ''}\".strip())\n\ngate = \"pass\" if coverage >= fail_under else \"fail\"\nprint(\"\\n\".join(runs))\nprint(f\"coverage {coverage}% vs --fail-under={fail_under}: {gate}\")\n"
+  "uth_example": "from itertools import product\n\njobs = {\n    \"lint\": {\"needs\": [], \"matrix\": {}},\n    \"test\": {\"needs\": [\"lint\"], \"matrix\": {\"python\": [\"3.11\", \"3.12\"], \"os\": [\"ubuntu\"]}},\n    \"deploy\": {\"needs\": [\"test\"], \"matrix\": {}},\n}\ncoverage, fail_under = 84, 80\n\nruns = []\nfor name, job in jobs.items():                   # needs: run in dependency order\n    keys = list(job[\"matrix\"])\n    combos = list(product(*job[\"matrix\"].values())) or [()]\n    for combo in combos:\n        runs.append(f\"{name} {dict(zip(keys, combo)) if combo else ''}\".strip())\n\ngate = \"pass\" if coverage >= fail_under else \"fail\"\nprint(\"\\n\".join(runs))\nprint(f\"coverage {coverage}% vs --fail-under={fail_under}: {gate}\")\n",
+  "under_the_hood": {
+    "summary": "A Python pipeline runs linters that parse your code into a syntax tree and check rules, runs pytest under coverage tracing, expands a version matrix into parallel jobs, and lets the deploy job run only after all of them pass.",
+    "steps": [
+      {
+        "title": "Linters read code without running it",
+        "body": "ruff and flake8 parse each file into a syntax tree and walk it checking rules: unused imports (F401), undefined names (F821), line length (E501). They report file:line:column and exit non-zero if anything is found, which fails the CI step. Formatters like black rewrite the layout instead of just reporting it.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "src/app.py:3:8: F401 [*] `os` imported but unused",
+              "src/app.py:17:5: F821 Undefined name `reslt`",
+              "Found 2 errors."
+            ],
+            "title": "ruff check output"
+          }
+        }
+      },
+      {
+        "title": "Coverage records which lines ran",
+        "body": "pytest --cov=src starts coverage.py before the tests. It installs a tracing hook (classically sys.settrace; recent coverage versions can use sys.monitoring on Python 3.12+) that notes every line executed in src. Afterwards it compares the executed lines with all statements: 85 of 100 statements run means 85% coverage, and the report lists the 15 missed line numbers."
+      },
+      {
+        "title": "A matrix multiplies jobs",
+        "body": "strategy: matrix: python-version: ['3.10', '3.11', '3.12'] with os: [ubuntu-latest, windows-latest] expands into 3 x 2 = 6 jobs, each on its own runner, running in parallel. A failure on one combination, say Windows with 3.10, shows exactly where compatibility breaks.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "job",
+                "values": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ]
+              },
+              {
+                "variable": "os",
+                "values": [
+                  "ubuntu",
+                  "ubuntu",
+                  "ubuntu",
+                  "windows",
+                  "windows",
+                  "windows"
+                ]
+              },
+              {
+                "variable": "python",
+                "values": [
+                  "3.10",
+                  "3.11",
+                  "3.12",
+                  "3.10",
+                  "3.11",
+                  "3.12"
+                ]
+              }
+            ],
+            "title": "matrix: 2 OS x 3 versions = 6 jobs"
+          }
+        }
+      },
+      {
+        "title": "Gates in order",
+        "body": "The deploy job declares needs: [lint, test], so GitHub waits until all those jobs succeed, and an if: github.ref == 'refs/heads/main' condition skips deploy for pull requests. A single red job anywhere means deploy never starts.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "lint",
+                "detail": "ruff / black --check"
+              },
+              {
+                "label": "test",
+                "detail": "pytest --cov on every matrix job"
+              },
+              {
+                "label": "deploy",
+                "detail": "needs: [lint, test], only on main"
+              }
+            ],
+            "title": "The three gates"
+          }
+        }
+      },
+      {
+        "title": "Caching saves minutes",
+        "body": "Each runner starts empty, so installing dependencies every time is slow. actions/setup-python with cache: 'pip' stores pip's download cache keyed on a hash of your requirements file; when that file has not changed, the next run restores the cache instead of downloading every package again."
+      }
+    ],
+    "takeaway": "A Python pipeline is a set of exit codes in sequence: lint, test with coverage across a matrix, then deploy. Each tool fails loudly, and needs: makes sure nothing ships past a failure."
+  }
 }
