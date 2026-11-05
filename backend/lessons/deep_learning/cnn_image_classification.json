@@ -383,5 +383,152 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A batch of digit images flows through the network as a 4-D tensor whose shape shrinks from 1 x 28 x 28 to 64 x 5 x 5 through convolution and pooling, is flattened to 1,600 numbers, and becomes 10 class scores; cross-entropy on those scores drives each Adam update.",
+    "steps": [
+      {
+        "title": "Images become normalised tensors",
+        "body": "Each MNIST image is 28 x 28 grey pixels from 0 to 255. ToTensor scales them to 0 to 1 and adds a channel axis; Normalize then centres them with the dataset mean 0.1307 and std 0.3081. A DataLoader with batch_size 64 stacks images into a tensor of shape (64, 1, 28, 28)."
+      },
+      {
+        "title": "Shapes through the feature extractor",
+        "body": "Conv2d(1, 32, 3) gives (64, 32, 26, 26); MaxPool2d(2) halves it to 13 x 13; Conv2d(32, 64, 3) gives 11 x 11; pooling rounds down to 5 x 5. Flatten turns each image's 64 x 5 x 5 block into 1,600 numbers, which is why the first Linear layer is Linear(64 * 5 * 5, 128).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "input",
+                "1 x 28 x 28"
+              ],
+              [
+                "conv 3x3",
+                "32 x 26 x 26"
+              ],
+              [
+                "pool 2",
+                "32 x 13 x 13"
+              ],
+              [
+                "conv 3x3",
+                "64 x 11 x 11"
+              ],
+              [
+                "pool 2",
+                "64 x 5 x 5"
+              ],
+              [
+                "flatten",
+                1600
+              ],
+              [
+                "linear",
+                128
+              ],
+              [
+                "output",
+                10
+              ]
+            ],
+            "labels": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7"
+            ],
+            "highlight": [
+              5
+            ],
+            "caption": "Per-image shape after each layer"
+          }
+        }
+      },
+      {
+        "title": "Ten scores and the loss",
+        "body": "The last layer outputs 10 raw scores (logits) per image. nn.CrossEntropyLoss applies log-softmax inside and takes -log of the probability for the correct digit, averaged over the batch. If the network gives the true digit probability 0.9, that image adds 0.105; at 0.1 it adds 2.3."
+      },
+      {
+        "title": "One training step",
+        "body": "optimizer.zero_grad() clears old gradients, model(images) runs the forward pass, loss.backward() fills .grad for every weight (about 225,000 here), and optimizer.step() applies Adam's update with lr = 1e-3. With 60,000 training images and batches of 64, one epoch is 938 such steps.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "batch (64, 1, 28, 28)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "forward -> logits (64, 10)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "cross-entropy loss",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "backward: gradients",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "Adam step",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "next batch",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "The inner loop, repeated 938 times per epoch"
+          }
+        }
+      },
+      {
+        "title": "Evaluation switches modes",
+        "body": "model.eval() turns dropout off so every unit is used, and torch.no_grad() skips building the backward graph, saving memory and time. The prediction is logits.argmax(1); accuracy is the number of matches over 10,000 test images, about 99% for this small network after a few epochs."
+      }
+    ],
+    "takeaway": "Track the tensor shape through each layer and the whole classifier becomes clear: features shrink spatially and grow in channels, get flattened, and become scores. Training is the same four-line step repeated over batches."
+  }
 }

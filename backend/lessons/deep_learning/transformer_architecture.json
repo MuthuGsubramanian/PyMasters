@@ -466,5 +466,126 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A transformer is a stack of identical blocks, each with attention followed by a position-wise feed-forward network, wrapped in residual connections and layer normalisation; BERT keeps only the encoder stack, GPT only a masked decoder stack.",
+    "steps": [
+      {
+        "title": "Inside one block",
+        "body": "The block first runs multi-head self-attention, adds the result to its input (residual) and normalises. Then a feed-forward network expands each position from d_model = 512 to d_ff = 2,048 with a ReLU and projects back to 512, again with a residual and normalisation. The original 2017 model used 6 encoder and 6 decoder blocks.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "x (seq_len x 512)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "multi-head self-attention",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "add x, LayerNorm",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "feed-forward 512 -> 2048 -> 512",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "add, LayerNorm -> next block",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One encoder block, as in the original paper"
+          }
+        }
+      },
+      {
+        "title": "Where the parameters live",
+        "body": "Attention's four projections (Q, K, V and output) are each 512 x 512, about 1.05 million weights. The feed-forward layer's two matrices are 512 x 2,048 and 2,048 x 512, about 2.1 million. So roughly two thirds of each block is the feed-forward network, which is where much of a model's stored knowledge is thought to sit.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "attention (4 x 512 x 512)",
+                1048576
+              ],
+              [
+                "feed-forward (2 x 512 x 2048)",
+                2097152
+              ]
+            ],
+            "labels": [
+              "part",
+              "part"
+            ],
+            "highlight": [
+              1
+            ],
+            "caption": "Weights per block, ignoring biases and norms"
+          }
+        }
+      },
+      {
+        "title": "The decoder adds masking and cross-attention",
+        "body": "In the encoder-decoder design, decoder self-attention is masked so position t cannot see positions after t. Cross-attention then takes queries from the decoder and keys and values from the encoder output, letting each generated word look at the whole source sentence, as in translation."
+      },
+      {
+        "title": "BERT: encoder only, fill in blanks",
+        "body": "BERT uses only encoder blocks, so every token sees both left and right context. It is pre-trained by masking about 15% of tokens and predicting them. BERT-base has 12 layers, hidden size 768, 12 heads, about 110 million parameters, and is fine-tuned for classification, tagging or extractive question answering."
+      },
+      {
+        "title": "GPT: decoder only, predict the next",
+        "body": "GPT drops the encoder and cross-attention and keeps masked self-attention, so each position sees only earlier tokens. Pre-training predicts the next token everywhere at once. Because the same objective is used to generate text, GPT-style models became the base of today's chat assistants.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "BERT (encoder)",
+              "code": "sees left and right context\nmasked-token pre-training\nbest for understanding tasks"
+            },
+            "right": {
+              "label": "GPT (decoder)",
+              "code": "sees only earlier tokens\nnext-token pre-training\nbest for generating text"
+            },
+            "caption": "Same blocks, different masks and objectives"
+          }
+        }
+      }
+    ],
+    "takeaway": "Transformers are built from one repeated block: attention to mix positions, a feed-forward network to transform each position, residuals and norms to keep training stable. Which positions may attend to which, and what is predicted, decides whether you get BERT or GPT."
+  }
 }
