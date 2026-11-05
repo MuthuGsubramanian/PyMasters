@@ -188,21 +188,17 @@ export default function Login() {
     // Whether to show the username/password form
     const showCredentialsForm = isLogin || accountType === 'individual' || (accountType === 'organization' && orgStep === 1);
 
+
+    // Theme tokens (index.css), so Login follows the light/dark toggle like the rest of the app (redesign I11).
+    const inputCls = 'input-neo pl-12 pr-5';
+    const labelCls = 'text-xs uppercase font-bold text-text-muted tracking-wider';
+    const backCls = 'min-h-11 -ml-2 px-2 inline-flex items-center gap-1.5 text-sm text-text-muted hover:text-text-primary transition-colors rounded-lg';
+    const fieldIcon = 'absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-accent-primary transition-colors duration-300';
+    const solidBtn = 'bg-purple-600 hover:bg-purple-700 text-white';
+    const waitBtn = 'bg-bg-inset text-text-muted';
+
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#020617]">
-            {/* Animated background */}
-            <div className="absolute inset-0 z-0">
-                <div className="absolute top-[-30%] right-[-20%] w-[700px] h-[700px] bg-purple-700/15 rounded-full blur-[140px] animate-pulse" style={{ animationDuration: '8s' }} />
-                <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-cyan-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '10s', animationDelay: '2s' }} />
-                <div className="absolute top-[50%] left-[50%] -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-violet-600/8 rounded-full blur-[80px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }} />
-
-                {/* Grid overlay */}
-                <div className="absolute inset-0 opacity-[0.03]" style={{
-                    backgroundImage: 'linear-gradient(rgba(124,58,237,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.5) 1px, transparent 1px)',
-                    backgroundSize: '60px 60px',
-                }} />
-            </div>
-
+        <div className="min-h-screen flex items-center justify-center p-4 bg-bg-base text-text-secondary">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -215,11 +211,10 @@ export default function Login() {
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ duration: 0.5, delay: 0.1 }}
-                        className="relative inline-block mb-6"
+                        className="inline-block mb-6"
                     >
-                        <div className="absolute inset-0 bg-purple-600/30 blur-[40px] rounded-full scale-150" />
-                        <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shadow-2xl shadow-purple-500/30 border border-white/10">
-                            <img src={PymastersGlyph} alt="PyMasters" className="w-11 h-11" />
+                        <div className="w-16 h-16 rounded-2xl bg-purple-600 flex items-center justify-center shadow-elegant">
+                            <img src={PymastersGlyph} alt="PyMasters" className="w-9 h-9" />
                         </div>
                     </motion.div>
 
@@ -231,10 +226,10 @@ export default function Login() {
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.3 }}
                         >
-                            <h2 className="text-3xl font-bold mb-2 tracking-tight text-white font-display">
+                            <h2 className="text-3xl font-bold mb-2 tracking-tight text-text-primary font-display">
                                 {header.title}
                             </h2>
-                            <p className="text-slate-400">
+                            <p className="text-text-secondary">
                                 {header.subtitle}
                             </p>
                         </motion.div>
@@ -242,16 +237,17 @@ export default function Login() {
                 </div>
 
                 {/* Card */}
-                <div className="relative rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-xl p-8 shadow-2xl shadow-black/20">
+                <div className="relative rounded-2xl border border-border-default bg-bg-surface p-6 sm:p-8 shadow-elegant">
                     <AnimatePresence mode="wait">
                         {error && (
                             <motion.div
+                                role="alert"
                                 initial={{ opacity: 0, height: 0, marginBottom: 0 }}
                                 animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
                                 exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                                className="bg-red-500/10 border border-red-500/20 text-red-400 p-3.5 rounded-xl text-sm flex items-start gap-3 overflow-hidden"
+                                className="bg-red-500/10 border border-red-500/30 text-red-700 dark:text-red-300 p-3.5 rounded-xl text-sm flex items-start gap-3 overflow-hidden"
                             >
-                                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" aria-hidden="true" />
                                 <span>{error}</span>
                             </motion.div>
                         )}
@@ -263,7 +259,7 @@ export default function Login() {
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-[#020617]/80 backdrop-blur-sm"
+                                className="absolute inset-0 z-20 flex items-center justify-center rounded-2xl bg-bg-base/90"
                             >
                                 <motion.div
                                     initial={{ scale: 0 }}
@@ -271,10 +267,10 @@ export default function Login() {
                                     transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                                     className="flex flex-col items-center gap-3"
                                 >
-                                    <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center shadow-xl shadow-green-500/30">
-                                        <Sparkles size={28} className="text-white" />
+                                    <div className="w-16 h-16 rounded-full bg-green-700 flex items-center justify-center">
+                                        <Sparkles size={28} className="text-white" aria-hidden="true" />
                                     </div>
-                                    <p className="text-white font-bold font-display text-lg">Welcome!</p>
+                                    <p className="text-text-primary font-bold font-display text-lg">Welcome!</p>
                                 </motion.div>
                             </motion.div>
                         )}
@@ -291,41 +287,29 @@ export default function Login() {
                                 transition={{ duration: 0.3 }}
                             >
                                 <div className="space-y-4">
-                                    <p className="text-sm text-slate-400 text-center mb-6">How would you like to use PyMasters?</p>
+                                    <p className="text-sm text-text-secondary text-center mb-6">How would you like to use PyMasters?</p>
 
-                                    {/* Individual option */}
-                                    <button
-                                        onClick={() => setAccountType('individual')}
-                                        className="w-full p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-cyan-500/30 transition-all duration-300 text-left group"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <User size={24} className="text-cyan-400" />
+                                    {[
+                                        { key: 'individual', icon: User, title: 'Individual Learner', desc: 'Learn Python & AI at your own pace', onClick: () => setAccountType('individual') },
+                                        { key: 'organization', icon: Building2, title: 'Organization / School / Enterprise', desc: 'Manage teams, track progress, assign paths', onClick: () => { setAccountType('organization'); setOrgStep(0); } },
+                                    ].map(({ key, icon: Icon, title, desc, onClick }) => (
+                                        <button
+                                            key={key}
+                                            onClick={onClick}
+                                            className="w-full p-5 rounded-2xl border border-border-default bg-bg-elevated hover:border-accent-primary transition-colors duration-200 text-left group"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 rounded-xl bg-accent-subtle text-accent-primary flex items-center justify-center flex-shrink-0">
+                                                    <Icon size={24} aria-hidden="true" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <h3 className="text-text-primary font-bold text-sm">{title}</h3>
+                                                    <p className="text-text-muted text-xs mt-0.5">{desc}</p>
+                                                </div>
+                                                <ArrowRight size={16} className="text-text-muted ml-auto flex-shrink-0 group-hover:text-accent-primary transition-colors" aria-hidden="true" />
                                             </div>
-                                            <div>
-                                                <h3 className="text-white font-bold text-sm">Individual Learner</h3>
-                                                <p className="text-slate-500 text-xs mt-0.5">Learn Python & AI at your own pace</p>
-                                            </div>
-                                            <ArrowRight size={16} className="text-slate-600 ml-auto group-hover:text-cyan-400 transition-colors" />
-                                        </div>
-                                    </button>
-
-                                    {/* Organization option */}
-                                    <button
-                                        onClick={() => { setAccountType('organization'); setOrgStep(0); }}
-                                        className="w-full p-5 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] hover:border-purple-500/30 transition-all duration-300 text-left group"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                                <Building2 size={24} className="text-purple-400" />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-white font-bold text-sm">Organization / School / Enterprise</h3>
-                                                <p className="text-slate-500 text-xs mt-0.5">Manage teams, track progress, assign paths</p>
-                                            </div>
-                                            <ArrowRight size={16} className="text-slate-600 ml-auto group-hover:text-purple-400 transition-colors" />
-                                        </div>
-                                    </button>
+                                        </button>
+                                    ))}
                                 </div>
                             </motion.div>
                         )}
@@ -340,44 +324,46 @@ export default function Login() {
                                 transition={{ duration: 0.3 }}
                             >
                                 <div className="space-y-5">
-                                    <button onClick={() => setAccountType(null)} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors mb-2">
-                                        <ChevronLeft size={14} /> Back
+                                    <button onClick={() => setAccountType(null)} className={backCls}>
+                                        <ChevronLeft size={16} aria-hidden="true" /> Back
                                     </button>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">Organization Name *</label>
+                                        <label htmlFor="org-name" className={labelCls}>Organization Name *</label>
                                         <input
+                                            id="org-name"
                                             type="text"
                                             value={orgName}
                                             onChange={e => setOrgName(e.target.value)}
-                                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-5 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/40 focus:ring-1 focus:ring-purple-500/30 transition-all duration-300 font-medium"
+                                            className="input-neo"
                                             placeholder="e.g., Stanford University, Google, Lincoln High"
                                             required
                                         />
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">Organization Type *</label>
+                                        <p className={labelCls}>Organization Type *</p>
                                         <div className="grid grid-cols-2 gap-2">
                                             {[
-                                                { value: 'school', label: 'School', icon: School, color: 'cyan' },
-                                                { value: 'university', label: 'University', icon: GraduationCap, color: 'blue' },
-                                                { value: 'enterprise', label: 'Enterprise', icon: Briefcase, color: 'purple' },
-                                                { value: 'training_center', label: 'Training Center', icon: Briefcase, color: 'emerald' },
-                                                { value: 'other', label: 'Other', icon: Users, color: 'violet' },
+                                                { value: 'school', label: 'School', icon: School },
+                                                { value: 'university', label: 'University', icon: GraduationCap },
+                                                { value: 'enterprise', label: 'Enterprise', icon: Briefcase },
+                                                { value: 'training_center', label: 'Training Center', icon: Briefcase },
+                                                { value: 'other', label: 'Other', icon: Users },
                                             ].map(opt => (
                                                 <button
                                                     key={opt.value}
                                                     type="button"
+                                                    aria-pressed={orgType === opt.value}
                                                     onClick={() => setOrgType(opt.value)}
                                                     className={clsx(
-                                                        "p-3 rounded-xl border text-left transition-all duration-200 flex items-center gap-2.5",
+                                                        "min-h-11 p-3 rounded-xl border text-left transition-colors duration-200 flex items-center gap-2.5",
                                                         orgType === opt.value
-                                                            ? "border-purple-500/50 bg-purple-500/10 text-white"
-                                                            : "border-white/[0.08] bg-white/[0.02] text-slate-400 hover:border-white/[0.15]"
+                                                            ? "border-accent-primary bg-accent-subtle text-text-primary"
+                                                            : "border-border-default bg-bg-elevated text-text-secondary hover:border-border-strong"
                                                     )}
                                                 >
-                                                    <opt.icon size={16} />
+                                                    <opt.icon size={16} aria-hidden="true" />
                                                     <span className="text-sm font-medium">{opt.label}</span>
                                                 </button>
                                             ))}
@@ -385,12 +371,13 @@ export default function Login() {
                                     </div>
 
                                     <div className="space-y-1.5">
-                                        <label className="text-xs uppercase font-bold text-slate-500 tracking-wider">Domain <span className="text-slate-600">(optional)</span></label>
+                                        <label htmlFor="org-domain" className={labelCls}>Domain <span className="normal-case font-medium">(optional)</span></label>
                                         <input
+                                            id="org-domain"
                                             type="text"
                                             value={orgDomain}
                                             onChange={e => setOrgDomain(e.target.value)}
-                                            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-5 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/40 focus:ring-1 focus:ring-purple-500/30 transition-all duration-300 font-medium"
+                                            className="input-neo"
                                             placeholder="e.g., stanford.edu, company.com"
                                         />
                                     </div>
@@ -399,13 +386,11 @@ export default function Login() {
                                         onClick={() => setOrgStep(1)}
                                         disabled={!orgName || !orgType}
                                         className={clsx(
-                                            "w-full py-3.5 rounded-xl font-bold text-sm text-white transition-all duration-300 flex items-center justify-center gap-2",
-                                            orgName && orgType
-                                                ? "bg-gradient-to-r from-purple-600 to-violet-500 hover:scale-[1.02] shadow-lg shadow-purple-500/25"
-                                                : "bg-slate-700 cursor-not-allowed opacity-50"
+                                            "w-full min-h-11 py-3.5 rounded-xl font-bold text-sm transition-colors duration-200 flex items-center justify-center gap-2",
+                                            orgName && orgType ? solidBtn : `${waitBtn} cursor-not-allowed`
                                         )}
                                     >
-                                        Next: Create Admin Account <ArrowRight size={16} />
+                                        Next: Create Admin Account <ArrowRight size={16} aria-hidden="true" />
                                     </button>
                                 </div>
                             </motion.div>
@@ -422,22 +407,22 @@ export default function Login() {
                             >
                                 {/* Back button for individual signup */}
                                 {!isLogin && accountType === 'individual' && (
-                                    <button onClick={() => setAccountType(null)} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors mb-4">
-                                        <ChevronLeft size={14} /> Back
+                                    <button onClick={() => setAccountType(null)} className={`${backCls} mb-4`}>
+                                        <ChevronLeft size={16} aria-hidden="true" /> Back
                                     </button>
                                 )}
 
                                 {/* Back button and org badge for org admin step */}
                                 {!isLogin && accountType === 'organization' && orgStep === 1 && (
                                     <>
-                                        <button onClick={() => setOrgStep(0)} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors mb-4">
-                                            <ChevronLeft size={14} /> Back to org details
+                                        <button onClick={() => setOrgStep(0)} className={`${backCls} mb-4`}>
+                                            <ChevronLeft size={16} aria-hidden="true" /> Back to org details
                                         </button>
-                                        <div className="mb-5 p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center gap-3">
-                                            <Building2 size={16} className="text-purple-400 flex-shrink-0" />
-                                            <div>
-                                                <p className="text-xs text-purple-300 font-bold">{orgName}</p>
-                                                <p className="text-[10px] text-purple-400/60">You'll be the Super Admin</p>
+                                        <div className="mb-5 p-3 rounded-xl bg-accent-subtle border border-border-default flex items-center gap-3">
+                                            <Building2 size={16} className="text-accent-primary flex-shrink-0" aria-hidden="true" />
+                                            <div className="min-w-0">
+                                                <p className="text-sm text-text-primary font-bold truncate">{orgName}</p>
+                                                <p className="text-xs text-text-secondary">You'll be the Super Admin</p>
                                             </div>
                                         </div>
                                     </>
@@ -445,16 +430,16 @@ export default function Login() {
 
                                 <form onSubmit={handleSubmit} className="space-y-5">
                                     <div className="space-y-1.5">
-                                        <label htmlFor="username" className="text-xs uppercase font-bold text-slate-500 tracking-wider">Username</label>
+                                        <label htmlFor="username" className={labelCls}>Username</label>
                                         <div className="relative group">
-                                            <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors duration-300" size={18} />
+                                            <User className={fieldIcon} size={18} aria-hidden="true" />
                                             <input
                                                 id="username"
                                                 type="text"
                                                 value={username}
                                                 onChange={e => setUsername(e.target.value)}
                                                 autoComplete="username"
-                                                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-12 pr-5 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.06] transition-all duration-300 font-medium"
+                                                className={inputCls}
                                                 placeholder="Enter your username"
                                                 required
                                             />
@@ -463,16 +448,16 @@ export default function Login() {
 
                                     {!isLogin && (
                                         <div className="space-y-1.5">
-                                            <label htmlFor="email" className="text-xs uppercase font-bold text-slate-500 tracking-wider">Email <span className="text-slate-600 normal-case font-medium">(for password recovery)</span></label>
+                                            <label htmlFor="email" className={labelCls}>Email <span className="normal-case font-medium">(for password recovery)</span></label>
                                             <div className="relative group">
-                                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors duration-300" size={18} />
+                                                <Mail className={fieldIcon} size={18} aria-hidden="true" />
                                                 <input
                                                     id="email"
                                                     type="email"
                                                     value={email}
                                                     onChange={e => setEmail(e.target.value)}
                                                     autoComplete="email"
-                                                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-12 pr-5 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.06] transition-all duration-300 font-medium"
+                                                    className={inputCls}
                                                     placeholder="you@example.com"
                                                 />
                                             </div>
@@ -481,20 +466,20 @@ export default function Login() {
 
                                     <div className="space-y-1.5">
                                         <div className="flex items-center justify-between">
-                                            <label htmlFor="password" className="text-xs uppercase font-bold text-slate-500 tracking-wider">Password</label>
+                                            <label htmlFor="password" className={labelCls}>Password</label>
                                             {isLogin && (
-                                                <Link to="/forgot-password" className="text-xs font-medium text-cyan-600 hover:underline">Forgot?</Link>
+                                                <Link to="/forgot-password" className="min-h-11 -my-3 inline-flex items-center px-1 text-sm font-semibold text-accent-primary hover:underline">Forgot?</Link>
                                             )}
                                         </div>
                                         <div className="relative group">
-                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyan-400 transition-colors duration-300" size={18} />
+                                            <Lock className={fieldIcon} size={18} aria-hidden="true" />
                                             <input
                                                 id="password"
                                                 type={showPassword ? 'text' : 'password'}
                                                 value={password}
                                                 onChange={e => setPassword(e.target.value)}
                                                 autoComplete={isLogin ? "current-password" : "new-password"}
-                                                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-12 pr-12 py-3.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/30 focus:bg-white/[0.06] transition-all duration-300 font-medium"
+                                                className="input-neo pl-12 pr-12"
                                                 placeholder={isLogin ? 'Enter your password' : 'At least 8 characters'}
                                                 minLength={isLogin ? undefined : 8}
                                                 required
@@ -503,7 +488,7 @@ export default function Login() {
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
                                                 aria-label={showPassword ? "Hide password" : "Show password"}
-                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                                                className="absolute right-1 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-lg text-text-muted hover:text-text-primary transition-colors"
                                             >
                                                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                                             </button>
@@ -526,14 +511,14 @@ export default function Login() {
                                                     const labels = ['Weak', 'Fair', 'Good', 'Strong'];
                                                     return (
                                                         <>
-                                                            <div className="flex gap-1">
+                                                            <div className="flex gap-1" aria-hidden="true">
                                                                 {[0,1,2,3].map(i => (
                                                                     <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                                                                        i < strength ? colors[strength - 1] : 'bg-white/[0.06]'
+                                                                        i < strength ? colors[strength - 1] : 'bg-bg-inset'
                                                                     }`} />
                                                                 ))}
                                                             </div>
-                                                            <p className="text-[10px] mt-1 text-slate-500">{labels[strength - 1] || 'Too short'}</p>
+                                                            <p className="text-xs mt-1 text-text-muted">{labels[strength - 1] || 'Too short'}</p>
                                                         </>
                                                     );
                                                 })()}
@@ -544,51 +529,46 @@ export default function Login() {
                                     <button
                                         disabled={loading}
                                         className={clsx(
-                                            "w-full mt-6 py-3.5 rounded-xl font-bold text-sm text-white transition-all duration-300 flex items-center justify-center gap-2 relative overflow-hidden",
-                                            loading
-                                                ? "bg-slate-700 cursor-wait"
-                                                : "bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30"
+                                            "w-full mt-6 min-h-11 py-3.5 rounded-xl font-bold text-sm transition-colors duration-200 flex items-center justify-center gap-2",
+                                            loading ? `${waitBtn} cursor-wait` : solidBtn
                                         )}
                                     >
                                         {loading ? (
                                             <>
-                                                <Loader2 className="animate-spin" size={18} />
+                                                <Loader2 className="animate-spin" size={18} aria-hidden="true" />
                                                 <span>Authenticating...</span>
                                             </>
                                         ) : (
                                             <>
                                                 <span>{getSubmitText()}</span>
-                                                <ArrowRight size={18} />
+                                                <ArrowRight size={18} aria-hidden="true" />
                                             </>
-                                        )}
-                                        {!loading && (
-                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] hover:translate-x-[100%] transition-transform duration-700" />
                                         )}
                                     </button>
 
                                     {(linkedinEnabled || githubEnabled) && (isLogin || accountType === 'individual') && (
                                         <>
                                             <div className="flex items-center gap-3 my-1">
-                                                <div className="h-px flex-1 bg-white/[0.08]" />
-                                                <span className="text-[11px] uppercase tracking-wider text-slate-600">or</span>
-                                                <div className="h-px flex-1 bg-white/[0.08]" />
+                                                <div className="h-px flex-1 bg-border-default" />
+                                                <span className="text-xs uppercase tracking-wider text-text-muted">or</span>
+                                                <div className="h-px flex-1 bg-border-default" />
                                             </div>
                                             {githubEnabled && (
                                                 <button
                                                     type="button"
                                                     onClick={handleGitHub}
-                                                    className="w-full py-3 rounded-xl font-bold text-sm text-white bg-[#24292f] hover:bg-[#1b1f24] border border-white/10 transition-colors flex items-center justify-center gap-2"
+                                                    className="w-full min-h-11 py-3 rounded-xl font-bold text-sm text-white bg-[#24292f] hover:bg-[#1b1f24] border border-border-default transition-colors flex items-center justify-center gap-2"
                                                 >
-                                                    <Github size={18} /> Continue with GitHub
+                                                    <Github size={18} aria-hidden="true" /> Continue with GitHub
                                                 </button>
                                             )}
                                             {linkedinEnabled && (
                                                 <button
                                                     type="button"
                                                     onClick={handleLinkedIn}
-                                                    className="w-full py-3 rounded-xl font-bold text-sm text-white bg-[#0a66c2] hover:bg-[#004182] transition-colors flex items-center justify-center gap-2"
+                                                    className="w-full min-h-11 py-3 rounded-xl font-bold text-sm text-white bg-[#0a66c2] hover:bg-[#004182] transition-colors flex items-center justify-center gap-2"
                                                 >
-                                                    <Linkedin size={18} /> Continue with LinkedIn
+                                                    <Linkedin size={18} aria-hidden="true" /> Continue with LinkedIn
                                                 </button>
                                             )}
                                         </>
@@ -608,12 +588,12 @@ export default function Login() {
                 >
                     <button
                         onClick={switchMode}
-                        className="text-sm font-medium text-slate-500 hover:text-slate-300 transition-colors"
+                        className="min-h-11 px-3 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg"
                     >
                         {isLogin ? (
-                            <>Don't have an account? <span className="text-cyan-400 font-semibold">Sign up</span></>
+                            <>Don't have an account? <span className="text-accent-primary font-semibold">Sign up</span></>
                         ) : (
-                            <>Already have an account? <span className="text-cyan-400 font-semibold">Sign in</span></>
+                            <>Already have an account? <span className="text-accent-primary font-semibold">Sign in</span></>
                         )}
                     </button>
                 </motion.div>
