@@ -23,7 +23,8 @@ function fmt(s, params) {
 }
 
 // Sentences mark code identifiers with backticks: show them as <code>.
-function Rich({ text }) {
+// Text with `backticked` code spans. Also used by TopicUnderTheHood.
+export function Rich({ text }) {
   const parts = String(text || '').split('`');
   return parts.map((p, i) => (i % 2
     ? <code key={i} className="rounded bg-bg-inset px-1 font-mono text-[0.95em]">{p}</code>

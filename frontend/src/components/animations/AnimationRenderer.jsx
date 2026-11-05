@@ -114,6 +114,33 @@ function applySpeed(props, speedMultiplier) {
   return out;
 }
 
+/**
+ * One primitive on its own, with its caption: the same normalisation and locale
+ * resolution as the full renderer, but no sequence, sync or particle wiring.
+ * Step-based types get the playback controls, starting paused (the learner
+ * presses Play). Used by the "How it works" topic explainer.
+ */
+export function PrimitiveView({ type, props: rawProps, language = 'en' }) {
+  const Component = PRIMITIVE_MAP[type];
+  if (!Component || type === 'ParticleEffect' || type === 'particle_effect') return null;
+  const { caption, ...componentProps } = normalizeProps(type, rawProps || {}, language);
+  const props = resolveProps(componentProps, language, '');
+  const stepTotal = getStepTotal(type, props);
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <VisualCaption title={caption?.title} />
+      {stepTotal > 0 ? (
+        <PlayableVisual total={stepTotal} autoPlay={false}>
+          {(step) => <Component {...props} controlledStep={step} />}
+        </PlayableVisual>
+      ) : (
+        <Component {...props} />
+      )}
+      <VisualCaption description={caption?.description} />
+    </div>
+  );
+}
+
 export default function AnimationRenderer({
   sequence: rawSequence = [],
   storyContent = '',

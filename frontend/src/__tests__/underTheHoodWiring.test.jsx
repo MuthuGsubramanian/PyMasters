@@ -190,6 +190,140 @@ describe('Lesson intro: Under the hood', () => {
   })
 })
 
+describe('Lesson intro: Under the hood with topic content (How it works | Python\'s view)', () => {
+  const BODY = 'Python builds the list object first, then stores a reference to it under the name.'
+  const TOPIC = {
+    summary: { en: 'Names point to objects.', ta: 'பெயர்கள் பொருட்களைச் சுட்டுகின்றன.' },
+    steps: [
+      { title: 'Objects', body: BODY, visual: { type: 'TerminalOutput', props: { lines: ['>>> id(a)'] } } },
+      { title: 'Names', body: BODY },
+      { title: 'Identity', body: BODY, visual: { type: 'ConceptMap', props: { nodes: ['object'] } } },
+      { title: 'Refcounts', body: BODY },
+    ],
+    takeaway: 'Names are labels, not boxes.',
+  }
+  const TOPIC_LESSON = { ...LESSON, under_the_hood: TOPIC, has_uth_trace: true }
+  const tabs = () => [...dialog().querySelectorAll('[role="tab"]')]
+  const tab = (name) => tabs().find((t) => t.textContent.includes(name))
+
+  it('opens on "How it works" without fetching; "Python\'s view" fetches the trace once', async () => {
+    api.get.mockResolvedValue({ data: LESSON_UTH })
+    const r = render(<IntroPhase lesson={TOPIC_LESSON} language="en" onComplete={() => {}} />)
+    r.click(uthButton(r.container))
+    await flush()
+    expect(api.get).not.toHaveBeenCalled()
+    expect(tabs().map((t) => t.textContent.trim())).toEqual(['How it works', "Python's view"])
+    expect(tab('How it works').getAttribute('aria-selected')).toBe('true')
+    for (const t of tabs()) expect(t.className).toMatch(/min-h-\[44px\]/)
+    expect(dialog().querySelector('section[aria-label="How it works"]')).toBeTruthy()
+    expect(dialog().querySelector('[data-uth-topic="summary"]').textContent).toBe('Names point to objects.')
+
+    r.click(tab("Python's view"))
+    await flush()
+    expect(api.get).toHaveBeenCalledWith(ofLesson('lists_alias'))
+    expect(tab("Python's view").getAttribute('aria-selected')).toBe('true')
+    expect(dialog().querySelector('[data-uth="code"]').textContent).toContain('b.append(3)')
+    expect(dialog().querySelector('section[aria-label="How it works"]').closest('[hidden]')).toBeTruthy()
+
+    r.click(tab('How it works'))
+    expect(dialog().querySelector('section[aria-label="How it works"]').closest('[hidden]')).toBeFalsy()
+    expect(dialog().querySelector('[data-uth="code"]')).toBeFalsy()
+    r.click(tab("Python's view"))
+    await flush()
+    expect(api.get).toHaveBeenCalledTimes(1)
+    r.unmount()
+  })
+
+  it('keeps the "How it works" step when switching tabs and back', async () => {
+    api.get.mockResolvedValue({ data: LESSON_UTH })
+    const r = render(<IntroPhase lesson={TOPIC_LESSON} language="en" onComplete={() => {}} />)
+    r.click(uthButton(r.container))
+    await flush()
+    r.click([...dialog().querySelectorAll('button')].find((b) => b.textContent.trim() === 'Next'))
+    r.click(tab("Python's view"))
+    await flush()
+    r.click(tab('How it works'))
+    expect(dialog().querySelector('[data-uth-topic="counter"]').textContent).toBe('Step 2 of 4')
+    r.unmount()
+  })
+
+  it('steps through to the takeaway inside the popup', async () => {
+    const r = render(<IntroPhase lesson={TOPIC_LESSON} language="en" onComplete={() => {}} />)
+    r.click(uthButton(r.container))
+    await flush()
+    const next = () => [...dialog().querySelectorAll('button')].find((b) => b.textContent.trim() === 'Next')
+    for (let i = 0; i < 3; i++) r.click(next())
+    expect(dialog().querySelector('[data-uth-topic="counter"]').textContent).toBe('Step 4 of 4')
+    expect(dialog().querySelector('[data-uth-topic="takeaway"]').textContent).toContain('Names are labels, not boxes.')
+    r.unmount()
+  })
+
+  it('keeps the loading, error and Try again behaviour in "Python\'s view"', async () => {
+    api.get.mockRejectedValueOnce(httpError(500)).mockResolvedValueOnce({ data: LESSON_UTH })
+    const r = render(<IntroPhase lesson={TOPIC_LESSON} language="en" onComplete={() => {}} />)
+    r.click(uthButton(r.container))
+    r.click(tab("Python's view"))
+    expect(dialog().querySelector('[role="status"]').textContent).toMatch(/Running the example/)
+    await flush()
+    const alert = dialog().querySelector('[role="alert"]')
+    expect(alert.textContent).toMatch(/Could not run the example/)
+    r.click(byText(alert, 'Try again'))
+    await flush()
+    expect(api.get).toHaveBeenCalledTimes(2)
+    expect(dialog().querySelector('section[aria-label="Under the hood"]')).toBeTruthy()
+    r.unmount()
+  })
+
+  it('reopening starts on "How it works" again', async () => {
+    api.get.mockResolvedValue({ data: LESSON_UTH })
+    const r = render(<IntroPhase lesson={TOPIC_LESSON} language="en" onComplete={() => {}} />)
+    r.click(uthButton(r.container))
+    r.click(tab("Python's view"))
+    await flush()
+    r.key('Escape')
+    await flush()
+    r.click(uthButton(r.container))
+    await flush()
+    expect(tab('How it works').getAttribute('aria-selected')).toBe('true')
+    r.unmount()
+  })
+
+  it('has no "Python\'s view" tab when the lesson has no example code to trace', async () => {
+    const r = render(<IntroPhase lesson={{ ...TOPIC_LESSON, has_uth_trace: false }} language="en" onComplete={() => {}} />)
+    r.click(uthButton(r.container))
+    await flush()
+    expect(dialog().querySelector('[role="tab"]')).toBeFalsy()
+    expect(dialog().querySelector('section[aria-label="How it works"]')).toBeTruthy()
+    expect(api.get).not.toHaveBeenCalled()
+    r.unmount()
+  })
+
+  it('shows Tamil tab names and content for a Tamil learner', async () => {
+    const r = render(<IntroPhase lesson={TOPIC_LESSON} language="ta" onComplete={() => {}} />)
+    r.click(r.container.querySelector('button[aria-haspopup="dialog"]'))
+    await flush()
+    const names = [...document.querySelectorAll('[role="dialog"] [role="tab"]')].map((t) => t.textContent.trim())
+    expect(names).toHaveLength(2)
+    expect(names[0]).not.toBe('How it works')
+    expect(names[1]).not.toBe("Python's view")
+    expect(document.querySelector('[data-uth-topic="summary"]').textContent).toBe('பெயர்கள் பொருட்களைச் சுட்டுகின்றன.')
+    expect(document.querySelector('[data-uth-topic="title"]').textContent).toBe('Objects')
+    r.unmount()
+  })
+
+  it('a lesson without topic content keeps the old single view (no tabs, fetch on open)', async () => {
+    api.get.mockResolvedValue({ data: LESSON_UTH })
+    const r = render(<IntroPhase lesson={LESSON} language="en" onComplete={() => {}} />)
+    r.click(uthButton(r.container))
+    expect(api.get).toHaveBeenCalledTimes(1)
+    await flush()
+    expect(dialog().querySelector('[role="tab"]')).toBeFalsy()
+    expect(dialog().querySelector('section[aria-label="How it works"]')).toBeFalsy()
+    expect(dialog().querySelector('section[aria-label="Under the hood"]')).toBeTruthy()
+    r.unmount()
+  })
+})
+
 describe('TraceViewer: Steps | Under the hood tabs', () => {
   const tabs = () => [...document.querySelectorAll('[role="tab"]')]
   const tab = (name) => tabs().find((t) => t.textContent.includes(name))
