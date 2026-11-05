@@ -405,5 +405,129 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A chatbot's memory is the list of messages your code sends on every call; since that list grows each turn and the context window is finite, the app must decide what to keep in full, what to summarise and what to drop.",
+    "steps": [
+      {
+        "title": "The model forgets after every call",
+        "body": "An LLM API call does not remember the previous call. If the user says 'My name is Priya' and later asks 'What is my name?', the model only knows the answer if the earlier message is included again in the second request. The chatbot's state lives in your messages list."
+      },
+      {
+        "title": "Full history grows fast",
+        "body": "If each turn adds about 100 tokens, turn 10 sends about 1,000 tokens of history, and the 10 turns together send 100 + 200 + ... + 1,000 = 5,500 input tokens. Cost and latency grow with every turn, and eventually the history exceeds the context window.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              100,
+              200,
+              300,
+              400,
+              500,
+              600,
+              700,
+              800,
+              900,
+              1000
+            ],
+            "labels": [
+              "t1",
+              "t2",
+              "t3",
+              "t4",
+              "t5",
+              "t6",
+              "t7",
+              "t8",
+              "t9",
+              "t10"
+            ],
+            "caption": "Tokens sent per turn with full history; total 5,500"
+          }
+        }
+      },
+      {
+        "title": "Sliding window keeps the last N",
+        "body": "Keep the system prompt plus only the last N messages, for example the last 10. The cost per turn stops growing, but anything older, like the user's name from turn 1, is gone. Counting tokens instead of messages gives tighter control, since messages vary in length."
+      },
+      {
+        "title": "Summaries compress the past",
+        "body": "When history passes a token budget, ask the model to summarise the oldest turns into a short note ('User is Priya, learning pandas, prefers short answers') and replace those turns with it. The summary costs one extra call but keeps key facts while freeing most of the space.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "new user message",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "count tokens of history",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "over budget?",
+                "type": "decision"
+              },
+              {
+                "id": "n3",
+                "label": "summarise oldest turns into a note",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "system + summary + recent turns + new message",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "call the model",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "Managing context each turn"
+          }
+        }
+      },
+      {
+        "title": "Long-term memory sits outside the chat",
+        "body": "Facts worth keeping across sessions are stored in a database, sometimes as embeddings, and the relevant ones are retrieved and inserted into the prompt when a new conversation starts. To the model it is all just context; your code decides what it sees."
+      }
+    ],
+    "takeaway": "A chatbot remembers only what you resend. Choose a strategy, full history, a window, summaries or retrieved memories, based on how much the past matters versus how much each call may cost."
   }
 }

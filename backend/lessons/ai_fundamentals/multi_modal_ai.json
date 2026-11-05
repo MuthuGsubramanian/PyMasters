@@ -371,5 +371,107 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A vision-language model cuts an image into small patches, turns each patch into a vector just like a text token, and feeds those image tokens into the same transformer alongside your text so attention can relate words to regions.",
+    "steps": [
+      {
+        "title": "Images become patches",
+        "body": "In a Vision Transformer style encoder, a 224 x 224 image split into 16 x 16 pixel patches gives 14 x 14 = 196 patches. Each patch's 16 x 16 x 3 = 768 pixel values are flattened and linearly projected to a vector, with a position embedding saying where the patch came from.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              "224 x 224 x 3",
+              "16 x 16",
+              "14 x 14 = 196",
+              "16 x 16 x 3 = 768"
+            ],
+            "labels": [
+              "image",
+              "patch size",
+              "patches",
+              "values per patch"
+            ],
+            "caption": "Turning one image into 196 patch tokens"
+          }
+        }
+      },
+      {
+        "title": "Image tokens join the text sequence",
+        "body": "An image encoder refines those patch vectors, and a projection maps them into the language model's embedding space. The model then sees one sequence, image tokens followed by tokens like 'What does this receipt total?', and attention lets the question's tokens look at the relevant patches.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "image pixels",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "patches -> vectors (vision encoder)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "project into the LLM's token space",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "concatenate with text tokens",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "transformer generates the answer",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "How text and image meet"
+          }
+        }
+      },
+      {
+        "title": "Bigger images cost more tokens",
+        "body": "More pixels means more patches and so more tokens. Providers resize large images to a maximum size and count image tokens as part of the input, so a full-resolution screenshot costs more than a thumbnail. Small text in a downscaled image may become unreadable; cropping to the region you care about helps."
+      },
+      {
+        "title": "Sending images through an API",
+        "body": "Chat APIs accept an image as a content part next to text, either base64-encoded bytes with a media type such as image/png or, for some providers, a URL. Several images can go in one message, and their order matters when you refer to 'the first image'."
+      },
+      {
+        "title": "Documents: pixels and text together",
+        "body": "For PDFs, systems may extract the embedded text and also render pages as images so tables and charts are visible to the model. Asking for structured output, such as JSON with vendor, date and total, turns a receipt photo into data, but numbers read from images should be validated, for example by checking that line items add up to the total."
+      }
+    ],
+    "takeaway": "To the model an image is just more tokens: patch vectors placed next to your words. Give it enough resolution where details matter, keep images as small as the task allows, and verify any numbers it reads."
   }
 }

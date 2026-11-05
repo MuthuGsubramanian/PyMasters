@@ -429,5 +429,103 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "In LangChain every component is a Runnable with invoke, batch and stream; the | operator joins them into a RunnableSequence, so a prompt's output becomes the model's input and the model's message becomes the parser's input.",
+    "steps": [
+      {
+        "title": "The pipe builds a sequence",
+        "body": "prompt | model | parser calls Python's __or__ method on the prompt, which returns a RunnableSequence of three steps. Nothing runs yet. chain.invoke({'topic': 'Python'}) then calls each step's invoke in order, passing the output along.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "{'topic': 'Python'}",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "ChatPromptTemplate -> ChatPromptValue (messages)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "ChatModel -> AIMessage",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "StrOutputParser -> str",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "result string",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Types flowing through prompt | model | parser"
+          }
+        }
+      },
+      {
+        "title": "The template fills variables",
+        "body": "ChatPromptTemplate.from_template('Explain {topic} in two sentences') looks for {topic} in the input dict and substitutes it, producing a list of chat messages. A missing key raises an error before any API call, which catches typos early."
+      },
+      {
+        "title": "The model returns a message object",
+        "body": "The chat model sends those messages to the provider and wraps the reply in an AIMessage with .content, plus metadata such as token usage. Because every chat model returns the same type, you can swap one provider for another without changing the rest of the chain."
+      },
+      {
+        "title": "Parsers turn text into data",
+        "body": "StrOutputParser takes .content as a plain string. JsonOutputParser parses the text into a dict and can supply format instructions to put in the prompt. If the model's text is not valid JSON, the parser raises an exception, so structured-output features or retries are often used alongside it.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "StrOutputParser",
+              "code": "AIMessage -> 'Python is...'"
+            },
+            "right": {
+              "label": "JsonOutputParser",
+              "code": "AIMessage -> {'summary': '...', 'level': 'beginner'}"
+            },
+            "caption": "Same message, different parsers"
+          }
+        }
+      },
+      {
+        "title": "batch and stream come free",
+        "body": "Because the sequence is a Runnable too, chain.batch([...]) runs several inputs (concurrently where possible) and chain.stream(...) yields pieces of the final output as the model produces them. Each component only has to implement the standard interface."
+      }
+    ],
+    "takeaway": "LCEL is function composition with a shared interface. Know the type each step outputs, dict to messages to AIMessage to parsed value, and debugging a chain becomes checking one step at a time."
   }
 }

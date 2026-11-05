@@ -374,5 +374,103 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "AI has gone through three engines: hand-written rules that a program applies to facts, models whose numbers are learned from labelled data, and huge neural networks that learn to generate text, images and code by predicting what comes next.",
+    "steps": [
+      {
+        "title": "Symbolic AI: rules written by people",
+        "body": "An expert system stores rules like 'IF fever AND rash THEN suspect measles' and an inference engine applies them to the facts it is given, chaining one conclusion into the next rule. It is transparent and exact, but someone must write every rule, and it fails on cases nobody anticipated.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "facts: fever, rash",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "rule: fever AND rash?",
+                "type": "decision"
+              },
+              {
+                "id": "n2",
+                "label": "conclude: suspect measles",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "next rule may use the new fact",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "diagnosis",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Forward chaining in a rule system"
+          }
+        }
+      },
+      {
+        "title": "Machine learning: rules learned from data",
+        "body": "Instead of writing the spam rule, give a model 10,000 emails labelled spam or not. Training adjusts weights, say +2.1 for 'free' and +1.4 for a link, until predictions match the labels. The 'rules' become numbers found by optimisation, and they adapt when you retrain on new data.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Symbolic",
+              "code": "IF 'free' AND link THEN spam\nwritten by a person"
+            },
+            "right": {
+              "label": "Learned",
+              "code": "score = 2.1*free + 1.4*link - 3.0\nnumbers found from labelled data"
+            },
+            "caption": "The same spam idea, two engines"
+          }
+        }
+      },
+      {
+        "title": "Deep learning: features learned too",
+        "body": "Classic ML still needed people to design features. Deep neural networks learn their own features in layers, edges then shapes then objects for images. The 2012 ImageNet result (AlexNet), trained on GPUs, showed how far this could go when data and compute were large enough."
+      },
+      {
+        "title": "Generative AI: predicting the next piece",
+        "body": "The 2017 transformer made it practical to train very large models on huge amounts of text. Trained only to predict the next token, they learned to write, summarise, translate and code. Image generators apply related ideas to pixels, for example by learning to remove noise step by step."
+      },
+      {
+        "title": "Narrow systems, broad interfaces",
+        "body": "Every system so far is narrow AI: it does what its training or rules cover. Language models feel general because language can describe many tasks, but they still have no goals of their own and make mistakes outside their data. Artificial general intelligence remains a research goal, not a shipped product."
+      }
+    ],
+    "takeaway": "The history of AI is a shift in where the knowledge comes from: from rules people write, to parameters learned from data, to very large models that learn representations themselves. Each shift traded transparency for flexibility."
   }
 }

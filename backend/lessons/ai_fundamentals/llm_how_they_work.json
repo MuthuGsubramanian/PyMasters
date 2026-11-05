@@ -433,5 +433,136 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Inside an LLM, text is split into tokens, each token id looks up a learned vector, stacked attention layers let every position mix in information from earlier positions, and the final vector is scored against the whole vocabulary.",
+    "steps": [
+      {
+        "title": "Tokenization with merged pieces",
+        "body": "Byte-pair encoding starts from bytes and repeatedly merges the most frequent adjacent pair seen in training text, building a vocabulary of about 100,000 pieces in GPT-4's tokenizer. Common words become one token, rare ones split: 'Hello, PyMasters!' might become ['Hello', ',', ' Py', 'Masters', '!']. In English a token averages roughly 4 characters.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              "Hello",
+              ",",
+              " Py",
+              "Masters",
+              "!"
+            ],
+            "labels": [
+              "t0",
+              "t1",
+              "t2",
+              "t3",
+              "t4"
+            ],
+            "caption": "One possible tokenization"
+          }
+        }
+      },
+      {
+        "title": "Embedding: a row lookup",
+        "body": "The embedding table has one row per vocabulary entry; with 100,000 tokens and 4,096 dimensions that is about 410 million numbers. Token id 15496 simply selects row 15496. These vectors are learned during training, so tokens used in similar ways end up with similar vectors. Position information is added so word order is not lost."
+      },
+      {
+        "title": "Attention mixes context into each token",
+        "body": "Each token makes a query, key and value vector. A token's query is dotted with every earlier key; with scores [4, 2, 0] and key size 4, dividing by sqrt(4) gives [2, 1, 0], and softmax turns that into weights [0.67, 0.24, 0.09]. The output is the weighted sum of the value vectors: with values [1, 0], [0, 1], [1, 1] it is [0.76, 0.33].",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                2,
+                1,
+                0
+              ],
+              [
+                0.67,
+                0.24,
+                0.09
+              ],
+              [
+                0.76,
+                0.33
+              ]
+            ],
+            "labels": [
+              "scaled scores",
+              "softmax weights",
+              "output"
+            ],
+            "caption": "Attention for one token over three positions"
+          }
+        }
+      },
+      {
+        "title": "Layers stack attention and MLPs",
+        "body": "A transformer block applies attention and then a small feed-forward network to every position, with residual connections adding each block's result to its input. Models stack dozens of blocks; early ones tend to capture local syntax, later ones broader meaning. In a decoder model a causal mask stops any position from seeing tokens after it.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "token embeddings + positions",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "block 1: attention + MLP",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "block 2 ... block N",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "final vector at last position",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "scores for every vocabulary token",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "The path through the model"
+          }
+        }
+      },
+      {
+        "title": "From vector to next token",
+        "body": "The last position's final vector is multiplied by an output matrix to give one score per vocabulary token, softmax turns scores into probabilities, and the next token is chosen. That new token is appended and the process repeats; caches of past keys and values avoid recomputing earlier positions."
+      }
+    ],
+    "takeaway": "Tokens become vectors, attention lets each vector gather what it needs from the context, and many layers refine them until the last one can be scored against the vocabulary. Everything an LLM does comes from repeating that pass."
   }
 }
