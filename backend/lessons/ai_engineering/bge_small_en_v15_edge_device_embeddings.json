@@ -190,14 +190,14 @@
       },
       {
         "title": "Dynamic int8 quantization",
-        "body": "Each weight matrix is stored as 8-bit integers plus a float scale: w is approximately scale x q, with q in -128..127. 33M weights drop from about 130 MB (4 bytes each) to about 33 MB (1 byte each), and integer matrix multiplies are cheaper on CPU.",
+        "body": "Each weight matrix is stored as 8-bit integers plus a float scale: w is approximately scale x q, with q in -128..127. 33M weights drop from about 130 MB (4 bytes each) to roughly a quarter of that, about 34 MB (1 byte each), and integer matrix multiplies are cheaper on CPU.",
         "visual": {
           "type": "DataStructure",
           "props": {
             "structure": "model size (approx.)",
             "data": [
               "~130 MB fp32",
-              "~33 MB int8"
+              "~34 MB int8"
             ],
             "labels": [
               "before",
