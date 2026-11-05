@@ -90,7 +90,8 @@ function isEditableTarget(t) {
 // to `children(step)` (which renders the visual with controlledStep), and shows
 // the controls. `onComplete` fires when playback finishes the last step or the
 // learner steps onto it with Next, so a "Watch It Run" sequence still advances.
-export function PlayableVisual({ total, onComplete, children }) {
+// `autoPlay={false}` starts paused (as under reduced motion); Play still works.
+export function PlayableVisual({ total, onComplete, children, autoPlay = true }) {
   const reducedMotion = useReducedMotion();
   const completedRef = useRef(false);
   const complete = () => {
@@ -98,7 +99,7 @@ export function PlayableVisual({ total, onComplete, children }) {
     completedRef.current = true;
     onComplete?.();
   };
-  const pb = useStepPlayback(total, { reducedMotion, onFinish: complete });
+  const pb = useStepPlayback(total, { reducedMotion: reducedMotion || !autoPlay, onFinish: complete });
 
   // A Next press that reaches the last step finishes the visual right away, so
   // the next one in a sequence appears without an extra press on a counter that

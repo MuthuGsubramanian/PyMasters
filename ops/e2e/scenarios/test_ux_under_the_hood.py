@@ -32,6 +32,10 @@ def _open(logged_in_page, width, height, dark):
     launcher.first.click()
     dialog = page.get_by_role("dialog", name=re.compile("Under the hood"))
     dialog.wait_for(timeout=30000)
+    # With topic content the popup opens on "How it works"; the trace lives on "Python's view".
+    python_tab = dialog.get_by_role("tab", name="Python's view")
+    if python_tab.count():
+        python_tab.click()
     dialog.locator('[data-uth="headline"]').wait_for(timeout=30000)
     pause = dialog.get_by_role("button", name="Pause")
     if pause.count() and pause.first.is_visible():

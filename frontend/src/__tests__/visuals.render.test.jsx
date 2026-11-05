@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRoot } from 'react-dom/client';
 import { act } from 'react';
-import AnimationRenderer from '../components/animations/AnimationRenderer';
+import AnimationRenderer, { PrimitiveView } from '../components/animations/AnimationRenderer';
 import { canonicalType, normalizeProps } from '../components/animations/normalize';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -123,3 +123,54 @@ describe('every authored lesson visual shape renders real content', () => {
     }
   });
 });
+
+// "How it works": every lesson's under_the_hood step visual, drawn the way the explainer draws it.
+function collectTopicVisuals() {
+  const out = [];
+  for (const file of jsonFiles(LESSONS_DIR)) {
+    const lesson = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const steps = lesson?.under_the_hood?.steps;
+    if (!Array.isArray(steps)) continue;
+    const lessonId = lesson.id || path.basename(file, '.json');
+    steps.forEach((s, i) => { if (s && s.visual) out.push([`${lessonId} steps[${i}] ${s.visual.type}`, s.visual]); });
+  }
+  return out;
+}
+
+const TOPIC_VISUALS = collectTopicVisuals();
+
+describe('every under_the_hood topic visual renders real content', () => {
+  it('finds topic visuals to test', () => {
+    expect(TOPIC_VISUALS.length).toBeGreaterThan(0);
+  });
+
+  it.each(TOPIC_VISUALS)('%s', (_name, visual) => {
+    vi.useFakeTimers();
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+    // Reduced motion: typed and animated primitives show their full content at once.
+    localStorage.setItem('pm_reduce_motion', '1');
+    try {
+      for (const language of ['en', 'ta']) {
+        act(() => { root.render(<PrimitiveView key={language} type={visual.type} props={visual.props} language={language} />); });
+        act(() => { vi.advanceTimersByTime(10000); });
+        checkTopicVisual(visual, language);
+      }
+    } finally {
+      localStorage.removeItem('pm_reduce_motion');
+    }
+  });
+});
+
+function checkTopicVisual(visual, language) {
+  const squash = (v) => String(v).replace(/\s+/g, ' ').trim();
+  const text = container.textContent;
+  expect(text.trim(), 'textContent is empty').not.toBe('');
+  expect(text).not.toMatch(BAD);
+  const { caption } = normalizeProps(visual.type, { ...visual.props }, language);
+  if (caption?.title) expect(squash(text), 'caption title missing').toContain(squash(caption.title));
+  if (caption?.description) expect(squash(text), 'caption description missing').toContain(squash(caption.description));
+  // Terminal lines are the whole point of a terminal visual: every one must be on screen.
+  for (const line of visual.props.lines || []) expect(squash(text)).toContain(squash(line));
+}
