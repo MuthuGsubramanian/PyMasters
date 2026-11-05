@@ -420,5 +420,145 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A perceptron adds up its inputs times their weights plus a bias and outputs 1 if the total is at least 0; it learns by nudging the weights towards each example it gets wrong, which works only when a straight line can separate the classes.",
+    "steps": [
+      {
+        "title": "Weighted sum, then a threshold",
+        "body": "With study_hours = 1, sleep = 1, weights [0.6, 0.4] and bias -0.5, the total is 0.6 + 0.4 - 0.5 = 0.5. Since 0.5 >= 0 the output is 1, pass. The bias moves the threshold: it is how much evidence the inputs must supply before the neuron fires.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "inputs x = (1, 1)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "weighted sum 0.6*1 + 0.4*1 = 1.0",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "add bias: 1.0 - 0.5 = 0.5",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "total >= 0?",
+                "type": "decision"
+              },
+              {
+                "id": "n4",
+                "label": "output 1 (pass)",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One perceptron decision"
+          }
+        }
+      },
+      {
+        "title": "The decision boundary is a line",
+        "body": "The perceptron fires exactly when 0.6 x1 + 0.4 x2 - 0.5 >= 0. The points where that equals 0 form a straight line in the (x1, x2) plane; everything on one side is class 1, the other side class 0. Changing weights rotates the line; changing the bias shifts it."
+      },
+      {
+        "title": "Learning: fix the mistakes",
+        "body": "The rule is w = w + lr * (target - output) * x, and the same for the bias with x = 1. For input (1, 0) with target 0, our perceptron gives 0.6 - 0.5 = 0.1, output 1: wrong. With lr = 0.1: w1 = 0.6 - 0.1 = 0.5, bias = -0.6. Now 0.5 - 0.6 = -0.1, output 0. Correct examples cause no change.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "w1",
+                0.6,
+                0.5
+              ],
+              [
+                "w2",
+                0.4,
+                0.4
+              ],
+              [
+                "bias",
+                -0.5,
+                -0.6
+              ]
+            ],
+            "labels": [
+              "param",
+              "param",
+              "param"
+            ],
+            "highlight": [
+              0,
+              2
+            ],
+            "caption": "Before and after one update on input (1, 0), target 0"
+          }
+        }
+      },
+      {
+        "title": "After that update it computes AND",
+        "body": "Check all four inputs with w = [0.5, 0.4] and bias -0.6: (0,0) gives -0.6, (0,1) gives -0.2, (1,0) gives -0.1, all 0; (1,1) gives 0.3, output 1. That is logical AND. If a separating line exists, the perceptron convergence theorem guarantees this rule finds one in a finite number of updates.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "(0,0)",
+                "value": 0
+              },
+              {
+                "variable": "(0,1)",
+                "value": 0
+              },
+              {
+                "variable": "(1,0)",
+                "value": 0
+              },
+              {
+                "variable": "(1,1)",
+                "value": 1
+              }
+            ],
+            "caption": "Outputs with w = [0.5, 0.4], b = -0.6"
+          }
+        }
+      },
+      {
+        "title": "Where one neuron stops",
+        "body": "XOR needs (0,1) and (1,0) on one side and (0,0) and (1,1) on the other; no single line does that, so a lone perceptron never converges on it, a limit made famous by Minsky and Papert in 1969. Layers of neurons with smooth activations, trained by backpropagation, removed the limit."
+      }
+    ],
+    "takeaway": "A perceptron is a weighted vote with a threshold, learned by correcting mistakes. It can only draw one straight line, which is exactly why networks stack many neurons in layers."
+  }
 }

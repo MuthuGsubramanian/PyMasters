@@ -382,5 +382,114 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "An embedding model maps text to a fixed-length vector so that texts with similar meaning point in similar directions; cosine similarity then compares two texts by the angle between their vectors.",
+    "steps": [
+      {
+        "title": "Text in, fixed-length vector out",
+        "body": "An embedding model is a neural network, usually a transformer, that reads the text and produces one vector of fixed size, often 384 to 3,072 numbers, whatever the text length. It was trained so that related pairs, like a question and its answer, end up close and unrelated pairs far apart."
+      },
+      {
+        "title": "Cosine similarity: the dot product, normalised",
+        "body": "cos(a, b) = (a · b) / (|a| |b|). With toy vectors cat = [0.2, 0.8, 0.1] and dog = [0.3, 0.7, 0.1], the dot product is 0.06 + 0.56 + 0.01 = 0.63 and the lengths are 0.83 and 0.77, so cosine = 0.99. For car = [0.9, 0.1, 0.8], cos(cat, car) = 0.34.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "cat",
+                "dog",
+                0.99
+              ],
+              [
+                "cat",
+                "car",
+                0.34
+              ]
+            ],
+            "labels": [
+              "pair 1",
+              "pair 2"
+            ],
+            "highlight": [
+              0
+            ],
+            "caption": "Cosine similarity of the toy vectors"
+          }
+        }
+      },
+      {
+        "title": "Normalise once, then just dot",
+        "body": "If every vector is scaled to length 1 when stored, |a| and |b| are 1 and cosine similarity is just the dot product. That is why many systems normalise embeddings and use an inner-product index: comparing a query to a million documents becomes one matrix-vector multiply."
+      },
+      {
+        "title": "Exact search with FAISS",
+        "body": "faiss.IndexFlatIP stores all vectors and, for a query, computes the inner product with every one of them, then returns the top k. For 1 million 1,536-dimensional vectors that is about 1.5 billion multiply-adds per query: fine for prototypes, but the reason approximate indexes exist.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "embed the query",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "normalise to length 1",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "dot product with every stored vector",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "sort scores",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "return top-k ids",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Exact nearest-neighbour search"
+          }
+        }
+      },
+      {
+        "title": "Similarity is not truth",
+        "body": "High cosine means 'about the same thing', not 'answers the question correctly'. 'The bank approved my loan' and 'The bank denied my loan' can score very high together. Retrieval systems therefore often re-rank the top results or let the LLM judge relevance."
+      }
+    ],
+    "takeaway": "Embeddings turn meaning into geometry: similar texts, nearby directions. Normalise the vectors, compare with dot products, and remember that closeness measures topic, not correctness."
   }
 }

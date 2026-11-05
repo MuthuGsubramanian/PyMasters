@@ -261,5 +261,79 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A dict hashes each key to pick a slot in a table, stores entries in insertion order in a separate array, and resizes when about two-thirds full, giving O(1) average lookups.",
+    "steps": [
+      {
+        "title": "The key is hashed",
+        "body": "`contacts['Asha']` first calls `hash('Asha')`, which gives a large integer. Equal keys must give equal hashes, which is why keys must be hashable (immutable in practice): a list can change, so it has no hash and cannot be a key."
+      },
+      {
+        "title": "The hash picks a slot",
+        "body": "CPython keeps a small index table whose size is a power of two (8 for a new small dict). The slot is `hash & (size - 1)`, the low bits of the hash. The slot holds a number pointing into a separate entries array that stores (hash, key, value) in insertion order, which is why dicts remember order since Python 3.7.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": [
+              "indices: [_, 1, _, 0, _, _, 2, _]",
+              "entries[0]: hash, 'Asha', '555-1234'",
+              "entries[1]: hash, 'Ravi', '555-9876'",
+              "entries[2]: hash, 'Meena', '555-4321'"
+            ],
+            "highlight": [
+              0
+            ],
+            "caption": "Index table points into an ordered entries array"
+          }
+        }
+      },
+      {
+        "title": "Collisions probe to another slot",
+        "body": "If the slot is taken by a different key, CPython does not chain a list there. It jumps to another slot using a formula that mixes in more bits of the hash (`perturb`), and keeps probing until it finds the key or an empty slot. On a hit it also compares the stored key with `==` to be sure.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "hash('Ravi') & 7",
+                "detail": "slot 3: taken by Asha"
+              },
+              {
+                "label": "probe with perturb",
+                "detail": "slot 1: empty"
+              },
+              {
+                "label": "store",
+                "detail": "indices[1] = entry 1"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Resize at about two-thirds full",
+        "body": "A dict with 8 slots holds at most 5 keys. Adding one more triggers a resize: a bigger table is allocated and every entry is re-slotted. Resizes are rare and get rarer as the dict grows, so the average cost of an insert stays O(1)."
+      },
+      {
+        "title": "Why lookup is O(1) on average",
+        "body": "Finding a key costs one hash, usually one or two slot checks and one `==`, no matter whether the dict has 10 or 10 million keys. Compare that to scanning a list of pairs, which checks every pair. That is the whole reason dicts are Python's workhorse for lookups.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "List of pairs",
+              "code": "for k, v in pairs:\n    if k == 'Ravi': ...\n# up to n comparisons"
+            },
+            "right": {
+              "label": "dict",
+              "code": "contacts['Ravi']\n# hash, 1-2 probes, 1 compare"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Hash, slot, probe, resize: that cycle is why dict lookups stay fast at any size and why keys must be hashable. Insertion order comes for free from the separate entries array."
+  }
 }

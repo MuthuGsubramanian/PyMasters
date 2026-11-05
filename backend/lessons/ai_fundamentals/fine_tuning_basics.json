@@ -422,5 +422,115 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Fine-tuning continues training a pre-trained model on your examples with ordinary gradient descent; LoRA makes this cheap by freezing the original weights and learning two small matrices whose product is added to them.",
+    "steps": [
+      {
+        "title": "Training data is example conversations",
+        "body": "Each example is a prompt and the exact reply you want, often stored as JSON lines with a messages list. The model reads the prompt and is scored on how well it predicts the reply's tokens, usually only the assistant part, using cross-entropy loss.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              "{\"messages\": [{\"role\": \"user\", \"content\": \"Summarise ticket #4411\"}, {\"role\": \"assistant\", \"content\": \"Login fails after reset; needs DB fix.\"}]}"
+            ],
+            "labels": [
+              "one JSONL line"
+            ],
+            "caption": "One training example"
+          }
+        }
+      },
+      {
+        "title": "Gradient descent nudges the weights",
+        "body": "For each batch, the loss on the target tokens is backpropagated and the weights move a small step to make your replies more likely. After a few passes (epochs) over a few hundred good examples, the model's default style, format or domain wording shifts towards your data."
+      },
+      {
+        "title": "LoRA: learn a small correction",
+        "body": "A full weight matrix W of 4,096 x 4,096 has 16.8 million numbers. LoRA freezes W and learns B (4,096 x r) and A (r x 4,096); with rank r = 8 that is 8 x (4,096 + 4,096) = 65,536 numbers, 0.4% of W. The layer computes W x + (alpha / r) B A x.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Full fine-tune",
+              "code": "update all of W\n16,777,216 numbers per matrix\nstore a full model copy"
+            },
+            "right": {
+              "label": "LoRA, r = 8",
+              "code": "freeze W, train B and A\n65,536 numbers per matrix\nstore a small adapter file"
+            },
+            "caption": "Trainable numbers for one 4,096 x 4,096 matrix"
+          }
+        }
+      },
+      {
+        "title": "Starting at zero keeps the base intact",
+        "body": "B starts as zeros, so B A = 0 and the fine-tuned model begins exactly equal to the base model. Training only grows the correction where your data needs it. Afterwards the adapter can be merged into W for serving, or kept separate so one base model can switch between several adapters.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "x",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "frozen W x",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "small path: A x then B (A x), scaled",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "add the two",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "layer output",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Inside a LoRA layer"
+          }
+        }
+      },
+      {
+        "title": "Watch for overfitting and forgetting",
+        "body": "Hold out some examples and track their loss: if training loss keeps falling while held-out loss rises, the model is memorising. Too many epochs or a high learning rate can also erode general skills. Fine-tuning teaches style and format well, but new facts are usually better supplied by RAG."
+      }
+    ],
+    "takeaway": "Fine-tuning is just more training on your examples. LoRA trains a tiny low-rank correction instead of the whole model, which makes it affordable; use it for consistent behaviour, not as a database of facts."
   }
 }

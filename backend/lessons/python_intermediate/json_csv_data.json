@@ -403,5 +403,82 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "json.dumps walks your object tree and maps each Python type to JSON text, json.loads scans the text back into dicts and lists, and the csv module is a small state machine that splits rows while honouring quotes.",
+    "steps": [
+      {
+        "title": "dumps maps types one by one",
+        "body": "`json.dumps({'name': 'Asha', 'ok': True, 'tags': ('a',)})` recursively visits each value: dict becomes an object, list or tuple becomes an array, str a quoted string, int and float numbers, True/False become true/false and None becomes null. Anything else, like a set or datetime, raises `TypeError: Object of type set is not JSON serializable` unless you pass `default=`.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Python",
+              "code": "dict\nlist, tuple\nstr\nint, float\nTrue / False\nNone"
+            },
+            "right": {
+              "label": "JSON",
+              "code": "object {}\narray []\nstring \"...\"\nnumber\ntrue / false\nnull"
+            }
+          }
+        }
+      },
+      {
+        "title": "loads scans the text",
+        "body": "`json.loads(text)` uses a fast C scanner (`_json`) that reads one character at a time: '{' starts a dict, '\"' starts a string, digits start a number. It builds Python objects as it goes and raises `json.JSONDecodeError` with the line and column of the first bad character.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "'{'",
+                "detail": "start dict"
+              },
+              {
+                "label": "'\"name\"'",
+                "detail": "key string"
+              },
+              {
+                "label": "':'",
+                "detail": "expect value"
+              },
+              {
+                "label": "'\"Asha\"'",
+                "detail": "value string"
+              },
+              {
+                "label": "'}'",
+                "detail": "dict complete"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Round trips are not always exact",
+        "body": "JSON has no tuple, so a tuple comes back as a list. JSON object keys must be strings, so `{1: 'a'}` becomes `{\"1\": \"a\"}` and loads gives back the key '1'. Knowing the type mapping explains these surprises."
+      },
+      {
+        "title": "csv reader is a quote-aware state machine",
+        "body": "`csv.reader(f)` reads each line and walks its characters with states such as 'in field' and 'in quoted field'. A comma inside quotes is kept as text, and a doubled quote \"\" means one literal quote. A quoted field may even contain a newline, which is why files should be opened with `newline=''`.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "name,city",
+              "Asha,\"Chennai, TN\"",
+              "Ravi,\"He said \"\"hi\"\"\""
+            ],
+            "caption": "Parsed: ['Asha', 'Chennai, TN'] and ['Ravi', 'He said \"hi\"']"
+          }
+        }
+      },
+      {
+        "title": "Every csv value is a string",
+        "body": "CSV has no types, so `csv.reader` gives lists of strings and `DictReader` gives dicts of strings keyed by the header row. Converting '30' to 30 is your job, for example `int(row['age'])`."
+      }
+    ],
+    "takeaway": "Both formats are text; the modules translate between that text and Python objects. Know the JSON type table and the CSV quoting rules and you can predict exactly what comes back."
   }
 }

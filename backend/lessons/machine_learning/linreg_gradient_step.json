@@ -214,5 +214,116 @@
       "correct": 0
     }
   ],
-  "uth_example": "xs = [1.0, 2.0, 3.0]\nys = [3.0, 6.0, 9.0]                 # the true slope is 3\nw, lr = 0.0, 0.05\nhistory = []\n\nfor epoch in range(4):\n    preds = [w * x for x in xs]\n    errors = [p - y for p, y in zip(preds, ys)]\n    gradient = sum(2 * x * e for x, e in zip(xs, errors)) / len(xs)\n    w = w - lr * gradient            # step downhill\n    loss = sum(e * e for e in errors) / len(xs)\n    history.append({\"epoch\": epoch, \"w\": round(w, 3), \"loss\": round(loss, 2)})\n\nfor row in history:\n    print(row)\n"
+  "uth_example": "xs = [1.0, 2.0, 3.0]\nys = [3.0, 6.0, 9.0]                 # the true slope is 3\nw, lr = 0.0, 0.05\nhistory = []\n\nfor epoch in range(4):\n    preds = [w * x for x in xs]\n    errors = [p - y for p, y in zip(preds, ys)]\n    gradient = sum(2 * x * e for x, e in zip(xs, errors)) / len(xs)\n    w = w - lr * gradient            # step downhill\n    loss = sum(e * e for e in errors) / len(xs)\n    history.append({\"epoch\": epoch, \"w\": round(w, 3), \"loss\": round(loss, 2)})\n\nfor row in history:\n    print(row)\n",
+  "under_the_hood": {
+    "summary": "One gradient-descent step predicts with the current slope, measures how the squared error changes when w moves, averages that over the data, and moves w a small step the other way.",
+    "steps": [
+      {
+        "title": "Predict with the current weight",
+        "body": "Data (1, 2), (2, 4), (3, 6), true slope 2. Start at w = 0, so every prediction w*x is 0 and the errors w*x - y are -2, -4, -6. The loss is the mean of the squared errors: (4 + 16 + 36) / 3, about 18.7.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                2,
+                0,
+                -2
+              ],
+              [
+                2,
+                4,
+                0,
+                -4
+              ],
+              [
+                3,
+                6,
+                0,
+                -6
+              ]
+            ],
+            "labels": [
+              "point 1",
+              "point 2",
+              "point 3"
+            ],
+            "caption": "Columns: x, y, prediction w*x, error at w = 0"
+          }
+        }
+      },
+      {
+        "title": "The gradient of one point",
+        "body": "For one point the loss is (w*x - y) squared. Its derivative with respect to w, by the chain rule, is 2 * (w*x - y) * x: the error times how strongly w affects that prediction. The three points give 2*(-2)*1 = -4, 2*(-4)*2 = -16 and 2*(-6)*3 = -36.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              -4,
+              -16,
+              -36
+            ],
+            "labels": [
+              "point 1",
+              "point 2",
+              "point 3"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "Per-point gradients; the far point pulls hardest"
+          }
+        }
+      },
+      {
+        "title": "Average and step against it",
+        "body": "The mean gradient is (-4 - 16 - 36) / 3 = -18.67. Negative means 'loss falls if w rises'. The update is w_new = w - lr * gradient = 0 - 0.1 * (-18.67) = 1.867, matching the lesson's expected output.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "w",
+                "value": 0
+              },
+              {
+                "variable": "gradient",
+                "value": -18.67
+              },
+              {
+                "variable": "lr",
+                "value": 0.1
+              },
+              {
+                "variable": "w_new",
+                "value": 1.867
+              }
+            ],
+            "caption": "One update"
+          }
+        }
+      },
+      {
+        "title": "Repeat and the steps shrink",
+        "body": "At w = 1.867 the errors are small, so the gradient is only -1.24 and w moves to 1.991; the next gradient is -0.08, giving 1.999. Steps shrink by themselves because the gradient shrinks near the bottom. With lr = 0.5 instead, the first step would jump to w = 9.3, overshoot and diverge.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "step 1  grad -18.667  w 1.8667",
+              "step 2  grad  -1.244  w 1.9911",
+              "step 3  grad  -0.083  w 1.9994"
+            ],
+            "caption": "Three updates with lr = 0.1"
+          }
+        }
+      },
+      {
+        "title": "Two weights: the same step for each",
+        "body": "With a bias, y_hat = w*x + b, each weight gets its own partial derivative. From w = 0, b = 0: grad_w = -18.67 as before, and grad_b = mean(2 * error) = mean(-4, -8, -12) = -8. Both move in one update: w = 1.867, b = 0.8. A neural network does exactly this for millions of weights at once."
+      }
+    ],
+    "takeaway": "Training is this loop: predict, compute the gradient, step against it by the learning rate. The gradient's sign gives the direction, its size shrinks near the minimum, and too large a learning rate overshoots."
+  }
 }

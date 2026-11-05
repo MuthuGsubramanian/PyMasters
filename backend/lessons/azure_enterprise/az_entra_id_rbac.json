@@ -33,5 +33,88 @@
     {"q": {"en": "What does Privileged Identity Management (PIM) change about a role assignment?"}, "options": {"en": ["It makes the role apply to all subscriptions at once", "It converts the role to read-only", "It makes the role eligible — activated just-in-time with justification and expiry instead of standing", "It removes the need for MFA"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["azure_identity", "zero_trust_architecture", "identity_federation"], "concepts_required": ["cloud_fundamentals"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Entra ID proves who the caller is and issues a token; Azure RBAC then checks deny assignments and every role assignment on the resource's scope path, and allows the action only if some role grants it and nothing denies it.",
+    "steps": [
+      {
+        "title": "Sign in and get a token",
+        "body": "A user or service principal authenticates to Microsoft Entra ID, satisfying Conditional Access (for example MFA from a compliant device). Entra returns an access token whose audience is Azure Resource Manager and whose claims include the object ID.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Sign in to Entra ID",
+                "type": "input"
+              },
+              {
+                "label": "Conditional Access checks",
+                "type": "process"
+              },
+              {
+                "label": "Access token (oid, groups)",
+                "type": "process"
+              },
+              {
+                "label": "Call ARM with token",
+                "type": "process"
+              },
+              {
+                "label": "RBAC check on the scope",
+                "type": "process"
+              },
+              {
+                "label": "Allowed or 403",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "From sign-in to an authorised call"
+          }
+        }
+      },
+      {
+        "title": "A role assignment has three parts",
+        "body": "Security principal (who), role definition (what actions), scope (where). Contributor on /subscriptions/abc/resourceGroups/rg-api means that principal may perform Contributor's actions on everything inside rg-api.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "principal": "grp-payments-devs (group)",
+              "role": "Contributor",
+              "scope": "/subscriptions/abc/resourceGroups/rg-api"
+            },
+            "caption": "One role assignment"
+          }
+        }
+      },
+      {
+        "title": "Roles are lists of actions",
+        "body": "A role definition lists Actions and NotActions for the control plane and DataActions for data such as blob contents. Contributor allows '*' but has NotActions for role assignment writes, so a Contributor cannot grant access to others."
+      },
+      {
+        "title": "Evaluation: deny first, then union",
+        "body": "For a request, Azure first checks deny assignments; a matching deny blocks the call. It then gathers every role assignment for the principal and its groups at this scope and all parent scopes. If any of them grants the action, the request is allowed.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "deny assignments matching?        no",
+              "assignments on path:  Reader @ subscription, Contributor @ rg-data",
+              "Contributor actions include Microsoft.Storage/storageAccounts/delete",
+              "-> ALLOWED"
+            ],
+            "caption": "Can alice delete storage account 'logsprod'?"
+          }
+        }
+      },
+      {
+        "title": "PIM makes access temporary",
+        "body": "With Privileged Identity Management, a user is only eligible for Owner. When they activate it, with justification or approval, a time-limited assignment is created and later removed automatically, so standing admin access stays near zero."
+      }
+    ],
+    "takeaway": "Authentication (Entra) and authorization (RBAC) are separate steps. Assign roles to groups at the narrowest scope that works, and remember roles only add up; only deny assignments subtract."
+  }
 }

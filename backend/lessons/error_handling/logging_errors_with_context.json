@@ -178,5 +178,102 @@
       "error_handling"
     ]
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "log.exception() inside an except block captures sys.exc_info() into the LogRecord at ERROR level; the handler's Formatter then renders the message line plus the full traceback text, so the log keeps where and why the failure happened.",
+    "steps": [
+      {
+        "title": "A record is created only if it passes the level",
+        "body": "In the lesson, the 'shop.orders' logger has level INFO. `log.debug('cart contents dumped')` is compared with that threshold first and dropped before any object is built. `log.info('order 17 shipped')` passes, so a LogRecord is created with the level, message, logger name and time.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "call",
+                "values": [
+                  "log.debug(...)",
+                  "log.info(...)",
+                  "log.warning(...)"
+                ]
+              },
+              {
+                "variable": "level vs INFO (20)",
+                "values": [
+                  "10 < 20: dropped",
+                  "20: kept",
+                  "30: kept"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "exception() attaches the traceback",
+        "body": "`log.exception('could not parse price')` is `log.error(..., exc_info=True)`. While the except block is running, `sys.exc_info()` still holds the ValueError, its type and its traceback, and that triple is stored on the record as `record.exc_info`. Called outside an except block, there is nothing to attach.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "int('12.5') raises",
+                "detail": "ValueError"
+              },
+              {
+                "label": "except block",
+                "detail": "log.exception(msg)"
+              },
+              {
+                "label": "LogRecord",
+                "detail": "level=ERROR, exc_info=sys.exc_info()"
+              },
+              {
+                "label": "handler",
+                "detail": "format message + traceback"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The Formatter renders the traceback",
+        "body": "The handler's Formatter first fills the format string, here `%(levelname)s:%(name)s:%(message)s`. If the record has exc_info, it calls `formatException`, which uses the traceback module to produce the familiar text, and appends it on the following lines. The text is cached on the record as `exc_text` so several handlers do not redo the work.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "ERROR:shop.orders:could not parse price",
+              "Traceback (most recent call last):",
+              "  File \"shop.py\", line 14, in <module>",
+              "    price = int(\"12.5\")",
+              "ValueError: invalid literal for int() with base 10: '12.5'"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Arguments are merged late",
+        "body": "With `log.info('order %s shipped', order_id)`, the record stores the template and `args` separately and merges them only when a handler formats the record. Dropped records never pay for string building, and log tools can group all records that share the template 'order %s shipped'.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "f-string (eager)",
+              "code": "log.info(f'order {order_id} shipped')\n# string built even if dropped\n# every message text unique"
+            },
+            "right": {
+              "label": "args (lazy)",
+              "code": "log.info('order %s shipped', order_id)\n# built only if kept\n# one template, many values"
+            }
+          }
+        }
+      },
+      {
+        "title": "Context fields with extra=",
+        "body": "`log.error('payment failed', extra={'order_id': 17})` sets `record.order_id = 17`, so a format string containing `%(order_id)s` can print it, and structured log systems can index it. Logging once, where the error is handled, avoids the same failure appearing at every layer."
+      }
+    ],
+    "takeaway": "A log line is a record object: level, message template, arguments, context and, with log.exception, the traceback. Log the failure once where you handle it, with exception() and lazy arguments."
+  }
 }

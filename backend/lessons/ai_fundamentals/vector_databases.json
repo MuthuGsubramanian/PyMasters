@@ -414,5 +414,121 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A vector database stores each embedding with an id and metadata and builds an approximate nearest-neighbour index, often an HNSW graph, so a query visits only a small fraction of the vectors yet still finds most of the true closest ones.",
+    "steps": [
+      {
+        "title": "Records: id, vector, metadata, text",
+        "body": "collection.add(ids=['doc1'], embeddings=[...], metadatas=[{'source': 'handbook.pdf', 'page': 4}], documents=['...']). The id lets you update or delete a record later (upsert replaces by id); metadata lets you filter, for example only pages from a given year.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "doc1",
+                "[0.12, -0.40, ...]",
+                "source: handbook.pdf, page 4"
+              ],
+              [
+                "doc2",
+                "[0.08, 0.33, ...]",
+                "source: faq.md"
+              ]
+            ],
+            "labels": [
+              "record",
+              "record"
+            ],
+            "caption": "What one collection stores"
+          }
+        }
+      },
+      {
+        "title": "Brute force does not scale",
+        "body": "Comparing a query with every stored vector is exact but costs one dot product per vector: 10 million 768-dimensional vectors means about 7.7 billion multiply-adds per query. Indexes trade a little accuracy for a lot of speed."
+      },
+      {
+        "title": "HNSW: a layered graph",
+        "body": "HNSW connects each vector to a few of its near neighbours (parameter M) and keeps extra, sparser layers with fewer vectors for long jumps. A search starts at the top layer, greedily moves to the neighbour closest to the query, drops a layer, and repeats; at the bottom it keeps a candidate list of size ef. Chroma uses an HNSW index by default.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "enter at top layer",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "hop to the neighbour closest to the query",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "no closer neighbour?",
+                "type": "decision"
+              },
+              {
+                "id": "n3",
+                "label": "drop one layer",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "bottom layer: explore ef candidates",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "return top-k",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "Searching an HNSW graph"
+          }
+        }
+      },
+      {
+        "title": "Recall versus speed",
+        "body": "Approximate search can miss a true neighbour. Recall@10 measures how many of the true 10 nearest it returns; raising ef or M increases recall but also latency and memory. IVF indexes do the same trade with clusters: search only nprobe of the nlist cells closest to the query."
+      },
+      {
+        "title": "Filtering and the managed option",
+        "body": "A query like 'top 5 similar where source = handbook.pdf' combines vector search with a metadata filter. Embedded stores such as ChromaDB run inside your process; managed services such as Pinecone run the index on their servers behind an API, handling replication and scaling for you."
+      }
+    ],
+    "takeaway": "A vector database is a nearest-neighbour index plus a record store. Use the same embedding model for documents and queries, tune the index for the recall you need, and use metadata filters to keep results relevant."
   }
 }

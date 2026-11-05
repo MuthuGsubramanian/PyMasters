@@ -453,5 +453,78 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "@dataclass reads the class's annotations to build a list of fields, then writes Python source for __init__, __repr__ and __eq__, compiles it with exec() and attaches the resulting methods to the class.",
+    "steps": [
+      {
+        "title": "Fields come from annotations",
+        "body": "For `@dataclass class Item: name: str; price: float = 0.0`, the decorator reads `Item.__annotations__` in order and builds a Field object for each annotated name, noting defaults. Names without an annotation are ignored, and `ClassVar` annotations are skipped.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "Field(name='name', type=str, default=MISSING)",
+              "Field(name='price', type=float, default=0.0)"
+            ],
+            "label": "Item.__dataclass_fields__"
+          }
+        }
+      },
+      {
+        "title": "Methods are generated as source text",
+        "body": "The decorator builds the text of a function like `def __init__(self, name, price=0.0): self.name = name; self.price = price` and runs it with `exec()`. The result is an ordinary function attached to the class, as fast as one you would write by hand.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "def __init__(self, name: str, price: float = 0.0):\n    self.name = name\n    self.price = price\n\ndef __repr__(self):\n    return f'Item(name={self.name!r}, price={self.price!r})'\n\ndef __eq__(self, other):\n    if other.__class__ is self.__class__:\n        return (self.name, self.price) == (other.name, other.price)\n    return NotImplemented",
+            "highlightSequence": [
+              1,
+              5,
+              8
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Generated __init__: one assignment per field."
+              },
+              {
+                "description": "Generated __repr__ lists fields in order."
+              },
+              {
+                "description": "Generated __eq__ compares field tuples of the same class."
+              }
+            ],
+            "caption": "Roughly the code @dataclass writes"
+          }
+        }
+      },
+      {
+        "title": "default_factory runs per instance",
+        "body": "A mutable default such as `tags: list = []` is rejected with ValueError, because one list would be shared by every instance. `field(default_factory=list)` makes the generated `__init__` call `list()` each time, giving every object its own list."
+      },
+      {
+        "title": "__post_init__ and frozen",
+        "body": "If you define `__post_init__`, the generated `__init__` calls it at the end, for validation or derived fields. `@dataclass(frozen=True)` generates a `__setattr__` that raises `FrozenInstanceError`, and since the fields cannot change, it can also generate a `__hash__`.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "@dataclass",
+              "code": "eq=True -> __hash__ set to None\ninstances unhashable\nattributes assignable"
+            },
+            "right": {
+              "label": "@dataclass(frozen=True)",
+              "code": "__setattr__ raises FrozenInstanceError\n__hash__ from fields\nusable as dict keys"
+            }
+          }
+        }
+      },
+      {
+        "title": "Nothing is checked at run time",
+        "body": "The annotations are used only to find fields. `Item(name=42, price='free')` happily stores an int and a str. Type checkers like mypy read the annotations; the dataclass itself does not validate types."
+      }
+    ],
+    "takeaway": "A dataclass is code generation: annotations in, ordinary methods out. That is why it is fast, why mutable defaults need default_factory, and why it does not enforce your type hints."
   }
 }

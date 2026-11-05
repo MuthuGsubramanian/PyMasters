@@ -169,5 +169,72 @@
     "category": "regex",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Each capturing group is numbered by its opening parenthesis; while matching, the engine records the start and end index each time it enters and leaves a group, and the Match object slices the original string with those marks.",
+    "steps": [
+      {
+        "title": "Groups are numbered by opening parenthesis",
+        "body": "In `(\\d{4})-(\\d{2})-(\\d{2})`, counting the `(` from the left gives groups 1, 2 and 3. Group 0 is always the whole match. Named groups `(?P<year>...)` also get a number; the name is just an alias stored in the pattern's `groupindex`.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "group 0": "'2026-06-09'  span (0, 10)",
+              "group 1 / year": "'2026'  span (0, 4)",
+              "group 2 / month": "'06'  span (5, 7)",
+              "group 3 / day": "'09'  span (8, 10)"
+            },
+            "label": "m = p.match('2026-06-09')"
+          }
+        }
+      },
+      {
+        "title": "Marks, not copies",
+        "body": "During matching the engine keeps an array of 'marks': the index where each group started and ended. If it backtracks out of a group, the marks are restored too. The Match object stores only those integers and returns substrings on demand, so unused groups cost almost nothing."
+      },
+      {
+        "title": "A repeated group keeps its last pass",
+        "body": "With `(a|b)+` on 'abab', the group matches four times, but there is only one slot, so each pass overwrites the marks. `m.group(1)` is 'b', the last one. To collect every repetition, use `findall` or `finditer` with a pattern for a single item.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "group 1 marks",
+                "values": [
+                  "(0,1) 'a'",
+                  "(1,2) 'b'",
+                  "(2,3) 'a'",
+                  "(3,4) 'b'"
+                ]
+              }
+            ],
+            "caption": "Same slot overwritten on each repetition"
+          }
+        }
+      },
+      {
+        "title": "findall changes shape with groups",
+        "body": "Without groups, `findall` returns whole matches. With one group it returns that group's text; with several it returns a tuple per match. `re.findall(r'(\\d{4})-(\\d{2})', '2026-06 and 2025-01')` gives `[('2026', '06'), ('2025', '01')]`.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> re.findall(r'\\d{4}-\\d{2}', s)",
+              "['2026-06', '2025-01']",
+              ">>> re.findall(r'(\\d{4})-(\\d{2})', s)",
+              "[('2026', '06'), ('2025', '01')]"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Non-capturing groups",
+        "body": "`(?:...)` groups for alternation or quantifiers without creating a slot, so numbering of the other groups is not shifted and findall's output stays simple. Use it whenever you need parentheses only for structure."
+      }
+    ],
+    "takeaway": "Parentheses add bookmark slots. Count them by opening bracket, name the important ones, and use (?:...) when you only need grouping, so that group numbers and findall results stay what you expect."
+  }
 }

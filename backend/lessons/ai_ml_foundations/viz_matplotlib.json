@@ -345,5 +345,129 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Matplotlib builds a tree of objects, a Figure holding Axes holding lines, text and ticks, then converts data coordinates into pixels and draws every object through a backend renderer when you save or show.",
+    "steps": [
+      {
+        "title": "Figure, Axes, Artists",
+        "body": "fig, ax = plt.subplots() creates a Figure (the whole canvas) and one Axes (a plot area with its own x and y axis). ax.plot(x, y) adds a Line2D object to that Axes; titles and labels are Text objects. Everything that can be drawn is an Artist in this tree.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "fig",
+                "label": "Figure"
+              },
+              {
+                "id": "ax",
+                "label": "Axes"
+              },
+              {
+                "id": "line",
+                "label": "Line2D (the curve)"
+              },
+              {
+                "id": "title",
+                "label": "Text (title)"
+              },
+              {
+                "id": "xaxis",
+                "label": "XAxis + ticks"
+              }
+            ],
+            "edges": [
+              {
+                "from": "fig",
+                "to": "ax",
+                "label": "contains"
+              },
+              {
+                "from": "ax",
+                "to": "line",
+                "label": "contains"
+              },
+              {
+                "from": "ax",
+                "to": "title",
+                "label": "contains"
+              },
+              {
+                "from": "ax",
+                "to": "xaxis",
+                "label": "contains"
+              }
+            ],
+            "caption": "The object tree behind one chart"
+          }
+        }
+      },
+      {
+        "title": "pyplot is a thin wrapper",
+        "body": "plt.plot(x, y) looks up the 'current' Figure and Axes (creating them if none exist) and calls their methods for you. That is handy for one quick chart; with several subplots the explicit ax.plot style avoids drawing on the wrong Axes."
+      },
+      {
+        "title": "Autoscaling and margins",
+        "body": "When you plot x from 0 to 10, the Axes computes limits from the data and adds a default 5% margin each side, so xlim becomes -0.5 to 10.5. A locator then chooses tick positions such as 0, 2, 4, 6, 8, 10, and a formatter turns them into label text."
+      },
+      {
+        "title": "Transforms map data to pixels",
+        "body": "Each point passes through transforms: data coordinates to axes fractions (0 to 1 inside the plot box), then to figure fractions, then to display pixels. figsize=(8, 4) at dpi=100 gives an 800 x 400 pixel image, so a point at the axes centre lands near the middle of the plot box.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "data (5, 0.0)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "axes fraction (0.5, 0.5)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "figure fraction",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "display pixels",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3"
+            ],
+            "caption": "One point's trip to the screen"
+          }
+        }
+      },
+      {
+        "title": "Drawing happens at the end",
+        "body": "Nothing is rasterised while you call plot or set_title; Matplotlib just updates the Artist tree. savefig or show triggers a draw: each Artist renders itself through the backend, Agg for PNG files or a vector backend for SVG and PDF. That is why changing a property after plotting still shows up in the saved file."
+      }
+    ],
+    "takeaway": "Think of a chart as objects you configure, not pixels you paint. Hold on to fig and ax, set properties on them, and let the draw at save time turn data coordinates into the image."
+  }
 }

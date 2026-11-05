@@ -434,5 +434,90 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "In a generator pipeline each stage pulls one item at a time from the stage before it, so only one item is in flight and memory stays flat no matter how big the input is.",
+    "steps": [
+      {
+        "title": "A pipeline of lazy stages",
+        "body": "`lines = (l for l in open('log.txt'))`, `errors = (l for l in lines if 'ERROR' in l)`, `count = sum(1 for _ in errors)`. Creating the first two lines does no work at all; each is a generator object waiting to be asked for a value.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "open('log.txt')",
+                "detail": "file iterator"
+              },
+              {
+                "label": "lines",
+                "detail": "genexpr"
+              },
+              {
+                "label": "errors",
+                "detail": "genexpr with filter"
+              },
+              {
+                "label": "sum()",
+                "detail": "pulls until exhausted"
+              }
+            ],
+            "caption": "Values are pulled from the right"
+          }
+        }
+      },
+      {
+        "title": "The consumer pulls, the stages run",
+        "body": "`sum()` calls `next(errors)`. The errors generator resumes and calls `next(lines)`, which asks the file for its next line. The line travels back up; if it contains 'ERROR' it reaches `sum`, otherwise the errors generator asks for another. Each item passes through all stages before the next item is read."
+      },
+      {
+        "title": "Only the current item is held",
+        "body": "At any moment the pipeline holds one line plus each generator's small paused frame. A 10 GB log file can be processed with a few kilobytes of Python objects. Building lists at each stage would instead hold every line in memory at once.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "List at every stage",
+              "code": "lines = open(p).readlines()\nerrors = [l for l in lines if ...]\n# whole file in memory, twice"
+            },
+            "right": {
+              "label": "Generators",
+              "code": "lines = (l for l in open(p))\nerrors = (l for l in lines if ...)\n# one line at a time"
+            }
+          }
+        }
+      },
+      {
+        "title": "yield from delegates to a sub-generator",
+        "body": "`yield from inner()` passes every value from `inner` straight through to the caller and returns `inner`'s return value when it finishes. It also forwards `send()` and `throw()`, so the outer generator acts as a transparent pipe.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "def read_all(paths):\n    for p in paths:\n        yield from read_lines(p)\n\ndef read_lines(p):\n    with open(p) as f:\n        yield from f",
+            "highlightSequence": [
+              3,
+              7,
+              3
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Delegate to read_lines for this file."
+              },
+              {
+                "description": "Each line of the file is yielded straight out."
+              },
+              {
+                "description": "read_lines finished: move to the next path."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Single use and order of work",
+        "body": "Generators can be consumed only once and only in order. If you need random access, the length, or several passes over the data, a list is the right tool; if you stream once from start to end, a generator wins."
+      }
+    ],
+    "takeaway": "Generators turn data processing into a pull-based pipeline: nothing runs until a consumer asks, and only one item moves through at a time. That is how Python handles inputs larger than memory."
   }
 }

@@ -327,5 +327,82 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Polymorphism in Python is late binding: the method name is looked up on type(obj) at the moment of each call, so any object with a matching method works, whatever its class.",
+    "steps": [
+      {
+        "title": "The call site only knows a name",
+        "body": "In `for d in devices: d.power_on()`, the compiled code says 'load attribute power_on from d, then call it'. It does not mention TV or Fan. Which function runs is decided each time the line executes.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "d.power_on",
+                "detail": "look up 'power_on' on type(d)"
+              },
+              {
+                "label": "TV instance",
+                "detail": "TV.power_on"
+              },
+              {
+                "label": "Fan instance",
+                "detail": "Fan.power_on"
+              },
+              {
+                "label": "Speaker instance",
+                "detail": "Speaker.power_on"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Lookup uses the object's own type",
+        "body": "Python takes `type(d)`, walks its MRO for `power_on` and binds the found function to `d`. A TV gets TV's method and a Fan gets Fan's, from the same line of code."
+      },
+      {
+        "title": "Duck typing: no shared parent required",
+        "body": "Python never checks that the classes share a base class or declare an interface. If an object has a callable attribute with that name, it works; if not, you get `AttributeError` at that call, at run time.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Has power_on()",
+              "code": "class Robot:\n    def power_on(self): ...\n# works in the loop"
+            },
+            "right": {
+              "label": "Missing power_on()",
+              "code": "class Lamp:\n    def switch(self): ...\n# AttributeError: 'Lamp' object\n# has no attribute 'power_on'"
+            }
+          }
+        }
+      },
+      {
+        "title": "Specialisation keeps it fast",
+        "body": "Looking a name up on every call could be slow, so CPython 3.11's specialising interpreter caches the result at each call site, keyed on the type's version. While the same types keep arriving, the lookup is nearly free; a different type simply takes the slower path.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "LOAD_ATTR cache at this line",
+                "values": [
+                  "empty",
+                  "TV -> TV.power_on",
+                  "Fan seen: re-specialise or fall back"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Operators are polymorphic too",
+        "body": "`+` calls `__add__` on the left operand's type, so `1 + 2`, `'a' + 'b'` and `[1] + [2]` all use the same syntax for different behaviour. Your own classes join in by defining the same methods."
+      }
+    ],
+    "takeaway": "In Python, 'which code runs' is decided by the object at call time, not by declared types. Give different classes the same method names and one loop can drive them all."
+  }
 }

@@ -410,5 +410,121 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "PyTorch combines three mechanisms: tensors that hold data on CPU or GPU, autograd that records operations so gradients can be computed backwards, and nn.Module, which registers the layers and parameters you assign so the whole model can be trained, moved and saved as one object.",
+    "steps": [
+      {
+        "title": "Tensors: arrays that remember devices",
+        "body": "torch.tensor([1.0, 2.0, 3.0]) is a float32 array; a * 2 + 1 gives [3, 5, 7] element-wise, and c @ c.T multiplies a (2, 3) tensor by its (3, 2) transpose into (2, 2). The same code runs on a GPU after .to('cuda'), which is the main thing NumPy arrays cannot do."
+      },
+      {
+        "title": "Autograd: requires_grad starts recording",
+        "body": "For x = torch.tensor(2.0, requires_grad=True), y = x² + 3x builds a small graph. y.backward() computes dy/dx = 2x + 3 = 7 and stores it in x.grad. Model parameters have requires_grad=True automatically, so any loss computed from them can be backpropagated.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "x = 2.0 (requires_grad)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "y = x**2 + 3*x = 10",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "y.backward()",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "x.grad = 2*2 + 3 = 7",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3"
+            ],
+            "caption": "Autograd on one variable"
+          }
+        }
+      },
+      {
+        "title": "nn.Module registers what you assign",
+        "body": "When __init__ runs self.fc = nn.Linear(3, 2), Module's __setattr__ records fc as a submodule and its weight and bias as parameters. model.parameters() walks this tree, so the optimizer finds all weights without you listing them; model.to(device) and state_dict() use the same tree.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "fc.weight",
+                "(2, 3)",
+                6
+              ],
+              [
+                "fc.bias",
+                "(2,)",
+                2
+              ]
+            ],
+            "labels": [
+              "param",
+              "param"
+            ],
+            "caption": "Parameters registered by nn.Linear(3, 2): 8 numbers"
+          }
+        }
+      },
+      {
+        "title": "Calling the model runs forward",
+        "body": "model(x) calls Module.__call__, which runs any registered hooks and then your forward method. Always call the model rather than model.forward(x) directly, so hooks and other bookkeeping are not skipped."
+      },
+      {
+        "title": "Default initialisation",
+        "body": "nn.Linear(3, 2) does not start at zero. PyTorch fills its weights from a uniform distribution whose range is about plus or minus 1/sqrt(in_features), here about 0.58, and does the same for the bias. Random starting values break the symmetry between neurons so they can learn different features.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "in_features",
+                "value": 3
+              },
+              {
+                "variable": "init range",
+                "value": "+/- 1/sqrt(3) = 0.577"
+              },
+              {
+                "variable": "requires_grad",
+                "value": true
+              }
+            ],
+            "caption": "What a fresh nn.Linear(3, 2) looks like"
+          }
+        }
+      }
+    ],
+    "takeaway": "Tensors carry the numbers, autograd carries the derivatives, and nn.Module carries the structure. Assign layers as attributes in __init__, compute in forward, and PyTorch can find, train, move and save everything for you."
   }
 }

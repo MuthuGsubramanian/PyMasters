@@ -167,5 +167,89 @@
     "category": "regex",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Anchors and lookarounds are zero-width: at the current position the engine runs a test (start of string, word boundary, or a whole sub-pattern ahead or behind) and continues without consuming any characters if it passes.",
+    "steps": [
+      {
+        "title": "A position, not a character",
+        "body": "Between every two characters, and at both ends, there is a position. `^`, `$`, `\\b` and lookarounds test a position. When the test passes, the engine's cursor stays where it is, so the matched text does not include anything the assertion looked at.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "|t",
+              "h",
+              "e",
+              "| |",
+              "c",
+              "a",
+              "t",
+              "| |"
+            ],
+            "highlight": [
+              0,
+              3,
+              7
+            ],
+            "label": "| marks word boundaries in 'the cat '"
+          }
+        }
+      },
+      {
+        "title": "\\b compares neighbours",
+        "body": "`\\b` passes where one side is a word character ([A-Za-z0-9_] plus Unicode letters) and the other side is not, or is the string edge. In 'a scatter mat', `\\bcat\\b` fails inside 'scatter' because 's' and 'c' are both word characters, so there is no boundary before 'c'.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Pattern",
+              "code": "cat\n\\bcat\\b"
+            },
+            "right": {
+              "label": "Matches in 'the cat sat on a scatter mat'",
+              "code": "'cat' and the 'cat' in 'scatter'\nonly the word 'cat'"
+            }
+          }
+        }
+      },
+      {
+        "title": "^ and $ depend on MULTILINE",
+        "body": "By default `^` tests 'at index 0' and `$` tests 'at the end, or just before a final newline'. With `re.MULTILINE` they also pass after and before every '\\n', so `^ERROR` finds lines that start with ERROR. `\\A` and `\\Z` always mean the true start and end."
+      },
+      {
+        "title": "Lookbehind checks what came before",
+        "body": "In the lesson `(?<=\\$)\\d+` runs on 'price $42, aisle 42, $7 off'. At each candidate position the engine steps back one character and checks for '$'. Only digits preceded by '$' pass, so findall returns ['42', '7']; the 42 after 'aisle' fails. Python's re requires lookbehind patterns to have a fixed width so it knows how far to step back.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "position before '42'",
+                "detail": "step back 1: is it '$'?"
+              },
+              {
+                "label": "yes",
+                "detail": "now match \\d+ -> '42'"
+              },
+              {
+                "label": "position before 'aisle 42'",
+                "detail": "step back: ' ' -> fail"
+              },
+              {
+                "label": "result",
+                "detail": "['42', '7']"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Lookahead and the negative forms",
+        "body": "`(?=...)` runs the sub-pattern forward from the current position and then returns the cursor to where it was. `(?!...)` and `(?<!...)` pass only when their sub-pattern fails, for example `\\d+(?!%)` for numbers not followed by a percent sign."
+      }
+    ],
+    "takeaway": "Assertions let a pattern say where a match may happen without making the surrounding context part of the match. Think 'check the neighbours, then stay put'."
+  }
 }

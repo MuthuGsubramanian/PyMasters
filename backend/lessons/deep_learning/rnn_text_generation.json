@@ -388,5 +388,153 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A character-level model is trained to predict each next character from the ones before; to generate, it takes a seed character, turns its output scores into probabilities, samples one character, feeds it back in with the carried hidden state, and repeats.",
+    "steps": [
+      {
+        "title": "Text becomes index sequences",
+        "body": "For 'hello world', sorted(set(text)) gives 8 characters: ' ', d, e, h, l, o, r, w, numbered 0 to 7. The input is every character but the last and the target is every character but the first, so 'h' should predict 'e', 'e' should predict 'l', and so on.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "h",
+                "e"
+              ],
+              [
+                "e",
+                "l"
+              ],
+              [
+                "l",
+                "l"
+              ],
+              [
+                "l",
+                "o"
+              ],
+              [
+                "o",
+                "' '"
+              ],
+              [
+                "' '",
+                "w"
+              ]
+            ],
+            "labels": [
+              "t0",
+              "t1",
+              "t2",
+              "t3",
+              "t4",
+              "t5"
+            ],
+            "caption": "First input -> target pairs (shifted by one)"
+          }
+        }
+      },
+      {
+        "title": "Embedding, LSTM, scores",
+        "body": "nn.Embedding(8, 32) turns each index into a learned 32-number vector. The LSTM (hidden size 128) reads them in order, and a Linear(128, 8) layer turns each hidden state into 8 scores, one per character. Cross-entropy compares the scores at every position with the true next character."
+      },
+      {
+        "title": "Context changes the prediction",
+        "body": "After 'l' the right answer is sometimes 'l' (in 'hel|lo') and sometimes 'o' (in 'hell|o'). Only the hidden state, which remembers 'he' versus 'hel', lets the model tell these apart. That is why the hidden state is carried from character to character during generation too."
+      },
+      {
+        "title": "Generation is a sampling loop",
+        "body": "Start from a seed character with hidden = None. Each step: run the model on the last character and the current hidden state, divide the logits by the temperature, softmax them, draw one index with torch.multinomial, append its character, and use it as the next input. Repeat 100 times for 100 characters.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "seed 'h', hidden = None",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "model -> logits for 8 characters",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "softmax(logits / temperature)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "sample one character",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "append; feed it back with new hidden",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "repeat until length reached",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "The generate() loop"
+          }
+        }
+      },
+      {
+        "title": "Temperature controls risk",
+        "body": "Dividing logits by 0.5 doubles their gaps, so the favourite character dominates and text gets repetitive. Dividing by 1.5 shrinks the gaps, so unlikely characters appear more often and text gets creative but error-prone. At 0.8 the model mostly follows what it learned while still varying.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "temperature 0.5",
+              "code": "sharper distribution\nsafe, repetitive"
+            },
+            "right": {
+              "label": "temperature 1.5",
+              "code": "flatter distribution\nvaried, more mistakes"
+            },
+            "caption": "Same model, different sampling"
+          }
+        }
+      }
+    ],
+    "takeaway": "Training teaches next-character prediction; generation turns predictions into text by sampling and feeding each choice back. The same predict-sample-append loop, scaled up to tokens and transformers, is how today's language models write."
+  }
 }

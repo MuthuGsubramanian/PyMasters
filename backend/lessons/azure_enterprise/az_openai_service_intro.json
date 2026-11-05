@@ -34,5 +34,93 @@
   ],
   "tags": {"concepts_taught": ["azure_openai_service", "azure_security"], "concepts_required": ["azure_identity", "azure_networking"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 24, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "class FakeTokenProvider:                      # Entra ID token instead of an API key\n    def __call__(self):\n        return \"entra-token-demo\"\n\nclass FakeAzureOpenAI:\n    def __init__(self, endpoint, token_provider, api_version):\n        self.endpoint, self.api_version = endpoint, api_version\n        self.auth = token_provider()\n        self.usage_log = []\n    def chat(self, deployment, question):\n        usage = {\"prompt\": len(question.split()), \"completion\": 6}\n        usage[\"total\"] = usage[\"prompt\"] + usage[\"completion\"]\n        self.usage_log.append(usage)\n        return {\"text\": \"Data stays in your region.\", \"usage\": usage}\n\nclient = FakeAzureOpenAI(\"https://example.invalid\", FakeTokenProvider(), \"2024-10-21\")\nr = client.chat(\"chat-prod\", \"Where is my data processed?\")\nprint(r[\"text\"], \"| tokens:\", r[\"usage\"][\"total\"], \"| auth:\", client.auth)\n"
+  "uth_example": "class FakeTokenProvider:                      # Entra ID token instead of an API key\n    def __call__(self):\n        return \"entra-token-demo\"\n\nclass FakeAzureOpenAI:\n    def __init__(self, endpoint, token_provider, api_version):\n        self.endpoint, self.api_version = endpoint, api_version\n        self.auth = token_provider()\n        self.usage_log = []\n    def chat(self, deployment, question):\n        usage = {\"prompt\": len(question.split()), \"completion\": 6}\n        usage[\"total\"] = usage[\"prompt\"] + usage[\"completion\"]\n        self.usage_log.append(usage)\n        return {\"text\": \"Data stays in your region.\", \"usage\": usage}\n\nclient = FakeAzureOpenAI(\"https://example.invalid\", FakeTokenProvider(), \"2024-10-21\")\nr = client.chat(\"chat-prod\", \"Where is my data processed?\")\nprint(r[\"text\"], \"| tokens:\", r[\"usage\"][\"total\"], \"| auth:\", client.auth)\n",
+  "under_the_hood": {
+    "summary": "An Azure OpenAI call goes to your resource's endpoint and a named deployment, is checked against that deployment's tokens-per-minute budget, passes through content filters on the prompt and the completion, and returns either a response or a 429 with Retry-After.",
+    "steps": [
+      {
+        "title": "You call a deployment, not a model",
+        "body": "The URL names your resource and a deployment, for example https://contoso.openai.azure.com/openai/deployments/chat-prod/.... The deployment pins a model and version and holds its own quota and filter configuration.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "POST to deployment chat-prod",
+                "type": "input"
+              },
+              {
+                "label": "Auth: Entra token or key",
+                "type": "process"
+              },
+              {
+                "label": "Rate limiter: TPM/RPM",
+                "type": "process"
+              },
+              {
+                "label": "Content filter on prompt",
+                "type": "process"
+              },
+              {
+                "label": "Model generates",
+                "type": "process"
+              },
+              {
+                "label": "Content filter on completion",
+                "type": "process"
+              },
+              {
+                "label": "Response",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "One chat request"
+          }
+        }
+      },
+      {
+        "title": "The rate limiter estimates before it runs",
+        "body": "Quota is tokens per minute assigned to the deployment, with a matching requests-per-minute limit. Each request is counted on arrival using its prompt tokens plus max_tokens, and the limit is enforced over short windows, so a burst can be throttled even under the per-minute total.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "deployment quota: 30,000 TPM",
+              "request: 1,200 prompt + max_tokens 4,000 -> counted as 5,200",
+              "6 such requests in a burst -> over budget -> 429, Retry-After: 6"
+            ],
+            "caption": "Why max_tokens matters (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "429 is a signal to wait",
+        "body": "When throttled, the service returns HTTP 429 with a Retry-After header. Clients should wait at least that long, use exponential backoff with jitter, and set max_tokens close to what they really need."
+      },
+      {
+        "title": "Filters run on both sides",
+        "body": "The prompt is classified for hate, sexual, violence and self-harm at a severity level; if it passes your threshold, generation runs, then the completion is classified too. A blocked prompt returns an error; a filtered completion returns finish_reason 'content_filter'.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Prompt filtered",
+              "code": "HTTP 400, error code content_filter\nno tokens generated"
+            },
+            "right": {
+              "label": "Completion filtered",
+              "code": "HTTP 200, finish_reason content_filter\noutput cut or withheld"
+            },
+            "description": "Where the filter can stop you"
+          }
+        }
+      },
+      {
+        "title": "Deployment types decide where it runs",
+        "body": "Standard runs in the resource's region; Global Standard can route to capacity in any region; Data Zone keeps processing inside a geography such as the EU. Provisioned (PTU) reserves throughput for your deployment."
+      }
+    ],
+    "takeaway": "Treat each deployment as a rate-limited, filtered pipe. Budget tokens on the client, retry with backoff, and pick the deployment type that matches your data-residency needs."
+  }
 }

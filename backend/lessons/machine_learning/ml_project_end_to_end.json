@@ -483,5 +483,103 @@
     "path_memberships": [
       "production"
     ]
+  },
+  "under_the_hood": {
+    "summary": "An end-to-end project turns a CSV into a fitted pipeline file and a small web service: split once, compare models by cross-validation, test once, save the pipeline, and load it to answer each request.",
+    "steps": [
+      {
+        "title": "Split first, and stratify",
+        "body": "Before any exploration that shapes decisions, train_test_split(X, y, test_size=0.2, stratify=y) puts 20% aside. If 26% of customers churn, both parts keep about 26% churners. The test set is now locked until the very end."
+      },
+      {
+        "title": "Compare candidates with the same folds",
+        "body": "Each candidate, say logistic regression, random forest and gradient boosting, is wrapped in the same preprocessing pipeline and scored with 5-fold cross-validation on the training part only. Using ROC-AUC rather than accuracy keeps the comparison fair when churners are a minority.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Candidate",
+              "code": "LogisticRegression\nRandomForest\nGradientBoosting"
+            },
+            "right": {
+              "label": "mean CV ROC-AUC (example)",
+              "code": "0.84\n0.83\n0.86"
+            },
+            "caption": "Same pipeline, same folds, different final estimator"
+          }
+        }
+      },
+      {
+        "title": "Refit the winner, then test once",
+        "body": "The best candidate is refitted on the whole training part and evaluated a single time on the locked test set. That one number estimates real-world performance. Going back to tweak after seeing it turns the test set into a second validation set."
+      },
+      {
+        "title": "Save the fitted pipeline as one file",
+        "body": "joblib.dump(pipeline, 'churn.joblib') pickles the whole fitted object: imputer medians, scaler means, encoder categories and model weights together. Anything that loads it must have compatible versions of scikit-learn and the other libraries, so record them alongside the file."
+      },
+      {
+        "title": "Serve: load once, predict per request",
+        "body": "The API process loads the file once at startup. Each request's JSON is validated, turned into a one-row DataFrame with the training column names, passed to predict_proba, and the churn probability goes back as JSON. The raw request is never scaled by hand; the pipeline already knows how.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "POST /predict {tenure: 5, plan: 'basic', ...}",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "validate fields",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "one-row DataFrame, same columns as training",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "pipeline.predict_proba",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "return {churn_probability: 0.71}",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One prediction request"
+          }
+        }
+      }
+    ],
+    "takeaway": "The deliverable of an ML project is not a notebook score but a fitted pipeline file plus an honest test number. Lock the test set early, keep every transformation inside the pipeline, and serve that same object."
   }
 }

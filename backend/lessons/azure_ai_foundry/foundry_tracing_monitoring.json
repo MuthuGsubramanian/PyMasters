@@ -34,5 +34,105 @@
   ],
   "tags": {"concepts_taught": ["llmops", "ai_foundry_platform"], "concepts_required": ["llm_concepts", "functions", "dictionaries"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_ai", "path_memberships": []},
   "generated": false,
-  "uth_example": "spans = []\n\nclass Span:\n    def __init__(self, name, parent=None):\n        self.name, self.parent, self.attributes = name, parent, {}\n    def __enter__(self):\n        spans.append(self)\n        return self\n    def __exit__(self, *exc):\n        return False\n    def set_attribute(self, key, value):\n        self.attributes[key] = value\n\nwith Span(\"chat_request\") as root:\n    with Span(\"retrieval\", parent=root.name) as s:\n        chunks = [\"policy A\", \"policy B\"]\n        s.set_attribute(\"retrieval.top_k\", len(chunks))\n    with Span(\"llm_call\", parent=root.name) as s:\n        s.set_attribute(\"tokens.total\", 512)\n\nfor span in spans:\n    print(span.name, \"<-\", span.parent, span.attributes)\n"
+  "uth_example": "spans = []\n\nclass Span:\n    def __init__(self, name, parent=None):\n        self.name, self.parent, self.attributes = name, parent, {}\n    def __enter__(self):\n        spans.append(self)\n        return self\n    def __exit__(self, *exc):\n        return False\n    def set_attribute(self, key, value):\n        self.attributes[key] = value\n\nwith Span(\"chat_request\") as root:\n    with Span(\"retrieval\", parent=root.name) as s:\n        chunks = [\"policy A\", \"policy B\"]\n        s.set_attribute(\"retrieval.top_k\", len(chunks))\n    with Span(\"llm_call\", parent=root.name) as s:\n        s.set_attribute(\"tokens.total\", 512)\n\nfor span in spans:\n    print(span.name, \"<-\", span.parent, span.attributes)\n",
+  "under_the_hood": {
+    "summary": "Instrumentation wraps each model call, tool call and retrieval in an OpenTelemetry span tagged with GenAI attributes such as model and token counts; spans sharing one trace ID are exported to Application Insights, where they become traces, metrics and alerts.",
+    "steps": [
+      {
+        "title": "A request becomes a trace",
+        "body": "When a user message arrives, the first span starts and gets a trace ID. Every operation inside that request, such as retrieval, the LLM call and a tool call, starts a child span with the same trace ID.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "chat_turn (root)",
+              "retrieve_docs",
+              "chat gpt-4o",
+              "tool: get_order",
+              "chat gpt-4o (final)"
+            ],
+            "edges": [
+              {
+                "from": "chat_turn (root)",
+                "to": "retrieve_docs"
+              },
+              {
+                "from": "retrieve_docs",
+                "to": "chat gpt-4o"
+              },
+              {
+                "from": "chat gpt-4o",
+                "to": "tool: get_order"
+              },
+              {
+                "from": "tool: get_order",
+                "to": "chat gpt-4o (final)"
+              }
+            ],
+            "description": "Spans of one chat turn"
+          }
+        }
+      },
+      {
+        "title": "GenAI attributes describe the call",
+        "body": "OpenTelemetry's GenAI semantic conventions define attribute names, so every tool reads them the same way: the operation, the requested model and the token usage.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "gen_ai.operation.name": "chat",
+              "gen_ai.request.model": "gpt-4o",
+              "gen_ai.usage.input_tokens": "1,240",
+              "gen_ai.usage.output_tokens": "180",
+              "duration": "1.9 s"
+            },
+            "caption": "Attributes on one LLM span"
+          }
+        }
+      },
+      {
+        "title": "Export to Application Insights",
+        "body": "An exporter batches finished spans and sends them to Application Insights. There they are stored as request and dependency records, queryable with KQL and shown as an end-to-end transaction view.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Instrumented SDK call",
+                "type": "input"
+              },
+              {
+                "label": "Span finished",
+                "type": "process"
+              },
+              {
+                "label": "Exporter batches spans",
+                "type": "process"
+              },
+              {
+                "label": "Application Insights / Azure Monitor",
+                "type": "process"
+              },
+              {
+                "label": "Dashboards, KQL, alerts",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "From code to dashboard"
+          }
+        }
+      },
+      {
+        "title": "Metrics come from spans",
+        "body": "Aggregating spans gives the four families: latency (p50, p95), cost (tokens per request), quality (online evaluation scores) and safety (filter hits). An alert on p95 latency or token spend is a query over these."
+      },
+      {
+        "title": "Online evaluation samples production",
+        "body": "A sample of traced conversations can be scored by evaluators, for example groundedness, on a schedule. A falling score shows quality drift that latency and error metrics would never reveal."
+      }
+    ],
+    "takeaway": "Trace every hop, not just the final answer. Token counts and per-span latency on each trace are what let you debug cost spikes and slow answers after the fact."
+  }
 }

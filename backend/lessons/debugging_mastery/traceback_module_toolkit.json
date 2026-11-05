@@ -172,5 +172,90 @@
     "estimated_minutes": 20,
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "The traceback module walks the tb_next chain stored on e.__traceback__, turns each entry into a FrameSummary (filename, lineno, name, line) and fetches source lines lazily through linecache, so you can print, log or store the stack as data.",
+    "steps": [
+      {
+        "title": "e.__traceback__ is a linked list",
+        "body": "When `ratio(1, 0)` raises ZeroDivisionError inside `run()`, the caught exception's `__traceback__` points to a traceback object for the try's frame. Its `tb_next` points to the entry for `run`, whose `tb_next` points to `ratio`. Each entry knows its frame and line number.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "linked list",
+            "data": [
+              "<module> line 10 (try)",
+              "run() line 7",
+              "ratio() line 4  <- raised"
+            ],
+            "highlight": [
+              2
+            ],
+            "label": "tb -> tb_next -> tb_next"
+          }
+        }
+      },
+      {
+        "title": "extract_tb makes plain data",
+        "body": "`traceback.extract_tb(e.__traceback__)` walks that chain and returns a StackSummary, a list of FrameSummary objects ordered outermost first. Each has `filename`, `lineno`, `name` and `line`. Unlike the raw traceback, these do not keep the frames and their local variables alive.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "f.name",
+                "values": [
+                  "'<module>'",
+                  "'run'",
+                  "'ratio'"
+                ]
+              },
+              {
+                "variable": "f.lineno",
+                "values": [
+                  "10",
+                  "7",
+                  "4"
+                ]
+              },
+              {
+                "variable": "f.line",
+                "values": [
+                  "'run()'",
+                  "'return ratio(1, 0)'",
+                  "'return a / b'"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Source lines come from linecache",
+        "body": "The `line` text is read from the source file through `linecache`, which loads and caches files the first time they are needed. If the file is gone or the code came from a string, `line` is empty, which is why REPL tracebacks sometimes show no source."
+      },
+      {
+        "title": "Formatting helpers",
+        "body": "`traceback.format_exc()` returns the full report of the exception being handled as a string; `print_exc()` writes it to stderr; `format_exception(e)` returns a list of lines, including chained causes. Use them inside `except` to log a complete stack without crashing.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Function",
+              "code": "extract_tb(tb)\nformat_exc()\nprint_exc()\nformat_exception_only(e)"
+            },
+            "right": {
+              "label": "Gives you",
+              "code": "list of FrameSummary\nfull report as one string\nfull report to stderr\njust 'ZeroDivisionError: division by zero'"
+            }
+          }
+        }
+      },
+      {
+        "title": "Build your own view",
+        "body": "Because FrameSummary objects are plain data, you can join names in reverse to get 'ratio <- run <- <module>', send them to a monitoring service, or keep only frames from your own package."
+      }
+    ],
+    "takeaway": "A traceback is data. extract it into FrameSummary objects to filter, store or log it; format it with format_exc when you want Python's standard report."
+  }
 }

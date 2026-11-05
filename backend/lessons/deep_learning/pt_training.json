@@ -455,5 +455,123 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Training in PyTorch is a loop you write: switch the model to training mode, clear gradients, run the forward pass, compute the loss, backpropagate, let the optimizer update every registered parameter, and periodically measure validation loss with gradients off.",
+    "steps": [
+      {
+        "title": "nn.Module registers the parameters",
+        "body": "Assigning nn.Linear layers inside __init__ registers their weight and bias tensors, so model.parameters() can hand them all to the optimizer. MLP(10, 64, 1) has 10 x 64 + 64 = 704, then 64 x 64 + 64 = 4,160, then 64 + 1 = 65 parameters: 4,929 in total.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              "(64, 10)",
+              "(64,)",
+              "(64, 64)",
+              "(64,)",
+              "(1, 64)",
+              "(1,)"
+            ],
+            "labels": [
+              "net.0.weight",
+              "net.0.bias",
+              "net.2.weight",
+              "net.2.bias",
+              "net.4.weight",
+              "net.4.bias"
+            ],
+            "caption": "state_dict keys and shapes for MLP(10, 64, 1)"
+          }
+        }
+      },
+      {
+        "title": "The five-line step",
+        "body": "model.train() enables training behaviour. optimizer.zero_grad() clears old gradients. predictions = model(X) runs forward and records the graph. loss.backward() fills .grad on all 4,929 parameters. optimizer.step() applies Adam's update to each one. Every training loop in PyTorch is a variation of this.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "model.train()",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "optimizer.zero_grad()",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "pred = model(X); loss = criterion(pred, y)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "loss.backward()",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "optimizer.step()",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One training step"
+          }
+        }
+      },
+      {
+        "title": "Validation with gradients off",
+        "body": "model.eval() switches dropout off and makes batch norm use its running averages; torch.no_grad() stops graph building. The validation loss on held-out data tells you whether learning generalises: if training loss falls while validation loss rises, the model has started to overfit."
+      },
+      {
+        "title": "Epochs and batches",
+        "body": "The lesson's loop trains on all of X_train at once each epoch. With a DataLoader of batch_size 32 over 1,000 samples, an epoch becomes 32 steps: 31 full batches and one of 8. Shuffling each epoch changes the batches, so each step's gradient is a slightly different estimate.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "epoch 0: train=1.2041, val=1.1876",
+              "epoch 10: train=0.4123, val=0.4410",
+              "epoch 20: train=0.2017, val=0.2589",
+              "(illustrative values: both falling, a small gap)"
+            ],
+            "caption": "What a healthy log looks like"
+          }
+        }
+      },
+      {
+        "title": "Checkpoints save the state_dict",
+        "body": "torch.save(model.state_dict(), 'best.pt') stores a dictionary of parameter names to tensors, not the Python class. To load, build the same architecture and call model.load_state_dict(torch.load('best.pt')). Saving whenever validation loss hits a new low keeps the best model even if later epochs overfit."
+      }
+    ],
+    "takeaway": "The PyTorch loop is explicit on purpose: train mode, zero, forward, loss, backward, step, then evaluate in eval mode with no_grad. Knowing what each line does is how you debug a model that will not learn."
+  }
 }

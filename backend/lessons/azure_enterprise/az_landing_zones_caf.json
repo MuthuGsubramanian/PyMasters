@@ -34,5 +34,95 @@
   ],
   "tags": {"concepts_taught": ["landing_zones", "cloud_compliance", "infrastructure_as_code"], "concepts_required": ["azure_identity", "azure_networking", "azure_security", "azure_resource_management"], "difficulty": "advanced", "engagement_type": "conceptual", "estimated_minutes": 24, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "hub = {\"vnet\": \"10.0.0.0/16\", \"spokes\": []}\nsubscriptions = []\n\ndef vend_subscription(name, mg, address_prefix, team):\n    sub = {\n        \"name\": name,\n        \"management_group\": mg,\n        \"vnet\": address_prefix,\n        \"peered_to_hub\": True,\n        \"roles\": {team: \"Contributor\"},\n        \"policies\": [\"require-tags\", \"deny-public-ip\"],\n    }\n    hub[\"spokes\"].append(address_prefix)\n    subscriptions.append(sub)\n    return sub\n\nclaims = vend_subscription(\"sub-claims-prod-001\", \"landing-zones-corp\", \"10.42.16.0/22\", \"claims-team\")\nweb = vend_subscription(\"sub-web-prod-001\", \"landing-zones-online\", \"10.42.20.0/22\", \"web-team\")\nprint(claims[\"name\"], claims[\"roles\"], claims[\"policies\"])\nprint(\"hub peers:\", hub[\"spokes\"])\n"
+  "uth_example": "hub = {\"vnet\": \"10.0.0.0/16\", \"spokes\": []}\nsubscriptions = []\n\ndef vend_subscription(name, mg, address_prefix, team):\n    sub = {\n        \"name\": name,\n        \"management_group\": mg,\n        \"vnet\": address_prefix,\n        \"peered_to_hub\": True,\n        \"roles\": {team: \"Contributor\"},\n        \"policies\": [\"require-tags\", \"deny-public-ip\"],\n    }\n    hub[\"spokes\"].append(address_prefix)\n    subscriptions.append(sub)\n    return sub\n\nclaims = vend_subscription(\"sub-claims-prod-001\", \"landing-zones-corp\", \"10.42.16.0/22\", \"claims-team\")\nweb = vend_subscription(\"sub-web-prod-001\", \"landing-zones-online\", \"10.42.20.0/22\", \"web-team\")\nprint(claims[\"name\"], claims[\"roles\"], claims[\"policies\"])\nprint(\"hub peers:\", hub[\"spokes\"])\n",
+  "under_the_hood": {
+    "summary": "An Azure landing zone is a pre-built management group hierarchy with policies and platform subscriptions; subscription vending drops each new workload subscription into the right group, where it inherits guardrails and is peered to the shared hub network.",
+    "steps": [
+      {
+        "title": "The hierarchy encodes intent",
+        "body": "The reference architecture puts an intermediate root under the tenant root, then Platform (Identity, Management, Connectivity), Landing Zones (Corp, Online), Sandbox and Decommissioned. Each group exists because it needs different policies.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "label": "Intermediate root",
+                "children": [
+                  "Platform: Identity, Management, Connectivity",
+                  "Landing Zones: Corp, Online",
+                  "Sandbox",
+                  "Decommissioned"
+                ]
+              }
+            ],
+            "description": "Azure landing zone management groups"
+          }
+        }
+      },
+      {
+        "title": "Platform subscriptions hold shared services",
+        "body": "Connectivity holds the hub VNet, firewall and DNS. Management holds the central Log Analytics workspace. Identity holds domain controllers if needed. Application teams consume these but do not own them."
+      },
+      {
+        "title": "Policies are assigned high, inherited low",
+        "body": "Initiatives assigned at the intermediate root apply everywhere, for example sending diagnostics to the central workspace. 'Corp' adds stricter ones, such as denying public IPs, because corp workloads only talk through the hub."
+      },
+      {
+        "title": "Subscription vending is the factory door",
+        "body": "A request (from a form or pipeline) triggers automation that creates a subscription, moves it under the right management group, assigns the team's RBAC, sets budgets and creates a spoke VNet peered to the hub. The new subscription is compliant on day one.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Request: team, env, archetype Corp",
+                "type": "input"
+              },
+              {
+                "label": "Create subscription",
+                "type": "process"
+              },
+              {
+                "label": "Place under MG Corp (inherit policies)",
+                "type": "process"
+              },
+              {
+                "label": "Assign RBAC + budget",
+                "type": "process"
+              },
+              {
+                "label": "Create spoke VNet, peer to hub",
+                "type": "process"
+              },
+              {
+                "label": "Hand over to team",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Vending one application landing zone"
+          }
+        }
+      },
+      {
+        "title": "Archetype decides the rules",
+        "body": "The same workload placed under Corp or Online gets different results: Corp blocks public endpoints and routes egress through the hub firewall; Online allows internet-facing services with WAF in front.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Corp",
+              "code": "no public IPs (policy deny)\nreachable via hub only"
+            },
+            "right": {
+              "label": "Online",
+              "code": "public endpoints allowed\nWAF / Front Door required"
+            },
+            "description": "Same app, two archetypes"
+          }
+        }
+      }
+    ],
+    "takeaway": "A landing zone is mostly placement plus automation. Get the management groups and the vending pipeline right, and every new team starts governed without filing tickets."
+  }
 }

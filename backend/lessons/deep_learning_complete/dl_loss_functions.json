@@ -14,7 +14,7 @@
   },
   "xp_reward": 70,
   "story_variants": {
-    "en": "## Vaathiyaar's Scorecard\n\nVaathiyaar holds up a scorecard. \"How do you know if your student is improving? You measure the gap between their answer and the correct answer. That's exactly what a loss function does for a neural network.\"\n\n### Loss = How Wrong the Network Is\n\n**MSE (Mean Squared Error):** For regression\n```python\nimport torch\nimport torch.nn as nn\n\npredictions = torch.tensor([2.5, 0.0, 2.1, 7.8])\ntargets = torch.tensor([3.0, -0.5, 2.0, 7.5])\n\nmse_loss = nn.MSELoss()\nloss = mse_loss(predictions, targets)\nprint(f'MSE Loss: {loss.item():.4f}')  # 0.1025\n```\n\n**Cross-Entropy:** For classification\n```python\nlogits = torch.tensor([[2.0, 1.0, 0.1]])  # raw scores\ntarget = torch.tensor([0])  # correct class is 0\n\nce_loss = nn.CrossEntropyLoss()\nloss = ce_loss(logits, target)\nprint(f'CE Loss: {loss.item():.4f}')  # 0.4170\n```\n\n**BCE (Binary Cross-Entropy):** For binary classification\n```python\npreds = torch.tensor([0.9, 0.1, 0.8])\ntargets = torch.tensor([1.0, 0.0, 1.0])\n\nbce_loss = nn.BCELoss()\nloss = bce_loss(preds, targets)\nprint(f'BCE Loss: {loss.item():.4f}')  # 0.1269\n```\n\n> **Rule:** Regression → MSE/MAE | Binary classification → BCE | Multi-class → CrossEntropy",
+    "en": "## Vaathiyaar's Scorecard\n\nVaathiyaar holds up a scorecard. \"How do you know if your student is improving? You measure the gap between their answer and the correct answer. That's exactly what a loss function does for a neural network.\"\n\n### Loss = How Wrong the Network Is\n\n**MSE (Mean Squared Error):** For regression\n```python\nimport torch\nimport torch.nn as nn\n\npredictions = torch.tensor([2.5, 0.0, 2.1, 7.8])\ntargets = torch.tensor([3.0, -0.5, 2.0, 7.5])\n\nmse_loss = nn.MSELoss()\nloss = mse_loss(predictions, targets)\nprint(f'MSE Loss: {loss.item():.4f}')  # 0.1500\n```\n\n**Cross-Entropy:** For classification\n```python\nlogits = torch.tensor([[2.0, 1.0, 0.1]])  # raw scores\ntarget = torch.tensor([0])  # correct class is 0\n\nce_loss = nn.CrossEntropyLoss()\nloss = ce_loss(logits, target)\nprint(f'CE Loss: {loss.item():.4f}')  # 0.4170\n```\n\n**BCE (Binary Cross-Entropy):** For binary classification\n```python\npreds = torch.tensor([0.9, 0.1, 0.8])\ntargets = torch.tensor([1.0, 0.0, 1.0])\n\nbce_loss = nn.BCELoss()\nloss = bce_loss(preds, targets)\nprint(f'BCE Loss: {loss.item():.4f}')  # 0.1446\n```\n\n> **Rule:** Regression → MSE/MAE | Binary classification → BCE | Multi-class → CrossEntropy",
     "ta": "## வாத்தியாரின் மதிப்பெண் அட்டை\n\nவாத்தியார் ஒரு மதிப்பெண் அட்டையைக் காட்டுகிறார். \"உங்கள் மாணவர் முன்னேறுகிறாரா என்பதை எப்படி அறிவீர்கள்? அவர்களின் பதிலுக்கும் சரியான பதிலுக்கும் இடையிலான இடைவெளியை அளவிடுவீர்கள். நரம்பியல் நெட்வொர்க்கிற்கு இழப்பு செயல்பாடு அதையே செய்கிறது.\""
   },
   "animation_sequence": [
@@ -149,7 +149,7 @@
       "type": "VariableBox",
       "id": "box_mse",
       "variable": "mse_loss",
-      "value": "0.1025",
+      "value": "0.1500",
       "data_type": "float",
       "color": "#ff6b6b"
     },
@@ -165,7 +165,7 @@
       "type": "VariableBox",
       "id": "box_bce",
       "variable": "bce_loss",
-      "value": "0.1269",
+      "value": "0.1446",
       "data_type": "float",
       "color": "#45b7d1"
     },
@@ -188,15 +188,15 @@
       "id": "output_display",
       "output": [
         ">>> mse_loss(predictions, targets)",
-        "tensor(0.1025)",
+        "tensor(0.1500)",
         ">>> ce_loss(logits, target)",
         "tensor(0.4170)",
         ">>> bce_loss(preds, binary_targets)",
-        "tensor(0.1269)",
+        "tensor(0.1446)",
         ">>> # Custom loss: Huber loss (smooth L1)",
         ">>> huber = nn.SmoothL1Loss()",
         ">>> huber(predictions, targets)",
-        "tensor(0.0887)"
+        "tensor(0.0750)"
       ]
     },
     {
@@ -223,10 +223,10 @@
         {
           "line": 7,
           "variables": {
-            "mse": "0.1167"
+            "mse": "0.1700"
           },
-          "output": "MSE: 0.1167",
-          "explanation": "Mean of (0.5^2 + 0.5^2 + 0.1^2)/3 = 0.1167"
+          "output": "MSE: 0.1700",
+          "explanation": "Mean of (0.5^2 + 0.5^2 + 0.1^2)/3 = 0.1700"
         },
         {
           "line": 10,
@@ -255,9 +255,9 @@
         {
           "line": 18,
           "variables": {
-            "bce": "0.1528"
+            "bce": "0.1839"
           },
-          "output": "BCE: 0.1528",
+          "output": "BCE: 0.1839",
           "explanation": "Binary CE: -[y*log(p) + (1-y)*log(1-p)]"
         }
       ]
@@ -382,5 +382,110 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "PyTorch's loss modules take the model's raw output and the targets, compute one number per sample, and average them by default; CrossEntropyLoss expects raw logits and class indices and applies log-softmax internally, while BCE and MSE compare values directly.",
+    "steps": [
+      {
+        "title": "CrossEntropyLoss = log-softmax + NLL",
+        "body": "For logits [2.0, 1.0, 0.1] and target class 0, softmax gives [0.659, 0.242, 0.099] and the loss is -ln 0.659 = 0.417, the lesson's value. Internally PyTorch computes log-softmax with the max-subtraction trick and picks the target's entry, so you must pass raw scores, not probabilities.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                2.0,
+                0.659
+              ],
+              [
+                1.0,
+                0.242
+              ],
+              [
+                0.1,
+                0.099
+              ]
+            ],
+            "labels": [
+              "class 0 (target)",
+              "class 1",
+              "class 2"
+            ],
+            "highlight": [
+              0
+            ],
+            "caption": "Logits and softmax probabilities; loss = -ln 0.659 = 0.417"
+          }
+        }
+      },
+      {
+        "title": "Targets are indices, not one-hot",
+        "body": "nn.CrossEntropyLoss expects target = torch.tensor([0]), a class index of dtype long, with logits of shape (batch, classes). Passing a softmax output by mistake applies softmax twice, squeezing probabilities together and slowing learning without any error message."
+      },
+      {
+        "title": "BCE for yes or no",
+        "body": "nn.BCELoss takes probabilities in (0, 1): for predictions [0.8, 0.3] with targets [1, 0] the loss is -(ln 0.8 + ln 0.7) / 2 = 0.290. nn.BCEWithLogitsLoss takes raw scores and applies the sigmoid inside in a numerically stable way, so it is usually the better choice.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "BCELoss",
+              "code": "input: sigmoid outputs\nunstable when outputs hit 0 or 1"
+            },
+            "right": {
+              "label": "BCEWithLogitsLoss",
+              "code": "input: raw scores\nsigmoid + log combined stably"
+            },
+            "caption": "Two ways to get the same loss"
+          }
+        }
+      },
+      {
+        "title": "MSE versus MAE with an outlier",
+        "body": "Errors [1, 1, 1, 10]: MSE = (1 + 1 + 1 + 100) / 4 = 25.75, MAE = 13 / 4 = 3.25. The single outlier contributes 100 of MSE's 103, so it dominates the gradients. nn.L1Loss (MAE) or nn.HuberLoss, which is quadratic for small errors and linear for large ones, are less sensitive to it.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                1
+              ],
+              [
+                10,
+                100,
+                10
+              ]
+            ],
+            "labels": [
+              "sample 1",
+              "sample 2",
+              "sample 3",
+              "sample 4"
+            ],
+            "highlight": [
+              3
+            ],
+            "caption": "Columns: error, squared error, absolute error"
+          }
+        }
+      },
+      {
+        "title": "Reduction and custom losses",
+        "body": "reduction='mean' (default) averages over the batch, 'sum' adds, 'none' returns one loss per sample so you can weight them yourself. A custom loss is just a function of tensors returning a scalar; autograd differentiates it like any other operation. CrossEntropyLoss also accepts class weights and label_smoothing."
+      }
+    ],
+    "takeaway": "Match the loss to the output: logits plus class indices for CrossEntropyLoss, logits for BCEWithLogitsLoss, numbers for MSE or Huber. Most loss bugs are a wrong input format that runs without error."
   }
 }

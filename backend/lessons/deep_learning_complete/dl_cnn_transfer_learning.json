@@ -389,5 +389,137 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Transfer learning reuses a network already trained on ImageNet as a feature extractor: its early layers keep their learned weights, the 1,000-class output layer is replaced with a small head for your classes, and only the new parts (or a few top layers) are trained.",
+    "steps": [
+      {
+        "title": "Pre-trained features are general",
+        "body": "A ResNet-18 trained on about 1.2 million ImageNet images has early filters for edges and colours, middle ones for textures and parts, and late ones for object-level features. Those are useful for flowers, X-rays or products too, so you start from them instead of from random weights."
+      },
+      {
+        "title": "Swap the head",
+        "body": "models.resnet18(weights=...) ends with fc = Linear(512, 1000). The lesson replaces it with Linear(512, 128), ReLU, Dropout(0.3), Linear(128, 5). The body still turns any image into 512 numbers; the new head learns to map those to your 5 classes.",
+        "visual": {
+          "type": "NeuralNetworkVisualizer",
+          "props": {
+            "layers": [
+              6,
+              3,
+              2
+            ],
+            "labels": {
+              "input": [
+                "feat 1",
+                "feat 2",
+                "feat 3",
+                "feat 4",
+                "feat 5",
+                "... 512"
+              ],
+              "output": [
+                "class A",
+                "... 5 classes"
+              ]
+            },
+            "caption": "New head on top of the 512 pre-trained features (scaled down)"
+          }
+        }
+      },
+      {
+        "title": "Freeze, then train only the head",
+        "body": "Setting requires_grad = False on the backbone's parameters stops gradients there, and passing only model.fc.parameters() to Adam means only the head changes. That is 66,309 trainable numbers instead of about 11.2 million in the backbone, so a few hundred images per class and a few epochs can be enough.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "backbone (frozen)",
+                "about 11.2 million"
+              ],
+              [
+                "new head (trained)",
+                "512x128 + 128 + 128x5 + 5 = 66,309"
+              ]
+            ],
+            "labels": [
+              "part",
+              "part"
+            ],
+            "highlight": [
+              1
+            ],
+            "caption": "Parameters for ResNet-18 with the lesson's head"
+          }
+        }
+      },
+      {
+        "title": "Feed it images the way it learned",
+        "body": "The backbone expects inputs prepared like ImageNet: resized and cropped to 224 x 224 and normalised with mean [0.485, 0.456, 0.406] and std [0.229, 0.224, 0.225]. Using other statistics shifts every activation and quietly costs accuracy. The weights object's transforms() returns the matching preprocessing."
+      },
+      {
+        "title": "Optionally fine-tune deeper",
+        "body": "Once the head has learned, you can unfreeze the last block (layer4) and continue with a smaller learning rate, often 10 times lower, so the pre-trained features adapt gently instead of being overwritten. The more your images differ from ImageNet and the more data you have, the more layers it pays to unfreeze.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "load pre-trained ResNet-18",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "replace fc with new head",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "freeze backbone, train head",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "still underfitting?",
+                "type": "decision"
+              },
+              {
+                "id": "n4",
+                "label": "unfreeze layer4, train with lower lr",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "A typical transfer learning schedule"
+          }
+        }
+      }
+    ],
+    "takeaway": "Transfer learning starts from features someone else paid to learn. Replace the head, match the original preprocessing, train the new layers first, and unfreeze more only when your data justifies it."
   }
 }

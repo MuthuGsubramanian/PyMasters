@@ -168,5 +168,104 @@
     "category": "functional",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Composition works because functions are objects: a pipe loop feeds each function's return value into the next, and a compose helper builds a new function whose closure holds the list of steps.",
+    "steps": [
+      {
+        "title": "A function is a value with a name",
+        "body": "`double` is a name bound to a function object, exactly like `x = 3`. `pipe(3, double, increment, square)` passes three function objects as arguments; nothing is called until `pipe` adds the parentheses.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "tuple",
+            "data": [
+              "<function double>",
+              "<function increment>",
+              "<function square>"
+            ],
+            "label": "funcs inside pipe()"
+          }
+        }
+      },
+      {
+        "title": "The pipe loop threads one value",
+        "body": "`for f in funcs: value = f(value)` rebinds `value` to each function's result in turn. With 3: double gives 6, increment gives 7, square gives 49. Each function only sees the output of the one before it.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "value",
+                "values": [
+                  "3",
+                  "6",
+                  "7",
+                  "49"
+                ],
+                "data_type": "int"
+              },
+              {
+                "variable": "f",
+                "values": [
+                  "start",
+                  "double",
+                  "increment",
+                  "square"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "compose returns a new function",
+        "body": "`def compose(*fs): return lambda x: reduce(lambda acc, f: f(acc), fs, x)` does not run anything yet. It returns a lambda whose closure holds the tuple `fs`. Calling that lambda later runs the same left-to-right loop as pipe.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "from functools import reduce\n\ndef compose(*fs):\n    return lambda x: reduce(lambda acc, f: f(acc), fs, x)\n\nprocess = compose(double, increment, square)\nprocess(3)   # 49",
+            "highlightSequence": [
+              6,
+              7,
+              4
+            ],
+            "stepDescriptions": [
+              {
+                "description": "compose runs once: the tuple of functions is captured in a closure."
+              },
+              {
+                "description": "Calling process starts reduce with acc = 3."
+              },
+              {
+                "description": "reduce applies each function to the accumulator: 6, 7, 49."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Order matters",
+        "body": "Function composition is not commutative. `square` then `double` on 3 gives 18, while `double` then `square` gives 36. Mathematical notation (f ∘ g)(x) = f(g(x)) runs right to left; most Python pipe helpers run left to right, so check which convention a helper uses.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "pipe(3, double, square)",
+              "code": "3 -> 6 -> 36"
+            },
+            "right": {
+              "label": "pipe(3, square, double)",
+              "code": "3 -> 9 -> 18"
+            }
+          }
+        }
+      },
+      {
+        "title": "Small pure steps compose safely",
+        "body": "Composition works best when each step takes one value and returns one value without side effects. Then any step can be tested alone, reordered or reused in another pipeline, and the combined function is as predictable as its parts."
+      }
+    ],
+    "takeaway": "Composition is just passing function objects around and feeding outputs into inputs. Keep each step small and pure, and the pipeline becomes a readable list of what happens to the data."
+  }
 }

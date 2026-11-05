@@ -456,5 +456,72 @@
     "path_memberships": [
       "ml_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Each workflow stage produces state that later stages depend on, from raw rows and learned cleaning statistics to model weights and a deployed artifact, so a mistake in one stage silently spreads to the rest.",
+    "steps": [
+      {
+        "title": "Collection fixes what the model can know",
+        "body": "The model can only learn patterns present in the rows you collect. If the data has only weekday sales, no algorithm can learn the weekend; if labels are wrong 5% of the time, accuracy above about 95% is mostly noise. Collect for the situation the model will face."
+      },
+      {
+        "title": "Preprocessing learns statistics",
+        "body": "Imputers learn medians, scalers learn means and standard deviations, encoders learn the category list. These are learned numbers, just like weights, and must come from training data only. They travel with the model to production.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "imputer",
+                "median age = 28"
+              ],
+              [
+                "scaler",
+                "mean = 60000, std = 8165"
+              ],
+              [
+                "encoder",
+                "cities = [Chennai, Delhi, Mumbai]"
+              ],
+              [
+                "model",
+                "weights w1..wn, b"
+              ]
+            ],
+            "labels": [
+              "stage",
+              "stage",
+              "stage",
+              "stage"
+            ],
+            "caption": "State learned at fit time"
+          }
+        }
+      },
+      {
+        "title": "Training fits, validation chooses",
+        "body": "The training split sets the parameters; a validation split or cross-validation chooses between models and hyperparameters; a test split, touched once, reports the final score. Each split answers a different question, and reusing one for another's job gives over-optimistic numbers.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              "train: learn weights",
+              "validate: choose model",
+              "test: report once"
+            ],
+            "caption": "Three splits, three jobs"
+          }
+        }
+      },
+      {
+        "title": "Deployment freezes the whole chain",
+        "body": "What goes to production is the fitted preprocessing plus the fitted model, saved together, often as one scikit-learn Pipeline. A request is transformed with the stored statistics and predicted by the stored weights, exactly as during evaluation."
+      },
+      {
+        "title": "Monitoring closes the loop",
+        "body": "After launch, the inputs can drift: a new product line changes the price distribution, or user behaviour shifts. Teams compare live feature distributions and, when labels arrive, live accuracy against the evaluation baseline; a clear drop is the signal to collect fresh data and retrain, starting the loop again."
+      }
+    ],
+    "takeaway": "Think of the workflow as passing state forward: data, learned statistics, weights, artifact. Every stage must use only what earlier stages legitimately learned, or the numbers you trust will not hold in production."
   }
 }

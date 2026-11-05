@@ -166,5 +166,81 @@
     "category": "regex",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A character class is a set test for one character, and a quantifier is a loop: greedy quantifiers take as many characters as possible and then backtrack one at a time if the rest of the pattern fails.",
+    "steps": [
+      {
+        "title": "A class tests one character",
+        "body": "`[a-z0-9]` compiles into a set check: is this one character in the range a-z or 0-9? `\\d`, `\\w` and `\\s` are predefined sets; in Python 3 str patterns they are Unicode-aware, so `\\d` also matches digits like '٣'. `[^...]` inverts the set. Either way the class consumes exactly one character.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Class",
+              "code": "[abc]\n[a-z0-9]\n[^0-9]\n\\d  \\w  \\s"
+            },
+            "right": {
+              "label": "Matches one character that is",
+              "code": "a, b or c\na lowercase letter or digit\nanything except a digit\ndigit, word char, whitespace"
+            }
+          }
+        }
+      },
+      {
+        "title": "Quantifiers repeat the previous piece",
+        "body": "`\\d+` means 'the digit test, at least once, as many times as possible'. On 'room 12, floor 3, 250 chairs' findall returns ['12', '3', '250']: each run of digits is taken whole because `+` keeps consuming until a non-digit."
+      },
+      {
+        "title": "Greedy: take all, then give back",
+        "body": "`<.+>` on '<a><b>' starts at '<', then `.+` swallows every remaining character to the end. The final `>` now fails, so the engine backtracks: `.+` gives back one character, and `>` is tried again. It succeeds at the last '>', so the match is the whole '<a><b>'.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "text taken by .+",
+                "values": [
+                  "a><b>",
+                  "a><b",
+                  "(then '>' matches)"
+                ]
+              },
+              {
+                "variable": "result",
+                "values": [
+                  "fail",
+                  "-",
+                  "'<a><b>'"
+                ]
+              }
+            ],
+            "caption": "Greedy backtracking on <.+>"
+          }
+        }
+      },
+      {
+        "title": "Lazy: take little, then extend",
+        "body": "`<.+?>` reverses the strategy: `.+?` takes one character, then tries `>`; if that fails it takes one more. On '<a><b>' it stops at the first '>', giving '<a>'. Lazy quantifiers are often what you mean when matching between delimiters.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Greedy <.+>",
+              "code": "re.search(r'<.+>', '<a><b>')\n-> '<a><b>'"
+            },
+            "right": {
+              "label": "Lazy <.+?>",
+              "code": "re.search(r'<.+?>', '<a><b>')\n-> '<a>'"
+            }
+          }
+        }
+      },
+      {
+        "title": "Exact counts",
+        "body": "`{3}` means exactly 3, `{2,4}` between 2 and 4 (greedy), `?` means 0 or 1. `\\d{3}-\\d{4}` therefore matches '555-1234' but not '55-1234'. A tighter class plus an exact count leaves the engine less to backtrack over."
+      }
+    ],
+    "takeaway": "Classes decide what one character may be; quantifiers decide how many and in which order the engine tries. Greedy grabs and backs off, lazy creeps forward; choose the one that makes the right match come first."
+  }
 }

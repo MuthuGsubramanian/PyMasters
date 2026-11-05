@@ -49,5 +49,85 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "The same Gemini models are reachable through two doors: the Gemini Developer API (AI Studio) with an API key, and Vertex AI with Google Cloud IAM; the google-genai SDK switches between them with one flag, while auth, quotas, data terms and enterprise controls follow the door.",
+    "steps": [
+      {
+        "title": "One SDK, two backends",
+        "body": "With the google-genai SDK, Client(api_key=...) talks to the Gemini Developer API. Client(vertexai=True, project=..., location=...) talks to Vertex AI. generate_content looks the same on both.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Developer API (AI Studio)",
+              "code": "Client(api_key=KEY)\nquick start, prototypes"
+            },
+            "right": {
+              "label": "Vertex AI",
+              "code": "Client(vertexai=True, project, location)\nIAM, VPC-SC, enterprise terms"
+            },
+            "description": "Creating the client"
+          }
+        }
+      },
+      {
+        "title": "Auth differs",
+        "body": "The Developer API checks an API key on each request. Vertex AI uses Application Default Credentials: a user login locally, a service account in production, checked against IAM roles on the project.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Code calls generate_content",
+                "type": "input"
+              },
+              {
+                "label": "ADC finds service account",
+                "type": "process"
+              },
+              {
+                "label": "OAuth token for Google Cloud",
+                "type": "process"
+              },
+              {
+                "label": "IAM: aiplatform permission on project?",
+                "type": "process"
+              },
+              {
+                "label": "Model in chosen location answers",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "A Vertex AI call"
+          }
+        }
+      },
+      {
+        "title": "Everything is tokens, including media",
+        "body": "Text, images, audio and video are all converted to tokens. count_tokens tells you the size before you send, which matters because Gemini models accept very long inputs and you pay for all of them.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "contents: 1 PDF (12 pages) + question",
+              "total_tokens: 3,180",
+              "decision: fits easily, send to Flash"
+            ],
+            "caption": "count_tokens before sending (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Pick the class per task",
+        "body": "Pro-class models handle the hardest reasoning, Flash is the balanced default, and Flash-Lite is the cheapest and fastest. Switching is a change of model name."
+      },
+      {
+        "title": "Grounding and enterprise features",
+        "body": "Both doors can ground answers with Google Search. Vertex AI adds enterprise controls such as regional processing choices, VPC Service Controls and integration with Vertex AI Search over your own data."
+      }
+    ],
+    "takeaway": "Prototype on the Developer API, ship on Vertex AI when you need IAM, regions and enterprise terms. Keep the client creation in one place so the switch is one line."
+  }
 }

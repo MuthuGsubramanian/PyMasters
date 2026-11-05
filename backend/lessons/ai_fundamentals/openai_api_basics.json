@@ -362,5 +362,143 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "The OpenAI Python client turns your call into an HTTPS POST with your API key in a header and a JSON body of model and messages; the server runs the model and returns JSON, or, when streaming, a series of server-sent events with small text deltas.",
+    "steps": [
+      {
+        "title": "An authenticated HTTPS request",
+        "body": "client.chat.completions.create(...) sends POST https://api.openai.com/v1/chat/completions with the header 'Authorization: Bearer <your key>'. The client reads the key from the OPENAI_API_KEY environment variable, which keeps it out of your code and out of version control."
+      },
+      {
+        "title": "The body: model and messages",
+        "body": "The JSON body names the model and a list of messages with roles: system for behaviour, user for input, assistant for earlier replies. Optional fields like temperature and max_tokens shape generation. The model sees the messages as one formatted token sequence.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "model",
+                "a chat model name"
+              ],
+              [
+                "messages[0]",
+                "system: You are a helpful tutor"
+              ],
+              [
+                "messages[1]",
+                "user: What is a list?"
+              ],
+              [
+                "temperature",
+                0.7
+              ]
+            ],
+            "labels": [
+              "key",
+              "key",
+              "key",
+              "key"
+            ],
+            "caption": "The request body"
+          }
+        }
+      },
+      {
+        "title": "The response: choices, finish_reason, usage",
+        "body": "The answer is at response.choices[0].message.content. finish_reason says why it stopped: 'stop' for a natural end, 'length' when it hit the token limit, 'tool_calls' when it wants a function. usage gives prompt_tokens and completion_tokens, the numbers billing is based on.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "choices[0].message.content",
+                "value": "A list is..."
+              },
+              {
+                "variable": "finish_reason",
+                "value": "stop"
+              },
+              {
+                "variable": "prompt_tokens",
+                "value": 22
+              },
+              {
+                "variable": "completion_tokens",
+                "value": 85
+              }
+            ],
+            "caption": "Fields worth reading"
+          }
+        }
+      },
+      {
+        "title": "Streaming sends deltas as they are made",
+        "body": "With stream=True the server keeps the connection open and sends server-sent events, lines starting with 'data: ' each holding a chunk whose choices[0].delta.content is a few characters. The stream ends with 'data: [DONE]'. Printing each delta with end='' and flush=True makes the reply appear as it is generated.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "request with stream=True",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "chunk: delta 'A list'",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "chunk: delta ' stores items'",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "... more chunks",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "data: [DONE]",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "A streamed reply"
+          }
+        }
+      },
+      {
+        "title": "Errors you should expect",
+        "body": "A 401 means a bad or missing key, 429 means a rate or quota limit, and 5xx means a server-side problem. The Python client raises typed exceptions and automatically retries some errors (2 times by default); for production, add your own backoff, timeouts and logging."
+      }
+    ],
+    "takeaway": "Behind the SDK is plain HTTPS and JSON. Keep the key in the environment, read finish_reason and usage on every response, stream long replies, and plan for 429s and timeouts."
   }
 }

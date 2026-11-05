@@ -414,5 +414,148 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "When two shapes differ, NumPy lines them up from the right, pads the shorter shape with 1s, and lets any size-1 axis repeat itself, using a stride of 0 so nothing is actually copied.",
+    "steps": [
+      {
+        "title": "Rule 1: compare shapes from the right",
+        "body": "For (3, 4) + (4,), NumPy first pads the shorter shape on the left: (4,) becomes (1, 4). Now both have two axes and can be compared position by position: 3 with 1, and 4 with 4.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "A",
+                3,
+                4
+              ],
+              [
+                "B padded",
+                1,
+                4
+              ],
+              [
+                "result",
+                3,
+                4
+              ]
+            ],
+            "labels": [
+              "shape",
+              "shape",
+              "shape"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "(3, 4) with (4,): pad, then compare each axis"
+          }
+        }
+      },
+      {
+        "title": "Rule 2: equal or 1, otherwise an error",
+        "body": "Each pair of sizes must be equal or contain a 1. The 1 stretches to match the other size. (3, 4) + (3,) fails: padded to (1, 3), the last axes are 4 and 3, neither is 1, and NumPy raises 'operands could not be broadcast together'."
+      },
+      {
+        "title": "A column plus a row makes a grid",
+        "body": "[[0], [10], [20]] has shape (3, 1) and [1, 2, 3] has shape (3,), padded to (1, 3). Both size-1 axes stretch, giving (3, 3): [[1, 2, 3], [11, 12, 13], [21, 22, 23]]. Every row value is combined with every column value, an outer sum.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                11,
+                12,
+                13
+              ],
+              [
+                21,
+                22,
+                23
+              ]
+            ],
+            "labels": [
+              "0 +",
+              "10 +",
+              "20 +"
+            ],
+            "caption": "(3, 1) + (3,) -> (3, 3)"
+          }
+        }
+      },
+      {
+        "title": "Stretching costs no memory",
+        "body": "NumPy does not build the repeated copies. It gives the stretched axis a stride of 0, so moving along it re-reads the same bytes. np.broadcast_to(np.array([1, 2, 3]), (4, 3)).strides is (0, 8): four 'rows' that are all the same 24 bytes."
+      },
+      {
+        "title": "The everyday use: centring features",
+        "body": "X has shape (n_samples, n_features), for example (100, 3). X.mean(axis=0) has shape (3,). X - X.mean(axis=0) broadcasts the means across all 100 rows, centring every column in one line. To subtract per-row values instead you need shape (100, 1), which keepdims=True gives you.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "X shape (100, 3)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "means shape (3,) -> padded (1, 3)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "axis 0: 100 vs 1 -> stretch",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "axis 1: 3 vs 3 -> match",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "result (100, 3), every column centred",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Checking the rules for X - X.mean(axis=0)"
+          }
+        }
+      }
+    ],
+    "takeaway": "Read shapes right to left: each pair must match or be 1. If the result shape is not what you meant, add an axis with None or keepdims=True rather than copying data with np.tile."
+  }
 }

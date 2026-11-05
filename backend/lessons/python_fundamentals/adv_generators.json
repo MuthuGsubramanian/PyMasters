@@ -302,5 +302,103 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A generator function returns a generator object holding a suspended frame; each next() resumes that frame until the following yield, so values are produced one at a time.",
+    "steps": [
+      {
+        "title": "Calling it runs nothing",
+        "body": "Because `count_up(n)` contains `yield`, the compiler marks it as a generator function. Calling it returns a generator object with an unstarted frame. Not a single line of the body has run yet.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> g = count_up(3)",
+              ">>> g",
+              "<generator object count_up at 0x7f...>",
+              ">>> next(g)",
+              "1"
+            ]
+          }
+        }
+      },
+      {
+        "title": "next() resumes the frame",
+        "body": "`next(g)` resumes the frame from where it stopped. The body runs until it reaches `yield i`; that value is handed to the caller and the frame freezes, keeping its local variables and the exact instruction position.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "count_up",
+                "variables": {
+                  "n": "3",
+                  "i": "1",
+                  "state": "suspended at yield"
+                }
+              },
+              {
+                "name": "<module>",
+                "variables": {
+                  "g": "<generator>"
+                }
+              }
+            ],
+            "caption": "Locals survive between next() calls"
+          }
+        }
+      },
+      {
+        "title": "Local state survives between calls",
+        "body": "The next `next(g)` continues after the yield: `i` goes from 1 to 2 and the loop hits `yield` again. Nothing is recomputed from the start; the generator simply picks up where it was paused.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "i",
+                "values": [
+                  "1",
+                  "2",
+                  "3"
+                ],
+                "data_type": "int"
+              },
+              {
+                "variable": "next(g)",
+                "values": [
+                  "1",
+                  "2",
+                  "3",
+                  "StopIteration"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "StopIteration when the body ends",
+        "body": "When the function body finishes (or hits `return`), the generator raises StopIteration. A for loop treats that as the normal end. The generator is now exhausted; looping over it again yields nothing."
+      },
+      {
+        "title": "Constant memory, however long the sequence",
+        "body": "A list of a million numbers stores a million objects. A generator stores one frame with a few locals, so its size stays the same whether it will produce ten values or ten billion. That is why generators suit large files and endless streams.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "List",
+              "code": "squares = [n*n for n in range(10**6)]\n# a million ints stored at once"
+            },
+            "right": {
+              "label": "Generator",
+              "code": "squares = (n*n for n in range(10**6))\n# one frame; values made on demand"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "A generator is a paused function. yield hands out one value and freezes the frame; next() thaws it. Use one when you can process items one at a time instead of holding them all."
+  }
 }

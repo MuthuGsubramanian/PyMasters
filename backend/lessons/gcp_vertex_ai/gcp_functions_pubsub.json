@@ -41,5 +41,93 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Pub/Sub stores each published message and keeps a copy for every subscription until a subscriber acknowledges it; unacknowledged messages are redelivered after the ack deadline, so delivery is at-least-once and handlers must be idempotent.",
+    "steps": [
+      {
+        "title": "Publish to a topic",
+        "body": "A publisher sends a message (data bytes plus attributes) to topic orders. Pub/Sub stores it durably and returns a message ID. The publisher does not know or care who is subscribed."
+      },
+      {
+        "title": "Every subscription gets its own copy",
+        "body": "Topic orders has subscriptions billing-sub and email-sub. Each one receives every message independently; inside one subscription, messages are shared among that subscription's consumers.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Publisher",
+              "Topic: orders",
+              "Subscription: billing-sub",
+              "Subscription: email-sub",
+              "Billing function",
+              "Email service"
+            ],
+            "edges": [
+              {
+                "from": "Publisher",
+                "to": "Topic: orders"
+              },
+              {
+                "from": "Topic: orders",
+                "to": "Subscription: billing-sub"
+              },
+              {
+                "from": "Topic: orders",
+                "to": "Subscription: email-sub"
+              },
+              {
+                "from": "Subscription: billing-sub",
+                "to": "Billing function"
+              },
+              {
+                "from": "Subscription: email-sub",
+                "to": "Email service"
+              }
+            ],
+            "description": "Fan-out with two subscriptions"
+          }
+        }
+      },
+      {
+        "title": "Ack deadline and redelivery",
+        "body": "A delivered message is leased to one consumer for the ack deadline. If the consumer acks, it is removed from that subscription. If the deadline passes or the consumer nacks, Pub/Sub delivers it again, possibly to another consumer.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "deliver msg 42 -> worker A (deadline running)",
+              "worker A slow, deadline expires before ack",
+              "redeliver msg 42 -> worker B -> ack",
+              "worker A finishes -> msg 42 processed twice"
+            ],
+            "caption": "A message that is processed twice"
+          }
+        }
+      },
+      {
+        "title": "Push vs pull, and dead letters",
+        "body": "A pull subscriber asks for messages; a push subscription POSTs each message to an HTTPS endpoint, such as a Cloud Run service, and treats a success code as an ack. After a set number of failed attempts, a dead-letter topic can capture the message."
+      },
+      {
+        "title": "Functions are triggered through Eventarc",
+        "body": "A Cloud Run function with a Pub/Sub trigger gets a push subscription created for it. Each message becomes one function invocation; if the function errors, the message is retried.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Not idempotent",
+              "code": "charge card for order 42\nretry -> customer charged twice"
+            },
+            "right": {
+              "label": "Idempotent",
+              "code": "if order 42 already charged: skip\nretry -> no double charge"
+            },
+            "description": "Handler that is safe to retry"
+          }
+        }
+      }
+    ],
+    "takeaway": "At-least-once delivery is the contract: duplicates will happen. Make every handler idempotent and use ordering keys only where order truly matters."
+  }
 }

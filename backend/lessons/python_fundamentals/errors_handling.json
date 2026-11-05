@@ -346,5 +346,92 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "When code raises, Python creates an exception object and unwinds the call stack frame by frame, using each function's exception table to find a matching except clause, and building the traceback as it goes.",
+    "steps": [
+      {
+        "title": "raise creates an exception object",
+        "body": "`int('abc')` raises by creating a `ValueError` instance holding the message. From that moment normal execution stops; the interpreter switches to looking for a handler.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> int('abc')",
+              "Traceback (most recent call last):",
+              "  File \"<stdin>\", line 1, in <module>",
+              "ValueError: invalid literal for int() with base 10: 'abc'"
+            ]
+          }
+        }
+      },
+      {
+        "title": "The exception table finds the handler",
+        "body": "Since CPython 3.11, a try block costs nothing while no exception happens: the compiler writes a side table mapping ranges of bytecode to handler locations. When an exception occurs, the interpreter looks up the current instruction in that table to see if it is inside a try."
+      },
+      {
+        "title": "No handler? Unwind to the caller",
+        "body": "If the current function has no matching except, its frame is discarded and the search continues in the caller, then its caller, and so on. Each frame passed through adds an entry to the traceback, which is why tracebacks list the whole chain of calls.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "parse_age",
+                "variables": {
+                  "text": "'abc'",
+                  "status": "raised ValueError, no handler"
+                }
+              },
+              {
+                "name": "load_user",
+                "variables": {
+                  "status": "has try/except ValueError"
+                }
+              },
+              {
+                "name": "<module>",
+                "variables": {
+                  "status": "not reached"
+                }
+              }
+            ],
+            "caption": "The search stops at load_user"
+          }
+        }
+      },
+      {
+        "title": "except clauses are checked in order",
+        "body": "Python tests each `except` from top to bottom with an isinstance check. `except ValueError` also catches subclasses. The first match runs; the rest are skipped. If nothing matches, the exception keeps unwinding.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "except KeyError",
+                "detail": "no match"
+              },
+              {
+                "label": "except ValueError",
+                "detail": "match -> handler runs"
+              },
+              {
+                "label": "except Exception",
+                "detail": "skipped"
+              },
+              {
+                "label": "finally",
+                "detail": "runs either way"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "finally always runs",
+        "body": "A `finally` block runs whether the try succeeded, an exception was handled, or one is still propagating, even on `return`. It is the place for cleanup such as closing connections. If nothing ever catches the exception, the interpreter prints the traceback and exits with status 1."
+      }
+    ],
+    "takeaway": "Raising is a search: Python walks up the call stack until an except clause matches, recording the path as the traceback. Catch narrow exception types where you can actually recover."
+  }
 }

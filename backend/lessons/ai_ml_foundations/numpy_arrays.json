@@ -350,5 +350,101 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "An ndarray is a header (dtype, shape, strides) pointing at one block of raw bytes; every element has the same type and size, so NumPy can find any element with arithmetic instead of following pointers.",
+    "steps": [
+      {
+        "title": "One dtype for every element",
+        "body": "np.array([1, 2, 3, 4]) picks int64 on most 64-bit Linux and macOS systems, 8 bytes per element, so a.nbytes is 32. Mix in a float, np.array([1, 2.5]), and everything becomes float64; mix in a string and everything becomes a fixed-width string. NumPy converts up front so one fast loop can treat every element alike.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "[1, 2, 3]",
+                "int64"
+              ],
+              [
+                "[1, 2.5]",
+                "float64"
+              ],
+              [
+                "[1, 'a']",
+                "<U21 (string)"
+              ]
+            ],
+            "labels": [
+              "input",
+              "input",
+              "input"
+            ],
+            "caption": "The dtype NumPy chooses for mixed inputs"
+          }
+        }
+      },
+      {
+        "title": "Raw bytes instead of objects",
+        "body": "A Python list of a million ints stores a million 8-byte pointers plus a separate int object for each, and an int object is 28 bytes. The same numbers in an int64 array take 8 MB total, with no per-element header. Less memory also means more of the data fits in the CPU cache."
+      },
+      {
+        "title": "Shape and strides locate elements",
+        "body": "b = np.array([[1, 2], [3, 4], [5, 6]]) has shape (3, 2), ndim 2 and strides (16, 8). To read b[1, 0] NumPy computes 1*16 + 0*8 = byte 16 from the start and reads 8 bytes there: the value 3. No nested lists are involved.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                5,
+                6
+              ]
+            ],
+            "labels": [
+              "offset 0",
+              "offset 16",
+              "offset 32"
+            ],
+            "highlight": [
+              [
+                1,
+                0
+              ]
+            ],
+            "caption": "b[1, 0] is read at byte offset 16"
+          }
+        }
+      },
+      {
+        "title": "reshape and slicing usually make views",
+        "body": "b.reshape(2, 3) and b[:, 0] usually return a new header over the same bytes: a view. Change the view and b changes too. b.base shows the array that owns the memory. Use .copy() when you need independent data.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "view = b[:, 0]",
+              "code": "new shape (3,), strides (16,)\nsame buffer as b\nview[0] = 99 changes b[0, 0]"
+            },
+            "right": {
+              "label": "copy = b[:, 0].copy()",
+              "code": "new buffer with 1, 3, 5\nchanges stay local"
+            },
+            "caption": "Same numbers, shared or not"
+          }
+        }
+      },
+      {
+        "title": "Whole-array math stays in C",
+        "body": "a * 2 or a.sum() make one call into compiled code that walks the buffer. A Python for loop over the same array would turn every element back into a Python object first. That conversion overhead, not the arithmetic, is what makes element-by-element Python loops slow."
+      }
+    ],
+    "takeaway": "An array's speed comes from its layout: one type, one contiguous block, a shape and strides to index it. Choose the dtype deliberately, watch out for views that share memory, and operate on whole arrays."
+  }
 }

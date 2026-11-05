@@ -168,5 +168,89 @@
     "category": "async",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A coroutine is a paused frame you can drive by hand with send(None); asyncio.run creates an event loop, wraps your coroutine in a Task, runs the loop until that Task is done, then cancels leftovers and closes the loop.",
+    "steps": [
+      {
+        "title": "Calling builds a paused coroutine",
+        "body": "`c = compute(7)` runs nothing. It creates a coroutine object that holds a frame for `compute` with `n = 7`, stopped before the first line. `asyncio.iscoroutine(c)` is True. This is the same idea as a generator: code plus a saved position.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "compute (not started)",
+                "variables": {
+                  "n": "7",
+                  "position": "before line 1"
+                }
+              },
+              {
+                "name": "<module>",
+                "variables": {
+                  "c": "<coroutine object compute>"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Driving it by hand",
+        "body": "`c.send(None)` runs the frame until it either suspends or finishes. `compute` has no await, so it finishes immediately, and finishing is reported the same way as a generator: StopIteration carrying the return value 49. This is exactly the call the event loop makes for you.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> c = compute(7)",
+              ">>> c.send(None)",
+              "Traceback (most recent call last):",
+              "StopIteration: 49"
+            ]
+          }
+        }
+      },
+      {
+        "title": "A suspension yields to the driver",
+        "body": "If the coroutine awaits something that is not ready, such as a network read, `send(None)` returns early instead, handing back the Future it is waiting on. The driver must remember to call `send` again when that Future completes. Tracking many such Futures is the event loop's job."
+      },
+      {
+        "title": "What asyncio.run does",
+        "body": "`asyncio.run(c)` creates a new event loop, wraps `c` in a Task, and runs the loop until the Task finishes. It then cancels any other tasks still pending, finalises async generators, shuts down the default thread pool and closes the loop. The Task's result, 49, is returned.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "new event loop",
+                "detail": "fresh scheduler"
+              },
+              {
+                "label": "Task(c)",
+                "detail": "first step scheduled"
+              },
+              {
+                "label": "run_until_complete",
+                "detail": "send / wait / send ..."
+              },
+              {
+                "label": "cleanup",
+                "detail": "cancel leftovers, close loop"
+              },
+              {
+                "label": "return",
+                "detail": "49"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "One thread, many paused frames",
+        "body": "Thousands of coroutines can be paused at once, each costing only a frame object, all managed by one thread. Only one is running at any moment; the others wait for their Futures. That is why async helps with waiting and not with computing."
+      }
+    ],
+    "takeaway": "Under async/await there is no magic: coroutines are resumable frames, and the event loop is the loop that calls send() on them whenever what they wait for is ready."
+  }
 }

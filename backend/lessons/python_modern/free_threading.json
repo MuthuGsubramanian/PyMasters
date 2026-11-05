@@ -151,5 +151,94 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "The free-threaded CPython build (3.13t, 3.14t) removes the GIL by making reference counting thread-safe with biased and deferred counting plus immortal objects, and by giving lists, dicts and other objects their own lightweight locks.",
+    "steps": [
+      {
+        "title": "A separate build, not a switch",
+        "body": "Free threading (PEP 703) ships as a separate interpreter binary, for example `python3.14t`, compiled with `--disable-gil`. `sys._is_gil_enabled()` reports whether the GIL is active. In CPython 3.13 it was experimental; in 3.14 it became an officially supported, still optional, build.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Default build",
+              "code": "python3.14\none GIL per interpreter\nthreads take turns on Python code"
+            },
+            "right": {
+              "label": "Free-threaded build",
+              "code": "python3.14t\nno GIL\nthreads run Python code in parallel"
+            }
+          }
+        }
+      },
+      {
+        "title": "Reference counts without a global lock",
+        "body": "Plain refcount increments would race between threads. The free-threaded build uses biased reference counting: each object records its owning thread, which updates a local count cheaply, while other threads update a separate shared count with atomic operations. Frequently shared objects like functions and modules use deferred counting so they are not hammered by every thread.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "owner thread",
+                "detail": "fast non-atomic local count"
+              },
+              {
+                "label": "other threads",
+                "detail": "atomic shared count"
+              },
+              {
+                "label": "both reach zero",
+                "detail": "object freed"
+              },
+              {
+                "label": "immortal objects",
+                "detail": "never counted"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Immortal objects skip counting",
+        "body": "Objects such as None, True, False and small integers are immortal (PEP 683, CPython 3.12+): their count is fixed and never changes, so threads can share them without any memory traffic on the count."
+      },
+      {
+        "title": "Containers lock themselves",
+        "body": "Instead of one big lock, built-in containers use per-object critical sections. `my_list.append(x)` briefly locks that one list, so two threads appending to different lists never wait for each other. Your own read-modify-write sequences, like `counter += 1`, still need a `threading.Lock`.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Safe per operation",
+              "code": "lst.append(x)\nd[key] = value\nlen(lst)"
+            },
+            "right": {
+              "label": "Still needs your lock",
+              "code": "counter += 1\nif key not in d: d[key] = ...\nlst[i] = lst[i] + 1"
+            }
+          }
+        }
+      },
+      {
+        "title": "Extensions and speed",
+        "body": "C extensions must declare that they support running without the GIL; importing one that does not re-enables the GIL for the process unless you set `PYTHON_GIL=0`. Single-threaded code runs somewhat slower than on the default build, a cost that shrank noticeably from 3.13 to 3.14, while CPU-bound threads can now scale across cores.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "4 CPU-bound threads",
+                "values": [
+                  "default build: ~1 core busy",
+                  "free-threaded: up to 4 cores busy"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Free-threaded Python replaces the single interpreter lock with cheaper, finer-grained safety: smarter reference counting and per-object locks. Built-in operations stay safe, but your own compound updates still need locks."
+  }
 }

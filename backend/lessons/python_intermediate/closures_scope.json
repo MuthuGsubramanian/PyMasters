@@ -525,5 +525,96 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "When an inner function uses a variable of its enclosing function, Python stores that variable in a cell object shared by both, so the inner function can still read it after the outer call has returned.",
+    "steps": [
+      {
+        "title": "The compiler spots free variables",
+        "body": "In `def make_counter(): count = 0; def inc(): ...count...`, the compiler sees that `inc` uses `count`, which belongs to `make_counter`. It marks `count` as a cell variable in the outer function and a free variable in the inner one (`inc.__code__.co_freevars == ('count',)`)."
+      },
+      {
+        "title": "The variable lives in a cell",
+        "body": "At run time `count` is not stored in the outer frame's normal slot. It is stored inside a small cell object, and the outer function reads and writes through that cell. Creating `inc` attaches a tuple of those cells as `inc.__closure__`.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "outer",
+                "label": "make_counter frame"
+              },
+              {
+                "id": "cell",
+                "label": "cell: count = 0"
+              },
+              {
+                "id": "inner",
+                "label": "inc function"
+              }
+            ],
+            "edges": [
+              {
+                "from": "outer",
+                "to": "cell",
+                "label": "writes through"
+              },
+              {
+                "from": "inner",
+                "to": "cell",
+                "label": "__closure__[0]"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The cell outlives the outer call",
+        "body": "When `make_counter()` returns `inc`, its frame is discarded, but the cell is still referenced by `inc.__closure__`, so it stays alive. `inc.__closure__[0].cell_contents` shows the current value.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "inc",
+                "variables": {
+                  "count (via cell)": "2"
+                }
+              },
+              {
+                "name": "<module>",
+                "variables": {
+                  "c": "<function inc>",
+                  "make_counter frame": "gone"
+                }
+              }
+            ],
+            "caption": "The frame is gone; the cell remains"
+          }
+        }
+      },
+      {
+        "title": "nonlocal writes to the cell",
+        "body": "Writing `count += 1` inside `inc` would normally make `count` local to `inc` and fail with UnboundLocalError. `nonlocal count` tells the compiler to write through the cell instead, so every call updates the same shared value.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Without nonlocal",
+              "code": "def inc():\n    count += 1\n# UnboundLocalError"
+            },
+            "right": {
+              "label": "With nonlocal",
+              "code": "def inc():\n    nonlocal count\n    count += 1\n# 1, 2, 3 ..."
+            }
+          }
+        }
+      },
+      {
+        "title": "Each outer call makes new cells",
+        "body": "Calling `make_counter()` twice creates two separate cells, so `c1` and `c2` count independently. That is how closures give each function its own private state without a class."
+      }
+    ],
+    "takeaway": "A closure is a function plus the cells of the variables it borrowed. The cells, not the values, are captured, which is why updates are shared and why nonlocal is needed to write."
   }
 }

@@ -34,5 +34,91 @@
   ],
   "tags": {"concepts_taught": ["ai_governance", "ai_content_safety", "azure_identity"], "concepts_required": ["ai_safety", "dictionaries", "functions"], "difficulty": "advanced", "engagement_type": "conceptual", "estimated_minutes": 24, "category": "enterprise_ai", "path_memberships": []},
   "generated": false,
-  "uth_example": "policy = {\"content_filter\": True, \"managed_identity\": True, \"network_isolation\": True}\ninventory = [\n    {\"name\": \"chat-prod\", \"content_filter\": True, \"managed_identity\": True,\n     \"network_isolation\": True, \"owner\": \"support\"},\n    {\"name\": \"poc-bot\", \"content_filter\": False, \"managed_identity\": True,\n     \"network_isolation\": False, \"owner\": \"labs\"},\n]\n\nreport = {}\nfor deployment in inventory:\n    gaps = [rule for rule, needed in policy.items() if needed and not deployment[rule]]\n    report[deployment[\"name\"]] = {\"owner\": deployment[\"owner\"],\n                                  \"status\": \"compliant\" if not gaps else \"blocked\",\n                                  \"gaps\": gaps}\n\nfor name, row in report.items():\n    print(name, row)\n"
+  "uth_example": "policy = {\"content_filter\": True, \"managed_identity\": True, \"network_isolation\": True}\ninventory = [\n    {\"name\": \"chat-prod\", \"content_filter\": True, \"managed_identity\": True,\n     \"network_isolation\": True, \"owner\": \"support\"},\n    {\"name\": \"poc-bot\", \"content_filter\": False, \"managed_identity\": True,\n     \"network_isolation\": False, \"owner\": \"labs\"},\n]\n\nreport = {}\nfor deployment in inventory:\n    gaps = [rule for rule, needed in policy.items() if needed and not deployment[rule]]\n    report[deployment[\"name\"]] = {\"owner\": deployment[\"owner\"],\n                                  \"status\": \"compliant\" if not gaps else \"blocked\",\n                                  \"gaps\": gaps}\n\nfor name, row in report.items():\n    print(name, row)\n",
+  "under_the_hood": {
+    "summary": "Responsible-AI principles become enforceable when each one is mapped to an automatic control on a path every request or deployment must take: Azure Policy at deploy time, RBAC, a gateway that logs and limits calls, content filters and human review by risk tier.",
+    "steps": [
+      {
+        "title": "Principles map to controls",
+        "body": "'Accountability' becomes a model inventory with an owner per use case. 'Privacy' becomes private endpoints and data rules. 'Safety' becomes content filters and red teaming before launch. Each control produces evidence.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "Accountability": "inventory entry + owner -> registry record",
+              "Safety": "filters + red team -> ASR report",
+              "Privacy": "private endpoints -> policy compliance",
+              "Transparency": "user disclosure -> UI review"
+            },
+            "caption": "Principle to control to evidence"
+          }
+        }
+      },
+      {
+        "title": "Deploy-time gates",
+        "body": "Azure Policy runs on every Resource Manager request, so a policy can deny model deployments outside approved regions or deny resources with public network access. Nobody has to remember the rule."
+      },
+      {
+        "title": "Run-time path through a gateway",
+        "body": "Apps call models through a gateway such as Azure API Management. It authenticates the app, enforces token limits per team, logs prompts and usage for audit and routes to approved deployments only.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "App request",
+                "type": "input"
+              },
+              {
+                "label": "Gateway: identity + team",
+                "type": "process"
+              },
+              {
+                "label": "Token limit check",
+                "type": "process"
+              },
+              {
+                "label": "Content filters",
+                "type": "process"
+              },
+              {
+                "label": "Approved deployment",
+                "type": "process"
+              },
+              {
+                "label": "Logged response",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "A governed model call"
+          }
+        }
+      },
+      {
+        "title": "Risk tier decides the review",
+        "body": "A low-risk internal summariser ships with automated checks. A high-risk use, such as one that affects credit or hiring decisions, needs impact assessment, red teaming and human sign-off before launch, plus human oversight in operation.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Low risk",
+              "code": "self-service with paved road\nautomated evals and filters"
+            },
+            "right": {
+              "label": "High risk",
+              "code": "impact assessment + red team\nsign-off, human in the loop"
+            },
+            "description": "Gate by consequence"
+          }
+        }
+      },
+      {
+        "title": "Incidents close the loop",
+        "body": "When something goes wrong, the gateway logs and traces reconstruct what happened, the owner from the inventory is paged, and the fix becomes a new automated check."
+      }
+    ],
+    "takeaway": "Governance works when the safe path is the easy path. Put controls where every request already flows, and keep humans for the decisions that carry real consequences."
+  }
 }

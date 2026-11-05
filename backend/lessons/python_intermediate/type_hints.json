@@ -370,5 +370,75 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Type hints are evaluated when the function is defined and stored in __annotations__; the interpreter never checks them at run time, while static checkers like mypy read them from the source to find mismatches before you run.",
+    "steps": [
+      {
+        "title": "Annotations are stored, not enforced",
+        "body": "When Python runs `def greet(name: str, excited: bool = False) -> str:`, it evaluates `str`, `bool` and `str` and saves them in `greet.__annotations__`: `{'name': str, 'excited': bool, 'return': str}`. That is all the interpreter does with them.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "name": "<class 'str'>",
+              "excited": "<class 'bool'>",
+              "return": "<class 'str'>"
+            },
+            "label": "greet.__annotations__"
+          }
+        }
+      },
+      {
+        "title": "Wrong types still run",
+        "body": "`greet(42)` is not stopped by Python. The call runs until something inside actually fails, here `name.upper()` on an int raising AttributeError. Hints document intent; they are not checks.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> greet(42, excited=True)",
+              "AttributeError: 'int' object has no attribute 'upper'"
+            ]
+          }
+        }
+      },
+      {
+        "title": "A static checker reads the source",
+        "body": "`mypy app.py` parses your files without running them, builds the type of every expression and compares it with the hints. It would report `Argument 1 to \"greet\" has incompatible type \"int\"; expected \"str\"` before the program ever runs.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "source files",
+                "detail": "parsed, not executed"
+              },
+              {
+                "label": "infer types",
+                "detail": "for each expression"
+              },
+              {
+                "label": "compare with hints",
+                "detail": "find mismatches"
+              },
+              {
+                "label": "report",
+                "detail": "file:line: error ..."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Optional means 'or None'",
+        "body": "`Optional[str]` is shorthand for `Union[str, None]` (written `str | None` since Python 3.10). The checker then insists you handle the None case, for example with `if user is not None:`, before calling string methods. That is how hints catch 'NoneType has no attribute' bugs early."
+      },
+      {
+        "title": "Postponed evaluation",
+        "body": "With `from __future__ import annotations`, CPython 3.11 stores annotations as strings instead of evaluating them, which allows forward references to classes defined later and avoids import cost. Tools that need the real objects call `typing.get_type_hints()` to evaluate them."
+      }
+    ],
+    "takeaway": "Hints are metadata for tools and people. Python stores them and moves on; a checker such as mypy or your editor is what turns them into caught bugs."
   }
 }

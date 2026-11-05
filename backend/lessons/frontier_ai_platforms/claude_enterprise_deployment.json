@@ -49,5 +49,92 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "The same Claude model can be reached through three front doors: Anthropic's API with an API key, Amazon Bedrock with IAM-signed requests, or Google Cloud Vertex AI with Google credentials; the model is the same, but auth, quotas, billing and feature timing follow the channel.",
+    "steps": [
+      {
+        "title": "Direct API",
+        "body": "Your app calls Anthropic's API with an API key from the Anthropic Console. Billing, rate limits and workspaces are managed there, and new models and features usually appear here first."
+      },
+      {
+        "title": "Amazon Bedrock",
+        "body": "Your app calls bedrock-runtime with a Bedrock model ID, signed with SigV4 by an IAM role. IAM policies, VPC endpoints, CloudTrail logging and AWS billing apply, and quotas are Bedrock's per account and Region.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "App with IAM role",
+                "type": "input"
+              },
+              {
+                "label": "SigV4-signed InvokeModel / Converse",
+                "type": "process"
+              },
+              {
+                "label": "IAM allows this model?",
+                "type": "process"
+              },
+              {
+                "label": "Bedrock quota check",
+                "type": "process"
+              },
+              {
+                "label": "Claude generates",
+                "type": "process"
+              },
+              {
+                "label": "Billed on AWS invoice",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Claude via Bedrock"
+          }
+        }
+      },
+      {
+        "title": "Google Cloud Vertex AI",
+        "body": "Your app calls the Anthropic model on Vertex AI in a chosen region, using Google credentials. IAM roles on the project, VPC Service Controls, Cloud Logging and Google Cloud billing apply."
+      },
+      {
+        "title": "Same model, different envelope",
+        "body": "Request bodies are close to the Messages API format, but the endpoint, model identifier, authentication and some feature availability differ per channel. A thin client wrapper keeps the app independent of the door it uses.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "auth": "API key / IAM SigV4 / Google OAuth",
+              "model id": "channel-specific naming",
+              "quotas": "Anthropic / Bedrock / Vertex limits",
+              "billing": "Anthropic / AWS / Google Cloud",
+              "logging": "Console / CloudTrail / Cloud Logging"
+            },
+            "caption": "What changes per channel"
+          }
+        }
+      },
+      {
+        "title": "Choosing a door",
+        "body": "Pick by where your data, identity and spend commitments already live, then check feature timing: if you need a brand-new capability, the direct API is often first; if procurement and network controls matter most, the cloud channel you already run on wins.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Direct API",
+              "code": "newest features first\nseparate vendor and billing"
+            },
+            "right": {
+              "label": "Bedrock / Vertex",
+              "code": "existing IAM, network, billing\nfeatures may arrive later"
+            },
+            "description": "Typical choice"
+          }
+        }
+      }
+    ],
+    "takeaway": "Choose the channel for its controls and contracts, not for the model. Keep the model call behind one small interface so switching doors is a config change."
+  }
 }
