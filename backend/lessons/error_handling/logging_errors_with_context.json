@@ -275,5 +275,6 @@
       }
     ],
     "takeaway": "A log line is a record object: level, message template, arguments, context and, with log.exception, the traceback. Log the failure once where you handle it, with exception() and lazy arguments."
-  }
+  },
+  "uth_example": "import logging, io\n\nstream = io.StringIO()\nhandler = logging.StreamHandler(stream)\nhandler.setFormatter(logging.Formatter(\"%(levelname)s:%(name)s:%(message)s\"))\nlog = logging.getLogger(\"orders\")\nlog.setLevel(logging.INFO)\nlog.addHandler(handler)\nlog.propagate = False\n\ndef charge(order_id, amount):\n    if amount <= 0:\n        raise ValueError(f\"bad amount {amount}\")\n    return {\"order\": order_id, \"charged\": amount}\n\nresults = []\nfor order_id, amount in [(\"A1\", 250), (\"A2\", 0), (\"A3\", 99)]:\n    try:\n        results.append(charge(order_id, amount))\n        log.info(\"charged order %s for %d\", order_id, amount)\n    except ValueError as exc:\n        log.error(\"order %s failed: %s\", order_id, exc)\n\nprint(len(results), \"charged\")\nprint(stream.getvalue().strip())\n"
 }

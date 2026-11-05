@@ -279,5 +279,6 @@
       }
     ],
     "takeaway": "Validate where data enters: type first, then value, with messages that name the field, the rule and the bad value. Collect problems when users need to see them all, and subclass ValueError so callers can catch broadly or precisely."
-  }
+  },
+  "uth_example": "def create_account(name, age):\n    if not isinstance(name, str) or not name.strip():\n        raise ValueError(\"name is required\")\n    if not isinstance(age, int):\n        raise TypeError(f\"age must be int, got {type(age).__name__}\")\n    if age < 13:\n        raise ValueError(f\"age must be at least 13, got {age}\")\n    return {\"name\": name.strip(), \"age\": age}\n\naccounts, errors = [], []\nfor name, age in [(\"Asha\", 30), (\"\", 20), (\"Ravi\", \"17\"), (\"Mei\", 9)]:\n    try:\n        accounts.append(create_account(name, age))\n    except (TypeError, ValueError) as exc:\n        errors.append(f\"{type(exc).__name__}: {exc}\")\n\nprint(accounts)\nfor e in errors:\n    print(e)\n"
 }
