@@ -11,10 +11,9 @@ Design notes:
     (page load + every 3 minutes). "Online now" = last_seen within 5 minutes.
   * Visits are an append-only log (tiny at current scale; one row per page
     LOAD, not per heartbeat, so growth is bounded by real traffic).
-  * Login geolocation is coarse (country/region/city) via a best-effort
-    ip-api lookup in a BACKGROUND THREAD — login latency is never affected,
-    and any failure just leaves the location columns NULL. Private/loopback
-    IPs are skipped. IP + coarse geo only; no precise location is collected.
+  * Login geolocation is coarse (country, plus region/city when present) and comes
+    from Cloudflare's request headers — no visitor IP is sent to any third party.
+    Missing headers just leave the location columns NULL. No precise location is collected.
   * Ops activity rows are reported by the automation loops through a
     super-admin-authenticated endpoint (see admin.py) and rendered on the
     Overview tab.
@@ -22,7 +21,6 @@ Design notes:
 
 import os
 import sqlite3
-import threading
 import uuid
 from typing import Optional
 
@@ -115,32 +113,17 @@ def _is_private(ip: str) -> bool:
         return True
 
 
-def _geo_lookup_and_store(login_id: str, ip: str, db_path: str):
-    """Background: coarse geo for a login row. Best-effort, fail-silent."""
-    country = region = city = None
-    try:
-        import requests
-        r = requests.get(
-            f"http://ip-api.com/json/{ip}?fields=status,country,regionName,city",
-            timeout=2.5,
-        )
-        d = r.json()
-        if d.get("status") == "success":
-            country, region, city = d.get("country"), d.get("regionName"), d.get("city")
-    except Exception:
-        pass
-    if not country:
-        return
-    try:
-        conn = sqlite3.connect(db_path)
-        conn.execute(
-            "UPDATE login_events SET country=?, region=?, city=? WHERE id=?",
-            [country, region, city, login_id],
-        )
-        conn.commit()
-        conn.close()
-    except Exception:
-        pass
+def _cloudflare_geo(request) -> tuple:
+    """Coarse geo from Cloudflare's request headers (security review L14, 2026-11-05: the visitor IP used to
+    go to ip-api.com over plain HTTP). CF-IPCountry is always set behind Cloudflare; region and city appear when
+    the zone's visitor location headers are on. XX = unknown, T1 = Tor: stored as unknown."""
+    h = getattr(request, "headers", None) or {}
+    country = (h.get("cf-ipcountry") or "").strip().upper()[:2] or None
+    if country in ("XX", "T1"):
+        return None, None, None
+    region = (h.get("cf-region") or "").strip()[:80] or None
+    city = (h.get("cf-ipcity") or "").strip()[:80] or None
+    return (country, region, city) if country else (None, None, None)
 
 
 def record_login(user_id: str, request: Optional[Request], db_path: str = None):
@@ -154,19 +137,16 @@ def record_login(user_id: str, request: Optional[Request], db_path: str = None):
         ip = client_ip(request) if request is not None else None
         login_id = str(uuid.uuid4())
         conn = sqlite3.connect(db)
+        country, region, city = _cloudflare_geo(request) if request is not None else (None, None, None)
         conn.execute(
-            "INSERT INTO login_events (id, user_id, ip) VALUES (?, ?, ?)",
-            [login_id, user_id, ip],
+            "INSERT INTO login_events (id, user_id, ip, country, region, city) VALUES (?, ?, ?, ?, ?, ?)",
+            [login_id, user_id, ip, country, region, city],
         )
         conn.execute(
             "UPDATE users SET last_seen_at = CURRENT_TIMESTAMP WHERE id = ?", [user_id]
         )
         conn.commit()
         conn.close()
-        if ip and not _is_private(ip):
-            threading.Thread(
-                target=_geo_lookup_and_store, args=(login_id, ip, db), daemon=True
-            ).start()
     except Exception as exc:
         print(f"[telemetry.record_login] non-fatal: {exc!r}")
 
