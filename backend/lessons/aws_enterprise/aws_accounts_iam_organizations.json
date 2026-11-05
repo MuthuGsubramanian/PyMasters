@@ -33,5 +33,140 @@
     {"q": {"en": "Which condition key lets a resource policy grant access to any principal in your AWS Organization without listing account IDs?"}, "options": {"en": ["aws:SourceIp", "aws:RequestedRegion", "aws:MultiFactorAuthPresent", "aws:PrincipalOrgID"]}, "correct": 3}
   ],
   "tags": {"concepts_taught": ["aws_identity", "cloud_fundamentals"], "concepts_required": ["functions", "dictionaries"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Every AWS API call carries a signed identity, and AWS evaluates every policy that applies to it; one explicit Deny anywhere ends the request, and without an Allow it is denied by default.",
+    "steps": [
+      {
+        "title": "The request arrives signed",
+        "body": "Your SDK signs each call with Signature Version 4 using the caller's credentials. AWS checks the signature, works out the principal (for example the role arn:aws:iam::111122223333:role/deployer) and builds a request context: action s3:PutObject, resource ARN, source IP, MFA flag, tags.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "SDK call signed with SigV4",
+                "type": "input"
+              },
+              {
+                "label": "Authenticate: which principal?",
+                "type": "process"
+              },
+              {
+                "label": "Request context: action, resource, conditions",
+                "type": "process"
+              },
+              {
+                "label": "Policy evaluation",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "What AWS knows before any policy is read"
+          }
+        }
+      },
+      {
+        "title": "Start from an implicit deny",
+        "body": "The evaluation engine starts with the answer 'deny'. A request only succeeds if some policy explicitly allows it. A brand-new role with no policies can do nothing at all, even inside its own account."
+      },
+      {
+        "title": "Collect every policy that applies",
+        "body": "AWS gathers the Service Control Policies on every OU above the account, resource-based policies (such as the bucket policy), permissions boundaries, session policies and the identity-based policies on the role. Each one is a list of statements with Effect, Action, Resource and optional Condition.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "label": "Request",
+                "children": [
+                  "SCPs on the OU path",
+                  "Resource-based policy",
+                  "Permissions boundary",
+                  "Session policy",
+                  "Identity-based policy"
+                ]
+              }
+            ],
+            "description": "Policy types considered for one request"
+          }
+        }
+      },
+      {
+        "title": "Explicit Deny wins, then every gate must allow",
+        "body": "If any matching statement says Deny, the answer is deny, full stop. Otherwise the SCPs must allow the action, the boundary and session policy (if present) must allow it, and an identity or resource policy must grant it. Within one account a resource policy alone can grant access.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Explicit Deny anywhere?",
+              "DENY",
+              "SCPs allow?",
+              "Boundary / session allow?",
+              "Identity or resource policy allows?",
+              "ALLOW"
+            ],
+            "edges": [
+              {
+                "from": "Explicit Deny anywhere?",
+                "to": "DENY"
+              },
+              {
+                "from": "Explicit Deny anywhere?",
+                "to": "SCPs allow?"
+              },
+              {
+                "from": "SCPs allow?",
+                "to": "DENY"
+              },
+              {
+                "from": "SCPs allow?",
+                "to": "Boundary / session allow?"
+              },
+              {
+                "from": "Boundary / session allow?",
+                "to": "DENY"
+              },
+              {
+                "from": "Boundary / session allow?",
+                "to": "Identity or resource policy allows?"
+              },
+              {
+                "from": "Identity or resource policy allows?",
+                "to": "DENY"
+              },
+              {
+                "from": "Identity or resource policy allows?",
+                "to": "ALLOW"
+              }
+            ],
+            "description": "Simplified evaluation order"
+          }
+        }
+      },
+      {
+        "title": "Conditions narrow a match",
+        "body": "A statement only matches if its Condition block is true for this request context. For example, Deny s3:* with condition aws:SecureTransport = false blocks plain-HTTP calls while HTTPS calls fall through to the next check."
+      },
+      {
+        "title": "Crossing accounts needs both sides",
+        "body": "When a role in account A reads a bucket in account B, B's bucket policy must trust A and A's identity policy must allow the action. SCPs still apply to the caller's account, so a Deny in A's OU blocks the call even if B says yes.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Same account",
+              "code": "bucket policy allows role\n-> ALLOW (one side is enough)"
+            },
+            "right": {
+              "label": "Cross account",
+              "code": "bucket policy in B allows A's role\nAND A's role policy allows s3:GetObject\n-> ALLOW only if both say yes"
+            },
+            "description": "Same-account vs cross-account access"
+          }
+        }
+      }
+    ],
+    "takeaway": "SCPs and boundaries never grant anything; they only set the ceiling. Debug an AccessDenied by walking the chain: explicit Deny, SCP, boundary, then the missing Allow."
+  }
 }

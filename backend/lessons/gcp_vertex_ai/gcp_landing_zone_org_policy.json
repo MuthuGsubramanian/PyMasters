@@ -42,5 +42,86 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "org_policies = {\n    \"gcp.resourceLocations\": {\"allowed\": [\"europe-west1\", \"europe-west4\"]},\n    \"compute.vmExternalIpAccess\": {\"allowed\": []},\n    \"iam.disableServiceAccountKeyCreation\": {\"enforced\": True},\n}\nrequests = [\n    {\"what\": \"vm\", \"region\": \"europe-west1\", \"external_ip\": False},\n    {\"what\": \"vm\", \"region\": \"us-central1\", \"external_ip\": False},\n    {\"what\": \"vm\", \"region\": \"europe-west4\", \"external_ip\": True},\n    {\"what\": \"sa_key\"},\n]\n\ndef evaluate(req):\n    if req[\"what\"] == \"sa_key\" and org_policies[\"iam.disableServiceAccountKeyCreation\"][\"enforced\"]:\n        return \"DENY: service account keys disabled\"\n    if req[\"region\"] not in org_policies[\"gcp.resourceLocations\"][\"allowed\"]:\n        return \"DENY: region not allowed\"\n    if req[\"external_ip\"] and not org_policies[\"compute.vmExternalIpAccess\"][\"allowed\"]:\n        return \"DENY: external IPs blocked\"\n    return \"ALLOW\"\n\ndecisions = [evaluate(r) for r in requests]\nprint(decisions)\n"
+  "uth_example": "org_policies = {\n    \"gcp.resourceLocations\": {\"allowed\": [\"europe-west1\", \"europe-west4\"]},\n    \"compute.vmExternalIpAccess\": {\"allowed\": []},\n    \"iam.disableServiceAccountKeyCreation\": {\"enforced\": True},\n}\nrequests = [\n    {\"what\": \"vm\", \"region\": \"europe-west1\", \"external_ip\": False},\n    {\"what\": \"vm\", \"region\": \"us-central1\", \"external_ip\": False},\n    {\"what\": \"vm\", \"region\": \"europe-west4\", \"external_ip\": True},\n    {\"what\": \"sa_key\"},\n]\n\ndef evaluate(req):\n    if req[\"what\"] == \"sa_key\" and org_policies[\"iam.disableServiceAccountKeyCreation\"][\"enforced\"]:\n        return \"DENY: service account keys disabled\"\n    if req[\"region\"] not in org_policies[\"gcp.resourceLocations\"][\"allowed\"]:\n        return \"DENY: region not allowed\"\n    if req[\"external_ip\"] and not org_policies[\"compute.vmExternalIpAccess\"][\"allowed\"]:\n        return \"DENY: external IPs blocked\"\n    return \"ALLOW\"\n\ndecisions = [evaluate(r) for r in requests]\nprint(decisions)\n",
+  "under_the_hood": {
+    "summary": "Organisation Policy attaches constraints to nodes in the resource hierarchy; for each resource, Google Cloud computes the effective policy by walking up the hierarchy and merging or overriding according to each level's settings, then rejects API calls that violate it.",
+    "steps": [
+      {
+        "title": "Constraints restrict configurations",
+        "body": "IAM says who can act; organisation policy says what configurations are allowed for anyone. constraints/compute.vmExternalIpAccess limits external IPs, constraints/gcp.resourceLocations limits regions.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "IAM",
+              "code": "who may call compute.instances.create\n-> roles on principals"
+            },
+            "right": {
+              "label": "Organization Policy",
+              "code": "even an owner may not create a VM\nwith an external IP -> constraint"
+            },
+            "description": "IAM vs organisation policy"
+          }
+        }
+      },
+      {
+        "title": "List and boolean constraints",
+        "body": "A boolean constraint is on or off, for example iam.disableServiceAccountKeyCreation. A list constraint holds allowed or denied values, for example allowed locations in:eu-locations."
+      },
+      {
+        "title": "Effective policy is computed down the tree",
+        "body": "If a project sets no policy, it inherits its nearest ancestor's. A list policy can set inheritFromParent to merge its values with the parent's, or replace them. A child can only override where the parent's policy allows it.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "Organization: allow in:eu-locations",
+              "Folder Prod:  (not set) -> inherits",
+              "Project:      allow in:us-locations, inheritFromParent=true",
+              "Effective:    eu-locations + us-locations (merged)"
+            ],
+            "caption": "Effective gcp.resourceLocations for project pay-prod"
+          }
+        }
+      },
+      {
+        "title": "Enforced at the API call",
+        "body": "When someone calls the API to create a bucket in asia-south1, the service checks the effective policy for that project and rejects the call with a constraint violation. Existing resources are not deleted.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "API call: create bucket in asia-south1",
+                "type": "input"
+              },
+              {
+                "label": "IAM allows the caller",
+                "type": "process"
+              },
+              {
+                "label": "Compute effective org policy",
+                "type": "process"
+              },
+              {
+                "label": "Location not allowed",
+                "type": "process"
+              },
+              {
+                "label": "Request rejected: constraint violated",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Creating a resource under organisation policy"
+          }
+        }
+      },
+      {
+        "title": "A project factory applies it all",
+        "body": "A landing zone's project factory creates each project in the right folder with labels, billing, Shared VPC attachment and baseline IAM, so the folder's organisation policies and grants apply from creation."
+      }
+    ],
+    "takeaway": "Set the strict defaults at the organisation node, allow narrow exceptions lower down on purpose, and test new constraints in dry-run mode before enforcing them."
+  }
 }

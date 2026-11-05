@@ -312,5 +312,79 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Calling a class runs type.__call__, which asks __new__ to allocate an empty object and then calls __init__ with that object as self to fill its attribute dictionary.",
+    "steps": [
+      {
+        "title": "The class statement builds a class object",
+        "body": "When Python runs `class Cookie:`, it executes the body, collecting `__init__` and other methods into a namespace dict, and then creates a class object from it. The name `Cookie` is bound to that object, just like a function name."
+      },
+      {
+        "title": "Calling the class allocates an object",
+        "body": "`Cookie('choco', 12)` calls the class. Behind the scenes `type.__call__` runs `Cookie.__new__(Cookie, 'choco', 12)`, which (via `object.__new__`) allocates a new, empty instance whose type pointer refers to Cookie.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "Cookie('choco', 12)",
+                "detail": "type.__call__"
+              },
+              {
+                "label": "__new__",
+                "detail": "allocate empty object"
+              },
+              {
+                "label": "__init__(self, ...)",
+                "detail": "fill attributes"
+              },
+              {
+                "label": "return",
+                "detail": "the new instance"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "__init__ fills the instance dict",
+        "body": "Next Python calls `__init__(obj, 'choco', 12)`. Inside, `self` is that new object, and `self.flavour = 'choco'` stores a key in the instance's own `__dict__`. `__init__` returns None; the object itself is what the call gives back.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "flavour": "'choco'",
+              "size": 12
+            },
+            "label": "c1.__dict__",
+            "caption": "Each instance has its own attribute dict"
+          }
+        }
+      },
+      {
+        "title": "Methods live on the class",
+        "body": "`c1.bake()` does not find `bake` in `c1.__dict__`; it finds it in `Cookie.__dict__`. Python then binds it to the instance, so the call becomes `Cookie.bake(c1)`. That is where `self` comes from: it is simply the first argument.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "You write",
+              "code": "c1.bake(180)"
+            },
+            "right": {
+              "label": "Python runs",
+              "code": "Cookie.bake(c1, 180)"
+            }
+          }
+        }
+      },
+      {
+        "title": "Many objects, one class",
+        "body": "Every instance has its own `__dict__` for data, but all share the single set of methods stored on the class. Creating a thousand cookies copies no method code; it creates a thousand small dicts."
+      }
+    ],
+    "takeaway": "A class is an object that makes objects: __new__ allocates, __init__ fills the instance dict, and methods are fetched from the class and handed the instance as self."
+  }
 }

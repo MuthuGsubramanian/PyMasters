@@ -168,5 +168,98 @@
     "estimated_minutes": 22,
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A retry loop catches transient failures, waits a growing delay between attempts (exponential backoff with jitter), gives up after a fixed number of tries, and then returns a fallback so the caller still gets a usable answer.",
+    "steps": [
+      {
+        "title": "The loop counts attempts",
+        "body": "In the lesson, `retry(func, attempts, fallback)` loops `for i in range(attempts)`, calls `func()` inside a try and returns immediately on success. `flaky()` fails on calls 1 and 2 and succeeds on call 3, so with 3 attempts the loop returns the real result.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "attempt",
+                "values": [
+                  "1",
+                  "2",
+                  "3"
+                ]
+              },
+              {
+                "variable": "flaky()",
+                "values": [
+                  "raises",
+                  "raises",
+                  "returns 'ok'"
+                ]
+              },
+              {
+                "variable": "retry returns",
+                "values": [
+                  "-",
+                  "-",
+                  "'ok'"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Backoff spaces the retries",
+        "body": "Retrying instantly can hammer a struggling service. Exponential backoff waits base * 2**attempt seconds, for example 0.5, 1, 2, 4, up to a cap. Adding random jitter spreads out many clients that failed at the same moment so they do not retry in lockstep.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "try 1 fails -> wait 0.5s",
+              "try 2 fails -> wait 1s",
+              "try 3 fails -> wait 2s",
+              "try 4 fails -> give up"
+            ],
+            "label": "base 0.5s, doubling, 4 attempts"
+          }
+        }
+      },
+      {
+        "title": "Retry only what can succeed later",
+        "body": "Timeouts and connection resets are often transient; a 'not found' or a validation error will fail the same way every time. Catch the transient types only, and retry only idempotent operations: repeating a payment that actually went through would charge twice."
+      },
+      {
+        "title": "Fallback after the last attempt",
+        "body": "When the loop runs out, the function returns the fallback (a cached value, a default, an empty list) instead of raising. The caller gets a degraded but working answer, and one failing dependency does not take down the whole page.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "call",
+                "detail": "success -> return result"
+              },
+              {
+                "label": "transient error",
+                "detail": "wait with backoff"
+              },
+              {
+                "label": "retry",
+                "detail": "up to the attempt limit"
+              },
+              {
+                "label": "all failed",
+                "detail": "return fallback, log the error"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Bound the total time",
+        "body": "Every attempt should have its own timeout, and the whole retry loop a total budget. Otherwise a slow dependency can hold a request for attempts times timeout seconds. Log each failure so the degradation is visible rather than silent."
+      }
+    ],
+    "takeaway": "Retries are a bet that the next attempt will succeed. Make it a smart bet: transient errors only, idempotent operations only, growing waits, a hard limit, and a fallback when the bet loses."
+  }
 }

@@ -34,5 +34,88 @@
   ],
   "tags": {"concepts_taught": ["aws_data_platform", "aws_storage"], "concepts_required": ["aws_storage", "aws_data_platform"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "s3_lake = {\n    \"orders/year=2025/month=01\": [{\"channel\": \"web\", \"total\": 30}, {\"channel\": \"app\", \"total\": 12}],\n    \"orders/year=2025/month=02\": [{\"channel\": \"web\", \"total\": 18}],\n    \"orders/year=2024/month=12\": [{\"channel\": \"store\", \"total\": 50}],\n}\n\ndef glue_crawl(lake):                          # infer a catalog table from the files\n    sample = next(iter(lake.values()))[0]\n    columns = {k: type(v).__name__ for k, v in sample.items()}\n    partitions = [path.split(\"/\", 1)[1] for path in lake]\n    return {\"table\": \"lake.orders\", \"columns\": columns, \"partitions\": partitions}\n\ncatalog = glue_crawl(s3_lake)\ncounts = {}                                    # SELECT channel, count(*) ... WHERE year='2025'\nscanned = [p for p in catalog[\"partitions\"] if p.startswith(\"year=2025\")]\nfor part in scanned:\n    for row in s3_lake[\"orders/\" + part]:\n        counts[row[\"channel\"]] = counts.get(row[\"channel\"], 0) + 1\nprint(catalog[\"columns\"], \"| scanned\", len(scanned), \"of\", len(catalog[\"partitions\"]))\nprint(counts)\n"
+  "uth_example": "s3_lake = {\n    \"orders/year=2025/month=01\": [{\"channel\": \"web\", \"total\": 30}, {\"channel\": \"app\", \"total\": 12}],\n    \"orders/year=2025/month=02\": [{\"channel\": \"web\", \"total\": 18}],\n    \"orders/year=2024/month=12\": [{\"channel\": \"store\", \"total\": 50}],\n}\n\ndef glue_crawl(lake):                          # infer a catalog table from the files\n    sample = next(iter(lake.values()))[0]\n    columns = {k: type(v).__name__ for k, v in sample.items()}\n    partitions = [path.split(\"/\", 1)[1] for path in lake]\n    return {\"table\": \"lake.orders\", \"columns\": columns, \"partitions\": partitions}\n\ncatalog = glue_crawl(s3_lake)\ncounts = {}                                    # SELECT channel, count(*) ... WHERE year='2025'\nscanned = [p for p in catalog[\"partitions\"] if p.startswith(\"year=2025\")]\nfor part in scanned:\n    for row in s3_lake[\"orders/\" + part]:\n        counts[row[\"channel\"]] = counts.get(row[\"channel\"], 0) + 1\nprint(catalog[\"columns\"], \"| scanned\", len(scanned), \"of\", len(catalog[\"partitions\"]))\nprint(counts)\n",
+  "under_the_hood": {
+    "summary": "Glue records where files live and what their schema is; Athena plans SQL over those files, skips partitions and columns it does not need and bills for bytes scanned; Redshift loads data into columnar blocks spread over compute slices for repeated fast queries.",
+    "steps": [
+      {
+        "title": "Glue Data Catalog: schema as a shared table",
+        "body": "A crawler reads sample files in s3://lake/sales/, infers columns and types, and registers a table with its S3 location and partitions such as year=2026/month=11. Athena, Redshift Spectrum and EMR all read the same catalog entry.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "table": "sales",
+              "location": "s3://lake/sales/",
+              "format": "Parquet",
+              "partitions": "year, month",
+              "columns": "order_id, region, amount, ts"
+            },
+            "caption": "A catalog table entry"
+          }
+        }
+      },
+      {
+        "title": "Athena prunes partitions",
+        "body": "For WHERE year = 2026 AND month = 11, Athena's planner asks the catalog for only that partition's S3 prefix. The other months are never listed or read."
+      },
+      {
+        "title": "Columnar files prune columns",
+        "body": "Parquet stores each column separately with min/max statistics per row group. SELECT SUM(amount) reads only the amount column, and row groups whose min and max rule out the filter are skipped entirely.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "CSV, unpartitioned",
+              "code": "reads every row, every column\n100 GB scanned"
+            },
+            "right": {
+              "label": "Parquet, partitioned",
+              "code": "one month, one column\nabout 1 GB scanned"
+            },
+            "description": "Same query, different bytes scanned (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Redshift: leader and slices",
+        "body": "In Redshift the leader node parses the SQL, builds a plan and compiles it. Compute nodes are split into slices; each slice holds part of every table and works on its part in parallel, then the leader merges the results.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "SQL to leader node",
+                "type": "input"
+              },
+              {
+                "label": "Plan + compile",
+                "type": "process"
+              },
+              {
+                "label": "Slices scan their data in parallel",
+                "type": "process"
+              },
+              {
+                "label": "Redistribute rows if join keys differ",
+                "type": "process"
+              },
+              {
+                "label": "Leader merges and returns",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "A Redshift query"
+          }
+        }
+      },
+      {
+        "title": "Distribution keys avoid shuffles",
+        "body": "If two big tables are distributed on the same join key, matching rows already sit on the same slice and the join needs no network movement. A small dimension table can use ALL distribution, a copy on every node."
+      }
+    ],
+    "takeaway": "In analytics, cost and speed come from data you never read. Partition, use columnar formats, and pick distribution keys that match how you join."
+  }
 }

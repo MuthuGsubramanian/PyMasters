@@ -153,5 +153,113 @@
       "correct": 3
     }
   ],
-  "uth_example": "from html import escape\n\nclass Interpolation:\n    def __init__(self, value, expression):\n        self.value, self.expression = value, expression\n\nclass Template:                      # what t\"<p>{user}</p>\" builds in 3.14\n    def __init__(self, *parts):\n        self.parts = parts\n        self.strings = tuple(p for p in parts if isinstance(p, str))\n        self.interpolations = tuple(p for p in parts if isinstance(p, Interpolation))\n\ndef safe_html(template):\n    out = []\n    for part in template.parts:\n        out.append(part if isinstance(part, str) else escape(str(part.value)))\n    return \"\".join(out)\n\nuser = \"<b>Ravi</b>\"\ntmpl = Template(\"<p>Hi \", Interpolation(user, \"user\"), \"</p>\")\nprint(tmpl.strings, [i.expression for i in tmpl.interpolations])\nprint(safe_html(tmpl))\n"
+  "uth_example": "from html import escape\n\nclass Interpolation:\n    def __init__(self, value, expression):\n        self.value, self.expression = value, expression\n\nclass Template:                      # what t\"<p>{user}</p>\" builds in 3.14\n    def __init__(self, *parts):\n        self.parts = parts\n        self.strings = tuple(p for p in parts if isinstance(p, str))\n        self.interpolations = tuple(p for p in parts if isinstance(p, Interpolation))\n\ndef safe_html(template):\n    out = []\n    for part in template.parts:\n        out.append(part if isinstance(part, str) else escape(str(part.value)))\n    return \"\".join(out)\n\nuser = \"<b>Ravi</b>\"\ntmpl = Template(\"<p>Hi \", Interpolation(user, \"user\"), \"</p>\")\nprint(tmpl.strings, [i.expression for i in tmpl.interpolations])\nprint(safe_html(tmpl))\n",
+  "under_the_hood": {
+    "summary": "A t-string evaluates its expressions immediately like an f-string, but instead of joining everything into a str it returns a string.templatelib.Template holding the static strings and Interpolation objects separately for a processing function to combine.",
+    "steps": [
+      {
+        "title": "The prefix changes the result type",
+        "body": "`f\"Hello, {name}!\"` evaluates `name`, formats it and returns a finished str. `t\"Hello, {name}!\"` (PEP 750, Python 3.14) evaluates `name` too, at the same moment, but returns a `Template` object. Nothing has been joined yet.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "f-string",
+              "code": "f\"Hello, {name}!\"\n-> 'Hello, World!'  (str)"
+            },
+            "right": {
+              "label": "t-string",
+              "code": "t\"Hello, {name}!\"\n-> Template(strings=('Hello, ', '!'),\n   interpolations=(Interpolation('World', 'name', None, ''),))"
+            }
+          }
+        }
+      },
+      {
+        "title": "Strings and interpolations, interleaved",
+        "body": "A Template stores `strings`, a tuple of the literal parts, and `interpolations`, a tuple with one Interpolation per `{...}`. There is always one more string than interpolations (possibly empty strings), so the parts alternate: string, interpolation, string.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "tuple",
+            "data": [
+              "'Hello, '",
+              "Interpolation(value='World')",
+              "'!'"
+            ],
+            "highlight": [
+              1
+            ],
+            "label": "iterating the Template (empty strings skipped)"
+          }
+        }
+      },
+      {
+        "title": "Each Interpolation keeps its context",
+        "body": "An Interpolation has `value` (the evaluated object), `expression` (the source text, such as 'name'), `conversion` ('r', 's', 'a' or None) and `format_spec` (for example '.2f'). A processor can therefore treat the value as data instead of text.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "value",
+                "values": [
+                  "\"<script>alert('xss')</script>\""
+                ]
+              },
+              {
+                "variable": "expression",
+                "values": [
+                  "'name'"
+                ]
+              },
+              {
+                "variable": "conversion",
+                "values": [
+                  "None"
+                ]
+              },
+              {
+                "variable": "format_spec",
+                "values": [
+                  "''"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "A processor decides how to join",
+        "body": "`safe_html(template)` loops over the template: plain strings are trusted and appended as they are, and each Interpolation's value goes through `html.escape` first. A SQL helper could instead turn each interpolation into a `?` placeholder and pass the values separately to the driver."
+      },
+      {
+        "title": "Why there is no automatic str",
+        "body": "A Template deliberately does not render itself into the final text; `str(template)` does not give you the joined string. That forces untrusted values through a processor, which is the safety point of the feature.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "t\"...{user_input}...\"",
+                "detail": "values evaluated now"
+              },
+              {
+                "label": "Template",
+                "detail": "parts kept apart"
+              },
+              {
+                "label": "processor",
+                "detail": "escape / parameterise"
+              },
+              {
+                "label": "final output",
+                "detail": "safe string or query"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "t-strings separate what you wrote from what was interpolated. The processing function, not the string syntax, decides how values become text, which is how escaping and parameterisation become automatic."
+  }
 }

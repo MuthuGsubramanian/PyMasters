@@ -33,5 +33,88 @@
     {"q": {"en": "Why must criteria weights be agreed BEFORE scoring the platforms?"}, "options": {"en": ["Vendors require signed weights", "To prevent motivated arithmetic — tuning weights after seeing scores to produce a predetermined winner", "Weights expire after scoring", "Because scores must always be equal"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["ai_platform_selection", "azure_openai_service", "aws_bedrock", "vertex_ai_platform"], "concepts_required": ["cloud_fundamentals", "multi_cloud_strategy"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 24, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Choosing between Foundry, Bedrock and Vertex works as a two-stage machine: hard constraints (models needed, regions, compliance, existing cloud) remove platforms, then weighted criteria score the rest, and a short pilot with your own evaluation data confirms the winner.",
+    "steps": [
+      {
+        "title": "List the hard constraints",
+        "body": "Must-haves remove options without debate: the specific model family you need, data processed in a given geography, identity integration with your existing directory, or an existing enterprise agreement.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Use cases + constraints",
+                "type": "input"
+              },
+              {
+                "label": "Filter: models, regions, compliance",
+                "type": "process"
+              },
+              {
+                "label": "Weighted scoring",
+                "type": "process"
+              },
+              {
+                "label": "Pilot with own eval set",
+                "type": "process"
+              },
+              {
+                "label": "Decision record",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Selection pipeline"
+          }
+        }
+      },
+      {
+        "title": "Check model access under your terms",
+        "body": "Each platform offers its own first-party models plus partners. Check not just that a model is listed, but whether it is available in your regions, with the deployment type and throughput option you need."
+      },
+      {
+        "title": "Score what remains",
+        "body": "Weight criteria by importance: integration with your data and identity, residency options, cost flexibility (on-demand vs reserved), tooling for agents and evaluation. Score each platform and compute the weighted total.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "criterion          weight  P1   P2   P3",
+              "data integration   0.35    5    3    4",
+              "residency options  0.25    4    4    4",
+              "cost flexibility   0.20    3    4    4",
+              "agent tooling      0.20    4    4    3",
+              "total                      4.15 3.65 3.80"
+            ],
+            "caption": "Weighted score (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Pilot with your own data",
+        "body": "Benchmarks do not use your documents or tasks. Run the same evaluation set through the top two platforms and compare quality, latency and throughput under realistic load.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Public benchmark",
+              "code": "generic tasks\nsays little about your use case"
+            },
+            "right": {
+              "label": "Your eval set",
+              "code": "your documents, your questions\nquality + latency + cost per answer"
+            },
+            "description": "What decides"
+          }
+        }
+      },
+      {
+        "title": "Write the decision down",
+        "body": "A decision record lists constraints, weights, scores, pilot results and the conditions that would trigger a re-evaluation, so the choice can be audited and revisited."
+      }
+    ],
+    "takeaway": "Constraints first, scores second, your own evals last. The platform where your data and identity already live usually wins unless a must-have model forces otherwise."
+  }
 }

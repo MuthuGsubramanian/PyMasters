@@ -34,5 +34,71 @@
     {"q": {"en": "Why is cross-region replication alone NOT a complete backup strategy?"}, "options": {"en": ["Replication is too slow for backups", "Corruption and malicious deletion replicate faithfully to every region — you also need point-in-time, immutable recovery points", "Replication only works for S3", "Replicas cannot be encrypted"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["cloud_observability", "cloud_disaster_recovery"], "concepts_required": ["aws_compute", "aws_data_platform"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 24, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "CloudWatch turns data points into time series and alarm states; disaster recovery depends on how far behind your replica is (RPO) and how long it takes to bring the standby up (RTO).",
+    "steps": [
+      {
+        "title": "A metric is a named time series",
+        "body": "Each data point carries a namespace, a metric name, dimensions and a timestamp, for example AWS/ApplicationELB, HTTPCode_Target_5XX_Count, LoadBalancer=app/web. Each unique combination of dimensions is its own series. Embedded Metric Format lets a log line carry metrics that CloudWatch extracts.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "namespace": "AWS/ApplicationELB",
+              "metric": "HTTPCode_Target_5XX_Count",
+              "dimensions": "LoadBalancer=app/web",
+              "period": "60s",
+              "statistic": "Sum",
+              "value": "37"
+            },
+            "caption": "One data point and its identity"
+          }
+        }
+      },
+      {
+        "title": "Alarms evaluate M out of N periods",
+        "body": "An alarm looks at the last N periods and goes to ALARM when at least M of them breach the threshold. With 3 out of 5 at 60 seconds, one bad minute does not page anyone, but a sustained problem does. Missing data can be treated as breaching, not breaching or ignored.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "periods: [ok, BREACH, ok, BREACH, BREACH]  -> 3/5 breaching",
+              "state: OK -> ALARM",
+              "action: SNS topic -> on-call page"
+            ],
+            "caption": "A '3 out of 5' alarm moving between states"
+          }
+        }
+      },
+      {
+        "title": "Composite alarms reduce noise",
+        "body": "A composite alarm combines other alarms with AND, OR and NOT. For example, page only when latency is high AND the error rate is high, which avoids being woken up for a single noisy metric."
+      },
+      {
+        "title": "RPO comes from replication lag",
+        "body": "RPO is how much data you can lose. With nightly backups, the worst case is about a day of writes. With asynchronous replication to another Region, it is the replication lag at the moment of failure, often seconds."
+      },
+      {
+        "title": "RTO comes from what is already running",
+        "body": "RTO is how long until you serve again. Backup and restore must build everything first. Pilot light has the data replicated but compute off. Warm standby runs a small copy that only needs scaling. Active/active already serves traffic, so recovery is mostly a routing change.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Backup & restore / Pilot light",
+              "code": "restore or start compute\nscale up, switch DNS\nRTO: hours"
+            },
+            "right": {
+              "label": "Warm standby / Active-active",
+              "code": "already running\nscale out, shift traffic\nRTO: minutes or less"
+            },
+            "description": "Four DR strategies, slowest to fastest recovery"
+          }
+        }
+      }
+    ],
+    "takeaway": "Monitoring and DR are linked: an alarm that fires fast and a failover you have actually rehearsed decide your real RTO, not the diagram."
+  }
 }

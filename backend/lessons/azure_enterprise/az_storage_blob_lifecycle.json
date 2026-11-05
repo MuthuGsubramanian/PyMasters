@@ -33,5 +33,95 @@
     {"q": {"en": "The cool tier's pricing trade-off is..."}, "options": {"en": ["Higher storage rate, cheaper transactions", "Lower storage rate, higher transaction charges plus a 30-day minimum retention", "Identical to hot but slower", "Free storage with per-read billing only"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["azure_storage", "cloud_cost_management"], "concepts_required": ["azure_resource_management", "cloud_fundamentals"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A storage account writes each blob as several synchronous copies (in one datacenter or across zones) and optionally copies it asynchronously to a paired region, while access tiers change its price per GB and lifecycle policies move or delete blobs on a daily run.",
+    "steps": [
+      {
+        "title": "Redundancy: copies and distance",
+        "body": "LRS keeps 3 synchronous copies in one datacenter. ZRS keeps 3 synchronous copies across availability zones. GRS and GZRS add an asynchronous copy to a secondary region, so the secondary can be slightly behind.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "LRS": "3 copies, 1 datacenter",
+              "ZRS": "3 copies, 3 zones",
+              "GRS": "LRS + async LRS in paired region",
+              "GZRS": "ZRS + async LRS in paired region"
+            },
+            "caption": "Where the copies live"
+          }
+        }
+      },
+      {
+        "title": "A write returns after the primary copies",
+        "body": "A PUT returns success once the primary region's synchronous copies are written. Geo-replication happens afterwards, which is why the secondary region has a recovery point a little behind the primary.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "PUT blob",
+                "type": "input"
+              },
+              {
+                "label": "Write to 3 zones (sync)",
+                "type": "process"
+              },
+              {
+                "label": "201 Created",
+                "type": "process"
+              },
+              {
+                "label": "Async copy to secondary region",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "One blob write with GZRS"
+          }
+        }
+      },
+      {
+        "title": "Tiers trade storage price for access price",
+        "body": "Hot costs most to store and least to read. Cool and Cold are cheaper to store, cost more to read and have early-deletion periods. Archive is offline: a blob must be rehydrated to an online tier first, which can take hours.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Hot / Cool / Cold",
+              "code": "online: read immediately\nread cost rises as tier gets colder"
+            },
+            "right": {
+              "label": "Archive",
+              "code": "offline: rehydrate first\ncan take hours, then read"
+            },
+            "description": "Reading a blob by tier"
+          }
+        }
+      },
+      {
+        "title": "Lifecycle policies run on a schedule",
+        "body": "A rule like 'if lastModified > 30 days, move to Cool; > 180 days, Archive; > 2555 days, delete' is evaluated by a background job about once a day, not the instant a blob ages. A new policy can take up to a day to start acting.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "day 0     created          -> Hot",
+              "day 30+   daily run        -> Cool",
+              "day 180+  daily run        -> Archive",
+              "day 2555+ daily run        -> deleted"
+            ],
+            "caption": "A log blob under one lifecycle rule"
+          }
+        }
+      },
+      {
+        "title": "Protection features keep old data",
+        "body": "Soft delete keeps deleted blobs for a retention period, versioning keeps previous versions on overwrite, and immutability policies (WORM) block changes and deletes until a time-based retention ends."
+      }
+    ],
+    "takeaway": "Pick redundancy by the failure you must survive, and tiers by how often data is read. Let lifecycle rules do the moving, and remember Archive needs hours to come back."
+  }
 }

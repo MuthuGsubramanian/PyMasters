@@ -336,5 +336,90 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Calling an async function only creates a paused coroutine object; an event loop runs it, and each `await` on slow I/O hands control back so another coroutine can run.",
+    "steps": [
+      {
+        "title": "async def returns a coroutine object",
+        "body": "`fetch_data('A', 2)` does not run the body. It returns a coroutine object that holds a paused frame, ready to start. If you never await it or schedule it, Python later warns `RuntimeWarning: coroutine 'fetch_data' was never awaited`.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> c = fetch_data('A', 2)",
+              ">>> c",
+              "<coroutine object fetch_data at 0x7f...>",
+              ">>> asyncio.run(c)",
+              "A: starting",
+              "A: done after 2s"
+            ]
+          }
+        }
+      },
+      {
+        "title": "asyncio.run starts an event loop",
+        "body": "`asyncio.run(main())` creates an event loop, wraps `main()` in a Task and runs the loop until that Task finishes. The loop is a single-threaded scheduler: it keeps a queue of tasks that are ready and resumes them one at a time."
+      },
+      {
+        "title": "await gives control back",
+        "body": "Inside `fetch_data`, `await asyncio.sleep(2)` pauses the coroutine at that line and tells the loop 'wake me in 2 seconds'. The coroutine's frame, with its local variables, stays saved. The loop is now free to resume a different task.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "fetch_data",
+                "variables": {
+                  "name": "'A'",
+                  "delay": "2",
+                  "paused at": "await asyncio.sleep(2)"
+                }
+              },
+              {
+                "name": "event loop",
+                "variables": {
+                  "ready": "[task B]",
+                  "sleeping": "[task A until t=2s]"
+                }
+              }
+            ],
+            "caption": "A paused coroutine keeps its frame"
+          }
+        }
+      },
+      {
+        "title": "gather overlaps the waiting",
+        "body": "`asyncio.gather(fetch('A', 2), fetch('B', 1), fetch('C', 3))` turns each coroutine into a Task. All three start, all three hit their `await sleep`, and the loop waits for whichever timer is due first. Total time is about 3 seconds (the longest) instead of 6 (the sum).",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "t=0",
+                "detail": "A, B, C start and await"
+              },
+              {
+                "label": "t=1s",
+                "detail": "B resumes and finishes"
+              },
+              {
+                "label": "t=2s",
+                "detail": "A finishes"
+              },
+              {
+                "label": "t=3s",
+                "detail": "C finishes; gather returns"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "One thread, one task at a time",
+        "body": "Only one coroutine runs Python code at any moment; switching happens only at an `await`. That makes async great for many slow network or disk waits, but a CPU-heavy loop with no awaits blocks every other task until it ends."
+      }
+    ],
+    "takeaway": "async code is cooperative: coroutines pause at await and the event loop fills the waiting time with other work. It speeds up waiting, not computing."
+  }
 }

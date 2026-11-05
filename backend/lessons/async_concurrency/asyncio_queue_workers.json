@@ -164,5 +164,94 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "import asyncio\n\nasync def worker(name, queue, done):\n    while True:\n        word = await queue.get()\n        if word is None:\n            queue.task_done()\n            return\n        await asyncio.sleep(0)                  # let the other worker run\n        done.append((name, word.upper()))\n        queue.task_done()\n\nasync def main():\n    queue, done = asyncio.Queue(), []\n    for word in [\"ant\", \"bee\", \"cat\", \"dog\", \"eel\"]:\n        queue.put_nowait(word)\n    for _ in range(2):\n        queue.put_nowait(None)                  # one stop signal per worker\n    workers = [asyncio.create_task(worker(f\"w{i}\", queue, done)) for i in range(2)]\n    await queue.join()\n    await asyncio.gather(*workers)\n    return done\n\nprint(asyncio.run(main()))\n"
+  "uth_example": "import asyncio\n\nasync def worker(name, queue, done):\n    while True:\n        word = await queue.get()\n        if word is None:\n            queue.task_done()\n            return\n        await asyncio.sleep(0)                  # let the other worker run\n        done.append((name, word.upper()))\n        queue.task_done()\n\nasync def main():\n    queue, done = asyncio.Queue(), []\n    for word in [\"ant\", \"bee\", \"cat\", \"dog\", \"eel\"]:\n        queue.put_nowait(word)\n    for _ in range(2):\n        queue.put_nowait(None)                  # one stop signal per worker\n    workers = [asyncio.create_task(worker(f\"w{i}\", queue, done)) for i in range(2)]\n    await queue.join()\n    await asyncio.gather(*workers)\n    return done\n\nprint(asyncio.run(main()))\n",
+  "under_the_hood": {
+    "summary": "asyncio.Queue is a deque plus two waiting lines of futures: get() parks a worker when the queue is empty, put() parks a producer when it is full, and an unfinished-task counter lets join() wait until every item has been marked done.",
+    "steps": [
+      {
+        "title": "A deque and two waiting lines",
+        "body": "An `asyncio.Queue(maxsize=10)` keeps items in a deque, plus a deque of futures for consumers waiting in `get()` and one for producers waiting in `put()`. Nothing uses threads or locks; waiting is just awaiting a future that someone else will complete.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Queue part",
+              "code": "_queue\n_getters\n_putters\n_unfinished_tasks"
+            },
+            "right": {
+              "label": "Holds",
+              "code": "items waiting to be processed\nfutures of workers waiting for an item\nfutures of producers waiting for space\ncount of items not yet task_done()"
+            }
+          }
+        }
+      },
+      {
+        "title": "get() on an empty queue parks the worker",
+        "body": "A worker calling `await queue.get()` on an empty queue creates a future, appends it to the getters line and awaits it. When a producer calls `put(item)`, the item goes into the deque and the first waiting getter's future is woken, so that worker resumes and takes the item.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "worker: await get()",
+                "detail": "queue empty -> park future"
+              },
+              {
+                "label": "producer: put(job)",
+                "detail": "append job; wake first getter"
+              },
+              {
+                "label": "worker resumes",
+                "detail": "popleft() -> job"
+              },
+              {
+                "label": "worker",
+                "detail": "process, then task_done()"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "maxsize gives backpressure",
+        "body": "With `maxsize=10`, an 11th `await queue.put(job)` parks the producer until a worker removes an item. A fast producer is therefore slowed to the speed of the workers instead of filling memory with millions of pending jobs.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "qsize()",
+                "values": [
+                  "0",
+                  "3",
+                  "10",
+                  "10",
+                  "9"
+                ]
+              },
+              {
+                "variable": "producer",
+                "values": [
+                  "running",
+                  "running",
+                  "running",
+                  "parked in put()",
+                  "woken, puts 1"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "task_done() and join()",
+        "body": "Every `put` increments the unfinished counter; every `task_done()` decrements it. `await queue.join()` waits until the counter reaches zero, meaning every item that was put has been fully processed, not just taken off the queue."
+      },
+      {
+        "title": "Shutting down the pool",
+        "body": "Workers usually loop forever (`while True: job = await q.get()`). After `await q.join()`, the main task cancels them: `w.cancel()` raises CancelledError inside each worker at its pending `get()`, and `gather(*workers, return_exceptions=True)` waits for them to exit."
+      }
+    ],
+    "takeaway": "A queue decouples how fast work arrives from how fast it is processed. A fixed pool of workers, bounded size for backpressure, and task_done/join for completion give you a controlled pipeline."
+  }
 }

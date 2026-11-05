@@ -34,5 +34,86 @@
   ],
   "tags": {"concepts_taught": ["cloud_observability", "cloud_compliance"], "concepts_required": ["azure_resource_management", "azure_networking"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 24, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "app_requests = [\n    {\"role\": \"api\", \"minute\": 0, \"success\": True},\n    {\"role\": \"api\", \"minute\": 2, \"success\": False},\n    {\"role\": \"api\", \"minute\": 3, \"success\": False},\n    {\"role\": \"web\", \"minute\": 6, \"success\": False},\n    {\"role\": \"api\", \"minute\": 7, \"success\": False},\n]\n\nerrors = {}                       # like: summarize count() by role, bin(time, 5m)\nfor row in app_requests:\n    if not row[\"success\"]:\n        key = (row[\"role\"], row[\"minute\"] // 5 * 5)\n        errors[key] = errors.get(key, 0) + 1\n\nranked = sorted(errors.items(), key=lambda kv: kv[1], reverse=True)\nalert_rule = {\"threshold\": 2}\nalerts = [k for k, n in ranked if n >= alert_rule[\"threshold\"]]\nprint(ranked)\nprint(\"fire alert for:\", alerts)\n"
+  "uth_example": "app_requests = [\n    {\"role\": \"api\", \"minute\": 0, \"success\": True},\n    {\"role\": \"api\", \"minute\": 2, \"success\": False},\n    {\"role\": \"api\", \"minute\": 3, \"success\": False},\n    {\"role\": \"web\", \"minute\": 6, \"success\": False},\n    {\"role\": \"api\", \"minute\": 7, \"success\": False},\n]\n\nerrors = {}                       # like: summarize count() by role, bin(time, 5m)\nfor row in app_requests:\n    if not row[\"success\"]:\n        key = (row[\"role\"], row[\"minute\"] // 5 * 5)\n        errors[key] = errors.get(key, 0) + 1\n\nranked = sorted(errors.items(), key=lambda kv: kv[1], reverse=True)\nalert_rule = {\"threshold\": 2}\nalerts = [k for k, n in ranked if n >= alert_rule[\"threshold\"]]\nprint(ranked)\nprint(\"fire alert for:\", alerts)\n",
+  "under_the_hood": {
+    "summary": "Azure Monitor runs two pipelines: platform metrics go into a time-series store for fast charts and alerts, while logs flow through diagnostic settings or data collection rules into Log Analytics tables that you query with KQL.",
+    "steps": [
+      {
+        "title": "Metrics: numbers at a fixed interval",
+        "body": "Platform metrics such as Percentage CPU are collected automatically and stored as time series with dimensions. They are cheap to read and fast to alert on, but they only answer 'how much', not 'which request'."
+      },
+      {
+        "title": "Logs: rows in tables",
+        "body": "Diagnostic settings send resource logs (for example AppServiceHTTPLogs) to a Log Analytics workspace. Agents on VMs use data collection rules to pick which events and counters to send. Each record lands as a row in a table with typed columns.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Resource or VM emits log",
+                "type": "input"
+              },
+              {
+                "label": "Diagnostic setting / DCR",
+                "type": "process"
+              },
+              {
+                "label": "Ingestion into workspace",
+                "type": "process"
+              },
+              {
+                "label": "Table row (TimeGenerated, columns)",
+                "type": "process"
+              },
+              {
+                "label": "KQL query",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "How a log record reaches a query"
+          }
+        }
+      },
+      {
+        "title": "KQL is a pipeline of operators",
+        "body": "A query starts from a table and pipes rows through operators: where filters, summarize aggregates, render draws. Each operator gets the output of the previous one.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "AppRequests",
+              "| where TimeGenerated > ago(1h) and Success == false",
+              "| summarize failures = count() by OperationName",
+              "| top 5 by failures"
+            ],
+            "caption": "A KQL query read left to right"
+          }
+        }
+      },
+      {
+        "title": "Application Insights correlates a request",
+        "body": "The SDK or OpenTelemetry distro gives each incoming request an operation ID and passes it in the traceparent header to downstream calls. Requests, dependencies and exceptions sharing that ID form one end-to-end transaction."
+      },
+      {
+        "title": "Alerts evaluate on a schedule",
+        "body": "A metric alert checks a condition every minute or so; a log search alert runs a KQL query on a schedule and fires if the result crosses a threshold. Both call an action group: email, SMS, webhook or automation.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Metric alert",
+              "code": "near real-time\nsimple threshold on a metric"
+            },
+            "right": {
+              "label": "Log search alert",
+              "code": "runs KQL on a schedule\nany condition you can query"
+            },
+            "description": "Two alert types"
+          }
+        }
+      }
+    ],
+    "takeaway": "Use metrics for fast signals and logs for explanation. Ingestion decides cost, so collect deliberately, and alert on symptoms users feel, tied to an SLO."
+  }
 }

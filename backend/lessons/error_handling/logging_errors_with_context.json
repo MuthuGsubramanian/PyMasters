@@ -1,0 +1,279 @@
+{
+  "id": "logging_errors_with_context",
+  "topic": "logging_errors_with_context",
+  "track": "error_handling",
+  "module": "patterns",
+  "order": 3,
+  "title": {
+    "en": "Logging Errors with Context: Beyond print()"
+  },
+  "description": {
+    "en": "print() vanishes the moment your program leaves your laptop. The logging module gives every message a level, a destination and a format — and log.exception() keeps the traceback. Build a logger from its three parts and learn what to log, what never to log, and where."
+  },
+  "xp_reward": 90,
+  "next_unlock": "validate_early_fail_fast",
+  "story_variants": {
+    "en": "## print() Is Not a Plan\n\nWhen something breaks in production you cannot stand next to the server watching the terminal. What you have is whatever the program **wrote down** while it ran. `print()` writes to one place, has no severity, no timestamp, no way to turn it down, and no way to attach a traceback. The `logging` module in the standard library fixes all of that.\n\n> **Key idea:** A log record is a small object — a *level*, a *message*, and context (logger name, time, optional traceback). You decide separately *which* records are kept (level) and *where* they go and *how* they look (handler and formatter).\n\n## Levels: How Loud Is This?\n\nPython has five standard levels, each with a number: `DEBUG` (10), `INFO` (20), `WARNING` (30), `ERROR` (40), `CRITICAL` (50). A logger has a threshold; records below it are dropped.\n\n| Level | Use it for |\n|---|---|\n| DEBUG | Detail useful only while developing |\n| INFO | Normal milestones (\"order 17 shipped\") |\n| WARNING | Something odd, but we coped |\n| ERROR | An operation failed |\n| CRITICAL | The whole program may not continue |\n\n## Logger, Handler, Formatter\n\nThree small pieces cooperate:\n\n```python\nimport logging, io\n\nstream = io.StringIO()                       # stand-in for a file or the console\nhandler = logging.StreamHandler(stream)      # WHERE records go\nhandler.setFormatter(logging.Formatter(\"%(levelname)s:%(name)s:%(message)s\"))  # HOW they look\n\nlog = logging.getLogger(\"shop.orders\")       # WHO is speaking\nlog.setLevel(logging.INFO)                   # the threshold\nlog.addHandler(handler)\nlog.propagate = False                        # keep this demo self-contained\n\nlog.debug(\"cart contents dumped\")            # dropped: DEBUG < INFO\nlog.info(\"order 17 shipped\")\nlog.warning(\"stock for sku-9 is low\")\nprint(stream.getvalue())\n```\n\nOnly the INFO and WARNING lines appear. The DEBUG call costs almost nothing because the level check happens first.\n\n## Logging Failures: `exception()` Keeps the Traceback\n\nInside an `except` block, `log.exception(\"message\")` logs at ERROR **and** appends the full traceback. That is the single most useful habit in this lesson — compare:\n\n```python\ntry:\n    price = int(\"12.5\")\nexcept ValueError:\n    log.exception(\"could not parse price\")   # message + traceback\n```\n\nversus `print(\"could not parse price\")`, which tells you *that* it failed but not *where* or *why*.\n\n> **Pass values as arguments, not f-strings:** write `log.info(\"order %s shipped\", order_id)`. The string is only built if the record is actually kept, and log tools can group identical message templates.\n\n## Honest Caveats\n\n- Logging an error and then re-raising it is fine, but logging it at *every* layer produces the same failure five times. Log where you **handle** it, or at the boundary.\n- Never log secrets (passwords, tokens). A log file lives much longer and travels much further than a variable.\n- By default records also *propagate* to the root logger's handlers; in real apps configure handlers once at startup, not in library code.\n"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "resilience",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "log_parts",
+      "nodes": [
+        {
+          "label": "logging",
+          "children": [
+            "Logger: who is speaking",
+            "Level: how loud, and the threshold",
+            "Handler: where records go",
+            "Formatter: how a line looks",
+            "exception(): message + traceback"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "print_vs_log",
+      "left": {
+        "label": "print('failed') — no level, no traceback, can't be turned off",
+        "result": false
+      },
+      "right": {
+        "label": "log.exception('failed') — ERROR level, full traceback, routed by handlers",
+        "result": true
+      },
+      "description": {
+        "en": "Both tell you something failed. Only the log record tells you where, why, how severe, and lets you filter it later without editing code."
+      }
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Level = how loud.",
+        "Handler = where it goes.",
+        "exception() = traceback for free.",
+        "Pass values as args, never log secrets."
+      ],
+      "duration_ms": 3500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Finish make_logger(level): set the logger's threshold, attach the handler, and turn propagation off. Then log one message at each of DEBUG, INFO, WARNING and ERROR with the threshold at WARNING. Only records at or above the threshold should survive. Expected output:\nWARNING:w\nERROR:e"
+      },
+      "starter_code": "import logging, io\n\ndef make_logger(level):\n    stream = io.StringIO()\n    handler = logging.StreamHandler(stream)\n    handler.setFormatter(logging.Formatter(\"%(levelname)s:%(message)s\"))\n    log = logging.getLogger(\"lesson.demo.\" + str(level))\n    log.handlers.clear()\n    # TODO: set the logger's threshold to `level`, attach the handler,\n    # and stop records propagating to the root logger.\n    return log, stream\n\nlog, stream = make_logger(logging.WARNING)\nlog.debug(\"d\")\nlog.info(\"i\")\nlog.warning(\"w\")\nlog.error(\"e\")\nprint(stream.getvalue().strip())\n",
+      "expected_output": "WARNING:w\nERROR:e",
+      "hints": {
+        "en": [
+          "Call log.setLevel(level) so the logger knows its threshold.",
+          "Call log.addHandler(handler) — without a handler nothing is written to the stream.",
+          "Set log.propagate = False so records don't also go to the root logger.",
+          "With the threshold at WARNING, only the warning and error lines remain."
+        ]
+      },
+      "test_code": "\nl2, s2 = make_logger(logging.DEBUG)\nl2.debug(\"x\")\nassert s2.getvalue() == \"DEBUG:x\\n\"\nl3, s3 = make_logger(logging.ERROR)\nl3.warning(\"no\")\nl3.error(\"yes\")\nassert s3.getvalue() == \"ERROR:yes\\n\"\n"
+    },
+    {
+      "instruction": {
+        "en": "Make parse_all log what it skips instead of silently dropping it. For each bad value log an ERROR 'skipping %r' (pass the value as an argument), and at the end log an INFO 'parsed %d of %d'. Expected output:\n[4, 10]\nERROR:skipping 'x'\nERROR:skipping '3.5'\nINFO:parsed 2 of 4"
+      },
+      "starter_code": "import logging, io\n\nstream = io.StringIO()\nhandler = logging.StreamHandler(stream)\nhandler.setFormatter(logging.Formatter(\"%(levelname)s:%(message)s\"))\nlog = logging.getLogger(\"lesson.parse\")\nlog.handlers.clear()\nlog.setLevel(logging.INFO)\nlog.addHandler(handler)\nlog.propagate = False\n\ndef parse_all(values):\n    good = []\n    for v in values:\n        try:\n            good.append(int(v))\n        except ValueError:\n            pass  # TODO: log an ERROR \"skipping 'x'\" using %r and an argument (not an f-string)\n    # TODO: log an INFO line \"parsed N of M\" using %d arguments\n    return good\n\nresult = parse_all([\"4\", \"x\", \"10\", \"3.5\"])\nprint(result)\nprint(stream.getvalue().strip())\n",
+      "expected_output": "[4, 10]\nERROR:skipping 'x'\nERROR:skipping '3.5'\nINFO:parsed 2 of 4",
+      "hints": {
+        "en": [
+          "In the except branch: log.error(\"skipping %r\", v) — %r shows the quotes, which helps spot whitespace bugs.",
+          "After the loop: log.info(\"parsed %d of %d\", len(good), len(values)).",
+          "Pass values as extra arguments rather than building the string with an f-string."
+        ]
+      },
+      "test_code": "\nstream.seek(0); stream.truncate()\nassert parse_all([\"1\",\"2\"]) == [1,2]\nassert stream.getvalue() == \"INFO:parsed 2 of 2\\n\"\n"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "A logger's level is WARNING. Which call is dropped?"
+      },
+      "options": {
+        "en": [
+          "log.error('x')",
+          "log.warning('x')",
+          "log.info('x')",
+          "log.critical('x')"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What does log.exception('msg') add compared with log.error('msg')?"
+      },
+      "options": {
+        "en": [
+          "A timestamp",
+          "The current traceback",
+          "Retries the operation",
+          "Sends an email"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why write log.info('order %s shipped', oid) instead of an f-string?"
+      },
+      "options": {
+        "en": [
+          "f-strings are not allowed in logging",
+          "The string is only formatted if the record is actually kept, and identical templates can be grouped",
+          "It makes the order id secret",
+          "It changes the log level"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which belongs in a log line?"
+      },
+      "options": {
+        "en": [
+          "The user's password for debugging",
+          "An API token",
+          "The order id and the error type",
+          "Nothing — logs should never contain data"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "logging",
+      "log_levels",
+      "handlers",
+      "formatters",
+      "logger_exception",
+      "lazy_formatting"
+    ],
+    "concepts_required": [
+      "exceptions_done_right"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "category": "error_handling",
+    "estimated_minutes": 22,
+    "path_memberships": [
+      "error_handling"
+    ]
+  },
+  "generated": false,
+  "under_the_hood": {
+    "summary": "log.exception() inside an except block captures sys.exc_info() into the LogRecord at ERROR level; the handler's Formatter then renders the message line plus the full traceback text, so the log keeps where and why the failure happened.",
+    "steps": [
+      {
+        "title": "A record is created only if it passes the level",
+        "body": "In the lesson, the 'shop.orders' logger has level INFO. `log.debug('cart contents dumped')` is compared with that threshold first and dropped before any object is built. `log.info('order 17 shipped')` passes, so a LogRecord is created with the level, message, logger name and time.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "call",
+                "values": [
+                  "log.debug(...)",
+                  "log.info(...)",
+                  "log.warning(...)"
+                ]
+              },
+              {
+                "variable": "level vs INFO (20)",
+                "values": [
+                  "10 < 20: dropped",
+                  "20: kept",
+                  "30: kept"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "exception() attaches the traceback",
+        "body": "`log.exception('could not parse price')` is `log.error(..., exc_info=True)`. While the except block is running, `sys.exc_info()` still holds the ValueError, its type and its traceback, and that triple is stored on the record as `record.exc_info`. Called outside an except block, there is nothing to attach.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "int('12.5') raises",
+                "detail": "ValueError"
+              },
+              {
+                "label": "except block",
+                "detail": "log.exception(msg)"
+              },
+              {
+                "label": "LogRecord",
+                "detail": "level=ERROR, exc_info=sys.exc_info()"
+              },
+              {
+                "label": "handler",
+                "detail": "format message + traceback"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The Formatter renders the traceback",
+        "body": "The handler's Formatter first fills the format string, here `%(levelname)s:%(name)s:%(message)s`. If the record has exc_info, it calls `formatException`, which uses the traceback module to produce the familiar text, and appends it on the following lines. The text is cached on the record as `exc_text` so several handlers do not redo the work.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "ERROR:shop.orders:could not parse price",
+              "Traceback (most recent call last):",
+              "  File \"shop.py\", line 14, in <module>",
+              "    price = int(\"12.5\")",
+              "ValueError: invalid literal for int() with base 10: '12.5'"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Arguments are merged late",
+        "body": "With `log.info('order %s shipped', order_id)`, the record stores the template and `args` separately and merges them only when a handler formats the record. Dropped records never pay for string building, and log tools can group all records that share the template 'order %s shipped'.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "f-string (eager)",
+              "code": "log.info(f'order {order_id} shipped')\n# string built even if dropped\n# every message text unique"
+            },
+            "right": {
+              "label": "args (lazy)",
+              "code": "log.info('order %s shipped', order_id)\n# built only if kept\n# one template, many values"
+            }
+          }
+        }
+      },
+      {
+        "title": "Context fields with extra=",
+        "body": "`log.error('payment failed', extra={'order_id': 17})` sets `record.order_id = 17`, so a format string containing `%(order_id)s` can print it, and structured log systems can index it. Logging once, where the error is handled, avoids the same failure appearing at every layer."
+      }
+    ],
+    "takeaway": "A log line is a record object: level, message template, arguments, context and, with log.exception, the traceback. Log the failure once where you handle it, with exception() and lazy arguments."
+  }
+}

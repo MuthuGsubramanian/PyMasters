@@ -49,5 +49,89 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A Messages API call sends a model name, max_tokens, an optional system prompt and an alternating list of user and assistant messages; Claude reads it all as tokens and generates content blocks until it ends its turn, hits max_tokens or a stop sequence, reported in stop_reason.",
+    "steps": [
+      {
+        "title": "The request is the whole state",
+        "body": "The API is stateless. Each call carries the model, max_tokens, the system prompt and the full messages list. For a multi-turn chat, your app appends the previous assistant reply and the new user message and sends everything again.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "model": "a Claude model ID",
+              "max_tokens": "1024",
+              "system": "You are a support agent for Acme. Reply in JSON.",
+              "messages": "[user, assistant, user] alternating"
+            },
+            "caption": "A Messages API request, simplified"
+          }
+        }
+      },
+      {
+        "title": "System prompt sets the contract",
+        "body": "The system prompt is read before the conversation and holds role, hard rules and output format. Rules there are steadier than rules repeated in user messages."
+      },
+      {
+        "title": "Generation stops for a reason",
+        "body": "Claude generates until it decides the turn is complete (end_turn), reaches max_tokens, emits one of your stop_sequences, or asks to use a tool (tool_use). Your code should check stop_reason, because a max_tokens stop means the answer was cut off.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "end_turn       -> complete answer",
+              "max_tokens     -> truncated, raise the limit or continue",
+              "stop_sequence  -> hit one of your stop strings",
+              "tool_use       -> run the requested tool"
+            ],
+            "caption": "Reading stop_reason"
+          }
+        }
+      },
+      {
+        "title": "Streaming sends events",
+        "body": "With stream enabled, the response arrives as server-sent events: message_start, then content_block_start, many content_block_delta events with text pieces, content_block_stop, message_delta with the stop_reason and usage, and message_stop.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "message_start",
+                "type": "input"
+              },
+              {
+                "label": "content_block_start",
+                "type": "process"
+              },
+              {
+                "label": "content_block_delta x N (text pieces)",
+                "type": "process"
+              },
+              {
+                "label": "content_block_stop",
+                "type": "process"
+              },
+              {
+                "label": "message_delta (stop_reason, usage)",
+                "type": "process"
+              },
+              {
+                "label": "message_stop",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Event order in a streamed reply"
+          }
+        }
+      },
+      {
+        "title": "Images are tokens too",
+        "body": "An image content block is converted to tokens before the model reads it; Anthropic's guide estimates about width x height / 750 tokens, so a 1000 x 1000 image is roughly 1,333 tokens. Resize large images to control cost and latency."
+      }
+    ],
+    "takeaway": "Treat each call as self-contained: everything the model should know is in that request. Check stop_reason every time and count image and history tokens as part of the budget."
+  }
 }

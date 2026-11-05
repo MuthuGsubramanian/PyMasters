@@ -33,5 +33,89 @@
     {"q": {"en": "Why must backups be immutable and credential-isolated from production?"}, "options": {"en": ["To reduce storage costs", "Ransomware operators target and delete backups first; isolation keeps the recovery path out of the blast radius", "Immutability improves restore speed", "Regulators forbid mutable storage entirely"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["cloud_disaster_recovery", "multi_cloud_strategy"], "concepts_required": ["cloud_fundamentals", "landing_zones"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 23, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Recovery depends on two numbers: RPO is set by how far the replica lags when disaster strikes, and RTO by how much must be started, restored and re-pointed before users are served; going cross-cloud adds data and config translation to both.",
+    "steps": [
+      {
+        "title": "Replication lag is your RPO",
+        "body": "With asynchronous replication, writes are acknowledged locally and shipped later. If the replica is 4 seconds behind when the primary dies, those 4 seconds of writes are lost. Backups set a coarser RPO: the time since the last good copy.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "last write committed on primary:  12:00:10",
+              "last write applied on replica:    12:00:06",
+              "lost on failover:                 4 seconds of writes"
+            ],
+            "caption": "RPO at the moment of failure"
+          }
+        }
+      },
+      {
+        "title": "RTO is a sum of steps",
+        "body": "Detect the outage, decide to fail over, promote or restore data, start or scale compute, switch DNS or traffic, and verify. The slowest and least-practised step dominates, often the decision itself.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Detect",
+                "type": "input"
+              },
+              {
+                "label": "Declare disaster",
+                "type": "process"
+              },
+              {
+                "label": "Promote / restore data",
+                "type": "process"
+              },
+              {
+                "label": "Scale compute",
+                "type": "process"
+              },
+              {
+                "label": "Switch traffic (DNS TTL)",
+                "type": "process"
+              },
+              {
+                "label": "Verify and serve",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "What RTO is made of"
+          }
+        }
+      },
+      {
+        "title": "Tiers trade cost for speed",
+        "body": "Backup and restore keeps only data. Pilot light keeps data replicated with compute off. Warm standby runs a small copy. Active/active serves from both sites. Each step up costs more and recovers faster."
+      },
+      {
+        "title": "Cross-region vs cross-cloud",
+        "body": "Within one provider, replication features and images work in both regions. Across providers, databases, images, IAM and network config must be translated, and someone must keep that translation working.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Other region, same cloud",
+              "code": "native replication\nsame IaC, same IAM model"
+            },
+            "right": {
+              "label": "Other cloud",
+              "code": "export/import or third-party replication\ntranslated IaC, IAM, network"
+            },
+            "description": "Failover target"
+          }
+        }
+      },
+      {
+        "title": "Untested DR does not exist",
+        "body": "Only a game day proves the numbers: fail over for real, measure detection, decision and recovery times, and fix what was slow. Backups must also sit where an attacker with production access cannot delete them."
+      }
+    ],
+    "takeaway": "Measure RPO and RTO in drills, not diagrams. Cross-cloud DR is only worth its translation cost when a whole-provider failure is a risk you truly must survive."
+  }
 }

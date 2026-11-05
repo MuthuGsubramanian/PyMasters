@@ -465,5 +465,98 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Counter and defaultdict are dict subclasses that use the __missing__ hook for absent keys, namedtuple generates a tuple subclass with named properties, and deque is a linked list of fixed-size blocks.",
+    "steps": [
+      {
+        "title": "The __missing__ hook",
+        "body": "When `d[key]` does not find the key, `dict.__getitem__` checks whether the subclass defines `__missing__` and, if so, returns what it returns instead of raising KeyError. Counter and defaultdict are built on this one hook.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "d[key]",
+                "detail": "hash and probe"
+              },
+              {
+                "label": "found?",
+                "detail": "return the value"
+              },
+              {
+                "label": "not found + __missing__",
+                "detail": "call it"
+              },
+              {
+                "label": "plain dict",
+                "detail": "raise KeyError"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Counter returns 0, defaultdict inserts",
+        "body": "`Counter.__missing__` returns 0 without storing anything, so `c['x'] += 1` reads 0 and writes 1. `defaultdict(list).__missing__` calls the factory, stores the new list under the key and returns it, so `groups[k].append(v)` works on first use.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Counter()",
+              "code": "c['apple']      -> 0\n'apple' in c    -> False\nc['apple'] += 1 -> stored 1"
+            },
+            "right": {
+              "label": "defaultdict(list)",
+              "code": "g['a']          -> []\n'a' in g        -> True (inserted!)\ng['b'].append(1)"
+            }
+          }
+        }
+      },
+      {
+        "title": "namedtuple writes a class for you",
+        "body": "`Point = namedtuple('Point', 'x y')` creates a subclass of tuple. Each field becomes a small read-only descriptor (a _tuplegetter in CPython 3.11) that fetches an index, so `p.x` is `p[0]`. Instances store no per-instance dict, so they are as small as plain tuples.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "tuple",
+            "data": [
+              "x -> 3",
+              "y -> 4"
+            ],
+            "labels": [
+              "[0] .x",
+              "[1] .y"
+            ],
+            "label": "Point(x=3, y=4)"
+          }
+        }
+      },
+      {
+        "title": "deque is a chain of blocks",
+        "body": "A deque stores items in blocks of 64 slots linked in both directions, with indexes for the left and right ends. Adding or removing at either end touches only the end block, so `appendleft` and `popleft` are O(1), unlike `list.insert(0, x)`. Indexing into the middle has to walk blocks, so it is slower than a list.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "deque",
+            "data": [
+              "block 1: [.., .., a, b]",
+              "block 2: [c, d, e, f]",
+              "block 3: [g, h, .., ..]"
+            ],
+            "highlight": [
+              0,
+              2
+            ],
+            "label": "left and right ends live in the outer blocks"
+          }
+        }
+      },
+      {
+        "title": "maxlen turns deque into a ring",
+        "body": "`deque(maxlen=3)` discards an item from the opposite end whenever a new one would exceed the limit, which makes 'keep the last N lines' a one-liner."
+      }
+    ],
+    "takeaway": "Each collections type changes one mechanism of a built-in: a missing-key hook, a generated tuple class, or a block-linked layout. Knowing which one tells you its cost and its surprises."
   }
 }

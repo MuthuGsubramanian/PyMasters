@@ -204,5 +204,93 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A curried function returns a new closure after each call; every closure stores the arguments given so far in cells, and the innermost call finally has all of them and computes the result.",
+    "steps": [
+      {
+        "title": "Each call returns a function",
+        "body": "`add(1)` runs the outer function with `a = 1`, defines `with_b` and returns it. No addition happens. `add(1)(2)` calls that returned function with `b = 2`, which returns `with_c`. Only `add(1)(2)(3)` reaches the body that adds.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "add(1)",
+                "detail": "returns with_b (a=1 captured)"
+              },
+              {
+                "label": "(2)",
+                "detail": "returns with_c (b=2 captured)"
+              },
+              {
+                "label": "(3)",
+                "detail": "computes 1 + 2 + 3"
+              },
+              {
+                "label": "result",
+                "detail": "6"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Arguments live in closure cells",
+        "body": "`with_c` uses `a` and `b`, which belong to outer functions. Python keeps them in cells referenced by `with_c.__closure__`, so they survive after `add` and `with_b` have returned.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "with_c",
+                "variables": {
+                  "c": "3"
+                }
+              },
+              {
+                "name": "with_b's cell",
+                "variables": {
+                  "b": "2"
+                }
+              },
+              {
+                "name": "add's cell",
+                "variables": {
+                  "a": "1"
+                }
+              }
+            ],
+            "caption": "What the innermost call can reach"
+          }
+        }
+      },
+      {
+        "title": "Partial application falls out",
+        "body": "`add5 = add(5)` stops after the first call and keeps the half-configured function. `add5(1)(1)` and `add5(10)(0)` reuse the same captured 5. Every call to `add(5)` creates a fresh closure, so different prefixes never interfere."
+      },
+      {
+        "title": "functools.partial stores arguments differently",
+        "body": "`partial(add3, 5)` (with a normal three-argument `add3`) creates a partial object holding `func`, `args=(5,)` and `keywords={}`. When called, it merges stored and new arguments and calls `func` once. It can fix several arguments at once, works with keywords, and keeps the original function inspectable.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Curried closures",
+              "code": "add(5)(1)(2)\n# one nested function per argument\n# arguments in closure cells"
+            },
+            "right": {
+              "label": "functools.partial",
+              "code": "partial(add3, 5)(1, 2)\n# one object: func, args, keywords\n# merged into a single call"
+            }
+          }
+        }
+      },
+      {
+        "title": "When to use which",
+        "body": "Hand-curried closures suit small function factories such as `make_multiplier(3)`. For fixing arguments of existing functions, `partial` is clearer and avoids writing the nesting by hand."
+      }
+    ],
+    "takeaway": "Currying is closures all the way down: each call captures one argument and returns the next function. partial does the same job in one object when you just want to fix some arguments now."
+  }
 }

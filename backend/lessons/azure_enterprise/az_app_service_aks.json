@@ -35,5 +35,105 @@
   ],
   "tags": {"concepts_taught": ["azure_compute", "azure_networking"], "concepts_required": ["azure_compute", "azure_resource_management"], "difficulty": "intermediate", "engagement_type": "conceptual", "estimated_minutes": 18, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "workloads = [\n    {\"name\": \"shop-web\", \"containers\": 1, \"needs_k8s_ecosystem\": False, \"event_driven\": False},\n    {\"name\": \"order-mesh\", \"containers\": 14, \"needs_k8s_ecosystem\": True, \"event_driven\": False},\n    {\"name\": \"thumbnailer\", \"containers\": 1, \"needs_k8s_ecosystem\": False, \"event_driven\": True},\n]\n\ndef pick_platform(w):\n    if w[\"event_driven\"]:\n        return \"Functions / Container Apps\"\n    if w[\"needs_k8s_ecosystem\"] or w[\"containers\"] > 10:\n        return \"AKS\"\n    return \"App Service\"\n\ndecisions = {w[\"name\"]: pick_platform(w) for w in workloads}\n\nslots = {\"production\": \"v1\", \"staging\": \"v2\"}          # deployment slots\nslots[\"production\"], slots[\"staging\"] = slots[\"staging\"], slots[\"production\"]  # swap\nprint(decisions)\nprint(\"after slot swap:\", slots)\n"
+  "uth_example": "workloads = [\n    {\"name\": \"shop-web\", \"containers\": 1, \"needs_k8s_ecosystem\": False, \"event_driven\": False},\n    {\"name\": \"order-mesh\", \"containers\": 14, \"needs_k8s_ecosystem\": True, \"event_driven\": False},\n    {\"name\": \"thumbnailer\", \"containers\": 1, \"needs_k8s_ecosystem\": False, \"event_driven\": True},\n]\n\ndef pick_platform(w):\n    if w[\"event_driven\"]:\n        return \"Functions / Container Apps\"\n    if w[\"needs_k8s_ecosystem\"] or w[\"containers\"] > 10:\n        return \"AKS\"\n    return \"App Service\"\n\ndecisions = {w[\"name\"]: pick_platform(w) for w in workloads}\n\nslots = {\"production\": \"v1\", \"staging\": \"v2\"}          # deployment slots\nslots[\"production\"], slots[\"staging\"] = slots[\"staging\"], slots[\"production\"]  # swap\nprint(decisions)\nprint(\"after slot swap:\", slots)\n",
+  "under_the_hood": {
+    "summary": "App Service routes requests through shared front ends to worker VMs in your plan and swaps slots by moving routing after warm-up, while AKS runs a Kubernetes reconcile loop where the scheduler places pods and the cluster autoscaler adds nodes when pods cannot fit.",
+    "steps": [
+      {
+        "title": "App Service: front ends and workers",
+        "body": "Requests to myapp.azurewebsites.net hit App Service front ends, which load-balance them to the worker instances of your App Service plan. Scaling out the plan adds workers, and every app in the plan runs on every worker.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "https://myapp.azurewebsites.net",
+                "type": "input"
+              },
+              {
+                "label": "Front end (TLS, routing)",
+                "type": "process"
+              },
+              {
+                "label": "Worker instance in your plan",
+                "type": "process"
+              },
+              {
+                "label": "Your app process",
+                "type": "process"
+              },
+              {
+                "label": "Response",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "A request to App Service"
+          }
+        }
+      },
+      {
+        "title": "Slot swap moves routing, not files",
+        "body": "A staging slot is a live copy of the app. On swap, App Service applies production settings to staging, warms up each instance, then switches routing so staging becomes production. Swapping back is the rollback.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Deploy to production",
+              "code": "app restarts on live workers\ncold requests, risky rollback"
+            },
+            "right": {
+              "label": "Deploy to staging + swap",
+              "code": "warm-up first, then route switch\nrollback = swap again"
+            },
+            "description": "Deploy directly vs slot swap"
+          }
+        }
+      },
+      {
+        "title": "AKS: you declare, the control plane reconciles",
+        "body": "Azure runs the Kubernetes control plane. You apply a Deployment with replicas: 4; the scheduler places pods on nodes in your node pools where the CPU and memory requests fit, and the kubelet on each node starts the containers."
+      },
+      {
+        "title": "Two autoscalers, two layers",
+        "body": "The Horizontal Pod Autoscaler adds pods when CPU or a custom metric rises. If new pods stay Pending because no node has room, the cluster autoscaler (or node auto-provisioning) adds VMs to a node pool; empty nodes are later removed.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Traffic rises",
+              "HPA: 4 -> 8 pods",
+              "4 pods Pending (no room)",
+              "Cluster autoscaler adds 2 nodes",
+              "Pods scheduled"
+            ],
+            "edges": [
+              {
+                "from": "Traffic rises",
+                "to": "HPA: 4 -> 8 pods"
+              },
+              {
+                "from": "HPA: 4 -> 8 pods",
+                "to": "4 pods Pending (no room)"
+              },
+              {
+                "from": "4 pods Pending (no room)",
+                "to": "Cluster autoscaler adds 2 nodes"
+              },
+              {
+                "from": "Cluster autoscaler adds 2 nodes",
+                "to": "Pods scheduled"
+              }
+            ],
+            "description": "Scaling chain in AKS"
+          }
+        }
+      },
+      {
+        "title": "Workload identity per pod",
+        "body": "A pod's Kubernetes service account token is exchanged with Entra ID through a federated credential, giving the pod its own Entra token. No secret is mounted, and two pods on one node can hold different permissions."
+      }
+    ],
+    "takeaway": "App Service hides the machinery and gives you slots; AKS exposes the scheduler, nodes and autoscalers. Choose by how much of that machinery you actually need to control."
+  }
 }

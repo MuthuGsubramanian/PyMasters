@@ -1,0 +1,283 @@
+{
+  "id": "validate_early_fail_fast",
+  "topic": "validate_early_fail_fast",
+  "track": "error_handling",
+  "module": "foundations",
+  "order": 4,
+  "title": {
+    "en": "Validate Early, Fail Fast: Guard Clauses and Clear Errors"
+  },
+  "description": {
+    "en": "Catch bad data at the door and say exactly what is wrong. Learn TypeError vs ValueError, why assert is not validation, guard clauses, and the pattern of collecting every problem into one custom exception."
+  },
+  "xp_reward": 90,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Fail Early, Fail Clearly\n\nA bad value is cheapest to catch at the door. If `age = -5` slips into your program, it may travel through ten functions before something divides by it or stores it — and the traceback points at the *victim*, not the culprit. **Validating at the boundary** moves the failure to where the mistake was made.\n\n> **Key idea:** Check inputs as soon as they enter your system, raise a specific exception with a message that names the field and the rule, and keep the rest of the code free to trust its inputs.\n\n## Validation vs. `assert`\n\nThey look similar but have different jobs:\n\n| | Validation (`if ... raise`) | `assert` |\n|---|---|---|\n| Checks | Data from outside (users, files, APIs) | Your own assumptions (internal bugs) |\n| Can be disabled? | No | **Yes** — `python -O` removes asserts |\n| Audience | The caller / end user | The developer |\n| Exception | `ValueError`, `TypeError`, custom | `AssertionError` |\n\nBecause asserts can vanish, **never** use them to check user input. Use `assert` to document \"this can't happen unless I have a bug\".\n\n```python\ndef set_age(age):\n    if not isinstance(age, int):\n        raise TypeError(f\"age must be int, got {type(age).__name__}\")\n    if not 0 <= age <= 150:\n        raise ValueError(f\"age must be between 0 and 150, got {age}\")\n    return age\n```\n\nNotice two things: `TypeError` for the wrong *kind* of value, `ValueError` for the right kind with a wrong *value* — and the message includes the offending value.\n\n## Collect All Problems, Not Just the First\n\nRaising on the first problem is fail-fast, but for a form with five fields it's annoying to fix them one at a time. A common pattern is to gather every problem into a list and raise once:\n\n```python\nclass ValidationError(ValueError):\n    def __init__(self, problems):\n        self.problems = problems\n        super().__init__(\"; \".join(problems))\n\ndef validate_user(data):\n    problems = []\n    if not data.get(\"name\"):\n        problems.append(\"name is required\")\n    if \"@\" not in data.get(\"email\", \"\"):\n        problems.append(\"email must contain '@'\")\n    if problems:\n        raise ValidationError(problems)\n    return data\n```\n\nThe caller can catch `ValidationError` and show `e.problems` as a tidy list. Because it subclasses `ValueError`, existing handlers still work.\n\n## Honest Caveats\n\n- Don't validate everywhere. Validate at boundaries, then trust. Re-checking in every function is noise and drifts out of sync.\n- Real email validation is far harder than looking for `@`; for a learning exercise a simple rule is fine, for production use a proper library or send a confirmation message.\n- A clear message beats a clever one: \"age must be between 0 and 150, got -5\" needs no traceback reading.\n"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "try_not_check",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "validation_map",
+      "nodes": [
+        {
+          "label": "Fail fast",
+          "children": [
+            "Validate at the boundary",
+            "TypeError: wrong kind",
+            "ValueError: wrong value",
+            "Name the field and the offending value",
+            "assert is for bugs, not input"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "late_vs_early",
+      "left": {
+        "label": "No check: age=-5 flows on and crashes ten calls later, far from the cause",
+        "result": false
+      },
+      "right": {
+        "label": "Check at the door: ValueError 'age must be between 0 and 150, got -5'",
+        "result": true
+      },
+      "description": {
+        "en": "Same bad input. The early check turns a confusing downstream crash into a message that names the field, the rule and the value."
+      }
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Validate at the boundary, then trust.",
+        "Wrong kind -> TypeError. Wrong value -> ValueError.",
+        "assert is for your bugs; python -O removes it."
+      ],
+      "duration_ms": 3500
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write the guard clauses in set_age: TypeError for a non-int (message 'age must be int, got <type name>'), ValueError for an int outside 0..150 (message 'age must be between 0 and 150, got <age>'). Expected output:\nok 30\nValueError: age must be between 0 and 150, got -5\nTypeError: age must be int, got str\nValueError: age must be between 0 and 150, got 200"
+      },
+      "starter_code": "def set_age(age):\n    # TODO: raise TypeError (message: \"age must be int, got <typename>\")\n    # if age is not an int; raise ValueError\n    # (message: \"age must be between 0 and 150, got <age>\") if out of range.\n    return age\n\nfor value in [30, -5, \"12\", 200]:\n    try:\n        print(\"ok\", set_age(value))\n    except (TypeError, ValueError) as e:\n        print(type(e).__name__ + \":\", e)\n",
+      "expected_output": "ok 30\nValueError: age must be between 0 and 150, got -5\nTypeError: age must be int, got str\nValueError: age must be between 0 and 150, got 200",
+      "hints": {
+        "en": [
+          "Use isinstance(age, int) for the kind check, and type(age).__name__ for the type name.",
+          "Chained comparison: 0 <= age <= 150 reads like the maths.",
+          "Raise before returning so bad values never leave the function."
+        ]
+      },
+      "test_code": "\nassert set_age(0) == 0 and set_age(150) == 150\nfor bad, exc in [(-1, ValueError), (151, ValueError), (\"1\", TypeError), (2.5, TypeError)]:\n    try:\n        set_age(bad)\n    except exc:\n        pass\n    else:\n        raise AssertionError(bad)\n"
+    },
+    {
+      "instruction": {
+        "en": "Collect every problem instead of stopping at the first. Finish validate_user so it appends a message for each broken rule (name, email, age) and raises ValidationError(problems) once if any exist. Expected output:\nvalid\n3 problems: name is required; email must contain '@'; age must be an int >= 18"
+      },
+      "starter_code": "class ValidationError(ValueError):\n    def __init__(self, problems):\n        self.problems = problems\n        super().__init__(\"; \".join(problems))\n\ndef validate_user(data):\n    problems = []\n    if not data.get(\"name\"):\n        problems.append(\"name is required\")\n    # TODO: add \"email must contain '@'\" when the email (default \"\") has no '@'\n    # TODO: add \"age must be an int >= 18\" when age is missing, not an int, or < 18\n    # TODO: raise ValidationError(problems) if the list is not empty\n    return data\n\nfor user in [{\"name\": \"Asha\", \"email\": \"a@x.io\", \"age\": 30}, {\"email\": \"nope\", \"age\": 12}]:\n    try:\n        validate_user(user)\n        print(\"valid\")\n    except ValidationError as e:\n        print(len(e.problems), \"problems:\", e)\n",
+      "expected_output": "valid\n3 problems: name is required; email must contain '@'; age must be an int >= 18",
+      "hints": {
+        "en": [
+          "data.get('email', '') gives an empty string when the key is missing, so the '@' test never raises KeyError.",
+          "For age, check isinstance(data.get('age'), int) BEFORE comparing, or a missing age would crash on `None < 18`.",
+          "After all checks: if problems: raise ValidationError(problems)."
+        ]
+      },
+      "test_code": "\ntry:\n    validate_user({})\nexcept ValueError as e:\n    assert e.problems == [\"name is required\", \"email must contain '@'\", \"age must be an int >= 18\"]\nelse:\n    raise AssertionError\nassert validate_user({\"name\": \"B\", \"email\": \"b@b\", \"age\": 18})[\"age\"] == 18\n"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "A caller passes the string '12' where an int age is required. Which exception fits best?"
+      },
+      "options": {
+        "en": [
+          "ValueError",
+          "TypeError",
+          "KeyError",
+          "AssertionError"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why shouldn't you use assert to validate user input?"
+      },
+      "options": {
+        "en": [
+          "assert is slower",
+          "python -O strips assert statements, so the check silently disappears",
+          "assert can't compare numbers",
+          "assert only works in tests"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the benefit of collecting all problems before raising?"
+      },
+      "options": {
+        "en": [
+          "It's faster",
+          "The caller can show every issue at once instead of one per attempt",
+          "It avoids using exceptions",
+          "It hides the errors"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Where should validation mostly live?"
+      },
+      "options": {
+        "en": [
+          "In every internal function",
+          "At the boundary where data enters, then trust it inside",
+          "Only in the tests",
+          "Nowhere — let it crash"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "validation",
+      "fail_fast",
+      "typeerror_vs_valueerror",
+      "assert_vs_validation",
+      "guard_clauses",
+      "collecting_errors"
+    ],
+    "concepts_required": [
+      "exceptions_done_right",
+      "custom_exceptions_and_chaining"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "category": "error_handling",
+    "estimated_minutes": 22,
+    "path_memberships": [
+      "error_handling"
+    ]
+  },
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Validation at the boundary is a series of isinstance and range checks that raise TypeError for the wrong kind of value and ValueError for a wrong value, or collect every problem into one custom exception, before the data reaches the rest of the program.",
+    "steps": [
+      {
+        "title": "Check the kind first",
+        "body": "`if not isinstance(age, int): raise TypeError(...)` asks the object's class whether it is int or a subclass. Watch out: bool is a subclass of int, so `isinstance(True, int)` is True and `set_age(True)` passes this check. Add `or isinstance(age, bool)` if that matters.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Value",
+              "code": "'42'\n4.5\nTrue\n42"
+            },
+            "right": {
+              "label": "isinstance(v, int)",
+              "code": "False -> TypeError\nFalse -> TypeError\nTrue (bool is an int!)\nTrue"
+            }
+          }
+        }
+      },
+      {
+        "title": "Then check the value",
+        "body": "Once the type is right, range and format rules decide: `if not 0 <= age <= 150: raise ValueError(f'age must be between 0 and 150, got {age}')`. Python's chained comparison evaluates `age` once and stops at the first false part. The message names the field, the rule and the bad value.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "set_age(-5)",
+                "detail": "isinstance int: ok"
+              },
+              {
+                "label": "0 <= -5",
+                "detail": "False"
+              },
+              {
+                "label": "raise ValueError",
+                "detail": "'age must be between 0 and 150, got -5'"
+              },
+              {
+                "label": "caller",
+                "detail": "sees the cause at the door"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why the boundary",
+        "body": "Raised at the entry point, the traceback's last frame is the validator and the message explains the rule. Without it, the bad value travels on and the eventual error, perhaps a ZeroDivisionError three modules away, points at the victim instead of the culprit."
+      },
+      {
+        "title": "Collect every problem",
+        "body": "`validate_user` appends each failed rule to a `problems` list instead of raising at the first one. At the end, if the list is not empty, it raises one `ValidationError(problems)`. The exception keeps the list as an attribute and joins it into its message, so a form can show every mistake at once.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "problems = []\nif not data.get('name'):\n    problems.append('name is required')\nif '@' not in data.get('email', ''):\n    problems.append(\"email must contain '@'\")\nif problems:\n    raise ValidationError(problems)",
+            "highlightSequence": [
+              1,
+              3,
+              5,
+              7
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Start with no problems."
+              },
+              {
+                "description": "Each failed rule adds a message and continues."
+              },
+              {
+                "description": "Rules are independent, so all of them run."
+              },
+              {
+                "description": "Raise once with the full list."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Subclassing keeps old handlers working",
+        "body": "`class ValidationError(ValueError)` makes the new exception a ValueError too, so existing `except ValueError` handlers still catch it, while new code can catch ValidationError specifically and read `e.problems`. And unlike assert, these checks are never removed by `python -O`.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "tuple",
+            "data": [
+              "ValidationError",
+              "ValueError",
+              "Exception",
+              "BaseException",
+              "object"
+            ],
+            "label": "ValidationError.__mro__"
+          }
+        }
+      }
+    ],
+    "takeaway": "Validate where data enters: type first, then value, with messages that name the field, the rule and the bad value. Collect problems when users need to see them all, and subclass ValueError so callers can catch broadly or precisely."
+  }
+}

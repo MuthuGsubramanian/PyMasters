@@ -486,5 +486,94 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A decorator with arguments is a factory: the first call takes the arguments and returns the real decorator, which then wraps the function; stacked decorators apply bottom-up and run top-down.",
+    "steps": [
+      {
+        "title": "Three layers for @retry(times=3)",
+        "body": "`@retry(times=3)` first evaluates `retry(times=3)`. That returns a decorator function, which Python then calls with the function being defined. The decorator returns the wrapper. So there are three nested functions: factory, decorator, wrapper.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "retry(times=3)",
+                "detail": "factory: returns decorator"
+              },
+              {
+                "label": "decorator(fetch)",
+                "detail": "returns wrapper"
+              },
+              {
+                "label": "fetch = wrapper",
+                "detail": "name rebound"
+              },
+              {
+                "label": "fetch()",
+                "detail": "wrapper runs, uses times"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Each layer closes over the one above",
+        "body": "The wrapper uses `times` from the factory's scope and `func` from the decorator's scope. Both are kept in closure cells, so each decorated function gets its own `times` and its own `func`.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "wrapper",
+                "variables": {
+                  "args": "(url,)",
+                  "attempt": "2"
+                }
+              },
+              {
+                "name": "decorator scope (cell)",
+                "variables": {
+                  "func": "<original fetch>"
+                }
+              },
+              {
+                "name": "factory scope (cell)",
+                "variables": {
+                  "times": "3"
+                }
+              }
+            ],
+            "caption": "Values a wrapper call can see"
+          }
+        }
+      },
+      {
+        "title": "Stacking: applied bottom-up",
+        "body": "For `@timed` above `@retry(times=3)` above `def fetch`, Python computes `fetch = timed(retry(times=3)(fetch))`. The decorator nearest the def wraps first. When you call `fetch()`, the outer `timed` wrapper runs first, then the retry wrapper, then the real function.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Definition time (inside out)",
+              "code": "1. retry(times=3)(fetch)\n2. timed(result of 1)"
+            },
+            "right": {
+              "label": "Call time (outside in)",
+              "code": "1. timed wrapper starts clock\n2. retry wrapper loops\n3. fetch runs"
+            }
+          }
+        }
+      },
+      {
+        "title": "Class decorators receive the class",
+        "body": "`@register` above `class Plugin:` calls `register(Plugin)` after the class object is built. It can add attributes or methods, record the class in a registry dict, and must return the class (or a replacement). `@dataclass` is a class decorator that adds generated methods."
+      },
+      {
+        "title": "Classes as decorators",
+        "body": "Any callable can be a decorator. A class with `__init__(self, func)` and `__call__(self, *args)` replaces the function with an instance; state such as a cache dict lives in instance attributes. `functools.lru_cache` returns a callable object built the same way."
+      }
+    ],
+    "takeaway": "Count the calls: `@name` is one call, `@name(args)` is two. Stacked decorators wrap from the bottom up and run from the top down, so put the one that should see everything on top."
   }
 }

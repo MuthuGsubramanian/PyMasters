@@ -33,5 +33,86 @@
     {"q": {"en": "What is the recommended way to run heavy analytics over a large DynamoDB table?"}, "options": {"en": ["A parallel Scan with maximum segments during peak hours", "Raise provisioned RCU temporarily and Scan nightly", "Query each partition key sequentially", "Export the table to S3 and query with Athena — no RCU consumption"]}, "correct": 3}
   ],
   "tags": {"concepts_taught": ["aws_data_platform", "aws_storage"], "concepts_required": ["aws_networking", "aws_security"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "RDS runs a database engine on a managed instance with synchronous standby replication for failover, while DynamoDB hashes each item's partition key to pick a partition stored as replicas across three AZs, so key lookups stay fast as the table grows.",
+    "steps": [
+      {
+        "title": "RDS Multi-AZ: synchronous standby",
+        "body": "Each write to the primary is copied synchronously to a standby in another AZ before it is acknowledged. On failure, RDS promotes the standby and flips the endpoint's DNS record to it, so the app reconnects to the same hostname.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Primary in AZ-a fails",
+                "type": "input"
+              },
+              {
+                "label": "Health check detects it",
+                "type": "process"
+              },
+              {
+                "label": "Standby in AZ-b promoted",
+                "type": "process"
+              },
+              {
+                "label": "DNS endpoint now points to AZ-b",
+                "type": "process"
+              },
+              {
+                "label": "App reconnects",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "RDS Multi-AZ failover"
+          }
+        }
+      },
+      {
+        "title": "Aurora: storage that keeps six copies",
+        "body": "Aurora separates compute from storage. Storage keeps six copies of each data segment across three AZs; a write is durable once four copies acknowledge it, and reads need three. Losing a whole AZ still leaves enough copies for both."
+      },
+      {
+        "title": "DynamoDB: hash the partition key",
+        "body": "DynamoDB hashes the partition key, for example customer#42, and the hash decides which partition stores the item. Inside a partition, items with the same partition key are sorted by the sort key, so a range query on one customer is a sequential read.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "hash(customer#42)": "partition P3, sorted by order date",
+              "hash(customer#7)": "partition P1",
+              "hash(customer#99)": "partition P3"
+            },
+            "caption": "Items placed by partition key hash"
+          }
+        }
+      },
+      {
+        "title": "Hot keys and throughput",
+        "body": "Each partition has its own throughput and size limits. If most traffic hits one partition key, that partition throttles even when the table as a whole has spare capacity. Good keys spread load evenly.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Hot key: pk = 'today'",
+              "code": "all writes -> one partition\nthrottling under load"
+            },
+            "right": {
+              "label": "Spread key: pk = customer id",
+              "code": "writes spread over many partitions\nscales evenly"
+            },
+            "description": "Key design decides scale"
+          }
+        }
+      },
+      {
+        "title": "Consistency is chosen per read",
+        "body": "Every partition is replicated across three AZs with a leader for writes. A strongly consistent read goes to the leader and sees the latest write. An eventually consistent read may hit a replica that is a moment behind, for half the read cost. Global secondary indexes always update asynchronously."
+      }
+    ],
+    "takeaway": "RDS scales by bigger instances and replicas around one engine; DynamoDB scales by spreading partition keys. In DynamoDB, design the keys from your access patterns before writing any data."
+  }
 }

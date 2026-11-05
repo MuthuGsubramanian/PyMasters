@@ -198,5 +198,125 @@
     "category": "async",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "asyncio.TaskGroup (Python 3.11) ties child tasks to an async with block: leaving the block waits for every child, the first failure cancels the rest by throwing CancelledError into them, and all errors are raised together as an ExceptionGroup.",
+    "steps": [
+      {
+        "title": "Children belong to the block",
+        "body": "`async with asyncio.TaskGroup() as tg:` creates a group. `tg.create_task(square(n))` schedules a task and registers it with the group. The group holds strong references, so no task can be lost, and none can outlive the block.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "main",
+                "label": "main task"
+              },
+              {
+                "id": "tg",
+                "label": "TaskGroup block"
+              },
+              {
+                "id": "t2",
+                "label": "square(2)"
+              },
+              {
+                "id": "t3",
+                "label": "square(3)"
+              },
+              {
+                "id": "t4",
+                "label": "square(4)"
+              }
+            ],
+            "edges": [
+              {
+                "from": "main",
+                "to": "tg",
+                "label": "async with"
+              },
+              {
+                "from": "tg",
+                "to": "t2",
+                "label": "owns"
+              },
+              {
+                "from": "tg",
+                "to": "t3",
+                "label": "owns"
+              },
+              {
+                "from": "tg",
+                "to": "t4",
+                "label": "owns"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Exit waits for everyone",
+        "body": "When the code reaches the end of the block, `__aexit__` awaits until every child task has finished. Only then does `main` continue, so `t.result()` is safe right after the block: in the lesson that gives [4, 9, 16]."
+      },
+      {
+        "title": "One failure cancels the siblings",
+        "body": "If one child raises, the group calls `cancel()` on all other children and on the body of the block. Cancelling a task throws CancelledError into it at its current await, so its `finally` blocks and `async with` cleanups run. The group then waits for them to finish unwinding.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "child B raises ValueError",
+                "detail": "group notified"
+              },
+              {
+                "label": "cancel A and C",
+                "detail": "CancelledError at their awaits"
+              },
+              {
+                "label": "A and C clean up",
+                "detail": "finally blocks run"
+              },
+              {
+                "label": "block exits",
+                "detail": "ExceptionGroup([ValueError])"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Errors arrive as an ExceptionGroup",
+        "body": "All non-cancellation errors from children are collected into an ExceptionGroup. Handle them with `except*`, which can match several types from the same group: `except* ValueError as eg:` receives just the ValueErrors.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "try:\n    async with asyncio.TaskGroup() as tg:\n        tg.create_task(fetch('a'))\n        tg.create_task(fetch('b'))\nexcept* TimeoutError as eg:\n    log(len(eg.exceptions), 'timed out')",
+            "highlightSequence": [
+              2,
+              4,
+              5
+            ],
+            "stepDescriptions": [
+              {
+                "description": "The group owns both tasks."
+              },
+              {
+                "description": "If any task fails, the others are cancelled."
+              },
+              {
+                "description": "except* picks the TimeoutErrors out of the ExceptionGroup."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Timeouts use the same cancellation",
+        "body": "`async with asyncio.timeout(2):` (also new in 3.11) schedules a callback for the deadline that cancels the current task. When the CancelledError reaches the timeout block, it is converted into TimeoutError. Combined with a TaskGroup, a timeout cancels the whole tree of work."
+      }
+    ],
+    "takeaway": "Structured concurrency means tasks have an owner and a scope: they start inside a block and are finished, failed or cancelled when it ends. TaskGroup and timeout give you that with cancellation that unwinds cleanly."
+  }
 }

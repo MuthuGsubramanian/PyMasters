@@ -41,5 +41,92 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Cloud Logging ingests structured entries and routes them through sinks, Cloud Monitoring stores metrics (including log-based ones) and evaluates alerting policies such as SLO burn rate, and Cloud Trace links the spans of one request through a shared trace ID.",
+    "steps": [
+      {
+        "title": "Structured logs become fields",
+        "body": "If your Cloud Run app prints JSON like {\"severity\": \"ERROR\", \"message\": \"payment failed\", \"order_id\": 42}, Cloud Logging parses it so severity and order_id are queryable fields, not just text."
+      },
+      {
+        "title": "The Log Router decides where logs go",
+        "body": "Every entry passes through the Log Router. Sinks with filters send matching entries to log buckets, BigQuery, Cloud Storage or Pub/Sub; exclusion filters drop noisy entries before they are stored.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "App writes JSON log line",
+                "type": "input"
+              },
+              {
+                "label": "Cloud Logging API",
+                "type": "process"
+              },
+              {
+                "label": "Log Router: sinks + exclusions",
+                "type": "process"
+              },
+              {
+                "label": "Log bucket / BigQuery / Pub/Sub",
+                "type": "process"
+              },
+              {
+                "label": "Log-based metric counts it",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "One log entry's journey"
+          }
+        }
+      },
+      {
+        "title": "Metrics and alerting policies",
+        "body": "A log-based metric can count ERROR entries; platform metrics cover latency and CPU. An alerting policy watches a metric over a window and opens an incident and notifies a channel when its condition holds."
+      },
+      {
+        "title": "SLOs and burn rate",
+        "body": "An SLO of 99.9% success over 30 days gives an error budget of 0.1% of requests. Burn rate is how fast you use it: a burn rate of 10 would spend the 30-day budget in 3 days, which is worth a page; slow burn is a ticket.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "SLO: 99.9% over 30 days -> budget 0.1% bad requests",
+              "current error rate: 1.0%  -> burn rate = 1.0 / 0.1 = 10",
+              "budget gone in 30 / 10 = 3 days  -> page on-call"
+            ],
+            "caption": "Error budget math"
+          }
+        }
+      },
+      {
+        "title": "Traces connect services",
+        "body": "With OpenTelemetry, each request gets a trace ID passed between services in the traceparent header. Each service records spans with start and end times, and Cloud Trace draws them as one waterfall showing where the time went.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "frontend 220 ms",
+              "api 180 ms",
+              "db query 150 ms"
+            ],
+            "edges": [
+              {
+                "from": "frontend 220 ms",
+                "to": "api 180 ms"
+              },
+              {
+                "from": "api 180 ms",
+                "to": "db query 150 ms"
+              }
+            ],
+            "description": "Spans of one request"
+          }
+        }
+      }
+    ],
+    "takeaway": "Logs explain, metrics alert, traces locate. Alert on SLO burn rate rather than raw thresholds, and your pages will match what users actually feel."
+  }
 }

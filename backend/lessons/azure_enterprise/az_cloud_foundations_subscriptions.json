@@ -34,5 +34,93 @@
   ],
   "tags": {"concepts_taught": ["cloud_fundamentals", "cloud_compliance"], "concepts_required": ["functions", "dictionaries"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 18, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "tenant = {\"name\": \"contoso\", \"groups\": {}}\n\ndef add_group(parent, name):\n    group = {\"name\": name, \"groups\": {}, \"subscriptions\": [], \"policies\": []}\n    parent[\"groups\"][name] = group\n    return group\n\nroot = add_group(tenant, \"root\")\nroot[\"policies\"].append(\"allowed-regions: eu\")\nlanding = add_group(root, \"landing-zones\")\nlanding[\"policies\"].append(\"require-tags\")\nlanding[\"subscriptions\"].append(\"sub-payments-prod-001\")\n\ndef effective_policies(path):\n    node, found = tenant, []\n    for name in path:\n        node = node[\"groups\"][name]\n        found += node[\"policies\"]                # policies inherit downwards\n    return found\n\nprint(landing[\"subscriptions\"], \"inherits\", effective_policies([\"root\", \"landing-zones\"]))\n"
+  "uth_example": "tenant = {\"name\": \"contoso\", \"groups\": {}}\n\ndef add_group(parent, name):\n    group = {\"name\": name, \"groups\": {}, \"subscriptions\": [], \"policies\": []}\n    parent[\"groups\"][name] = group\n    return group\n\nroot = add_group(tenant, \"root\")\nroot[\"policies\"].append(\"allowed-regions: eu\")\nlanding = add_group(root, \"landing-zones\")\nlanding[\"policies\"].append(\"require-tags\")\nlanding[\"subscriptions\"].append(\"sub-payments-prod-001\")\n\ndef effective_policies(path):\n    node, found = tenant, []\n    for name in path:\n        node = node[\"groups\"][name]\n        found += node[\"policies\"]                # policies inherit downwards\n    return found\n\nprint(landing[\"subscriptions\"], \"inherits\", effective_policies([\"root\", \"landing-zones\"]))\n",
+  "under_the_hood": {
+    "summary": "Every Azure resource sits on one path, tenant to root management group to child groups to subscription to resource group, and policies and role assignments set on any level of that path flow down to everything beneath it.",
+    "steps": [
+      {
+        "title": "One tenant, one root",
+        "body": "Your Microsoft Entra tenant is the identity boundary. Inside it, Azure creates a Tenant Root Group, the top management group. Every subscription in the tenant ends up somewhere below it.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Tenant Root Group",
+              "MG: Contoso",
+              "MG: Landing Zones / Corp",
+              "Subscription: corp-payments-prod",
+              "Resource group: rg-api",
+              "VM: vm-api-01"
+            ],
+            "edges": [
+              {
+                "from": "Tenant Root Group",
+                "to": "MG: Contoso"
+              },
+              {
+                "from": "MG: Contoso",
+                "to": "MG: Landing Zones / Corp"
+              },
+              {
+                "from": "MG: Landing Zones / Corp",
+                "to": "Subscription: corp-payments-prod"
+              },
+              {
+                "from": "Subscription: corp-payments-prod",
+                "to": "Resource group: rg-api"
+              },
+              {
+                "from": "Resource group: rg-api",
+                "to": "VM: vm-api-01"
+              }
+            ],
+            "description": "The scope path of one virtual machine"
+          }
+        }
+      },
+      {
+        "title": "Management groups nest up to six levels",
+        "body": "Below the root you can nest management groups up to six levels deep. A subscription has exactly one parent management group at a time, so moving it changes what it inherits immediately."
+      },
+      {
+        "title": "Assignments are stored at a scope",
+        "body": "When you assign a policy or a role at the 'Corp' management group, Azure stores it once at that scope. It is not copied to the subscriptions; instead, evaluation for any resource walks up its path and collects everything assigned above it."
+      },
+      {
+        "title": "Inheritance flows down, never up",
+        "body": "A Reader role at the management group lets you read every subscription below it. A policy that denies public IPs at 'Corp' applies to every resource group under it. A child scope can add more, but it cannot remove a parent's policy.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "MG Contoso:     policy 'allowed locations: westeurope, northeurope'",
+              "MG Corp:        policy 'deny public IP'; role Reader -> security team",
+              "Subscription:   role Contributor -> payments team",
+              "Result: all of the above apply to vm-api-01"
+            ],
+            "caption": "Effective rules for vm-api-01, collected up its path"
+          }
+        }
+      },
+      {
+        "title": "Subscriptions are boundaries",
+        "body": "A subscription is a billing, quota and access boundary. Quotas such as vCPU limits are per subscription and per region, and the bill rolls up per subscription, which is why enterprises split workloads across many of them.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "One big subscription",
+              "code": "shared quotas\nmixed bill\none mistake reaches everything"
+            },
+            "right": {
+              "label": "Subscription per workload/env",
+              "code": "own quotas\nclean chargeback\nsmaller blast radius"
+            },
+            "description": "One shared subscription vs many"
+          }
+        }
+      }
+    ],
+    "takeaway": "Govern by placement: put a subscription under the right management group and it inherits the right rules. Design the hierarchy around policy needs, not the org chart."
+  }
 }

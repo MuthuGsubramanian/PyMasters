@@ -161,5 +161,88 @@
     "category": "debugging",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Debugging is a measurement loop: state the expected value, observe the actual value at a point in the program, and move that point until you find the first place where they differ; that place is where the bug lives.",
+    "steps": [
+      {
+        "title": "Write down expected vs actual",
+        "body": "In the lesson, `average([10, 20, 30])` should be 20.0 but prints 30.0. Writing both values down turns a vague 'it's broken' into a precise gap of 10.0 to explain.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "expected",
+                "values": [
+                  "20.0"
+                ],
+                "data_type": "float"
+              },
+              {
+                "variable": "actual",
+                "values": [
+                  "30.0"
+                ],
+                "data_type": "float"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Follow the value backwards",
+        "body": "The output comes from `sum(nums) / (len(nums) - 1)`. Check each piece separately: `sum(nums)` is 60 as expected, `len(nums)` is 3 as expected, `len(nums) - 1` is 2, but the divisor should be 3. The first wrong intermediate value points straight at the faulty expression.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Expected",
+              "code": "sum(nums)       = 60\nlen(nums)       = 3\ndivisor         = 3\nresult          = 20.0"
+            },
+            "right": {
+              "label": "Actual",
+              "code": "sum(nums)       = 60\nlen(nums)       = 3\ndivisor         = 2   <- first difference\nresult          = 30.0"
+            }
+          }
+        }
+      },
+      {
+        "title": "Form one hypothesis at a time",
+        "body": "A hypothesis is a testable sentence: 'the divisor is off by one'. Test it with a single change or a single print. If you change three things at once and the bug disappears, you do not know which change mattered, or whether you created a new bug.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "observe",
+                "detail": "expected vs actual"
+              },
+              {
+                "label": "hypothesise",
+                "detail": "one specific cause"
+              },
+              {
+                "label": "experiment",
+                "detail": "one print or one change"
+              },
+              {
+                "label": "result",
+                "detail": "confirmed -> fix; refuted -> new hypothesis"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The computer is not wrong",
+        "body": "The interpreter ran exactly the instructions you wrote. A bug is always a gap between those instructions and your mental model of them. Treat each surprising value as information about which belief was false."
+      },
+      {
+        "title": "Confirm the fix with the original case",
+        "body": "After changing the divisor to `len(nums)`, rerun the exact input that failed and check that 20.0 now prints. Then try edge cases, such as an empty list, which now raises ZeroDivisionError and needs its own decision."
+      }
+    ],
+    "takeaway": "Bugs are found by measurement, not by staring. Pin down expected vs actual, trace backwards to the first wrong value, and change one thing at a time."
+  }
 }

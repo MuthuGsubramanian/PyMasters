@@ -266,5 +266,78 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A tuple stores its item pointers inline in one fixed-size object that has no methods to change them, which makes it compact, hashable when its items are, and cheap to create.",
+    "steps": [
+      {
+        "title": "Fixed size, allocated once",
+        "body": "A list keeps its items in a separate array that can grow. A tuple puts the item pointers directly inside the tuple object, sized exactly at creation. There is no `append` because there is no spare room and no code that changes the slots after creation.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "tuple",
+            "data": [
+              "-> 28.6",
+              "-> 77.2"
+            ],
+            "label": "point = (28.6, 77.2)",
+            "caption": "Two slots, fixed forever"
+          }
+        }
+      },
+      {
+        "title": "Immutable container, possibly mutable contents",
+        "body": "The tuple's slots can never point somewhere else, but the objects they point to may be mutable. `t = ([1], 2)` followed by `t[0].append(5)` works and gives `([1, 5], 2)`. The tuple did not change; the list inside did."
+      },
+      {
+        "title": "Hashable when its items are",
+        "body": "Because its slots cannot change, a tuple can compute a hash by combining the hashes of its items. That is why `(28.6, 77.2)` can be a dict key or a set element. A tuple that contains a list fails with `TypeError: unhashable type: 'list'`."
+      },
+      {
+        "title": "Packing and unpacking",
+        "body": "`lat, lon = point` compiles to UNPACK_SEQUENCE 2, which pushes the two items onto the stack and stores them into the two names. `a, b = b, a` packs the right side into a tuple-like pair and unpacks it, which is how the swap works without a temporary variable.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "point = 28.6, 77.2\nlat, lon = point\na, b = b, a",
+            "highlightSequence": [
+              1,
+              2,
+              3
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Packing: the comma builds a tuple; no parentheses needed."
+              },
+              {
+                "description": "UNPACK_SEQUENCE 2: item 0 to lat, item 1 to lon."
+              },
+              {
+                "description": "Right side is evaluated first, then unpacked into a and b."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Cheap to build",
+        "body": "The compiler turns a tuple of constants like `(1, 2, 3)` into a single constant stored in the code object, so it costs nothing at run time. CPython also keeps free lists of small tuples to recycle their memory.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "list [1, 2, 3]",
+              "code": "BUILD_LIST each time\nseparate item array\nspare capacity"
+            },
+            "right": {
+              "label": "tuple (1, 2, 3)",
+              "code": "one stored constant\nitems inline\nexact size"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Use a tuple when the shape of the data is fixed. You get a smaller object, a usable hash and free unpacking, and you document that the record should not change."
+  }
 }
