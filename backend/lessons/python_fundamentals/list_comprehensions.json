@@ -419,5 +419,94 @@
     "path_memberships": [
       "python_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "`[expr for x in items if cond]` runs as a tight loop: fetch an item, test the condition, evaluate the expression, append the result; that saves the per-item method lookup of a for loop with append().",
+    "steps": [
+      {
+        "title": "Read it in execution order",
+        "body": "The text order is expression first, but the run order is: `for x in items`, then `if cond`, then `expr`. For `[p.upper() for p in names if len(p) > 3]`, each name is fetched, its length tested, and only names that pass are uppercased.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "for p in names",
+                "detail": "fetch next"
+              },
+              {
+                "label": "if len(p) > 3",
+                "detail": "False -> skip"
+              },
+              {
+                "label": "p.upper()",
+                "detail": "compute"
+              },
+              {
+                "label": "append",
+                "detail": "add to result"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "A worked trace",
+        "body": "With `names = ['al', 'asha', 'ravi', 'jo']`, 'al' fails the test, 'asha' becomes 'ASHA', 'ravi' becomes 'RAVI', 'jo' fails. The result list grows only when an item passes.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "p",
+                "values": [
+                  "'al'",
+                  "'asha'",
+                  "'ravi'",
+                  "'jo'"
+                ],
+                "data_type": "str"
+              },
+              {
+                "variable": "result",
+                "values": [
+                  "[]",
+                  "['ASHA']",
+                  "['ASHA', 'RAVI']",
+                  "['ASHA', 'RAVI']"
+                ],
+                "data_type": "list"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why it beats a for loop with append",
+        "body": "A loop with `result.append(v)` looks up the `append` attribute and makes a method call on every pass. The comprehension uses the LIST_APPEND instruction instead, which adds to the list directly. On small bodies that commonly makes it noticeably faster.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "for loop",
+              "code": "result = []\nfor p in names:\n    if len(p) > 3:\n        result.append(p.upper())"
+            },
+            "right": {
+              "label": "comprehension",
+              "code": "result = [p.upper()\n          for p in names\n          if len(p) > 3]"
+            }
+          }
+        }
+      },
+      {
+        "title": "if filters, if-else transforms",
+        "body": "A trailing `if` decides whether an item is included at all. An `a if c else b` written before `for` is part of the expression and always produces a value, so the result has one item per input: `['big' if n > 9 else 'small' for n in nums]`."
+      },
+      {
+        "title": "It builds the whole list at once",
+        "body": "The comprehension finishes the full list before the next line runs, holding every result in memory. For a million rows you only need to sum, a generator expression `sum(x * 2 for x in rows)` produces one value at a time instead."
+      }
+    ],
+    "takeaway": "Read a comprehension as for, then if, then expression. It is the fastest plain-Python way to build a list from another iterable, and a generator expression is its lazy twin when you do not need the list."
   }
 }

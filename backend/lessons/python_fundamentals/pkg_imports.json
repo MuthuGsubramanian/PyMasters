@@ -259,5 +259,80 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "`import name` searches the folders in sys.path in order for a matching module or package, runs that file once to build a module object, and binds the name in your namespace.",
+    "steps": [
+      {
+        "title": "sys.path is the search list",
+        "body": "Python searches a list of folders: the script's own folder first, then entries from PYTHONPATH, then the standard library and site-packages. `import utils` uses the first match it finds, which is why a local file named `random.py` can shadow the standard random module.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "/home/asha/project  (script folder)",
+              "PYTHONPATH entries",
+              "/usr/lib/python3.11",
+              ".../site-packages"
+            ],
+            "label": "sys.path, searched in order"
+          }
+        }
+      },
+      {
+        "title": "Already imported? Reuse it",
+        "body": "Before searching, Python checks `sys.modules`, a dict of every module loaded so far. If 'utils' is there, the existing module object is returned at once. That is why a module's top-level code runs only once per process, however many files import it."
+      },
+      {
+        "title": "Packages are folders",
+        "body": "`import shop.cart` finds the folder `shop`, runs `shop/__init__.py` to create the package module, then finds and runs `cart.py` inside it. The package's `__path__` tells Python where to look for its submodules.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "import shop.cart",
+                "detail": "find shop/ on sys.path"
+              },
+              {
+                "label": "run shop/__init__.py",
+                "detail": "module 'shop'"
+              },
+              {
+                "label": "find cart.py in shop.__path__",
+                "detail": "run it"
+              },
+              {
+                "label": "bind name",
+                "detail": "shop (with .cart attribute)"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "__name__ tells a module how it was started",
+        "body": "Each module gets a `__name__`. Run directly (`python app.py`), it is '__main__'; imported, it is the module's dotted name. `if __name__ == '__main__':` therefore runs code only when the file is the program, not when it is imported.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "python app.py",
+              "code": "app.__name__ == '__main__'\n# main block runs"
+            },
+            "right": {
+              "label": "import app",
+              "code": "app.__name__ == 'app'\n# main block skipped"
+            }
+          }
+        }
+      },
+      {
+        "title": "Relative imports use the package",
+        "body": "`from . import cart` inside `shop/checkout.py` resolves '.' using the module's `__package__` ('shop'), giving 'shop.cart'. Running that file directly as a script has no package, which is why it fails with 'attempted relative import with no known parent package'; use `python -m shop.checkout` instead."
+      }
+    ],
+    "takeaway": "Imports are a search through sys.path plus a cache in sys.modules. Most import puzzles, from shadowed modules to failed relative imports, come down to which folder Python searched and under which name."
+  }
 }

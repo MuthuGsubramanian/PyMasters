@@ -381,5 +381,94 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "In CPython 3.11 a comprehension is compiled into a small hidden function that loops over the iterable and adds each result with one special bytecode, so its loop variable stays private.",
+    "steps": [
+      {
+        "title": "A hidden function is created",
+        "body": "`[x * 2 for x in nums]` compiles into a separate code object named `<listcomp>`. At run time Python makes a function from it, calls `iter(nums)` and passes that iterator in as the function's only argument (named `.0`). Dict, set and generator comprehensions get their own versions: `<dictcomp>`, `<setcomp>`, `<genexpr>`. CPython 3.12 later inlined list, dict and set comprehensions (PEP 709).",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "MAKE_FUNCTION",
+                "detail": "<listcomp> code"
+              },
+              {
+                "label": "GET_ITER",
+                "detail": "iter(nums)"
+              },
+              {
+                "label": "CALL",
+                "detail": "run the hidden function"
+              },
+              {
+                "label": "result",
+                "detail": "new list"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The loop inside",
+        "body": "Inside, BUILD_LIST creates an empty list, then FOR_ITER pulls each item, STORE_FAST binds it to `x`, the expression runs, and LIST_APPEND adds the result directly to the list without looking up a `.append` method.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "[x * 2 for x in nums if x]",
+            "highlightSequence": [
+              1,
+              1,
+              1,
+              1
+            ],
+            "stepDescriptions": [
+              {
+                "description": "BUILD_LIST 0: empty result list."
+              },
+              {
+                "description": "FOR_ITER: next item, stored in x."
+              },
+              {
+                "description": "Test x; if falsy, jump back for the next item."
+              },
+              {
+                "description": "Compute x * 2, LIST_APPEND it, jump back."
+              }
+            ],
+            "caption": "Bytecode steps of a list comprehension"
+          }
+        }
+      },
+      {
+        "title": "One engine, four shapes",
+        "body": "The same loop is used for every kind: a dict comprehension ends each pass with MAP_ADD, a set comprehension with SET_ADD, and a generator expression with YIELD_VALUE, which pauses instead of collecting.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Comprehension",
+              "code": "[e for x in it]\n{k: v for x in it}\n{e for x in it}\n(e for x in it)"
+            },
+            "right": {
+              "label": "Adds results with",
+              "code": "LIST_APPEND\nMAP_ADD\nSET_ADD\nYIELD_VALUE (lazy)"
+            }
+          }
+        }
+      },
+      {
+        "title": "The loop variable does not leak",
+        "body": "Because `x` is a local of the hidden function, it disappears when the comprehension finishes. After `[x for x in range(3)]`, the name `x` outside is untouched. In Python 2 it leaked; Python 3 fixed that."
+      },
+      {
+        "title": "Only the first iterable is evaluated outside",
+        "body": "The first `for` clause's iterable (`nums`) is evaluated in your scope before the hidden function runs. Everything else, including conditions and nested `for` clauses, runs inside it. That detail matters in class bodies, where inner parts cannot see class-level names."
+      }
+    ],
+    "takeaway": "A comprehension is a tiny compiled loop with a private scope and a fast add instruction. It reads well and runs fast, as long as you are building a collection rather than running side effects."
+  }
 }

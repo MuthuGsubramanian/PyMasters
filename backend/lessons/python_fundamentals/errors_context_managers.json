@@ -293,5 +293,94 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A with statement calls __enter__ on the manager before the block and guarantees __exit__ is called after it, passing in any exception so the manager can clean up and decide whether to swallow it.",
+    "steps": [
+      {
+        "title": "Evaluate the manager, call __enter__",
+        "body": "`with open('log.txt') as f:` first evaluates `open('log.txt')`, giving a file object (the context manager). Python then looks up `__enter__` on its type and calls it. Whatever `__enter__` returns is bound to `f`; for files it returns the file itself.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "evaluate expression",
+                "detail": "manager object"
+              },
+              {
+                "label": "__enter__()",
+                "detail": "result bound to f"
+              },
+              {
+                "label": "run block",
+                "detail": "your code"
+              },
+              {
+                "label": "__exit__(...)",
+                "detail": "always runs"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The body runs inside a protected region",
+        "body": "The block is compiled like the body of a `try`. Whether it ends normally, with `return`, `break` or an exception, control passes through the exit step on the way out."
+      },
+      {
+        "title": "__exit__ receives the exception",
+        "body": "On a normal exit Python calls `__exit__(None, None, None)`. If the block raised, it calls `__exit__(exc_type, exc_value, traceback)`. The file object's `__exit__` closes the file in both cases.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Block succeeded",
+              "code": "__exit__(None, None, None)\n-> file closed"
+            },
+            "right": {
+              "label": "Block raised ValueError",
+              "code": "__exit__(ValueError, err, tb)\n-> file closed\n-> exception continues"
+            }
+          }
+        }
+      },
+      {
+        "title": "A true return value swallows the error",
+        "body": "If `__exit__` returns a truthy value, the exception is suppressed and execution continues after the with block. If it returns None or False, the exception keeps propagating. `contextlib.suppress(FileNotFoundError)` is built exactly this way."
+      },
+      {
+        "title": "The same thing written by hand",
+        "body": "The with statement replaces a try/finally pattern you would otherwise repeat everywhere, so the cleanup can never be forgotten.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "mgr = open('log.txt')\nf = mgr.__enter__()\ntry:\n    data = f.read()\nexcept BaseException as e:\n    if not mgr.__exit__(type(e), e, e.__traceback__):\n        raise\nelse:\n    mgr.__exit__(None, None, None)",
+            "highlightSequence": [
+              2,
+              4,
+              6,
+              9
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Enter: get the resource."
+              },
+              {
+                "description": "Run the block."
+              },
+              {
+                "description": "Error: let __exit__ decide whether to re-raise."
+              },
+              {
+                "description": "Success: __exit__ with three Nones."
+              }
+            ],
+            "caption": "Roughly what `with open(...) as f:` expands to"
+          }
+        }
+      }
+    ],
+    "takeaway": "with = enter, run, always exit. The cleanup lives inside the manager, so every caller gets it for free, even when an exception flies through the block."
+  }
 }
