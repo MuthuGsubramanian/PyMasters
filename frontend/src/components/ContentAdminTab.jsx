@@ -136,7 +136,7 @@ function ClaudeRequestsPanel() {
                                 <li key={r.id} className="flex items-center gap-3 py-2.5">
                                     <Icon size={16} className={`${m.cls} shrink-0`} aria-hidden="true" />
                                     <span className="text-sm text-text-primary flex-1 truncate" title={r.notes || undefined}>{r.topic}</span>
-                                    <span className="text-[11px] text-text-muted uppercase tracking-wide">{r.kind}</span>
+                                    <span className="text-xs text-text-muted uppercase tracking-wide">{r.kind}</span>
                                     <span className={`text-xs ${m.cls}`}>{m.label}</span>
                                     {r.status === 'pending' && (
                                         <button onClick={() => cancel(r.id)} aria-label={`Cancel request ${r.topic}`}
@@ -277,7 +277,7 @@ export default function ContentAdminTab() {
                                     <span className="text-sm text-text-primary flex-1 truncate">{j.topic}</span>
                                     <span className={`text-xs ${m.cls}`}>{m.label}</span>
                                     {j.status === 'failed' && j.error_message && (
-                                        <span className="text-[11px] text-text-muted max-w-[30%] truncate" title={j.error_message}>
+                                        <span className="text-xs text-text-muted max-w-[30%] truncate" title={j.error_message}>
                                             {j.error_message}
                                         </span>
                                     )}

@@ -267,7 +267,7 @@ export default function ROCVisual({ stepIndex = 0 }) {
 
             {interactive && (
                 <div className="flex-shrink-0 pt-2 flex items-center gap-3">
-                    <label htmlFor="roc-threshold" className="text-[11px] font-mono text-text-muted flex-shrink-0">
+                    <label htmlFor="roc-threshold" className="text-xs font-mono text-text-muted flex-shrink-0">
                         threshold t = {userT.toFixed(2)}
                     </label>
                     <input id="roc-threshold" type="range" min="0" max="1" step="0.01" value={userT}

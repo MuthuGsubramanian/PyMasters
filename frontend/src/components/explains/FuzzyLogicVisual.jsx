@@ -179,7 +179,7 @@ export default function FuzzyLogicVisual({ stepIndex = 0 }) {
             {/* Interactive controls */}
             {interactive && (
                 <div className="flex-shrink-0 pt-2 flex items-center gap-3">
-                    <label htmlFor="fz-temp" className="text-[11px] font-mono text-text-muted flex-shrink-0">
+                    <label htmlFor="fz-temp" className="text-xs font-mono text-text-muted flex-shrink-0">
                         room = {userT}°C
                     </label>
                     <input id="fz-temp" type="range" min="0" max="45" value={userT}

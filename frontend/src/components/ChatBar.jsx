@@ -54,7 +54,7 @@ export default function ChatBar({ onSend, placeholder = 'Ask Vaathiyaar...', loa
 
             {/* Keyboard hint */}
             {value.trim() && !loading && (
-                <span className="hidden sm:inline text-[10px] text-text-muted font-mono flex-shrink-0">
+                <span className="hidden sm:inline text-xs text-text-muted font-mono flex-shrink-0">
                     Enter ↵
                 </span>
             )}

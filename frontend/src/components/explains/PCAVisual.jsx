@@ -231,7 +231,7 @@ export default function PCAVisual({ stepIndex = 0 }) {
             {interactive && (
                 <div className="flex-shrink-0 pt-2 space-y-2">
                     <div className="flex items-center gap-3">
-                        <label htmlFor="pca-angle" className="text-[11px] font-mono text-text-muted flex-shrink-0">
+                        <label htmlFor="pca-angle" className="text-xs font-mono text-text-muted flex-shrink-0">
                             axis angle = {angle}°
                         </label>
                         <input id="pca-angle" type="range" min="0" max="180" value={angle}

@@ -34,8 +34,8 @@ export function CountRace({ counts }) {
           </li>
         ))}
       </ol>
-      {counts['1000'] === -1 && <p className="text-[11px] text-text-muted mt-1">n = 1000 was not run: it would not finish in this lifetime.</p>}
-      <p className="text-[11px] text-text-muted mt-1">Bars use a log scale so all three fit.</p>
+      {counts['1000'] === -1 && <p className="text-xs text-text-muted mt-1">n = 1000 was not run: it would not finish in this lifetime.</p>}
+      <p className="text-xs text-text-muted mt-1">Bars use a log scale so all three fit.</p>
     </figure>
   );
 }

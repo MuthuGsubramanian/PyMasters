@@ -25,9 +25,9 @@ export function Results({ result, gameTitle, onAgain, onBack }) {
       </header>
 
       <dl className="grid grid-cols-3 gap-3 text-center">
-        <div className="rounded-xl bg-bg-inset p-3"><dt className="text-[11px] uppercase tracking-wide text-text-muted">{t('results.score', 'Score')}</dt><dd className="text-2xl font-bold text-text-primary tabular-nums">{result.score}<span className="text-sm text-text-muted">/{result.max_score}</span></dd></div>
-        <div className="rounded-xl bg-bg-inset p-3"><dt className="text-[11px] uppercase tracking-wide text-text-muted">{t('results.accuracy', 'Accuracy')}</dt><dd className="text-2xl font-bold text-text-primary tabular-nums">{pct}%</dd></div>
-        <div className="rounded-xl bg-bg-inset p-3"><dt className="text-[11px] uppercase tracking-wide text-text-muted">{t('results.xp', 'XP')}</dt><dd className="text-2xl font-bold text-accent-primary tabular-nums">+{result.xp}</dd></div>
+        <div className="rounded-xl bg-bg-inset p-3"><dt className="text-xs uppercase tracking-wide text-text-muted">{t('results.score', 'Score')}</dt><dd className="text-2xl font-bold text-text-primary tabular-nums">{result.score}<span className="text-sm text-text-muted">/{result.max_score}</span></dd></div>
+        <div className="rounded-xl bg-bg-inset p-3"><dt className="text-xs uppercase tracking-wide text-text-muted">{t('results.accuracy', 'Accuracy')}</dt><dd className="text-2xl font-bold text-text-primary tabular-nums">{pct}%</dd></div>
+        <div className="rounded-xl bg-bg-inset p-3"><dt className="text-xs uppercase tracking-wide text-text-muted">{t('results.xp', 'XP')}</dt><dd className="text-2xl font-bold text-accent-primary tabular-nums">+{result.xp}</dd></div>
       </dl>
       {result.xp_capped && <p className="text-xs text-text-muted flex items-center gap-1"><Sparkles size={12} /> {t('results.capped', 'Daily game-XP cap reached. Scores still count.')}</p>}
 

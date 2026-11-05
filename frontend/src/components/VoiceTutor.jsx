@@ -145,7 +145,7 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
                             </div>
                             <div>
                                 <h3 className="font-bold text-text-primary text-sm">Voice Tutor</h3>
-                                <p className="text-[11px] text-text-muted">Talk with Vaathiyaar — hands-free</p>
+                                <p className="text-xs text-text-muted">Talk with Vaathiyaar — hands-free</p>
                             </div>
                         </div>
                         <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-bg-elevated text-text-muted" aria-label="Close voice tutor">
@@ -204,10 +204,10 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
                             )}
                         </div>
                         {!useWeb && inputSupported && (
-                            <p className="text-[10px] text-text-muted">Using server transcription (your browser lacks built-in speech).</p>
+                            <p className="text-xs text-text-muted">Using server transcription (your browser lacks built-in speech).</p>
                         )}
                         {engineError && engineError !== 'no-speech' && errorText[engineError] && (
-                            <p className="text-[11px] text-red-500">{errorText[engineError]}</p>
+                            <p className="text-xs text-red-500">{errorText[engineError]}</p>
                         )}
                     </div>
                 </motion.div>

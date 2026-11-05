@@ -51,6 +51,8 @@ def test_home_shows_openedg_education_partnership(browser, dark):
     first = badges.first
     first.scroll_into_view_if_needed()
     first.wait_for(timeout=10000)
+    # loading="lazy": give the image time to arrive once it has been scrolled into view.
+    first.page.wait_for_function("e => e.complete && e.naturalWidth > 0", arg=first.element_handle(), timeout=15000)
     assert first.evaluate("e => e.complete && e.naturalWidth > 0"), "badge image failed to load"
     # On a white panel in either theme (the badge's dark lettering must stay readable; never recoloured).
     bg = first.evaluate("e => { let n = e.parentElement; while (n && getComputedStyle(n).backgroundColor === 'rgba(0, 0, 0, 0)') n = n.parentElement; return n ? getComputedStyle(n).backgroundColor : '' }")

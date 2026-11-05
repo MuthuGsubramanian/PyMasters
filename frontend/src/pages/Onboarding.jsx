@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import {
+    ArrowRight, BarChart3, Bell, BellOff, BookOpen, Bot, Brain, Briefcase, Building2, CalendarDays, Check, ClipboardList, Clock, Code2, Compass, Eye, FileCode2, Gamepad2, Globe, GraduationCap, Hammer, Hourglass, Laptop, PenLine, Phone, RefreshCw, Rocket, School, Settings, Shuffle, Sprout, Target, Timer, User, Users, UsersRound, Wrench,
+} from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
@@ -24,12 +27,12 @@ const QUESTIONS = [
         text: "What brings you to Python?",
         hint: "Pick all that apply.",
         options: [
-            { value: 'career_switch', label: '💼 Career Switch' },
-            { value: 'student',       label: '🎓 I\'m a Student' },
-            { value: 'hobby',         label: '🎮 Just for Fun' },
-            { value: 'ai_ml',         label: '🤖 AI / ML' },
-            { value: 'work',          label: '🏢 Need it for Work' },
-            { value: 'data_science',  label: '📊 Data Science' },
+            { value: 'career_switch', icon: Briefcase, label: 'Career Switch' },
+            { value: 'student',       icon: GraduationCap, label: 'I\'m a Student' },
+            { value: 'hobby',         icon: Gamepad2, label: 'Just for Fun' },
+            { value: 'ai_ml',         icon: Bot, label: 'AI / ML' },
+            { value: 'work',          icon: Building2, label: 'Need it for Work' },
+            { value: 'data_science',  icon: BarChart3, label: 'Data Science' },
         ],
     },
     {
@@ -39,12 +42,12 @@ const QUESTIONS = [
         type: 'choice',
         multi: false,
         options: [
-            { value: 'high_school_student', label: '🏫 High School Student', desc: 'Learning the ropes in school' },
-            { value: 'college_student', label: '🎓 College / University Student', desc: 'Studying CS or a related field' },
-            { value: 'junior_developer', label: '💻 Junior Developer', desc: 'Early in my dev career (0-2 yrs)' },
-            { value: 'senior_developer', label: '🚀 Senior Developer', desc: 'Experienced dev (3+ years)' },
-            { value: 'career_switcher', label: '🔄 Career Switcher', desc: 'Transitioning into tech' },
-            { value: 'hobbyist', label: '🎮 Hobbyist / Enthusiast', desc: 'Learning for fun and curiosity' },
+            { value: 'high_school_student', icon: School, label: 'High School Student', desc: 'Learning the ropes in school' },
+            { value: 'college_student', icon: GraduationCap, label: 'College / University Student', desc: 'Studying CS or a related field' },
+            { value: 'junior_developer', icon: Laptop, label: 'Junior Developer', desc: 'Early in my dev career (0-2 yrs)' },
+            { value: 'senior_developer', icon: Rocket, label: 'Senior Developer', desc: 'Experienced dev (3+ years)' },
+            { value: 'career_switcher', icon: RefreshCw, label: 'Career Switcher', desc: 'Transitioning into tech' },
+            { value: 'hobbyist', icon: Gamepad2, label: 'Hobbyist / Enthusiast', desc: 'Learning for fun and curiosity' },
         ],
     },
     {
@@ -52,10 +55,10 @@ const QUESTIONS = [
         type: 'choice',
         text: "How much coding experience do you have?",
         options: [
-            { value: 'none',            label: '🌱 Total Beginner' },
-            { value: 'some',            label: '📝 A Little Bit' },
-            { value: 'other_language',  label: '🔄 Know Another Language' },
-            { value: 'python',          label: '🐍 Already Know Some Python' },
+            { value: 'none',            icon: Sprout, label: 'Total Beginner' },
+            { value: 'some',            icon: PenLine, label: 'A Little Bit' },
+            { value: 'other_language',  icon: Code2, label: 'Know Another Language' },
+            { value: 'python',          icon: FileCode2, label: 'Already Know Some Python' },
         ],
     },
     {
@@ -63,10 +66,10 @@ const QUESTIONS = [
         type: 'choice',
         text: "How do you learn best?",
         options: [
-            { value: 'visual',    label: '👁️ Visual — Charts & Diagrams' },
-            { value: 'hands_on',  label: '🔧 Hands-On — Build Things' },
-            { value: 'reading',   label: '📖 Reading — Theory First' },
-            { value: 'projects',  label: '🚀 Project-Driven' },
+            { value: 'visual',    icon: Eye, label: 'Visual — Charts & Diagrams' },
+            { value: 'hands_on',  icon: Wrench, label: 'Hands-On — Build Things' },
+            { value: 'reading',   icon: BookOpen, label: 'Reading — Theory First' },
+            { value: 'projects',  icon: Hammer, label: 'Project-Driven' },
         ],
     },
     {
@@ -76,12 +79,12 @@ const QUESTIONS = [
         text: "What do you want to build with Python?",
         hint: "Pick all that apply.",
         options: [
-            { value: 'web',          label: '🌐 Web Development' },
-            { value: 'data_science', label: '📊 Data Science' },
-            { value: 'automation',   label: '⚙️ Automate Tasks' },
-            { value: 'ai_ml',        label: '🤖 AI / Machine Learning' },
-            { value: 'games',        label: '🎮 Game Development' },
-            { value: 'unknown',      label: '🤷 Not Sure Yet' },
+            { value: 'web',          icon: Globe, label: 'Web Development' },
+            { value: 'data_science', icon: BarChart3, label: 'Data Science' },
+            { value: 'automation',   icon: Settings, label: 'Automate Tasks' },
+            { value: 'ai_ml',        icon: Brain, label: 'AI / Machine Learning' },
+            { value: 'games',        icon: Gamepad2, label: 'Game Development' },
+            { value: 'unknown',      icon: Compass, label: 'Not Sure Yet' },
         ],
     },
     {
@@ -89,10 +92,10 @@ const QUESTIONS = [
         type: 'choice',
         text: "How much time can you dedicate each day?",
         options: [
-            { value: '15min',    label: '⚡ 15 minutes' },
-            { value: '30min',    label: '🔥 30 minutes' },
-            { value: '1hour',    label: '💪 1 hour' },
-            { value: 'weekends', label: '📅 Weekends Only' },
+            { value: '15min',    icon: Timer, label: '15 minutes' },
+            { value: '30min',    icon: Clock, label: '30 minutes' },
+            { value: '1hour',    icon: Hourglass, label: '1 hour' },
+            { value: 'weekends', icon: CalendarDays, label: 'Weekends Only' },
         ],
     },
     {
@@ -106,8 +109,8 @@ const QUESTIONS = [
         type: 'choice',
         text: "Want progress updates & learning reminders?",
         options: [
-            { value: 'yes', label: '✅ Yes, keep me updated!' },
-            { value: 'no',  label: '⏭️ Skip for now' },
+            { value: 'yes', icon: Bell, label: 'Yes, keep me updated!' },
+            { value: 'no',  icon: BellOff, label: 'Skip for now' },
         ],
     },
     {
@@ -131,10 +134,10 @@ const ORG_QUESTIONS = [
         type: 'choice',
         text: "How many learners will use PyMasters?",
         options: [
-            { value: '1-10',   label: '👤 1-10 learners' },
-            { value: '11-50',  label: '👥 11-50 learners' },
-            { value: '51-200', label: '🏫 51-200 learners' },
-            { value: '200+',   label: '🏢 200+ learners' },
+            { value: '1-10',   icon: User, label: '1-10 learners' },
+            { value: '11-50',  icon: Users, label: '11-50 learners' },
+            { value: '51-200', icon: UsersRound, label: '51-200 learners' },
+            { value: '200+',   icon: Building2, label: '200+ learners' },
         ],
     },
     {
@@ -142,10 +145,10 @@ const ORG_QUESTIONS = [
         type: 'choice',
         text: "Who are your learners?",
         options: [
-            { value: 'k12',          label: '🏫 K-12 Students' },
-            { value: 'university',   label: '🎓 University Students' },
-            { value: 'professional', label: '💼 Working Professionals' },
-            { value: 'mixed',        label: '🌍 Mixed Group' },
+            { value: 'k12',          icon: School, label: 'K-12 Students' },
+            { value: 'university',   icon: GraduationCap, label: 'University Students' },
+            { value: 'professional', icon: Briefcase, label: 'Working Professionals' },
+            { value: 'mixed',        icon: Globe, label: 'Mixed Group' },
         ],
     },
     {
@@ -153,9 +156,9 @@ const ORG_QUESTIONS = [
         type: 'choice',
         text: "What's their current Python level?",
         options: [
-            { value: 'beginner', label: '🌱 Complete Beginners' },
-            { value: 'some',     label: '📝 Some Experience' },
-            { value: 'mixed',    label: '🔀 Mixed Levels' },
+            { value: 'beginner', icon: Sprout, label: 'Complete Beginners' },
+            { value: 'some',     icon: PenLine, label: 'Some Experience' },
+            { value: 'mixed',    icon: Shuffle, label: 'Mixed Levels' },
         ],
     },
     {
@@ -163,11 +166,11 @@ const ORG_QUESTIONS = [
         type: 'choice',
         text: "What should they learn?",
         options: [
-            { value: 'fundamentals',  label: '🐍 Python Fundamentals' },
-            { value: 'ai_ml',         label: '🤖 AI & Machine Learning' },
-            { value: 'web',           label: '🌐 Web Development' },
-            { value: 'data_science',  label: '📊 Data Science' },
-            { value: 'mixed',         label: '🎯 Mixed / All Topics' },
+            { value: 'fundamentals',  icon: FileCode2, label: 'Python Fundamentals' },
+            { value: 'ai_ml',         icon: Brain, label: 'AI & Machine Learning' },
+            { value: 'web',           icon: Globe, label: 'Web Development' },
+            { value: 'data_science',  icon: BarChart3, label: 'Data Science' },
+            { value: 'mixed',         icon: Target, label: 'Mixed / All Topics' },
         ],
     },
     {
@@ -175,9 +178,9 @@ const ORG_QUESTIONS = [
         type: 'choice',
         text: "How do you want to manage learning?",
         options: [
-            { value: 'assigned',    label: '📋 Assign Specific Paths' },
-            { value: 'free_choice', label: '🆓 Let Learners Choose' },
-            { value: 'mix',         label: '🔀 Mix of Both' },
+            { value: 'assigned',    icon: ClipboardList, label: 'Assign Specific Paths' },
+            { value: 'free_choice', icon: Compass, label: 'Let Learners Choose' },
+            { value: 'mix',         icon: Shuffle, label: 'Mix of Both' },
         ],
     },
 ];
@@ -197,6 +200,7 @@ function isAnswered(q, answers) {
 // Sub-components
 // ---------------------------------------------------------------------------
 function OptionCard({ option, selected, onClick }) {
+    const Icon = option.icon;
     return (
         <button
             type="button"
@@ -208,12 +212,17 @@ function OptionCard({ option, selected, onClick }) {
                     : 'border-border-default bg-bg-elevated hover:border-cyan-400/50 hover:bg-cyan-500/5'
             }`}
         >
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2.5">
+                {Icon && (
+                    <Icon size={18} aria-hidden="true" className={`flex-shrink-0 mt-px ${selected ? 'text-cyan-700 dark:text-cyan-200' : 'text-text-muted'}`} />
+                )}
                 <span className={`text-sm font-semibold ${selected ? 'text-cyan-700 dark:text-cyan-200' : 'text-text-primary'}`}>
                     {option.label}
                 </span>
                 {selected && (
-                    <span className="ml-auto flex-shrink-0 w-4 h-4 rounded-full bg-cyan-500 text-white text-[10px] flex items-center justify-center">✓</span>
+                    <span className="ml-auto flex-shrink-0 w-5 h-5 rounded-full bg-cyan-700 text-white flex items-center justify-center">
+                        <Check size={12} strokeWidth={3} aria-hidden="true" />
+                    </span>
                 )}
             </div>
             {option.desc && (
@@ -246,9 +255,9 @@ function QuestionCard({ q, index, answers, setAnswers }) {
         >
             <div className="flex items-start gap-3 mb-4">
                 <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                    answered ? 'bg-cyan-500 text-white' : 'bg-bg-inset text-text-muted'
+                    answered ? 'bg-cyan-700 text-white' : 'bg-bg-inset text-text-muted'
                 }`}>
-                    {answered ? '✓' : index}
+                    {answered ? <Check size={14} strokeWidth={3} aria-label="Answered" /> : index}
                 </div>
                 <div>
                     <h3 className="text-base font-bold text-text-primary leading-snug">{q.text}</h3>
@@ -318,7 +327,7 @@ function QuestionCard({ q, index, answers, setAnswers }) {
                         />
                     </div>
                     <div className="flex items-center gap-2 bg-bg-elevated rounded-xl px-4 py-2.5 border border-border-default">
-                        <span className="text-text-muted text-sm">📱</span>
+                        <Phone size={14} className="text-text-muted" aria-hidden="true" />
                         <input
                             type="tel"
                             value={answers.whatsapp || ''}
@@ -460,15 +469,16 @@ export default function Onboarding() {
                 </div>
                 <div>
                     <p className="text-xs font-bold uppercase tracking-widest text-purple-600 dark:text-purple-400">PyMasters</p>
-                    <p className="text-[11px] text-text-muted">Set up with Vaathiyaar</p>
+                    <p className="text-xs text-text-muted">Set up with Vaathiyaar</p>
                 </div>
                 <button
                     type="button"
                     onClick={handleSkip}
-                    className="ml-auto text-[11px] font-semibold text-text-muted hover:text-purple-600 dark:hover:text-purple-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded px-2 py-1"
+                    className="ml-auto min-h-11 inline-flex items-center gap-1 text-xs font-semibold text-text-muted hover:text-purple-600 dark:hover:text-purple-400 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400/60 rounded px-3"
                     title="You can finish this later from your profile"
                 >
-                    Skip setup →
+                    Skip setup
+                    <ArrowRight size={14} aria-hidden="true" />
                 </button>
             </header>
 
@@ -476,12 +486,12 @@ export default function Onboarding() {
             <div className="sticky top-[65px] z-10 px-4 sm:px-8 pt-3 pb-2 bg-bg-deep/90 backdrop-blur">
                 <div className="max-w-2xl w-full mx-auto">
                     <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[11px] text-text-muted">{answeredCount} of {requiredQuestions.length} answered</span>
-                        <span className="text-[11px] font-semibold text-cyan-600 dark:text-cyan-400">{progressPct}%</span>
+                        <span className="text-xs text-text-muted">{answeredCount} of {requiredQuestions.length} answered</span>
+                        <span className="text-xs font-semibold text-cyan-700 dark:text-cyan-400">{progressPct}%</span>
                     </div>
                     <div className="w-full h-1.5 rounded-full bg-bg-inset overflow-hidden">
                         <motion.div
-                            className="h-full rounded-full bg-gradient-to-r from-purple-500 to-cyan-500"
+                            className="h-full rounded-full bg-primary"
                             initial={false}
                             animate={{ width: `${progressPct}%` }}
                             transition={{ type: 'spring', stiffness: 200, damping: 30 }}
@@ -505,7 +515,7 @@ export default function Onboarding() {
                         </div>
                         <div className="panel rounded-2xl rounded-tl-sm px-5 py-3.5 border-l-2 border-purple-500/60">
                             <p className="text-sm text-text-primary leading-relaxed">
-                                {username ? `Vanakkam, ${username}! 🙏 ` : 'Vanakkam! 🙏 '}
+                                {username ? `Vanakkam, ${username}! ` : 'Vanakkam! '}
                                 {isOrg
                                     ? "I'm Vaathiyaar. Set up your organization's learning environment below — answer them all in one go, then hit Finish."
                                     : "I'm Vaathiyaar, your personal Python guide. Fill in the cards below — pick everything in one go, then hit Finish and I'll tailor your path."}
@@ -537,7 +547,7 @@ export default function Onboarding() {
             {/* Sticky footer: submit */}
             <footer className="flex-shrink-0 px-4 sm:px-8 py-4 border-t border-border-default bg-bg-deep/90 backdrop-blur">
                 <div className="max-w-2xl w-full mx-auto flex items-center gap-4">
-                    <p className="text-[11px] text-text-muted hidden sm:block">
+                    <p className="text-xs text-text-muted hidden sm:block">
                         {allRequiredAnswered
                             ? 'All set — finish whenever you like.'
                             : `Answer ${requiredQuestions.length - answeredCount} more to continue.`}
@@ -546,13 +556,14 @@ export default function Onboarding() {
                         type="button"
                         onClick={handleSubmit}
                         disabled={!allRequiredAnswered || submitting}
-                        className={`ml-auto px-7 py-3 rounded-xl text-sm font-bold text-white transition-all duration-200 flex items-center gap-2 ${
+                        className={`ml-auto min-h-11 px-7 py-3 rounded-xl text-sm font-bold transition-colors duration-200 flex items-center gap-2 ${
                             allRequiredAnswered && !submitting
-                                ? 'bg-gradient-to-r from-purple-600 to-cyan-500 hover:scale-[1.02] shadow-lg shadow-purple-500/25'
-                                : 'bg-slate-500/50 cursor-not-allowed'
+                                ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                                : 'bg-bg-inset text-text-muted cursor-not-allowed'
                         }`}
                     >
-                        {submitting ? 'Saving…' : (isOrg ? 'Finish Setup 🚀' : 'Finish & Start Learning 🚀')}
+                        {submitting ? 'Saving…' : (isOrg ? 'Finish Setup' : 'Finish & Start Learning')}
+                        {!submitting && <ArrowRight size={16} aria-hidden="true" />}
                     </button>
                 </div>
             </footer>

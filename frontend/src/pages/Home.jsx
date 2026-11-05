@@ -3,13 +3,14 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import {
     ArrowRight, Sparkles, Brain, Layers, Code2, Zap,
-    BookOpen, Star, MessageSquare, Cpu, GraduationCap,
+    BookOpen, MessageSquare, Cpu, GraduationCap,
     Play, Terminal, Building2, ShieldCheck, Mail,
     LifeBuoy, CalendarClock, BadgeCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
 import SupportModal from '../components/SupportModal';
+import HowALessonWorks from '../components/landing/HowALessonWorks';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
 // Official OpenEDG partnership badge (edube.org partner resources), used unaltered per the Python Institute
 // brand guideline: never recoloured or stretched, always on a light panel with clear space around it.
@@ -62,33 +63,6 @@ const TRACKS = [
         icon: <Layers size={22} color="#f59e0b" />,
         desc: 'Neural networks, CNNs, RNNs, transformers, embeddings, RAG, rerankers, and local LLMs — from scratch to production.',
         topics: ['PyTorch', 'Transformers', 'Embeddings', 'RAG', 'Rerankers', 'Local LLMs'],
-    },
-];
-
-const FEATURES = [
-    {
-        icon: <Brain size={20} color="#7c3aed" />,
-        title: 'AI-Powered Learning',
-        desc: 'Vaathiyaar — your personal AI teacher — adapts to your pace and explains concepts in ways that click.',
-        accent: '#7c3aed',
-    },
-    {
-        icon: <Zap size={20} color="#06b6d4" />,
-        title: 'Visual Code Execution',
-        desc: 'Watch Python execute step-by-step. Variables, loops, and recursion come alive through animations.',
-        accent: '#06b6d4',
-    },
-    {
-        icon: <Star size={20} color="#f59e0b" />,
-        title: 'Personalized Path',
-        desc: 'Your curriculum adapts as you progress. Vaathiyaar reinforces topics you struggle with automatically.',
-        accent: '#f59e0b',
-    },
-    {
-        icon: <Sparkles size={20} color="#10b981" />,
-        title: 'Dynamic Modules',
-        desc: 'On-demand lesson generation: ask Vaathiyaar to teach any Python topic, and a module is built for you.',
-        accent: '#10b981',
     },
 ];
 
@@ -272,28 +246,6 @@ function TrackCard({ track, delay, reduced }) {
     );
 }
 
-/* ─── Feature card ───────────────────────────────────────────────────────── */
-function FeatureCard({ icon, title, desc, accent, reduced, delay }) {
-    return (
-        <motion.div
-            initial={reduced ? false : { opacity: 0, y: 20 }}
-            whileInView={reduced ? false : { opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-80px' }}
-            transition={{ duration: 0.45, delay }}
-            className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.05] hover:border-white/20 transition-all duration-300"
-        >
-            <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
-                style={{ background: `${accent}1a`, border: `1px solid ${accent}40` }}
-            >
-                {icon}
-            </div>
-            <h3 className="text-white font-bold text-base mb-2 font-display">{title}</h3>
-            <p className="text-slate-400 text-sm leading-relaxed">{desc}</p>
-        </motion.div>
-    );
-}
-
 /* ─── Main ───────────────────────────────────────────────────────────────── */
 export default function Home() {
     const { user } = useAuth();
@@ -339,7 +291,7 @@ export default function Home() {
                     </Link>
                     <div className="hidden sm:flex items-center gap-6">
                         <a href="#curriculum" className="text-sm text-slate-300 hover:text-white transition-colors">Curriculum</a>
-                        <a href="#features" className="text-sm text-slate-300 hover:text-white transition-colors">Features</a>
+                        <a href="#how-it-works" className="text-sm text-slate-300 hover:text-white transition-colors">How it works</a>
                         <a href="#organizations" className="text-sm text-slate-300 hover:text-white transition-colors">For organisations</a>
                         <button onClick={() => openSupport('issue')} className="text-sm text-slate-300 hover:text-white transition-colors">Support</button>
                         <Link to="/pricing" className="text-sm text-slate-300 hover:text-white transition-colors">Pricing</Link>
@@ -437,31 +389,8 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* ── FEATURES ── */}
-            <section id="features" className="relative py-24 px-4 sm:px-6">
-                <div className="max-w-6xl mx-auto">
-                    <div className="text-center mb-14">
-                        <span className="inline-flex items-center gap-2 px-3 py-1 mb-5 rounded-full text-xs font-semibold tracking-wider uppercase text-cyan-300 bg-cyan-500/10 border border-cyan-500/30">
-                            <Sparkles size={12} aria-hidden="true" />
-                            Why PyMasters
-                        </span>
-                        <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">
-                            A different kind of{' '}
-                            <span>
-                                learning experience
-                            </span>
-                        </h2>
-                        <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                            PyMasters isn't another tutorial site. It's an AI-powered platform that evolves with you.
-                        </p>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {FEATURES.map((f, i) => (
-                            <FeatureCard key={f.title} {...f} reduced={reduced} delay={i * 0.05} />
-                        ))}
-                    </div>
-                </div>
-            </section>
+            {/* ── HOW A LESSON WORKS (replaced the 4 identical feature cards) ── */}
+            <HowALessonWorks />
 
             {/* ── CURRICULUM ── */}
             <section id="curriculum" className="relative py-24 px-4 sm:px-6 bg-gradient-to-b from-transparent via-purple-950/10 to-transparent">

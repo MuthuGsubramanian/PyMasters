@@ -231,7 +231,7 @@ export default function LogisticRegressionVisual({ stepIndex = 0 }) {
             {state.mode === 'interactive' && (
                 <div className="flex-shrink-0 pt-2 space-y-1.5">
                     <div className="flex items-center gap-3">
-                        <label htmlFor="logreg-hours" className="text-[11px] font-mono text-text-muted flex-shrink-0">
+                        <label htmlFor="logreg-hours" className="text-xs font-mono text-text-muted flex-shrink-0">
                             hours studied: {hours.toFixed(1)}
                         </label>
                         <input
@@ -241,7 +241,7 @@ export default function LogisticRegressionVisual({ stepIndex = 0 }) {
                             aria-label="Hours studied by a hypothetical student"
                         />
                     </div>
-                    <p className="text-[11px] text-text-muted">Drag to see the trained model's predicted pass probability update live.</p>
+                    <p className="text-xs text-text-muted">Drag to see the trained model's predicted pass probability update live.</p>
                 </div>
             )}
         </div>

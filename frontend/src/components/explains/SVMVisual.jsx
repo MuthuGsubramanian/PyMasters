@@ -303,7 +303,7 @@ export default function SVMVisual({ stepIndex = 0 }) {
             {state.mode === 'interactive' && (
                 <div className="flex-shrink-0 pt-2 space-y-1.5">
                     <div className="flex items-center gap-3">
-                        <label htmlFor="svm-testx" className="text-[11px] font-mono text-text-muted flex-shrink-0 w-32">
+                        <label htmlFor="svm-testx" className="text-xs font-mono text-text-muted flex-shrink-0 w-32">
                             time: {testX.toFixed(1)}s
                         </label>
                         <input
@@ -314,7 +314,7 @@ export default function SVMVisual({ stepIndex = 0 }) {
                         />
                     </div>
                     <div className="flex items-center gap-3">
-                        <label htmlFor="svm-testy" className="text-[11px] font-mono text-text-muted flex-shrink-0 w-32">
+                        <label htmlFor="svm-testy" className="text-xs font-mono text-text-muted flex-shrink-0 w-32">
                             reading: {testY.toFixed(1)}V
                         </label>
                         <input
@@ -324,7 +324,7 @@ export default function SVMVisual({ stepIndex = 0 }) {
                             aria-label="Hypothetical part's output reading in volts"
                         />
                     </div>
-                    <p className="text-[11px] text-text-muted">Drag either slider to move the point and watch the trained model classify it live.</p>
+                    <p className="text-xs text-text-muted">Drag either slider to move the point and watch the trained model classify it live.</p>
                 </div>
             )}
         </div>

@@ -125,7 +125,7 @@ function TopicCard({ topic, onClick }) {
         {topic.description || topic.summary || 'Quick reference for this topic'}
       </p>
       {topic.items_count != null && (
-        <p className="text-[10px] text-text-muted mt-2">
+        <p className="text-xs text-text-muted mt-2">
           {topic.items_count} section{topic.items_count !== 1 ? 's' : ''}
         </p>
       )}

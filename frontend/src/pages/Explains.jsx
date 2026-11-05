@@ -402,7 +402,7 @@ function ExplainsIndex() {
                             {essay.title}
                         </h2>
                         <p className="text-sm text-text-secondary mt-1">{essay.tagline}</p>
-                        <p className="text-[11px] text-text-muted mt-3 flex items-center gap-3">
+                        <p className="text-xs text-text-muted mt-3 flex items-center gap-3">
                             <span className="flex items-center gap-1"><Clock size={11} />{essay.minutes} min</span>
                             <span className="flex items-center gap-1 text-accent-primary font-medium">
                                 Scroll the story <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />

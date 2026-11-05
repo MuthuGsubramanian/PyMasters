@@ -65,7 +65,7 @@ function buildMdComponents(onPlayground) {
                             <button
                                 onClick={() => inject(codeText, false)}
                                 title="Insert this example into the terminal"
-                                className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition-all cursor-pointer"
+                                className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25 transition-all cursor-pointer"
                             >
                                 <Terminal size={10} />
                                 Insert
@@ -73,7 +73,7 @@ function buildMdComponents(onPlayground) {
                             <button
                                 onClick={() => inject(codeText, true)}
                                 title="Insert into the terminal and run it now"
-                                className="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md bg-green-500/15 text-green-600 dark:text-green-300 border border-green-500/30 hover:bg-green-500/25 transition-all cursor-pointer"
+                                className="flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-md bg-green-500/15 text-green-600 dark:text-green-300 border border-green-500/30 hover:bg-green-500/25 transition-all cursor-pointer"
                             >
                                 <Play size={10} />
                                 Run demo
@@ -244,7 +244,7 @@ export default function VaathiyaarPanel() {
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-bold text-text-primary font-display leading-tight">Vaathiyaar</p>
-                                <p className="text-[10px] text-text-muted truncate" title={pageLabel}>
+                                <p className="text-xs text-text-muted truncate" title={pageLabel}>
                                     Sees: {pageLabel.split('—')[0].trim()}
                                 </p>
                             </div>

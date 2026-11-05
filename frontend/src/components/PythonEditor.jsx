@@ -5,8 +5,8 @@ function FallbackEditor({ value, onChange, onRun, placeholder, height, readOnly 
     return (
         <div className="relative rounded-lg overflow-hidden border border-slate-700/50" style={{ height }}>
             <div className="flex items-center justify-between px-3 py-1 bg-[#161b22] border-b border-slate-700/50">
-                <span className="text-[10px] text-slate-500 font-mono">Python</span>
-                <span className="text-[10px] text-slate-600 font-mono">Ctrl+Enter to run</span>
+                <span className="text-xs text-slate-500 font-mono">Python</span>
+                <span className="text-xs text-slate-600 font-mono">Ctrl+Enter to run</span>
             </div>
             <textarea
                 value={value}

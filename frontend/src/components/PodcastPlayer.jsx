@@ -140,7 +140,7 @@ export default function PodcastPlayer({ contentId, language, manifest, onClose }
                 <input type="range" min={0} max={dur || 0} value={cur} step="1"
                   onChange={(e) => { if (a) a.currentTime = Number(e.target.value); }}
                   aria-label="Seek" className="w-full accent-cyan-500" />
-                <div className="flex justify-between text-[11px] text-text-muted"><span>{fmt(cur)}</span><span>{fmt(dur)}</span></div>
+                <div className="flex justify-between text-xs text-text-muted"><span>{fmt(cur)}</span><span>{fmt(dur)}</span></div>
               </div>
 
               <div className="flex items-center justify-between">

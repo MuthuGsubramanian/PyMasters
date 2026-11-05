@@ -65,13 +65,13 @@ function RequestRow({ r, onDecide, busy }) {
                 <span className="text-xs text-text-muted">{r.email}</span>
                 <Badge variant={REQ_BADGE[r.status] || 'neutral'}>{r.status}</Badge>
                 {r.matched_username && (
-                    <span className="text-[10px] text-text-muted">account: @{r.matched_username} ({r.matched_plan})</span>
+                    <span className="text-xs text-text-muted">account: @{r.matched_username} ({r.matched_plan})</span>
                 )}
-                <span className="ml-auto text-[10px] text-text-muted">{rel(r.created_at)}</span>
+                <span className="ml-auto text-xs text-text-muted">{rel(r.created_at)}</span>
             </div>
             {r.message && <p className="text-xs text-text-secondary whitespace-pre-wrap">{r.message}</p>}
-            {r.page_url && <p className="text-[10px] text-text-muted truncate">From: {r.page_url}</p>}
-            {r.admin_note && <p className="text-[11px] text-text-muted italic">Note: {r.admin_note}</p>}
+            {r.page_url && <p className="text-xs text-text-muted truncate">From: {r.page_url}</p>}
+            {r.admin_note && <p className="text-xs text-text-muted italic">Note: {r.admin_note}</p>}
             <div className="flex items-center gap-2 flex-wrap">
                 {r.attachment_id && (
                     <Button variant="outline" size="sm" onClick={() => setShowAttachment((v) => !v)}>
@@ -190,13 +190,13 @@ function TutorSessionsList() {
                             <span className="text-sm font-semibold text-text-primary">{s.name || '—'}</span>
                             <span className="text-xs text-text-muted">{s.email}</span>
                             <Badge variant={SESSION_BADGE[s.status] || 'neutral'}>{s.status}</Badge>
-                            <span className="ml-auto text-[10px] text-text-muted">{rel(s.created_at)}</span>
+                            <span className="ml-auto text-xs text-text-muted">{rel(s.created_at)}</span>
                         </div>
                         <p className="text-xs text-text-secondary">
                             <span className="font-semibold">{s.topic}</span> · {s.preferred_at}{s.timezone ? ` (${s.timezone})` : ''} · {s.duration_minutes} min
                         </p>
                         {s.notes && <p className="text-xs text-text-muted whitespace-pre-wrap">{s.notes}</p>}
-                        {s.admin_note && <p className="text-[11px] text-text-muted italic">Note: {s.admin_note}</p>}
+                        {s.admin_note && <p className="text-xs text-text-muted italic">Note: {s.admin_note}</p>}
                         {(s.status === 'pending' || s.status === 'confirmed') && (
                             <div className="flex items-center gap-2 pt-1">
                                 {s.status === 'pending' && (
@@ -285,11 +285,11 @@ function OrgRequestsList() {
                         <span className="text-sm font-semibold text-text-primary">{r.org_name || 'Unknown org'}</span>
                         <Badge variant={r.status === 'pending' ? 'warning' : r.status === 'approved' ? 'success' : 'danger'}>{r.status}</Badge>
                         <span className="text-xs text-text-muted">{orgReqSummary(r)}</span>
-                        <span className="ml-auto text-[10px] text-text-muted">{rel(r.created_at)}</span>
+                        <span className="ml-auto text-xs text-text-muted">{rel(r.created_at)}</span>
                     </div>
-                    {r.requester && <p className="text-[11px] text-text-muted">by {r.requester}</p>}
+                    {r.requester && <p className="text-xs text-text-muted">by {r.requester}</p>}
                     {r.message && <p className="text-xs text-text-secondary whitespace-pre-wrap">{r.message}</p>}
-                    {r.admin_note && <p className="text-[11px] text-text-muted italic">Note: {r.admin_note}</p>}
+                    {r.admin_note && <p className="text-xs text-text-muted italic">Note: {r.admin_note}</p>}
                     {r.status === 'pending' && (
                         <div className="flex items-center gap-2 pt-1">
                             <Button variant="primary" size="sm" disabled={busy === r.id} onClick={() => decide(r, true)}>
@@ -306,7 +306,7 @@ function OrgRequestsList() {
                         <div className="pt-1">
                             <button disabled={busy === r.id} onClick={() => dismiss(r)}
                                 title="Remove this handled request from the queue"
-                                className="inline-flex items-center gap-1 text-[11px] text-text-muted hover:text-red-500 disabled:opacity-40 transition-colors">
+                                className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-red-500 disabled:opacity-40 transition-colors">
                                 {busy === r.id ? <Loader2 size={11} className="animate-spin" aria-hidden="true" /> : <Trash2 size={11} aria-hidden="true" />}
                                 Dismiss
                             </button>

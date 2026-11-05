@@ -106,8 +106,8 @@ function ColorField({ id, label, value, fallback, error, onChange }) {
         )}
       </div>
       {error
-        ? <p id={`${id}-err`} className="text-[11px] text-red-500 mt-1">{error}</p>
-        : <p className="text-[11px] text-text-muted mt-1">Leave empty to keep the PyMasters default.</p>}
+        ? <p id={`${id}-err`} className="text-xs text-red-500 mt-1">{error}</p>
+        : <p className="text-xs text-text-muted mt-1">Leave empty to keep the PyMasters default.</p>}
     </div>
   );
 }
@@ -126,14 +126,14 @@ function TextField({ id, label, value, max, hint, error, onChange, multiline = f
     <div>
       <div className="flex items-baseline justify-between gap-2 mb-1.5">
         <label htmlFor={id} className="block text-xs font-semibold text-text-secondary">{label}</label>
-        <span className="text-[10px] text-text-muted font-mono" aria-hidden="true">{value.length}/{max}</span>
+        <span className="text-xs text-text-muted font-mono" aria-hidden="true">{value.length}/{max}</span>
       </div>
       {multiline
         ? <textarea {...common} rows={3} className="input-neo py-2 px-3 text-sm w-full resize-y" />
         : <input {...common} type="text" className="input-neo py-2 px-3 text-sm w-full" />}
       {error
-        ? <p id={`${id}-err`} className="text-[11px] text-red-500 mt-1">{error}</p>
-        : hint && <p className="text-[11px] text-text-muted mt-1">{hint}</p>}
+        ? <p id={`${id}-err`} className="text-xs text-red-500 mt-1">{error}</p>
+        : hint && <p className="text-xs text-text-muted mt-1">{hint}</p>}
     </div>
   );
 }
@@ -152,7 +152,7 @@ function Preview({ form, preset, orgName, userName }) {
   const singular = learner.endsWith('s') && learner.length > 3 ? learner.slice(0, -1) : learner;
   return (
     <Card className="overflow-hidden" aria-label="Live preview" role="region">
-      <div className="px-4 py-2 border-b border-border-default text-[10px] font-semibold uppercase tracking-wider text-text-muted">
+      <div className="px-4 py-2 border-b border-border-default text-xs font-semibold uppercase tracking-wider text-text-muted">
         Live preview
       </div>
       {/* mini navbar */}
@@ -170,11 +170,11 @@ function Preview({ form, preset, orgName, userName }) {
           <div className="min-w-0">
             <div className="font-bold text-text-primary truncate">{portal}</div>
             {custom && form.show_powered_by
-              ? <div className="text-[10px] text-text-muted">Powered by <span className="font-mono font-bold" style={{ color: accent }}>PyMasters</span></div>
-              : form.tagline.trim() && <div className="text-[10px] text-text-muted truncate">{form.tagline.trim()}</div>}
+              ? <div className="text-xs text-text-muted">Powered by <span className="font-mono font-bold" style={{ color: accent }}>PyMasters</span></div>
+              : form.tagline.trim() && <div className="text-xs text-text-muted truncate">{form.tagline.trim()}</div>}
           </div>
         </div>
-        <span className="hidden sm:inline-flex text-[10px] font-bold px-2.5 py-1 rounded-full text-white shrink-0" style={{ background: primary }}>
+        <span className="hidden sm:inline-flex text-xs font-bold px-2.5 py-1 rounded-full text-white shrink-0" style={{ background: primary }}>
           {instructor}
         </span>
       </div>
@@ -349,7 +349,7 @@ export default function OrgBrandingPanel({ orgId, orgName = 'your organization',
             <ColorField id="br-accent" label="Accent colour" value={form.accent_color} fallback={DEFAULT_ACCENT}
               error={errors.accent_color} onChange={set('accent_color')} />
           </div>
-          <p className="text-[11px] text-text-muted">Primary tints buttons, links and the active nav item; accent is used for highlights and progress.</p>
+          <p className="text-xs text-text-muted">Primary tints buttons, links and the active nav item; accent is used for highlights and progress.</p>
         </Card>
 
         <Card className="p-4 sm:p-5 space-y-4">
@@ -398,7 +398,7 @@ export default function OrgBrandingPanel({ orgId, orgName = 'your organization',
       {/* ---- Preview column ---- */}
       <div className="lg:col-span-2 min-w-0 lg:sticky lg:top-4 self-start">
         <Preview form={form} preset={preset} orgName={orgName} userName={userName} />
-        <p className="text-[11px] text-text-muted mt-2">
+        <p className="text-xs text-text-muted mt-2">
           Only these typed fields are stored; no custom HTML or CSS is accepted, so branding can never affect other members&rsquo; security.
         </p>
       </div>

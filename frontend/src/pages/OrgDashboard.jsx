@@ -11,6 +11,8 @@ import OrgRequestsPanel from '../components/OrgRequestsPanel';
 import OrgCurriculumPanel from '../components/OrgCurriculumPanel';
 import OrgBrandingPanel from '../components/OrgBrandingPanel';
 import useOrgBranding from '../hooks/useOrgBranding';
+import { audienceFor } from '../hooks/useAudience';
+import { pointsLabels } from '../utils/orgStatLabels';
 import { motion, AnimatePresence } from 'framer-motion';
 import { safeErrorMsg } from '../utils/errorUtils';
 import {
@@ -446,8 +448,10 @@ export default function OrgDashboard() {
 
   // Org vocabulary (white-label lite): "Students" / "Trainees" / "Employees"
   // etc. come from the org's type preset or its saved branding overrides.
-  const { branding } = useOrgBranding();
+  const { branding, preset, type: brandingType } = useOrgBranding();
   const learnerLabel = String(branding?.learner_label || 'Students');
+  // "Avg XP" is all-time platform points per member; professional orgs see it as plain points.
+  const points = pointsLabels(audienceFor(activeOrg, preset, brandingType));
 
   /* ---- Data loading ---- */
   const loadOrg = useCallback(async () => {
@@ -868,7 +872,7 @@ export default function OrgDashboard() {
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <StatCard icon={Users} label="Total Members" value={memberCount} />
-                <StatCard icon={Zap} label="Avg XP" value={avgXp} />
+                <StatCard icon={Zap} label={points.avg} value={avgXp} hint={points.hint} />
                 <StatCard icon={TrendingUp} label="Active Learners (7d)" value={activeLearners} />
                 <StatCard icon={Trophy} label="Lessons Completed" value={lessonsCompleted} />
               </div>
@@ -956,7 +960,7 @@ export default function OrgDashboard() {
                       {/* Meta: role + XP (right-aligned) */}
                       <div className="flex items-center gap-3 shrink-0 sm:ml-auto">
                         <RoleBadge role={m.role || 'member'} />
-                        <span className="text-xs text-accent-primary font-semibold whitespace-nowrap">{Number(m.xp || m.points) || 0} XP</span>
+                        <span className="text-xs text-accent-primary font-semibold whitespace-nowrap">{Number(m.xp || m.points) || 0} {points.unit}</span>
                       </div>
 
                       {/* Links */}
@@ -998,7 +1002,7 @@ export default function OrgDashboard() {
                                 disabled={actionLoading === memberId}
                                 variant="danger"
                                 size="sm"
-                                className="px-2 py-1 text-[10px]"
+                                className="px-2 py-1 text-xs"
                               >
                                 Confirm
                               </Button>
@@ -1006,7 +1010,7 @@ export default function OrgDashboard() {
                                 onClick={() => setConfirmRemove(null)}
                                 variant="ghost"
                                 size="sm"
-                                className="px-2 py-1 text-[10px]"
+                                className="px-2 py-1 text-xs"
                               >
                                 Cancel
                               </Button>
@@ -1159,12 +1163,12 @@ export default function OrgDashboard() {
                         <RoleBadge role={inv?.role || 'member'} />
                         {inv?.token && (
                           <div className="flex items-center gap-1">
-                            <span className="text-[10px] font-mono text-text-muted truncate max-w-[120px]">{String(inv.token)}</span>
+                            <span className="text-xs font-mono text-text-muted truncate max-w-[120px]">{String(inv.token)}</span>
                             <CopyButton text={inv.token} />
                           </div>
                         )}
                         {inv?.expires_at && (
-                          <span className={`text-[10px] ${(inv?.status === 'expired' || inv?.expired) ? 'text-red-500' : 'text-text-muted'}`}>
+                          <span className={`text-xs ${(inv?.status === 'expired' || inv?.expired) ? 'text-red-500' : 'text-text-muted'}`}>
                             Exp: {new Date(inv.expires_at).toLocaleDateString()}
                           </span>
                         )}
@@ -1243,7 +1247,7 @@ export default function OrgDashboard() {
                       <caption className="sr-only">Per-{singular(learnerLabel).toLowerCase()} progress</caption>
                       <THead>
                         <TH>{singular(learnerLabel)}</TH>
-                        <TH>XP</TH>
+                        <TH>{points.unit === 'XP' ? 'XP' : 'Points'}</TH>
                         <TH>Lessons</TH>
                         <TH>Last active</TH>
                         <TH>{plural(groupLabel)}</TH>
@@ -1281,7 +1285,7 @@ export default function OrgDashboard() {
                                     <Badge key={g} variant="primary">{g}</Badge>
                                   ))}
                                   {(s.groups || []).length > 3 && (
-                                    <span className="text-[10px] text-text-muted">+{s.groups.length - 3}</span>
+                                    <span className="text-xs text-text-muted">+{s.groups.length - 3}</span>
                                   )}
                                 </div>
                               </TD>
@@ -1304,8 +1308,8 @@ export default function OrgDashboard() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <StatCard icon={Users} label="Members" value={typeof analytics?.total_members === 'number' ? analytics.total_members : memberCount} />
-                <StatCard icon={Zap} label="Avg XP" value={typeof analytics?.avg_xp === 'number' ? analytics.avg_xp : avgXp} />
-                <StatCard icon={Trophy} label="Top XP" value={typeof analytics?.top_xp === 'number' ? analytics.top_xp : topXp} />
+                <StatCard icon={Zap} label={points.avg} hint={points.hint} value={typeof analytics?.avg_xp === 'number' ? analytics.avg_xp : avgXp} />
+                <StatCard icon={Trophy} label={points.top} value={typeof analytics?.top_xp === 'number' ? analytics.top_xp : topXp} />
                 <StatCard icon={TrendingUp} label="Active (7d)" value={typeof analytics?.active_7d === 'number' ? analytics.active_7d : '--'} />
                 <StatCard icon={BarChart3} label="Lessons Done" value={typeof analytics?.lessons_completed === 'number' ? analytics.lessons_completed : '--'} />
               </div>
@@ -1345,7 +1349,7 @@ export default function OrgDashboard() {
                               transition={{ duration: 0.8, ease: 'easeOut' }}
                               className="h-full bg-gradient-primary rounded-lg flex items-center justify-end pr-2"
                             >
-                              <span className="text-[10px] font-bold text-white">{count}</span>
+                              <span className="text-xs font-bold text-white">{count}</span>
                             </motion.div>
                           </div>
                         </div>

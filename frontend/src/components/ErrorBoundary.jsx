@@ -29,7 +29,7 @@ export default class ErrorBoundary extends Component {
                         Try Again
                     </button>
                     {this.state.error && (
-                        <pre className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-[11px] text-red-400 max-w-lg overflow-auto text-left max-h-32">
+                        <pre className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400 max-w-lg overflow-auto text-left max-h-32">
                             {(() => {
                                 try {
                                     const e = this.state.error;

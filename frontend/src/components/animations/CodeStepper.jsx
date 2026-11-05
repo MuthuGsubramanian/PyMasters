@@ -352,7 +352,7 @@ export default function CodeStepper({
 
                 {/* Line number */}
                 <span className={`w-8 text-right select-none mr-4 text-xs tabular-nums transition-all duration-300 ${
-                  isActive ? 'text-cyan-400 font-medium' : isPast ? 'text-code-foreground/40' : 'text-code-foreground/30'
+                  isActive ? 'text-cyan-400 font-medium' : isPast ? 'text-code-foreground/60' : 'text-code-foreground/60'
                 }`}>
                   {lineNum}
                 </span>
@@ -362,9 +362,9 @@ export default function CodeStepper({
                   isActive
                     ? 'text-code-foreground brightness-110'
                     : isPast
-                    ? 'text-code-foreground/50'
+                    ? 'text-code-foreground/60'
                     : isFuture
-                    ? 'text-code-foreground/40'
+                    ? 'text-code-foreground/60'
                     : 'text-code-foreground/70'
                 }`}>
                   {colorizeWithContext(line) || '\u00A0'}

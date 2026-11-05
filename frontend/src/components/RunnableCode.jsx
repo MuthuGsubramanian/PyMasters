@@ -199,7 +199,7 @@ export default function RunnableCode({ children, className, code: rawCode, langu
             type="button"
             onClick={doCopy}
             aria-label="Copy code"
-            className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-1 rounded-md text-slate-400 hover:text-slate-200 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-medium px-1.5 py-1 rounded-md text-slate-400 hover:text-slate-200 transition-colors"
         >
             {copied ? <Check size={11} className="text-green-400" /> : <Copy size={11} />}
         </button>
@@ -212,7 +212,7 @@ export default function RunnableCode({ children, className, code: rawCode, langu
             return (
                 <div className={`my-3 rounded-lg overflow-hidden border border-white/[0.08] shadow-sm`}>
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-black/30 border-b border-white/[0.06]">
-                        <span className="text-[10px] font-mono text-slate-400">{language || 'code'}</span>
+                        <span className="text-xs font-mono text-slate-400">{language || 'code'}</span>
                         <span className="ml-auto">{copyBtn}</span>
                     </div>
                     <pre className={`${preCls} rounded-none border-0 my-0`}>{codeBody}</pre>
@@ -231,7 +231,7 @@ export default function RunnableCode({ children, className, code: rawCode, langu
                     <span className="w-2.5 h-2.5 rounded-full bg-amber-400/70" />
                     <span className="w-2.5 h-2.5 rounded-full bg-green-400/70" />
                 </div>
-                <span className="text-[10px] font-mono text-slate-400 ml-1">{language || 'python'}</span>
+                <span className="text-xs font-mono text-slate-400 ml-1">{language || 'python'}</span>
                 <div className="ml-auto flex items-center gap-1">
                     {copyBtn}
                     {canPredict && (
@@ -240,7 +240,7 @@ export default function RunnableCode({ children, className, code: rawCode, langu
                             onClick={() => { setPredicting('open'); setGuess(''); }}
                             disabled={state === 'running'}
                             title="Guess the output first, then run to check"
-                            className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md bg-violet-500/80 hover:bg-violet-500 text-white disabled:opacity-60 transition-colors"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-md bg-violet-500/80 hover:bg-violet-500 text-white disabled:opacity-60 transition-colors"
                         >
                             <Target size={12} /> Predict
                         </button>
@@ -249,7 +249,7 @@ export default function RunnableCode({ children, className, code: rawCode, langu
                         type="button"
                         onClick={() => { setPredicting(null); run(); }}
                         disabled={state === 'running'}
-                        className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md bg-green-500/90 hover:bg-green-500 text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-md bg-green-500/90 hover:bg-green-500 text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                     >
                         {state === 'running'
                             ? <><Loader2 size={12} className="animate-spin" /> Running…</>
@@ -264,7 +264,7 @@ export default function RunnableCode({ children, className, code: rawCode, langu
             {/* Predict-then-run: commit to a guess before seeing the output */}
             {predicting === 'open' && (
                 <div className="border-t border-white/[0.06] bg-slate-900 px-3 py-2.5 border-l-2 border-l-violet-400">
-                    <label className="block text-[11px] font-semibold text-violet-200 mb-1.5" htmlFor={`guess-${code.length}`}>
+                    <label className="block text-xs font-semibold text-violet-200 mb-1.5" htmlFor={`guess-${code.length}`}>
                         What will this print? Write it exactly, one line per line of output (or name the error).
                     </label>
                     <textarea
@@ -281,11 +281,11 @@ export default function RunnableCode({ children, className, code: rawCode, langu
                             type="button"
                             onClick={() => run(guess)}
                             disabled={!guess.trim() || state === 'running'}
-                            className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md bg-violet-500 hover:bg-violet-400 text-white disabled:opacity-50 transition-colors"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-md bg-violet-500 hover:bg-violet-400 text-white disabled:opacity-50 transition-colors"
                         >
                             <Play size={12} fill="currentColor" /> Run &amp; check
                         </button>
-                        <button type="button" onClick={() => setPredicting(null)} className="text-[11px] text-slate-400 hover:text-slate-200">Cancel</button>
+                        <button type="button" onClick={() => setPredicting(null)} className="text-xs text-slate-400 hover:text-slate-200">Cancel</button>
                     </div>
                 </div>
             )}
@@ -299,7 +299,7 @@ export default function RunnableCode({ children, className, code: rawCode, langu
                                 : `${predicting.matched} of ${predicting.total} line${predicting.total === 1 ? '' : 's'} right.`}
                     </div>
                     {!predicting.exact && !predicting.errorType && (
-                        <table className="mt-1.5 font-mono text-[11.5px]">
+                        <table className="mt-1.5 font-mono text-xs">
                             <thead><tr className="text-slate-400"><th className="pr-4 text-left font-normal">Your guess</th><th className="text-left font-normal">Actual</th></tr></thead>
                             <tbody>
                                 {predicting.lines.filter((l) => !l.ok).slice(0, 5).map((l, k) => (
@@ -308,7 +308,7 @@ export default function RunnableCode({ children, className, code: rawCode, langu
                             </tbody>
                         </table>
                     )}
-                    <div className="mt-1 text-[11px] text-slate-400">
+                    <div className="mt-1 text-xs text-slate-400">
                         Prediction accuracy {predicting.stats.correct}/{predicting.stats.tries}
                         {predicting.stats.streak > 1 ? ` - ${predicting.stats.streak} in a row` : ''}
                     </div>
@@ -318,7 +318,7 @@ export default function RunnableCode({ children, className, code: rawCode, langu
             {/* Output */}
             {state !== 'idle' && (
                 <div className="border-t border-white/[0.06] bg-slate-950">
-                    <div className="flex items-center gap-1.5 px-3 pt-2 text-[10px] font-bold uppercase tracking-wider">
+                    <div className="flex items-center gap-1.5 px-3 pt-2 text-xs font-bold uppercase tracking-wider">
                         {state === 'running' && <span className="text-slate-400">Executing…</span>}
                         {state === 'done' && <><Check size={11} className="text-green-400" /><span className="text-green-400">Output</span></>}
                         {state === 'error' && <><X size={11} className="text-red-400" /><span className="text-red-400">Output</span></>}

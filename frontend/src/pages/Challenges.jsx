@@ -179,13 +179,13 @@ function ChallengeArchive() {
               >
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <h3 className="text-sm font-semibold text-text-primary">{c.title}</h3>
-                  <span className={clsx('text-[10px] font-bold px-2 py-0.5 rounded-full border whitespace-nowrap', d.bg, d.text, d.border)}>{d.label}</span>
+                  <span className={clsx('text-xs font-bold px-2 py-0.5 rounded-full border whitespace-nowrap', d.bg, d.text, d.border)}>{d.label}</span>
                 </div>
                 <p className="text-xs text-text-muted mb-2">{c.category}</p>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[11px] text-amber-500 font-semibold flex items-center gap-1"><Zap size={11} /> +{c.xp_reward} XP</span>
+                  <span className="text-xs text-amber-500 font-semibold flex items-center gap-1"><Zap size={11} /> +{c.xp_reward} XP</span>
                   {c.targets_weak_concept && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-accent-subtle text-accent-primary border border-accent-primary/30 flex items-center gap-1">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-accent-subtle text-accent-primary border border-accent-primary/30 flex items-center gap-1">
                       <Flame size={10} /> {c.weak_concepts?.length ? `Weak: ${c.weak_concepts.slice(0, 2).join(', ')}` : 'Weak area'}
                     </span>
                   )}

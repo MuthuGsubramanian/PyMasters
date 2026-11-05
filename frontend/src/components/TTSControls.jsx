@@ -100,7 +100,7 @@ export default function TTSControls({ tts, className = '' }) {
 
                 {/* --- speed --- */}
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest text-slate-500 mb-1 block">
+                  <label className="text-xs uppercase tracking-widest text-slate-500 mb-1 block">
                     Speed
                   </label>
                   <div className="flex gap-1">
@@ -125,7 +125,7 @@ export default function TTSControls({ tts, className = '' }) {
 
                 {/* --- volume slider --- */}
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest text-slate-500 mb-1 block">
+                  <label className="text-xs uppercase tracking-widest text-slate-500 mb-1 block">
                     Volume
                   </label>
                   <div className="flex items-center gap-2">
@@ -153,7 +153,7 @@ export default function TTSControls({ tts, className = '' }) {
                 {/* --- voice selector --- */}
                 {voices.length > 0 && (
                   <div>
-                    <label className="text-[10px] uppercase tracking-widest text-slate-500 mb-1 block">
+                    <label className="text-xs uppercase tracking-widest text-slate-500 mb-1 block">
                       Voice
                     </label>
                     <select

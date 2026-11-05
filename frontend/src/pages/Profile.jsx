@@ -1147,7 +1147,7 @@ export default function Profile() {
                                         {badge.label}
                                     </span>
                                     {xpToGo != null && (
-                                        <span className="text-[10px] font-medium text-text-muted leading-none">
+                                        <span className="text-xs font-medium text-text-muted leading-none">
                                             {xpToGo} XP to go
                                         </span>
                                     )}

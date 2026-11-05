@@ -957,10 +957,10 @@ export default function Trending() {
                   <div className="p-5 flex flex-col flex-1 gap-3">
                     {/* Category + Difficulty */}
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Badge className={`px-2.5 py-0.5 text-[11px] whitespace-nowrap ${catColor(topic.category).bg} ${catColor(topic.category).text} ${catColor(topic.category).border}`}>
+                      <Badge className={`px-2.5 py-0.5 text-xs whitespace-nowrap ${catColor(topic.category).bg} ${catColor(topic.category).text} ${catColor(topic.category).border}`}>
                         {topic.category}
                       </Badge>
-                      <Badge className={`px-2.5 py-0.5 text-[11px] whitespace-nowrap ${DIFFICULTY_STYLES[topic.difficulty]}`}>
+                      <Badge className={`px-2.5 py-0.5 text-xs whitespace-nowrap ${DIFFICULTY_STYLES[topic.difficulty]}`}>
                         {topic.difficulty}
                       </Badge>
                     </div>
@@ -988,12 +988,12 @@ export default function Trending() {
                     {/* Concepts Tags */}
                     <div className="flex flex-wrap gap-1.5">
                       {topic.concepts.slice(0, 3).map(c => (
-                        <span key={c} className="px-2 py-0.5 rounded-md bg-bg-elevated border border-border-default text-[11px] text-text-secondary">
+                        <span key={c} className="px-2 py-0.5 rounded-md bg-bg-elevated border border-border-default text-xs text-text-secondary">
                           {c}
                         </span>
                       ))}
                       {topic.concepts.length > 3 && (
-                        <span className="px-2 py-0.5 rounded-md bg-bg-elevated text-[11px] text-text-muted">
+                        <span className="px-2 py-0.5 rounded-md bg-bg-elevated text-xs text-text-muted">
                           +{topic.concepts.length - 3}
                         </span>
                       )}
@@ -1107,10 +1107,10 @@ export default function Trending() {
             className="max-w-2xl"
           >
             <div className="flex items-center gap-2 mb-3">
-              <Badge className={`px-2.5 py-0.5 text-[11px] ${catColor(codeTopic.category).bg} ${catColor(codeTopic.category).text} ${catColor(codeTopic.category).border}`}>
+              <Badge className={`px-2.5 py-0.5 text-xs ${catColor(codeTopic.category).bg} ${catColor(codeTopic.category).text} ${catColor(codeTopic.category).border}`}>
                 {codeTopic.category}
               </Badge>
-              <Badge className={`px-2.5 py-0.5 text-[11px] ${DIFFICULTY_STYLES[codeTopic.difficulty]}`}>
+              <Badge className={`px-2.5 py-0.5 text-xs ${DIFFICULTY_STYLES[codeTopic.difficulty]}`}>
                 {codeTopic.difficulty}
               </Badge>
             </div>

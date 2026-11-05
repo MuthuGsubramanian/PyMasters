@@ -97,7 +97,7 @@ export default function LanguageSelector({ currentLanguage = 'en', onSelect }) {
                     <span className="text-base w-6 text-center">{lang.flag}</span>
                     <span className="flex-1 text-left">{lang.name}</span>
                     {isActive && (
-                      <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
+                      <span className="ml-auto text-xs font-bold uppercase tracking-wider text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded">
                         Active
                       </span>
                     )}
@@ -118,7 +118,7 @@ export default function LanguageSelector({ currentLanguage = 'en', onSelect }) {
                 >
                   <span className="text-base w-6 text-center opacity-40">🚫</span>
                   <span className="flex-1 text-left line-through opacity-50">{lang.name}</span>
-                  <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-red-500/70 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">
+                  <span className="ml-auto text-xs font-bold uppercase tracking-wider text-red-500/70 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">
                     Not Supported
                   </span>
                 </button>

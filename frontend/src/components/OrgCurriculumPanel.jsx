@@ -167,7 +167,7 @@ export default function OrgCurriculumPanel({ orgId, groups = [] }) {
                                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                                     <span className="text-sm font-bold text-text-primary">{s.title}</span>
                                     <Badge variant={s.status === 'ready' ? 'success' : 'warning'}>{s.status}</Badge>
-                                    <span className="text-[11px] text-text-muted">{s.group_name ? `Group: ${s.group_name}` : 'Whole org'} · {s.published_count}/{s.items.length} published</span>
+                                    <span className="text-xs text-text-muted">{s.group_name ? `Group: ${s.group_name}` : 'Whole org'} · {s.published_count}/{s.items.length} published</span>
                                     <button disabled={itemBusy === s.id} onClick={() => removeSet(s)}
                                         className="ml-auto p-1 rounded-md text-text-muted hover:text-red-500 disabled:opacity-40" aria-label="Delete set">
                                         <Trash2 size={13} aria-hidden="true" />
@@ -189,7 +189,7 @@ export default function OrgCurriculumPanel({ orgId, groups = [] }) {
                                                 </Button>
                                             )}
                                             {it.status === 'failed' && (
-                                                <span className="text-[10px] text-red-500 max-w-[45%] truncate" title={it.error}>
+                                                <span className="text-xs text-red-500 max-w-[45%] truncate" title={it.error}>
                                                     {it.error || 'Generation failed — try again'}
                                                 </span>
                                             )}

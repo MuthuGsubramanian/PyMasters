@@ -51,11 +51,11 @@ export default function OutputPanel({
             <div className="flex-shrink-0 flex items-center justify-between px-4 py-1.5 bg-[#161b22] border-b border-slate-700/50">
                 <div className="flex items-center gap-2">
                     <span className={`w-1.5 h-1.5 rounded-full ${running ? 'bg-amber-400 animate-pulse' : hasError ? 'bg-red-400' : 'bg-green-400'}`} />
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                    <span className="text-xs uppercase font-bold tracking-widest text-slate-400">
                         {running ? 'Running...' : 'Output'}
                     </span>
                     {executionTime != null && !running && (
-                        <span className="text-[10px] text-slate-400 font-mono ml-2">
+                        <span className="text-xs text-slate-400 font-mono ml-2">
                             {executionTime < 1000 ? `${executionTime}ms` : `${(executionTime / 1000).toFixed(1)}s`}
                         </span>
                     )}
@@ -86,7 +86,7 @@ export default function OutputPanel({
                             <span>Executing...</span>
                         </div>
                         {slowRun && (
-                            <span className="text-[11px] text-slate-400 italic pl-6">
+                            <span className="text-xs text-slate-400 italic pl-6">
                                 First run can take a few seconds while the sandbox warms up…
                             </span>
                         )}

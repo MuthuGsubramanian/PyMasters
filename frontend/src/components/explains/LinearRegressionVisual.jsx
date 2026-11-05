@@ -160,7 +160,7 @@ export default function LinearRegressionVisual({ stepIndex = 0 }) {
             {interactive && (
                 <div className="flex-shrink-0 pt-2 space-y-2">
                     <div className="flex items-center gap-3">
-                        <label htmlFor="lr-slope" className="text-[11px] font-mono text-text-muted flex-shrink-0">
+                        <label htmlFor="lr-slope" className="text-xs font-mono text-text-muted flex-shrink-0">
                             slope = {(slope / 100).toFixed(2)}
                         </label>
                         <input id="lr-slope" type="range" min="-20" max="120" value={slope}

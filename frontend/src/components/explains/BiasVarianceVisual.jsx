@@ -254,7 +254,7 @@ export default function BiasVarianceVisual({ stepIndex = 0 }) {
             {interactive && (
                 <div className="flex-shrink-0 pt-2 space-y-1.5">
                     <div className="flex items-center gap-3">
-                        <label htmlFor="bv-degree" className="text-[11px] font-mono text-text-muted flex-shrink-0">
+                        <label htmlFor="bv-degree" className="text-xs font-mono text-text-muted flex-shrink-0">
                             degree = {degree}
                         </label>
                         <input

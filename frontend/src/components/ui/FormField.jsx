@@ -15,7 +15,7 @@ export function FormField({ label, hint, children, className = '' }) {
         </label>
       )}
       {typeof children === 'function' ? children(id) : children}
-      {hint && <p className="text-[11px] text-text-muted mt-1">{hint}</p>}
+      {hint && <p className="text-xs text-text-muted mt-1">{hint}</p>}
     </div>
   );
 }

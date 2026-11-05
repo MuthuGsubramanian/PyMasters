@@ -55,7 +55,7 @@ export function StatCard({ label, value, icon: Icon, hint, className = '' }) {
         </div>
       )}
       <div className="min-w-0">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-text-muted">{label}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">{label}</p>
         <p className="text-2xl font-bold font-display text-text-primary leading-tight">{value}</p>
         {hint && <p className="text-xs text-text-muted mt-0.5">{hint}</p>}
       </div>

@@ -212,7 +212,7 @@ export default function LoopVisualizer({
         <div className="surface-code border-b border-white/10 py-2 px-4 overflow-x-auto">
           {code.split('\n').map((line, idx) => (
             <div key={idx} className="flex items-center w-max min-w-full py-[3px]">
-              <span className="w-6 text-right select-none mr-3 text-xs text-code-foreground/30 tabular-nums">{idx + 1}</span>
+              <span className="w-6 text-right select-none mr-3 text-xs text-code-foreground/60 tabular-nums">{idx + 1}</span>
               <span className="whitespace-pre text-code-foreground/90 leading-relaxed">{colorizeLine(line) || '\u00A0'}</span>
             </div>
           ))}
@@ -252,11 +252,11 @@ export default function LoopVisualizer({
         <div className="flex items-center gap-2">
           <span className="text-xs text-code-foreground/60 uppercase tracking-wider">Variable</span>
           <span className="text-xs text-cyan-300 font-medium">{variable}</span>
-          <span className="text-code-foreground/50">=</span>
+          <span className="text-code-foreground/60">=</span>
           <span className={`text-xs px-2 py-1 rounded transition-all duration-300 ${
             activeIndex >= 0
               ? 'text-amber-300 bg-amber-500/10 border border-amber-500/20'
-              : 'text-code-foreground/50 bg-white/[0.04] border border-white/10'
+              : 'text-code-foreground/60 bg-white/[0.04] border border-white/10'
           }`}>
             {currentValue !== undefined
               ? (typeof currentValue === 'string' ? `"${currentValue}"` : String(currentValue))

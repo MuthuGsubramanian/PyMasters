@@ -27,9 +27,9 @@ export default function BossBattle({ track, name, accent = '#8b5cf6', lang = 'en
                 <Swords size={18} style={{ color: accent }} />
                 <span className="flex-1">
                     <span className="block text-sm font-bold text-text-primary">Boss battle: {name}</span>
-                    <span className="block text-[11px] text-text-muted">Mixed questions from the lessons you've finished here. Beat the boss before you run out of lives.</span>
+                    <span className="block text-xs text-text-muted">Mixed questions from the lessons you've finished here. Beat the boss before you run out of lives.</span>
                 </span>
-                {won && <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-bold text-green-700">Conquered</span>}
+                {won && <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-700">Conquered</span>}
             </button>
             {/* Portal: the track list animates with transforms, which would trap a fixed-position modal. */}
             {open && createPortal(<Battle track={track} name={name} accent={accent} lang={lang}
@@ -108,7 +108,7 @@ function Battle({ track, name, accent, lang, onClose, onWin }) {
                         <>
                             <div className="mb-4 flex items-center gap-4">
                                 <div className="flex-1">
-                                    <div className="mb-1 flex justify-between text-[11px] uppercase tracking-wide text-slate-400"><span>Boss</span><span>{Math.max(0, hp)} / {BOSS_HP} HP</span></div>
+                                    <div className="mb-1 flex justify-between text-xs uppercase tracking-wide text-slate-400"><span>Boss</span><span>{Math.max(0, hp)} / {BOSS_HP} HP</span></div>
                                     <div className="h-2.5 overflow-hidden rounded-full bg-white/10">
                                         <div className="h-full rounded-full bg-gradient-to-r from-red-500 to-orange-400 transition-all duration-500" style={{ width: `${(Math.max(0, hp) / BOSS_HP) * 100}%` }} />
                                     </div>
@@ -139,7 +139,7 @@ function Battle({ track, name, accent, lang, onClose, onWin }) {
 
                             {!over && q && (
                                 <div aria-live="polite">
-                                    <div className="mb-2 flex justify-between text-[11px] text-slate-400">
+                                    <div className="mb-2 flex justify-between text-xs text-slate-400">
                                         <span className="uppercase tracking-wide">{q.title}</span><span>{i + 1} / {qs.length}</span>
                                     </div>
                                     <p className="mb-2 text-sm font-semibold">{q.q.split('\n')[0]}</p>

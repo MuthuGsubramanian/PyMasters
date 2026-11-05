@@ -319,7 +319,7 @@ export default function NaiveBayesVisual({ stepIndex = 0 }) {
                         <button
                             key={m.id}
                             onClick={() => setUserMsg(i)}
-                            className={`px-3 py-2 cursor-pointer rounded-lg border text-[11px] font-mono transition-colors ${
+                            className={`px-3 py-2 cursor-pointer rounded-lg border text-xs font-mono transition-colors ${
                                 userMsg === i
                                     ? 'border-accent-primary text-accent-primary bg-accent-subtle'
                                     : 'border-border-strong text-text-muted hover:text-text-primary'
