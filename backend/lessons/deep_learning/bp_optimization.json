@@ -13,7 +13,7 @@
   "xp_reward": 70,
   "next_unlock": "cnn_convolutions",
   "story_variants": {
-    "en": "## Optimizers: SGD, Momentum, and Adam\n\nVanilla gradient descent works but is slow and gets stuck in ravines. Modern optimizers add **memory** and **adaptive learning rates** to converge faster.\n\n### SGD with Momentum\n\nMomentum accumulates a velocity vector in the gradient direction:\n\n```\nv ← β·v − η·∇L\nw ← w + v\n```\n\n- `β` is the momentum coefficient (typically 0.9).\n- Like a ball rolling downhill — it builds speed.\n\n### RMSProp\n\nAdapts the learning rate for each parameter individually based on recent gradient magnitudes:\n\n```\nE[g²] ← β·E[g²] + (1−β)·g²\nw ← w − η · g / √(E[g²] + ε)\n```\n\n### Adam: The Best of Both\n\n**Adam** (Adaptive Moment Estimation) combines momentum (first moment) and RMSProp (second moment):\n\n```python\ndef adam_update(w, g, m, v, t, lr=0.001, b1=0.9, b2=0.999, eps=1e-8):\n    m = b1 * m + (1 - b1) * g          # first moment\n    v = b2 * v + (1 - b2) * g**2       # second moment\n    m_hat = m / (1 - b1**t)            # bias correction\n    v_hat = v / (1 - b2**t)            # bias correction\n    w = w - lr * m_hat / (v**0.5 + eps)\n    return w, m, v\n```\n\n### Optimizer Comparison\n\n| Optimizer | Adaptive LR | Momentum | Typical Use |\n|-----------|------------|---------|-------------|\n| SGD | No | No | Simple baselines |\n| SGD + Momentum | No | Yes | Image classification |\n| RMSProp | Yes | No | RNNs |\n| Adam | Yes | Yes | General purpose |\n| AdamW | Yes | Yes | Transformers |\n\n> **Key Concept:** Adam is the default choice for most deep learning tasks. If Adam doesn't converge, try SGD with momentum and a learning rate schedule."
+    "en": "## Optimizers: SGD, Momentum, and Adam\n\nVanilla gradient descent works but is slow and gets stuck in ravines. Modern optimizers add **memory** and **adaptive learning rates** to converge faster.\n\n### SGD with Momentum\n\nMomentum accumulates a velocity vector in the gradient direction:\n\n```\nv ← β·v − η·∇L\nw ← w + v\n```\n\n- `β` is the momentum coefficient (typically 0.9).\n- Like a ball rolling downhill — it builds speed.\n\n### RMSProp\n\nAdapts the learning rate for each parameter individually based on recent gradient magnitudes:\n\n```\nE[g²] ← β·E[g²] + (1−β)·g²\nw ← w − η · g / √(E[g²] + ε)\n```\n\n### Adam: The Best of Both\n\n**Adam** (Adaptive Moment Estimation) combines momentum (first moment) and RMSProp (second moment):\n\n```python\ndef adam_update(w, g, m, v, t, lr=0.001, b1=0.9, b2=0.999, eps=1e-8):\n    m = b1 * m + (1 - b1) * g          # first moment\n    v = b2 * v + (1 - b2) * g**2       # second moment\n    m_hat = m / (1 - b1**t)            # bias correction\n    v_hat = v / (1 - b2**t)            # bias correction\n    w = w - lr * m_hat / (v_hat**0.5 + eps)\n    return w, m, v\n```\n\n### Optimizer Comparison\n\n| Optimizer | Adaptive LR | Momentum | Typical Use |\n|-----------|------------|---------|-------------|\n| SGD | No | No | Simple baselines |\n| SGD + Momentum | No | Yes | Image classification |\n| RMSProp | Yes | No | RNNs |\n| Adam | Yes | Yes | General purpose |\n| AdamW | Yes | Yes | Transformers |\n\n> **Key Concept:** Adam is the default choice for most deep learning tasks. If Adam doesn't converge, try SGD with momentum and a learning rate schedule."
   },
   "animation_sequence": [
     {
@@ -329,8 +329,8 @@
     },
     {
       "q": {
-        "en": "In the lesson's adam_update, which line has a mistake in the weight update?",
-        "ta": "பாடத்தின் adam_update-இல், weight புதுப்பிப்பில் எந்த வரியில் தவறு உள்ளது?"
+        "en": "A student writes `w = w - lr * m_hat / (v**0.5 + eps)` in adam_update. What is the mistake in the weight update?",
+        "ta": "ஒரு மாணவர் adam_update-இல் `w = w - lr * m_hat / (v**0.5 + eps)` என்று எழுதுகிறார். weight புதுப்பிப்பில் என்ன தவறு?"
       },
       "options": {
         "en": [
