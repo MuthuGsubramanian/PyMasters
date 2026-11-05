@@ -33,5 +33,91 @@
     {"q": {"en": "The recommended data-plane permission model for new Key Vaults is..."}, "options": {"en": ["Access policies, because they predate RBAC", "Shared access signatures", "Azure RBAC — it inherits scope, supports PIM, and composes with the rest of the platform", "Account keys"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["azure_security", "azure_identity", "zero_trust_architecture"], "concepts_required": ["azure_identity", "azure_networking"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "With a managed identity, your code asks a local endpoint for an Entra token, Key Vault checks that token, its RBAC role and its network path, and only then returns the secret, so no credential is stored in your app or config.",
+    "steps": [
+      {
+        "title": "Azure creates an identity for the resource",
+        "body": "Enabling a system-assigned managed identity on an App Service or VM creates a service principal in Entra ID tied to that resource's lifecycle. Azure keeps its credentials; your code never sees them."
+      },
+      {
+        "title": "Code asks the local token endpoint",
+        "body": "The SDK (through ManagedIdentityCredential or DefaultAzureCredential) calls a local endpoint, on a VM the instance metadata service at 169.254.169.254, asking for a token for https://vault.azure.net. The platform returns an Entra access token for that identity.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "App: get secret 'db-password'",
+                "type": "input"
+              },
+              {
+                "label": "Local token endpoint (IMDS)",
+                "type": "process"
+              },
+              {
+                "label": "Entra token for vault.azure.net",
+                "type": "process"
+              },
+              {
+                "label": "Key Vault: network allowed?",
+                "type": "process"
+              },
+              {
+                "label": "Key Vault: RBAC role allows read?",
+                "type": "process"
+              },
+              {
+                "label": "Secret value returned",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Secretless path to a secret"
+          }
+        }
+      },
+      {
+        "title": "Key Vault checks network, then permission",
+        "body": "The vault's firewall or private endpoint decides whether the request can arrive at all. Then Key Vault validates the token and checks data-plane RBAC, for example the Key Vault Secrets User role, or the legacy access policy if the vault uses that model.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Network blocked",
+              "code": "public access disabled, no private endpoint\n-> 403 Forbidden (not allowed by firewall)"
+            },
+            "right": {
+              "label": "No data-plane role",
+              "code": "token valid, but no Secrets User role\n-> 403 Forbidden (no permission)"
+            },
+            "description": "Two different refusals"
+          }
+        }
+      },
+      {
+        "title": "Secrets are versioned",
+        "body": "Each update creates a new version with its own ID. Referencing the secret without a version returns the latest, so rotation is writing a new version, and apps that reload pick it up."
+      },
+      {
+        "title": "Delete is soft by default",
+        "body": "A deleted secret or vault is kept in a soft-deleted state for a retention period you set. With purge protection on, nobody, not even an Owner, can permanently purge it before that period ends.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "soft delete": "on (retention set at creation)",
+              "purge protection": "on",
+              "permission model": "Azure RBAC",
+              "public network": "disabled, private endpoint only"
+            },
+            "caption": "Recovery settings on a vault"
+          }
+        }
+      }
+    ],
+    "takeaway": "First remove secrets by using managed identities everywhere a service supports Entra auth; vault only the secrets that are left, and lock the vault behind RBAC and a private endpoint."
+  }
 }

@@ -34,5 +34,68 @@
   ],
   "tags": {"concepts_taught": ["azure_data_platform", "azure_storage"], "concepts_required": ["azure_resource_management", "azure_storage"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "sql_tables = {\"orders\": [{\"id\": 1, \"user\": \"alice\", \"total\": 40}],\n              \"users\": [{\"name\": \"alice\", \"city\": \"Pune\"}]}\n\ndef sql_join(user):                           # relational: joins, constraints\n    orders = [o for o in sql_tables[\"orders\"] if o[\"user\"] == user]\n    city = next(u[\"city\"] for u in sql_tables[\"users\"] if u[\"name\"] == user)\n    return [{**o, \"city\": city} for o in orders]\n\ncosmos = {}                                   # partition key -> items\n\ndef cosmos_upsert(item, partition_key):\n    cosmos.setdefault(item[partition_key], {})[item[\"id\"]] = item\n\ncosmos_upsert({\"id\": \"cart-42\", \"userId\": \"alice\", \"items\": [\"pen\"]}, \"userId\")\ncosmos_upsert({\"id\": \"cart-43\", \"userId\": \"bob\", \"items\": [\"ink\"]}, \"userId\")\npoint_read = cosmos[\"alice\"][\"cart-42\"]       # one partition, one item: cheap\nprint(sql_join(\"alice\"))\nprint(point_read, \"| partitions:\", list(cosmos))\n"
+  "uth_example": "sql_tables = {\"orders\": [{\"id\": 1, \"user\": \"alice\", \"total\": 40}],\n              \"users\": [{\"name\": \"alice\", \"city\": \"Pune\"}]}\n\ndef sql_join(user):                           # relational: joins, constraints\n    orders = [o for o in sql_tables[\"orders\"] if o[\"user\"] == user]\n    city = next(u[\"city\"] for u in sql_tables[\"users\"] if u[\"name\"] == user)\n    return [{**o, \"city\": city} for o in orders]\n\ncosmos = {}                                   # partition key -> items\n\ndef cosmos_upsert(item, partition_key):\n    cosmos.setdefault(item[partition_key], {})[item[\"id\"]] = item\n\ncosmos_upsert({\"id\": \"cart-42\", \"userId\": \"alice\", \"items\": [\"pen\"]}, \"userId\")\ncosmos_upsert({\"id\": \"cart-43\", \"userId\": \"bob\", \"items\": [\"ink\"]}, \"userId\")\npoint_read = cosmos[\"alice\"][\"cart-42\"]       # one partition, one item: cheap\nprint(sql_join(\"alice\"))\nprint(point_read, \"| partitions:\", list(cosmos))\n",
+  "under_the_hood": {
+    "summary": "Azure SQL runs the SQL Server engine with replicas or remote storage for high availability, while Cosmos DB hashes each item's partition key to a logical partition, places logical partitions on replicated physical partitions and charges each operation in Request Units.",
+    "steps": [
+      {
+        "title": "Azure SQL: one engine, managed HA",
+        "body": "In the General Purpose tier, compute runs on one node and data files sit on remote durable storage; if the node fails, a new one attaches to the same files. Business Critical keeps several replicas with local SSD in an availability group and fails over to a replica.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "General Purpose",
+              "code": "compute + remote storage\nfailover = start new compute\nreattach files"
+            },
+            "right": {
+              "label": "Business Critical",
+              "code": "replicas with local storage\nfailover to a synced replica\nreadable secondary"
+            },
+            "description": "Two SQL HA designs"
+          }
+        }
+      },
+      {
+        "title": "Failover groups move the name",
+        "body": "A failover group replicates databases to another region and gives you listener endpoints. On failover, the listener DNS points to the new primary, so connection strings do not change."
+      },
+      {
+        "title": "Cosmos DB: partition key to partitions",
+        "body": "Cosmos hashes the partition key value, for example /tenantId = 'acme', to choose a logical partition. Many logical partitions share a physical partition; as data or throughput grows, Cosmos splits physical partitions. A single logical partition has a size limit, so keys must have many values.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "tenantId=acme": "logical partition -> physical P2",
+              "tenantId=globex": "-> physical P1",
+              "tenantId=initech": "-> physical P2"
+            },
+            "caption": "Items routed by partition key"
+          }
+        }
+      },
+      {
+        "title": "Request Units price every operation",
+        "body": "Each operation costs RUs based on item size, indexing and query work; a point read of a 1 KB item by id and partition key costs about 1 RU. Provisioned throughput gives RU/s per second; going over returns 429 with a retry hint.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "point read 1 KB by id+pk        ~1 RU",
+              "write 1 KB, default indexing    ~5 RU",
+              "cross-partition query           many RU, grows with partitions scanned"
+            ],
+            "caption": "RU charges (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Consistency is a dial",
+        "body": "Cosmos offers five levels: strong, bounded staleness, session (the default), consistent prefix and eventual. Session gives each client read-your-own-writes through a session token; stronger levels cost more RU and latency across regions."
+      }
+    ],
+    "takeaway": "Azure SQL scales a relational engine; Cosmos DB scales by partition key. For Cosmos, choose the key from your hottest queries and your RU bill will follow."
+  }
 }
