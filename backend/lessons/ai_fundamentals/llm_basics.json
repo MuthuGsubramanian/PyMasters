@@ -403,5 +403,139 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "An LLM is a neural network trained on enormous amounts of text to predict the next token; it generates by predicting one token, appending it, and predicting again, and later tuning teaches it to follow instructions.",
+    "steps": [
+      {
+        "title": "Pre-training: guess the next token",
+        "body": "Training text is cut into token sequences. At every position the model predicts a probability for each possible next token, and the loss is -log of the probability it gave the real one. If it gave 'mat' 0.4 after 'The cat sat on the', the loss is 0.92; at 0.9 it would be 0.11. Gradient descent lowers this loss over trillions of tokens.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "0.9",
+                0.11
+              ],
+              [
+                "0.4",
+                0.92
+              ],
+              [
+                "0.1",
+                2.3
+              ]
+            ],
+            "labels": [
+              "p(correct)",
+              "p(correct)",
+              "p(correct)"
+            ],
+            "highlight": [
+              1
+            ],
+            "caption": "Cross-entropy loss for one prediction"
+          }
+        }
+      },
+      {
+        "title": "Patterns end up in the weights",
+        "body": "To predict well across books, code and conversations, the network has to capture grammar, facts that appear often, styles and some reasoning patterns. All of it is stored implicitly in billions of weights, not as a searchable list of documents, which is why it cannot cite where something came from."
+      },
+      {
+        "title": "Instruction tuning makes an assistant",
+        "body": "A pre-trained model just continues text. It is then fine-tuned on example conversations and with human or AI feedback (for example RLHF), so that a question is followed by a helpful answer rather than, say, more questions. The chat models you call through APIs are these tuned versions.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              "pre-training: next token on web-scale text",
+              "supervised tuning: example dialogues",
+              "preference tuning: feedback on answers",
+              "assistant model"
+            ],
+            "caption": "How a chat model is made"
+          }
+        }
+      },
+      {
+        "title": "Generation is a loop",
+        "body": "For a reply, the model scores every vocabulary token, one is picked (the top one, or sampled according to temperature), it is appended, and the whole thing repeats until a stop token or max_tokens. A 200-token answer is 200 such steps.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "prompt tokens",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "model scores next token",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "pick one (greedy or sample)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "append to sequence",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "stop token or limit?",
+                "type": "decision"
+              },
+              {
+                "id": "n5",
+                "label": "reply",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "Autoregressive generation"
+          }
+        }
+      },
+      {
+        "title": "What follows from this design",
+        "body": "LLMs are strong at language tasks: summarising, drafting, translating, explaining code. Because they predict plausible text, they can state false things confidently, they know nothing after their training data unless you supply it, and they are unreliable at exact arithmetic unless they use a tool."
+      }
+    ],
+    "takeaway": "An LLM is a next-token predictor trained at huge scale and then tuned to be helpful. That explains both its fluency and its failure modes: it produces what is likely, which is usually, but not always, what is true."
   }
 }

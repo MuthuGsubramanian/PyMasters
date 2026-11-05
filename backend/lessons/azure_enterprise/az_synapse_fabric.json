@@ -34,5 +34,88 @@
   ],
   "tags": {"concepts_taught": ["azure_data_platform", "cloud_cost_management"], "concepts_required": ["azure_data_platform", "azure_storage"], "difficulty": "advanced", "engagement_type": "conceptual", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "bronze = [\n    {\"sale_id\": 1, \"cust\": \"c1\", \"amount\": \"120\"},\n    {\"sale_id\": 2, \"cust\": \"c2\", \"amount\": \"bad\"},\n    {\"sale_id\": 3, \"cust\": \"c1\", \"amount\": \"80\"},\n]\ndim_customer = {\"c1\": \"Asha\", \"c2\": \"Ravi\"}        # small: replicate everywhere\n\nsilver = []\nfor row in bronze:                                 # clean and type\n    if row[\"amount\"].isdigit():\n        silver.append({**row, \"amount\": int(row[\"amount\"])})\n\ndistributions = {0: [], 1: []}                     # fact table: HASH(sale_id)\nfor row in silver:\n    distributions[row[\"sale_id\"] % 2].append(row)\n\ngold = {}\nfor rows in distributions.values():\n    for row in rows:\n        name = dim_customer[row[\"cust\"]]\n        gold[name] = gold.get(name, 0) + row[\"amount\"]\nprint(distributions)\nprint(\"gold sales by customer:\", gold)\n"
+  "uth_example": "bronze = [\n    {\"sale_id\": 1, \"cust\": \"c1\", \"amount\": \"120\"},\n    {\"sale_id\": 2, \"cust\": \"c2\", \"amount\": \"bad\"},\n    {\"sale_id\": 3, \"cust\": \"c1\", \"amount\": \"80\"},\n]\ndim_customer = {\"c1\": \"Asha\", \"c2\": \"Ravi\"}        # small: replicate everywhere\n\nsilver = []\nfor row in bronze:                                 # clean and type\n    if row[\"amount\"].isdigit():\n        silver.append({**row, \"amount\": int(row[\"amount\"])})\n\ndistributions = {0: [], 1: []}                     # fact table: HASH(sale_id)\nfor row in silver:\n    distributions[row[\"sale_id\"] % 2].append(row)\n\ngold = {}\nfor rows in distributions.values():\n    for row in rows:\n        name = dim_customer[row[\"cust\"]]\n        gold[name] = gold.get(name, 0) + row[\"amount\"]\nprint(distributions)\nprint(\"gold sales by customer:\", gold)\n",
+  "under_the_hood": {
+    "summary": "A dedicated SQL pool splits every table into 60 distributions processed in parallel and moves rows between them when joins need it, while Fabric stores everything once in OneLake as Delta Parquet so several engines read the same files.",
+    "steps": [
+      {
+        "title": "Data lands in the lake first",
+        "body": "Raw files land in ADLS Gen2 or OneLake as Bronze, are cleaned into Silver and aggregated into Gold. Delta Lake adds a transaction log to Parquet files, so each table version is a consistent set of files.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Sources",
+              "Bronze: raw",
+              "Silver: cleaned, conformed",
+              "Gold: business aggregates"
+            ],
+            "edges": [
+              {
+                "from": "Sources",
+                "to": "Bronze: raw"
+              },
+              {
+                "from": "Bronze: raw",
+                "to": "Silver: cleaned, conformed"
+              },
+              {
+                "from": "Silver: cleaned, conformed",
+                "to": "Gold: business aggregates"
+              }
+            ],
+            "description": "Medallion layers"
+          }
+        }
+      },
+      {
+        "title": "Dedicated pool: 60 distributions",
+        "body": "A Synapse dedicated SQL pool divides every table into 60 distributions spread over its compute nodes. A query runs on all distributions in parallel, and the control node combines the results."
+      },
+      {
+        "title": "Distribution choice decides data movement",
+        "body": "HASH(customer_id) puts all rows for one customer in the same distribution, so joins on customer_id need no movement. ROUND_ROBIN spreads rows evenly but forces a shuffle on joins. REPLICATE keeps a full copy of a small table on each compute node.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Both HASH(customer_id)",
+              "code": "matching rows already together\nno data movement"
+            },
+            "right": {
+              "label": "sales ROUND_ROBIN",
+              "code": "rows must be shuffled by key\ndata movement step, slower"
+            },
+            "description": "Joining sales to customers"
+          }
+        }
+      },
+      {
+        "title": "Serverless SQL reads files in place",
+        "body": "The serverless SQL pool queries Parquet or CSV in the lake with OPENROWSET and bills by data processed, so partitioned, columnar files make it cheaper and faster."
+      },
+      {
+        "title": "Fabric: one copy, many engines",
+        "body": "In Fabric, Lakehouse, Warehouse and Power BI (Direct Lake mode) read the same Delta tables in OneLake. There is no copy into a separate warehouse; all compute draws from one Fabric capacity.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "label": "OneLake (Delta Parquet)",
+                "children": [
+                  "Spark notebooks",
+                  "SQL endpoint / Warehouse",
+                  "Power BI Direct Lake",
+                  "Data pipelines"
+                ]
+              }
+            ],
+            "description": "OneLake as the single store"
+          }
+        }
+      }
+    ],
+    "takeaway": "In MPP engines, speed comes from avoiding data movement. In Fabric, the idea is one copy of the data that every engine can read."
+  }
 }

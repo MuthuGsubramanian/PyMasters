@@ -394,5 +394,89 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "An RNN reads a sequence one step at a time and keeps a hidden state: at each step it mixes the new input with the previous state using the same weights, h_t = tanh(W_h h_(t-1) + W_x x_t + b), so earlier inputs echo into later steps.",
+    "steps": [
+      {
+        "title": "One cell, reused every step",
+        "body": "The same W_h, W_x and b are applied at every time step, whether the sequence has 5 steps or 500. Unrolled in time the RNN looks like a deep network with shared weights, one copy per step, each passing its hidden state to the next.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              "x1 -> h1",
+              "x2 + h1 -> h2",
+              "x3 + h2 -> h3",
+              "... -> h_T",
+              "output from h_T or every h_t"
+            ],
+            "caption": "An RNN unrolled over time"
+          }
+        }
+      },
+      {
+        "title": "Worked: a fading memory",
+        "body": "Scalar RNN with w_h = 0.5, w_x = 1, b = 0 and inputs [1, 0, 0]. h1 = tanh(1) = 0.762. h2 = tanh(0.5 x 0.762) = 0.363. h3 = tanh(0.5 x 0.363) = 0.180. The first input is still present at step 3, but halving each time: this RNN's memory fades quickly.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                0.762
+              ],
+              [
+                0,
+                0.363
+              ],
+              [
+                0,
+                0.18
+              ]
+            ],
+            "labels": [
+              "t = 1",
+              "t = 2",
+              "t = 3"
+            ],
+            "caption": "Columns: input x_t, hidden state h_t"
+          }
+        }
+      },
+      {
+        "title": "Shapes in PyTorch",
+        "body": "nn.RNN(input_size=10, hidden_size=20, batch_first=True) takes input of shape (batch, time, 10). It returns output (batch, time, 20), the hidden state at every step, and h_n (num_layers, batch, 20), the final state. For classifying a whole sequence you usually feed h_n to a linear layer."
+      },
+      {
+        "title": "Backpropagation through time",
+        "body": "To learn, the loss's gradient flows backwards through every step. Each step multiplies it by w_h and by tanh's slope (at most 1). With w_h = 0.5, ten steps scale it by at most 0.5^10, about 0.001: early inputs barely influence learning. With |w_h| > 1 gradients can instead explode, which gradient clipping limits.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "w_h",
+                "value": 0.5
+              },
+              {
+                "variable": "steps back",
+                "value": 10
+              },
+              {
+                "variable": "gradient factor",
+                "value": "<= 0.001"
+              }
+            ],
+            "caption": "Why long-range learning is hard"
+          }
+        }
+      },
+      {
+        "title": "Why gated cells followed",
+        "body": "This vanishing gradient means a plain RNN struggles to connect words more than a few dozen steps apart. LSTM and GRU cells add gates and an additive memory path so gradients survive longer, and transformers later replaced recurrence with attention that links any two positions directly."
+      }
+    ],
+    "takeaway": "An RNN is one small network applied repeatedly with a carried state. That design gives it memory, but also multiplies gradients step after step, which is why plain RNNs forget and gated cells were invented."
+  }
 }

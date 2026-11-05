@@ -417,5 +417,87 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Groups record start and end positions while the engine matches, lookarounds run a sub-pattern at the current position without consuming characters, and re.sub stitches the output from unmatched gaps and replacements.",
+    "steps": [
+      {
+        "title": "Groups store positions, not copies",
+        "body": "`(?P<user>\\w+)@(?P<host>[\\w.]+)` makes the engine save a start mark when it enters each group and an end mark when it leaves. The Match object keeps these index pairs; `m.group('user')` slices the original string with them, and `m.span('host')` shows the raw positions.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "user": "span (0, 4) -> 'asha'",
+              "host": "span (5, 16) -> 'example.com'"
+            },
+            "label": "re.match on 'asha@example.com'"
+          }
+        }
+      },
+      {
+        "title": "Lookahead peeks without moving",
+        "body": "`\\d+(?= rupees)` matches digits only if ' rupees' follows. At the end of the digits the engine runs the lookahead sub-pattern at that position; if it succeeds, the engine returns to the same position and continues. The text ' rupees' is checked but not part of the match.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "match \\d+",
+                "detail": "'250' consumed"
+              },
+              {
+                "label": "run (?= rupees)",
+                "detail": "check ahead, no consumption"
+              },
+              {
+                "label": "success",
+                "detail": "position unchanged"
+              },
+              {
+                "label": "result",
+                "detail": "'250'"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Lookbehind checks backwards",
+        "body": "`(?<=Rs\\.)\\d+` steps back from the current position and checks that 'Rs.' ends exactly here. Python's re requires lookbehind to have a fixed width so it knows how far to step back; `(?<=a+)` raises an error. Negative versions `(?!...)` and `(?<!...)` succeed when the sub-pattern fails."
+      },
+      {
+        "title": "re.sub builds the result in pieces",
+        "body": "`re.sub(r'(\\d+)-(\\d+)', r'\\2-\\1', text)` scans left to right for non-overlapping matches. For each one it appends the text before the match, then the replacement with `\\2` and `\\1` filled from the groups. After the last match it appends the remainder and joins everything into a new string.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "re.sub(r'(\\d+)-(\\d+)', r'\\2-\\1', 'a 10-20 b 3-4')",
+            "highlightSequence": [
+              1,
+              1,
+              1
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Gap 'a ' copied; match '10-20' becomes '20-10'."
+              },
+              {
+                "description": "Gap ' b ' copied; match '3-4' becomes '4-3'."
+              },
+              {
+                "description": "No more matches: join pieces -> 'a 20-10 b 4-3'."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Compiled patterns save the parse",
+        "body": "Inside a loop, `PHONE = re.compile(...)` defined once and reused avoids even the cache lookup and keeps the pattern in one named place. The compiled object also offers `finditer`, which yields Match objects lazily."
+      }
+    ],
+    "takeaway": "Groups are bookmarks into the original string, lookarounds are checks that do not move the cursor, and sub is a scan that copies gaps and builds replacements. With those three ideas, advanced patterns become predictable."
   }
 }

@@ -50,5 +50,87 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "phases = [\n    {\"name\": \"pilot\", \"users\": 50},\n    {\"name\": \"department\", \"users\": 800},\n    {\"name\": \"company\", \"users\": 12000},\n]\ngates = {\"weekly_active\": 0.6, \"csat\": 4.0, \"incidents\": 0}\nmetrics = {\n    \"pilot\": {\"weekly_active\": 0.72, \"csat\": 4.4, \"incidents\": 0},\n    \"department\": {\"weekly_active\": 0.55, \"csat\": 4.1, \"incidents\": 1},\n}\n\nrolled_out = []\nfor phase in phases:\n    m = metrics.get(phase[\"name\"])\n    rolled_out.append(phase[\"name\"])\n    if m is None:\n        break\n    passed = (m[\"weekly_active\"] >= gates[\"weekly_active\"] and m[\"csat\"] >= gates[\"csat\"]\n              and m[\"incidents\"] <= gates[\"incidents\"])\n    if not passed:\n        print(f\"hold at {phase['name']}: fix adoption and incidents first\")\n        break\nprint(\"reached:\", rolled_out)\n"
+  "uth_example": "phases = [\n    {\"name\": \"pilot\", \"users\": 50},\n    {\"name\": \"department\", \"users\": 800},\n    {\"name\": \"company\", \"users\": 12000},\n]\ngates = {\"weekly_active\": 0.6, \"csat\": 4.0, \"incidents\": 0}\nmetrics = {\n    \"pilot\": {\"weekly_active\": 0.72, \"csat\": 4.4, \"incidents\": 0},\n    \"department\": {\"weekly_active\": 0.55, \"csat\": 4.1, \"incidents\": 1},\n}\n\nrolled_out = []\nfor phase in phases:\n    m = metrics.get(phase[\"name\"])\n    rolled_out.append(phase[\"name\"])\n    if m is None:\n        break\n    passed = (m[\"weekly_active\"] >= gates[\"weekly_active\"] and m[\"csat\"] >= gates[\"csat\"]\n              and m[\"incidents\"] <= gates[\"incidents\"])\n    if not passed:\n        print(f\"hold at {phase['name']}: fix adoption and incidents first\")\n        break\nprint(\"reached:\", rolled_out)\n",
+  "under_the_hood": {
+    "summary": "Rate limits are enforced per window and return 429; a resilient client retries with exponential backoff and random jitter inside a retry budget, a circuit breaker stops calling a failing provider and fails over, and non-urgent work goes through a queue.",
+    "steps": [
+      {
+        "title": "Limits are enforced per window",
+        "body": "Providers cap requests and tokens per minute (and sometimes per day) per key, project or deployment. Once the window's budget is used, extra requests get HTTP 429, often with a Retry-After header."
+      },
+      {
+        "title": "Backoff with full jitter",
+        "body": "After a failure, wait a random time between 0 and min(cap, base x 2^attempt). Randomness spreads clients out so they do not all retry at the same instant and cause a second spike.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "attempt 0: wait random(0, 1 s)",
+              "attempt 1: wait random(0, 2 s)",
+              "attempt 2: wait random(0, 4 s)",
+              "attempt 5: wait random(0, 30 s)  (capped)",
+              "retry budget used -> give up, return graceful error"
+            ],
+            "caption": "Backoff schedule, base 1 s, cap 30 s"
+          }
+        }
+      },
+      {
+        "title": "Circuit breakers stop hammering",
+        "body": "If a provider keeps failing, the breaker opens: calls fail fast or go to a fallback provider without waiting. After a pause it lets a few test calls through (half-open); if they succeed it closes again.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Closed (normal)",
+              "Open (fail fast / fallback)",
+              "Half-open (test calls)"
+            ],
+            "edges": [
+              {
+                "from": "Closed (normal)",
+                "to": "Open (fail fast / fallback)"
+              },
+              {
+                "from": "Open (fail fast / fallback)",
+                "to": "Half-open (test calls)"
+              },
+              {
+                "from": "Half-open (test calls)",
+                "to": "Closed (normal)"
+              },
+              {
+                "from": "Half-open (test calls)",
+                "to": "Open (fail fast / fallback)"
+              }
+            ],
+            "description": "Circuit breaker states"
+          }
+        }
+      },
+      {
+        "title": "Queue what can wait",
+        "body": "Reports, bulk summaries and enrichment go into a queue drained at a steady rate below the limit, or into a provider batch API, leaving live capacity for users."
+      },
+      {
+        "title": "Upgrades go through an eval gate",
+        "body": "Before moving a use case to a new model version, run its regression eval set. Ship only if scores hold, and keep the old version routable until the new one has proven itself in production.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Swap and hope",
+              "code": "new version for everyone\nregressions found by users"
+            },
+            "right": {
+              "label": "Eval gate",
+              "code": "regression suite passes first\nthen gradual traffic shift"
+            },
+            "description": "Model upgrade"
+          }
+        }
+      }
+    ],
+    "takeaway": "Assume 429s and outages will happen. Backoff with jitter, a retry budget, a circuit breaker and a queue turn them from incidents into slight delays."
+  }
 }

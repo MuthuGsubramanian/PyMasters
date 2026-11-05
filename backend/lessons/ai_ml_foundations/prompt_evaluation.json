@@ -325,5 +325,113 @@
       "correct": 3
     }
   ],
-  "uth_example": "import json\n\ntest_cases = [(\"I love this phone\", \"positive\"), (\"Battery died in a day\", \"negative\"),\n              (\"It arrived on Tuesday\", \"neutral\")]\n\ndef prompt_v1(text):                     # fake LLM behind prompt version 1\n    return \"positive\" if \"love\" in text else \"negative\"\n\ndef prompt_v2(text):                     # version 2 asks for JSON with a neutral option\n    label = \"positive\" if \"love\" in text else \"negative\" if \"died\" in text else \"neutral\"\n    return json.dumps({\"sentiment\": label, \"score\": 0.9})\n\nresults = {}\nfor name, fn in [(\"v1\", prompt_v1), (\"v2\", prompt_v2)]:\n    passed = 0\n    for text, expected in test_cases:\n        out = fn(text)\n        label = json.loads(out)[\"sentiment\"] if out.startswith(\"{\") else out\n        passed += label == expected\n    results[name] = round(passed / len(test_cases), 2)\nprint(results)\n"
+  "uth_example": "import json\n\ntest_cases = [(\"I love this phone\", \"positive\"), (\"Battery died in a day\", \"negative\"),\n              (\"It arrived on Tuesday\", \"neutral\")]\n\ndef prompt_v1(text):                     # fake LLM behind prompt version 1\n    return \"positive\" if \"love\" in text else \"negative\"\n\ndef prompt_v2(text):                     # version 2 asks for JSON with a neutral option\n    label = \"positive\" if \"love\" in text else \"negative\" if \"died\" in text else \"neutral\"\n    return json.dumps({\"sentiment\": label, \"score\": 0.9})\n\nresults = {}\nfor name, fn in [(\"v1\", prompt_v1), (\"v2\", prompt_v2)]:\n    passed = 0\n    for text, expected in test_cases:\n        out = fn(text)\n        label = json.loads(out)[\"sentiment\"] if out.startswith(\"{\") else out\n        passed += label == expected\n    results[name] = round(passed / len(test_cases), 2)\nprint(results)\n",
+  "under_the_hood": {
+    "summary": "Prompt evaluation runs the same prompt over a fixed set of test cases, scores each output with code or a rubric, repeats runs to measure consistency, and compares versions on identical cases.",
+    "steps": [
+      {
+        "title": "Build a test set first",
+        "body": "Each case pairs an input with what a good output must satisfy: an exact label, a required field, a fact that must appear. Twenty to fifty varied cases, including awkward ones, catch far more than trying a prompt by hand three times."
+      },
+      {
+        "title": "Score with the cheapest reliable check",
+        "body": "Exact match works for labels. json.loads plus key checks verify format. A regular expression can confirm a date pattern. For open-ended quality, a second model can grade against a written rubric (LLM-as-judge), which should itself be spot-checked against human ratings.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "test case input",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "call model with prompt v1",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "score: exact / format / rubric",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "record pass or fail",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "pass rate over all cases",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One evaluation pass"
+          }
+        }
+      },
+      {
+        "title": "Repeat to measure consistency",
+        "body": "With temperature above 0 the same input can give different outputs. Run each case several times, say 5, and measure how often the answers agree. A prompt that passes 4 of 5 runs per case is less dependable than its average score suggests."
+      },
+      {
+        "title": "Small samples are noisy",
+        "body": "With 20 cases a 90% pass rate has a standard error of sqrt(0.9 x 0.1 / 20), about 0.067, so the true rate could plausibly be anywhere from about 77% to 100%. Prompt A at 18/20 versus B at 16/20 is not a clear win; add cases before deciding.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "cases",
+                "value": 20
+              },
+              {
+                "variable": "pass rate",
+                "value": 0.9
+              },
+              {
+                "variable": "std error",
+                "value": 0.067
+              },
+              {
+                "variable": "rough 95% range",
+                "value": "0.77 - 1.0"
+              }
+            ],
+            "caption": "How sure is a 90% score?"
+          }
+        }
+      },
+      {
+        "title": "Compare versions on the same cases",
+        "body": "Change one thing per version and rerun the full set, so any difference is caused by the change. Keep the failing outputs: reading them shows whether failures are format slips, wrong facts or misunderstood instructions, and points to the next fix."
+      }
+    ],
+    "takeaway": "Treat prompts like code with tests: a fixed case set, automatic checks, repeated runs and version comparisons. Without them, 'this prompt works' just means it worked the few times you looked."
+  }
 }

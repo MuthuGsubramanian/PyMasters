@@ -350,5 +350,79 @@
     "path_memberships": [
       "supervised_learning"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Naive Bayes multiplies the class's prior probability by the probability of each observed feature given that class, as if the features were independent, and picks the class with the larger product.",
+    "steps": [
+      {
+        "title": "Bayes' rule flips the question",
+        "body": "We want P(spam | words) but can count P(words | spam) from training emails. Bayes' rule links them: P(spam | words) = P(words | spam) * P(spam) / P(words). The denominator is the same for every class, so comparing the numerators is enough."
+      },
+      {
+        "title": "The naive step: multiply per word",
+        "body": "Assuming words are independent given the class, P(words | spam) is the product of each word's own probability. That is rarely exactly true, since 'free' and 'offer' travel together, but it turns an impossible table of word combinations into one small table per word.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "free",
+                0.3,
+                0.02
+              ],
+              [
+                "click",
+                0.2,
+                0.01
+              ],
+              [
+                "meeting",
+                0.01,
+                0.1
+              ]
+            ],
+            "labels": [
+              "word",
+              "word",
+              "word"
+            ],
+            "caption": "Learned P(word | spam) and P(word | ham)"
+          }
+        }
+      },
+      {
+        "title": "Worked: 'free click'",
+        "body": "With priors P(spam) = 0.4 and P(ham) = 0.6: spam score = 0.4 x 0.30 x 0.20 = 0.024 and ham score = 0.6 x 0.02 x 0.01 = 0.00012. Normalising, P(spam | email) = 0.024 / 0.02412 = 0.995. The two spammy words outweigh the higher ham prior.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "spam score",
+                "value": 0.024
+              },
+              {
+                "variable": "ham score",
+                "value": 0.00012
+              },
+              {
+                "variable": "P(spam | email)",
+                "value": 0.995
+              }
+            ],
+            "caption": "Compare and normalise"
+          }
+        }
+      },
+      {
+        "title": "Smoothing and logs keep it stable",
+        "body": "A word never seen in ham would get probability 0 and wipe out the whole product. Laplace smoothing adds 1 to every count: (count + 1) / (total + vocabulary size), the alpha=1.0 default of MultinomialNB. Products of hundreds of small numbers underflow, so the implementation adds log probabilities instead."
+      },
+      {
+        "title": "Variants differ in the per-feature model",
+        "body": "MultinomialNB uses word counts, BernoulliNB uses present/absent flags, and GaussianNB treats each numeric feature as a normal curve with a per-class mean and variance. Training is just counting or averaging once over the data, which is why Naive Bayes trains almost instantly."
+      }
+    ],
+    "takeaway": "Naive Bayes is counting plus Bayes' rule. The independence assumption makes its probabilities overconfident, but the ranking of classes is often right, which is why it remains a strong, fast baseline for text."
   }
 }

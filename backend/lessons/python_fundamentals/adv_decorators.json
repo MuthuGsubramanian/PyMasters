@@ -309,5 +309,107 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "`@timer` above a def is shorthand for `func = timer(func)`: at definition time the decorator receives the function and returns a wrapper that holds the original in a closure.",
+    "steps": [
+      {
+        "title": "The @ line runs once, at definition",
+        "body": "When Python executes `@timer` followed by `def slow():`, it first builds the function object for `slow`, then calls `timer(slow)` and binds the name `slow` to whatever `timer` returns. No wrapping happens at call time; it already happened when the module loaded.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "With @",
+              "code": "@timer\ndef slow():\n    ..."
+            },
+            "right": {
+              "label": "What Python does",
+              "code": "def slow():\n    ...\nslow = timer(slow)"
+            }
+          }
+        }
+      },
+      {
+        "title": "The decorator builds a wrapper",
+        "body": "Inside `timer`, `def wrapper(*args, **kwargs):` creates a new function each time `timer` is called. The wrapper refers to `func`, a local of `timer`, so Python stores `func` in a closure cell attached to the wrapper (`wrapper.__closure__`).",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "name",
+                "label": "name slow"
+              },
+              {
+                "id": "wrap",
+                "label": "wrapper function"
+              },
+              {
+                "id": "cell",
+                "label": "closure cell: func"
+              },
+              {
+                "id": "orig",
+                "label": "original slow"
+              }
+            ],
+            "edges": [
+              {
+                "from": "name",
+                "to": "wrap",
+                "label": "now points to"
+              },
+              {
+                "from": "wrap",
+                "to": "cell",
+                "label": "__closure__"
+              },
+              {
+                "from": "cell",
+                "to": "orig",
+                "label": "holds"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Calling goes through the wrapper",
+        "body": "`slow()` now calls `wrapper()`. It runs the extra code (start a timer), calls the original through the cell with the same arguments, runs more extra code (print the time) and returns the original's result. `*args, **kwargs` let one wrapper fit any signature.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "slow()",
+                "detail": "really calls wrapper"
+              },
+              {
+                "label": "before",
+                "detail": "start = perf_counter()"
+              },
+              {
+                "label": "func(*args, **kwargs)",
+                "detail": "original runs"
+              },
+              {
+                "label": "after",
+                "detail": "print elapsed; return result"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Metadata needs functools.wraps",
+        "body": "Without help, `slow.__name__` becomes 'wrapper' and its docstring is lost. Decorating the wrapper with `@functools.wraps(func)` copies `__name__`, `__doc__`, `__module__` and more from the original and sets `__wrapped__` so tools can find it."
+      },
+      {
+        "title": "Stacked decorators wrap from the bottom up",
+        "body": "With `@a` above `@b` above `def f`, Python computes `f = a(b(f))`. The decorator nearest to `def` wraps first, so at call time `a`'s wrapper runs first, then `b`'s, then `f`."
+      }
+    ],
+    "takeaway": "A decorator is just a function call made at definition time. Once you see `f = deco(f)` and the closure cell holding the original, every decorator pattern, from logging to caching, is readable."
+  }
 }

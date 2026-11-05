@@ -34,5 +34,86 @@
   ],
   "tags": {"concepts_taught": ["infrastructure_as_code", "multi_cloud_strategy"], "concepts_required": ["cloud_fundamentals", "functions"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "stack = [\n    {\"name\": \"api\", \"kind\": \"k8s_deployment\"},\n    {\"name\": \"queue\", \"kind\": \"aws_sqs_queue\"},\n    {\"name\": \"db\", \"kind\": \"aws_rds_postgres\"},\n    {\"name\": \"secrets\", \"kind\": \"aws_secretsmanager\"},\n]\ngcp_equivalent = {\"aws_sqs_queue\": \"google_pubsub_topic\",\n                  \"aws_rds_postgres\": \"google_sql_database\",\n                  \"aws_secretsmanager\": \"google_secret_manager\"}\n\nplan = []\nfor item in stack:\n    if item[\"kind\"].startswith(\"k8s_\"):\n        plan.append((item[\"name\"], \"move as-is\"))\n    else:\n        target = gcp_equivalent[item[\"kind\"]]\n        plan.append((item[\"name\"], f\"rewrite as {target} + app changes\"))\n\ntax = sum(1 for _, action in plan if action.startswith(\"rewrite\"))\nfor name, action in plan:\n    print(f\"{name:8} {action}\")\nprint(f\"abstraction tax: {tax} of {len(stack)} components need rework\")\n"
+  "uth_example": "stack = [\n    {\"name\": \"api\", \"kind\": \"k8s_deployment\"},\n    {\"name\": \"queue\", \"kind\": \"aws_sqs_queue\"},\n    {\"name\": \"db\", \"kind\": \"aws_rds_postgres\"},\n    {\"name\": \"secrets\", \"kind\": \"aws_secretsmanager\"},\n]\ngcp_equivalent = {\"aws_sqs_queue\": \"google_pubsub_topic\",\n                  \"aws_rds_postgres\": \"google_sql_database\",\n                  \"aws_secretsmanager\": \"google_secret_manager\"}\n\nplan = []\nfor item in stack:\n    if item[\"kind\"].startswith(\"k8s_\"):\n        plan.append((item[\"name\"], \"move as-is\"))\n    else:\n        target = gcp_equivalent[item[\"kind\"]]\n        plan.append((item[\"name\"], f\"rewrite as {target} + app changes\"))\n\ntax = sum(1 for _, action in plan if action.startswith(\"rewrite\"))\nfor name, action in plan:\n    print(f\"{name:8} {action}\")\nprint(f\"abstraction tax: {tax} of {len(stack)} components need rework\")\n",
+  "under_the_hood": {
+    "summary": "Kubernetes standardises the API you declare against, but each cloud fills in load balancers, disks and identity with its own controllers; Terraform standardises the plan-apply-state workflow, but every resource type is provider-specific.",
+    "steps": [
+      {
+        "title": "Kubernetes: same API, provider controllers",
+        "body": "A Deployment manifest runs the same on EKS, AKS and GKE because the API and scheduler are conformant. But a Service of type LoadBalancer is fulfilled by each cloud's controller, which creates that cloud's load balancer.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Portable",
+              "code": "Deployment, Service, ConfigMap\nsame behaviour on every cluster"
+            },
+            "right": {
+              "label": "Provider-specific",
+              "code": "LoadBalancer annotations, StorageClass,\ningress class, workload identity"
+            },
+            "description": "Same manifest, different implementation"
+          }
+        }
+      },
+      {
+        "title": "Storage and identity leak through",
+        "body": "A PersistentVolumeClaim with storageClassName gp3 maps to an AWS EBS CSI driver; on Azure it would need a managed-disk class. Pod identity is IRSA or Pod Identity on EKS, workload identity on AKS and GKE, each with different annotations."
+      },
+      {
+        "title": "Terraform: one workflow",
+        "body": "Terraform reads your configuration, refreshes state from the real resources, computes a plan of creates, updates and deletes, and applies it. That workflow and the state model are identical on every cloud.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Configuration (.tf)",
+                "type": "input"
+              },
+              {
+                "label": "Refresh state from cloud APIs",
+                "type": "process"
+              },
+              {
+                "label": "Diff desired vs actual",
+                "type": "process"
+              },
+              {
+                "label": "Plan: + create, ~ update, - destroy",
+                "type": "process"
+              },
+              {
+                "label": "Apply, write new state",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Terraform's loop"
+          }
+        }
+      },
+      {
+        "title": "Resources are not portable",
+        "body": "aws_instance, azurerm_linux_virtual_machine and google_compute_instance are different resources with different arguments. Moving clouds means rewriting modules; what moves is the people's skill with the workflow.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "AWS": "aws_instance (ami, instance_type)",
+              "Azure": "azurerm_linux_virtual_machine (size, source_image_reference)",
+              "GCP": "google_compute_instance (machine_type, boot_disk)"
+            },
+            "caption": "The 'same' VM in three providers"
+          }
+        }
+      },
+      {
+        "title": "Measure portability",
+        "body": "Count which manifests and modules would change to move a workload. Each provider-specific item is part of the abstraction tax you are, or are not, willing to pay."
+      }
+    ],
+    "takeaway": "Portability is a gradient, not a yes/no. Know which layers are standard and which are provider glue, and only abstract the glue when a real move is likely."
+  }
 }

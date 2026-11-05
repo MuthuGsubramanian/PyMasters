@@ -167,5 +167,91 @@
     "category": "debugging",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A traceback lists the frames the exception passed through, from the outermost call down to the line that raised; each entry shows file, line, function and source, and the last line names the exception type and message.",
+    "steps": [
+      {
+        "title": "Built while the exception unwinds",
+        "body": "When `record['email']` raises KeyError inside `load_user`, Python creates the exception and starts unwinding. Each frame it passes through, `load_user` then the module, is recorded on the exception's traceback. With no handler, the interpreter prints it and exits.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "load_user",
+                "variables": {
+                  "record": "{'name': 'Ada'}",
+                  "raises": "KeyError('email')"
+                }
+              },
+              {
+                "name": "<module>",
+                "variables": {
+                  "data": "{'name': 'Ada'}",
+                  "calling": "load_user(data)"
+                }
+              }
+            ],
+            "caption": "Frames at the moment of the error"
+          }
+        }
+      },
+      {
+        "title": "Most recent call last",
+        "body": "The header 'Traceback (most recent call last):' tells you the order: the first entry is the outermost call (your script), each next entry is one call deeper, and the last entry is the line where the exception was raised. So you read it from the bottom up.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "Traceback (most recent call last):",
+              "  File \"app.py\", line 5, in <module>",
+              "    print(load_user(data))",
+              "          ^^^^^^^^^^^^^^^",
+              "  File \"app.py\", line 2, in load_user",
+              "    return record[\"email\"]",
+              "           ~~~~~~^^^^^^^^^",
+              "KeyError: 'email'"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Each entry has four parts",
+        "body": "File name, line number, function name, and the source line read from disk. CPython 3.11 adds the markers under the line (PEP 657), using column positions stored in the code object, so you can see exactly which sub-expression failed: here the `[\"email\"]` subscript."
+      },
+      {
+        "title": "The last line is the diagnosis",
+        "body": "`KeyError: 'email'` gives the exception class and its message. Start there, then go up to the deepest frame that is your code, not a library: that is usually where the wrong value was used. Further up you find who passed it in.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "read last line",
+                "detail": "KeyError: 'email'"
+              },
+              {
+                "label": "deepest frame in your code",
+                "detail": "load_user, line 2"
+              },
+              {
+                "label": "go up one frame",
+                "detail": "who called it with what"
+              },
+              {
+                "label": "form a hypothesis",
+                "detail": "data has no 'email' key"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Chained tracebacks",
+        "body": "If the error happened while handling another one, you see two tracebacks joined by 'During handling of the above exception...' or 'The above exception was the direct cause...'. The top one is the original problem; the bottom one is what finally escaped."
+      }
+    ],
+    "takeaway": "A traceback is the call stack written out at the moment of failure. Read the last line, find your deepest frame, and climb upward to see how the bad value got there."
+  }
 }

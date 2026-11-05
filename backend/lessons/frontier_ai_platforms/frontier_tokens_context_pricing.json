@@ -49,5 +49,102 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Text is split into tokens by a learned vocabulary, every token in the context window is processed on each call, output is generated one token at a time, and the bill is input tokens times one rate plus output tokens times a higher rate, so resent history makes cost grow fast.",
+    "steps": [
+      {
+        "title": "Tokenisation",
+        "body": "A tokenizer splits text into sub-word pieces from a fixed vocabulary built with methods like byte-pair encoding. Common English words are often one token; rare words and many non-English scripts take several. A rough rule for English is about 4 characters per token.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "list",
+            "data": [
+              "Token",
+              "ization",
+              " is",
+              " un",
+              "believ",
+              "able"
+            ],
+            "caption": "'Tokenization is unbelievable' split into tokens (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Input is read in parallel, output one at a time",
+        "body": "The model processes all input tokens together in one pass. Output is generated token by token, each step reading everything before it. That is why output tokens are priced higher and why long answers take longer.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "System + history + question (input)",
+                "type": "input"
+              },
+              {
+                "label": "Process all input tokens",
+                "type": "process"
+              },
+              {
+                "label": "Generate token 1",
+                "type": "process"
+              },
+              {
+                "label": "Generate token 2 ... N (one at a time)",
+                "type": "process"
+              },
+              {
+                "label": "Bill: input x in-rate + output x out-rate",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "One call"
+          }
+        }
+      },
+      {
+        "title": "The window holds everything",
+        "body": "The context window is the maximum input plus output for one call. Every call is stateless: the system prompt and the whole conversation are sent again each turn and billed again each turn."
+      },
+      {
+        "title": "History growth adds up",
+        "body": "If each turn adds 500 tokens and you resend all history, turn 10 sends about 5,000 input tokens, and the first 10 turns together send about 27,500. Summarising or trimming history keeps this in check.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "turn 1:   500",
+              "turn 2:  1,000",
+              "turn 5:  2,500",
+              "turn 10: 5,000",
+              "sum of turns 1-10: 27,500 input tokens"
+            ],
+            "caption": "Input tokens when resending history (500 per turn)"
+          }
+        }
+      },
+      {
+        "title": "Levers on the bill",
+        "body": "Prompt caching charges less for a repeated prefix; batch APIs charge less for non-urgent work; a smaller tier cuts both rates; capping max output tokens bounds the expensive side.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "No caching",
+              "code": "full input rate\nfor the prefix, every call"
+            },
+            "right": {
+              "label": "Prompt caching",
+              "code": "prefix cached after first call\nlater calls read it at a lower rate"
+            },
+            "description": "Two ways to send a long system prompt"
+          }
+        }
+      }
+    ],
+    "takeaway": "Count tokens per call and per conversation, not per message. Most surprise bills come from resending context, so trim, cache and pick the tier deliberately."
+  }
 }

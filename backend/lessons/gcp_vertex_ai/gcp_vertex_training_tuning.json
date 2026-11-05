@@ -41,5 +41,99 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A Vertex custom training job provisions the machines in your worker pool specs, runs your container on them as a service account, tells it where to write the model, then releases the machines; tuning jobs repeat this as trials guided by Vizier.",
+    "steps": [
+      {
+        "title": "Submit a job description",
+        "body": "A CustomJob lists worker pool specs: machine type, accelerators, replica count and a container image or Python package with arguments. Nothing runs on your laptop; Vertex schedules the machines.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "workerPoolSpecs[0]": "a2-highgpu-1g x 1, image train:v3",
+              "args": "--epochs=10 --lr=0.001",
+              "serviceAccount": "trainer@proj.iam",
+              "baseOutputDirectory": "gs://ml/runs/42"
+            },
+            "caption": "A CustomJob, simplified"
+          }
+        }
+      },
+      {
+        "title": "Vertex provisions and runs",
+        "body": "Vertex starts the machines, pulls your image and runs it as the job's service account. It sets environment variables such as AIP_MODEL_DIR, which tells your code where in Cloud Storage to save the model. Logs stream to Cloud Logging.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Submit CustomJob",
+                "type": "input"
+              },
+              {
+                "label": "Provision machines + pull image",
+                "type": "process"
+              },
+              {
+                "label": "Run container as service account",
+                "type": "process"
+              },
+              {
+                "label": "Write model to AIP_MODEL_DIR",
+                "type": "process"
+              },
+              {
+                "label": "Job succeeds, machines released",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Lifecycle of a custom job"
+          }
+        }
+      },
+      {
+        "title": "Distributed jobs get a cluster spec",
+        "body": "With several worker pools (chief, workers, parameter servers or reduction servers), Vertex passes each replica a description of the cluster, so the framework knows its role and peers."
+      },
+      {
+        "title": "Tuning is many trials",
+        "body": "A hyperparameter tuning job defines parameter ranges and a metric to optimise. Vizier suggests values for each trial, each trial runs your container, and your code reports the metric back. Vizier uses the results to suggest better values.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "trial 1  lr=0.01   depth=4  -> auc 0.81",
+              "trial 2  lr=0.001  depth=8  -> auc 0.86",
+              "trial 3  lr=0.003  depth=7  -> auc 0.87  <- Vizier refines near the best",
+              "trial 4  stopped early (curve below best)"
+            ],
+            "caption": "Tuning progress (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Foundation-model tuning is different",
+        "body": "Supervised fine-tuning of Gemini uploads a JSONL dataset of example prompts and answers; Vertex trains an adapter for the base model and gives you a tuned model endpoint. You do not manage machines at all.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Custom training",
+              "code": "your code, your container\nyou choose machines"
+            },
+            "right": {
+              "label": "Gemini tuning",
+              "code": "your examples only\nmanaged job, tuned endpoint out"
+            },
+            "description": "Two kinds of training"
+          }
+        }
+      }
+    ],
+    "takeaway": "Custom training is 'rent machines for the length of a job'. Make the code read its config from arguments and environment variables, and you can tune, rerun and scale it without changes."
+  }
 }

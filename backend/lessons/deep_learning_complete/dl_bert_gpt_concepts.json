@@ -403,5 +403,139 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "BERT and GPT use the same transformer blocks but differ in what each token may look at and what it must predict: BERT sees the whole sentence and fills in masked tokens, GPT sees only earlier tokens and predicts the next one at every position.",
+    "steps": [
+      {
+        "title": "The attention mask is the key difference",
+        "body": "For a 4-token input, BERT's mask lets every token attend to all 4. GPT's causal mask is lower-triangular: token 1 sees only itself, token 4 sees tokens 1 to 4. This one matrix decides whether a model reads in both directions or strictly left to right.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                1,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                1,
+                1
+              ]
+            ],
+            "labels": [
+              "tok 1",
+              "tok 2",
+              "tok 3",
+              "tok 4"
+            ],
+            "caption": "BERT: every token may attend to every token (1 = allowed)"
+          }
+        }
+      },
+      {
+        "title": "GPT's causal mask",
+        "body": "The same 4 tokens under GPT's mask: row i has 1s only up to column i. Because no position can see what comes after it, the model can be trained to predict token i + 1 from row i without cheating, and later generate text one token at a time.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                0,
+                0,
+                0
+              ],
+              [
+                1,
+                1,
+                0,
+                0
+              ],
+              [
+                1,
+                1,
+                1,
+                0
+              ],
+              [
+                1,
+                1,
+                1,
+                1
+              ]
+            ],
+            "labels": [
+              "tok 1",
+              "tok 2",
+              "tok 3",
+              "tok 4"
+            ],
+            "highlight": [
+              [
+                3,
+                0
+              ],
+              [
+                3,
+                1
+              ],
+              [
+                3,
+                2
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "caption": "GPT: lower-triangular mask"
+          }
+        }
+      },
+      {
+        "title": "BERT pre-training: masked language modelling",
+        "body": "BERT picks 15% of token positions. Of those, 80% become [MASK], 10% a random token and 10% stay unchanged, so the model cannot rely on seeing [MASK]. The loss is computed only at the chosen positions: 'The [MASK] sat on the mat' should predict 'cat' using words on both sides."
+      },
+      {
+        "title": "GPT pre-training: next token everywhere",
+        "body": "GPT shifts the sequence by one: inputs 'The cat sat on', targets 'cat sat on the'. Every position contributes to the loss, so each sentence gives as many training signals as it has tokens. The same objective then drives generation: predict, append, repeat.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "BERT objective",
+              "code": "loss on ~15% masked positions\nuses left and right context"
+            },
+            "right": {
+              "label": "GPT objective",
+              "code": "loss on every position\nuses left context only"
+            },
+            "caption": "Two pre-training games"
+          }
+        }
+      },
+      {
+        "title": "Fine-tuning attaches a small head",
+        "body": "For classification, BERT's final vector at the [CLS] token goes into a new linear layer, and the whole model is trained briefly on labelled examples with a small learning rate (often around 2e-5). GPT-style models are adapted by prompting, instruction tuning or fine-tuning on example completions."
+      }
+    ],
+    "takeaway": "Same blocks, different mask and objective. Bidirectional masking makes BERT strong at understanding a given text; causal masking makes GPT able to write text, which is why chat models are GPT-style."
   }
 }

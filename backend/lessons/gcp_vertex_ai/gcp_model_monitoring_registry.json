@@ -41,5 +41,70 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "The Model Registry stores each model as numbered versions with aliases that serving points to; Model Monitoring samples logged prediction requests, compares feature distributions with training data or a past window using distance scores, and alerts when a threshold is crossed.",
+    "steps": [
+      {
+        "title": "Versions and aliases",
+        "body": "Uploading a retrained model creates version 4 of model churn. Aliases such as default or champion are pointers you move between versions. Rollback is moving the alias back to version 3.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "version 3": "alias: (none) - previous",
+              "version 4": "alias: default, champion",
+              "version 5": "alias: challenger",
+              "lineage": "training pipeline run, dataset"
+            },
+            "caption": "Registry entry for model 'churn'"
+          }
+        }
+      },
+      {
+        "title": "Prediction requests are sampled and logged",
+        "body": "Monitoring needs data, so the endpoint logs a sample of requests and responses to BigQuery. A monitoring job runs on a schedule over the latest window of logged data."
+      },
+      {
+        "title": "Skew vs drift",
+        "body": "Training-serving skew compares serving feature distributions with the training data. Prediction drift compares the current window with an earlier window of serving data. One catches pipeline bugs, the other catches a changing world.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Skew",
+              "code": "baseline: training data\nfinds: feature pipeline mismatch"
+            },
+            "right": {
+              "label": "Drift",
+              "code": "baseline: last week's traffic\nfinds: the world changed"
+            },
+            "description": "Two comparisons"
+          }
+        }
+      },
+      {
+        "title": "A distance score per feature",
+        "body": "For each feature, the job builds a distribution and computes a distance, for example Jensen-Shannon divergence for numeric features or L-infinity for categorical ones. If the score exceeds that feature's threshold, an alert fires.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "feature        distance   threshold   status",
+              "tenure_months  0.04       0.10        ok",
+              "plan_type      0.23       0.15        ALERT",
+              "avg_spend      0.08       0.10        ok"
+            ],
+            "caption": "One monitoring run (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Respond with the registry",
+        "body": "An alert triggers triage: is plan_type broken upstream, or did customers change? Retrain on fresh data, evaluate against the champion, and if better, move the alias, all recorded with lineage."
+      }
+    ],
+    "takeaway": "Monitoring detects that inputs changed; it does not tell you accuracy dropped. Pair it with delayed ground-truth evaluation, and keep rollback as cheap as moving an alias."
+  }
 }

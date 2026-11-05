@@ -448,5 +448,103 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A decorator replaces a function object with whatever the decorator returns; functools.wraps then copies the original's name, docstring and other metadata onto the wrapper and records the original in __wrapped__.",
+    "steps": [
+      {
+        "title": "Functions are values you can pass",
+        "body": "`def greet(): ...` creates a function object bound to the name `greet`. You can pass it to another function, store it, or return it, without calling it. A decorator is any callable that accepts such an object and returns a replacement.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "greet",
+                "label": "name greet"
+              },
+              {
+                "id": "fobj",
+                "label": "function object"
+              },
+              {
+                "id": "code",
+                "label": "__code__"
+              },
+              {
+                "id": "meta",
+                "label": "__name__, __doc__"
+              }
+            ],
+            "edges": [
+              {
+                "from": "greet",
+                "to": "fobj",
+                "label": "bound to"
+              },
+              {
+                "from": "fobj",
+                "to": "code",
+                "label": "has"
+              },
+              {
+                "from": "fobj",
+                "to": "meta",
+                "label": "has"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The @ line rebinds the name",
+        "body": "`@log` above `def greet` compiles to: create the function, call `log(greet_function)`, bind the result to `greet`. From then on the name refers to the wrapper. The original function still exists, kept alive by the wrapper's closure."
+      },
+      {
+        "title": "The wrapper loses identity",
+        "body": "A plain wrapper is a different function, so `greet.__name__` is now 'wrapper', `greet.__doc__` is the wrapper's docstring (often None), and `help(greet)` shows the wrong signature. Logs and tracebacks then name the wrong function.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Without @wraps",
+              "code": "greet.__name__  -> 'wrapper'\ngreet.__doc__   -> None"
+            },
+            "right": {
+              "label": "With @wraps(func)",
+              "code": "greet.__name__  -> 'greet'\ngreet.__doc__   -> 'Say hello.'\ngreet.__wrapped__ -> original"
+            }
+          }
+        }
+      },
+      {
+        "title": "What functools.wraps copies",
+        "body": "`@functools.wraps(func)` calls `update_wrapper`, which copies `__module__`, `__name__`, `__qualname__`, `__doc__` and `__annotations__` from the original, merges the original's `__dict__` into the wrapper's, and sets `wrapper.__wrapped__ = func`.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "update_wrapper(wrapper, func)",
+                "detail": "copy name, qualname, doc, module, annotations"
+              },
+              {
+                "label": "merge __dict__",
+                "detail": "custom attributes carried over"
+              },
+              {
+                "label": "set __wrapped__",
+                "detail": "link to the original"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "__wrapped__ lets tools see through",
+        "body": "`inspect.signature(greet)` follows `__wrapped__` and reports the original parameters. `inspect.unwrap(greet)` returns the undecorated function, which is handy in tests when you want to call the original directly."
+      }
+    ],
+    "takeaway": "The @ syntax only rebinds a name. Always add @functools.wraps to your wrapper so the replacement still looks like the original to people, logs and tools."
   }
 }

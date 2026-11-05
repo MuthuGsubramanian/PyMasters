@@ -200,5 +200,112 @@
       "correct": 2
     }
   ],
-  "uth_example": "banned_list = [\"u3\", \"u7\", \"u9\", \"u12\"]\nbanned_set = set(banned_list)\n\nrequests = [\"u1\", \"u7\", \"u3\", \"u5\", \"u12\"]\nchecks = {\"list\": 0, \"set\": 0}\n\nblocked = []\nfor user in requests:\n    for b in banned_list:                 # list: scan item by item\n        checks[\"list\"] += 1\n        if b == user:\n            break\n    checks[\"set\"] += 1                    # set: one hash lookup\n    if user in banned_set:\n        blocked.append(user)\n\nprint(\"blocked:\", blocked, \"comparisons:\", checks)\n"
+  "uth_example": "banned_list = [\"u3\", \"u7\", \"u9\", \"u12\"]\nbanned_set = set(banned_list)\n\nrequests = [\"u1\", \"u7\", \"u3\", \"u5\", \"u12\"]\nchecks = {\"list\": 0, \"set\": 0}\n\nblocked = []\nfor user in requests:\n    for b in banned_list:                 # list: scan item by item\n        checks[\"list\"] += 1\n        if b == user:\n            break\n    checks[\"set\"] += 1                    # set: one hash lookup\n    if user in banned_set:\n        blocked.append(user)\n\nprint(\"blocked:\", blocked, \"comparisons:\", checks)\n",
+  "under_the_hood": {
+    "summary": "`x in a_list` compares x with each element using == until one matches, while `x in a_set` computes hash(x) once, jumps to one slot and usually does a single comparison; building the set is a one-time O(n) cost repaid after a handful of lookups.",
+    "steps": [
+      {
+        "title": "A list check is a scan",
+        "body": "For `request_id in bad_ids` with a 10,000-item list, Python starts at index 0 and compares (first by identity, then with ==) item after item. A missing ID, the common case for a blocklist, costs all 10,000 comparisons.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "9001",
+              "4417",
+              "8823",
+              "...",
+              "1032",
+              "7750"
+            ],
+            "highlight": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "label": "missing id: every slot compared"
+          }
+        }
+      },
+      {
+        "title": "A set check is a jump",
+        "body": "With a set, Python calls `hash(request_id)`. For ints the hash is essentially the number itself; a str computes its hash once and stores it inside the string object, so later lookups reuse it. The hash picks a slot, and Python compares only what is stored there, plus a few more slots after a collision.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "hash(x)",
+                "detail": "cached for str, cheap for int"
+              },
+              {
+                "label": "slot = hash & mask",
+                "detail": "one array index"
+              },
+              {
+                "label": "compare stored key",
+                "detail": "== only if hashes match"
+              },
+              {
+                "label": "result",
+                "detail": "True / False"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Multiply by the request count",
+        "body": "One million requests against a 10,000-item list is up to 10,000,000,000 comparisons. Against a set it is about one million hash-and-probe steps. The lookup code is identical; only the container changed.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "list: comparisons",
+                "values": [
+                  "up to 10,000 per check",
+                  "up to 10,000,000,000 total"
+                ]
+              },
+              {
+                "variable": "set: probes",
+                "values": [
+                  "about 1 per check",
+                  "about 1,000,000 total"
+                ]
+              }
+            ],
+            "caption": "10,000 bad ids, 1,000,000 requests"
+          }
+        }
+      },
+      {
+        "title": "Building the set costs once",
+        "body": "`bad = set(bad_list)` hashes all 10,000 items once. If you only check two or three IDs, the scan may be cheaper than building the set. If you check thousands, build the set once, outside the loop, and keep reusing it.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Rebuilt every time (slow)",
+              "code": "for r in requests:\n    if r in set(bad_list):\n        block(r)"
+            },
+            "right": {
+              "label": "Built once (fast)",
+              "code": "bad = set(bad_list)\nfor r in requests:\n    if r in bad:\n        block(r)"
+            }
+          }
+        }
+      },
+      {
+        "title": "The rules that come with hashing",
+        "body": "Set members must be hashable, so lists and dicts cannot be stored; use tuples or frozensets. Order is not preserved, and the table keeps empty slots, so a set uses several times more memory than a list of the same items."
+      }
+    ],
+    "takeaway": "For repeated membership tests, a set turns a scan into a jump. Build it once, outside the loop, and every `in` check stays fast no matter how many items you store."
+  }
 }

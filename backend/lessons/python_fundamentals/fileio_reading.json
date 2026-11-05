@@ -245,5 +245,68 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "open() stacks three layers: a raw OS file descriptor, a buffered reader that fetches 8 KB chunks, and a text wrapper that decodes bytes to str and normalises line endings.",
+    "steps": [
+      {
+        "title": "The OS hands out a file descriptor",
+        "body": "`open('books.txt')` asks the operating system to open the file and gets back a small integer, the file descriptor. If the file is missing, this step raises `FileNotFoundError`. The fd is wrapped in an `io.FileIO` object that can read raw bytes.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "FileIO",
+                "detail": "raw bytes from fd 3"
+              },
+              {
+                "label": "BufferedReader",
+                "detail": "8192-byte chunks"
+              },
+              {
+                "label": "TextIOWrapper",
+                "detail": "decode UTF-8, '\\n' newlines"
+              },
+              {
+                "label": "your code",
+                "detail": "str lines"
+              }
+            ],
+            "caption": "The layers inside a text-mode file"
+          }
+        }
+      },
+      {
+        "title": "Reads are buffered",
+        "body": "Asking the OS for data is slow compared to memory access, so a BufferedReader asks for a big chunk at once (`io.DEFAULT_BUFFER_SIZE` is 8192 bytes) and serves small reads from that buffer. Reading a file line by line therefore does not make one system call per line."
+      },
+      {
+        "title": "Bytes are decoded to text",
+        "body": "In text mode a TextIOWrapper decodes the bytes using the encoding: UTF-8 if you pass `encoding='utf-8'`, otherwise a platform default. It also turns '\\r\\n' and '\\r' into '\\n'. Bytes that do not fit the encoding raise `UnicodeDecodeError`. Mode 'rb' skips this layer and gives you bytes.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "open(p, 'r', encoding='utf-8')",
+              "code": "f.read()  -> str\n'line 1\\nline 2\\n'"
+            },
+            "right": {
+              "label": "open(p, 'rb')",
+              "code": "f.read()  -> bytes\nb'line 1\\r\\nline 2\\r\\n'"
+            }
+          }
+        }
+      },
+      {
+        "title": "Iterating reads line by line",
+        "body": "`for line in f:` asks the text layer for the next line; it searches the decoded buffer for '\\n' and refills the buffer from below when needed. Only a small window of the file is in memory, so this works for files far bigger than RAM. `f.read()` instead loads the whole file at once."
+      },
+      {
+        "title": "A file position moves forward",
+        "body": "The file object tracks a position. After `f.read()` the position is at the end, so a second `f.read()` returns ''. `f.seek(0)` moves back to the start. Leaving the with block calls `close()`, which releases the descriptor back to the OS."
+      }
+    ],
+    "takeaway": "A text file is bytes from the OS, read in chunks, decoded into str. Pass encoding='utf-8', loop over the file for big data, and let `with` close it."
+  }
 }

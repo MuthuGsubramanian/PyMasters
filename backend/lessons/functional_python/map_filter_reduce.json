@@ -168,5 +168,86 @@
     "category": "functional",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "map and filter return lazy iterator objects that call your function per item as they are consumed, reduce loops eagerly with an accumulator, and comprehensions do the same work with inline bytecode instead of a function call per item.",
+    "steps": [
+      {
+        "title": "map returns a recipe, not results",
+        "body": "`result = map(lambda n: n * n, [1, 2, 3])` stores the function and an iterator over the list in a map object. `print(result)` shows `<map object at 0x...>` because nothing has run. `list(result)` drives it and gives `[1, 4, 9]`.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> result = map(lambda n: n * n, [1, 2, 3])",
+              ">>> print(result)",
+              "<map object at 0x7f...>",
+              ">>> list(result)",
+              "[1, 4, 9]",
+              ">>> list(result)",
+              "[]"
+            ]
+          }
+        }
+      },
+      {
+        "title": "One item at a time, once",
+        "body": "Each `next()` on the map pulls one item, calls the function and returns the value. filter pulls items until the predicate returns something truthy. Both are single-use: once drained, they stay empty."
+      },
+      {
+        "title": "reduce folds with an accumulator",
+        "body": "`reduce(lambda acc, n: acc + n, [1, 2, 3, 4], 0)` starts with acc = 0 and calls the function for each item, replacing acc with the result each time: 1, 3, 6, 10. Without an initial value, the first item becomes the starting accumulator, and an empty list raises TypeError.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "acc",
+                "values": [
+                  "0",
+                  "1",
+                  "3",
+                  "6",
+                  "10"
+                ],
+                "data_type": "int"
+              },
+              {
+                "variable": "n",
+                "values": [
+                  "start",
+                  "1",
+                  "2",
+                  "3",
+                  "4"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Comprehensions skip the function call",
+        "body": "`[n * n for n in nums]` evaluates `n * n` inline in the loop's bytecode. `map(lambda n: n * n, nums)` makes a Python function call per item, which costs more. map wins when the function is already a fast built-in like `str.upper` or `int`, because then no Python-level call is needed.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Comprehension",
+              "code": "[n * n for n in nums]\n# expression inlined\n[w for w in words if w]"
+            },
+            "right": {
+              "label": "map / filter",
+              "code": "map(lambda n: n * n, nums)\n# a function call per item\nmap(int, strings)  # fast: built-in"
+            }
+          }
+        }
+      },
+      {
+        "title": "Choose by readability",
+        "body": "Use a comprehension for most transforms and filters, map/filter when you already have a named function, and reduce only for real folds. For the common folds, built-ins like `sum`, `max`, `any` and `all` are clearer and faster."
+      }
+    ],
+    "takeaway": "map and filter are lazy iterators, reduce is an accumulator loop, and comprehensions do the same work inline. Pick the one that reads best, remembering laziness means single use."
+  }
 }

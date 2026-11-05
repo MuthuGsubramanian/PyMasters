@@ -370,5 +370,81 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A lambda compiles to an ordinary function object with one expression as its body, and map() and filter() are lazy iterators that call that function one item at a time.",
+    "steps": [
+      {
+        "title": "lambda is a def without a name",
+        "body": "`square = lambda x: x * x` builds the same kind of function object as `def square(x): return x * x`. The only differences: the body must be one expression (its value is returned automatically) and the function's `__name__` is '<lambda>', which is what tracebacks will show.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "lambda",
+              "code": "square = lambda x: x * x\nsquare.__name__  # '<lambda>'"
+            },
+            "right": {
+              "label": "def",
+              "code": "def square(x):\n    return x * x\nsquare.__name__  # 'square'"
+            }
+          }
+        }
+      },
+      {
+        "title": "No statements allowed",
+        "body": "Because the body is a single expression, a lambda cannot contain assignments, `return`, loops or `try`. A conditional expression (`a if cond else b`) works because it is an expression. Anything bigger belongs in a normal `def`."
+      },
+      {
+        "title": "map() returns an iterator",
+        "body": "`map(square, [1, 2, 3])` does not compute anything yet. It returns a map object holding the function and an iterator over the list. Each `next()` pulls one item, calls the function and returns the result.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "next(m)",
+                "detail": "pull 1 from the list"
+              },
+              {
+                "label": "call square(1)",
+                "detail": "returns 1"
+              },
+              {
+                "label": "next(m)",
+                "detail": "pull 2 -> 4"
+              },
+              {
+                "label": "list(m)",
+                "detail": "drains the rest"
+              }
+            ],
+            "caption": "Work happens only when items are requested"
+          }
+        }
+      },
+      {
+        "title": "filter() keeps truthy results",
+        "body": "`filter(lambda n: n % 2 == 0, nums)` pulls items one by one, calls the function and yields the item only if the result is truthy. Like map, it is lazy and single-use: after you loop over it once, it is exhausted.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> evens = filter(lambda n: n % 2 == 0, [1, 2, 3, 4])",
+              ">>> list(evens)",
+              "[2, 4]",
+              ">>> list(evens)",
+              "[]"
+            ],
+            "caption": "An exhausted iterator gives nothing the second time"
+          }
+        }
+      },
+      {
+        "title": "Lambdas capture names, not values",
+        "body": "A lambda that uses an outer variable looks it up when it is called, not when it is created. `fns = [lambda: i for i in range(3)]` gives three functions that all return 2. Binding a default (`lambda i=i: i`) freezes the value at creation."
+      }
+    ],
+    "takeaway": "A lambda is just a small anonymous function, and map/filter are lazy pipes that call it per item. Wrap them in list() when you need the results more than once."
+  }
 }

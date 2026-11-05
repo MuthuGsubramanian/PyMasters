@@ -494,5 +494,143 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Backpropagation runs the network forward, then walks backwards layer by layer, multiplying each layer's local derivative onto the gradient arriving from above, so one backward pass yields the gradient of the loss for every weight.",
+    "steps": [
+      {
+        "title": "Forward through a tiny two-layer net",
+        "body": "x = 1, hidden h = sigmoid(w1 x), output y_hat = w2 h, loss L = 1/2 (y_hat - y)² with target y = 1. With w1 = 0.5 and w2 = 2.0: h = sigmoid(0.5) = 0.6225, y_hat = 1.245, L = 0.030. Each intermediate value is kept, because the backward pass needs it.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "x = 1",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "z1 = w1 x = 0.5",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "h = sigmoid(z1) = 0.6225",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "y_hat = w2 h = 1.245",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "L = 0.5 (y_hat - 1)² = 0.030",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Forward pass, values stored"
+          }
+        }
+      },
+      {
+        "title": "Start at the loss",
+        "body": "dL/dy_hat = y_hat - y = 0.245. The output is too high, so the gradient is positive. Every other gradient will be this number multiplied by local derivatives along the path back to each weight."
+      },
+      {
+        "title": "Output layer: one multiplication",
+        "body": "y_hat = w2 h, so dy_hat/dw2 = h and dL/dw2 = 0.245 x 0.6225 = 0.152. To continue backwards we also need dL/dh = 0.245 x w2 = 0.490: the blame passed down to the hidden unit, scaled by how strongly it was connected.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "dL/dy_hat",
+                0.245
+              ],
+              [
+                "dL/dw2 = 0.245 x h",
+                0.152
+              ],
+              [
+                "dL/dh = 0.245 x w2",
+                0.49
+              ],
+              [
+                "dL/dz1 = 0.490 x sigmoid'(0.5)",
+                0.115
+              ],
+              [
+                "dL/dw1 = 0.115 x x",
+                0.115
+              ]
+            ],
+            "labels": [
+              "1",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
+            "caption": "The chain rule, one factor per step"
+          }
+        }
+      },
+      {
+        "title": "Hidden layer: through the activation",
+        "body": "The sigmoid's local slope at z1 = 0.5 is h(1 - h) = 0.235, so dL/dz1 = 0.490 x 0.235 = 0.115, and since z1 = w1 x, dL/dw1 = 0.115 x 1 = 0.115. With learning rate 0.5 the updates are w2 = 2.0 - 0.076 = 1.924 and w1 = 0.5 - 0.058 = 0.442; both reduce the output towards 1.",
+        "visual": {
+          "type": "NeuralNetworkVisualizer",
+          "props": {
+            "layers": [
+              1,
+              1,
+              1
+            ],
+            "labels": {
+              "input": [
+                "x"
+              ],
+              "output": [
+                "y_hat"
+              ]
+            },
+            "caption": "x -> h -> y_hat: gradients flow right to left"
+          }
+        }
+      },
+      {
+        "title": "Why saturation stalls learning",
+        "body": "In the lesson's own example z = 3 x 2 + 1 = 7, so sigmoid(7) = 0.9991 and its slope is only 0.0009. That tiny factor multiplies everything behind it: dL/dw is about -0.0000033. A saturated unit passes almost no gradient back, which is the vanishing-gradient problem in miniature and why ReLU is preferred in hidden layers."
+      }
+    ],
+    "takeaway": "Backprop is the chain rule organised efficiently: each layer multiplies the incoming gradient by its own local derivative and passes it on. Large or small local factors, repeated over many layers, explain exploding and vanishing gradients."
   }
 }

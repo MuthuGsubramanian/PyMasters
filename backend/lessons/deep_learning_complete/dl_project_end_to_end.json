@@ -515,5 +515,131 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "An end-to-end deep learning project hands a few concrete artifacts from stage to stage: a split dataset with fixed transforms, a model trained with validation-based checkpointing, a single honest test score, and an exported file that runs without the training code.",
+    "steps": [
+      {
+        "title": "Data: split before anything else",
+        "body": "Fashion-MNIST has 60,000 training and 10,000 test images of 10 clothing types. random_split(full_train, [50000, 10000]) carves out a validation set. Because both parts come from the same dataset object, both get the augmenting transform; giving validation its own plain transform is a common refinement. The test set uses transform_test and stays untouched until the end.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "train",
+                50000,
+                "fit the weights"
+              ],
+              [
+                "validation",
+                10000,
+                "choose the checkpoint"
+              ],
+              [
+                "test",
+                10000,
+                "report once"
+              ]
+            ],
+            "labels": [
+              "split",
+              "split",
+              "split"
+            ],
+            "caption": "Data splits and their roles"
+          }
+        }
+      },
+      {
+        "title": "Model: blocks you can trace",
+        "body": "FashionCNN stacks two conv-BN-ReLU pairs, pools 28 to 14, repeats and pools 14 to 7, then flattens 64 x 7 x 7 = 3,136 features into Linear(3136, 256) and Linear(256, 10). Dropout2d, Dropout and weight_decay=1e-4 in Adam all fight overfitting."
+      },
+      {
+        "title": "Training: keep the best epoch",
+        "body": "Each epoch trains on all batches, then evaluates on the validation set in eval mode. Whenever validation accuracy beats the best so far, torch.save(model.state_dict(), 'best_fashion_model.pth') overwrites the checkpoint. Later epochs that overfit cannot spoil the saved model.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "train one epoch",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "evaluate on validation",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "new best?",
+                "type": "decision"
+              },
+              {
+                "id": "n3",
+                "label": "save state_dict checkpoint",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "next epoch / stop",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Checkpointing on validation"
+          }
+        }
+      },
+      {
+        "title": "Test once, then shrink",
+        "body": "Load the best checkpoint and measure accuracy on the 10,000 test images once; that is the number you report. Then quantize_dynamic converts the Linear layers to int8 for a smaller CPU model, and you re-check test accuracy to confirm the drop is small."
+      },
+      {
+        "title": "Export: a file without Python",
+        "body": "torch.onnx.export runs the model on a dummy (1, 1, 28, 28) input and records the computation as an ONNX graph with its weights. A web service or mobile app loads that file with ONNX Runtime, applies the same normalisation as training, and reads 10 scores per image.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              "raw images",
+              "split + transforms",
+              "train with checkpoints",
+              "test once",
+              "quantize / export ONNX",
+              "serve"
+            ],
+            "caption": "Artifacts passed between stages"
+          }
+        }
+      }
+    ],
+    "takeaway": "Treat each stage's output as a contract: fixed splits and transforms, a checkpoint chosen on validation, one test score, and an exported model that expects exactly the preprocessing used in training."
   }
 }

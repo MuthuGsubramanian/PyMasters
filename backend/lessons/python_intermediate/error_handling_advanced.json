@@ -505,5 +505,82 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "An exception object carries a linked list of traceback entries, one per frame it passed through, plus __cause__ and __context__ links to earlier exceptions; the traceback module walks these to print the report.",
+    "steps": [
+      {
+        "title": "Traceback objects form a chain",
+        "body": "As an exception unwinds, CPython adds a traceback object for each frame: it records `tb_frame`, `tb_lineno` and `tb_next`. The chain hangs off `exc.__traceback__`, ordered from the outermost call to the line that raised.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "linked list",
+            "data": [
+              "main() line 20",
+              "load_config() line 11",
+              "parse() line 4  <- raised"
+            ],
+            "highlight": [
+              2
+            ],
+            "label": "exc.__traceback__ -> tb_next -> tb_next"
+          }
+        }
+      },
+      {
+        "title": "Implicit chaining: __context__",
+        "body": "If a new exception is raised while handling another, Python stores the first one in the new one's `__context__` automatically. The report then shows both, separated by 'During handling of the above exception, another exception occurred'."
+      },
+      {
+        "title": "Explicit chaining: raise ... from",
+        "body": "`raise ConfigError('bad port') from err` sets `__cause__ = err` and `__suppress_context__ = True`. The report shows the cause with 'The above exception was the direct cause of the following exception'. `from None` hides the earlier error entirely.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "raise New() (inside except)",
+              "code": "__context__ = original\n__cause__   = None\n'During handling of the above\n exception, another exception occurred'"
+            },
+            "right": {
+              "label": "raise New() from err",
+              "code": "__context__ = original\n__cause__   = err\n'The above exception was the direct\n cause of the following exception'"
+            }
+          }
+        }
+      },
+      {
+        "title": "The traceback module walks it all",
+        "body": "`traceback.format_exc()` follows the cause/context links back to the oldest exception, prints each one with its stack, and reads the source lines from the files via `linecache`. `traceback.extract_tb(tb)` gives you FrameSummary objects (filename, lineno, name, line) for your own formatting.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "exc",
+                "detail": "follow __cause__ / __context__"
+              },
+              {
+                "label": "each exception",
+                "detail": "walk tb_next entries"
+              },
+              {
+                "label": "each entry",
+                "detail": "linecache gets source line"
+              },
+              {
+                "label": "output",
+                "detail": "oldest exception first"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Custom hierarchies route handlers",
+        "body": "A base class like `class AppError(Exception)` with subclasses such as `ConfigError` lets callers catch the whole family with one `except AppError` or a single member precisely, because matching uses the class hierarchy."
+      }
+    ],
+    "takeaway": "An exception is a small data structure: a message, a chain of frames, and links to the errors that came before it. Chain with `from` when you translate an error, so the root cause stays in the report."
   }
 }

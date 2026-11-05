@@ -380,5 +380,136 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Activation functions bend each layer's output; with ReLU the network builds its prediction out of straight pieces joined at kinks, with sigmoid or tanh out of smooth S-curves, and softmax turns a final row of scores into probabilities.",
+    "steps": [
+      {
+        "title": "ReLU networks are made of bent lines",
+        "body": "Each ReLU unit adds one kink. f(x) = relu(x) - 2 relu(x - 1) + relu(x - 2) is 0 at x = 0, rises to 1 at x = 1, falls back to 0 at x = 2 and stays 0 after: a triangle built from three units. With enough units, such pieces can approximate any curve, which is how a ReLU network fits complex shapes.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                3,
+                0
+              ]
+            ],
+            "labels": [
+              "x=0",
+              "x=1",
+              "x=2",
+              "x=3"
+            ],
+            "highlight": [
+              1
+            ],
+            "caption": "Columns: x and f(x) = relu(x) - 2relu(x-1) + relu(x-2)"
+          }
+        }
+      },
+      {
+        "title": "Sigmoid and tanh are smooth squashers",
+        "body": "Sigmoid maps to (0, 1) and tanh to (-1, 1); tanh(z) = 2 sigmoid(2z) - 1, so they are the same curve rescaled. tanh's outputs are centred on zero, which keeps the next layer's inputs balanced; both flatten out for large |z|, where their gradients almost vanish."
+      },
+      {
+        "title": "GELU and SiLU: smooth ReLU cousins",
+        "body": "Transformers mostly use GELU, x times the probability that a standard normal value is below x, and many vision models use SiLU, x times sigmoid(x). Both behave like ReLU for large positive x, are smooth near 0, and let slightly negative values through, which tends to train a little better in deep models."
+      },
+      {
+        "title": "Softmax, computed safely",
+        "body": "Softmax is e^z_i divided by the sum of e^z_j. For scores [1000, 1001], e^1000 overflows. Subtracting the largest score first gives [-1, 0], which leaves the result unchanged and yields [0.269, 0.731]. PyTorch's softmax and CrossEntropyLoss do this internally.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "naive",
+              "code": "exp(1000), exp(1001)\n-> inf / inf = nan"
+            },
+            "right": {
+              "label": "subtract max first",
+              "code": "exp(-1), exp(0)\n-> [0.269, 0.731]"
+            },
+            "caption": "Same maths, stable numbers"
+          }
+        }
+      },
+      {
+        "title": "Activation and initialisation go together",
+        "body": "Weights are initialised so signals keep a steady size through the layers. ReLU zeroes about half its inputs, so He (Kaiming) initialisation uses variance 2 / fan_in; tanh and sigmoid pair with Xavier (Glorot) initialisation. A mismatch can make activations shrink or blow up layer by layer before training even starts.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "choose activation",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "ReLU family?",
+                "type": "decision"
+              },
+              {
+                "id": "n2",
+                "label": "He / Kaiming init",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "tanh / sigmoid: Xavier init",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "stable signal size through depth",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Matching initialisation to activation"
+          }
+        }
+      }
+    ],
+    "takeaway": "The activation decides what shapes a network can build and how gradients flow back. Default to ReLU or GELU inside, sigmoid or softmax at the output depending on the task, and initialise to match."
   }
 }

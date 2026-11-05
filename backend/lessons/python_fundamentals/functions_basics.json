@@ -402,5 +402,76 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "`def` builds a function object at run time; each call creates a new frame for its local variables, runs the code, and hands the return value back when the frame is discarded.",
+    "steps": [
+      {
+        "title": "def is an executable statement",
+        "body": "When Python reaches `def make_tea(cups):`, it takes the already compiled code object for the body and wraps it in a function object, together with a reference to the module's globals and any default values. Then it binds the name `make_tea` to that object. Nothing in the body runs yet."
+      },
+      {
+        "title": "A call creates a frame",
+        "body": "`make_tea(2)` creates a new frame: a record that holds the local variables (`cups = 2`), the current position in the bytecode and a link to the caller's frame. Frames stack up: the newest call is on top.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "make_tea",
+                "variables": {
+                  "cups": "2",
+                  "water_ml": "500"
+                }
+              },
+              {
+                "name": "<module>",
+                "variables": {
+                  "make_tea": "<function>",
+                  "result": "(not yet)"
+                }
+              }
+            ],
+            "caption": "Call stack during make_tea(2)"
+          }
+        }
+      },
+      {
+        "title": "Arguments are bound like assignments",
+        "body": "The value 2 is not copied into the function. The parameter name `cups` is bound to the same object the caller passed. So if a function receives a list and calls `.append`, the caller sees the change; rebinding the parameter to a new object does not affect the caller."
+      },
+      {
+        "title": "return pops the frame",
+        "body": "`return water_ml` puts the value on the stack, the frame finishes, and the caller receives the object. A function that ends without `return` gives back `None`. The frame's local names disappear, and objects nothing else refers to can be freed.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "call",
+                "detail": "new frame pushed"
+              },
+              {
+                "label": "run body",
+                "detail": "locals live in the frame"
+              },
+              {
+                "label": "return value",
+                "detail": "frame popped"
+              },
+              {
+                "label": "caller",
+                "detail": "receives the object"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Functions are objects too",
+        "body": "Because `def` just creates an object, you can pass `make_tea` to another function, store it in a list or check `make_tea.__name__`. Calling it is a separate step marked by the parentheses."
+      }
+    ],
+    "takeaway": "Defining a function makes an object; calling it makes a frame. Keeping those two moments apart explains default values, return None, and why changes to a mutable argument leak back to the caller."
+  }
 }

@@ -235,5 +235,80 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A virtual environment is a folder with its own python launcher and site-packages; at startup Python finds the pyvenv.cfg next to it and switches its package search path to that folder.",
+    "steps": [
+      {
+        "title": "What python -m venv creates",
+        "body": "`python -m venv .venv` makes a small folder: `bin/python` (a link or copy of the base interpreter; `Scripts\\python.exe` on Windows), an empty `lib/python3.11/site-packages`, activation scripts, and a text file `pyvenv.cfg` that records which base Python it came from.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "folder",
+            "data": [
+              ".venv/pyvenv.cfg  (home = /usr/bin)",
+              ".venv/bin/python  -> base interpreter",
+              ".venv/bin/pip, activate",
+              ".venv/lib/python3.11/site-packages/  (empty)"
+            ],
+            "label": ".venv"
+          }
+        }
+      },
+      {
+        "title": "pyvenv.cfg switches the prefix",
+        "body": "When `.venv/bin/python` starts, the startup code (`site`) sees `pyvenv.cfg` next to the executable or one folder up. It sets `sys.prefix` to the venv folder, keeps the original in `sys.base_prefix`, and puts the venv's site-packages on `sys.path` instead of the global one.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Global python",
+              "code": "sys.prefix = /usr\nsite-packages: /usr/lib/python3/..."
+            },
+            "right": {
+              "label": ".venv/bin/python",
+              "code": "sys.prefix = /home/asha/proj/.venv\nsite-packages: .venv/lib/python3.11/..."
+            }
+          }
+        }
+      },
+      {
+        "title": "activate only changes PATH",
+        "body": "`source .venv/bin/activate` does not change Python at all. It puts `.venv/bin` at the front of your shell's PATH, sets `VIRTUAL_ENV` and changes the prompt, so typing `python` or `pip` finds the venv's copies first. Running `.venv/bin/python` directly works without activating."
+      },
+      {
+        "title": "pip installs into that site-packages",
+        "body": "`pip install requests` run from the venv downloads a wheel (a zip of files) and unpacks it into the venv's site-packages, writing a `.dist-info` folder with the version. Other projects and the system Python never see it.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "pip install requests",
+                "detail": "resolve version"
+              },
+              {
+                "label": "download wheel",
+                "detail": "requests-2.x.whl"
+              },
+              {
+                "label": "unpack",
+                "detail": "into .venv/.../site-packages"
+              },
+              {
+                "label": "record",
+                "detail": "requests-2.x.dist-info"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "requirements.txt recreates it",
+        "body": "`pip freeze` lists every installed distribution with its exact version. On another machine, a fresh venv plus `pip install -r requirements.txt` installs the same versions, which is what makes a project reproducible."
+      }
+    ],
+    "takeaway": "A venv is just a folder plus a marker file that tells Python where to look for packages. Activation is a convenience for your shell; the isolation comes from sys.prefix and site-packages."
+  }
 }

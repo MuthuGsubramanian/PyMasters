@@ -34,5 +34,106 @@
     {"q": {"en": "Which delivery guarantees does EventBridge provide to targets?"}, "options": {"en": ["Exactly-once, strictly ordered", "Exactly-once, unordered", "At-most-once, ordered", "At-least-once, no ordering guarantee — consumers must be idempotent"]}, "correct": 3}
   ],
   "tags": {"concepts_taught": ["aws_compute", "cloud_fundamentals"], "concepts_required": ["aws_compute", "aws_identity"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "API Gateway passes each HTTP request through auth, throttling and an integration before answering; EventBridge matches each event JSON against rule patterns and delivers copies to targets asynchronously with retries.",
+    "steps": [
+      {
+        "title": "A request enters API Gateway",
+        "body": "The client calls the stage URL, for example POST /orders on the prod stage. API Gateway matches the route (method plus path) and finds the configured authorizer, throttling settings and integration for that route.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "POST /orders",
+                "type": "input"
+              },
+              {
+                "label": "Route match",
+                "type": "process"
+              },
+              {
+                "label": "Authorizer",
+                "type": "process"
+              },
+              {
+                "label": "Throttle check",
+                "type": "process"
+              },
+              {
+                "label": "Integration (Lambda / HTTP / AWS service)",
+                "type": "process"
+              },
+              {
+                "label": "Response to client",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "One synchronous request through API Gateway"
+          }
+        }
+      },
+      {
+        "title": "The authorizer decides who you are",
+        "body": "A JWT authorizer validates the token's signature, issuer, audience and expiry. A Lambda authorizer runs your function, which returns an IAM-style policy; API Gateway can cache that result for a TTL keyed on the token, so most requests skip the extra Lambda call."
+      },
+      {
+        "title": "Throttling is a token bucket",
+        "body": "Each stage or route has a steady rate and a burst size. Every request takes a token; tokens refill at the rate. When the bucket is empty, API Gateway answers 429 Too Many Requests without calling your backend at all.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "bucket: burst=5, rate=2/s",
+              "t=0.0  req 1-5  -> 200 (tokens 5 -> 0)",
+              "t=0.1  req 6    -> 429 Too Many Requests",
+              "t=0.5  refill +1 -> req 7 -> 200"
+            ],
+            "caption": "A burst against a small bucket (illustrative numbers)"
+          }
+        }
+      },
+      {
+        "title": "EventBridge: put an event on a bus",
+        "body": "A producer calls PutEvents with a JSON event: source, detail-type and a detail body. The bus does not know who is listening; the producer is finished as soon as EventBridge accepts the event."
+      },
+      {
+        "title": "Rules match patterns, targets get copies",
+        "body": "Every rule on the bus holds an event pattern such as {\"source\": [\"orders\"], \"detail\": {\"total\": [{\"numeric\": [\">\", 100]}]}}. Each matching rule sends its own copy to its targets, so one event can fan out to a Lambda, an SQS queue and a Step Functions workflow.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "PutEvents(order.created)",
+              "Event bus",
+              "Rule: total > 100",
+              "Targets: Lambda, SQS, Step Functions"
+            ],
+            "edges": [
+              {
+                "from": "PutEvents(order.created)",
+                "to": "Event bus"
+              },
+              {
+                "from": "Event bus",
+                "to": "Rule: total > 100"
+              },
+              {
+                "from": "Rule: total > 100",
+                "to": "Targets: Lambda, SQS, Step Functions"
+              }
+            ],
+            "description": "One event, many independent deliveries"
+          }
+        }
+      },
+      {
+        "title": "Retries, duplicates and ordering",
+        "body": "If a target fails, EventBridge retries with backoff for a configurable window, then sends the event to a dead-letter queue if you set one. Delivery is at-least-once and order is not guaranteed, so consumers must be idempotent, for example by recording processed event ids."
+      }
+    ],
+    "takeaway": "API Gateway is synchronous: the caller waits and sees every failure. EventBridge is asynchronous: the producer is decoupled, but consumers must handle duplicates and out-of-order events."
+  }
 }

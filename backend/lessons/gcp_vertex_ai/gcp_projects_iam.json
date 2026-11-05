@@ -42,5 +42,87 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "ROLE_PERMISSIONS = {\n    \"roles/bigquery.dataViewer\": {\"bigquery.tables.getData\"},\n    \"roles/bigquery.admin\": {\"bigquery.tables.getData\", \"bigquery.tables.delete\"},\n}\ngroups = {\"group:data-eng\": [\"user:asha\", \"user:ravi\"]}\nbindings = {                                    # project api-prod IAM policy\n    \"roles/bigquery.dataViewer\": [\"group:data-eng\"],\n    \"roles/bigquery.admin\": [\"user:meera\"],\n}\n\ndef can(member, permission):\n    identities = {member} | {g for g, users in groups.items() if member in users}\n    for role, members in bindings.items():\n        if identities & set(members) and permission in ROLE_PERMISSIONS[role]:\n            return True\n    return False\n\nchecks = {(m, p): can(m, p) for m in [\"user:asha\", \"user:meera\"]\n          for p in [\"bigquery.tables.getData\", \"bigquery.tables.delete\"]}\nfor (member, perm), ok in checks.items():\n    print(f\"{member:11} {perm:26} {'yes' if ok else 'no'}\")\n"
+  "uth_example": "ROLE_PERMISSIONS = {\n    \"roles/bigquery.dataViewer\": {\"bigquery.tables.getData\"},\n    \"roles/bigquery.admin\": {\"bigquery.tables.getData\", \"bigquery.tables.delete\"},\n}\ngroups = {\"group:data-eng\": [\"user:asha\", \"user:ravi\"]}\nbindings = {                                    # project api-prod IAM policy\n    \"roles/bigquery.dataViewer\": [\"group:data-eng\"],\n    \"roles/bigquery.admin\": [\"user:meera\"],\n}\n\ndef can(member, permission):\n    identities = {member} | {g for g, users in groups.items() if member in users}\n    for role, members in bindings.items():\n        if identities & set(members) and permission in ROLE_PERMISSIONS[role]:\n            return True\n    return False\n\nchecks = {(m, p): can(m, p) for m in [\"user:asha\", \"user:meera\"]\n          for p in [\"bigquery.tables.getData\", \"bigquery.tables.delete\"]}\nfor (member, perm), ok in checks.items():\n    print(f\"{member:11} {perm:26} {'yes' if ok else 'no'}\")\n",
+  "under_the_hood": {
+    "summary": "Google Cloud IAM checks deny policies first, then unions the allow policies set on the resource and every folder and organisation above it; a request succeeds if any inherited binding grants a role containing the needed permission.",
+    "steps": [
+      {
+        "title": "Resources live in a hierarchy",
+        "body": "Organisation example.com contains folders such as Prod and Dev, folders contain projects, projects contain resources like buckets and VMs. Each level can carry an IAM allow policy.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Organization: example.com",
+              "Folder: Prod",
+              "Folder: Payments",
+              "Project: pay-prod-123",
+              "Bucket: pay-invoices"
+            ],
+            "edges": [
+              {
+                "from": "Organization: example.com",
+                "to": "Folder: Prod"
+              },
+              {
+                "from": "Folder: Prod",
+                "to": "Folder: Payments"
+              },
+              {
+                "from": "Folder: Payments",
+                "to": "Project: pay-prod-123"
+              },
+              {
+                "from": "Project: pay-prod-123",
+                "to": "Bucket: pay-invoices"
+              }
+            ],
+            "description": "Path for one bucket"
+          }
+        }
+      },
+      {
+        "title": "A policy is a list of bindings",
+        "body": "Each binding links a role to principals, optionally with a condition. A role is a bundle of permissions such as storage.objects.get. You never grant a permission directly, only roles.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "role": "roles/storage.objectViewer",
+              "members": "group:finance@example.com",
+              "condition": "resource.name.startsWith('projects/_/buckets/pay-invoices')",
+              "set on": "folder Payments"
+            },
+            "caption": "One allow policy binding"
+          }
+        }
+      },
+      {
+        "title": "Deny policies are checked first",
+        "body": "If an IAM deny policy on the path denies the permission to the principal, the request fails regardless of any allow. Otherwise evaluation continues to the allow policies."
+      },
+      {
+        "title": "Allow policies are unioned up the path",
+        "body": "IAM collects the allow policies on the bucket, the project, each folder and the organisation. If any binding grants a role that contains storage.objects.get to the caller (directly or through a group), the call is allowed. A lower level cannot remove a grant made higher up.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "deny policies on path:       none match",
+              "bucket policy:               no binding for caller",
+              "folder Payments:             objectViewer -> group finance@ (member)",
+              "-> ALLOWED (inherited)"
+            ],
+            "caption": "Can finance@ read gs://pay-invoices/inv-42.pdf?"
+          }
+        }
+      },
+      {
+        "title": "Service accounts are identities for code",
+        "body": "A VM or Cloud Run service runs as a service account. Code gets short-lived OAuth tokens for it from the metadata server, so no key file is needed; IAM treats the service account like any other principal."
+      }
+    ],
+    "takeaway": "Grants inherit downward and only add up. Grant roles to groups at the lowest level that works, and use deny policies or organisation policies when something must never be possible."
+  }
 }

@@ -50,5 +50,84 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "providers = {\n    \"provider_a\": {\"max_context\": 200_000, \"regions\": [\"us\", \"eu\"], \"cost\": 3},\n    \"provider_b\": {\"max_context\": 128_000, \"regions\": [\"us\"], \"cost\": 2},\n    \"provider_c\": {\"max_context\": 1_000_000, \"regions\": [\"us\", \"eu\", \"asia\"], \"cost\": 4},\n}\nworkloads = [\n    {\"name\": \"EU support chat\", \"context\": 20_000, \"region\": \"eu\"},\n    {\"name\": \"contract review\", \"context\": 600_000, \"region\": \"us\"},\n    {\"name\": \"US autocomplete\", \"context\": 4_000, \"region\": \"us\"},\n]\n\nrouting = {}\nfor w in workloads:\n    fits = [name for name, p in providers.items()\n            if p[\"max_context\"] >= w[\"context\"] and w[\"region\"] in p[\"regions\"]]\n    routing[w[\"name\"]] = min(fits, key=lambda name: providers[name][\"cost\"])\n\nfor workload, provider in routing.items():\n    print(f\"{workload:16} -> {provider}\")\n"
+  "uth_example": "providers = {\n    \"provider_a\": {\"max_context\": 200_000, \"regions\": [\"us\", \"eu\"], \"cost\": 3},\n    \"provider_b\": {\"max_context\": 128_000, \"regions\": [\"us\"], \"cost\": 2},\n    \"provider_c\": {\"max_context\": 1_000_000, \"regions\": [\"us\", \"eu\", \"asia\"], \"cost\": 4},\n}\nworkloads = [\n    {\"name\": \"EU support chat\", \"context\": 20_000, \"region\": \"eu\"},\n    {\"name\": \"contract review\", \"context\": 600_000, \"region\": \"us\"},\n    {\"name\": \"US autocomplete\", \"context\": 4_000, \"region\": \"us\"},\n]\n\nrouting = {}\nfor w in workloads:\n    fits = [name for name, p in providers.items()\n            if p[\"max_context\"] >= w[\"context\"] and w[\"region\"] in p[\"regions\"]]\n    routing[w[\"name\"]] = min(fits, key=lambda name: providers[name][\"cost\"])\n\nfor workload, provider in routing.items():\n    print(f\"{workload:16} -> {provider}\")\n",
+  "under_the_hood": {
+    "summary": "Provider selection per workload runs as a filter then a weighted sum: constraints such as cloud, compliance and contracts remove providers, survivors are scored on the axes that matter for that workload, and the result is usually a primary provider plus a secondary.",
+    "steps": [
+      {
+        "title": "Define the workload, not the vendor",
+        "body": "Start from the job: 'summarise support tickets in German, 50K per day, answer under 3 s, no data leaves the EU'. Different workloads in the same company often pick different providers."
+      },
+      {
+        "title": "Constraints filter first",
+        "body": "Cloud gravity (data and identity already in one cloud), compliance regime and existing spend commitments eliminate options before any quality test. A provider that fails residency is out, however good its scores.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Workload spec",
+                "type": "input"
+              },
+              {
+                "label": "Constraint filter",
+                "type": "process"
+              },
+              {
+                "label": "Weighted scoring of survivors",
+                "type": "process"
+              },
+              {
+                "label": "Primary + secondary choice",
+                "type": "process"
+              },
+              {
+                "label": "Routing table",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Selection machine"
+          }
+        }
+      },
+      {
+        "title": "Weights reflect the workload",
+        "body": "A coding assistant weights reasoning and tool use; a high-volume classifier weights cost and latency; a document assistant weights long context and multimodal input. The same providers rank differently under different weights.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "workload       weights (quality/cost/latency)  winner",
+              "code review    0.6 / 0.2 / 0.2                  provider X",
+              "ticket triage  0.2 / 0.5 / 0.3                  provider Y"
+            ],
+            "caption": "Same providers, two workloads (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Multi-provider is the norm",
+        "body": "Most enterprises end up with a primary for depth and a secondary for specific fits and leverage. A gateway or thin abstraction makes the routing table, not the code, decide which provider serves a request.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "code-review": "primary X, fallback Y",
+              "ticket-triage": "primary Y (fast tier)",
+              "doc-qa-long": "primary Z (long context)",
+              "default": "primary X"
+            },
+            "caption": "A routing table"
+          }
+        }
+      },
+      {
+        "title": "Re-score on change",
+        "body": "New models, price changes and new regions change the inputs. Keep the eval set and weights, and re-run the scoring when a provider ships something relevant."
+      }
+    ],
+    "takeaway": "Ask 'which provider for this workload?', never 'which provider for us?'. Keep constraints, weights and eval data so the decision can be re-run, not re-argued."
+  }
 }

@@ -453,5 +453,162 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A forward pass on a batch is a few matrix products: X with one row per sample is multiplied by each layer's weight matrix, the bias is added to every row, an activation is applied element-wise, and the final sigmoid turns each row's score into a probability.",
+    "steps": [
+      {
+        "title": "A batch is a matrix of rows",
+        "body": "The lesson's X = [[1, 2], [3, 4], [5, 6]] has shape (3, 2): 3 samples, 2 features. Writing z1 = X @ W1 + b1 with W1 of shape (2, 3) processes all three samples in one product, giving (3, 3), one row of 3 hidden values per sample.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                5,
+                6
+              ]
+            ],
+            "labels": [
+              "sample 1",
+              "sample 2",
+              "sample 3"
+            ],
+            "caption": "X: shape (3, 2)"
+          }
+        }
+      },
+      {
+        "title": "Hidden layer, worked for sample 1",
+        "body": "Use W1 = [[0.5, -1.0, 0.2], [0.3, 0.4, -0.6]] and b1 = 0. Sample 1, [1, 2], times W1 gives [0.5 + 0.6, -1.0 + 0.8, 0.2 - 1.2] = [1.1, -0.2, -1.0]. ReLU keeps only positives: [1.1, 0, 0]. Each column of W1 is one hidden neuron's weights.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1.1,
+                0,
+                0
+              ],
+              [
+                2.7,
+                0,
+                0
+              ],
+              [
+                4.3,
+                0,
+                0
+              ]
+            ],
+            "labels": [
+              "sample 1",
+              "sample 2",
+              "sample 3"
+            ],
+            "caption": "a1 = relu(X @ W1): shape (3, 3)"
+          }
+        }
+      },
+      {
+        "title": "Output layer and sigmoid",
+        "body": "With W2 = [[1.0], [0.5], [-0.7]], sample 1's score is 1.1 x 1.0 = 1.1 and sigmoid(1.1) = 0.750. Samples 2 and 3 give scores 2.7 and 4.3, probabilities 0.937 and 0.987. The output has shape (3, 1): one probability per sample.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "sample 1",
+                "value": 0.75
+              },
+              {
+                "variable": "sample 2",
+                "value": 0.937
+              },
+              {
+                "variable": "sample 3",
+                "value": 0.987
+              }
+            ],
+            "caption": "output = sigmoid(a1 @ W2): shape (3, 1)"
+          }
+        }
+      },
+      {
+        "title": "nn.Linear stores the transpose",
+        "body": "nn.Linear(2, 3) keeps weight with shape (3, 2), out by in, and computes x @ weight.T + bias. So the hand-written X @ W1 above and nn.Linear give the same thing if weight = W1.T. Mixing the two conventions is a common source of shape errors."
+      },
+      {
+        "title": "The pass records what backprop needs",
+        "body": "When parameters require gradients, PyTorch stores z1, a1 and the other intermediates as it goes. The backward pass reuses them: ReLU passes gradient only where z1 was positive, and the sigmoid's slope is computed from its stored output. That is why training uses more memory than inference.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "X (3, 2)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "X @ W1 + b1 -> (3, 3)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "ReLU",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "@ W2 + b2 -> (3, 1)",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "sigmoid -> probabilities",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Shapes through the lesson's network"
+          }
+        }
+      }
+    ],
+    "takeaway": "Follow the shapes: (samples, features) times (in, out) gives (samples, out). With that rule and the activations in between, any feed-forward network can be traced by hand."
   }
 }

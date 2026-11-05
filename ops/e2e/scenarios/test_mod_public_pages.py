@@ -63,6 +63,19 @@ def test_home_shows_openedg_education_partnership(browser, dark):
     ctx.close()
 
 
+def test_partnership_section_sits_at_the_bottom_of_home(visitor):
+    # Owner 2026-11-05: "take this section to the bottom of the page" — the partner strip is the last section,
+    # right above the footer, not under the hero.
+    visitor.goto(f"{BASE}/", wait_until="networkidle")
+    placement = visitor.evaluate("""() => {
+        const p = document.getElementById('partners');
+        const sections = [...document.querySelectorAll('main section, body section')].filter(s => s.offsetParent);
+        return {exists: !!p, last: sections[sections.length - 1] === p,
+                beforeFooter: !!p && p.nextElementSibling && p.nextElementSibling.tagName === 'FOOTER'};
+    }""")
+    assert placement == {"exists": True, "last": True, "beforeFooter": True}, placement
+
+
 def test_pricing_shows_plan_prices(visitor):
     visitor.goto(f"{BASE}/pricing", wait_until="networkidle")
     body = visitor.locator("body").inner_text()

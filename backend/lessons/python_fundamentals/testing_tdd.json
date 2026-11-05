@@ -281,5 +281,84 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "TDD runs a tight loop: write a test that fails for the right reason, write the least code that makes it pass, then refactor while the tests keep checking that behaviour did not change.",
+    "steps": [
+      {
+        "title": "Red: the test fails first",
+        "body": "You write `assert slugify('Hello World') == 'hello-world'` before `slugify` exists. Running pytest gives a failure, usually ImportError or NameError at first. Seeing it fail proves the test actually runs and can catch a missing feature.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "$ pytest -q",
+              "F",
+              "E   NameError: name 'slugify' is not defined",
+              "1 failed in 0.02s"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Green: the smallest code that passes",
+        "body": "Now write just enough to pass, even something simple like `return text.lower().replace(' ', '-')`. The test turns green. The goal of this step is a working baseline, not a perfect design."
+      },
+      {
+        "title": "Refactor under a safety net",
+        "body": "With the test green you can rename, extract helpers or speed things up. After every change you rerun the tests; if any turns red, the last edit broke behaviour and you know exactly which one.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "Red",
+                "detail": "write a failing test"
+              },
+              {
+                "label": "Green",
+                "detail": "minimal code to pass"
+              },
+              {
+                "label": "Refactor",
+                "detail": "improve; rerun tests"
+              },
+              {
+                "label": "repeat",
+                "detail": "next small behaviour"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Each cycle adds one behaviour",
+        "body": "The next test captures the next rule, for example that punctuation is removed. Over many cycles the test file becomes an executable list of everything the code must do, and the code only grows to meet a test.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "tests passing",
+                "values": [
+                  "0/1",
+                  "1/1",
+                  "1/2",
+                  "2/2",
+                  "2/3",
+                  "3/3"
+                ]
+              }
+            ],
+            "caption": "Red and green alternate as rules are added"
+          }
+        }
+      },
+      {
+        "title": "Why it shapes design",
+        "body": "Writing the call before the implementation forces you to decide the function's inputs and outputs first. Code that is hard to test, because it needs a database or a global, shows up immediately as a hard-to-write test."
+      }
+    ],
+    "takeaway": "TDD is a feedback loop measured in minutes. A test that failed first and passes now is proof the code does what you meant, and it keeps proving it every time you change something."
+  }
 }

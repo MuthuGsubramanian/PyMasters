@@ -213,5 +213,89 @@
       "correct": 3
     }
   ],
-  "uth_example": "events = [\n    {\"type\": \"click\", \"x\": 10, \"y\": 20},\n    {\"type\": \"key\", \"key\": \"q\"},\n    {\"type\": \"scroll\", \"delta\": -3},\n    [\"resize\", 800, 600],\n]\n\ndef describe(event):\n    match event:\n        case {\"type\": \"click\", \"x\": x, \"y\": y}:\n            return f\"click at ({x}, {y})\"\n        case {\"type\": \"key\", \"key\": \"q\"}:\n            return \"quit\"\n        case [\"resize\", width, height]:\n            return f\"resize to {width}x{height}\"\n        case _:\n            return \"ignored\"\n\nlog = [describe(e) for e in events]\nprint(log)\n"
+  "uth_example": "events = [\n    {\"type\": \"click\", \"x\": 10, \"y\": 20},\n    {\"type\": \"key\", \"key\": \"q\"},\n    {\"type\": \"scroll\", \"delta\": -3},\n    [\"resize\", 800, 600],\n]\n\ndef describe(event):\n    match event:\n        case {\"type\": \"click\", \"x\": x, \"y\": y}:\n            return f\"click at ({x}, {y})\"\n        case {\"type\": \"key\", \"key\": \"q\"}:\n            return \"quit\"\n        case [\"resize\", width, height]:\n            return f\"resize to {width}x{height}\"\n        case _:\n            return \"ignored\"\n\nlog = [describe(e) for e in events]\nprint(log)\n",
+  "under_the_hood": {
+    "summary": "A match statement evaluates the subject once and tries each case top to bottom; each pattern compiles to type checks (MATCH_MAPPING, MATCH_SEQUENCE, MATCH_CLASS), key or length tests and comparisons, binding capture names only as the pattern succeeds.",
+    "steps": [
+      {
+        "title": "One subject, cases in order",
+        "body": "`match shape:` evaluates `shape` once. Python then tries each `case` from the top. The first pattern that matches (and whose `if` guard, if any, is true) runs its block; later cases are not tried. `case _:` matches anything and never binds.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "case {'type': 'circle', 'r': r}",
+                "detail": "test mapping"
+              },
+              {
+                "label": "case {'type': 'square', 'side': s}",
+                "detail": "test mapping"
+              },
+              {
+                "label": "case _",
+                "detail": "always matches"
+              },
+              {
+                "label": "first success",
+                "detail": "run that block only"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Mapping patterns check keys",
+        "body": "`{\"type\": \"circle\", \"r\": r}` compiles to: is the subject a mapping (MATCH_MAPPING)? Does it have the keys 'type' and 'r' (MATCH_KEYS)? Does the value of 'type' equal 'circle'? If all pass, bind `r` to the value of 'r'. Extra keys in the dict are allowed.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "match shape:\n    case {\"type\": \"circle\", \"r\": r}:\n        area = 3.14 * r * r",
+            "highlightSequence": [
+              2,
+              2,
+              3
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Is shape a mapping with keys 'type' and 'r'?"
+              },
+              {
+                "description": "Is shape['type'] == 'circle'? Then bind r = shape['r']."
+              },
+              {
+                "description": "The block uses the captured r."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Sequence and class patterns",
+        "body": "`case [x, y]:` checks MATCH_SEQUENCE (lists and tuples, but never str or bytes) and that the length is 2, then binds by position. `case Point(x=0, y=yy):` checks `isinstance(subject, Point)` and reads attributes; positional class patterns like `Point(0, yy)` use `Point.__match_args__` to know which attribute is first.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Pattern",
+              "code": "[x, y]\n[first, *rest]\nPoint(x=0, y=yy)\nPoint(0, yy)"
+            },
+            "right": {
+              "label": "Checks",
+              "code": "sequence, len == 2\nsequence, len >= 1\nisinstance + attributes\nuses __match_args__ = ('x', 'y')"
+            }
+          }
+        }
+      },
+      {
+        "title": "Names capture, dotted names compare",
+        "body": "A bare name such as `r` is a capture pattern: it always matches and binds. To compare against a constant, use a literal or a dotted name such as `Color.RED`. Writing `case RED:` with a plain name would capture everything into RED instead of comparing."
+      },
+      {
+        "title": "Guards run after binding",
+        "body": "`case {\"r\": r} if r > 0:` first matches the pattern and binds `r`, then evaluates the guard. If the guard is false, matching moves on to the next case."
+      }
+    ],
+    "takeaway": "match is a sequence of structural tests: type, shape, keys or attributes, then values, with captures bound along the way. Order cases from specific to general, and use dotted names for constants."
+  }
 }
