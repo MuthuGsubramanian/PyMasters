@@ -354,5 +354,145 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "groupby turns each key into an integer group code, runs the aggregation separately over the rows of each code, and stitches the per-group results into a new table indexed by the keys.",
+    "steps": [
+      {
+        "title": "Factorise the keys",
+        "body": "For dept = [Sales, Eng, Sales, Eng, HR], pandas finds the unique keys and sorts them (sort=True by default): Eng = 0, HR = 1, Sales = 2. Each row gets a code: [2, 0, 2, 0, 1]. From here on, pandas works with these small integers, not the strings.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "Sales",
+                2
+              ],
+              [
+                "Eng",
+                0
+              ],
+              [
+                "Sales",
+                2
+              ],
+              [
+                "Eng",
+                0
+              ],
+              [
+                "HR",
+                1
+              ]
+            ],
+            "labels": [
+              "row 0",
+              "row 1",
+              "row 2",
+              "row 3",
+              "row 4"
+            ],
+            "caption": "Each row's key and its group code"
+          }
+        }
+      },
+      {
+        "title": "Split-apply-combine on the codes",
+        "body": "For .mean() on salary, pandas keeps a running sum and count per code: Eng 90000 + 95000 = 185000 over 2, HR 60000 over 1, Sales 50000 + 55000 = 105000 over 2. Dividing gives 92500, 60000 and 52500, the same result as the story, computed in one pass with no Python loop per group.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "Eng",
+                185000,
+                2,
+                92500
+              ],
+              [
+                "HR",
+                60000,
+                1,
+                60000
+              ],
+              [
+                "Sales",
+                105000,
+                2,
+                52500
+              ]
+            ],
+            "labels": [
+              "code 0",
+              "code 1",
+              "code 2"
+            ],
+            "caption": "Sum, count and mean per group"
+          }
+        }
+      },
+      {
+        "title": "agg runs several reductions",
+        "body": "groupby('dept').agg({'salary': ['mean', 'max'], 'years': 'sum'}) computes each named reduction per group and puts them side by side, giving multi-level column names such as ('salary', 'mean'). Built-in names like 'mean' use fast compiled paths; passing your own Python function calls it once per group, which is slower."
+      },
+      {
+        "title": "transform sends results back to rows",
+        "body": "agg returns one row per group. transform('mean') returns one value per original row: every Eng row gets 92500. That makes df['salary'] - df.groupby('dept')['salary'].transform('mean') the gap between each person and their department average."
+      },
+      {
+        "title": "pivot_table groups by two keys",
+        "body": "pivot_table(index='dept', columns='level', values='salary', aggfunc='mean') groups by the pair (dept, level), averages, and then spreads level across the columns. Pairs with no rows become NaN unless you pass fill_value.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "group rows by (dept, level)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "aggregate each pair",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "unstack level into columns",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "table: dept rows x level columns",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3"
+            ],
+            "caption": "pivot_table is groupby + unstack"
+          }
+        }
+      }
+    ],
+    "takeaway": "groupby is split-apply-combine over integer codes. Use built-in aggregations for speed, agg for one row per group, transform for one value per original row, and pivot_table when you want a second key across the columns."
+  }
 }

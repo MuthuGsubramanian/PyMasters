@@ -339,5 +339,96 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Arithmetic on arrays calls a universal function: NumPy picks a result dtype, allocates the output, and runs one compiled loop over every element; reductions run a loop that folds one axis away.",
+    "steps": [
+      {
+        "title": "Element-wise means position by position",
+        "body": "a = [1, 2, 3, 4] and b = [10, 20, 30, 40]: a + b pairs index 0 with index 0 and so on, giving [11, 22, 33, 44]. Shapes must match or broadcast. Internally np.add runs one C loop over both buffers and writes a new one.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                2,
+                3,
+                4
+              ],
+              [
+                10,
+                20,
+                30,
+                40
+              ],
+              [
+                11,
+                22,
+                33,
+                44
+              ]
+            ],
+            "labels": [
+              "a",
+              "b",
+              "a + b"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "np.add pairs elements by position"
+          }
+        }
+      },
+      {
+        "title": "The ufunc picks the result type",
+        "body": "Before looping, the ufunc chooses a loop for the input dtypes: int64 + int64 stays int64, int64 + float64 becomes float64, and / always gives float, so b / a is [10., 10., 10., 10.]. Fixed-width integers can overflow silently: np.int8(127) + np.int8(1) wraps around to -128."
+      },
+      {
+        "title": "Ufuncs cover maths and comparisons",
+        "body": "np.sqrt, np.exp and np.log apply element-wise the same way, and so do comparisons: a > 2 gives the boolean array [False, False, True, True]. np.where(a > 2, a, 0) picks element by element: [0, 0, 3, 4]. The out= argument writes into an existing array to avoid a new allocation."
+      },
+      {
+        "title": "Reductions fold an axis away",
+        "body": "For m = [[1, 2, 3], [4, 5, 6]], m.sum(axis=0) adds down the rows and keeps the columns: [5, 7, 9]. m.sum(axis=1) adds across each row: [6, 15]. No axis means all elements: 21. The axis you name is the one that disappears.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                4,
+                5,
+                6
+              ],
+              [
+                5,
+                7,
+                9
+              ]
+            ],
+            "labels": [
+              "row 0",
+              "row 1",
+              "sum(axis=0)"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "axis=0 collapses the rows"
+          }
+        }
+      },
+      {
+        "title": "Float sums use pairwise addition",
+        "body": "np.sum on floats adds in a tree, pairs of pairs, rather than one long running total. That keeps rounding error much smaller for long arrays than a naive loop. mean is sum divided by count; for integer input it returns float64."
+      }
+    ],
+    "takeaway": "Every NumPy operation is a typed loop in C. Know which dtype comes out, name the axis you want to collapse, and you can express almost any calculation without a Python loop."
+  }
 }

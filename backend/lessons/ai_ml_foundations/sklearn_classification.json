@@ -403,5 +403,129 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Every scikit-learn classifier follows one contract: the constructor only stores settings, fit checks the data and saves learned attributes ending in an underscore, and predict uses those attributes to map new rows to labels.",
+    "steps": [
+      {
+        "title": "The constructor only records settings",
+        "body": "DecisionTreeClassifier(max_depth=3) stores max_depth and nothing else. No data is touched yet. get_params() returns those settings, which is how clone() and GridSearchCV can make fresh, unfitted copies."
+      },
+      {
+        "title": "fit validates, then learns",
+        "body": "fit(X_train, y_train) first converts X into a 2-D numeric array and checks that X and y have the same number of rows. It records classes_ (for iris [0, 1, 2]) and n_features_in_ = 4, then runs the learning algorithm, which for a tree stores the splits in tree_. It returns self, so calls can be chained.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "fit(X_train, y_train)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "validate: 2-D, numeric, same length",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "classes_ = [0, 1, 2], n_features_in_ = 4",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "learn: build tree_",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "return self",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Inside fit"
+          }
+        }
+      },
+      {
+        "title": "predict reuses what fit learned",
+        "body": "predict(X_test) checks that X_test has the same 4 features, computes a score or probability per class for each row, takes the highest, and maps that position back through classes_ to the original label. Calling predict before fit raises NotFittedError because the underscore attributes do not exist yet."
+      },
+      {
+        "title": "Accuracy is the share of matches",
+        "body": "accuracy_score(y_test, y_pred) compares the two arrays element by element and averages the matches. With 30 test flowers and 29 correct, that is 29/30 = 0.967. It counts every mistake the same, which is fine for balanced iris but misleading for rare classes.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0,
+                1,
+                2,
+                1,
+                2
+              ],
+              [
+                0,
+                1,
+                2,
+                2,
+                2
+              ],
+              [
+                true,
+                true,
+                true,
+                false,
+                true
+              ]
+            ],
+            "labels": [
+              "y_test",
+              "y_pred",
+              "match"
+            ],
+            "highlight": [
+              [
+                2,
+                3
+              ]
+            ],
+            "caption": "Five predictions, one miss: accuracy 4/5 = 0.8"
+          }
+        }
+      },
+      {
+        "title": "The same API everywhere",
+        "body": "Swap DecisionTreeClassifier for LogisticRegression or KNeighborsClassifier and the fit, predict and score calls stay identical. That shared contract is what lets pipelines, cross-validation and grid search work with any estimator."
+      }
+    ],
+    "takeaway": "Remember the three moves: settings in the constructor, learning in fit (results end in _), using in predict. Once you know that contract, every scikit-learn model reads the same way."
+  }
 }
