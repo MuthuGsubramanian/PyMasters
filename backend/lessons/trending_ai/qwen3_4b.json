@@ -317,5 +317,80 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Qwen3-4B is loaded in 4-bit with bitsandbytes, which stores weights as 4-bit codes plus a scale per small block and dequantizes them to bf16 on the fly inside each matrix multiply, cutting weight memory from about 8 GB to under 3 GB.",
+    "steps": [
+      {
+        "title": "The model's shape",
+        "body": "About 4 billion parameters in 36 layers, with grouped-query attention (32 query heads sharing 8 KV heads) and a native context of 32,768 tokens, extendable further with RoPE scaling (YaRN) according to its model card.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "params",
+                "value": "~4.0 B"
+              },
+              {
+                "variable": "layers",
+                "value": "36"
+              },
+              {
+                "variable": "q / kv heads",
+                "value": "32 / 8"
+              },
+              {
+                "variable": "context",
+                "value": "32,768"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "4-bit loading",
+        "body": "BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type='nf4') quantizes the linear-layer weights as they load. NF4 uses 16 levels placed to suit normally distributed weights, with one scale per block of 64 weights.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "weight memory (approx.)",
+            "data": [
+              "~8 GB bf16",
+              "~2.5-3 GB 4-bit"
+            ],
+            "labels": [
+              "before",
+              "after"
+            ],
+            "highlight": [
+              1
+            ]
+          }
+        }
+      },
+      {
+        "title": "Compute still happens in bf16",
+        "body": "With bnb_4bit_compute_dtype=torch.bfloat16, each layer dequantizes its 4-bit block to bf16 just before the matrix multiply. Memory is saved, while the arithmetic keeps 16-bit precision; the cost is some extra work per layer."
+      },
+      {
+        "title": "The KV cache adds up",
+        "body": "Per token the cache needs 2 x 36 layers x 8 KV heads x 128 x 2 bytes = 147,456 bytes, about 144 KiB. A full 32K-token context adds about 4.5 GiB, more than the 4-bit weights themselves.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "per token: 2 x 36 x 8 x 128 x 2 = 147,456 B",
+              "32,768 tokens -> ~4.5 GiB of KV cache"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Hybrid thinking",
+        "body": "Like other Qwen3 models it can reason inside <think> tags or answer directly, controlled by enable_thinking in the chat template. Reasoning tokens also fill the KV cache, so long thinking needs memory as well as time."
+      }
+    ],
+    "takeaway": "Running a 4B model locally is a memory budget: 4-bit weights, a KV cache that grows with every token, and bf16 compute on dequantized blocks."
+  }
 }

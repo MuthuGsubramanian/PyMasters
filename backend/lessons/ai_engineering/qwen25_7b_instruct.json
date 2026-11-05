@@ -205,5 +205,88 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Qwen2.5-7B-Instruct renders your messages into its ChatML template, tokenizes them, and runs a 28-layer decoder with grouped-query attention (28 query heads sharing 4 key/value heads) to generate the reply token by token, locally or behind an OpenAI-compatible server.",
+    "steps": [
+      {
+        "title": "The chat template",
+        "body": "apply_chat_template turns [{'role': 'system', ...}, {'role': 'user', ...}] into text with <|im_start|>role ... <|im_end|> markers and ends with '<|im_start|>assistant' so the model knows it should answer. Instruction tuning taught it this exact format.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "<|im_start|>system",
+              "You are a helpful assistant.<|im_end|>",
+              "<|im_start|>user",
+              "Write a haiku about Python.<|im_end|>",
+              "<|im_start|>assistant"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Memory: 2 bytes per parameter",
+        "body": "About 7.6B parameters in bf16 is roughly 15 GB of weights, which needs a large GPU or unified memory. 4-bit quantized builds (GGUF, AWQ) bring that to roughly 4-5 GB at some quality cost."
+      },
+      {
+        "title": "GQA keeps the KV cache small",
+        "body": "With 4 KV heads of size 128 across 28 layers, each token's cache is 2 x 28 x 4 x 128 x 2 bytes = 57,344 bytes, about 56 KiB. A 32,000-token context then needs about 1.7 GiB of cache instead of seven times that with full multi-head attention.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "layers",
+                "value": "28"
+              },
+              {
+                "variable": "query heads",
+                "value": "28"
+              },
+              {
+                "variable": "KV heads",
+                "value": "4"
+              },
+              {
+                "variable": "KV per token",
+                "value": "~56 KiB (bf16)"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Generation",
+        "body": "model.generate prefills the prompt in one pass, then samples one token at a time until <|im_end|> or max_new_tokens. Only the new tokens (after the prompt length) are decoded back to text."
+      },
+      {
+        "title": "Serving with vLLM",
+        "body": "vllm serve exposes an OpenAI-compatible /v1/chat/completions endpoint. Inside, PagedAttention stores the KV cache in fixed-size blocks and continuous batching adds new requests between decode steps, so many users share the GPU efficiently.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "client",
+                "detail": "openai SDK"
+              },
+              {
+                "label": "vLLM server",
+                "detail": "chat template"
+              },
+              {
+                "label": "batched decode",
+                "detail": "PagedAttention"
+              },
+              {
+                "label": "tokens streamed back"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "A local 7B model is the same machinery as a hosted one: template, tokens, decode loop. Memory for weights plus KV cache decides where it can run."
+  }
 }

@@ -213,5 +213,74 @@
       "correct": 1
     }
   ],
-  "uth_example": "params = 7e9                          # a 7B-parameter model\ngpus = 8\nbytes_per_param = {\"weights\": 2, \"grads\": 2, \"optimizer\": 12}   # fp16 + Adam fp32 states\n\ndef per_gpu_gb(stage):\n    w, g, o = (params * bytes_per_param[k] for k in (\"weights\", \"grads\", \"optimizer\"))\n    if stage >= 1:\n        o /= gpus                     # ZeRO-1: shard optimizer states\n    if stage >= 2:\n        g /= gpus                     # ZeRO-2: also shard gradients\n    if stage >= 3:\n        w /= gpus                     # ZeRO-3: also shard weights\n    return round((w + g + o) / 1e9, 1)\n\nmemory = {f\"ZeRO-{s}\" if s else \"DDP\": per_gpu_gb(s) for s in range(4)}\nfor name, gb in memory.items():\n    print(f\"{name:7} {gb:6} GB per GPU\", \"(fits 80 GB)\" if gb <= 80 else \"\")\n"
+  "uth_example": "params = 7e9                          # a 7B-parameter model\ngpus = 8\nbytes_per_param = {\"weights\": 2, \"grads\": 2, \"optimizer\": 12}   # fp16 + Adam fp32 states\n\ndef per_gpu_gb(stage):\n    w, g, o = (params * bytes_per_param[k] for k in (\"weights\", \"grads\", \"optimizer\"))\n    if stage >= 1:\n        o /= gpus                     # ZeRO-1: shard optimizer states\n    if stage >= 2:\n        g /= gpus                     # ZeRO-2: also shard gradients\n    if stage >= 3:\n        w /= gpus                     # ZeRO-3: also shard weights\n    return round((w + g + o) / 1e9, 1)\n\nmemory = {f\"ZeRO-{s}\" if s else \"DDP\": per_gpu_gb(s) for s in range(4)}\nfor name, gb in memory.items():\n    print(f\"{name:7} {gb:6} GB per GPU\", \"(fits 80 GB)\" if gb <= 80 else \"\")\n",
+  "under_the_hood": {
+    "summary": "Large models are trained by splitting work along several axes: data parallelism copies the model and averages gradients, ZeRO shards the copies' state, tensor parallelism splits each matrix multiply, and pipeline parallelism splits the layers into stages fed by micro-batches.",
+    "steps": [
+      {
+        "title": "Data parallelism",
+        "body": "Each GPU holds a full model copy and processes a different slice of the batch. After backward, an all-reduce averages gradients so every copy takes the same optimizer step. DistributedDataParallel overlaps that all-reduce with the remaining backward computation.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "split batch"
+              },
+              {
+                "label": "each GPU: forward + backward"
+              },
+              {
+                "label": "all-reduce gradients",
+                "detail": "average"
+              },
+              {
+                "label": "identical update"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "ZeRO removes the duplicated state",
+        "body": "Plain data parallelism stores optimizer states, gradients and weights on every GPU. ZeRO stage 1, 2 and 3 shard progressively more of these across GPUs and gather pieces only when needed, which is how DeepSpeed's 'stage': 2 config saves memory."
+      },
+      {
+        "title": "Tensor parallelism splits a layer",
+        "body": "An MLP's first weight matrix is split by columns and the second by rows across, say, 2 GPUs. Each GPU computes half the hidden units, and one all-reduce sums the partial outputs. It needs fast links, so it is usually kept inside one node.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Column-parallel W1",
+              "code": "GPU 0: x @ W1[:, :half]\nGPU 1: x @ W1[:, half:]"
+            },
+            "right": {
+              "label": "Row-parallel W2",
+              "code": "each GPU: its half @ W2 rows\nall-reduce -> full output"
+            }
+          }
+        }
+      },
+      {
+        "title": "Pipeline parallelism splits the depth",
+        "body": "With 4 stages each GPU owns a quarter of the layers. The batch is cut into micro-batches so stages work at the same time; the idle start-up and drain time, the bubble, is about (p - 1) / (m + p - 1) of the step, 3/11 for p = 4 stages and m = 8 micro-batches.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "p = 4 stages, m = 8 micro-batches",
+              "bubble = (4 - 1) / (8 + 4 - 1) = 3/11 = 27%",
+              "m = 32 -> 3/35 = 9%"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Combining the axes",
+        "body": "Big runs use 3D (or more) parallelism: tensor parallel within a node, pipeline across nodes, data parallel with ZeRO across replicas. The playbook's method is to pick the combination that fits memory first, then maximise GPU utilisation."
+      }
+    ],
+    "takeaway": "Every parallelism strategy trades memory for communication along a different axis. Know what each one splits and what it must send, and cluster layouts stop looking mysterious."
+  }
 }

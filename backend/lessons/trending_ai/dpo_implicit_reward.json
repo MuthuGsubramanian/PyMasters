@@ -235,5 +235,54 @@
       "correct": 2
     }
   ],
-  "uth_example": "beta = 0.1\nresponses = {\n    \"helpful answer\": {\"logp_policy\": -12.0, \"logp_ref\": -15.0},\n    \"rude answer\": {\"logp_policy\": -20.0, \"logp_ref\": -18.5},\n    \"unchanged answer\": {\"logp_policy\": -9.0, \"logp_ref\": -9.0},\n}\n\nrewards = {}\nfor name, lp in responses.items():\n    drift = lp[\"logp_policy\"] - lp[\"logp_ref\"]      # how far the policy moved\n    rewards[name] = round(beta * drift, 3)\n\nranking = sorted(rewards, key=rewards.get, reverse=True)\nprint(rewards)\nprint(\"implicit preference order:\", ranking)\n"
+  "uth_example": "beta = 0.1\nresponses = {\n    \"helpful answer\": {\"logp_policy\": -12.0, \"logp_ref\": -15.0},\n    \"rude answer\": {\"logp_policy\": -20.0, \"logp_ref\": -18.5},\n    \"unchanged answer\": {\"logp_policy\": -9.0, \"logp_ref\": -9.0},\n}\n\nrewards = {}\nfor name, lp in responses.items():\n    drift = lp[\"logp_policy\"] - lp[\"logp_ref\"]      # how far the policy moved\n    rewards[name] = round(beta * drift, 3)\n\nranking = sorted(rewards, key=rewards.get, reverse=True)\nprint(rewards)\nprint(\"implicit preference order:\", ranking)\n",
+  "under_the_hood": {
+    "summary": "DPO defines a completion's reward as beta times how much the trained policy's log-probability for it has risen above a frozen reference model's, r = beta x (log pi_policy(y|x) - log pi_ref(y|x)), so no separate reward model is ever trained.",
+    "steps": [
+      {
+        "title": "RLHF's three stages",
+        "body": "Classic RLHF collects preference pairs, trains a separate reward model on them, then runs reinforcement learning (often PPO) against that reward model. That means extra models in memory and a sampling-heavy RL loop."
+      },
+      {
+        "title": "Two models instead",
+        "body": "DPO keeps the policy being trained and a frozen copy of its starting point, the reference. For any completion y both models can score log p(y|x) by summing token log-probabilities, a single forward pass each."
+      },
+      {
+        "title": "The implicit reward",
+        "body": "r(x, y) = beta x (log pi_policy - log pi_ref). For the chosen answer, -12.4 versus -15.1 gives a drift of +2.7 and, with beta = 0.1, a reward of 0.27. A completion the policy now likes less than the reference gets a negative reward.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "chosen:   logp_policy -12.4, logp_ref -15.1",
+              "drift = +2.7  -> r = 0.1 x 2.7 = 0.27",
+              "rejected: drift = -2.7 -> r = -0.27"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why this is legitimate",
+        "body": "The DPO paper shows that the optimal policy of the usual KL-regularised RLHF objective satisfies exactly this relation between reward and log-probability ratio, up to a term that is the same for every completion of a prompt. So the policy itself can stand in for the reward model.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "RLHF",
+              "code": "policy + reference\n+ reward model + RL loop"
+            },
+            "right": {
+              "label": "DPO",
+              "code": "policy + reference\nreward read from log-prob ratio"
+            }
+          }
+        }
+      },
+      {
+        "title": "Beta as the leash",
+        "body": "Beta scales the reward. A small beta means large drifts are needed to change the reward, which keeps the policy close to the reference, the same role the KL penalty plays in RLHF."
+      }
+    ],
+    "takeaway": "DPO's reward is not learned separately; it is how far the policy has moved from the reference on that completion, scaled by beta. The next steps turn two such rewards into a training loss."
+  }
 }

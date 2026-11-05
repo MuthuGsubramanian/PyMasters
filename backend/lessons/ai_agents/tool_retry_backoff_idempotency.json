@@ -246,5 +246,62 @@
       "correct": 2
     }
   ],
-  "uth_example": "ledger, seen = [], {}\nfailures = [True, True, False]       # the network fails twice, then works\n\ndef charge(key, amount):\n    if failures.pop(0):\n        raise ConnectionError(\"timeout\")\n    if key not in seen:\n        ledger.append(amount)\n        seen[key] = f\"charged {amount}\"\n    return seen[key]\n\ndelays = []\nfor attempt in range(1, 5):\n    try:\n        receipt = charge(\"order-7-charge\", 250)\n        break\n    except ConnectionError:\n        delays.append(0.1 * 2 ** (attempt - 1))   # would wait this long\n\nfailures.append(False)\nagain = charge(\"order-7-charge\", 250)         # same key: no second charge\nprint(receipt, \"| waits:\", delays, \"| ledger:\", ledger, \"|\", again)\n"
+  "uth_example": "ledger, seen = [], {}\nfailures = [True, True, False]       # the network fails twice, then works\n\ndef charge(key, amount):\n    if failures.pop(0):\n        raise ConnectionError(\"timeout\")\n    if key not in seen:\n        ledger.append(amount)\n        seen[key] = f\"charged {amount}\"\n    return seen[key]\n\ndelays = []\nfor attempt in range(1, 5):\n    try:\n        receipt = charge(\"order-7-charge\", 250)\n        break\n    except ConnectionError:\n        delays.append(0.1 * 2 ** (attempt - 1))   # would wait this long\n\nfailures.append(False)\nagain = charge(\"order-7-charge\", 250)         # same key: no second charge\nprint(receipt, \"| waits:\", delays, \"| ledger:\", ledger, \"|\", again)\n",
+  "under_the_hood": {
+    "summary": "A transient failure is retried after waits that double each time, and side-effecting calls carry an idempotency key that the server stores, so a retried request returns the first result instead of acting twice.",
+    "steps": [
+      {
+        "title": "Separate transient from permanent errors",
+        "body": "Timeouts, HTTP 429 and 503 are worth retrying; a 400 'invalid card' will fail the same way every time. The retry loop catches only the transient class and re-raises everything else immediately."
+      },
+      {
+        "title": "Exponential backoff",
+        "body": "Wait base x 2^(attempt - 1) between tries: 0.5 s, 1 s, 2 s, 4 s. Doubling gives an overloaded service room to recover, and a cap on attempts makes the loop give up instead of hanging. Production code usually adds random jitter so many clients do not retry in lockstep.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "delays (s)",
+            "data": [
+              0.5,
+              1.0,
+              2.0,
+              4.0
+            ],
+            "labels": [
+              "try 1",
+              "try 2",
+              "try 3",
+              "try 4"
+            ]
+          }
+        }
+      },
+      {
+        "title": "The lost-response trap",
+        "body": "A charge can succeed on the server while the response is lost on the way back. From the client it looks like a failure, so it retries, and the card is charged twice: ledger [499, 499].",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Retry without a key",
+              "code": "attempt 1: charged, response lost\nattempt 2: charged again\nledger: [499, 499]"
+            },
+            "right": {
+              "label": "Retry with the same key",
+              "code": "attempt 1: charged, saved under key\nattempt 2: key seen -> stored result\nledger: [499]"
+            }
+          }
+        }
+      },
+      {
+        "title": "Idempotency keys",
+        "body": "The client creates one unique key per logical operation, for example a uuid4, and sends the same key on every retry. The server keeps a map key -> result; if the key is already present it returns the saved result without charging again."
+      },
+      {
+        "title": "Generate the key outside the retry loop",
+        "body": "The key must be created once, before the first attempt. Generating a fresh key inside the loop makes every retry look like a new operation and brings the double charge back."
+      }
+    ],
+    "takeaway": "Retries are only safe when repeating the call changes nothing. Backoff protects the service; idempotency keys protect the customer."
+  }
 }

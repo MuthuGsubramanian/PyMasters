@@ -170,5 +170,69 @@
     "category": "transformers",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A Transformer block lets tokens exchange information with attention, then transforms each token alone with a two-layer feed-forward network; each sublayer's output is added back onto its input, with normalisation keeping scales steady.",
+    "steps": [
+      {
+        "title": "Attention mixes across tokens",
+        "body": "Multi-head self-attention is the only place in the block where tokens talk to each other. For each token it produces a d_model-sized vector of information gathered from the others."
+      },
+      {
+        "title": "The residual adds, it does not replace",
+        "body": "The block computes x + Attention(norm(x)), not just Attention(x). Each layer therefore writes a correction onto a shared 'residual stream'. During backprop the + passes gradients straight through, so even a 96-layer stack trains.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "x"
+              },
+              {
+                "label": "norm -> attention"
+              },
+              {
+                "label": "x + attn",
+                "detail": "residual 1"
+              },
+              {
+                "label": "norm -> FFN"
+              },
+              {
+                "label": "x + ffn",
+                "detail": "residual 2"
+              }
+            ],
+            "title": "Pre-norm block (GPT-2 and later)"
+          }
+        }
+      },
+      {
+        "title": "The FFN works on each token alone",
+        "body": "The feed-forward network is two linear layers with a nonlinearity between, applied to every position independently with the same weights. In the original Transformer it expands 512 -> 2048 -> 512; many LLMs use a gated SwiGLU variant instead. Roughly two thirds of a typical block's parameters live here."
+      },
+      {
+        "title": "Normalisation placement",
+        "body": "The 2017 paper used post-norm: LayerNorm(x + Sublayer(x)). GPT-2 and later moved to pre-norm: x + Sublayer(LayerNorm(x)), which leaves the residual path untouched and is more stable for deep models.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Post-norm (2017)",
+              "code": "x = LayerNorm(x + Attn(x))\nx = LayerNorm(x + FFN(x))"
+            },
+            "right": {
+              "label": "Pre-norm (GPT-2+)",
+              "code": "x = x + Attn(LN(x))\nx = x + FFN(LN(x))"
+            }
+          }
+        }
+      },
+      {
+        "title": "Shapes in equal shapes out",
+        "body": "An n x d_model input leaves the block as n x d_model. That is what lets identical blocks stack N times (12 in GPT-2 small) with only the weights differing. A final norm and the output projection to vocabulary logits come after the last block."
+      }
+    ],
+    "takeaway": "Attention moves information between tokens; the FFN processes each token; residuals and norms keep a deep stack trainable. Learn one block and you have learned the whole tower."
+  }
 }

@@ -265,5 +265,74 @@
       "correct": 3
     }
   ],
-  "uth_example": "def estimate_tokens(text):\n    return len(text.split())\n\nsystem = {\"role\": \"system\", \"content\": \"You are a helpful tutor\"}\nrest = [{\"role\": \"user\", \"content\": \"hi there\"},\n        {\"role\": \"assistant\", \"content\": \"hello how can I help today\"},\n        {\"role\": \"user\", \"content\": \"explain lists please\"}]\nbudget = 10\n\nused = estimate_tokens(system[\"content\"])\nkept = []\nfor m in reversed(rest):\n    cost = estimate_tokens(m[\"content\"])\n    if used + cost > budget:\n        break\n    kept.append(m)\n    used += cost\nkept.reverse()\nwindow = [system] + kept\n\nlong_term = {\"name\": \"Asha\", \"likes\": \"examples\"}   # facts kept outside the window\nprint(len(window), \"messages in window,\", used, \"tokens; remembered:\", long_term)\n"
+  "uth_example": "def estimate_tokens(text):\n    return len(text.split())\n\nsystem = {\"role\": \"system\", \"content\": \"You are a helpful tutor\"}\nrest = [{\"role\": \"user\", \"content\": \"hi there\"},\n        {\"role\": \"assistant\", \"content\": \"hello how can I help today\"},\n        {\"role\": \"user\", \"content\": \"explain lists please\"}]\nbudget = 10\n\nused = estimate_tokens(system[\"content\"])\nkept = []\nfor m in reversed(rest):\n    cost = estimate_tokens(m[\"content\"])\n    if used + cost > budget:\n        break\n    kept.append(m)\n    used += cost\nkept.reverse()\nwindow = [system] + kept\n\nlong_term = {\"name\": \"Asha\", \"likes\": \"examples\"}   # facts kept outside the window\nprint(len(window), \"messages in window,\", used, \"tokens; remembered:\", long_term)\n",
+  "under_the_hood": {
+    "summary": "Short-term memory is the recent part of the message list trimmed to a token budget, and long-term memory is a separate store searched before each turn; only what is copied into the prompt is remembered by the model.",
+    "steps": [
+      {
+        "title": "The context window is the hard limit",
+        "body": "Every call sends the whole message list, and the model can only accept a fixed number of tokens. A long chat will eventually exceed it, so something must decide which messages to send."
+      },
+      {
+        "title": "Estimate tokens, then trim from the old end",
+        "body": "A cheap estimate is about 4 characters per English token. Charge the system message first because it is always kept, then walk the remaining messages from newest to oldest, keeping each while the total stays under budget. The oldest turns fall off first.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "messages",
+            "data": [
+              "system (kept)",
+              "turn 1",
+              "turn 2",
+              "turn 3",
+              "turn 4"
+            ],
+            "highlight": [
+              0,
+              3,
+              4
+            ],
+            "title": "Budget keeps system + the newest turns"
+          }
+        }
+      },
+      {
+        "title": "Long-term memory lives outside the window",
+        "body": "Facts worth keeping, such as 'user prefers short answers', are saved to a store: a list, a database, or a vector index. Before each turn the agent searches that store with the new message and inserts the best matches as a system note."
+      },
+      {
+        "title": "Score and retrieve",
+        "body": "In this lesson's store each fact is scored by how many query keywords it shares, after dropping stop words. Production systems usually score by embedding cosine similarity instead, but the flow is the same: score every memory, take the top few, prepend them.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "new message"
+              },
+              {
+                "label": "search store",
+                "detail": "top-k facts"
+              },
+              {
+                "label": "build prompt",
+                "detail": "system + facts + recent turns"
+              },
+              {
+                "label": "call model"
+              },
+              {
+                "label": "save new facts"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Summaries beat transcripts",
+        "body": "Storing the raw transcript wastes tokens on filler and matches unrelated queries. A short summary of the fact ('Asha is learning pandas for a sales report') costs fewer tokens and carries only searchable keywords, so retrieval is both cheaper and more precise."
+      }
+    ],
+    "takeaway": "A model remembers nothing between calls. Agent memory is two policies you write: what recent text to keep under the budget, and what stored facts to fetch and paste back in."
+  }
 }

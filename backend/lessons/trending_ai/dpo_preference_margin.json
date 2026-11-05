@@ -234,5 +234,69 @@
       "correct": 0
     }
   ],
-  "uth_example": "from math import exp\n\npairs = {\n    \"clear win\": (0.9, -0.6),\n    \"slight edge\": (0.27, 0.15),\n    \"tie\": (0.4, 0.4),\n    \"backwards\": (-0.2, 0.5),\n}\n\nconfidence = {}\nfor name, (r_chosen, r_rejected) in pairs.items():\n    margin = round(r_chosen - r_rejected, 4)\n    prob = round(1 / (1 + exp(-margin)), 4)\n    confidence[name] = (margin, prob)\n\nfor name, (margin, prob) in confidence.items():\n    print(f\"{name:12} margin {margin:+.2f} -> P(chosen wins) {prob}\")\n"
+  "uth_example": "from math import exp\n\npairs = {\n    \"clear win\": (0.9, -0.6),\n    \"slight edge\": (0.27, 0.15),\n    \"tie\": (0.4, 0.4),\n    \"backwards\": (-0.2, 0.5),\n}\n\nconfidence = {}\nfor name, (r_chosen, r_rejected) in pairs.items():\n    margin = round(r_chosen - r_rejected, 4)\n    prob = round(1 / (1 + exp(-margin)), 4)\n    confidence[name] = (margin, prob)\n\nfor name, (margin, prob) in confidence.items():\n    print(f\"{name:12} margin {margin:+.2f} -> P(chosen wins) {prob}\")\n",
+  "under_the_hood": {
+    "summary": "DPO subtracts the rejected completion's implicit reward from the chosen one's to get a margin, and the sigmoid of that margin is the modelled probability that the chosen answer is preferred, following the Bradley-Terry model of pairwise preferences.",
+    "steps": [
+      {
+        "title": "A reward alone is not informative",
+        "body": "r_chosen = 0.27 by itself does not say whether the policy prefers the chosen answer. What matters is how it compares with the rejected answer's reward for the same prompt."
+      },
+      {
+        "title": "The margin",
+        "body": "margin = r_chosen - r_rejected = 0.27 - (-0.27) = 0.54. Positive means the policy has moved more toward the chosen answer than toward the rejected one; zero means no preference; negative means it prefers the wrong one.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "r_chosen",
+                "value": "0.27"
+              },
+              {
+                "variable": "r_rejected",
+                "value": "-0.27"
+              },
+              {
+                "variable": "margin",
+                "value": "0.54"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Sigmoid turns a gap into a probability",
+        "body": "P(chosen beats rejected) = sigmoid(margin) = 1 / (1 + exp(-margin)). sigmoid(0) = 0.5, sigmoid(0.54) = 0.6318, and large positive margins approach 1. This is the Bradley-Terry model: preference probability depends only on the reward difference.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "sigmoid(margin)",
+            "data": [
+              0.5,
+              0.6318,
+              0.8808
+            ],
+            "labels": [
+              "margin 0",
+              "margin 0.54",
+              "margin 2.0"
+            ],
+            "highlight": [
+              1
+            ]
+          }
+        }
+      },
+      {
+        "title": "Shifts cancel out",
+        "body": "Adding the same constant to both rewards leaves the margin unchanged. That is why the prompt-dependent term in DPO's derivation disappears: only differences between completions of the same prompt are ever used."
+      },
+      {
+        "title": "From confidence to loss",
+        "body": "Training wants this probability near 1 for every human-labelled pair. The natural loss is its negative log, which the next lesson computes; here 0.6318 means there is still room to improve."
+      }
+    ],
+    "takeaway": "Two rewards become one confidence through a difference and a sigmoid. DPO only ever learns from those differences, which is what makes it stable and simple."
+  }
 }

@@ -202,5 +202,85 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "For each model MTEB computes task-specific metrics, such as nDCG@10 for retrieval, on dozens of public datasets; for a RAG system you combine the retrieval score with measured latency and memory on your own hardware to choose.",
+    "steps": [
+      {
+        "title": "How a retrieval score is produced",
+        "body": "For a dataset, all documents and queries are embedded, documents are ranked by similarity for each query, and the ranking is compared with human relevance labels using nDCG@10. The model's retrieval score is the average over the retrieval datasets."
+      },
+      {
+        "title": "nDCG@10 in one line",
+        "body": "It rewards relevant documents in the top 10, more so near the top (each position is discounted by log2(position + 1)), normalised so a perfect ranking scores 1. Leaderboards usually show it as a percentage.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "relevant at rank 1",
+                "value": "full credit"
+              },
+              {
+                "variable": "relevant at rank 3",
+                "value": "credit / 2"
+              },
+              {
+                "variable": "relevant at rank 11",
+                "value": "no credit"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Measure what MTEB does not",
+        "body": "MTEB does not report your latency. The lesson's benchmark_model times encoding a fixed corpus and queries on your machine, so a model with a slightly higher score but three times the latency can be judged fairly.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "model                 retrieval  ms/query  dims",
+              "all-MiniLM-L6-v2      lower      fast      384",
+              "bge-base-en-v1.5      higher     slower    768",
+              "(run it on your hardware)"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Encode the decision",
+        "body": "A small function maps your situation (corpus size, latency budget, GPU or not, multilingual or not) to a model family. Writing the rule down makes the choice repeatable and easy to revisit when the leaderboard changes."
+      },
+      {
+        "title": "Validate on your own queries",
+        "body": "Collect 50-100 real questions with their correct passages and compute recall@k for each shortlisted model. That small private benchmark is what finally decides.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "MTEB retrieval"
+              },
+              {
+                "label": "latency + memory",
+                "detail": "your hardware"
+              },
+              {
+                "label": "decision rule"
+              },
+              {
+                "label": "private eval",
+                "detail": "recall@k"
+              },
+              {
+                "label": "choose"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Leaderboard scores measure quality on public data; you still have to measure cost and quality on yours. Use MTEB to shortlist, never to decide alone."
+  }
 }

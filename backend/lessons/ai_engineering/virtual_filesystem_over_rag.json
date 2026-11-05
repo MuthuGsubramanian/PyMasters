@@ -202,5 +202,83 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Instead of embedding chunks, the documentation is exposed to the model as a file tree with tools such as list, read and search; the model navigates it in a tool loop, reading whole files or sections on demand.",
+    "steps": [
+      {
+        "title": "Docs as a tree",
+        "body": "VirtualDocFS walks the docs folder and builds an index of paths, titles and headings. The structure authors already created, folders for topics and files for pages, becomes the navigation system.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "doc tree",
+            "data": [
+              "guides/",
+              "guides/install.md",
+              "guides/auth.md",
+              "api/",
+              "api/users.md"
+            ],
+            "highlight": [
+              2
+            ]
+          }
+        }
+      },
+      {
+        "title": "Tools instead of a vector search",
+        "body": "The model gets tools like list_topics(), read_doc(path) and search_docs(text) with JSON schemas. It decides which to call, exactly like any agent tool loop."
+      },
+      {
+        "title": "The model navigates",
+        "body": "For 'How do I refresh a token?', it lists topics, opens guides/auth.md, and if needed searches for 'refresh'. Each tool result is appended to the context, and it answers once it has read the right section.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "question"
+              },
+              {
+                "label": "list_topics"
+              },
+              {
+                "label": "read_doc guides/auth.md"
+              },
+              {
+                "label": "search 'refresh'",
+                "detail": "optional"
+              },
+              {
+                "label": "answer with path cited"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "What it fixes",
+        "body": "No chunk boundaries cut an explanation in half, there is no embedding index to rebuild after edits, and exact names are found by text search. Citing the file path is natural because the model read that file."
+      },
+      {
+        "title": "What it costs",
+        "body": "Navigation takes several model calls and reading whole files spends context tokens. It works best when docs are well organised and moderate in size; very large or messy corpora still benefit from vector retrieval, sometimes as one more tool.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Vector RAG",
+              "code": "1 retrieval step\nchunks may split ideas\nindex must be rebuilt"
+            },
+            "right": {
+              "label": "Virtual filesystem",
+              "code": "several tool calls\nwhole sections read\nalways current files"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Retrieval does not have to mean embeddings. Giving the model a navigable structure and tools turns search into exploration, trading extra calls for intact context."
+  }
 }

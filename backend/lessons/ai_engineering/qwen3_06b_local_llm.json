@@ -204,5 +204,80 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Running Qwen3-0.6B locally means downloading about 0.6 billion weights, formatting the chat with its template, and running a decoder loop that turns logits into one sampled token at a time; a streamer prints each token as soon as it is decoded.",
+    "steps": [
+      {
+        "title": "Download once, then offline",
+        "body": "from_pretrained('Qwen/Qwen3-0.6B') fetches the config, tokenizer and weights into the Hugging Face cache. Later runs load from disk with no network or API key."
+      },
+      {
+        "title": "Size on your machine",
+        "body": "At 2 bytes per parameter in bf16, about 0.6B parameters is around 1.2 GB of weights, or double in float32. The model has 28 layers and uses grouped-query attention (16 query heads, 8 KV heads), which keeps the KV cache modest.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "params",
+                "value": "~0.6 B"
+              },
+              {
+                "variable": "bf16 weights",
+                "value": "~1.2 GB"
+              },
+              {
+                "variable": "layers",
+                "value": "28"
+              },
+              {
+                "variable": "context",
+                "value": "32,768 tokens"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Prompt to token ids",
+        "body": "The chat template wraps your message with role markers and the tokenizer turns it into ids. The model's job is to predict what comes after the assistant marker.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "messages"
+              },
+              {
+                "label": "chat template",
+                "detail": "text"
+              },
+              {
+                "label": "tokenizer",
+                "detail": "ids"
+              },
+              {
+                "label": "generate",
+                "detail": "loop"
+              },
+              {
+                "label": "decode",
+                "detail": "text"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Sampling settings shape the output",
+        "body": "Each step yields a probability for every vocabulary token. temperature rescales the logits, top_p keeps the smallest set of tokens whose probabilities add up to p, and one token is drawn. Lower temperature gives safer, more repetitive text."
+      },
+      {
+        "title": "Streaming tokens",
+        "body": "TextStreamer receives each new token id from generate(), decodes it, and prints it immediately with skip_special_tokens=True. The total time is unchanged, but the reply appears word by word like a chat app."
+      }
+    ],
+    "takeaway": "A local LLM is weights on disk plus a sampling loop on your CPU or GPU. Its size in bytes and its decode speed are what you trade for privacy and zero per-token cost."
+  }
 }

@@ -241,5 +241,59 @@
       "correct": 3
     }
   ],
-  "uth_example": "xs = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]\nys = [2.0, 4.1, 5.9, 8.2, 9.9, 12.1]\nw, workers = 1.5, 3\n\ndef grad(w, bx, by):\n    return sum(2 * (w * x - y) * x for x, y in zip(bx, by)) / len(bx)\n\nshard = len(xs) // workers\nlocal = []\nfor k in range(workers):                       # each GPU sees only its slice\n    sx, sy = xs[k * shard:(k + 1) * shard], ys[k * shard:(k + 1) * shard]\n    local.append(round(grad(w, sx, sy), 4))\n\nallreduced = sum(local) / workers              # the all-reduce: average\nsingle_gpu = grad(w, xs, ys)                   # what one big GPU would compute\nprint(\"local grads:\", local)\nprint(\"all-reduced:\", round(allreduced, 4), \"| full batch:\", round(single_gpu, 4))\n"
+  "uth_example": "xs = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]\nys = [2.0, 4.1, 5.9, 8.2, 9.9, 12.1]\nw, workers = 1.5, 3\n\ndef grad(w, bx, by):\n    return sum(2 * (w * x - y) * x for x, y in zip(bx, by)) / len(bx)\n\nshard = len(xs) // workers\nlocal = []\nfor k in range(workers):                       # each GPU sees only its slice\n    sx, sy = xs[k * shard:(k + 1) * shard], ys[k * shard:(k + 1) * shard]\n    local.append(round(grad(w, sx, sy), 4))\n\nallreduced = sum(local) / workers              # the all-reduce: average\nsingle_gpu = grad(w, xs, ys)                   # what one big GPU would compute\nprint(\"local grads:\", local)\nprint(\"all-reduced:\", round(allreduced, 4), \"| full batch:\", round(single_gpu, 4))\n",
+  "under_the_hood": {
+    "summary": "Each worker computes the gradient of the mean loss on its own equal-sized shard; because the gradient of a mean is the mean of gradients, all-reduce averaging the shard gradients gives exactly the full-batch gradient, so every copy takes the identical step.",
+    "steps": [
+      {
+        "title": "Split the batch",
+        "body": "With 8 samples and 4 workers, worker k sees samples 2k and 2k+1 only. Every worker holds the full model weights, here a single w = 2.0, and runs forward and backward on its slice."
+      },
+      {
+        "title": "Gradients per shard",
+        "body": "For loss = mean of (w x - y)^2, each worker computes the average of 2 (w x - y) x over its own two samples. In the lesson the four shard gradients are -3, -7, -11 and -15.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "shard gradients",
+            "data": [
+              -3.0,
+              -7.0,
+              -11.0,
+              -15.0
+            ],
+            "labels": [
+              "w0",
+              "w1",
+              "w2",
+              "w3"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why averaging is exact",
+        "body": "The full-batch loss is the mean over 8 samples, and differentiation is linear, so its gradient is the mean of the 8 per-sample gradients. Averaging four equal-sized shard means gives the same number: (-3 - 7 - 11 - 15) / 4 = -9, matching the single-worker result.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "full batch on one worker: -9.0",
+              "mean of shard grads: (-3 - 7 - 11 - 15) / 4 = -9.0",
+              "identical: True"
+            ]
+          }
+        }
+      },
+      {
+        "title": "All-reduce moves the numbers",
+        "body": "All-reduce sums the vectors across workers and gives every worker the result; dividing by N gives the mean. In a ring all-reduce each worker sends and receives about 2 (N - 1) / N times the gradient size, nearly independent of N."
+      },
+      {
+        "title": "Identical steps keep copies in sync",
+        "body": "Every worker now applies the same optimizer update to the same weights, so the copies never drift. If shards have unequal sizes, a plain average of shard means is no longer exact and must be weighted by shard size."
+      }
+    ],
+    "takeaway": "Data parallelism is mathematically exact, not an approximation: linearity of the gradient guarantees it. The only cost is the all-reduce over the network."
+  }
 }

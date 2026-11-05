@@ -243,5 +243,74 @@
       "correct": 1
     }
   ],
-  "uth_example": "prompt = [\"The\", \"cat\", \"sat\", \"on\", \"the\", \"mat\"]\n\nnaive_work, cached_work, cache = [], [], []\nfor step in range(1, len(prompt) + 1):\n    naive_work.append(step)                 # re-project every earlier token\n    cache.append(f\"KV({prompt[step - 1]})\")  # project only the new one, keep it\n    cached_work.append(1)\n\nnaive_total, cached_total = sum(naive_work), sum(cached_work)\nsaved = round((1 - cached_total / naive_total) * 100, 1)\nprint(\"cache:\", cache)\nprint(f\"projections: naive {naive_total}, cached {cached_total} -> {saved}% saved\")\n"
+  "uth_example": "prompt = [\"The\", \"cat\", \"sat\", \"on\", \"the\", \"mat\"]\n\nnaive_work, cached_work, cache = [], [], []\nfor step in range(1, len(prompt) + 1):\n    naive_work.append(step)                 # re-project every earlier token\n    cache.append(f\"KV({prompt[step - 1]})\")  # project only the new one, keep it\n    cached_work.append(1)\n\nnaive_total, cached_total = sum(naive_work), sum(cached_work)\nsaved = round((1 - cached_total / naive_total) * 100, 1)\nprint(\"cache:\", cache)\nprint(f\"projections: naive {naive_total}, cached {cached_total} -> {saved}% saved\")\n",
+  "under_the_hood": {
+    "summary": "Without a cache, generating token t recomputes key and value projections for all t tokens; with a KV cache each token's K and V are projected once and stored, so projection work drops from 1 + 2 + ... + n to n.",
+    "steps": [
+      {
+        "title": "What a projection is",
+        "body": "For every token, every layer computes k = x W_k and v = x W_v. These depend only on that token and earlier ones (because of the causal mask), so they never change when later tokens arrive."
+      },
+      {
+        "title": "Count the work without a cache",
+        "body": "Step 1 projects 1 token, step 2 projects 2, and step n projects n. Generating 5 tokens costs 1 + 2 + 3 + 4 + 5 = 15 projections; in general n(n + 1)/2, which grows quadratically.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "projections per step (no cache)",
+            "data": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "labels": [
+              "t1",
+              "t2",
+              "t3",
+              "t4",
+              "t5"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Count the work with a cache",
+        "body": "Each step projects only the new token and appends its k and v to the cache: 1 + 1 + 1 + 1 + 1 = 5 projections. For 1,000 tokens that is 1,000 instead of 500,500.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "seq_len=5, no cache   -> 15 K/V projections",
+              "seq_len=5, with cache -> 5 K/V projections",
+              "seq_len=1000: 500,500 vs 1,000"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Attention still reads everything",
+        "body": "The new token's query must still be compared with all cached keys, so attention work per step still grows with length. The cache removes the repeated projections and the repeated full forward passes, not the attention lookup itself."
+      },
+      {
+        "title": "The trade",
+        "body": "Compute saved is paid for in memory: the cache must hold K and V for every past token in every layer. That is why serving systems care so much about cache size.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "No cache",
+              "code": "quadratic recomputation\nlittle memory"
+            },
+            "right": {
+              "label": "KV cache",
+              "code": "linear projection work\nmemory grows with length"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Caching works because past keys and values are immutable under the causal mask. Computing each once turns quadratic waste into linear work, at the cost of memory."
+  }
 }

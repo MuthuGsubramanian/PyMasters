@@ -249,5 +249,94 @@
       "correct": 1
     }
   ],
-  "uth_example": "weights = [0.02, -0.05, 0.04, 0.01, 8.0, -0.03, 0.06, -0.02]    # one outlier: 8.0\n\ndef mean_error(values, group_size):\n    errors = []\n    for start in range(0, len(values), group_size):\n        group = values[start:start + group_size]\n        scale = max(abs(v) for v in group) / 127\n        errors += [abs(round(v / scale) * scale - v) for v in group]\n    return round(sum(errors) / len(errors), 5)\n\nresults = {}\nfor size in [8, 4, 2]:\n    results[size] = mean_error(weights, size)\n\nfor size, err in results.items():\n    print(f\"group size {size}: mean error {err}\")\n"
+  "uth_example": "weights = [0.02, -0.05, 0.04, 0.01, 8.0, -0.03, 0.06, -0.02]    # one outlier: 8.0\n\ndef mean_error(values, group_size):\n    errors = []\n    for start in range(0, len(values), group_size):\n        group = values[start:start + group_size]\n        scale = max(abs(v) for v in group) / 127\n        errors += [abs(round(v / scale) * scale - v) for v in group]\n    return round(sum(errors) / len(errors), 5)\n\nresults = {}\nfor size in [8, 4, 2]:\n    results[size] = mean_error(weights, size)\n\nfor size, err in results.items():\n    print(f\"group size {size}: mean error {err}\")\n",
+  "under_the_hood": {
+    "summary": "One scale per tensor is set by its largest value, so a single outlier makes the step size huge and rounds ordinary small weights to zero; group-wise quantization gives each small block of weights (for example 32 or 128) its own scale so an outlier only affects its own group.",
+    "steps": [
+      {
+        "title": "One outlier sets the scale",
+        "body": "Symmetric int8 uses scale = max(|x|) / 127. For weights [0.02, -0.03, 0.05, 6.4], the outlier 6.4 makes scale = 0.0504, so one step is larger than every ordinary weight.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "weights",
+            "data": [
+              0.02,
+              -0.03,
+              0.05,
+              6.4
+            ],
+            "highlight": [
+              3
+            ],
+            "title": "One outlier"
+          }
+        }
+      },
+      {
+        "title": "Small weights collapse",
+        "body": "0.02 / 0.0504 = 0.4 rounds to 0, -0.03 / 0.0504 = -0.6 rounds to -1, 0.05 rounds to 1. After dequantizing, 0.02 becomes 0.0, -0.03 becomes -0.0504 and 0.05 becomes 0.0504: errors as large as the values themselves.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "scale = 6.4 / 127 = 0.0504",
+              "0.02  -> q 0  -> 0.0",
+              "-0.03 -> q -1 -> -0.0504",
+              "0.05  -> q 1  -> 0.0504"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Give each group its own scale",
+        "body": "Split the tensor into groups of group_size consecutive values and compute a scale per group. A group without the outlier gets scale = 0.05 / 127 = 0.00039, so its weights are stored almost exactly; only the outlier's group pays.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Per-tensor scale",
+              "code": "1 scale for all values\noutlier taxes everyone"
+            },
+            "right": {
+              "label": "Per-group scale",
+              "code": "1 scale per group\noutlier taxes only its group"
+            }
+          }
+        }
+      },
+      {
+        "title": "The overhead",
+        "body": "Each group stores its scale, typically 16 bits. With groups of 128 that is about 0.125 extra bits per weight, with groups of 32 about 0.5 bits. Smaller groups give lower error for more metadata, which is why 4-bit formats commonly use groups of 32 to 128."
+      },
+      {
+        "title": "Outliers are real in LLMs",
+        "body": "Large language models are known to have a few dimensions with much larger magnitudes than the rest, so per-tensor quantization degrades them badly at low bit widths. Group-wise scales, and methods that treat outlier channels specially, are what make 4-bit LLMs work.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "tensor"
+              },
+              {
+                "label": "split into groups"
+              },
+              {
+                "label": "scale per group",
+                "detail": "max |x| / 127"
+              },
+              {
+                "label": "quantize each group"
+              },
+              {
+                "label": "store q + scales"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Precision is shared within whatever shares a scale. Smaller groups isolate outliers, at the cost of a fraction of a bit per weight for the extra scales."
+  }
 }

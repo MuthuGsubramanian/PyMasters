@@ -200,5 +200,75 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "paraphrase-multilingual-MiniLM-L12-v2 was trained by distillation so a sentence and its translation in 50+ languages map to nearly the same 384-d vector as an English teacher model gives the English sentence, which makes cross-language search a plain cosine comparison.",
+    "steps": [
+      {
+        "title": "A shared vocabulary for many scripts",
+        "body": "The model uses a SentencePiece vocabulary of about 250,000 pieces covering Latin, Tamil, Devanagari, CJK and more scripts. Most of its parameters sit in that large embedding table; the Transformer itself is 12 layers of width 384."
+      },
+      {
+        "title": "Teacher-student distillation",
+        "body": "An English teacher model produces a vector for 'The weather is nice'. The multilingual student is trained so that both the English sentence and its translation, say in French or Tamil, produce vectors close to that teacher vector, using a mean-squared-error loss over many translation pairs.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "English sentence",
+                "detail": "teacher vector"
+              },
+              {
+                "label": "student(English)",
+                "detail": "match teacher"
+              },
+              {
+                "label": "student(translation)",
+                "detail": "match teacher"
+              },
+              {
+                "label": "MSE loss"
+              },
+              {
+                "label": "aligned space"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Meaning aligns across languages",
+        "body": "Because every translation was pulled to the same target, a Tamil query and an English answer about the same thing end up close. Cosine similarity between them is high even though they share no characters.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "cosine to English doc",
+            "data": [
+              0.86,
+              0.84,
+              0.81,
+              0.09
+            ],
+            "labels": [
+              "English q",
+              "French q",
+              "Tamil q",
+              "unrelated"
+            ],
+            "title": "Illustrative scores"
+          }
+        }
+      },
+      {
+        "title": "One index, any query language",
+        "body": "Documents are embedded once regardless of language. A query in any supported language is embedded with the same model and compared directly, with no translation step."
+      },
+      {
+        "title": "Watch the input limit",
+        "body": "The model's max_seq_length is 128 tokens, and non-Latin scripts often need more tokens per word. Long passages must be chunked shorter than with English-only models or their ends are cut off."
+      }
+    ],
+    "takeaway": "Cross-lingual search works because training forced translations onto the same point. Keep chunks short for the 128-token limit and one index serves every language."
+  }
 }

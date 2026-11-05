@@ -219,5 +219,65 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Zero-shot CLIP classification writes each label as a sentence such as 'a photo of a cat', encodes the sentences and the image into the same space, scales their cosine similarities by a learned temperature, and takes a softmax over the labels.",
+    "steps": [
+      {
+        "title": "Labels become prompts",
+        "body": "Class names alone are ambiguous ('boxer' the dog or the athlete), so each label is placed in a template like 'a photo of a {label}'. Averaging several templates per label usually improves accuracy further."
+      },
+      {
+        "title": "Encode both sides",
+        "body": "The image goes through the ViT image encoder and each prompt through the text encoder; both are projected to 768 dimensions and normalised to length 1.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "image",
+                "detail": "ViT-L/14"
+              },
+              {
+                "label": "label prompts",
+                "detail": "text encoder"
+              },
+              {
+                "label": "cosine per label"
+              },
+              {
+                "label": "x logit_scale"
+              },
+              {
+                "label": "softmax"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Similarity times a learned temperature",
+        "body": "Cosine similarities between an image and prompts are close together, such as 0.27 versus 0.21. CLIP multiplies them by its learned logit scale (100 for released models), turning 0.27 and 0.21 into logits 27 and 21, so softmax gives a clear winner.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "cosine:  cat 0.27  dog 0.21  car 0.15",
+              "logits:  cat 27    dog 21    car 15",
+              "probs:   cat 0.998 dog 0.002 car 0.000"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Probabilities are relative to your list",
+        "body": "Softmax only compares the labels you supplied. If the true class is missing, CLIP still spreads 100% over the options, so add an 'other' style label or check raw similarity when the set is open."
+      },
+      {
+        "title": "Why it works without training",
+        "body": "The 400 million web image-text pairs CLIP saw cover a huge variety of concepts in natural language. A new class only needs a description, not labelled images, which is what 'zero-shot' means here."
+      }
+    ],
+    "takeaway": "Zero-shot classification is retrieval over label descriptions. Prompt wording matters, and the probabilities only rank the labels you gave it."
+  }
 }

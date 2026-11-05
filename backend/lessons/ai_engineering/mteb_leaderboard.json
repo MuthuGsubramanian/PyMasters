@@ -242,5 +242,81 @@
       "correct": 0
     }
   ],
-  "uth_example": "leaderboard = {\"big-embedder\": 64.1, \"small-embedder\": 58.7}   # public average\nmy_queries = [(\"refund rules\", \"doc_refund\"), (\"reset login\", \"doc_login\"),\n              (\"cancel plan\", \"doc_cancel\")]\nretrieved = {                       # what each model returned first on MY data\n    \"big-embedder\": [\"doc_refund\", \"doc_billing\", \"doc_billing\"],\n    \"small-embedder\": [\"doc_refund\", \"doc_login\", \"doc_cancel\"],\n}\n\nmy_scores = {}\nfor model, top1 in retrieved.items():\n    hits = sum(1 for (q, gold), got in zip(my_queries, top1) if got == gold)\n    my_scores[model] = round(hits / len(my_queries), 2)\n\nfor model in leaderboard:\n    print(f\"{model:15} MTEB {leaderboard[model]}  my recall@1 {my_scores[model]}\")\nprint(\"pick:\", max(my_scores, key=my_scores.get))\n"
+  "uth_example": "leaderboard = {\"big-embedder\": 64.1, \"small-embedder\": 58.7}   # public average\nmy_queries = [(\"refund rules\", \"doc_refund\"), (\"reset login\", \"doc_login\"),\n              (\"cancel plan\", \"doc_cancel\")]\nretrieved = {                       # what each model returned first on MY data\n    \"big-embedder\": [\"doc_refund\", \"doc_billing\", \"doc_billing\"],\n    \"small-embedder\": [\"doc_refund\", \"doc_login\", \"doc_cancel\"],\n}\n\nmy_scores = {}\nfor model, top1 in retrieved.items():\n    hits = sum(1 for (q, gold), got in zip(my_queries, top1) if got == gold)\n    my_scores[model] = round(hits / len(my_queries), 2)\n\nfor model in leaderboard:\n    print(f\"{model:15} MTEB {leaderboard[model]}  my recall@1 {my_scores[model]}\")\nprint(\"pick:\", max(my_scores, key=my_scores.get))\n",
+  "under_the_hood": {
+    "summary": "MTEB runs each embedding model through many datasets grouped into task families, each with its own metric, and the overall rank is an average across families; picking for RAG means filtering by your constraints and then sorting by the Retrieval column.",
+    "steps": [
+      {
+        "title": "Many tasks, one model",
+        "body": "The benchmark embeds the texts of each dataset with the model and evaluates them the same way for every model: retrieval ranks documents for queries, STS compares similarity with human scores, classification trains a simple classifier on the vectors, clustering groups them.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "task family -> metric",
+            "data": [
+              "Retrieval -> nDCG@10",
+              "STS -> Spearman correlation",
+              "Classification -> accuracy",
+              "Clustering -> V-measure",
+              "Reranking -> MAP"
+            ]
+          }
+        }
+      },
+      {
+        "title": "The overall score hides what you need",
+        "body": "The headline number averages all families. A model can be strong at classification and weak at retrieval and still rank high overall, so for RAG the Retrieval column is the one that matters."
+      },
+      {
+        "title": "Read score, size and dimensions together",
+        "body": "Top entries are often multi-billion-parameter embedders with 4,096-d vectors that need a GPU. Every extra dimension costs storage for every chunk, forever, and every extra parameter costs latency on every query.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Leaderboard #1",
+              "code": "retrieval 60.2\n14,000 MB, 4,096-d\nGPU only"
+            },
+            "right": {
+              "label": "Fits a CPU app",
+              "code": "bge-base-en-v1.5: retrieval 53.3\n440 MB, 768-d"
+            }
+          }
+        }
+      },
+      {
+        "title": "Filter, then sort",
+        "body": "Apply hard constraints first (language, size, dimensions, max input tokens), then take the best retrieval score among what remains. In the lesson's list the 500 MB limit removes the giant model and bge-base-en-v1.5 wins.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "all models"
+              },
+              {
+                "label": "filter",
+                "detail": "language, size, dims"
+              },
+              {
+                "label": "sort",
+                "detail": "Retrieval nDCG@10"
+              },
+              {
+                "label": "shortlist 3"
+              },
+              {
+                "label": "test on your data"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Benchmarks are a shortlist, not a verdict",
+        "body": "MTEB datasets are public, and your documents are not like them. Try the top two or three candidates on a small labelled sample of your own queries before committing."
+      }
+    ],
+    "takeaway": "MTEB tells you how models compare on standard tasks; your constraints decide which ones are eligible. Filter first, sort by the task you ship, verify on your data."
+  }
 }

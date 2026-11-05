@@ -249,5 +249,66 @@
       "correct": 0
     }
   ],
-  "uth_example": "notes = \"Our office opens at 9. Parking is in lot B. Lunch is served at 1. Wifi password is on the badge.\"\nchunks = [s.strip() for s in notes.split(\".\") if s.strip()]\nvocab = [\"office\", \"opens\", \"parking\", \"lot\", \"lunch\", \"wifi\", \"password\"]\n\ndef embed(text):\n    words = text.lower().split()\n    vec = [words.count(v) for v in vocab]\n    norm = sum(x * x for x in vec) ** 0.5 or 1\n    return [x / norm for x in vec]\n\nchunk_vecs = [embed(c) for c in chunks]\nquery = \"where is parking\"\nq_vec = embed(query)\nscores = [sum(a * b for a, b in zip(q_vec, cv)) for cv in chunk_vecs]\nbest = max(range(len(chunks)), key=lambda i: scores[i])\nprompt = f\"Answer using ONLY this context:\\n{chunks[best]}\\n\\nQuestion: {query}\"\nprint(prompt)\n"
+  "uth_example": "notes = \"Our office opens at 9. Parking is in lot B. Lunch is served at 1. Wifi password is on the badge.\"\nchunks = [s.strip() for s in notes.split(\".\") if s.strip()]\nvocab = [\"office\", \"opens\", \"parking\", \"lot\", \"lunch\", \"wifi\", \"password\"]\n\ndef embed(text):\n    words = text.lower().split()\n    vec = [words.count(v) for v in vocab]\n    norm = sum(x * x for x in vec) ** 0.5 or 1\n    return [x / norm for x in vec]\n\nchunk_vecs = [embed(c) for c in chunks]\nquery = \"where is parking\"\nq_vec = embed(query)\nscores = [sum(a * b for a, b in zip(q_vec, cv)) for cv in chunk_vecs]\nbest = max(range(len(chunks)), key=lambda i: scores[i])\nprompt = f\"Answer using ONLY this context:\\n{chunks[best]}\\n\\nQuestion: {query}\"\nprint(prompt)\n",
+  "under_the_hood": {
+    "summary": "The local RAG loop slides a 64-word window with a 48-word step over your notes, embeds each chunk with all-MiniLM-L6-v2 as a normalised vector, scores chunks by dot product with the query vector, and pastes the top 3 into the LLM prompt.",
+    "steps": [
+      {
+        "title": "Overlapping chunks",
+        "body": "chunks = [' '.join(words[i:i+64]) for i in range(0, len(words), 48)] takes 64 words, steps forward 48, so neighbouring chunks share 16 words. A sentence cut at one boundary appears whole in the next chunk.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "chunk word ranges",
+            "data": [
+              "0-63",
+              "48-111",
+              "96-159",
+              "144-207"
+            ],
+            "title": "Step 48, overlap 16"
+          }
+        }
+      },
+      {
+        "title": "Embed with normalisation",
+        "body": "model.encode(chunks, normalize_embeddings=True) returns one 384-d unit vector per chunk. 64 words is roughly 80-100 word pieces, comfortably inside the model's 256-token limit, so nothing is truncated."
+      },
+      {
+        "title": "Score is one matrix product",
+        "body": "chunk_vecs @ q_vec gives a cosine score per chunk because all vectors have length 1. scores.argsort()[-3:][::-1] returns the indices of the best three, highest first.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "scores = [0.12, 0.58, 0.44, 0.09]",
+              "top 3 = [1, 2, 0]"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Ground the prompt",
+        "body": "The three chunks are joined with '---' separators under 'Answer using ONLY this context', followed by the question. The LLM, local or cloud, now answers from your notes rather than from memory."
+      },
+      {
+        "title": "The two knobs",
+        "body": "Smaller chunks rank precisely but arrive as fragments; larger ones carry context but blur into vague vectors. Overlap costs some extra storage and repeated text in exchange for not losing boundary sentences; tune both on real questions.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Tiny chunks",
+              "code": "precise ranking\nfragments lack context"
+            },
+            "right": {
+              "label": "Huge chunks",
+              "code": "full context\nvague vectors, weak ranking"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "The R in RAG is four lines of embedding work. Chunk size and overlap decide what can be found, so they deserve as much tuning as the prompt."
+  }
 }

@@ -243,5 +243,93 @@
       "correct": 0
     }
   ],
-  "uth_example": "from math import exp\n\nclasses = [\"cat\", \"tiger\", \"car\"]\nlogits = [8.0, 5.0, -1.0]\n\ntable = {}\nfor T in [1, 2, 5]:\n    exps = [exp(x / T) for x in logits]\n    total = sum(exps)\n    table[T] = [round(e / total, 4) for e in exps]\n\nfor T, probs in table.items():\n    pairs = dict(zip(classes, probs))\n    print(f\"T={T}: {pairs}\")\nprint(\"At higher T the student can see that a cat looks more like a tiger than a car.\")\n"
+  "uth_example": "from math import exp\n\nclasses = [\"cat\", \"tiger\", \"car\"]\nlogits = [8.0, 5.0, -1.0]\n\ntable = {}\nfor T in [1, 2, 5]:\n    exps = [exp(x / T) for x in logits]\n    total = sum(exps)\n    table[T] = [round(e / total, 4) for e in exps]\n\nfor T, probs in table.items():\n    pairs = dict(zip(classes, probs))\n    print(f\"T={T}: {pairs}\")\nprint(\"At higher T the student can see that a cat looks more like a tiger than a car.\")\n",
+  "under_the_hood": {
+    "summary": "Dividing a teacher's logits by a temperature T > 1 before softmax shrinks the gaps between them, so the probabilities of the wrong classes become visible; that relative ranking of wrong answers is the extra information distillation passes to the student.",
+    "steps": [
+      {
+        "title": "Ordinary softmax hides the runners-up",
+        "body": "For logits [4.0, 2.0, 0.5] (cat, dog, fox) at T = 1 the probabilities are [0.858, 0.116, 0.026]. The teacher looks almost certain, and the fact that it ranks dog well above fox is nearly invisible.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "T = 1",
+            "data": [
+              0.858,
+              0.1161,
+              0.0259
+            ],
+            "labels": [
+              "cat",
+              "dog",
+              "fox"
+            ],
+            "highlight": [
+              0
+            ]
+          }
+        }
+      },
+      {
+        "title": "Divide by T before exponentiating",
+        "body": "p_i = exp(x_i / T) / sum_j exp(x_j / T). With T = 4 the logits become [1.0, 0.5, 0.125]; the gaps are four times smaller, so exp no longer blows them apart.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "T = 4",
+            "data": [
+              0.4942,
+              0.2998,
+              0.206
+            ],
+            "labels": [
+              "cat",
+              "dog",
+              "fox"
+            ],
+            "highlight": [
+              0
+            ]
+          }
+        }
+      },
+      {
+        "title": "Order is preserved",
+        "body": "Temperature never changes which class is on top, only how peaked the distribution is. cat stays first and dog stays above fox at every T > 0; as T grows the distribution approaches uniform."
+      },
+      {
+        "title": "Dark knowledge",
+        "body": "The softened distribution says 'this image is a bit dog-like and barely fox-like'. A student trained to match it learns these similarities between classes, information a one-hot label 'cat' never contains."
+      },
+      {
+        "title": "Both models use the same T",
+        "body": "During distillation the student's logits are softened with the same T before comparing with the teacher. At inference the student is used at T = 1 as normal.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "teacher logits"
+              },
+              {
+                "label": "/ T"
+              },
+              {
+                "label": "softmax",
+                "detail": "soft targets"
+              },
+              {
+                "label": "student logits / T"
+              },
+              {
+                "label": "compare",
+                "detail": "KL divergence"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Temperature turns a confident label into a ranking of how similar the classes look to the teacher. That ranking is what makes distillation more informative than training on hard labels."
+  }
 }

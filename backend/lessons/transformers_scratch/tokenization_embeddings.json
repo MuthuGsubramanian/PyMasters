@@ -168,5 +168,114 @@
     "category": "transformers",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Text is split into subword tokens, each token is looked up to an integer id, and each id selects one row of a learned embedding matrix; that row is the vector the first layer actually sees.",
+    "steps": [
+      {
+        "title": "A tokenizer splits text into known pieces",
+        "body": "A BPE tokenizer starts from bytes and repeatedly applies merge rules it learned from a corpus, such as 't'+'h' -> 'th', then 'th'+'e' -> 'the'. Common words end up as one token; a rarer word like 'tokenization' can fall apart into pieces such as 'token' + 'ization'. Nothing is ever out of vocabulary, because the bytes themselves are always in it.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "tokens",
+            "data": [
+              "The",
+              " cat",
+              " sat",
+              " token",
+              "ization"
+            ],
+            "highlight": [
+              3,
+              4
+            ],
+            "title": "One rare word becomes two subword tokens"
+          }
+        }
+      },
+      {
+        "title": "Each token is swapped for an integer id",
+        "body": "The vocabulary is a fixed table from token string to integer. GPT-2's has 50,257 entries, so every token becomes a number between 0 and 50,256. From here on the model works only with these ids; the letters are gone."
+      },
+      {
+        "title": "The id picks one row of the embedding matrix",
+        "body": "The embedding matrix has one row per vocabulary entry and d_model columns (768 for GPT-2 small, about 38.6 million numbers). Embedding is not a calculation, it is indexing: id 9246 means 'take row 9246'. Mathematically it equals multiplying a one-hot vector by the matrix, which is why gradients can flow into exactly the rows that were used.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "embedding_matrix",
+            "data": [
+              [
+                0.12,
+                -0.4,
+                0.88
+              ],
+              [
+                0.05,
+                0.31,
+                -0.22
+              ],
+              [
+                -0.71,
+                0.09,
+                0.14
+              ],
+              [
+                0.33,
+                0.27,
+                -0.58
+              ]
+            ],
+            "labels": [
+              "id 0",
+              "id 1",
+              "id 2",
+              "id 3"
+            ],
+            "highlight": [
+              2
+            ],
+            "title": "Token id 2 -> row 2 (d_model = 3 here)"
+          }
+        }
+      },
+      {
+        "title": "Rows start random and are learned",
+        "body": "At initialisation the rows are small random numbers. During training, every time a token appears its row receives a gradient, so tokens used in similar contexts drift toward similar vectors. That is where 'cat' ending up near 'dog' comes from: nobody wrote it down, the loss pushed it there."
+      },
+      {
+        "title": "The vector is static until attention runs",
+        "body": "The row for ' bank' is identical in 'river bank' and 'bank loan'; the lookup has no context. Position information is added next, and only the attention layers that follow mix in neighbouring tokens to produce a contextual vector.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "text",
+                "detail": "'the bank'"
+              },
+              {
+                "label": "tokens",
+                "detail": "['the', ' bank']"
+              },
+              {
+                "label": "ids",
+                "detail": "two integers < 50,257"
+              },
+              {
+                "label": "rows",
+                "detail": "2 x 768 matrix"
+              },
+              {
+                "label": "+ position, then attention"
+              }
+            ],
+            "title": "Text to vectors"
+          }
+        }
+      }
+    ],
+    "takeaway": "A model never reads characters: it reads rows of a table chosen by token ids. Vocabulary size and d_model fix the size of that table, and the tokenizer decides how many rows a sentence costs."
+  }
 }

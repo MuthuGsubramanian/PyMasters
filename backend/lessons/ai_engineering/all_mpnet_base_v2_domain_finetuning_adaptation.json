@@ -199,5 +199,67 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Fine-tuning all-mpnet-base-v2 shows it pairs of texts from your domain and adjusts its weights with a contrastive loss so matching pairs end up closer than non-matching ones, while the output stays a 768-dimensional normalised vector.",
+    "steps": [
+      {
+        "title": "Why a general model misses domain synonyms",
+        "body": "all-mpnet-base-v2 was trained on general web pairs. If 'myocardial infarction' and 'heart attack' rarely appeared as pairs, their vectors may sit further apart than your users need."
+      },
+      {
+        "title": "Build training pairs",
+        "body": "Each example is two texts, either a positive pair (query, relevant passage) or a pair with a similarity label such as 1.0 or 0.0. Sources include search logs, FAQ question-answer pairs, or titles with their sections.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "pairs",
+            "data": [
+              "('myocardial infarction symptoms', 'heart attack warning signs')",
+              "('statin side effects', 'muscle pain from cholesterol drugs')"
+            ],
+            "title": "Anchor-positive pairs"
+          }
+        }
+      },
+      {
+        "title": "Contrastive loss with in-batch negatives",
+        "body": "MultipleNegativesRankingLoss treats each anchor's own positive as the right answer and every other positive in the batch as a wrong one. It computes cosine scores for all pairs in the batch, scales them (by 20 by default), and applies cross-entropy, so a batch of 32 gives 31 negatives per anchor for free.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "batch of pairs"
+              },
+              {
+                "label": "encode both sides",
+                "detail": "768-d"
+              },
+              {
+                "label": "score matrix",
+                "detail": "anchor x positive"
+              },
+              {
+                "label": "cross-entropy",
+                "detail": "diagonal is correct"
+              },
+              {
+                "label": "update weights"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Evaluate during training",
+        "body": "Hold back some pairs and measure retrieval metrics such as recall@k or MRR before and after. Stop when held-out scores stop improving; continuing can over-fit to the training phrasings and hurt general queries."
+      },
+      {
+        "title": "Re-index after fine-tuning",
+        "body": "The fine-tuned model places every text differently, so all stored document vectors must be re-encoded with it. Mixing old and new vectors in one index makes their similarities meaningless."
+      }
+    ],
+    "takeaway": "Fine-tuning an embedder means moving points in vector space with labelled pairs. Same model size, same 768 dimensions, but your domain's synonyms now land together."
+  }
 }

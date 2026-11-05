@@ -212,5 +212,80 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "x = [2.0, 4.0, 6.0, 8.0]\nshifted = [v + 10 for v in x]\n\ndef layer_norm(v):\n    mean = sum(v) / len(v)\n    var = sum((a - mean) ** 2 for a in v) / len(v)\n    return [round((a - mean) / (var + 1e-5) ** 0.5, 2) for a in v]\n\ndef rms_norm(v):\n    rms = (sum(a * a for a in v) / len(v)) ** 0.5     # no mean: one pass, cheaper\n    return [round(a / rms, 2) for a in v]\n\nresults = {\n    \"layer(x)\": layer_norm(x), \"layer(x+10)\": layer_norm(shifted),\n    \"rms(x)\": rms_norm(x), \"rms(x+10)\": rms_norm(shifted),\n}\nfor name, out in results.items():\n    print(f\"{name:12} {out}\")\n"
+  "uth_example": "x = [2.0, 4.0, 6.0, 8.0]\nshifted = [v + 10 for v in x]\n\ndef layer_norm(v):\n    mean = sum(v) / len(v)\n    var = sum((a - mean) ** 2 for a in v) / len(v)\n    return [round((a - mean) / (var + 1e-5) ** 0.5, 2) for a in v]\n\ndef rms_norm(v):\n    rms = (sum(a * a for a in v) / len(v)) ** 0.5     # no mean: one pass, cheaper\n    return [round(a / rms, 2) for a in v]\n\nresults = {\n    \"layer(x)\": layer_norm(x), \"layer(x+10)\": layer_norm(shifted),\n    \"rms(x)\": rms_norm(x), \"rms(x+10)\": rms_norm(shifted),\n}\nfor name, out in results.items():\n    print(f\"{name:12} {out}\")\n",
+  "under_the_hood": {
+    "summary": "LayerNorm subtracts each vector's mean and divides by its standard deviation, while RMSNorm skips the mean and divides by the root mean square; both then multiply by a learned gain, and RMSNorm does less work.",
+    "steps": [
+      {
+        "title": "Why normalise at all",
+        "body": "Every block adds its output to the residual stream, so after dozens of layers a token vector's scale can drift. A norm layer rescales each token vector on its own (not across the batch), so the next sublayer always sees inputs of a similar size."
+      },
+      {
+        "title": "LayerNorm: centre, then scale",
+        "body": "For x = [4, 2, 0, 6] the mean is 3 and the variance is 5. (x - 3) / sqrt(5 + eps) gives [0.447, -0.447, -1.342, 1.342]: mean 0, standard deviation 1. A learned gain gamma and bias beta are then applied per dimension.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "LayerNorm(x)",
+            "data": [
+              0.447,
+              -0.447,
+              -1.342,
+              1.342
+            ],
+            "labels": [
+              "4",
+              "2",
+              "0",
+              "6"
+            ]
+          }
+        }
+      },
+      {
+        "title": "RMSNorm: scale only",
+        "body": "RMS = sqrt(mean(x^2) + eps) = sqrt((16 + 4 + 0 + 36) / 4) = 3.742. x / 3.742 = [1.069, 0.535, 0.0, 1.604]. The vector keeps its direction and its offset from zero; only its size is fixed. A learned gain is applied, and there is no bias.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "RMSNorm(x)",
+            "data": [
+              1.069,
+              0.535,
+              0.0,
+              1.604
+            ],
+            "labels": [
+              "4",
+              "2",
+              "0",
+              "6"
+            ]
+          }
+        }
+      },
+      {
+        "title": "What dropping the mean saves",
+        "body": "RMSNorm needs one reduction (sum of squares) instead of two (mean, then variance), and no bias parameter. The RMSNorm paper (Zhang and Sennrich, 2019) reported similar quality with less compute, which is why Llama, Mistral and Qwen use it."
+      },
+      {
+        "title": "Where it sits in the block",
+        "body": "Modern decoders use pre-norm: x + Attention(RMSNorm(x)), then x + FFN(RMSNorm(x)), plus one final norm before the output layer. The residual path itself is never normalised, which keeps gradients flowing cleanly through deep stacks.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "LayerNorm",
+              "code": "(x - mean) / std * gamma + beta\n2 reductions, gain + bias"
+            },
+            "right": {
+              "label": "RMSNorm",
+              "code": "x / rms(x) * gamma\n1 reduction, gain only"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Both norms fix the scale of each token vector. RMSNorm keeps only the part that matters most for stability, rescaling by size, and saves a reduction in every one of the many norm layers a model runs per token."
+  }
 }

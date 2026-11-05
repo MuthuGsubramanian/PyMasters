@@ -153,5 +153,70 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "LangGraph runs a graph of node functions over a shared state dict: each node returns a partial update, reducers merge it into the state, edges or routing functions pick the next node, and a checkpointer can save the state after each step.",
+    "steps": [
+      {
+        "title": "State is a typed dict",
+        "body": "You declare the state, e.g. class AgentState(TypedDict): messages: Annotated[list, add]. Every node receives the current state and returns only the keys it wants to change."
+      },
+      {
+        "title": "Reducers decide how updates merge",
+        "body": "Without a reducer a returned key overwrites the old value. With Annotated[list, operator.add], a returned ['draft ready'] is appended to the existing list, so several nodes can contribute messages without erasing each other.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "No reducer",
+              "code": "state['notes'] = ['a']\nnode returns ['b']\n-> ['b']"
+            },
+            "right": {
+              "label": "Annotated[list, add]",
+              "code": "state['notes'] = ['a']\nnode returns ['b']\n-> ['a', 'b']"
+            }
+          }
+        }
+      },
+      {
+        "title": "Edges, fixed and conditional",
+        "body": "add_edge('researcher', 'writer') always goes on to writer. add_conditional_edges('reviewer', route) calls route(state) and follows the node name it returns, which is how retries and branches are expressed, including loops back to an earlier node.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "START"
+              },
+              {
+                "label": "researcher"
+              },
+              {
+                "label": "writer"
+              },
+              {
+                "label": "reviewer",
+                "detail": "route(state)"
+              },
+              {
+                "label": "publisher or back to writer"
+              },
+              {
+                "label": "END"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Execution in steps",
+        "body": "compile() turns the builder into a runnable graph. invoke() runs it step by step: active nodes run, their updates are merged into the state, then the edges choose the next nodes. Nodes reached in the same step can run in parallel."
+      },
+      {
+        "title": "Checkpoints enable pause and resume",
+        "body": "With a checkpointer such as MemorySaver and a thread_id in the config, the state is saved after each step. That is what lets a graph stop for human approval and later continue from the same point, or resume a conversation by thread."
+      }
+    ],
+    "takeaway": "LangGraph is a state machine for agents: nodes are functions, the state is the only shared memory, and reducers plus edges decide what happens next."
+  }
 }

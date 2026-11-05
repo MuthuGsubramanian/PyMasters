@@ -169,5 +169,85 @@
     "category": "transformers",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Softmax exponentiates each score and divides by the total, so any real-valued scores become positive weights that sum to 1, with large gaps amplified; subtracting the max first keeps exp from overflowing.",
+    "steps": [
+      {
+        "title": "Exponentiate every score",
+        "body": "Take scores [2.0, 1.0, 0.0]. exp turns them into [7.39, 2.72, 1.0]. Every result is positive even if the score was negative, and a gap of 1 in score becomes a factor of about 2.72 in weight.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "exp(scores)",
+            "data": [
+              7.389,
+              2.718,
+              1.0
+            ],
+            "labels": [
+              "exp(2)",
+              "exp(1)",
+              "exp(0)"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Divide by the sum",
+        "body": "The sum is 11.11, so the weights are [0.665, 0.245, 0.090]. They add to 1, which is exactly what a weighted average needs. The order of the scores is preserved; only the scale changes.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "weights",
+            "data": [
+              0.665,
+              0.245,
+              0.09
+            ],
+            "highlight": [
+              0
+            ],
+            "title": "Sums to 1.0"
+          }
+        }
+      },
+      {
+        "title": "Subtract the max for numerical safety",
+        "body": "exp(1000) overflows a 64-bit float to infinity. Since softmax(x) == softmax(x - c) for any constant c, implementations subtract max(x) first, making the largest exponent exp(0) = 1. The answer is identical and nothing overflows."
+      },
+      {
+        "title": "Temperature sharpens or flattens",
+        "body": "Dividing scores by a temperature T before softmax changes the gaps. [2, 1, 0] at T = 0.5 becomes [4, 2, 0] -> [0.867, 0.117, 0.016]; at T = 2 it becomes [1, 0.5, 0] -> about [0.51, 0.31, 0.19]. As T approaches 0 softmax approaches argmax."
+      },
+      {
+        "title": "Where the Transformer uses it",
+        "body": "Attention applies softmax to each row of the score matrix, so each token's weights over the others sum to 1. The output layer applies it to the logits over the whole vocabulary to get next-token probabilities. Masked positions hold -inf, and exp(-inf) = 0, so they get exactly zero weight.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "scores",
+                "detail": "any real numbers"
+              },
+              {
+                "label": "- max",
+                "detail": "stability"
+              },
+              {
+                "label": "exp",
+                "detail": "all positive"
+              },
+              {
+                "label": "/ sum",
+                "detail": "weights sum to 1"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Softmax is the bridge from 'how relevant' to 'how much to take'. Remember the three moves: shift by the max, exponentiate, normalise; and that temperature only rescales the scores going in."
+  }
 }

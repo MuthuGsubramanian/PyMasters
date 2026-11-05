@@ -151,5 +151,78 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Structured outputs turn a Pydantic model into a JSON Schema sent with the request; providers that support strict mode constrain decoding so only schema-valid tokens can be generated, and the returned JSON is parsed back into the Pydantic object.",
+    "steps": [
+      {
+        "title": "Pydantic model to JSON Schema",
+        "body": "class MovieReview(BaseModel): title: str; rating: float; sentiment: str; key_themes: list[str] becomes a schema with types, required fields and descriptions from Field(...). The schema is what the model receives.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "{\"type\": \"object\",",
+              " \"properties\": {\"title\": {\"type\": \"string\"},",
+              "   \"rating\": {\"type\": \"number\"}, ...},",
+              " \"required\": [\"title\", \"rating\", \"sentiment\", \"key_themes\"]}"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Prompting alone is not a guarantee",
+        "body": "Asking for 'JSON only' usually works, but a model can add a sentence before the brace, drop a field or write rating as 'eight'. json.loads or validation then fails at runtime."
+      },
+      {
+        "title": "Constrained decoding",
+        "body": "In strict structured-output modes, the server tracks where generation is inside the schema and, at every step, masks the logits of tokens that would break it. After '\"rating\": ' only tokens that can start a number remain possible, so the result always parses.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "schema",
+                "detail": "state machine"
+              },
+              {
+                "label": "next-token logits"
+              },
+              {
+                "label": "mask invalid tokens"
+              },
+              {
+                "label": "sample"
+              },
+              {
+                "label": "always valid JSON"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Parse back into Python",
+        "body": "SDK helpers return the response already validated as a MovieReview instance, so code can use review.rating as a float. Where a provider lacks strict mode, libraries validate with Pydantic and retry with the error message."
+      },
+      {
+        "title": "Validity is not truth",
+        "body": "A schema guarantees shape, not correctness: rating can be a well-formed 9.5 for a film the text called mediocre. Field descriptions, enums for fixed choices and evals on real inputs still matter.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Schema guarantees",
+              "code": "keys present\ncorrect types\nparseable JSON"
+            },
+            "right": {
+              "label": "Schema does not guarantee",
+              "code": "values are right\nfacts are true\nnothing omitted from text"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Constrained decoding makes valid structure a property of generation itself, not a hope. Validation in Python and evals on content cover what the schema cannot."
+  }
 }

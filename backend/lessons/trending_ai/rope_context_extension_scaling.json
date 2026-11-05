@@ -245,5 +245,70 @@
       "correct": 2
     }
   ],
-  "uth_example": "from math import pi\n\nhead_dim = 128\ncontext_len = 128_000\npairs = [0, 16, 32, 48, 63]                 # dimension pairs, fast -> slow\n\ndef wavelengths(base):\n    return {i: round(2 * pi * base ** (2 * i / head_dim), 1) for i in pairs}\n\nreport = {}\nfor base in [10_000, 500_000]:\n    waves = wavelengths(base)\n    covering = [i for i, w in waves.items() if w >= context_len]\n    report[base] = (waves, covering)\n\nfor base, (waves, covering) in report.items():\n    print(f\"base {base}: slowest wavelength {waves[63]:,} -> pairs covering 128k: {covering}\")\n"
+  "uth_example": "from math import pi\n\nhead_dim = 128\ncontext_len = 128_000\npairs = [0, 16, 32, 48, 63]                 # dimension pairs, fast -> slow\n\ndef wavelengths(base):\n    return {i: round(2 * pi * base ** (2 * i / head_dim), 1) for i in pairs}\n\nreport = {}\nfor base in [10_000, 500_000]:\n    waves = wavelengths(base)\n    covering = [i for i, w in waves.items() if w >= context_len]\n    report[base] = (waves, covering)\n\nfor base, (waves, covering) in report.items():\n    print(f\"base {base}: slowest wavelength {waves[63]:,} -> pairs covering 128k: {covering}\")\n",
+  "under_the_hood": {
+    "summary": "Each RoPE dimension pair repeats every 2 x pi / theta_i positions; raising the base from 10,000 to 500,000 slows every pair except pair 0, stretching the slowest pair's wavelength from about 54,000 to about 2.6 million positions so very long contexts stay distinguishable.",
+    "steps": [
+      {
+        "title": "Rotations repeat",
+        "body": "A pair rotating theta_i radians per position returns to its starting angle after 2 x pi / theta_i positions: its wavelength. Positions further apart than that look the same to this pair alone."
+      },
+      {
+        "title": "Wavelength per pair",
+        "body": "wavelength_i = 2 x pi x base^(2i / head_dim). With head_dim 128 and base 10,000: pair 0 is 6.3 positions, pair 32 is 628.3, pair 63 is 54,410.1.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "wavelength, base 10,000",
+            "data": [
+              6.3,
+              628.3,
+              54410.1
+            ],
+            "labels": [
+              "pair 0",
+              "pair 32",
+              "pair 63"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Raise the base",
+        "body": "With base 500,000 (Llama 3.1's rope_theta): pair 0 is still 6.3, pair 32 becomes 4,442.9 and pair 63 about 2,559,195.5 positions. Every pair but the first slows down, so long distances map to clearly different angles.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "rope_wavelength(63, 128, 10000)  -> 54,410.1",
+              "rope_wavelength(63, 128, 500000) -> 2,559,195.5",
+              "pair 0 unchanged: 6.3"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why pair 0 never changes",
+        "body": "For i = 0 the exponent 2i / head_dim is 0 and base^0 = 1, so the fastest pair always has wavelength 2 x pi. Fine local position is preserved whatever the base."
+      },
+      {
+        "title": "Training still has to follow",
+        "body": "Changing the base alone does not teach the model long contexts; it must also be trained on long sequences so attention learns to use the slower pairs. Llama 3.1 combined a large base with a frequency-scaling scheme and long-context training stages to reach 128K tokens.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "base 10,000",
+              "code": "slowest pair ~54K positions\nfine for 4K-8K training"
+            },
+            "right": {
+              "label": "base 500,000",
+              "code": "slowest pair ~2.6M positions\nroom for 128K contexts"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "The base sets how slowly RoPE's slowest clocks tick. Raising it stretches the distances the model can tell apart, while the fastest clock keeps local order sharp."
+  }
 }

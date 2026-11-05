@@ -152,5 +152,65 @@
       "correct": 0
     }
   ],
-  "uth_example": "from dataclasses import dataclass\n\n@dataclass\nclass CityWeather:\n    city: str\n    temperature: float\n    condition: str\n\ndef fake_model(prompt):\n    return {\"city\": \"Chennai\", \"temperature\": \"31.5\", \"condition\": \"humid\"}\n\nclass Agent:\n    def __init__(self, result_type):\n        self.result_type = result_type\n    def run(self, prompt):\n        raw = fake_model(prompt)\n        raw[\"temperature\"] = float(raw[\"temperature\"])   # validate / coerce\n        return self.result_type(**raw)\n\nagent = Agent(result_type=CityWeather)\nresult = agent.run(\"Weather in Chennai?\")\nprint(result, type(result.temperature).__name__)\n"
+  "uth_example": "from dataclasses import dataclass\n\n@dataclass\nclass CityWeather:\n    city: str\n    temperature: float\n    condition: str\n\ndef fake_model(prompt):\n    return {\"city\": \"Chennai\", \"temperature\": \"31.5\", \"condition\": \"humid\"}\n\nclass Agent:\n    def __init__(self, result_type):\n        self.result_type = result_type\n    def run(self, prompt):\n        raw = fake_model(prompt)\n        raw[\"temperature\"] = float(raw[\"temperature\"])   # validate / coerce\n        return self.result_type(**raw)\n\nagent = Agent(result_type=CityWeather)\nresult = agent.run(\"Weather in Chennai?\")\nprint(result, type(result.temperature).__name__)\n",
+  "under_the_hood": {
+    "summary": "PydanticAI turns your output model and tool signatures into JSON Schemas sent to the LLM, validates the model's returned arguments with Pydantic, and on a validation error sends the error back to the model to retry, returning a typed object when it passes.",
+    "steps": [
+      {
+        "title": "Types become schemas",
+        "body": "Agent(model, output_type=CityWeather) and each @agent.tool function are inspected: field names, types and docstrings are turned into JSON Schemas. Those schemas are what the model actually sees in the request's tool definitions.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "{\"properties\": {",
+              "  \"city\": {\"type\": \"string\"},",
+              "  \"temperature\": {\"type\": \"number\"},",
+              "  \"condition\": {\"type\": \"string\"}},",
+              " \"required\": [\"city\", \"temperature\", \"condition\"]}"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Structured output arrives as a tool call",
+        "body": "By default the output type is offered to the model as a special final-result tool. When the model wants to finish, it 'calls' that tool with JSON arguments, which are the structured answer."
+      },
+      {
+        "title": "Validation is real Pydantic",
+        "body": "The arguments are parsed with CityWeather.model_validate. A string '18.5' for temperature is coerced to 18.5; a missing field or 'warm' for a float raises a ValidationError listing exactly which field failed."
+      },
+      {
+        "title": "Errors go back to the model",
+        "body": "Instead of crashing, the validation error is sent back as a retry message, and the model gets another attempt, up to the configured retries. Tools can do the same by raising ModelRetry with a hint.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "LLM reply"
+              },
+              {
+                "label": "validate",
+                "detail": "Pydantic"
+              },
+              {
+                "label": "error?",
+                "detail": "send message, retry"
+              },
+              {
+                "label": "typed result",
+                "detail": "result.output"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Dependencies are injected, not global",
+        "body": "deps_type declares a dataclass of things like a DB connection; each run passes deps=..., and tools receive them through RunContext. Tests can pass fake deps, so the same agent is easy to test without real services."
+      }
+    ],
+    "takeaway": "PydanticAI's safety comes from a simple loop: schema out, JSON in, validate, retry on failure. Your code only ever sees objects that passed validation."
+  }
 }
