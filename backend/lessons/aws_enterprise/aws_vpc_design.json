@@ -33,5 +33,95 @@
     {"q": {"en": "Why does VPC peering fail as a strategy for dozens of VPCs?"}, "options": {"en": ["Peering has per-GB costs that TGW does not", "Peering only works within one account", "Peering requires public IP addresses", "Peering is non-transitive, so full connectivity needs n*(n-1)/2 connections"]}, "correct": 3}
   ],
   "tags": {"concepts_taught": ["aws_networking", "zero_trust_architecture"], "concepts_required": ["cloud_fundamentals", "aws_compute"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Inside a VPC every packet leaving a subnet is matched against that subnet's route table by longest prefix, filtered by stateless network ACLs and stateful security groups, and sent to a local target, a gateway, an endpoint or a Transit Gateway.",
+    "steps": [
+      {
+        "title": "CIDR blocks carve up addresses",
+        "body": "A 10.20.0.0/16 VPC has 65,536 addresses. Split into /20 subnets you get 16 subnets of 4,096 addresses each. AWS reserves 5 addresses in every subnet (network, router, DNS, future use, broadcast), so a /24 gives 251 usable IPs.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "VPC 10.20.0.0/16  -> 65,536 addresses",
+              "/20 subnet       -> 4,096 addresses",
+              "/24 subnet       -> 256 - 5 reserved = 251 usable"
+            ],
+            "caption": "Subnet math"
+          }
+        }
+      },
+      {
+        "title": "Route tables pick the most specific route",
+        "body": "Each subnet has one route table. For a packet to 10.20.3.7, the local route 10.20.0.0/16 matches. For 8.8.8.8, only 0.0.0.0/0 matches, so it goes to the Internet Gateway in a public subnet or a NAT Gateway in a private one. The longest matching prefix always wins.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "10.20.0.0/16": "local",
+              "10.0.0.0/8": "tgw-0abc (Transit Gateway)",
+              "pl-s3 (S3 prefix list)": "vpce-gateway",
+              "0.0.0.0/0": "nat-0123 (NAT Gateway)"
+            },
+            "caption": "Route table of a private subnet"
+          }
+        }
+      },
+      {
+        "title": "Two filters: NACL then security group",
+        "body": "A network ACL is stateless and evaluated by rule number, lowest first, at the subnet edge; return traffic needs its own rule. A security group is stateful and attached to the network interface; if a request was allowed in, the reply is allowed out automatically.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Network ACL",
+              "code": "subnet level, stateless\nnumbered rules, first match wins\nallow and deny rules"
+            },
+            "right": {
+              "label": "Security group",
+              "code": "interface level, stateful\nall rules considered\nallow rules only"
+            },
+            "description": "Two layers of filtering"
+          }
+        }
+      },
+      {
+        "title": "Endpoints keep AWS traffic private",
+        "body": "A gateway endpoint for S3 or DynamoDB adds a prefix-list route, so S3 traffic skips the NAT Gateway. Interface endpoints place an ENI with a private IP in your subnet and private DNS resolves the service name to it."
+      },
+      {
+        "title": "Transit Gateway connects many VPCs",
+        "body": "Peering is one-to-one and not transitive, so 10 VPCs need up to 45 peerings. A Transit Gateway is a regional router: each VPC attaches once, and TGW route tables decide which attachments can reach each other.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "VPC A (10.1.0.0/16)",
+              "TGW attachment",
+              "TGW route table",
+              "VPC B (10.2.0.0/16)"
+            ],
+            "edges": [
+              {
+                "from": "VPC A (10.1.0.0/16)",
+                "to": "TGW attachment"
+              },
+              {
+                "from": "TGW attachment",
+                "to": "TGW route table"
+              },
+              {
+                "from": "TGW route table",
+                "to": "VPC B (10.2.0.0/16)"
+              }
+            ],
+            "description": "Hub routing with Transit Gateway"
+          }
+        }
+      }
+    ],
+    "takeaway": "Plan non-overlapping CIDRs early, because you cannot easily renumber later. Routing decides where a packet can go; NACLs and security groups decide whether it is allowed."
+  }
 }

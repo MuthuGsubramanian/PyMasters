@@ -33,5 +33,86 @@
     {"q": {"en": "Which metric best represents mature FinOps reporting to executives?"}, "options": {"en": ["Total monthly spend in absolute terms", "Cost per unit of business value (per order, per active user), trended", "Number of resources deleted this quarter", "The Savings Plan discount percentage achieved"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["cloud_cost_management", "cloud_fundamentals"], "concepts_required": ["aws_compute", "aws_storage"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Every hour of usage becomes a line item with a resource, tags and a rate; Savings Plans then apply your hourly commitment to the eligible usage that gets the biggest discount first, and only what is left is charged On-Demand.",
+    "steps": [
+      {
+        "title": "Usage becomes line items",
+        "body": "Every resource emits usage records: instance-hours, GB-months, requests. Billing turns them into line items in the Cost and Usage Report with account, Region, usage type, resource ID and any activated cost allocation tags.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "account": "prod-payments",
+              "usage_type": "BoxUsage:m7g.large",
+              "usage_amount": "1 hour",
+              "tag:team": "checkout",
+              "pricing": "SavingsPlanCoveredUsage"
+            },
+            "caption": "One simplified CUR line item"
+          }
+        }
+      },
+      {
+        "title": "Tags only count once activated",
+        "body": "A tag on a resource does not appear in billing data until it is activated as a cost allocation tag, and only from then on. Untagged spend shows as blank, which is why teams measure tag coverage as a KPI."
+      },
+      {
+        "title": "Savings Plans are applied hour by hour",
+        "body": "You commit to a dollar amount of compute per hour. Each hour, AWS applies that commitment to eligible usage, starting where the discount percentage is highest. Usage above the commitment is billed On-Demand; unused commitment in that hour is lost.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "commitment: 10.00/h",
+              "usage at SP rates: 8.40/h  -> 1.60 unused (wasted this hour)",
+              "next hour usage: 13.00/h  -> 10.00 covered, 3.00 billed On-Demand"
+            ],
+            "caption": "One hour with a fixed hourly commitment (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Break-even comes from utilisation",
+        "body": "A commitment pays off only if the steady baseline really uses it. Teams commit to the floor of their usage graph, not the average, and leave spikes to On-Demand or Spot."
+      },
+      {
+        "title": "Unit cost closes the loop",
+        "body": "Divide allocated cost by a business number, such as cost per 1,000 orders. If traffic doubles and the bill doubles, unit cost is flat and healthy; if the bill doubles on flat traffic, something is wasting money.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Allocate (tags, accounts)",
+              "Find waste",
+              "Commit to baseline",
+              "Track unit cost"
+            ],
+            "edges": [
+              {
+                "from": "Allocate (tags, accounts)",
+                "to": "Find waste"
+              },
+              {
+                "from": "Find waste",
+                "to": "Commit to baseline"
+              },
+              {
+                "from": "Commit to baseline",
+                "to": "Track unit cost"
+              },
+              {
+                "from": "Track unit cost",
+                "to": "Allocate (tags, accounts)"
+              }
+            ],
+            "description": "The FinOps loop"
+          }
+        }
+      }
+    ],
+    "takeaway": "Cost is computed per hour, per resource. Attribute first, commit only to the steady floor, and judge success by unit cost, not by the total bill."
+  }
 }
