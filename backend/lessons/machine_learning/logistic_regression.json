@@ -356,5 +356,117 @@
     "path_memberships": [
       "supervised_learning"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Logistic regression computes a weighted sum z, squeezes it through the sigmoid into a probability, and trains the weights by stepping down the log-loss, whose gradient is simply (p - y) times the input.",
+    "steps": [
+      {
+        "title": "A linear score first",
+        "body": "Each sample gets z = w·x + b, an unbounded score. With w = [0.5, -0.5], b = 0 and x = [2, 1], z = 1 - 0.5 = 0.5. Positive z leans towards class 1, negative towards class 0."
+      },
+      {
+        "title": "The sigmoid turns z into a probability",
+        "body": "p = 1 / (1 + e^(-z)) maps any z into (0, 1): z = 0.5 gives p = 0.62, z = 0 gives exactly 0.5. Predicting class 1 when p > 0.5 is the same as z > 0, so the decision boundary is the straight line (or plane) w·x + b = 0.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "x = [2, 1]",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "z = 0.5*2 - 0.5*1 + 0 = 0.5",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "p = sigmoid(0.5) = 0.62",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "p > 0.5?",
+                "type": "decision"
+              },
+              {
+                "id": "n4",
+                "label": "predict class 1",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "From features to a decision"
+          }
+        }
+      },
+      {
+        "title": "Log-loss punishes confident mistakes",
+        "body": "The loss for one sample is -[y log p + (1 - y) log(1 - p)]. If the truth is y = 1, p = 0.9 costs 0.105 but p = 0.1 costs 2.303. A model that is sure and wrong pays heavily, which pushes it towards honest probabilities.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "p = 0.9",
+                0.105
+              ],
+              [
+                "p = 0.5",
+                0.693
+              ],
+              [
+                "p = 0.1",
+                2.303
+              ]
+            ],
+            "labels": [
+              "y = 1",
+              "y = 1",
+              "y = 1"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "Log-loss when the true label is 1"
+          }
+        }
+      },
+      {
+        "title": "The gradient is (p - y) * x",
+        "body": "Differentiating log-loss through the sigmoid cancels neatly: d loss / d w = (p - y) * x. For our sample with y = 1, p - y = -0.38, so the gradient is [-0.76, -0.38]. With learning rate 0.1 the weights become [0.576, -0.462], raising z and so p for this positive sample. scikit-learn's default lbfgs solver uses these same gradients."
+      },
+      {
+        "title": "Regularisation and many classes",
+        "body": "scikit-learn adds an L2 penalty by default; C = 1.0 is the inverse of its strength, so smaller C means smaller weights and smoother boundaries. For more than two classes it uses softmax: one score per class, exponentiated and divided by the total, so the probabilities sum to 1."
+      }
+    ],
+    "takeaway": "Logistic regression is a linear model wearing a sigmoid. Its boundary is still a straight line, its outputs are probabilities, and its gradient (p - y)·x is the same one at the output of every neural network classifier."
   }
 }

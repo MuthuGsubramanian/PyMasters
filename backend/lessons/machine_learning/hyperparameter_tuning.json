@@ -385,5 +385,130 @@
     "path_memberships": [
       "evaluation"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A search tool proposes a setting, scores it with cross-validation, records the mean score, and after trying its budget refits the best setting on all training data.",
+    "steps": [
+      {
+        "title": "Each trial is a full cross-validation",
+        "body": "For one candidate, say C=1 and gamma=0.1, GridSearchCV clones the estimator, trains it on 4 of 5 folds, scores it on the fifth, and repeats for every fold. The trial's score is the mean of the 5 fold scores. Parameters like weights are learned inside each fit; hyperparameters stay fixed for the whole trial."
+      },
+      {
+        "title": "Grid search multiplies the options",
+        "body": "A grid of C in {0.1, 1, 10} and gamma in {0.01, 0.1} has 3 x 2 = 6 combinations. With cv=5 that is 30 fits, plus 1 final refit on all training data because refit=True by default. Add one more parameter with 4 values and the cost jumps to 120 fits.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0.81,
+                0.84
+              ],
+              [
+                0.88,
+                0.91
+              ],
+              [
+                0.9,
+                0.89
+              ]
+            ],
+            "labels": [
+              "C=0.1",
+              "C=1",
+              "C=10"
+            ],
+            "highlight": [
+              [
+                1,
+                1
+              ]
+            ],
+            "caption": "Mean CV score per combination; columns are gamma=0.01 and gamma=0.1"
+          }
+        }
+      },
+      {
+        "title": "Random search samples instead",
+        "body": "RandomizedSearchCV draws n_iter combinations from lists or distributions such as loguniform(1e-3, 1e2). Usually only one or two hyperparameters matter much. Nine grid points try just 3 values of each, while 9 random draws try 9 different values of the important one, so random search often finds a better setting for the same cost."
+      },
+      {
+        "title": "Bayesian search learns from past trials",
+        "body": "Bayesian optimisation fits a cheap surrogate model to the (setting, score) pairs seen so far, for example a Gaussian process or Optuna's default TPE sampler. An acquisition rule then picks the next setting where the surrogate predicts a high score or is still unsure. Each trial makes the next guess better informed.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "Try a few settings",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "Fit surrogate: setting -> score",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "Pick next setting (promising or uncertain)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "Run CV, record score",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "Budget left?",
+                "type": "decision"
+              },
+              {
+                "id": "n5",
+                "label": "Refit the best on all training data",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "The Bayesian optimisation loop"
+          }
+        }
+      },
+      {
+        "title": "Keep a final test set out of the search",
+        "body": "best_score_ was chosen as the maximum of many noisy CV scores, so it is slightly optimistic. Report performance on a test split the search never touched, or use nested cross-validation, with an inner loop for tuning and an outer loop for scoring."
+      }
+    ],
+    "takeaway": "Tuning is just cross-validation in a loop. Spend the budget on the parameters that matter, prefer random or Bayesian search over large grids, and judge the winner on data the search never saw."
   }
 }
