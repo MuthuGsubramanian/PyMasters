@@ -332,5 +332,85 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Iteration is a two-method protocol: iter(obj) calls __iter__ to get an iterator, and next(it) calls __next__ until it raises StopIteration; every for loop, unpack and sum() uses it.",
+    "steps": [
+      {
+        "title": "Iterable vs iterator",
+        "body": "An iterable (a list, a str, a dict) can give you an iterator through `__iter__`. An iterator is the object that remembers the position and hands out items through `__next__`. A list is iterable but not an iterator; `iter(my_list)` returns a separate list_iterator.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Iterable",
+              "code": "has __iter__()\ncan be looped many times\nlist, str, dict, range"
+            },
+            "right": {
+              "label": "Iterator",
+              "code": "has __next__() and __iter__()\nremembers position\nsingle use"
+            }
+          }
+        }
+      },
+      {
+        "title": "What a for loop really calls",
+        "body": "`for box in belt:` is equivalent to calling `it = iter(belt)` once, then `box = next(it)` repeatedly inside a `try`, stopping on StopIteration. You can run these steps by hand to watch the protocol.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> it = iter(['a', 'b'])",
+              ">>> next(it)",
+              "'a'",
+              ">>> next(it)",
+              "'b'",
+              ">>> next(it)",
+              "Traceback (most recent call last):",
+              "StopIteration"
+            ]
+          }
+        }
+      },
+      {
+        "title": "A custom iterator class",
+        "body": "A class becomes an iterator by defining `__iter__` (returning self) and `__next__` (returning the next value or raising StopIteration). The class keeps its position in an attribute, for example `self.current`, and advances it on each call.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "class Countdown:\n    def __init__(self, start):\n        self.current = start\n    def __iter__(self):\n        return self\n    def __next__(self):\n        if self.current <= 0:\n            raise StopIteration\n        self.current -= 1\n        return self.current + 1",
+            "highlightSequence": [
+              4,
+              6,
+              8,
+              10
+            ],
+            "stepDescriptions": [
+              {
+                "description": "for calls __iter__ once; returning self means the object is its own iterator."
+              },
+              {
+                "description": "for calls __next__ for every item."
+              },
+              {
+                "description": "No items left: signal the end."
+              },
+              {
+                "description": "Advance the position and return the value."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Iterators get used up",
+        "body": "Because an iterator keeps its position, a second loop over the same iterator starts where the first ended, usually at the end. A list can be looped again because each `for` asks it for a fresh iterator."
+      },
+      {
+        "title": "itertools builds on the same protocol",
+        "body": "Tools like `itertools.islice`, `zip` and `enumerate` are iterators that wrap other iterators. Each `next()` on the outer one triggers `next()` calls on the inner ones, so a whole chain processes one item at a time."
+      }
+    ],
+    "takeaway": "Learn the two calls, iter() and next(), and the StopIteration signal. Every loop and every lazy tool in Python is built from them, including the classes you write."
+  }
 }

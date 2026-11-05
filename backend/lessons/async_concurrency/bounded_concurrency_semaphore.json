@@ -164,5 +164,104 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "import asyncio\n\nasync def download(page, sem, stats):\n    async with sem:                      # at most 2 inside at once\n        stats[\"active\"] += 1\n        stats[\"peak\"] = max(stats[\"peak\"], stats[\"active\"])\n        await asyncio.sleep(0.01)\n        stats[\"active\"] -= 1\n        return f\"page{page}\"\n\nasync def main():\n    sem = asyncio.Semaphore(2)\n    stats = {\"active\": 0, \"peak\": 0}\n    pages = await asyncio.gather(*(download(p, sem, stats) for p in range(5)))\n    return pages, stats\n\npages, stats = asyncio.run(main())\nprint(pages, \"peak concurrency:\", stats[\"peak\"])\n"
+  "uth_example": "import asyncio\n\nasync def download(page, sem, stats):\n    async with sem:                      # at most 2 inside at once\n        stats[\"active\"] += 1\n        stats[\"peak\"] = max(stats[\"peak\"], stats[\"active\"])\n        await asyncio.sleep(0.01)\n        stats[\"active\"] -= 1\n        return f\"page{page}\"\n\nasync def main():\n    sem = asyncio.Semaphore(2)\n    stats = {\"active\": 0, \"peak\": 0}\n    pages = await asyncio.gather(*(download(p, sem, stats) for p in range(5)))\n    return pages, stats\n\npages, stats = asyncio.run(main())\nprint(pages, \"peak concurrency:\", stats[\"peak\"])\n",
+  "under_the_hood": {
+    "summary": "With `async with sem:` around each fetch, all tasks are created, but only N hold a permit at a time; the rest park in the semaphore's FIFO waiter queue, and each release hands a permit to the next waiter, keeping at most N requests in flight.",
+    "steps": [
+      {
+        "title": "All tasks start, few proceed",
+        "body": "`gather(*(fetch(u) for u in urls))` with 1,000 URLs creates 1,000 tasks. Each enters `async with sem:` (a Semaphore(3)). The first three find a free permit and go on to open connections; the other 997 find the counter at zero and park.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "permits free",
+                "values": [
+                  "3",
+                  "2",
+                  "1",
+                  "0",
+                  "0"
+                ]
+              },
+              {
+                "variable": "in flight",
+                "values": [
+                  "0",
+                  "1",
+                  "2",
+                  "3",
+                  "3"
+                ]
+              },
+              {
+                "variable": "parked waiters",
+                "values": [
+                  "0",
+                  "0",
+                  "0",
+                  "0",
+                  "997"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Parking costs almost nothing",
+        "body": "A parked task is a paused coroutine waiting on a future in the semaphore's waiters deque. It holds no socket and uses no CPU. The remote server only ever sees three connections, so it does not answer with '429 Too Many Requests' and you do not run out of file descriptors."
+      },
+      {
+        "title": "Release wakes the next in line",
+        "body": "When a fetch finishes, leaving the `async with` block calls `release()`. The counter goes back up and the first waiting future in the deque is woken. That task resumes, takes the permit and starts its request, so throughput stays at a steady three.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "task 1 done",
+                "detail": "release()"
+              },
+              {
+                "label": "permit returned",
+                "detail": "wake first waiter"
+              },
+              {
+                "label": "task 4 resumes",
+                "detail": "acquires permit"
+              },
+              {
+                "label": "in flight",
+                "detail": "still 3"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The timeline of a bounded gather",
+        "body": "With 9 URLs of 1 second each and a limit of 3, requests run in three waves: 0-1 s, 1-2 s, 2-3 s. Total about 3 seconds instead of 9 sequentially or 1 with no limit (which might overload the server).",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "No limit",
+              "code": "9 requests at once\n~1s if the server copes\nrisk: 429s, too many sockets"
+            },
+            "right": {
+              "label": "Semaphore(3)",
+              "code": "3 at a time, 3 waves\n~3s\nsteady, polite load"
+            }
+          }
+        }
+      },
+      {
+        "title": "BoundedSemaphore catches mistakes",
+        "body": "A plain Semaphore lets you call `release()` more times than `acquire()`, silently raising the limit. `asyncio.BoundedSemaphore` raises ValueError in that case. Using `async with` pairs acquire and release automatically, even when the request raises."
+      }
+    ],
+    "takeaway": "A semaphore turns 'start everything' into 'run at most N at a time' with almost no cost per waiting task. Pick N from what the other side can handle, not from how many tasks you have."
+  }
 }

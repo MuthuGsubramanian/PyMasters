@@ -314,5 +314,79 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A variable is not a box: assignment creates an object on the heap and writes a name-to-object reference into a namespace dictionary.",
+    "steps": [
+      {
+        "title": "The right side runs first",
+        "body": "In `score = 10`, Python first evaluates the right side. The literal 10 gives an int object that lives in memory, with a type and a value. Only after the object exists does Python look at the name on the left."
+      },
+      {
+        "title": "The name goes into a namespace",
+        "body": "At module level, Python stores the binding in the module's namespace, a real dict you can see with `globals()`. After `score = 10`, `globals()['score']` returns that same int object. The name holds a reference (an address), not a copy of the value.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "score": "-> int object 10",
+              "name": "-> str object 'Asha'"
+            },
+            "label": "globals() after two assignments",
+            "caption": "A namespace maps names to objects"
+          }
+        }
+      },
+      {
+        "title": "Reassignment moves the label",
+        "body": "`score = 15` builds a new int object 15 and points the name at it. The old object 10 is not changed; ints are immutable. If nothing else refers to 10 any more, CPython can free it.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "score",
+                "values": [
+                  "10",
+                  "15"
+                ],
+                "data_type": "int"
+              }
+            ],
+            "caption": "Same name, a different object each time"
+          }
+        }
+      },
+      {
+        "title": "Two names can share one object",
+        "body": "`best = score` copies the reference, not the value, so both names point at one object and `best is score` is True. That is harmless for numbers and strings, but with lists it means a change through one name shows through the other."
+      },
+      {
+        "title": "Reading a name is a lookup",
+        "body": "When you write `print(score)`, Python looks the name up: in a function it checks the local variables, at module level it checks the globals dict, then the builtins. If no binding is found you get `NameError: name 'score' is not defined`.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "evaluate right side"
+              },
+              {
+                "label": "create / reuse object"
+              },
+              {
+                "label": "bind name in namespace"
+              },
+              {
+                "label": "later: look name up"
+              }
+            ],
+            "caption": "The life of an assignment"
+          }
+        }
+      }
+    ],
+    "takeaway": "Think of variables as name tags tied to objects. Assignment ties a tag; it never copies the object. That one idea explains aliasing, NameError and why rebinding a name leaves other names alone."
+  }
 }

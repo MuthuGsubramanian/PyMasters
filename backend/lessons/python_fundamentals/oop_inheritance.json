@@ -307,5 +307,108 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "When you look up a method, Python walks the class's MRO, a fixed list of classes computed when the class is created, and super() continues that walk from the next class in the list.",
+    "steps": [
+      {
+        "title": "Subclass stores its bases",
+        "body": "`class Dog(Animal):` creates a class whose `__bases__` is `(Animal,)`. Dog's own dict holds only what Dog defines. Everything else is found by searching parent classes at lookup time, not by copying them."
+      },
+      {
+        "title": "The MRO is computed once",
+        "body": "At class creation Python computes the method resolution order with the C3 algorithm and stores it in `Dog.__mro__`: `(Dog, Animal, object)`. For multiple inheritance C3 keeps each class before its parents and keeps the left-to-right order of the bases.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "tuple",
+            "data": [
+              "Dog",
+              "Animal",
+              "object"
+            ],
+            "label": "Dog.__mro__",
+            "caption": "Lookup checks these classes in order"
+          }
+        }
+      },
+      {
+        "title": "Attribute lookup walks the MRO",
+        "body": "`rex.speak()` first checks `rex.__dict__`, then `Dog.__dict__`, then `Animal.__dict__`, then `object`. The first class that defines `speak` wins. That is overriding: Dog's version is found before Animal's.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "rex.__dict__",
+                "detail": "no speak"
+              },
+              {
+                "label": "Dog.__dict__",
+                "detail": "speak found -> use it"
+              },
+              {
+                "label": "Animal.__dict__",
+                "detail": "not reached"
+              },
+              {
+                "label": "object",
+                "detail": "not reached"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "super() means the next class in the MRO",
+        "body": "Inside `Dog.__init__`, `super().__init__(name)` does not mean 'my parent' literally. It means 'continue the MRO of type(self) after Dog'. With single inheritance that is Animal; in a diamond it may be a sibling class, which is how cooperative multiple inheritance calls every class once.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "D",
+                "label": "D"
+              },
+              {
+                "id": "B",
+                "label": "B(A)"
+              },
+              {
+                "id": "C",
+                "label": "C(A)"
+              },
+              {
+                "id": "A",
+                "label": "A"
+              }
+            ],
+            "edges": [
+              {
+                "from": "D",
+                "to": "B",
+                "label": "MRO 1"
+              },
+              {
+                "from": "B",
+                "to": "C",
+                "label": "MRO 2"
+              },
+              {
+                "from": "C",
+                "to": "A",
+                "label": "MRO 3"
+              }
+            ],
+            "caption": "class D(B, C): MRO is D, B, C, A, object"
+          }
+        }
+      },
+      {
+        "title": "isinstance follows the same chain",
+        "body": "`isinstance(rex, Animal)` is True because Animal appears in Dog's MRO. That is also how `except Animal:`-style matching and type checks treat a subclass instance as a parent instance."
+      }
+    ],
+    "takeaway": "Inheritance is a search order, not a copy. Read `Class.__mro__` when in doubt: it tells you exactly which method wins and where super() will go next."
+  }
 }

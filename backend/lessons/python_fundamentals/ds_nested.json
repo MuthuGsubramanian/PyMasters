@@ -335,5 +335,103 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Nested structures are containers holding references to other containers; every level of `data['a'][0]['b']` is a separate lookup, and shared inner objects show changes everywhere.",
+    "steps": [
+      {
+        "title": "Containers hold references, not copies",
+        "body": "In `org = {'team': ['Asha', 'Ravi']}`, the dict's value is a reference to a list object that lives on its own. The dict does not contain the list's items; it points at the list, which points at the strings.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "org",
+                "label": "dict org"
+              },
+              {
+                "id": "team",
+                "label": "list ['Asha', 'Ravi']"
+              },
+              {
+                "id": "a",
+                "label": "str 'Asha'"
+              },
+              {
+                "id": "r",
+                "label": "str 'Ravi'"
+              }
+            ],
+            "edges": [
+              {
+                "from": "org",
+                "to": "team",
+                "label": "'team' ->"
+              },
+              {
+                "from": "team",
+                "to": "a",
+                "label": "[0]"
+              },
+              {
+                "from": "team",
+                "to": "r",
+                "label": "[1]"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Each bracket is one lookup",
+        "body": "`org['team'][1]` runs left to right: the dict lookup returns the list, then indexing the list returns 'Ravi'. If any level is missing you get the error of that level, such as KeyError for the dict or IndexError for the list, raised at that exact step.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "org['team']",
+                "detail": "dict lookup -> list"
+              },
+              {
+                "label": "[1]",
+                "detail": "list index -> 'Ravi'"
+              },
+              {
+                "label": "result",
+                "detail": "'Ravi'"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The [[0]*3]*3 trap",
+        "body": "`grid = [[0] * 3] * 3` builds one inner list and then a list of three references to that same list. `grid[0][0] = 1` changes what all three rows show. A comprehension `[[0] * 3 for _ in range(3)]` builds three separate lists.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "[[0]*3]*3",
+              "code": "grid[0][0] = 1\n[[1,0,0],\n [1,0,0],\n [1,0,0]]"
+            },
+            "right": {
+              "label": "[[0]*3 for _ in range(3)]",
+              "code": "grid[0][0] = 1\n[[1,0,0],\n [0,0,0],\n [0,0,0]]"
+            }
+          }
+        }
+      },
+      {
+        "title": "Shallow vs deep copies",
+        "body": "`copy.copy(org)` makes a new outer dict whose values still point to the same inner lists. `copy.deepcopy(org)` walks every level and copies each container, keeping a memo so shared or circular objects are copied once."
+      },
+      {
+        "title": "Mirrors JSON",
+        "body": "`json.loads` builds exactly this kind of tree: objects become dicts and arrays become lists, nested as deep as the text. Walking it is the same chain of lookups, which is why `.get()` with defaults is handy at each level of uncertain data."
+      }
+    ],
+    "takeaway": "A nested structure is a graph of references. Read it as a chain of separate lookups, and remember that copying or multiplying the outer container does not copy what is inside."
+  }
 }

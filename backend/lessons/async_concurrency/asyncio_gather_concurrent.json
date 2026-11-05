@@ -207,5 +207,91 @@
       "correct": 3
     }
   ],
-  "uth_example": "import asyncio\n\nasync def fetch_price(item, delay):\n    await asyncio.sleep(delay)\n    return {\"item\": item, \"price\": len(item) * 10}\n\nasync def main():\n    orders = [(\"tea\", 0.03), (\"coffee\", 0.01), (\"juice\", 0.02)]\n    coros = [fetch_price(name, d) for name, d in orders]\n    results = await asyncio.gather(*coros)     # all run at once\n    total = sum(r[\"price\"] for r in results)\n    return results, total\n\nresults, total = asyncio.run(main())\nprint([r[\"item\"] for r in results], \"total:\", total)\n"
+  "uth_example": "import asyncio\n\nasync def fetch_price(item, delay):\n    await asyncio.sleep(delay)\n    return {\"item\": item, \"price\": len(item) * 10}\n\nasync def main():\n    orders = [(\"tea\", 0.03), (\"coffee\", 0.01), (\"juice\", 0.02)]\n    coros = [fetch_price(name, d) for name, d in orders]\n    results = await asyncio.gather(*coros)     # all run at once\n    total = sum(r[\"price\"] for r in results)\n    return results, total\n\nresults, total = asyncio.run(main())\nprint([r[\"item\"] for r in results], \"total:\", total)\n",
+  "under_the_hood": {
+    "summary": "When three tasks under gather each send a request and await the reply, the loop registers all three sockets with the OS selector in one wait; replies are handled as they arrive, so total time is close to the slowest call rather than the sum.",
+    "steps": [
+      {
+        "title": "All requests leave before any reply",
+        "body": "With `gather(get('A'), get('B'), get('C'))`, task A sends its request and awaits the reply. That await hands control back, so the loop runs task B, which sends its request and awaits, then task C. Within a few milliseconds all three requests are in flight.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "t=0.00s",
+                "detail": "A sends, awaits"
+              },
+              {
+                "label": "t=0.00s",
+                "detail": "B sends, awaits"
+              },
+              {
+                "label": "t=0.00s",
+                "detail": "C sends, awaits"
+              },
+              {
+                "label": "loop",
+                "detail": "one select() on 3 sockets"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "One OS call watches every socket",
+        "body": "The loop now has nothing ready to run, so it calls the selector (epoll on Linux) once with all three sockets. The operating system puts the thread to sleep until any socket has data. No CPU is used while waiting, and adding a fourth request adds no extra waiting thread."
+      },
+      {
+        "title": "Replies wake tasks in arrival order",
+        "body": "If B's reply arrives at 1.2 s, the selector returns B's socket; the loop schedules task B, which reads the data and finishes. A's reply arrives at 1.9 s and C's at 2.0 s. gather completes when the last one does.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "task",
+                "values": [
+                  "B",
+                  "A",
+                  "C"
+                ]
+              },
+              {
+                "variable": "reply arrives",
+                "values": [
+                  "1.2s",
+                  "1.9s",
+                  "2.0s"
+                ]
+              }
+            ],
+            "caption": "Finishing order is set by the network, not the code"
+          }
+        }
+      },
+      {
+        "title": "Time is the maximum, not the sum",
+        "body": "Sequentially, 1.9 + 1.2 + 2.0 = 5.1 seconds. Concurrently, the waits overlap and the total is about 2.0 seconds, the slowest call. The more calls you overlap, the bigger the gain, until the server or your connection limit becomes the bottleneck.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Sequential awaits",
+              "code": "A: 0.0 -> 1.9\nB: 1.9 -> 3.1\nC: 3.1 -> 5.1\ntotal 5.1s"
+            },
+            "right": {
+              "label": "gather",
+              "code": "A: 0.0 -> 1.9\nB: 0.0 -> 1.2\nC: 0.0 -> 2.0\ntotal 2.0s"
+            }
+          }
+        }
+      },
+      {
+        "title": "Results keep the call order",
+        "body": "Although B finished first, `results` is `[A_result, B_result, C_result]`, matching the order of the arguments, so you can unpack them directly: `a, b, c = await asyncio.gather(...)`."
+      }
+    ],
+    "takeaway": "gather gets its speed from overlapping waits: every request is sent first, then one OS wait covers them all. Total time tracks the slowest call, which is why independent I/O should never be awaited one by one."
+  }
 }

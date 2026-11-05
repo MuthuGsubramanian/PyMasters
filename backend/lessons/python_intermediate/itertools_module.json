@@ -424,5 +424,86 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "itertools functions are lazy iterators written in C; the combinatoric ones keep an array of indices and advance it like an odometer, so they produce each tuple on demand without building the whole set.",
+    "steps": [
+      {
+        "title": "Iterators, not lists",
+        "body": "`itertools.product('AB', repeat=2)` returns an iterator object immediately. Nothing is computed until you call `next()`. Because each tool both consumes and produces iterators, they snap together into pipelines."
+      },
+      {
+        "title": "product is an odometer",
+        "body": "`product('AB', range(3))` keeps one index per input and starts at (0, 0). Each `next()` returns the current tuple and then increments the rightmost index; when it rolls over, it resets to 0 and the index to its left increments, exactly like a car odometer.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "indices",
+                "values": [
+                  "(0,0)",
+                  "(0,1)",
+                  "(0,2)",
+                  "(1,0)",
+                  "(1,1)",
+                  "(1,2)"
+                ]
+              },
+              {
+                "variable": "output",
+                "values": [
+                  "('A',0)",
+                  "('A',1)",
+                  "('A',2)",
+                  "('B',0)",
+                  "('B',1)",
+                  "('B',2)"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "combinations keeps indices increasing",
+        "body": "`combinations('ABCD', 2)` starts with indices [0, 1] and only produces index lists that strictly increase, which is why order does not matter and nothing repeats: AB, AC, AD, BC, BD, CD. The count is n! / (r! (n-r)!), here 6. `permutations` allows any order and gives 12.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "AB",
+              "AC",
+              "AD",
+              "BC",
+              "BD",
+              "CD"
+            ],
+            "label": "combinations('ABCD', 2): 6 tuples"
+          }
+        }
+      },
+      {
+        "title": "chain and islice just forward items",
+        "body": "`chain(a, b)` returns items from `a` until it is exhausted and then from `b`, without copying either. `islice(it, 5, 10)` calls `next` five times and discards the results, then passes on the next five. Neither ever materialises the data."
+      },
+      {
+        "title": "Infinite iterators need a stop",
+        "body": "`count()`, `cycle()` and `repeat()` never raise StopIteration on their own. Pair them with something that stops: `zip(count(1), names)` ends when `names` ends, and `islice(cycle('RGB'), 7)` ends after 7 items.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              ">>> list(islice(cycle('RGB'), 7))",
+              "['R', 'G', 'B', 'R', 'G', 'B', 'R']",
+              ">>> list(zip(count(1), ['a', 'b']))",
+              "[(1, 'a'), (2, 'b')]"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "itertools gives you combinatorics and stream plumbing that cost memory for one item, not for the whole result. That matters, because the number of combinations explodes quickly."
   }
 }

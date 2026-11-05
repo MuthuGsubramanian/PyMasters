@@ -168,5 +168,92 @@
     "category": "regex",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Python's re is a backtracking engine: on failure it retries every other way the quantifiers could have split the text, so nested quantifiers like (a+)+ make the number of attempts double with each extra character.",
+    "steps": [
+      {
+        "title": "Backtracking explores alternatives",
+        "body": "When part of a pattern fails, the engine returns to the most recent choice point, such as how many characters a `+` took, and tries the next option. For normal patterns there are few choices, so this is quick."
+      },
+      {
+        "title": "Nested quantifiers multiply choices",
+        "body": "`^(a+)+$` on 'aaaaaaaaaa!' must fail because of the '!'. But before giving up, the engine tries every way to split the run of a's between the inner and outer `+`: 'aaaaaaaaaa', 'aaaaaaaaa'+'a', 'aaaaaaaa'+'aa', and so on. With n a's there are 2^(n-1) splits, 512 for 10.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "a's before '!'",
+                "values": [
+                  "16",
+                  "18",
+                  "20",
+                  "22"
+                ]
+              },
+              {
+                "variable": "time in CPython 3.11 (s)",
+                "values": [
+                  "0.003",
+                  "0.013",
+                  "0.065",
+                  "0.225"
+                ]
+              }
+            ],
+            "caption": "Each extra 'a' roughly doubles the work"
+          }
+        }
+      },
+      {
+        "title": "This is ReDoS",
+        "body": "If such a pattern runs on user input, an attacker can send a short string that keeps a server thread busy for minutes. The fix is to remove ambiguity: `^a+$` matches exactly the same strings with one way to do it, and fails at '!' immediately.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Ambiguous (exponential)",
+              "code": "^(a+)+$\n^(\\w+\\s?)*$\n(.*)*"
+            },
+            "right": {
+              "label": "Unambiguous (linear)",
+              "code": "^a+$\n^\\w+(\\s\\w+)*$\nlimit input length too"
+            }
+          }
+        }
+      },
+      {
+        "title": "Compile once, name the pattern",
+        "body": "`CODE = re.compile(r'^[A-Z]{2}-\\d{4}$')` at module level parses the pattern once and gives it a name. `re.VERBOSE` lets you spread a pattern over several lines with comments, because unescaped whitespace and `#` comments inside the pattern are ignored.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "DATE = re.compile(r\"\"\"\n    (?P<year>\\d{4}) -   # year\n    (?P<month>\\d{2}) -  # month\n    (?P<day>\\d{2})      # day\n\"\"\", re.VERBOSE)",
+            "highlightSequence": [
+              1,
+              2,
+              5
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Compiled once when the module loads."
+              },
+              {
+                "description": "Whitespace and comments are ignored in VERBOSE mode."
+              },
+              {
+                "description": "One readable, reusable object."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Know when not to use regex",
+        "body": "Nested or recursive formats such as HTML, JSON or arithmetic need a real parser; fixed substrings need only `in`, `startswith` or `split`. Regex is for flat, pattern-shaped text."
+      }
+    ],
+    "takeaway": "Fast regexes are unambiguous regexes: give the engine one way to match each piece. Compile once, write VERBOSE patterns for humans, and reach for a parser when the data is nested."
+  }
 }

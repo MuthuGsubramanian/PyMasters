@@ -291,5 +291,103 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "With composition an object stores references to part objects in its attributes and forwards work to them, so behaviour is found by following attributes rather than by searching an inheritance chain.",
+    "steps": [
+      {
+        "title": "A has-a link is just an attribute",
+        "body": "`self.engine = Engine(150)` inside `Car.__init__` stores a reference to a separate Engine object in the car's `__dict__`. The car does not contain the engine's code or data; it points at an object that has them.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "car",
+                "label": "Car instance"
+              },
+              {
+                "id": "eng",
+                "label": "Engine(150)"
+              },
+              {
+                "id": "wh",
+                "label": "list of 4 Wheel"
+              },
+              {
+                "id": "rad",
+                "label": "Radio"
+              }
+            ],
+            "edges": [
+              {
+                "from": "car",
+                "to": "eng",
+                "label": "self.engine"
+              },
+              {
+                "from": "car",
+                "to": "wh",
+                "label": "self.wheels"
+              },
+              {
+                "from": "car",
+                "to": "rad",
+                "label": "self.radio"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Calls are forwarded explicitly",
+        "body": "`car.start()` runs `self.engine.start()`. Python looks up `engine` in the car's dict, then `start` on the Engine class. Each object's methods are found on its own class; nothing is merged together.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "car.start()",
+                "detail": "Car.start runs"
+              },
+              {
+                "label": "self.engine",
+                "detail": "attribute lookup -> Engine object"
+              },
+              {
+                "label": ".start()",
+                "detail": "Engine.start runs"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Parts can be swapped at run time",
+        "body": "Because the link is an ordinary attribute, `car.engine = ElectricMotor()` replaces the part while the program runs. Any object with a `start()` method works, which is duck typing. With inheritance the parent is fixed when the class is defined."
+      },
+      {
+        "title": "Automatic forwarding with __getattr__",
+        "body": "If you want many methods forwarded, define `__getattr__(self, name)`. Python calls it only after normal lookup fails, so `return getattr(self.engine, name)` forwards anything Car does not define itself. Use it sparingly, because it hides where methods come from."
+      },
+      {
+        "title": "Inheritance versus composition lookup",
+        "body": "With inheritance, `obj.method` is found by searching the class chain (the MRO). With composition, you follow named attributes to the part that owns the method. Fewer hidden links make composed code easier to change and test.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Inheritance (is-a)",
+              "code": "class Car(Engine): ...\ncar.start()\n# found on Engine via MRO"
+            },
+            "right": {
+              "label": "Composition (has-a)",
+              "code": "class Car:\n    def start(self):\n        self.engine.start()\n# explicit forward"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Composition is objects holding references to other objects and calling them by name. You get swappable parts and clear lines of responsibility, at the cost of writing small forwarding methods."
+  }
 }

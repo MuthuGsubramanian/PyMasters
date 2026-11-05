@@ -157,5 +157,89 @@
     "estimated_minutes": 20,
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Defensive code checks inputs at the boundary and fails fast with a clear exception, so a bad value is stopped where it enters instead of travelling deep into the program; assert statements add internal checks that `python -O` strips out.",
+    "steps": [
+      {
+        "title": "Bad values travel",
+        "body": "If `safe_average([])` simply did `sum(nums) / len(nums)`, it would raise ZeroDivisionError. Worse, a None passed in early might only fail three functions later with `TypeError: 'NoneType' object is not iterable`, pointing at the wrong place. The further a bad value travels, the harder the traceback is to read.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "API input: None",
+                "detail": "accepted silently"
+              },
+              {
+                "label": "parse()",
+                "detail": "passes it on"
+              },
+              {
+                "label": "transform()",
+                "detail": "passes it on"
+              },
+              {
+                "label": "report()",
+                "detail": "TypeError, far from the cause"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Guard clauses fail or handle early",
+        "body": "The lesson's `if not nums: return 0.0` handles the empty case at the top of the function, then the main path runs with the guarantee that `len(nums) > 0`. For invalid input you cannot handle, `raise ValueError('nums must not be empty')` at the top gives a clear message at the true source.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Without a guard",
+              "code": "def average(nums):\n    return sum(nums) / len(nums)\n# [] -> ZeroDivisionError"
+            },
+            "right": {
+              "label": "With a guard",
+              "code": "def safe_average(nums):\n    if not nums:\n        return 0.0\n    return sum(nums) / len(nums)"
+            }
+          }
+        }
+      },
+      {
+        "title": "assert checks your own assumptions",
+        "body": "`assert total >= 0, 'total went negative'` compiles to: if `__debug__` is true and the condition is false, raise AssertionError. Running with `python -O` sets `__debug__` to False and the compiler removes asserts entirely, so never use assert to validate user input.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "assert total >= 0, 'total went negative'\n\n# roughly what it compiles to:\nif __debug__:\n    if not total >= 0:\n        raise AssertionError('total went negative')",
+            "highlightSequence": [
+              1,
+              4,
+              6
+            ],
+            "stepDescriptions": [
+              {
+                "description": "An internal sanity check."
+              },
+              {
+                "description": "Under python -O this whole block is removed."
+              },
+              {
+                "description": "Otherwise a false condition raises immediately."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Validate once at the edges",
+        "body": "Check types, ranges and required fields where data enters: function arguments of a public API, parsed files, HTTP requests. Inside the trusted core, functions can then rely on clean data instead of repeating checks everywhere."
+      },
+      {
+        "title": "Don't swallow errors",
+        "body": "A broad `except: pass` is the opposite of defensive: it hides the failure and lets bad state continue. Catch specific exceptions, handle or re-raise with context, and let unexpected ones crash loudly."
+      }
+    ],
+    "takeaway": "Stop bad data at the door with guards and clear exceptions, use asserts only for internal assumptions, and never hide errors. Failing fast keeps the traceback next to the real cause."
+  }
 }

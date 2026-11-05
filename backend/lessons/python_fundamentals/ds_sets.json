@@ -269,5 +269,81 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A set is a hash table holding only keys: membership hashes the item to a slot and checks one or a few slots, and set operations loop over one set while probing the other.",
+    "steps": [
+      {
+        "title": "A hash table with no values",
+        "body": "A set stores each element in a slot of an array chosen by its hash, like a dict but without a value or a separate ordered entries array. That is why a set has no order you can rely on: elements sit wherever their hashes put them."
+      },
+      {
+        "title": "Adding checks for a duplicate first",
+        "body": "`guests.add('Asha')` hashes 'Asha', goes to its slot and compares with what is there. If an equal element is found the set is unchanged, which is how sets stay unique. CPython looks at a few neighbouring slots (linear probing) before jumping elsewhere using more hash bits.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "hash('Asha')",
+                "detail": "pick slot"
+              },
+              {
+                "label": "slot holds 'Asha'?",
+                "detail": "yes -> do nothing"
+              },
+              {
+                "label": "empty slot",
+                "detail": "store it"
+              }
+            ],
+            "caption": "Uniqueness is a side effect of the lookup"
+          }
+        }
+      },
+      {
+        "title": "The table grows at about 60% full",
+        "body": "CPython resizes a set when its slots are about three-fifths used, building a larger table (usually four times the element count) and re-inserting every element. Keeping plenty of empty slots keeps probe chains short."
+      },
+      {
+        "title": "Set operations reuse the lookup",
+        "body": "`a & b` (intersection) loops over the smaller set and keeps each element that is also found in the other one, so it costs about O(min(len(a), len(b))). Union copies one set and adds the other's elements; difference keeps elements not found in the other.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "set",
+            "data": [
+              "Asha",
+              "Ravi",
+              "Meena"
+            ],
+            "highlight": [
+              0,
+              2
+            ],
+            "label": "a & b with b = {'Asha', 'Meena', 'Kiran'}",
+            "caption": "Highlighted elements survive the intersection"
+          }
+        }
+      },
+      {
+        "title": "Only hashable items allowed",
+        "body": "`{[1, 2]}` raises `TypeError: unhashable type: 'list'`, because a list's contents could change after it was placed in a slot and its hash would no longer point to it. Use a tuple or a frozenset for compound elements.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Fails",
+              "code": "{[1, 2], [3]}\n# TypeError: unhashable type: 'list'"
+            },
+            "right": {
+              "label": "Works",
+              "code": "{(1, 2), (3,)}\n{frozenset({1, 2})}"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "Sets are dicts without values. Everything they do well, from deduplication to fast intersection, comes from hashing an item straight to its slot instead of scanning."
+  }
 }
