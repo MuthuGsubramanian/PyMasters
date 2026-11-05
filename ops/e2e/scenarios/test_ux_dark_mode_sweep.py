@@ -56,7 +56,7 @@ def test_no_light_panels_in_dark_mode(logged_in_page, learner_with_due_review):
     page.goto(f"{BASE}/dashboard", wait_until="networkidle")
     page.get_by_role("heading", name="Due for Review").wait_for(timeout=30000)
     page.get_by_role("button", name="Switch to dark mode").first.click()      # the real toggle
-    page.wait_for_function("document.documentElement.classList.contains('dark')")
+    page.wait_for_function("() => document.documentElement.classList.contains('dark')")
     found = {}
     for path in PAGES:
         page.goto(f"{BASE}{path}", wait_until="networkidle")
