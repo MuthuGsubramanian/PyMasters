@@ -152,5 +152,69 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A CrewAI crew is several LLM calls with different system prompts: each agent's role, goal and backstory become its instructions, tasks run in order, and each task's output is passed as context into the next agent's prompt.",
+    "steps": [
+      {
+        "title": "An agent is a prompt plus tools",
+        "body": "Agent(role='Research Analyst', goal=..., backstory=...) does not create a new model. The fields are rendered into the system prompt for that agent's calls, and its tools list decides which functions it may call in its own tool loop.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Researcher",
+              "code": "role: Research Analyst\ntools: search\nprompt: find accurate facts"
+            },
+            "right": {
+              "label": "Writer",
+              "code": "role: Content Writer\ntools: none\nprompt: write clear prose"
+            }
+          }
+        }
+      },
+      {
+        "title": "Tasks carry the work",
+        "body": "A Task has a description, an expected_output and an assigned agent. Executing it runs that agent's loop until it produces a final answer matching the expected output description."
+      },
+      {
+        "title": "Sequential process passes context",
+        "body": "With Process.sequential, tasks run in list order and the output of earlier tasks is inserted into the prompt of later ones. The writer therefore sees the researcher's notes as text in its context.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "research task",
+                "detail": "researcher"
+              },
+              {
+                "label": "notes as context"
+              },
+              {
+                "label": "writing task",
+                "detail": "writer"
+              },
+              {
+                "label": "draft as context"
+              },
+              {
+                "label": "editing task",
+                "detail": "editor"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Hierarchical process adds a manager",
+        "body": "With Process.hierarchical a manager model plans, delegates tasks to agents and checks their results. That adds flexibility but also extra model calls for every delegation decision."
+      },
+      {
+        "title": "Why split at all",
+        "body": "Each agent gets a short, focused system prompt and only its own tools, and each call's context holds only what that step needs. The cost is more calls and the risk of information lost between hand-offs, so a single agent is often enough for small tasks."
+      }
+    ],
+    "takeaway": "Multi-agent frameworks are orchestration of ordinary LLM calls: specialised prompts, scoped tools, and text handed from one step to the next."
+  }
 }

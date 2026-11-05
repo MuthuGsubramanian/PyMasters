@@ -154,5 +154,68 @@
       "correct": 2
     }
   ],
-  "uth_example": "library = {\n    \"docs\": [\"Python lists are mutable\", \"Tuples are immutable\"],\n    \"faq\": [\"Lists can grow with append\", \"Sets have no order\"],\n}\n\ndef retrieve(question, source):\n    words = set(question.lower().split())\n    return [d for d in library[source] if words & set(d.lower().split())]\n\ndef is_sufficient(docs):\n    return len(docs) >= 3\n\nquestion = \"are lists mutable and can lists grow\"\nstate = {\"question\": question, \"documents\": [], \"tried\": []}\nfor source in [\"docs\", \"faq\"]:           # the agent decides to look further\n    state[\"documents\"] += retrieve(question, source)\n    state[\"tried\"].append(source)\n    if is_sufficient(state[\"documents\"]):\n        break\n\nprint(\"searched\", state[\"tried\"], \"->\", state[\"documents\"])\n"
+  "uth_example": "library = {\n    \"docs\": [\"Python lists are mutable\", \"Tuples are immutable\"],\n    \"faq\": [\"Lists can grow with append\", \"Sets have no order\"],\n}\n\ndef retrieve(question, source):\n    words = set(question.lower().split())\n    return [d for d in library[source] if words & set(d.lower().split())]\n\ndef is_sufficient(docs):\n    return len(docs) >= 3\n\nquestion = \"are lists mutable and can lists grow\"\nstate = {\"question\": question, \"documents\": [], \"tried\": []}\nfor source in [\"docs\", \"faq\"]:           # the agent decides to look further\n    state[\"documents\"] += retrieve(question, source)\n    state[\"tried\"].append(source)\n    if is_sufficient(state[\"documents\"]):\n        break\n\nprint(\"searched\", state[\"tried\"], \"->\", state[\"documents\"])\n",
+  "under_the_hood": {
+    "summary": "Agentic RAG puts retrieval inside an agent loop: the model rewrites or splits the question, retrieves, grades whether the documents answer it, and retrieves again or falls back to another source before generating.",
+    "steps": [
+      {
+        "title": "Basic RAG is one shot",
+        "body": "Plain RAG embeds the question, takes the top-k chunks, and generates. If those chunks are off-topic, the model answers from bad context, because nothing checks them."
+      },
+      {
+        "title": "Decompose the question",
+        "body": "A question like 'compare the 2023 and 2024 refund policies' needs two retrievals. The agent first asks the model for sub-questions, then retrieves for each one separately so each search is focused.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "question"
+              },
+              {
+                "label": "decompose",
+                "detail": "sub-questions"
+              },
+              {
+                "label": "retrieve"
+              },
+              {
+                "label": "grade docs"
+              },
+              {
+                "label": "generate",
+                "detail": "or search again"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Grade the retrieved documents",
+        "body": "A grading step, often another LLM call with a yes/no output, checks whether each chunk is relevant to the question. Irrelevant chunks are dropped, and a state flag such as is_sufficient records whether enough evidence remains."
+      },
+      {
+        "title": "Loop back when evidence is thin",
+        "body": "If grading fails, a conditional edge routes to a rewrite step or a different tool, for example web search or another collection, then retrieval runs again. A retry counter caps the loop so it always ends.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Basic RAG",
+              "code": "1 search\nno relevance check\nanswers from whatever came back"
+            },
+            "right": {
+              "label": "Agentic RAG",
+              "code": "rewrite / split query\ngrade each chunk\nre-search or switch source, capped"
+            }
+          }
+        }
+      },
+      {
+        "title": "State carries the work",
+        "body": "In LangGraph style the state is a dict like {question, documents, is_sufficient, answer}; each node returns updates to it. The final generate node sees only the documents that passed grading."
+      }
+    ],
+    "takeaway": "Agentic RAG trades extra model calls for reliability: the system checks its own evidence and searches again when it is weak, instead of trusting a single similarity search."
+  }
 }

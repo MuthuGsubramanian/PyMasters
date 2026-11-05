@@ -263,5 +263,76 @@
       "correct": 1
     }
   ],
-  "uth_example": "class FakeModel:\n    def __init__(self):\n        self.turns = [{\"tool_call\": {\"name\": \"add\", \"args\": {\"a\": 2, \"b\": 3}}},\n                      {\"final_answer\": \"2 + 3 is 5\"}]\n    def complete(self, messages):\n        return self.turns.pop(0)\n\ntools = {\"add\": lambda a, b: a + b}\nmodel = FakeModel()\nmessages = [{\"role\": \"user\", \"content\": \"What is 2 + 3?\"}]\n\nfor step in range(5):\n    turn = model.complete(messages)\n    messages.append({\"role\": \"assistant\", **turn})\n    if \"final_answer\" in turn:\n        break\n    call = turn[\"tool_call\"]\n    result = tools[call[\"name\"]](**call[\"args\"])\n    messages.append({\"role\": \"tool\", \"content\": str(result)})\n\nprint(turn[\"final_answer\"], \"after\", len(messages), \"messages\")\n"
+  "uth_example": "class FakeModel:\n    def __init__(self):\n        self.turns = [{\"tool_call\": {\"name\": \"add\", \"args\": {\"a\": 2, \"b\": 3}}},\n                      {\"final_answer\": \"2 + 3 is 5\"}]\n    def complete(self, messages):\n        return self.turns.pop(0)\n\ntools = {\"add\": lambda a, b: a + b}\nmodel = FakeModel()\nmessages = [{\"role\": \"user\", \"content\": \"What is 2 + 3?\"}]\n\nfor step in range(5):\n    turn = model.complete(messages)\n    messages.append({\"role\": \"assistant\", **turn})\n    if \"final_answer\" in turn:\n        break\n    call = turn[\"tool_call\"]\n    result = tools[call[\"name\"]](**call[\"args\"])\n    messages.append({\"role\": \"tool\", \"content\": str(result)})\n\nprint(turn[\"final_answer\"], \"after\", len(messages), \"messages\")\n",
+  "under_the_hood": {
+    "summary": "The loop calls the model with the full message list, appends its reply, and if the reply is a tool call it looks the name up in a dict of functions, runs it, appends the result as a tool message, and repeats until a final answer or the step limit.",
+    "steps": [
+      {
+        "title": "One growing list is the whole state",
+        "body": "messages starts as [system, user]. Every model turn and every tool result is appended to it. The model sees the complete list on each call, which is how it knows what it already tried."
+      },
+      {
+        "title": "Ask the model for its next turn",
+        "body": "turn = model.complete(messages) returns either {'tool_call': {'name': ..., 'args': {...}}} or {'final_answer': ...}. In production the model's reply is parsed from the API response; here a scripted stub returns the same shapes."
+      },
+      {
+        "title": "Dispatch by name",
+        "body": "The dispatcher is a plain dict, TOOLS = {'word_count': word_count, ...}. fn = TOOLS.get(name) then fn(**args) runs the call. An unknown name or a crashing tool should become an error string in the result, so the model can read it and correct itself instead of the loop dying.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "word_count": "<function>",
+              "add": "<function>"
+            },
+            "title": "TOOLS: name -> Python function"
+          }
+        }
+      },
+      {
+        "title": "Append the result and go again",
+        "body": "The result is appended as {'role': 'tool', 'content': '6'}. Then the loop calls the model again with the longer list. A two-tool task therefore takes three model calls: call, call, answer.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "step 1: word_count({'text': 'agents call tools in a loop'}) -> 6",
+              "step 2: multiply({'a': 6, 'b': 2}) -> 12",
+              "step 3: final answer: 12"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Two exits",
+        "body": "The loop returns when the model gives a final answer, and also when max_steps is reached, returning a clear 'stopped' message. Without the second exit, a model that keeps calling tools would loop forever and keep billing tokens.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "model turn"
+              },
+              {
+                "label": "final?",
+                "detail": "yes -> return"
+              },
+              {
+                "label": "dispatch tool"
+              },
+              {
+                "label": "append result"
+              },
+              {
+                "label": "steps < max?",
+                "detail": "no -> stop"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Every agent framework is this loop with extras. Know the four parts, message list, model turn, dispatcher, step limit, and you can debug any of them."
+  }
 }

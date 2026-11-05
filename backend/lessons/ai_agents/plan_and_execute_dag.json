@@ -247,5 +247,63 @@
       "correct": 0
     }
   ],
-  "uth_example": "from graphlib import TopologicalSorter\n\nplan = {\n    \"fetch_menu\": {\"tool\": lambda: [\"dosa\", \"idli\"], \"needs\": []},\n    \"fetch_prices\": {\"tool\": lambda: {\"dosa\": 60, \"idli\": 40}, \"needs\": []},\n    \"total\": {\"tool\": lambda menu, prices: sum(prices[m] for m in menu),\n              \"needs\": [\"fetch_menu\", \"fetch_prices\"]},\n}\ngraph = {name: step[\"needs\"] for name, step in plan.items()}\norder = list(TopologicalSorter(graph).static_order())\n\nresults = {}\nfor name in order:\n    step = plan[name]\n    inputs = [results[dep] for dep in step[\"needs\"]]\n    results[name] = step[\"tool\"](*inputs)\n\nprint(\"order:\", order)\nprint(\"total bill:\", results[\"total\"])\n"
+  "uth_example": "from graphlib import TopologicalSorter\n\nplan = {\n    \"fetch_menu\": {\"tool\": lambda: [\"dosa\", \"idli\"], \"needs\": []},\n    \"fetch_prices\": {\"tool\": lambda: {\"dosa\": 60, \"idli\": 40}, \"needs\": []},\n    \"total\": {\"tool\": lambda menu, prices: sum(prices[m] for m in menu),\n              \"needs\": [\"fetch_menu\", \"fetch_prices\"]},\n}\ngraph = {name: step[\"needs\"] for name, step in plan.items()}\norder = list(TopologicalSorter(graph).static_order())\n\nresults = {}\nfor name in order:\n    step = plan[name]\n    inputs = [results[dep] for dep in step[\"needs\"]]\n    results[name] = step[\"tool\"](*inputs)\n\nprint(\"order:\", order)\nprint(\"total bill:\", results[\"total\"])\n",
+  "under_the_hood": {
+    "summary": "The plan is a dict of steps with 'needs' lists, which forms a dependency graph; graphlib.TopologicalSorter rejects cycles, yields steps whose prerequisites are done, and each step runs with its prerequisites' outputs.",
+    "steps": [
+      {
+        "title": "A plan is data",
+        "body": "Each step has a tool, arguments and the names of steps it needs: price_a, price_b, price_c need nothing; subtotal needs all three; total needs subtotal. Because it is a dict, code can check it before a single tool runs."
+      },
+      {
+        "title": "Build the graph",
+        "body": "graph = {name: step['needs'] for name, step in plan.items()} maps each node to its predecessors, which is exactly the input TopologicalSorter expects.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "price_a, price_b, price_c",
+                "detail": "no needs"
+              },
+              {
+                "label": "subtotal",
+                "detail": "needs the 3 prices"
+              },
+              {
+                "label": "tax"
+              },
+              {
+                "label": "total"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Reject cycles up front",
+        "body": "If step A needs B and B needs A, nothing can ever start. static_order() raises graphlib.CycleError in that case, so the agent can ask the model for a new plan instead of deadlocking halfway through."
+      },
+      {
+        "title": "Waves show what can run in parallel",
+        "body": "Using prepare(), get_ready() and done() gives batches: every step returned by one get_ready() call has all its prerequisites finished, so they can run concurrently. Here wave 1 is the three lookups, then subtotal, then the rest.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "wave 1: ['price_a', 'price_b', 'price_c']",
+              "wave 2: ['subtotal']",
+              "wave 3: ['tax']",
+              "wave 4: ['total']"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Run with prerequisite outputs",
+        "body": "Results are stored in a dict as steps finish. When a step runs, its inputs are pulled from results[need] for each need, so the data flows along the graph edges exactly as planned."
+      }
+    ],
+    "takeaway": "Writing the plan as a dependency graph turns it into something you can validate, order and parallelise with the standard library, before spending money on tool calls."
+  }
 }

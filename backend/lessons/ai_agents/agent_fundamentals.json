@@ -152,5 +152,68 @@
       "correct": 1
     }
   ],
-  "uth_example": "def get_weather(city):\n    return {\"Tokyo\": \"sunny, 22C\", \"Oslo\": \"snow, -3C\"}.get(city, \"unknown\")\n\ntools = {\"get_weather\": get_weather}\n\ndef fake_llm(question):\n    # a real model would decide this; here the decision is canned\n    city = question.split()[-1].strip(\"?\")\n    return {\"tool\": \"get_weather\", \"args\": {\"city\": city}}\n\nquestion = \"What is the weather in Tokyo?\"\ndecision = fake_llm(question)\nobservation = tools[decision[\"tool\"]](**decision[\"args\"])\nanswer = f\"Agent: it is {observation} in {decision['args']['city']}.\"\nprint(answer)\n"
+  "uth_example": "def get_weather(city):\n    return {\"Tokyo\": \"sunny, 22C\", \"Oslo\": \"snow, -3C\"}.get(city, \"unknown\")\n\ntools = {\"get_weather\": get_weather}\n\ndef fake_llm(question):\n    # a real model would decide this; here the decision is canned\n    city = question.split()[-1].strip(\"?\")\n    return {\"tool\": \"get_weather\", \"args\": {\"city\": city}}\n\nquestion = \"What is the weather in Tokyo?\"\ndecision = fake_llm(question)\nobservation = tools[decision[\"tool\"]](**decision[\"args\"])\nanswer = f\"Agent: it is {observation} in {decision['args']['city']}.\"\nprint(answer)\n",
+  "under_the_hood": {
+    "summary": "An agent is a loop around a model: the model reads the conversation, either answers or emits a structured tool call, your code runs the tool, and the result is appended to the conversation before the model is called again.",
+    "steps": [
+      {
+        "title": "The model only ever produces text",
+        "body": "An LLM cannot click, browse or book anything. What it can do is produce output in an agreed format, for example {'name': 'get_weather', 'arguments': {'city': 'Tokyo'}}, because the request included a list of tool names, descriptions and JSON Schemas for their arguments."
+      },
+      {
+        "title": "Your code is the hands",
+        "body": "The application parses that tool call, checks the name against its own registry, runs the real Python function, and captures the return value. The model never executes anything itself; it only asks.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "perceive",
+                "detail": "messages + tool results"
+              },
+              {
+                "label": "reason",
+                "detail": "model picks next action"
+              },
+              {
+                "label": "act",
+                "detail": "your code runs the tool"
+              },
+              {
+                "label": "observe",
+                "detail": "result appended"
+              }
+            ],
+            "title": "One turn of the loop"
+          }
+        }
+      },
+      {
+        "title": "The result goes back into the context",
+        "body": "The tool's output is appended to the message list as a tool-result message tied to the call's id. On the next call the model sees its own request and the answer, so it can decide what to do next, such as calling a second tool with what it just learned."
+      },
+      {
+        "title": "The loop stops on an answer or a limit",
+        "body": "Each round the model either emits more tool calls or a final text answer. Real agents also cap the number of steps, tokens or cost, because a confused model can otherwise keep calling tools forever.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "user:      weather in Tokyo, in Fahrenheit?",
+              "assistant: tool_call get_weather(city='Tokyo')",
+              "tool:      {'temp_c': 18}",
+              "assistant: tool_call convert(c=18)",
+              "tool:      64.4",
+              "assistant: It is about 64 F in Tokyo."
+            ]
+          }
+        }
+      },
+      {
+        "title": "Memory is just what you resend",
+        "body": "The model is stateless between calls; the whole message list is sent every time. 'Memory' in an agent is therefore a decision about what goes into that list: recent turns, a summary, or facts retrieved from a store."
+      }
+    ],
+    "takeaway": "Chatbot versus agent is not a different model, it is a loop: model proposes, code executes, result is fed back. Everything else in agent frameworks is tooling around that loop."
+  }
 }
