@@ -27,3 +27,13 @@ def test_dates_lesson_states_the_real_string_comparison():
     assert ("2026-1-15" < "2026-06-09") is False
     story = json.loads(_raw("working_with_data", "working_with_dates"))["story_variants"]["en"]
     assert '`"2026-1-15" < "2026-06-09"` is `False` as strings' in story
+
+
+def test_self_attention_lesson_shows_the_real_softmax_weights():
+    import math
+    scores = [0.707, 0.0, 0.707]
+    exps = [math.exp(x) for x in scores]
+    weights = [round(e / sum(exps), 3) for e in exps]
+    assert weights == [0.401, 0.198, 0.401]
+    raw = _raw("transformers_scratch", "self_attention")
+    assert "[0.401, 0.198, 0.401]" in raw and "[0.401, 0.401, 0.198]" not in raw
