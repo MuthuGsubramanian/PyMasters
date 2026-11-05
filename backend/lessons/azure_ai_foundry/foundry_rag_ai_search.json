@@ -34,5 +34,88 @@
   ],
   "tags": {"concepts_taught": ["enterprise_rag", "ai_foundry_platform"], "concepts_required": ["rag", "llm_concepts", "functions"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_ai", "path_memberships": []},
   "generated": false,
-  "uth_example": "index = [\n    {\"text\": \"Refund policy: 30 days\", \"vec\": [0.9, 0.1], \"groups\": [\"all\"]},\n    {\"text\": \"Exec bonus plan\", \"vec\": [0.8, 0.3], \"groups\": [\"hr\"]},\n    {\"text\": \"Shipping times\", \"vec\": [0.1, 0.9], \"groups\": [\"all\"]},\n]\n\ndef score(a, b):\n    return sum(x * y for x, y in zip(a, b))\n\ndef search(query_vec, user_group, top=2):\n    allowed = [d for d in index if \"all\" in d[\"groups\"] or user_group in d[\"groups\"]]\n    ranked = sorted(allowed, key=lambda d: score(query_vec, d[\"vec\"]), reverse=True)\n    return [d[\"text\"] for d in ranked[:top]]\n\nquery_vec = [1.0, 0.2]                       # \"how do refunds work?\"\nfor group in [\"sales\", \"hr\"]:\n    chunks = search(query_vec, group)\n    print(group, \"sees\", chunks)\n"
+  "uth_example": "index = [\n    {\"text\": \"Refund policy: 30 days\", \"vec\": [0.9, 0.1], \"groups\": [\"all\"]},\n    {\"text\": \"Exec bonus plan\", \"vec\": [0.8, 0.3], \"groups\": [\"hr\"]},\n    {\"text\": \"Shipping times\", \"vec\": [0.1, 0.9], \"groups\": [\"all\"]},\n]\n\ndef score(a, b):\n    return sum(x * y for x, y in zip(a, b))\n\ndef search(query_vec, user_group, top=2):\n    allowed = [d for d in index if \"all\" in d[\"groups\"] or user_group in d[\"groups\"]]\n    ranked = sorted(allowed, key=lambda d: score(query_vec, d[\"vec\"]), reverse=True)\n    return [d[\"text\"] for d in ranked[:top]]\n\nquery_vec = [1.0, 0.2]                       # \"how do refunds work?\"\nfor group in [\"sales\", \"hr\"]:\n    chunks = search(query_vec, group)\n    print(group, \"sees\", chunks)\n",
+  "under_the_hood": {
+    "summary": "Azure AI Search builds an index of chunks with both an inverted index for keywords and a vector index for embeddings; a hybrid query runs both, merges the rankings with Reciprocal Rank Fusion, can re-rank the top results semantically, and the best chunks go into the prompt.",
+    "steps": [
+      {
+        "title": "Ingestion: extract, chunk, embed",
+        "body": "An indexer reads documents from Blob Storage, a skillset cracks PDFs and Office files, splits text into chunks and calls an embedding model. Each chunk is written to the index with its text, vector and metadata such as source and allowed groups.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Blob documents",
+              "Indexer + skillset",
+              "Chunk text",
+              "Embed chunk",
+              "Index: text + vector + metadata"
+            ],
+            "edges": [
+              {
+                "from": "Blob documents",
+                "to": "Indexer + skillset"
+              },
+              {
+                "from": "Indexer + skillset",
+                "to": "Chunk text"
+              },
+              {
+                "from": "Chunk text",
+                "to": "Embed chunk"
+              },
+              {
+                "from": "Embed chunk",
+                "to": "Index: text + vector + metadata"
+              }
+            ],
+            "description": "Integrated vectorisation"
+          }
+        }
+      },
+      {
+        "title": "Two indexes inside one",
+        "body": "Text fields feed an inverted index scored with BM25, good at exact terms like 'error E-1042'. Vector fields feed an approximate nearest-neighbour index (HNSW), good at meaning like 'laptop will not turn on'."
+      },
+      {
+        "title": "Hybrid query and RRF",
+        "body": "A hybrid query runs the keyword and vector searches in parallel. Reciprocal Rank Fusion scores each document by summing 1/(k + rank) from each list, so a chunk ranked well in both lists rises to the top.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "chunk A: keyword rank 1, vector rank 3 -> 1/61 + 1/63 = 0.0323",
+              "chunk B: keyword rank 5, vector rank 1 -> 1/65 + 1/61 = 0.0318",
+              "chunk C: vector rank 2 only           -> 1/62       = 0.0161",
+              "order: A, B, C"
+            ],
+            "caption": "Fusing two result lists (k = 60)"
+          }
+        }
+      },
+      {
+        "title": "Semantic ranker re-reads the top",
+        "body": "The semantic ranker takes the top results (up to 50) and re-scores them with a language model that reads query and chunk together, which fixes cases where both retrievers were fooled by word overlap."
+      },
+      {
+        "title": "Security trimming and grounding",
+        "body": "A filter such as group_ids/any(g: search.in(g, 'sales,emea')) removes chunks the user may not see before anything reaches the model. The top chunks are then placed in the prompt with an instruction to answer only from them and cite sources.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "No security filter",
+              "code": "HR salary chunk retrieved\nfor a sales user -> data leak"
+            },
+            "right": {
+              "label": "Filter on user's groups",
+              "code": "only chunks the user may read\nreach the prompt"
+            },
+            "description": "With and without trimming"
+          }
+        }
+      }
+    ],
+    "takeaway": "Retrieval quality decides answer quality. Use hybrid search plus the semantic ranker as the default, measure retrieval separately, and enforce permissions in the query, never in the prompt."
+  }
 }
