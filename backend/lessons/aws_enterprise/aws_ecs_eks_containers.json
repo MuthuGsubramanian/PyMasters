@@ -33,5 +33,104 @@
     {"q": {"en": "Which requirement most strongly justifies choosing EKS over ECS?"}, "options": {"en": ["Running a few stateless HTTP services on AWS only", "Avoiding all infrastructure upgrades", "Minimizing platform team headcount", "Needing Kubernetes-ecosystem tooling like operators, Helm charts, and a service mesh, or genuine multi-cloud portability"]}, "correct": 3}
   ],
   "tags": {"concepts_taught": ["aws_compute", "cloud_cost_management"], "concepts_required": ["aws_compute", "aws_identity"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Both orchestrators run a control loop: you declare how many copies of a task or pod you want, a scheduler picks a host that has room, and the loop replaces anything that dies; on Fargate the host is a per-task isolated environment that AWS manages.",
+    "steps": [
+      {
+        "title": "You declare the desired state",
+        "body": "In ECS a service says: run 3 copies of task definition web:12. In EKS a Deployment says replicas: 3 for a pod template. Neither starts anything by itself; it is a record the control plane keeps working towards."
+      },
+      {
+        "title": "The scheduler filters and places",
+        "body": "The scheduler drops hosts without enough free CPU and memory for the request, or that break constraints. It then places the task by strategy: ECS binpack fills the fullest host, spread distributes across AZs; Kubernetes scores nodes and picks the best score.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Need: 0.5 vCPU, 1 GiB",
+                "type": "input"
+              },
+              {
+                "label": "Filter hosts with room",
+                "type": "process"
+              },
+              {
+                "label": "Apply constraints (AZ, type)",
+                "type": "process"
+              },
+              {
+                "label": "Strategy: binpack or spread",
+                "type": "process"
+              },
+              {
+                "label": "Start container on chosen host",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Placing one task or pod"
+          }
+        }
+      },
+      {
+        "title": "The agent starts containers",
+        "body": "On EC2 hosts, the ECS agent or the kubelet pulls the image and starts the container. On Fargate, AWS runs each task or pod in its own isolated environment, so there are no nodes for you to patch or bin-pack.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "EC2 data plane",
+              "code": "you size and patch nodes\nmany tasks share one node\nbinpacking saves money"
+            },
+            "right": {
+              "label": "Fargate",
+              "code": "one isolated environment per task\nyou pay for the task size\nno nodes to manage"
+            },
+            "description": "Who owns the host"
+          }
+        }
+      },
+      {
+        "title": "Identity is per task, not per host",
+        "body": "An ECS task role, or EKS Pod Identity / IRSA, gives each workload its own short-lived AWS credentials. The SDK in the container fetches them from a local credentials endpoint, so two pods on the same node can have different permissions."
+      },
+      {
+        "title": "The loop heals and scales",
+        "body": "If a container exits or fails its health check, the observed count drops below desired and the scheduler places a new one. Autoscaling changes desired; on EC2, a capacity provider or Karpenter adds nodes when tasks cannot be placed.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "Desired: 3",
+              "Observe: 2 running",
+              "Schedule 1 more",
+              "Observe: 3 running"
+            ],
+            "edges": [
+              {
+                "from": "Desired: 3",
+                "to": "Observe: 2 running"
+              },
+              {
+                "from": "Observe: 2 running",
+                "to": "Schedule 1 more"
+              },
+              {
+                "from": "Schedule 1 more",
+                "to": "Observe: 3 running"
+              },
+              {
+                "from": "Observe: 3 running",
+                "to": "Desired: 3"
+              }
+            ],
+            "description": "Reconciliation loop"
+          }
+        }
+      }
+    ],
+    "takeaway": "ECS and EKS share the same core idea, a reconcile loop plus a placement scheduler. The real choice is how much of the API and the hosts you want to own."
+  }
 }

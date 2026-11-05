@@ -33,5 +33,86 @@
     {"q": {"en": "What is the most effective design response when a synchronous cross-cloud call chain breaches its latency budget?"}, "options": {"en": ["Increase the SLA number until it passes", "Add more VPN tunnels", "Colocate the chatty components or replace sync calls with async replication and caching", "Switch all traffic to the public internet"]}, "correct": 2}
   ],
   "tags": {"concepts_taught": ["multi_cloud_strategy", "infrastructure_as_code"], "concepts_required": ["cloud_fundamentals", "landing_zones"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_cloud", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "Cross-cloud traffic is limited by physics and by the path: light in fibre covers roughly 200 km per millisecond, so distance sets a floor on round-trip time, and whether packets ride the internet, a VPN or a dedicated interconnect decides how much jitter and loss sit on top.",
+    "steps": [
+      {
+        "title": "Distance sets the minimum latency",
+        "body": "Light in fibre travels at about two-thirds of its speed in vacuum, roughly 200 km per ms. A 6,000 km fibre path is about 30 ms one way, 60 ms round trip, before any routing detours or equipment delay.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "fibre speed ~200 km per ms",
+              "same metro, 50 km     -> ~0.5 ms RTT",
+              "1,000 km              -> ~10 ms RTT",
+              "6,000 km              -> ~60 ms RTT (real paths: more)"
+            ],
+            "caption": "Round-trip floor from distance"
+          }
+        }
+      },
+      {
+        "title": "Chatty designs multiply it",
+        "body": "A request that makes 40 sequential calls across a 70 ms link waits 40 x 70 = 2.8 seconds on the network alone. The same calls inside one region cost a few milliseconds. Latency budgets must count calls, not just distance.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Same region",
+              "code": "40 x ~1 ms\n~40 ms total"
+            },
+            "right": {
+              "label": "Across an ocean",
+              "code": "40 x ~70 ms\n~2.8 s total"
+            },
+            "description": "The same 40 sequential calls"
+          }
+        }
+      },
+      {
+        "title": "Three kinds of path",
+        "body": "Internet with TLS shares the public path and its variability. A site-to-site VPN encrypts with IPsec over the internet, still variable. A dedicated interconnect (ExpressRoute, Direct Connect, Cloud Interconnect) uses private circuits, usually meeting in a colocation facility.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "VM in AWS VPC",
+                "type": "input"
+              },
+              {
+                "label": "Direct Connect circuit",
+                "type": "process"
+              },
+              {
+                "label": "Colocation / carrier fabric",
+                "type": "process"
+              },
+              {
+                "label": "ExpressRoute circuit",
+                "type": "process"
+              },
+              {
+                "label": "VNet in Azure",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "A private cross-cloud path"
+          }
+        }
+      },
+      {
+        "title": "Routing is exchanged with BGP",
+        "body": "Over interconnects and VPNs, each side announces its address ranges with BGP. Overlapping CIDRs break this: if both clouds use 10.0.0.0/16, routers cannot tell which side a packet belongs to."
+      },
+      {
+        "title": "Design to cross the link rarely",
+        "body": "Patterns that work: keep chatty services together, cross clouds with batched or asynchronous calls, replicate read data near its users, and keep a fallback path (for example VPN behind an interconnect)."
+      }
+    ],
+    "takeaway": "Do the latency arithmetic before choosing an architecture. You can buy a better path, but you cannot buy away distance or a chatty design."
+  }
 }

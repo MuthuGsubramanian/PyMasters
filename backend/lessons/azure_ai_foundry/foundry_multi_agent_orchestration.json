@@ -34,5 +34,90 @@
   ],
   "tags": {"concepts_taught": ["ai_foundry_agents", "llmops"], "concepts_required": ["functions", "dictionaries", "llm_concepts"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_ai", "path_memberships": []},
   "generated": false,
-  "uth_example": "class Specialist:\n    def __init__(self, name, topics):\n        self.name, self.topics = name, topics\n    def handle(self, message):\n        return f\"{self.name} agent handled: {message}\"\n\nbilling = Specialist(\"billing\", [\"invoice\", \"refund\", \"charge\"])\ntech = Specialist(\"tech\", [\"error\", \"login\", \"crash\"])\n\nclass Triage:                                 # the orchestrator agent\n    def __init__(self, specialists):\n        self.specialists = specialists\n    def route(self, message):\n        for agent in self.specialists:\n            if any(t in message.lower() for t in agent.topics):\n                return agent.handle(message)\n        return \"triage answered directly\"\n\ntriage = Triage([billing, tech])\nreplies = [triage.route(m) for m in [\"Refund my invoice\", \"App crash on login\", \"Hello\"]]\nprint(replies)\n"
+  "uth_example": "class Specialist:\n    def __init__(self, name, topics):\n        self.name, self.topics = name, topics\n    def handle(self, message):\n        return f\"{self.name} agent handled: {message}\"\n\nbilling = Specialist(\"billing\", [\"invoice\", \"refund\", \"charge\"])\ntech = Specialist(\"tech\", [\"error\", \"login\", \"crash\"])\n\nclass Triage:                                 # the orchestrator agent\n    def __init__(self, specialists):\n        self.specialists = specialists\n    def route(self, message):\n        for agent in self.specialists:\n            if any(t in message.lower() for t in agent.topics):\n                return agent.handle(message)\n        return \"triage answered directly\"\n\ntriage = Triage([billing, tech])\nreplies = [triage.route(m) for m in [\"Refund my invoice\", \"App crash on login\", \"Hello\"]]\nprint(replies)\n",
+  "under_the_hood": {
+    "summary": "In a connected-agents setup the main agent sees each specialist as a tool; when it calls one, that agent runs its own model loop with its own instructions and tools and returns a result, which the main agent reads before deciding the next step.",
+    "steps": [
+      {
+        "title": "Specialists become tools",
+        "body": "When you connect a billing agent to a triage agent, the triage agent's tool list gets an entry with the billing agent's name and description. To the model it looks like any other function it can call.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "label": "Triage agent",
+                "children": [
+                  "billing_agent: invoices, refunds",
+                  "tech_agent: device troubleshooting",
+                  "faq search (file search)"
+                ]
+              }
+            ],
+            "description": "Triage agent's tool list"
+          }
+        }
+      },
+      {
+        "title": "A call starts a separate run",
+        "body": "When triage calls billing_agent with a task, the service runs the billing agent with its own instructions, model and tools. Its intermediate steps stay inside that run; only the result returns to the caller.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "User: 'refund my duplicate charge'",
+                "type": "input"
+              },
+              {
+                "label": "Triage model calls billing_agent",
+                "type": "process"
+              },
+              {
+                "label": "Billing agent runs its own loop",
+                "type": "process"
+              },
+              {
+                "label": "Result returned as tool output",
+                "type": "process"
+              },
+              {
+                "label": "Triage writes final reply",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Delegation through a connected agent"
+          }
+        }
+      },
+      {
+        "title": "Patterns are wiring choices",
+        "body": "A router calls exactly one specialist. A supervisor calls several, checks results and may call again. A pipeline passes an artifact through fixed stages. Group chat lets agents take turns on a shared conversation."
+      },
+      {
+        "title": "Handoffs lose context unless designed",
+        "body": "Each hop passes only what the caller writes into the call. If triage summarises badly, billing never sees the order number. Passing structured fields (customer_id, order_id, user_id) beats passing free-text summaries.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Free-text summary",
+              "code": "'customer wants money back'\norder ID lost on the way"
+            },
+            "right": {
+              "label": "Structured contract",
+              "code": "{customer_id: 77, order_id: 'A-17',\nreason: 'duplicate'}"
+            },
+            "description": "Two ways to hand off"
+          }
+        }
+      },
+      {
+        "title": "Cost and latency multiply",
+        "body": "Every hop is at least one more model call. A supervisor with three workers can use several times the tokens of one agent, so trace each hop and set budgets per conversation."
+      }
+    ],
+    "takeaway": "Multi-agent is a refactoring for complexity, not a default. Keep each agent narrow, hand off structured data, and trace every hop."
+  }
 }

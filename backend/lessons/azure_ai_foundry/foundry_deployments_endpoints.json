@@ -34,5 +34,88 @@
   ],
   "tags": {"concepts_taught": ["azure_openai_service", "cloud_cost_management", "ai_foundry_platform"], "concepts_required": ["llm_concepts", "functions"], "difficulty": "intermediate", "engagement_type": "hands_on", "estimated_minutes": 20, "category": "enterprise_ai", "path_memberships": []},
   "generated": false,
-  "uth_example": "deployments = {\n    \"chat-prod\": {\"model\": \"gpt-4o\", \"sku\": \"ProvisionedManaged\", \"ptu\": 50},\n    \"chat-dev\": {\"model\": \"gpt-4o-mini\", \"sku\": \"GlobalStandard\", \"tpm_quota\": 30000},\n}\n\nclass FakeEndpoint:                          # stands in for the Azure OpenAI client\n    def __init__(self, deployments):\n        self.deployments = deployments\n    def complete(self, model, prompt):       # 'model' is the DEPLOYMENT name\n        d = self.deployments[model]\n        return f\"[{d['model']} via {d['sku']}] reply to {prompt!r}\"\n\nclient = FakeEndpoint(deployments)\nreply = client.complete(model=\"chat-dev\", prompt=\"hi\")\nrpm, tokens_per_call = 200, 800\nneeded_tpm = rpm * tokens_per_call\nfits = needed_tpm <= deployments[\"chat-dev\"][\"tpm_quota\"]\nprint(reply)\nprint(\"needs\", needed_tpm, \"TPM; fits pay-as-you-go quota:\", fits)\n"
+  "uth_example": "deployments = {\n    \"chat-prod\": {\"model\": \"gpt-4o\", \"sku\": \"ProvisionedManaged\", \"ptu\": 50},\n    \"chat-dev\": {\"model\": \"gpt-4o-mini\", \"sku\": \"GlobalStandard\", \"tpm_quota\": 30000},\n}\n\nclass FakeEndpoint:                          # stands in for the Azure OpenAI client\n    def __init__(self, deployments):\n        self.deployments = deployments\n    def complete(self, model, prompt):       # 'model' is the DEPLOYMENT name\n        d = self.deployments[model]\n        return f\"[{d['model']} via {d['sku']}] reply to {prompt!r}\"\n\nclient = FakeEndpoint(deployments)\nreply = client.complete(model=\"chat-dev\", prompt=\"hi\")\nrpm, tokens_per_call = 200, 800\nneeded_tpm = rpm * tokens_per_call\nfits = needed_tpm <= deployments[\"chat-dev\"][\"tpm_quota\"]\nprint(reply)\nprint(\"needs\", needed_tpm, \"TPM; fits pay-as-you-go quota:\", fits)\n",
+  "under_the_hood": {
+    "summary": "A deployment binds a model version to a name, a deployment type and a capacity; requests to its endpoint are either shared pay-as-you-go traffic limited by TPM quota, or run on reserved PTU capacity where a utilisation meter decides when to return 429.",
+    "steps": [
+      {
+        "title": "Catalog entry to deployment",
+        "body": "Deploying gpt-4o version 2024-08-06 as 'chat-prod' creates a named object with a deployment type (Standard, Global Standard, Data Zone, Provisioned) and a capacity. Clients call the deployment name, not the model name.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "model": "gpt-4o",
+              "version": "pinned",
+              "type": "Global Standard",
+              "capacity": "TPM from subscription quota",
+              "upgrade policy": "manual"
+            },
+            "caption": "Deployment 'chat-prod'"
+          }
+        }
+      },
+      {
+        "title": "Standard: shared pool with a quota",
+        "body": "Standard requests share Microsoft's capacity. Your deployment's TPM allocation is the ceiling; each request is estimated on arrival and counted against it, and over-quota requests get 429 with Retry-After."
+      },
+      {
+        "title": "Provisioned: reserved capacity with a utilisation meter",
+        "body": "PTU deployments reserve model processing capacity for you. The service tracks how busy that capacity is; while utilisation is below 100% requests are admitted, and when it hits 100% new requests get a 429 quickly instead of waiting in a queue.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Pay-as-you-go (Standard)",
+              "code": "billed per token\nlatency varies with shared load\n429 at your TPM quota"
+            },
+            "right": {
+              "label": "Provisioned (PTU)",
+              "code": "billed for reserved units\nsteadier latency\n429 when utilisation is 100%"
+            },
+            "description": "Two deployment economics"
+          }
+        }
+      },
+      {
+        "title": "Spillover combines both",
+        "body": "A common design sends traffic to the PTU deployment first and, on 429, retries on a Standard deployment. Steady load uses the reserved capacity; peaks spill to pay-as-you-go.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Request",
+                "type": "input"
+              },
+              {
+                "label": "Try PTU deployment",
+                "type": "process"
+              },
+              {
+                "label": "429: PTU at 100%",
+                "type": "process"
+              },
+              {
+                "label": "Retry on Standard deployment",
+                "type": "process"
+              },
+              {
+                "label": "Response",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Spillover routing"
+          }
+        }
+      },
+      {
+        "title": "Placement follows the type",
+        "body": "Standard processes in the resource's region; Global types may process in any region with capacity; Data Zone keeps processing within a geography such as the EU or US. Choose by data-residency rules first."
+      }
+    ],
+    "takeaway": "Pay-as-you-go buys flexibility, PTU buys predictability. Measure your steady load before reserving, and design for 429 on both."
+  }
 }

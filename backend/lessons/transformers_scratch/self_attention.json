@@ -57,11 +57,11 @@
     {
       "type": "ExecutionVisualizer",
       "id": "attention_matrix_demo",
-      "code": "tokens = [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]]\nweights_row0 = [0.401, 0.401, 0.198]\noutput_row0 = [0.8022, 0.5989]",
+      "code": "tokens = [[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]]\nweights_row0 = [0.401, 0.198, 0.401]\noutput_row0 = [0.8022, 0.5989]",
       "executionSteps": [
         { "line": 1, "variables": { "tokens": "[[1,0],[0,1],[1,1]]" }, "output": "", "description": "3 tokens, d=2. Identity projection: Q=K=V=tokens." },
         { "line": 2, "variables": { "scores_row0": "[0.707, 0.0, 0.707]" }, "output": "", "description": "Token 0 scores itself & token 2 highest (shared dim), token 1 lowest." },
-        { "line": 2, "variables": { "weights_row0": "[0.401, 0.401, 0.198]" }, "output": "", "description": "Softmax -> row sums to 1.0. This is row 0 of the attention matrix." },
+        { "line": 2, "variables": { "weights_row0": "[0.401, 0.198, 0.401]" }, "output": "", "description": "Softmax -> row sums to 1.0. This is row 0 of the attention matrix." },
         { "line": 3, "variables": { "output_row0": "[0.8022, 0.5989]" }, "output": "[0.8022, 0.5989]", "description": "Mix value vectors by those weights -> token 0's new context vector." }
       ],
       "speed": "normal"

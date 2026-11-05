@@ -34,5 +34,69 @@
   ],
   "tags": {"concepts_taught": ["cloud_cost_management", "cloud_compliance"], "concepts_required": ["cloud_fundamentals", "azure_resource_management"], "difficulty": "advanced", "engagement_type": "hands_on", "estimated_minutes": 22, "category": "enterprise_cloud", "path_memberships": []},
   "generated": false,
-  "uth_example": "resources = [\n    {\"name\": \"vm-build-01\", \"cost\": 410, \"cpu_avg\": 3, \"tags\": {\"team\": \"ci\"}},\n    {\"name\": \"disk-orphan-7\", \"cost\": 85, \"attached\": False, \"tags\": {}},\n    {\"name\": \"sql-claims\", \"cost\": 1900, \"cpu_avg\": 62, \"tags\": {\"team\": \"claims\"}},\n]\nbudget = {\"name\": \"bud-claims-prod\", \"amount\": 2000}\n\nfindings = []\nfor r in resources:\n    if r.get(\"cpu_avg\", 100) < 5:\n        findings.append((r[\"name\"], \"rightsize or shut down\"))\n    if r.get(\"attached\") is False:\n        findings.append((r[\"name\"], \"delete orphaned disk\"))\n    if not r[\"tags\"]:\n        findings.append((r[\"name\"], \"missing cost-center tag\"))\n\nspend = sum(r[\"cost\"] for r in resources)\nprint(findings)\nprint(f\"spend {spend} of {budget['amount']} ({spend / budget['amount']:.0%} of budget)\")\n"
+  "uth_example": "resources = [\n    {\"name\": \"vm-build-01\", \"cost\": 410, \"cpu_avg\": 3, \"tags\": {\"team\": \"ci\"}},\n    {\"name\": \"disk-orphan-7\", \"cost\": 85, \"attached\": False, \"tags\": {}},\n    {\"name\": \"sql-claims\", \"cost\": 1900, \"cpu_avg\": 62, \"tags\": {\"team\": \"claims\"}},\n]\nbudget = {\"name\": \"bud-claims-prod\", \"amount\": 2000}\n\nfindings = []\nfor r in resources:\n    if r.get(\"cpu_avg\", 100) < 5:\n        findings.append((r[\"name\"], \"rightsize or shut down\"))\n    if r.get(\"attached\") is False:\n        findings.append((r[\"name\"], \"delete orphaned disk\"))\n    if not r[\"tags\"]:\n        findings.append((r[\"name\"], \"missing cost-center tag\"))\n\nspend = sum(r[\"cost\"] for r in resources)\nprint(findings)\nprint(f\"spend {spend} of {budget['amount']} ({spend / budget['amount']:.0%} of budget)\")\n",
+  "under_the_hood": {
+    "summary": "Azure meters each resource's usage, rates it against your price sheet and any reservation or savings plan hour by hour, and Cost Management lets you view it as actual or amortized cost, sliced by subscription, resource group and tags.",
+    "steps": [
+      {
+        "title": "Usage becomes rated records",
+        "body": "Every resource emits meter usage, such as hours of a D4s_v5 or GB-months of storage. Billing rates each record against your agreement's prices and attaches subscription, resource group, resource ID and tags.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "meter": "D4s v5, West Europe",
+              "quantity": "24 hours",
+              "resourceGroup": "rg-api",
+              "tags": "costcenter=4711",
+              "pricingModel": "Reservation"
+            },
+            "caption": "One simplified cost record"
+          }
+        }
+      },
+      {
+        "title": "Benefits apply hour by hour",
+        "body": "A reservation or savings plan is matched against eligible usage every hour. Matching usage is charged at the benefit rate; unused benefit in that hour is lost. Usage above the benefit is billed pay-as-you-go.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "running: 2 matching VMs  -> 2 covered, 1 reserved hour unused",
+              "running: 5 matching VMs  -> 3 covered, 2 billed pay-as-you-go"
+            ],
+            "caption": "One hour with a 3-VM reservation"
+          }
+        }
+      },
+      {
+        "title": "Actual vs amortized",
+        "body": "Actual cost shows a reservation as one large purchase on the day you buy it. Amortized cost spreads that purchase over the term and assigns each day's share to the resources that used it, which is what teams need for fair chargeback.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Actual cost",
+              "code": "day 1: big purchase line\nother days: reserved VMs show 0"
+            },
+            "right": {
+              "label": "Amortized cost",
+              "code": "purchase spread daily\neach VM carries its share"
+            },
+            "description": "Same reservation, two views"
+          }
+        }
+      },
+      {
+        "title": "Tags make cost attributable",
+        "body": "Tags on resources flow into cost data. Policies that require or inherit tags (for example copying costcenter from the resource group) close gaps, and the untagged share is a number you track until it is small."
+      },
+      {
+        "title": "Budgets alert; they do not stop",
+        "body": "A budget compares actual or forecast cost with a threshold and sends alerts or triggers action groups. It does not shut anything down by itself; automation you attach to the action group must do that."
+      }
+    ],
+    "takeaway": "Know which view you are reading. Use amortized cost for chargeback, buy commitments only for steady usage, and treat budgets as alarms, not brakes."
+  }
 }

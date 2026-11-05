@@ -33,5 +33,92 @@
     {"q": {"en": "Why is putting dev and prod workloads in one hub considered a pitfall?"}, "options": {"en": ["Hubs cannot hold more than one project", "They share quota and blast radius, mixing experiments with production", "Projects in the same hub cannot use different models", "Azure charges double for shared hubs"]}, "correct": 1}
   ],
   "tags": {"concepts_taught": ["ai_foundry_platform", "azure_identity", "ai_platform_selection"], "concepts_required": ["llm_concepts", "dictionaries"], "difficulty": "intermediate", "engagement_type": "conceptual", "estimated_minutes": 18, "category": "enterprise_ai", "path_memberships": []},
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A Foundry hub is an Azure resource holding shared security settings and connections; each project is a child workspace that resolves those shared settings at runtime, while RBAC on the hub and on each project decides who can use which part.",
+    "steps": [
+      {
+        "title": "The hub is created first",
+        "body": "A platform team creates a hub such as hub-retail-prod. Creating it wires up dependent resources: a storage account for artifacts, a key vault for connection secrets, a managed identity, and optionally a managed virtual network and customer-managed keys.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "label": "Hub: hub-retail-prod",
+                "children": [
+                  "Storage account (artifacts)",
+                  "Key vault (connection secrets)",
+                  "Managed identity",
+                  "Network isolation settings",
+                  "Shared connections: Azure OpenAI, AI Search"
+                ]
+              }
+            ],
+            "description": "What a hub carries"
+          }
+        }
+      },
+      {
+        "title": "Projects are child workspaces",
+        "body": "A project created under the hub records the hub as its parent. It does not copy the hub's settings; when the project uses a shared connection or the network setup, it is resolved from the hub at that moment.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Developer in project 'returns-bot'",
+                "type": "input"
+              },
+              {
+                "label": "Project RBAC: Azure AI Developer?",
+                "type": "process"
+              },
+              {
+                "label": "Resolve connection on hub",
+                "type": "process"
+              },
+              {
+                "label": "Hub identity / key vault provides auth",
+                "type": "process"
+              },
+              {
+                "label": "Call Azure OpenAI deployment",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "How a project call reaches a shared model"
+          }
+        }
+      },
+      {
+        "title": "Connections hide credentials",
+        "body": "A connection is a named pointer to a resource (endpoint plus auth method). Keys, if any, live in the hub's key vault. Project code asks for the connection by name and never sees the secret when Entra ID auth is used."
+      },
+      {
+        "title": "Two layers of RBAC",
+        "body": "Owner or Contributor on the hub lets the platform team change shared settings. Azure AI Developer on a project lets an app team build there but not change the hub. Access is checked at whichever scope the action touches.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Platform team on hub",
+              "code": "edit networking and connections\ncreate projects"
+            },
+            "right": {
+              "label": "App team on project",
+              "code": "deploy, build flows and agents\ncannot change hub security"
+            },
+            "description": "Who can do what"
+          }
+        }
+      },
+      {
+        "title": "Hub-less projects are lighter",
+        "body": "The newer Foundry project type sits directly on an Azure AI Foundry resource with no hub. It suits teams that mainly need model inference and agents; hub projects remain the choice for Prompt Flow and managed network isolation."
+      }
+    ],
+    "takeaway": "Harden once at the hub, then let teams self-serve projects. When something fails in a project, check both the project role and the hub connection it depends on."
+  }
 }
