@@ -49,5 +49,82 @@
     "category": "enterprise_ai",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "OpenAI offers two kinds of model: GPT models that answer directly and reasoning models that first generate hidden reasoning tokens (billed as output) before the visible answer; the Responses API can keep conversation state on the server and link turns by response ID.",
+    "steps": [
+      {
+        "title": "Two kinds of model",
+        "body": "GPT-series models generate the answer directly. Reasoning models first produce internal reasoning tokens, then the answer. A reasoning effort setting controls how much they think, trading cost and latency for accuracy on hard problems.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "GPT model",
+              "code": "answer tokens only\nfast, cheaper"
+            },
+            "right": {
+              "label": "Reasoning model",
+              "code": "hidden reasoning tokens + answer\nslower, billed for both"
+            },
+            "description": "Same question, two model kinds"
+          }
+        }
+      },
+      {
+        "title": "Reasoning tokens are billed as output",
+        "body": "Reasoning tokens are not returned in full but are counted in usage and billed as output tokens. A short visible answer can still cost thousands of output tokens.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "input_tokens:       850",
+              "output_tokens:    3,400",
+              "  of which reasoning_tokens: 3,100",
+              "visible answer:   about 300 tokens"
+            ],
+            "caption": "Usage of one reasoning call (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Chat Completions vs Responses",
+        "body": "Chat Completions is stateless: you send the full message list each time. The Responses API can store a response, and the next call passes previous_response_id so the server supplies the earlier context, and it adds built-in tools such as web and file search.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "Call 1: input -> response id resp_1",
+                "type": "input"
+              },
+              {
+                "label": "Call 2: input + previous_response_id=resp_1",
+                "type": "process"
+              },
+              {
+                "label": "Server adds turn-1 context",
+                "type": "process"
+              },
+              {
+                "label": "Model answers turn 2",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "Two turns with the Responses API"
+          }
+        }
+      },
+      {
+        "title": "Pin snapshots",
+        "body": "Model names without a date can move to newer snapshots. Dated snapshot names stay fixed until retirement, so production code pins them and upgrades deliberately."
+      },
+      {
+        "title": "Rate limits are tiered",
+        "body": "Each organisation has limits on requests and tokens per minute per model, which rise with usage tier. Over the limit, the API returns 429 and the response headers report remaining quota and reset times."
+      }
+    ],
+    "takeaway": "Pick the model kind by task difficulty, watch reasoning tokens in the usage report, and pin dated snapshots in production."
+  }
 }
