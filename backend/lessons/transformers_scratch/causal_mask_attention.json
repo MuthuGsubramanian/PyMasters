@@ -213,5 +213,84 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "import math\n\ntokens = [\"The\", \"cat\", \"sat\"]\nscores = [[1.0, 0.5, 2.0],\n          [0.3, 1.2, 0.8],\n          [0.6, 0.4, 1.5]]\n\ndef softmax(row):\n    exps = [math.exp(v) for v in row]\n    return [round(e / sum(exps), 2) for e in exps]\n\nmasked = []\nfor i, row in enumerate(scores):\n    masked.append([v if j <= i else float(\"-inf\") for j, v in enumerate(row)])\n\nweights = [softmax(r) for r in masked]\nfor tok, w in zip(tokens, weights):\n    print(f\"{tok:4} attends to {w}\")         # zeros above the diagonal: no peeking\n"
+  "uth_example": "import math\n\ntokens = [\"The\", \"cat\", \"sat\"]\nscores = [[1.0, 0.5, 2.0],\n          [0.3, 1.2, 0.8],\n          [0.6, 0.4, 1.5]]\n\ndef softmax(row):\n    exps = [math.exp(v) for v in row]\n    return [round(e / sum(exps), 2) for e in exps]\n\nmasked = []\nfor i, row in enumerate(scores):\n    masked.append([v if j <= i else float(\"-inf\") for j, v in enumerate(row)])\n\nweights = [softmax(r) for r in masked]\nfor tok, w in zip(tokens, weights):\n    print(f\"{tok:4} attends to {w}\")         # zeros above the diagonal: no peeking\n",
+  "under_the_hood": {
+    "summary": "Before softmax, a decoder sets every score where the key position comes after the query position to -inf, so exp gives those positions weight exactly 0 and each token can only use itself and earlier tokens.",
+    "steps": [
+      {
+        "title": "Training sees the whole sentence at once",
+        "body": "A decoder is trained on 'The cat sat on the mat' in a single pass, predicting the next token at every position in parallel. Without a mask, the position predicting 'sat' could simply attend to the 'sat' token and copy it."
+      },
+      {
+        "title": "Build an upper-triangular mask",
+        "body": "For query i and key j, the mask is 0 where j <= i and -inf where j > i. Added to a 3 x 3 score matrix it leaves the diagonal and everything below intact and replaces the upper triangle.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "masked scores",
+            "data": [
+              [
+                2.0,
+                "-inf",
+                "-inf"
+              ],
+              [
+                1.0,
+                2.5,
+                "-inf"
+              ],
+              [
+                0.5,
+                0.0,
+                1.5
+              ]
+            ],
+            "labels": [
+              "q0",
+              "q1",
+              "q2"
+            ],
+            "highlight": [
+              [
+                0,
+                1
+              ],
+              [
+                0,
+                2
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "title": "Future positions (highlighted) are -inf"
+          }
+        }
+      },
+      {
+        "title": "exp(-inf) is exactly zero",
+        "body": "Softmax of row 1, [1.0, 2.5, -inf], becomes [0.182, 0.818, 0.0]. The masked entry contributes nothing to the sum and the remaining weights renormalise to 1. Many implementations add a large negative number such as -1e9 instead; the effect is the same to float precision.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "row 0: [1.0, 0.0, 0.0]",
+              "row 1: [0.182, 0.818, 0.0]",
+              "row 2: [0.231, 0.14, 0.629]"
+            ]
+          }
+        }
+      },
+      {
+        "title": "One pass, n training examples",
+        "body": "Because each row only sees its own prefix, row i is a fair prediction of token i+1. A 1,024-token sequence therefore yields 1,024 next-token predictions from one forward pass, which is what makes decoder pre-training efficient."
+      },
+      {
+        "title": "The same mask makes generation consistent",
+        "body": "At inference the model emits one token at a time, so the future truly does not exist yet. Training under the mask guarantees the model learned to work with exactly this view, and it also means past keys and values never change, which is what lets a KV cache work."
+      }
+    ],
+    "takeaway": "The causal mask is a triangle of -inf added before softmax. It turns one sequence into many honest next-token exercises and is the reason GPT-style models can be cached and decoded left to right."
+  }
 }
