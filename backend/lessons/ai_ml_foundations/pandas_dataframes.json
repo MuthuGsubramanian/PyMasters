@@ -321,5 +321,73 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A DataFrame keeps each column as a typed array, groups same-typed columns into blocks, and pairs them with a row Index that works like a hash table from label to position.",
+    "steps": [
+      {
+        "title": "Columns are arrays, a Series is one column",
+        "body": "In df = pd.DataFrame({'name': [...], 'age': [25, 30, 35], 'score': [88.5, 92.0, 78.3]}), age is an int64 array, score a float64 array, name an object array of Python strings. df['age'] returns a Series: that array plus the shared row index.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "name",
+                "object",
+                "Alice, Bob, Charlie"
+              ],
+              [
+                "age",
+                "int64",
+                "25, 30, 35"
+              ],
+              [
+                "score",
+                "float64",
+                "88.5, 92.0, 78.3"
+              ]
+            ],
+            "labels": [
+              "col",
+              "col",
+              "col"
+            ],
+            "caption": "One dtype per column"
+          }
+        }
+      },
+      {
+        "title": "The Index maps labels to positions",
+        "body": "The default index is a RangeIndex 0, 1, 2. Set df.index = ['a', 'b', 'c'] and pandas builds a lookup table from each label to its row position, so df.loc['b'] finds row 1 without scanning. Label lookups stay fast however many rows there are."
+      },
+      {
+        "title": "loc uses labels, iloc uses positions",
+        "body": "df.iloc[0:2] means positions 0 and 1, end excluded, like a list slice. df.loc['a':'b'] means labels a through b, end included, because labels have no 'one past the end'. With the default 0, 1, 2 index the two look similar but df.loc[0:1] returns two rows and df.iloc[0:1] returns one.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "df.loc[0:1]",
+              "code": "label slice, end included\nrows 0 and 1"
+            },
+            "right": {
+              "label": "df.iloc[0:1]",
+              "code": "position slice, end excluded\nrow 0 only"
+            },
+            "caption": "Same numbers, different meaning"
+          }
+        }
+      },
+      {
+        "title": "Attribute access is a shortcut",
+        "body": "df.age is the same as df['age'] as long as the name is a valid identifier and does not clash with a DataFrame method; df.count is the method, not a column called count. Use brackets when creating columns: df.newcol = 1 sets an attribute on the object, not a column."
+      },
+      {
+        "title": "Selections can share data",
+        "body": "Taking a column or a slice can return an object that shares memory with df, which is why pandas 2 warns about 'setting on a copy'. With Copy-on-Write, the default from pandas 3.0, any derived object behaves as an independent copy, and memory is only duplicated when one of them is modified. Assign through df.loc[row, col] to change the original."
+      }
+    ],
+    "takeaway": "A DataFrame is labelled columns of typed arrays. Use loc for labels and iloc for positions, keep column dtypes clean, and change data through loc so you know which object you are modifying."
+  }
 }

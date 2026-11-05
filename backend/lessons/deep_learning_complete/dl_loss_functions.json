@@ -382,5 +382,110 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "PyTorch's loss modules take the model's raw output and the targets, compute one number per sample, and average them by default; CrossEntropyLoss expects raw logits and class indices and applies log-softmax internally, while BCE and MSE compare values directly.",
+    "steps": [
+      {
+        "title": "CrossEntropyLoss = log-softmax + NLL",
+        "body": "For logits [2.0, 1.0, 0.1] and target class 0, softmax gives [0.659, 0.242, 0.099] and the loss is -ln 0.659 = 0.417, the lesson's value. Internally PyTorch computes log-softmax with the max-subtraction trick and picks the target's entry, so you must pass raw scores, not probabilities.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                2.0,
+                0.659
+              ],
+              [
+                1.0,
+                0.242
+              ],
+              [
+                0.1,
+                0.099
+              ]
+            ],
+            "labels": [
+              "class 0 (target)",
+              "class 1",
+              "class 2"
+            ],
+            "highlight": [
+              0
+            ],
+            "caption": "Logits and softmax probabilities; loss = -ln 0.659 = 0.417"
+          }
+        }
+      },
+      {
+        "title": "Targets are indices, not one-hot",
+        "body": "nn.CrossEntropyLoss expects target = torch.tensor([0]), a class index of dtype long, with logits of shape (batch, classes). Passing a softmax output by mistake applies softmax twice, squeezing probabilities together and slowing learning without any error message."
+      },
+      {
+        "title": "BCE for yes or no",
+        "body": "nn.BCELoss takes probabilities in (0, 1): for predictions [0.8, 0.3] with targets [1, 0] the loss is -(ln 0.8 + ln 0.7) / 2 = 0.290. nn.BCEWithLogitsLoss takes raw scores and applies the sigmoid inside in a numerically stable way, so it is usually the better choice.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "BCELoss",
+              "code": "input: sigmoid outputs\nunstable when outputs hit 0 or 1"
+            },
+            "right": {
+              "label": "BCEWithLogitsLoss",
+              "code": "input: raw scores\nsigmoid + log combined stably"
+            },
+            "caption": "Two ways to get the same loss"
+          }
+        }
+      },
+      {
+        "title": "MSE versus MAE with an outlier",
+        "body": "Errors [1, 1, 1, 10]: MSE = (1 + 1 + 1 + 100) / 4 = 25.75, MAE = 13 / 4 = 3.25. The single outlier contributes 100 of MSE's 103, so it dominates the gradients. nn.L1Loss (MAE) or nn.HuberLoss, which is quadratic for small errors and linear for large ones, are less sensitive to it.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                1
+              ],
+              [
+                10,
+                100,
+                10
+              ]
+            ],
+            "labels": [
+              "sample 1",
+              "sample 2",
+              "sample 3",
+              "sample 4"
+            ],
+            "highlight": [
+              3
+            ],
+            "caption": "Columns: error, squared error, absolute error"
+          }
+        }
+      },
+      {
+        "title": "Reduction and custom losses",
+        "body": "reduction='mean' (default) averages over the batch, 'sum' adds, 'none' returns one loss per sample so you can weight them yourself. A custom loss is just a function of tensors returning a scalar; autograd differentiates it like any other operation. CrossEntropyLoss also accepts class weights and label_smoothing."
+      }
+    ],
+    "takeaway": "Match the loss to the output: logits plus class indices for CrossEntropyLoss, logits for BCEWithLogitsLoss, numbers for MSE or Huber. Most loss bugs are a wrong input format that runs without error."
   }
 }

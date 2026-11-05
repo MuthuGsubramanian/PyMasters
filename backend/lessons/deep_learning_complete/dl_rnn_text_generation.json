@@ -439,5 +439,149 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A character-level LSTM is trained on chunks of text where every position predicts the following character; cross-entropy over all positions measures how surprised it is, and generation repeatedly samples a character and feeds it back with the carried hidden state.",
+    "steps": [
+      {
+        "title": "Encode the corpus as integers",
+        "body": "The lesson's Shakespeare excerpt has 191 characters drawn from 24 distinct symbols, including space, newline and capital T. chars = sorted(set(text)) fixes an order, char_to_idx maps each to 0 to 23, and the whole text becomes one tensor of indices."
+      },
+      {
+        "title": "Training pairs are shifted windows",
+        "body": "make_batches cuts the data into windows of seq_len = 40: x = data[:, i:i+40] and y = data[:, i+1:i+41], the same window shifted by one. So 'To be or not' as input has 'o be or not ' as target, and all 40 positions are trained at once. The function also needs at least seq_len x batch_size = 1,280 characters to form one batch, more than this short excerpt provides, so real runs use a longer corpus.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "x",
+                "T o _ b e _ o r"
+              ],
+              [
+                "y",
+                "o _ b e _ o r _"
+              ]
+            ],
+            "labels": [
+              "input",
+              "target"
+            ],
+            "caption": "Input and target windows ('_' marks a space)"
+          }
+        }
+      },
+      {
+        "title": "The loss and what it means",
+        "body": "The model outputs 24 scores per position; CrossEntropyLoss averages -log p(true next char) over all positions in the batch. Guessing uniformly among 24 characters gives ln 24 = 3.18. A loss of 1.5 means perplexity e^1.5 = 4.5: the model is about as unsure as choosing among 4 or 5 characters.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "uniform guess",
+                "value": "ln 24 = 3.18"
+              },
+              {
+                "variable": "trained loss",
+                "value": 1.5
+              },
+              {
+                "variable": "perplexity",
+                "value": "e^1.5 = 4.5"
+              }
+            ],
+            "caption": "Reading the loss"
+          }
+        }
+      },
+      {
+        "title": "Two LSTM layers carry the context",
+        "body": "CharRNN embeds each index into 64 numbers, runs a 2-layer LSTM with 128 hidden units (dropout 0.2 between layers), and a Linear(128, 24) produces the next-character scores. The hidden state lets the model know it is in the middle of 'question' rather than at the start of a word.",
+        "visual": {
+          "type": "NeuralNetworkVisualizer",
+          "props": {
+            "layers": [
+              4,
+              6,
+              6,
+              4
+            ],
+            "labels": {
+              "input": [
+                "char idx"
+              ],
+              "output": [
+                "next char"
+              ]
+            },
+            "caption": "embedding -> LSTM layer 1 -> LSTM layer 2 -> 24 scores (scaled down)"
+          }
+        }
+      },
+      {
+        "title": "Generating from a start string",
+        "body": "Feed the start string through the model to warm up the hidden state. Then loop: divide the last scores by the temperature, softmax, sample an index, append idx_to_char[next_idx] to chars_generated, and feed that character in next. With so little training text the model mostly learns to reproduce fragments of it.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "start_str -> warm up hidden",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "last logits / temperature",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "softmax -> sample next_idx",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "append character",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "feed it back, repeat",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "The generation loop"
+          }
+        }
+      }
+    ],
+    "takeaway": "Training is next-character prediction on shifted windows; generation is sampling one character at a time with the memory carried forward. The loss, read as perplexity, tells you how many characters the model is effectively choosing between."
   }
 }

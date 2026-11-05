@@ -379,5 +379,93 @@
     "path_memberships": [
       "ml_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A DataFrame is a set of named columns, each a typed array, sharing one row index; operations line rows up by index label first and then run vectorised on the column arrays.",
+    "steps": [
+      {
+        "title": "Columns are typed arrays",
+        "body": "df = pd.DataFrame({'name': [...], 'age': [25, 30, 35, 28]}) stores age as an int64 array and name as an object (or string) array. df.dtypes shows one type per column. Column-wise storage is why df['age'].mean() is fast and why mixed types in one column fall back to slow Python objects.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "name",
+                "object",
+                "Alice, Bob, Charlie, Diana"
+              ],
+              [
+                "age",
+                "int64",
+                "25, 30, 35, 28"
+              ],
+              [
+                "salary",
+                "int64",
+                "50000 ... 55000"
+              ]
+            ],
+            "labels": [
+              "col",
+              "col",
+              "col"
+            ],
+            "caption": "One typed array per column"
+          }
+        }
+      },
+      {
+        "title": "The index labels every row",
+        "body": "Every DataFrame has an index, by default 0, 1, 2, 3. loc selects by those labels and iloc by position. After filtering, the labels stay with their rows: keep rows 1 and 3 and the index is [1, 3], not [0, 1]."
+      },
+      {
+        "title": "Arithmetic aligns by label",
+        "body": "Adding two Series matches labels, not positions. If s1 has index [a, b, c] and s2 has [b, c, d], s1 + s2 has index [a, b, c, d] and a and d become NaN, because each had no partner. This alignment prevents silent mismatches, and explains surprise NaNs.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "a",
+                "NaN"
+              ],
+              [
+                "b",
+                "s1.b + s2.b"
+              ],
+              [
+                "c",
+                "s1.c + s2.c"
+              ],
+              [
+                "d",
+                "NaN"
+              ]
+            ],
+            "labels": [
+              "a",
+              "b",
+              "c",
+              "d"
+            ],
+            "highlight": [
+              0,
+              3
+            ],
+            "caption": "s1 + s2: unmatched labels give NaN"
+          }
+        }
+      },
+      {
+        "title": "Filtering is a boolean mask",
+        "body": "df['age'] > 28 builds a True/False array, one per row: [False, True, True, False]. df[mask] keeps the True rows. & and | combine masks element by element, which is why each condition needs its own parentheses."
+      },
+      {
+        "title": "groupby: split, apply, combine",
+        "body": "df.groupby('department')['salary'].mean() splits rows into groups by department, computes the mean inside each group, and combines the results into a Series indexed by department. Engineering gets (50000 + 70000) / 2 = 60000, Marketing (60000 + 55000) / 2 = 57500."
+      }
+    ],
+    "takeaway": "Think of pandas as labelled NumPy columns. Keep columns in proper dtypes, remember that operations align on the index, and express logic as whole-column masks and group operations instead of row loops."
   }
 }

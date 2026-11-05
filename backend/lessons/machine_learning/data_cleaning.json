@@ -417,5 +417,133 @@
     "path_memberships": [
       "ml_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Cleaning tools learn a few numbers from the training data, such as a median, quartiles, category lists, a mean and standard deviation, and then rewrite every value using those stored numbers.",
+    "steps": [
+      {
+        "title": "Missing values are NaN masks",
+        "body": "pandas marks a missing number as NaN, a special float, so an integer column with one gap becomes float64. df.isnull() returns a boolean mask of the same shape, and .sum() counts the True values per column. That count is the first thing to look at before deciding how to fill."
+      },
+      {
+        "title": "Imputation fills from a learned statistic",
+        "body": "For ages [25, NaN, 35, 28, NaN] the median of the known values 25, 28, 35 is 28, so both gaps become 28. The median ignores extreme values, which is why it is preferred for skewed columns; the mode (most frequent value) is used for categories. SimpleImputer stores that statistic at fit time and reuses it on new data.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                25,
+                "NaN",
+                35,
+                28,
+                "NaN"
+              ],
+              [
+                25,
+                28,
+                35,
+                28,
+                28
+              ]
+            ],
+            "labels": [
+              "before",
+              "after"
+            ],
+            "highlight": [
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                4
+              ]
+            ],
+            "caption": "Median imputation: the two gaps become 28"
+          }
+        }
+      },
+      {
+        "title": "Outliers: the IQR fences",
+        "body": "For values [10, 12, 13, 14, 15, 16, 100] pandas' default linear interpolation gives Q1 = 12.5 and Q3 = 15.5, so IQR = 3. The fences are Q1 - 1.5*IQR = 8 and Q3 + 1.5*IQR = 20. Only 100 lies outside, so it is flagged; you then cap it, drop it, or keep it if it is real.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              10,
+              12,
+              13,
+              14,
+              15,
+              16,
+              100
+            ],
+            "highlight": [
+              6
+            ],
+            "caption": "Fences at 8 and 20: only 100 is outside"
+          }
+        }
+      },
+      {
+        "title": "Encoding turns categories into numbers",
+        "body": "One-hot encoding makes one 0/1 column per category: city in {Chennai, Delhi, Mumbai} becomes three columns, and 'Delhi' becomes [0, 1, 0]. OneHotEncoder remembers the category list from training, so a new file produces the same columns in the same order; handle_unknown='ignore' turns an unseen city into all zeros."
+      },
+      {
+        "title": "Scaling uses the training mean and std",
+        "body": "StandardScaler computes z = (x - mean) / std. For salaries 50000, 60000, 70000 the mean is 60000 and the population std is about 8165, so they become -1.22, 0 and 1.22. Fit the scaler on the training split only, then transform the test split with the same numbers; otherwise test information leaks into training.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "fit on train: learn mean, std",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "transform train",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "transform test with the SAME mean, std",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "model sees comparable scales",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3"
+            ],
+            "caption": "Learned once, applied everywhere"
+          }
+        }
+      }
+    ],
+    "takeaway": "Every cleaning step is 'learn a statistic, then apply it'. Learn it from training data only and save it with the model, because production data has to be cleaned with exactly the same numbers."
   }
 }

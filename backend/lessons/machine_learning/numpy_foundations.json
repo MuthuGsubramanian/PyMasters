@@ -374,5 +374,76 @@
     "path_memberships": [
       "ml_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A NumPy array is one block of raw numbers plus a small header (dtype, shape, strides), so operations run as tight C loops over memory instead of Python-level loops over objects.",
+    "steps": [
+      {
+        "title": "A list holds pointers, an array holds numbers",
+        "body": "A Python list of 1,000 integers stores 1,000 pointers to separate int objects, each with its own header. np.arange(1000) stores 1,000 int64 values side by side, 8 bytes each, 8,000 bytes in one contiguous buffer. No per-element objects and no pointer chasing.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "list [1, 2, 3]",
+              "code": "3 pointers -> 3 separate int objects\neach object has type and refcount\nloop runs in the interpreter"
+            },
+            "right": {
+              "label": "np.array([1, 2, 3])",
+              "code": "one buffer: 1 | 2 | 3 (8 bytes each)\none dtype for all: int64\nloop runs in compiled C"
+            },
+            "caption": "Same numbers, different memory"
+          }
+        }
+      },
+      {
+        "title": "Shape and strides index the buffer",
+        "body": "A 3 x 2 int64 matrix has shape (3, 2) and strides (16, 8): move 16 bytes for the next row, 8 bytes for the next column. Element [2, 1] lives at byte 2*16 + 1*8 = 40. Transposing just swaps the strides to (8, 16); no numbers move.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                2
+              ],
+              [
+                3,
+                4
+              ],
+              [
+                5,
+                6
+              ]
+            ],
+            "labels": [
+              "row 0 (bytes 0-15)",
+              "row 1 (bytes 16-31)",
+              "row 2 (bytes 32-47)"
+            ],
+            "highlight": [
+              [
+                2,
+                1
+              ]
+            ],
+            "caption": "[2, 1] = 6 sits at byte offset 40"
+          }
+        }
+      },
+      {
+        "title": "Vectorised ops call compiled loops",
+        "body": "a * 2 calls the multiply ufunc once; inside, a C loop walks the buffer and writes a new buffer. The Python interpreter runs one operation instead of a million, which is where the large speed-ups for big arrays come from."
+      },
+      {
+        "title": "Broadcasting stretches size-1 axes",
+        "body": "Shapes are compared from the right; each pair of dimensions must be equal or one of them must be 1. A (3, 1) column plus a (4,) row becomes (3, 4): the size-1 axes act as if repeated, using a stride of 0 instead of copying data. Subtracting a (n_features,) mean from an (n_samples, n_features) matrix is this rule at work."
+      },
+      {
+        "title": "Matrix products go to BLAS",
+        "body": "X @ W hands the work to an optimised BLAS library such as OpenBLAS or MKL, which splits matrices into cache-sized blocks and may use several CPU cores. Every ML library's linear layers, regressions and distance computations rest on this call."
+      }
+    ],
+    "takeaway": "NumPy is fast because data is stored as typed numbers in one block and every operation is a compiled loop. Keep work in whole-array operations, and Python's per-element overhead disappears."
   }
 }

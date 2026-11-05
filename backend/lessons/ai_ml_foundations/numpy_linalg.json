@@ -341,5 +341,135 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A matrix product takes the dot product of each row of the left matrix with each column of the right one; inverse, determinant and solve all go through an LU factorisation computed by LAPACK.",
+    "steps": [
+      {
+        "title": "Dot product: multiply pairs, then add",
+        "body": "np.dot([1, 2, 3], [4, 5, 6]) = 1*4 + 2*5 + 3*6 = 32. Geometrically it is |a| |b| cos(angle), so it measures how much two vectors point the same way, which is why similarity scores and neuron sums are dot products."
+      },
+      {
+        "title": "Matrix multiply: row times column",
+        "body": "For A = [[1, 2], [3, 4]] and B = [[5, 6], [7, 8]], entry C[0, 1] = row 0 of A dot column 1 of B = 1*6 + 2*8 = 22. All four give [[19, 22], [43, 50]]. Shapes must chain: (m, n) @ (n, p) gives (m, p), and the inner n's must agree.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                19,
+                22
+              ],
+              [
+                43,
+                50
+              ]
+            ],
+            "labels": [
+              "row 0",
+              "row 1"
+            ],
+            "highlight": [
+              [
+                0,
+                1
+              ]
+            ],
+            "caption": "A @ B; the highlighted 22 = 1*6 + 2*8"
+          }
+        }
+      },
+      {
+        "title": "Transpose moves nothing",
+        "body": "A.T swaps the shape and the strides, so it is a view: reading A.T[i, j] reads A[j, i] in the same memory. That is why A.T is instant even for big matrices, while the following @ may then read memory in a less cache-friendly order."
+      },
+      {
+        "title": "Determinant and inverse via LU",
+        "body": "np.linalg factors A into lower and upper triangular parts (LU with row pivoting, from LAPACK). The determinant is the product of U's diagonal with a sign for row swaps: for our A it is 1*4 - 2*3 = -2. The inverse is [[-2, 1], [1.5, -0.5]], and A @ inv(A) gives the identity up to rounding.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                -2,
+                1
+              ],
+              [
+                1.5,
+                -0.5
+              ]
+            ],
+            "labels": [
+              "row 0",
+              "row 1"
+            ],
+            "caption": "inv(A) for A = [[1, 2], [3, 4]], det = -2"
+          }
+        }
+      },
+      {
+        "title": "Prefer solve over inverse",
+        "body": "To find x with A x = b for b = [5, 11], np.linalg.solve(A, b) reuses the LU factors to get x = [1, 2] directly. Computing inv(A) @ b does more work and loses more precision. If det(A) is 0 the matrix is singular, and solve raises LinAlgError.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "A x = b",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "LU factorise A (LAPACK)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "forward substitution with L",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "back substitution with U",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "x = [1, 2]",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Inside np.linalg.solve"
+          }
+        }
+      }
+    ],
+    "takeaway": "Most of machine learning is matrix products, and the rest of linear algebra is factorisations. Know the shape rule (m, n) @ (n, p) and reach for solve, not inv, when you need to undo a matrix."
+  }
 }

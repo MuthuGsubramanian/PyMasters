@@ -323,5 +323,101 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Pooling cuts a feature map into small windows and keeps one number per window, the largest for max pooling or the mean for average pooling, so the map shrinks while the strongest responses survive; it has no weights to learn.",
+    "steps": [
+      {
+        "title": "Max pooling picks the strongest",
+        "body": "Feature map [[1, 3, 2, 4], [5, 6, 1, 2], [3, 2, 5, 1], [1, 4, 2, 3]] with 2 x 2 windows and stride 2 gives four windows. Their maxima are 6, 4, 5 and 5, so the output is [[6, 4], [5, 5]]: a quarter of the values, each saying 'the pattern was present strongly somewhere here'.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                3,
+                2,
+                4
+              ],
+              [
+                5,
+                6,
+                1,
+                2
+              ],
+              [
+                3,
+                2,
+                5,
+                1
+              ],
+              [
+                1,
+                4,
+                2,
+                3
+              ]
+            ],
+            "labels": [
+              "row 0",
+              "row 1",
+              "row 2",
+              "row 3"
+            ],
+            "highlight": [
+              [
+                1,
+                1
+              ],
+              [
+                0,
+                3
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                3,
+                1
+              ]
+            ],
+            "caption": "Highlighted: the maximum of each 2x2 window"
+          }
+        }
+      },
+      {
+        "title": "Average pooling takes the mean",
+        "body": "The same windows averaged give (1 + 3 + 5 + 6) / 4 = 3.75, 2.25, 2.5 and 2.75. Averaging keeps more about the overall level of activation, while max keeps only the peak. Max pooling is the usual choice inside CNNs; averaging is common at the end.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Max pool 2x2",
+              "code": "[[6, 4],\n [5, 5]]"
+            },
+            "right": {
+              "label": "Avg pool 2x2",
+              "code": "[[3.75, 2.25],\n [2.5, 2.75]]"
+            },
+            "caption": "Same map, two summaries"
+          }
+        }
+      },
+      {
+        "title": "Small shifts barely matter",
+        "body": "If an edge moves one pixel but stays inside the same 2 x 2 window, the max is unchanged. Pooling therefore makes the next layer less sensitive to exact positions, a limited form of translation invariance. It also quarters the work for every later layer."
+      },
+      {
+        "title": "Gradients flow only to the winner",
+        "body": "Max pooling has no weights. In backpropagation, each window's gradient goes entirely to the position that held the maximum, 6 in the first window, and the other three positions get zero. Average pooling splits the gradient equally, a quarter to each."
+      },
+      {
+        "title": "Global average pooling replaces big dense layers",
+        "body": "Modern CNNs such as ResNet end with global average pooling: a 7 x 7 x 512 map becomes 512 numbers, one average per channel, before the final classifier. That avoids a huge dense layer (VGG's first one has about 100 million weights) and works for any input size."
+      }
+    ],
+    "takeaway": "Pooling is a fixed summary, not a learned layer: it shrinks maps, adds tolerance to small shifts and saves computation. Many newer networks downsample with stride-2 convolutions instead, but global average pooling at the end is nearly universal."
+  }
 }

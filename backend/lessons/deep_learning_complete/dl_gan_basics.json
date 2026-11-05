@@ -455,5 +455,113 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A GAN trains two networks against each other: the discriminator is pushed to output 1 for real samples and 0 for generated ones, and the generator is pushed to make the discriminator output 1 for its fakes; they alternate gradient steps.",
+    "steps": [
+      {
+        "title": "Generator: noise in, sample out",
+        "body": "The generator takes a random vector z of 64 numbers from a normal distribution and maps it through layers to 784 numbers, a fake 28 x 28 image. Different z give different images. At the start the outputs are noise, because nothing has told the generator what real images look like."
+      },
+      {
+        "title": "Discriminator: real or fake?",
+        "body": "The discriminator takes 784 numbers and outputs one probability that the input is real. Its loss is binary cross-entropy with label 1 for real and 0 for fake. If it says 0.9 for a real image and 0.2 for a fake, its loss is -ln 0.9 - ln 0.8 = 0.105 + 0.223 = 0.328.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "real image",
+                0.9,
+                "label 1",
+                0.105
+              ],
+              [
+                "fake image",
+                0.2,
+                "label 0",
+                0.223
+              ]
+            ],
+            "labels": [
+              "input",
+              "input"
+            ],
+            "caption": "Discriminator outputs and their loss terms"
+          }
+        }
+      },
+      {
+        "title": "Generator loss: fool the judge",
+        "body": "The generator's fakes are scored by the discriminator, but now with label 1: the generator wants D(G(z)) close to 1. With D(G(z)) = 0.2 its loss is -ln 0.2 = 1.609. Gradients flow back through the discriminator into the generator's weights, showing it how to change its output to look more real; only the generator's optimizer steps here."
+      },
+      {
+        "title": "Alternating steps",
+        "body": "Each iteration: generate a batch of fakes; update D on real (label 1) and fakes.detach() (label 0), where detach stops this step from changing G; then update G by passing fresh D scores of the fakes with label 1. Neither network is trained to convergence on its own; they improve together.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "sample z, fakes = G(z)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "D step: real -> 1, fakes.detach() -> 0",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "update D only",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "G step: D(fakes) -> target 1",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "update G only",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One GAN training iteration"
+          }
+        }
+      },
+      {
+        "title": "The ideal end point",
+        "body": "If the generator matched the real data perfectly, the best the discriminator could do is answer 0.5 for everything, giving a loss of 2 ln 2 = 1.386. In practice training oscillates rather than settling, so you judge progress by looking at samples and by metrics such as FID, not by the losses alone."
+      }
+    ],
+    "takeaway": "A GAN is a two-player game written as two BCE losses with opposite labels for the fakes. Detach when training the discriminator, flip the label when training the generator, and expect a balance, not a falling loss curve."
   }
 }

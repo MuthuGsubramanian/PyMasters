@@ -482,5 +482,130 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A convolutional layer holds a small stack of learnable filters; each filter slides over every position of the input and writes one number per position, so each output channel is a map showing where that filter's pattern appears.",
+    "steps": [
+      {
+        "title": "A filter lights up on its pattern",
+        "body": "Take a 4 x 4 image that is dark on top and bright below: rows [0, 0, 0, 0], [0, 0, 0, 0], [9, 9, 9, 9], [9, 9, 9, 9]. The 2 x 2 filter [[-1, -1], [1, 1]] subtracts the top row of each patch from the bottom row. Where the patch straddles the edge it gives -0 - 0 + 9 + 9 = 18; on flat regions it gives 0.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                0
+              ],
+              [
+                9,
+                9,
+                9,
+                9
+              ],
+              [
+                9,
+                9,
+                9,
+                9
+              ]
+            ],
+            "labels": [
+              "row 0",
+              "row 1",
+              "row 2",
+              "row 3"
+            ],
+            "highlight": [
+              [
+                1,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                0
+              ],
+              [
+                2,
+                1
+              ]
+            ],
+            "caption": "Input; the highlighted patch straddles the edge"
+          }
+        }
+      },
+      {
+        "title": "The feature map shows where",
+        "body": "Sliding the filter over all 3 x 3 positions gives [[0, 0, 0], [18, 18, 18], [0, 0, 0]]. The middle row lights up exactly where the horizontal edge is. A trained CNN learns filters like this one by itself, plus many others for other orientations, colours and textures.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0,
+                0,
+                0
+              ],
+              [
+                18,
+                18,
+                18
+              ],
+              [
+                0,
+                0,
+                0
+              ]
+            ],
+            "labels": [
+              "row 0",
+              "row 1",
+              "row 2"
+            ],
+            "highlight": [
+              1
+            ],
+            "caption": "Feature map: strong response along the edge"
+          }
+        }
+      },
+      {
+        "title": "Tensors are (batch, channels, height, width)",
+        "body": "nn.Conv2d(3, 16, kernel_size=3, padding=1) takes input of shape [N, 3, H, W] and returns [N, 16, H, W]. Its weight tensor has shape [16, 3, 3, 3]: 16 filters, each spanning all 3 input channels with a 3 x 3 window. Each filter sums over the channels, so one filter makes one output map."
+      },
+      {
+        "title": "Stacking grows the receptive field",
+        "body": "One 3 x 3 layer sees a 3 x 3 patch of the image. A second 3 x 3 layer looks at 3 x 3 outputs of the first, which together cover 5 x 5 pixels; with a 2 x 2 pool in between the view grows faster. Deep layers therefore respond to large structures built from the small patterns found earlier.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              "layer 1: 3x3 view, edges",
+              "layer 2: 5x5 view, corners",
+              "after pooling: larger views, textures",
+              "deep layers: parts, objects"
+            ],
+            "caption": "Receptive field grows with depth"
+          }
+        }
+      },
+      {
+        "title": "Why not a dense layer?",
+        "body": "A dense layer from a 224 x 224 x 3 image to just 100 units needs about 15 million weights and must learn 'edge at top-left' separately from 'edge at bottom-right'. A 3 x 3 conv with 16 filters needs 448 parameters and detects its pattern anywhere, because the same weights are reused at every position."
+      }
+    ],
+    "takeaway": "A convolution layer is a bank of small pattern detectors swept across the image, producing one map per detector. Weight sharing makes it cheap and position-independent, and stacking builds big patterns from small ones."
   }
 }

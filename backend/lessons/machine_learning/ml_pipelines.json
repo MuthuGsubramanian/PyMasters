@@ -430,5 +430,139 @@
     "path_memberships": [
       "production"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A Pipeline is a list of steps: fit runs fit_transform on each transformer in order and fit on the last estimator, while predict replays only transform on each step, using the numbers learned during fit.",
+    "steps": [
+      {
+        "title": "fit walks the steps in order",
+        "body": "For Pipeline([('scale', StandardScaler()), ('model', LogisticRegression())]), fit(X, y) calls scale.fit_transform(X), which learns each column's mean and std and returns scaled X. That output goes into model.fit. Each step only ever sees the previous step's output.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "X_train",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "imputer.fit_transform (learn medians)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "scaler.fit_transform (learn mean, std)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "model.fit",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3"
+            ],
+            "caption": "Pipeline.fit"
+          }
+        }
+      },
+      {
+        "title": "predict replays transform only",
+        "body": "predict(X_new) calls imputer.transform, then scaler.transform, then model.predict. Nothing is re-learned: a test value 70 is scaled with the training mean and std, never with the test set's own. That is the bug pipelines make impossible.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "X_new",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "imputer.transform (stored medians)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "scaler.transform (stored mean, std)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "model.predict",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3"
+            ],
+            "caption": "Pipeline.predict"
+          }
+        }
+      },
+      {
+        "title": "ColumnTransformer splits, transforms, re-joins",
+        "body": "ColumnTransformer sends numeric columns to one sub-pipeline (impute median, then scale) and categorical columns to another (impute mode, then one-hot). Each returns its block of columns and the blocks are stacked side by side, so 3 numeric plus a 4-category column become 3 + 4 = 7 model inputs."
+      },
+      {
+        "title": "Cross-validation refits the whole chain",
+        "body": "cross_val_score(pipe, X, y, cv=5) clones the full pipeline for every fold, so the imputer's medians and the scaler's means come from that fold's training rows only. Scaling once before splitting would let the held-out fold's statistics leak into training and inflate the score."
+      },
+      {
+        "title": "Double-underscore names reach inside",
+        "body": "Parameters are addressed as step__param, for example model__C or prep__num__imputer__strategy. GridSearchCV uses those names to tune preprocessing and model together, and the fitted pipeline is one object you can save with joblib and load in production.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              "model__C",
+              "prep__num__imputer__strategy",
+              "prep__cat__onehot__handle_unknown"
+            ],
+            "label": "step__param routes a value to one inner step",
+            "caption": "Parameter names inside a nested pipeline"
+          }
+        }
+      }
+    ],
+    "takeaway": "A pipeline guarantees that the numbers learned during training are the only ones used later, in cross-validation, on the test set and in production. That single guarantee removes the most common leakage bug."
   }
 }

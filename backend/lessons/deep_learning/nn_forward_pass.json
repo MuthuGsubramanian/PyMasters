@@ -414,5 +414,121 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "In a forward pass each layer multiplies its input vector by a weight matrix, adds a bias vector and applies an activation; the result is the next layer's input, and at the end softmax turns the last scores into probabilities.",
+    "steps": [
+      {
+        "title": "Layer 1: matrix times vector",
+        "body": "x = [1, 2, 3] and W1 has shape (4, 3), one row of 3 weights per hidden neuron. Row [0.1, 0.2, 0.3] gives 0.1 + 0.4 + 0.9 = 1.4. The four rows give z1 = [1.4, -0.1, 1.2, 0.4] (bias zero here). Each entry is one neuron's weighted sum.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0.1,
+                0.2,
+                0.3
+              ],
+              [
+                -0.3,
+                0.1,
+                0.0
+              ],
+              [
+                0.2,
+                -0.1,
+                0.4
+              ],
+              [
+                0.0,
+                0.5,
+                -0.2
+              ]
+            ],
+            "labels": [
+              "neuron 1",
+              "neuron 2",
+              "neuron 3",
+              "neuron 4"
+            ],
+            "highlight": [
+              0
+            ],
+            "caption": "W1 (4 x 3); row 1 dot [1, 2, 3] = 1.4"
+          }
+        }
+      },
+      {
+        "title": "Activation, element by element",
+        "body": "ReLU sets negatives to 0: a1 = [1.4, 0, 1.2, 0.4]. Neuron 2 is silent for this input, so it contributes nothing to the next layer and, in backpropagation, receives no gradient for this example.",
+        "visual": {
+          "type": "NeuralNetworkVisualizer",
+          "props": {
+            "layers": [
+              3,
+              4,
+              2
+            ],
+            "labels": {
+              "input": [
+                "x1=1",
+                "x2=2",
+                "x3=3"
+              ],
+              "output": [
+                "class 0",
+                "class 1"
+              ]
+            },
+            "activations": [
+              1,
+              1,
+              1,
+              0.9,
+              0,
+              0.8,
+              0.3,
+              0.7,
+              0.3
+            ],
+            "caption": "3 inputs -> 4 ReLU neurons -> 2 outputs; neuron 2 is off"
+          }
+        }
+      },
+      {
+        "title": "Layer 2 and the output scores",
+        "body": "W2 has shape (2, 4). Row [0.5, -0.2, 0.1, 0.3] dotted with a1 gives 0.7 + 0 + 0.12 + 0.12 = 0.94; row [-0.4, 0.3, 0.2, 0.6] gives -0.56 + 0 + 0.24 + 0.24 = -0.08. These are raw scores, logits, not yet probabilities."
+      },
+      {
+        "title": "Softmax makes probabilities",
+        "body": "e^0.94 and e^-0.08 are 2.56 and 0.92; dividing by their sum gives [0.735, 0.265]. The network says class 0 with 73.5% confidence. During training, the loss compares this to the true label and backpropagation runs the same layers in reverse.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "z2",
+                "value": "[0.94, -0.08]"
+              },
+              {
+                "variable": "softmax",
+                "value": "[0.735, 0.265]"
+              },
+              {
+                "variable": "prediction",
+                "value": "class 0"
+              }
+            ],
+            "caption": "From scores to a decision"
+          }
+        }
+      },
+      {
+        "title": "Batches are just more rows",
+        "body": "With a batch of N examples, X has shape (N, 3) and a layer computes X @ W1.T + b1 to get (N, 4). The bias of shape (4,) broadcasts across all N rows. One matrix multiply handles the whole batch, which is exactly the work GPUs are built for."
+      }
+    ],
+    "takeaway": "A forward pass is a chain of 'multiply by weights, add bias, activate'. Check the shapes at each step, (out, in) weights turning (in,) into (out,), and you can trace any network by hand."
+  }
 }

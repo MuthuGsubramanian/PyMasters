@@ -458,5 +458,119 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "RAG splits your documents into chunks, stores an embedding for each, and at question time embeds the question, fetches the most similar chunks, and pastes them into the prompt so the model answers from that text.",
+    "steps": [
+      {
+        "title": "Chunk the documents",
+        "body": "Documents are cut into pieces small enough to retrieve precisely, for example 500 tokens with a 50-token overlap so a sentence at a boundary appears in both neighbours. A 2,000-token document then gives chunks starting at tokens 0, 450, 900, 1,350 and 1,800: five chunks. Each keeps metadata such as source file and page.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              "0-500",
+              "450-950",
+              "900-1400",
+              "1350-1850",
+              "1800-2000"
+            ],
+            "labels": [
+              "chunk 1",
+              "chunk 2",
+              "chunk 3",
+              "chunk 4",
+              "chunk 5"
+            ],
+            "caption": "500-token chunks with 50-token overlap"
+          }
+        }
+      },
+      {
+        "title": "Embed and store once",
+        "body": "Every chunk goes through an embedding model to become a vector, which is saved with the chunk text and metadata in a vector store. This indexing happens ahead of time and only needs to be redone for documents that change."
+      },
+      {
+        "title": "Retrieve by similarity at question time",
+        "body": "The question 'How many leave days do new employees get?' is embedded with the same model. The store returns the top k chunks by cosine similarity, say k = 4. If the right chunk is not among them, the model cannot use it, so retrieval quality caps answer quality.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "user question",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "embed question",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "vector search: top-4 chunks",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "build prompt: instructions + chunks + question",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "LLM generates",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "answer with sources",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "The query-time pipeline"
+          }
+        }
+      },
+      {
+        "title": "Augment the prompt",
+        "body": "The prompt says, in effect: 'Answer using only the context below. If the answer is not there, say so. Cite the source.' followed by the retrieved chunks and the question. The model's general knowledge fills in language; the facts come from your text."
+      },
+      {
+        "title": "Debug retrieval separately",
+        "body": "When an answer is wrong, first check whether the right chunk was retrieved. If not, tune chunk size, add keyword search alongside vectors, or re-rank results; if it was, improve the prompt. Updating knowledge is just re-indexing changed documents, no model training needed."
+      }
+    ],
+    "takeaway": "RAG gives a model an open-book exam: the quality of the answer depends first on whether the right page was found. Measure retrieval on its own, and instruct the model to stay within the retrieved text."
   }
 }

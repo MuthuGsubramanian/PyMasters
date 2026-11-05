@@ -304,5 +304,94 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A loss function turns each prediction and its true answer into one number, and its derivative tells backpropagation which way to push the output; MSE squares the error for numbers, cross-entropy takes -log of the probability given to the right class.",
+    "steps": [
+      {
+        "title": "MSE for numbers",
+        "body": "For targets [3, 5] and predictions [2.5, 6], the errors are 0.5 and -1, the squares 0.25 and 1, and MSE = (0.25 + 1) / 2 = 0.625. Squaring makes all errors positive and weighs big misses more: one error of 2 costs as much as four errors of 1.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                3,
+                2.5,
+                0.25
+              ],
+              [
+                5,
+                6,
+                1.0
+              ]
+            ],
+            "labels": [
+              "sample 1",
+              "sample 2"
+            ],
+            "caption": "Columns: target, prediction, squared error; MSE = 0.625"
+          }
+        }
+      },
+      {
+        "title": "Its gradient is proportional to the error",
+        "body": "dMSE / dy_hat = 2 (y_hat - y) / N. A prediction that is 1 too high gets a push twice as strong as one that is 0.5 too low, in the opposite direction. Big errors drive big updates, which is also why a few outliers can dominate MSE training; MAE or Huber loss react less to them."
+      },
+      {
+        "title": "Cross-entropy for classes",
+        "body": "A classifier outputs probabilities, for example [0.7, 0.2, 0.1] for cat, dog, bird. Cross-entropy is -log(probability of the true class). If it is a cat: -log 0.7 = 0.357. If it is a bird: -log 0.1 = 2.303. Being confidently wrong costs the most, and the loss is 0 only at probability 1.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0.7,
+                0.357
+              ],
+              [
+                0.2,
+                1.609
+              ],
+              [
+                0.1,
+                2.303
+              ]
+            ],
+            "labels": [
+              "true = cat",
+              "true = dog",
+              "true = bird"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "Same prediction [0.7, 0.2, 0.1], loss for each possible true class"
+          }
+        }
+      },
+      {
+        "title": "Softmax plus cross-entropy has a simple gradient",
+        "body": "Combined with softmax, the gradient with respect to the raw scores is just probabilities minus the one-hot target: for the cat case [0.7, 0.2, 0.1] - [1, 0, 0] = [-0.3, 0.2, 0.1]. Raise the cat score, lower the others, each in proportion to its error. PyTorch's CrossEntropyLoss takes raw logits and does the softmax inside for numerical stability."
+      },
+      {
+        "title": "The loss steers the whole network",
+        "body": "Backpropagation starts from the loss's gradient and carries it back through every layer, so the choice of loss defines what 'better' means. Regression with MSE predicts the mean; classification with cross-entropy learns calibrated probabilities. Match the loss to the task before tuning anything else.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              "prediction",
+              "loss value",
+              "dLoss / dOutput",
+              "backprop through layers",
+              "weight updates"
+            ],
+            "caption": "Where the loss sits in training"
+          }
+        }
+      }
+    ],
+    "takeaway": "Pick MSE (or MAE/Huber) for continuous targets and cross-entropy for classes. The loss's gradient, error for MSE and probability minus target for cross-entropy, is the signal every weight update starts from."
+  }
 }

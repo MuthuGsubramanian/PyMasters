@@ -455,5 +455,128 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "nn.RNN applies one cell repeatedly along the time axis, h_t = tanh(x_t W_ihᵀ + b_ih + h_(t-1) W_hhᵀ + b_hh), returning the hidden state at every step and the final state, so the order of inputs changes the result.",
+    "steps": [
+      {
+        "title": "Shapes from the lesson's call",
+        "body": "nn.RNN(input_size=10, hidden_size=20, batch_first=True) on x of shape (3, 5, 10), 3 sequences of 5 steps with 10 features, returns output (3, 5, 20), the hidden state after each step, and hidden (1, 3, 20), the final state for the single layer. output[:, -1, :] equals hidden[0].",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "x",
+                "(3, 5, 10)"
+              ],
+              [
+                "output",
+                "(3, 5, 20)"
+              ],
+              [
+                "hidden",
+                "(1, 3, 20)"
+              ]
+            ],
+            "labels": [
+              "in",
+              "out",
+              "out"
+            ],
+            "caption": "batch_first=True: (batch, time, features)"
+          }
+        }
+      },
+      {
+        "title": "The weights it reuses",
+        "body": "The layer stores W_ih (20 x 10), W_hh (20 x 20) and two bias vectors of 20: 200 + 400 + 40 = 640 parameters, used at all 5 steps. A sequence of 500 steps would use the same 640 numbers, which is how RNNs handle any length."
+      },
+      {
+        "title": "Order matters",
+        "body": "Scalar cell with input weight 0.5 and recurrent weight 0.5. Inputs [1, 2]: h1 = tanh(0.5) = 0.462, h2 = tanh(0.5 x 0.462 + 1.0) = 0.843. Inputs [2, 1]: h1 = tanh(1.0) = 0.762, h2 = tanh(0.5 x 0.762 + 0.5) = 0.707. Same numbers, different order, different final state: the RNN encodes sequence order, unlike a bag of features.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "inputs [1, 2]",
+              "code": "h1 = 0.462\nh2 = 0.843"
+            },
+            "right": {
+              "label": "inputs [2, 1]",
+              "code": "h1 = 0.762\nh2 = 0.707"
+            },
+            "caption": "The final state depends on order"
+          }
+        }
+      },
+      {
+        "title": "It is just a loop",
+        "body": "Conceptually nn.RNN does: h = zeros; for t in range(5): h = tanh(x[:, t] @ W_ih.T + b_ih + h @ W_hh.T + b_hh); outputs.append(h). The steps cannot run in parallel because each needs the previous h, which is why RNNs are slower than transformers on long sequences.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "h0 = zeros (3, 20)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "t = 0: combine x[:, 0] with h0",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "t = 1 ... t = 4: reuse the same weights",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "stack all h_t -> output (3, 5, 20)",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "last h -> hidden (1, 3, 20)",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "What nn.RNN computes"
+          }
+        }
+      },
+      {
+        "title": "Choosing what to read out",
+        "body": "For one label per sequence, such as sentiment, feed the final hidden state to a linear layer. For one label per step, such as tagging each word, apply the linear layer to every row of output. The same RNN serves both; only the read-out changes."
+      }
+    ],
+    "takeaway": "An RNN layer is a loop with shared weights and a carried state. Read its output shapes carefully, (batch, time, hidden) versus (layers, batch, hidden), and pick the read-out that matches your task."
   }
 }

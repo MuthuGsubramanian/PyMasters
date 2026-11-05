@@ -413,5 +413,120 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Attention scores how well a query matches each available key, turns the scores into weights that add to 1 with softmax, and returns the weighted average of the matching values, so the output is built mostly from the most relevant items.",
+    "steps": [
+      {
+        "title": "Query, keys, values",
+        "body": "Think of a search: the query is what you are looking for, each key describes an item, and each value is the item's content. In 'The animal didn't cross the street because it was too tired', the word 'it' issues a query, and every other word offers a key and a value."
+      },
+      {
+        "title": "Scores from dot products",
+        "body": "The match between query q and key k is their dot product, often divided by sqrt(d) to keep it in a stable range. Suppose the scores for 'it' against animal, street and tired come out as [3.0, 1.0, 0.5]. Higher means a better match; these are learned, not hand-set.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "animal",
+                3.0,
+                0.82
+              ],
+              [
+                "street",
+                1.0,
+                0.11
+              ],
+              [
+                "tired",
+                0.5,
+                0.07
+              ]
+            ],
+            "labels": [
+              "key",
+              "key",
+              "key"
+            ],
+            "highlight": [
+              0
+            ],
+            "caption": "Scores and softmax weights for the query 'it'"
+          }
+        }
+      },
+      {
+        "title": "Softmax turns scores into weights",
+        "body": "Softmax exponentiates and normalises: e^3.0, e^1.0 and e^0.5 are 20.1, 2.7 and 1.6, giving weights 0.82, 0.11 and 0.07. They are positive and sum to 1, so they say how to split attention: mostly on 'animal'."
+      },
+      {
+        "title": "The output is a weighted sum of values",
+        "body": "The result is 0.82 x value(animal) + 0.11 x value(street) + 0.07 x value(tired). The new vector for 'it' is now mostly 'animal' information, which is how the network resolves what 'it' refers to. Because every step is differentiable, training can adjust what queries and keys learn to match.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "query for 'it'",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "dot with every key",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "scale by sqrt(d)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "softmax -> weights",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "weighted sum of values",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "The attention computation"
+          }
+        }
+      },
+      {
+        "title": "Born in translation",
+        "body": "Attention was introduced for translation (Bahdanau and colleagues, 2014). Earlier encoder-decoder RNNs squeezed the whole source sentence into one fixed vector. With attention, each output word could look back at all encoder states and weight them, fixing the bottleneck for long sentences; transformers later made attention the main operation."
+      }
+    ],
+    "takeaway": "Attention is a soft, learned lookup: match, normalise, blend. It lets a network pull information from wherever it is in the input, instead of relying on what survived a long chain of steps."
+  }
 }

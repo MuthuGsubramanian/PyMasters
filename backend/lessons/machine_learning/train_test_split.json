@@ -367,5 +367,131 @@
     "path_memberships": [
       "ml_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Splitting shuffles row indices and sets some aside the model never trains on; k-fold cross-validation rotates that held-out part so every row is tested exactly once, and stratification keeps class shares equal in each part.",
+    "steps": [
+      {
+        "title": "A split is a shuffled list of indices",
+        "body": "train_test_split shuffles the row numbers with a random generator seeded by random_state, then takes the first 80% for training and the rest for testing (test_size=0.2). The same seed gives the same split every run, which makes results reproducible."
+      },
+      {
+        "title": "Stratify keeps the class mix",
+        "body": "With 1,000 rows of which 10% are positive, a plain random 200-row test set might hold 14 or 27 positives by chance. stratify=y splits each class separately, so the test set gets 20 positives and 180 negatives, the same 10% as the whole.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "all",
+                1000,
+                100
+              ],
+              [
+                "train",
+                800,
+                80
+              ],
+              [
+                "test",
+                200,
+                20
+              ]
+            ],
+            "labels": [
+              "part",
+              "part",
+              "part"
+            ],
+            "caption": "Rows and positives with stratify=y"
+          }
+        }
+      },
+      {
+        "title": "k-fold: everyone is tested once",
+        "body": "KFold(n_splits=5) cuts the rows into 5 folds. Round 1 trains on folds 2 to 5 and tests on fold 1, round 2 tests on fold 2, and so on. You get 5 scores; their mean estimates performance and their spread shows how stable it is. For classifiers, cross_val_score with cv=5 uses StratifiedKFold automatically.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "TEST",
+                "train",
+                "train",
+                "train",
+                "train"
+              ],
+              [
+                "train",
+                "TEST",
+                "train",
+                "train",
+                "train"
+              ],
+              [
+                "train",
+                "train",
+                "TEST",
+                "train",
+                "train"
+              ],
+              [
+                "train",
+                "train",
+                "train",
+                "TEST",
+                "train"
+              ],
+              [
+                "train",
+                "train",
+                "train",
+                "train",
+                "TEST"
+              ]
+            ],
+            "labels": [
+              "round 1",
+              "round 2",
+              "round 3",
+              "round 4",
+              "round 5"
+            ],
+            "highlight": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                3,
+                3
+              ],
+              [
+                4,
+                4
+              ]
+            ],
+            "caption": "5-fold cross-validation"
+          }
+        }
+      },
+      {
+        "title": "Read the gap between scores",
+        "body": "Training accuracy 1.00 with cross-validated accuracy 0.82 means the model memorised its training rows: overfitting. Training 0.70 and validation 0.69 means it is too simple to capture the pattern: underfitting. The fix differs, so always compare both numbers."
+      },
+      {
+        "title": "Keep the test set for the end",
+        "body": "Every time you check the test score and change something, a little of the test set's information leaks into your decisions. Use cross-validation on the training part for all choices, and look at the test set once. For time series, use TimeSeriesSplit so the model never trains on the future."
+      }
+    ],
+    "takeaway": "A score only means something if the model never saw those rows. Split before you look, stratify for imbalanced classes, use cross-validation for decisions, and spend the test set once."
   }
 }

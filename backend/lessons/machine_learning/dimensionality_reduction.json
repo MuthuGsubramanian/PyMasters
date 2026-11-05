@@ -379,5 +379,146 @@
     "path_memberships": [
       "unsupervised_learning"
     ]
+  },
+  "under_the_hood": {
+    "summary": "PCA rotates centred data onto the directions of greatest variance and keeps the top few; t-SNE and UMAP instead build a neighbour graph and move points in 2-D until neighbours stay neighbours.",
+    "steps": [
+      {
+        "title": "PCA centres the data and measures co-variation",
+        "body": "PCA first subtracts each feature's mean. The covariance matrix then says how features vary together. Two strongly linked features might give [[2.0, 1.9], [1.9, 2.0]]: each has variance 2 and they move together with covariance 1.9.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                2.0,
+                1.9
+              ],
+              [
+                1.9,
+                2.0
+              ]
+            ],
+            "labels": [
+              "f1",
+              "f2"
+            ],
+            "caption": "Covariance matrix of two correlated features"
+          }
+        }
+      },
+      {
+        "title": "Eigenvectors are the new axes",
+        "body": "The eigenvectors of that matrix are the principal components. Here they are (0.71, 0.71), the diagonal along which the points stretch, with eigenvalue 3.9, and (-0.71, 0.71) with eigenvalue 0.1. PC1 therefore explains 3.9 / 4.0 = 97.5% of the variance. scikit-learn computes the same thing through an SVD of the centred data, which is more stable numerically.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "PC1",
+                "(0.71, 0.71)",
+                3.9,
+                "97.5%"
+              ],
+              [
+                "PC2",
+                "(-0.71, 0.71)",
+                0.1,
+                "2.5%"
+              ]
+            ],
+            "labels": [
+              "1st",
+              "2nd"
+            ],
+            "highlight": [
+              0
+            ],
+            "caption": "Component, direction, eigenvalue, explained variance"
+          }
+        }
+      },
+      {
+        "title": "Projection is a dot product",
+        "body": "To reduce to one dimension each centred point is dotted with PC1. The point (1, 1.2) becomes 0.71*1 + 0.71*1.2, about 1.56. Keeping k components means multiplying the data by a d x k matrix, and inverse_transform maps back with only the small part that was dropped lost."
+      },
+      {
+        "title": "t-SNE matches neighbour probabilities",
+        "body": "t-SNE turns high-dimensional distances into 'is j my neighbour?' probabilities with a Gaussian whose width is set per point by perplexity (default 30). It places points in 2-D, where similarities use a heavier-tailed Student-t curve, and moves them by gradient descent to minimise the KL divergence between the two sets of probabilities. Local groups survive; distances between far clusters mean little.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "Distances in d dimensions",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "Neighbour probabilities (perplexity)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "Random 2-D layout",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "Compare with Student-t similarities",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "Gradient step to reduce KL",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "Repeat ~1000 iterations",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "Inside t-SNE"
+          }
+        }
+      },
+      {
+        "title": "UMAP builds a fuzzy k-NN graph",
+        "body": "UMAP connects each point to its n_neighbors nearest points with weights that fade with distance, then lays the graph out in low dimensions: connected points attract, randomly sampled non-neighbours repel. It is usually faster than t-SNE and keeps more of the global arrangement, and unlike t-SNE in scikit-learn it can transform new points."
+      }
+    ],
+    "takeaway": "PCA is a linear rotation you can reuse on new data and invert; t-SNE and UMAP are non-linear layouts for looking at clusters. Read cluster membership from a t-SNE plot, never the sizes or gaps between clusters."
   }
 }

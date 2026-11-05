@@ -386,5 +386,142 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Structured output narrows what the model may produce, from 'any text' to 'valid JSON' to 'JSON matching this schema'; strict modes enforce it while generating by blocking tokens that would break the format, and Pydantic checks the result on your side.",
+    "steps": [
+      {
+        "title": "Free text is hard to parse",
+        "body": "'The sentiment is positive with 85% confidence' needs fragile string handling. Your code wants {'sentiment': 'positive', 'confidence': 0.85}. Asking politely for JSON usually works, but sometimes the model adds a sentence before it or a trailing comma."
+      },
+      {
+        "title": "JSON mode: valid syntax, any shape",
+        "body": "With JSON mode enabled, the output is guaranteed to parse as JSON, but not to have your keys or types: you might get {'mood': 'good'}. You still have to describe the shape in the prompt and validate it afterwards.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "JSON mode",
+              "code": "valid JSON guaranteed\nkeys and types not guaranteed"
+            },
+            "right": {
+              "label": "Schema-enforced output",
+              "code": "valid JSON matching your schema\nrequired keys and types enforced"
+            },
+            "caption": "Two levels of guarantee"
+          }
+        }
+      },
+      {
+        "title": "Schema enforcement masks tokens",
+        "body": "In strict structured-output modes, the provider converts your JSON Schema into a grammar. At each step, tokens that could not continue a valid document get probability zero before sampling. After '{\"sentiment\": \"', only tokens that can begin 'positive', 'negative' or 'neutral' remain possible if the schema uses that enum.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "'pos'",
+                "allowed"
+              ],
+              [
+                "'neg'",
+                "allowed"
+              ],
+              [
+                "'neu'",
+                "allowed"
+              ],
+              [
+                "'happy'",
+                "masked"
+              ],
+              [
+                "'}'",
+                "masked"
+              ]
+            ],
+            "labels": [
+              "token",
+              "token",
+              "token",
+              "token",
+              "token"
+            ],
+            "highlight": [
+              3,
+              4
+            ],
+            "caption": "Constrained decoding at one step"
+          }
+        }
+      },
+      {
+        "title": "Function calling fills a schema",
+        "body": "With tools or function calling, you give a function name and a JSON Schema for its arguments. The model returns the function name and an arguments object instead of prose, which your code can pass straight to the real function after checking it."
+      },
+      {
+        "title": "Pydantic validates and types the result",
+        "body": "Define class Review(BaseModel): sentiment: Literal['positive', 'negative', 'neutral']; confidence: float. Review.model_validate_json(text) returns a typed object or raises ValidationError listing what is wrong. Many apps send that error back to the model and retry once, which fixes most remaining failures.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "model output text",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "Review.model_validate_json(...)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "valid?",
+                "type": "decision"
+              },
+              {
+                "id": "n3",
+                "label": "if not: send error back, retry",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "typed Review object",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Validation on your side"
+          }
+        }
+      }
+    ],
+    "takeaway": "Ask for structure at the strongest level the API offers, and validate anyway. Schemas plus Pydantic turn model output into typed data your code can trust, or a clear error you can handle."
   }
 }

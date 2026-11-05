@@ -316,5 +316,131 @@
       },
       "correct": 0
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A PyTorch tensor is a view onto a block of memory, its storage, described by a shape, strides, a dtype and a device; many operations only change that description, while others copy data or launch work on the GPU.",
+    "steps": [
+      {
+        "title": "Storage plus a description",
+        "body": "t = torch.arange(6).reshape(2, 3) stores 0 to 5 in one contiguous block. Its shape is (2, 3) and its strides are (3, 1): step 3 elements for the next row, 1 for the next column. t[1, 2] is element 1*3 + 2 = 5 of the storage. The default for float tensors is float32, 4 bytes each.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0,
+                1,
+                2
+              ],
+              [
+                3,
+                4,
+                5
+              ]
+            ],
+            "labels": [
+              "row 0",
+              "row 1"
+            ],
+            "highlight": [
+              [
+                1,
+                2
+              ]
+            ],
+            "caption": "t[1, 2] -> storage index 1*3 + 2 = 5"
+          }
+        }
+      },
+      {
+        "title": "Views share memory",
+        "body": "t.T, t[:, 1] and t.view(3, 2) create new tensor objects over the same storage. Changing one changes the others. t.T has strides (1, 3), so its rows are not consecutive in memory: t.T.is_contiguous() is False."
+      },
+      {
+        "title": "view versus reshape",
+        "body": "view only works when the requested shape can be expressed with strides over the existing memory; t.T.view(6) raises an error because the transposed elements are not in order. reshape returns a view when it can and quietly copies when it must. .contiguous() makes an ordered copy explicitly.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "t.T.view(6)",
+              "code": "RuntimeError: view size is not\ncompatible with input tensor's size and stride"
+            },
+            "right": {
+              "label": "t.T.reshape(6)",
+              "code": "tensor([0, 3, 1, 4, 2, 5])\n(a copy in the new order)"
+            },
+            "caption": "Same request, different rules"
+          }
+        }
+      },
+      {
+        "title": "Devices: CPU and GPU memory",
+        "body": "x.to('cuda') copies the data into GPU memory and returns a new tensor there. Operations between tensors must happen on one device; adding a CPU tensor to a GPU tensor raises an error. GPU operations are queued and run asynchronously, so the Python line returns before the GPU finishes; .item() or printing waits for the result.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "tensor on CPU",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": ".to('cuda'): copy to GPU memory",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "ops launch GPU kernels (queued)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": ".cpu() / .item(): copy back, waits",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "Python value",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "A tensor's round trip to the GPU"
+          }
+        }
+      },
+      {
+        "title": "Sharing with NumPy",
+        "body": "torch.from_numpy(arr) and tensor.numpy() (for CPU tensors) share memory with the NumPy array, so no copy is made and a change on one side shows on the other. torch.tensor(arr) always copies. NumPy defaults to float64; converting to float32 halves memory and matches what most models expect."
+      }
+    ],
+    "takeaway": "A tensor is data plus metadata. Knowing which operations only change the metadata (views) and which copy or move data (reshape when needed, .to(), torch.tensor) explains most surprises with memory, speed and device errors."
+  }
 }

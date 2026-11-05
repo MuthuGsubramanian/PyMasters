@@ -359,5 +359,127 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Code assistants collect context from your editor or repository, send it to a language model, and either show the predicted code inline or, in agent mode, loop through reading files, editing them and running commands until the task is done.",
+    "steps": [
+      {
+        "title": "Inline completion: fill in the middle",
+        "body": "When you pause typing, an inline tool such as Copilot sends the code before the cursor, often the code after it, and snippets from related open files. The model predicts the missing middle and the editor shows it as grey ghost text; Tab accepts it. Latency matters, so these requests are kept small.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "prefix",
+                "def area(r):\\n    return"
+              ],
+              [
+                "suffix",
+                "\\n\\nprint(area(2))"
+              ],
+              [
+                "model fills",
+                " 3.14159 * r * r"
+              ]
+            ],
+            "labels": [
+              "sent",
+              "sent",
+              "returned"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "Fill-in-the-middle context for one suggestion"
+          }
+        }
+      },
+      {
+        "title": "Chat and edit modes gather more context",
+        "body": "Asking a question in an AI editor such as Cursor attaches the current file, your selection and, when the project is indexed, the chunks of other files whose embeddings best match the question. The answer is only as good as the context retrieved, so naming the relevant files helps."
+      },
+      {
+        "title": "Agent mode is a tool loop",
+        "body": "A terminal agent like Claude Code gives the model tools: read a file, search the repo, edit a file, run a shell command. It might read a failing test, grep for the function, edit it, run the tests, read the error, and edit again. Each tool result goes back into the conversation for the next decision.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "your task",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "model chooses a tool",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "read / search / edit / run",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "result back into context",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "tests pass?",
+                "type": "decision"
+              },
+              {
+                "id": "n5",
+                "label": "report the change",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "How an agent works through a task"
+          }
+        }
+      },
+      {
+        "title": "Context is limited, so tools search",
+        "body": "A whole repository rarely fits in the model's context window. Assistants therefore search, open only the relevant files, and summarise long outputs. Project instruction files (such as CLAUDE.md for Claude Code) are loaded at the start of each session so conventions do not have to be repeated."
+      },
+      {
+        "title": "You stay the reviewer",
+        "body": "The model predicts plausible code, which is not the same as correct code: it can call functions that do not exist or miss an edge case. Agents ask permission before running commands unless you allow them; read the diff, run the tests, and keep commits small so mistakes are easy to spot and undo."
+      }
+    ],
+    "takeaway": "Every assistant is 'context in, predicted code out'. Better context gives better code, and agents add a loop that can run and check their own work, but the review is still yours."
   }
 }

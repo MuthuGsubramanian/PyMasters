@@ -339,5 +339,97 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Each hidden layer re-describes its input as a new set of features built from the previous layer's features; stacking them lets a network compose simple patterns into complex ones, and every connection between layers is one trainable weight.",
+    "steps": [
+      {
+        "title": "Counting the weights",
+        "body": "A dense layer from n inputs to m outputs has n x m weights plus m biases. For an MNIST network 784 -> 256 -> 128 -> 64 -> 10 that is 200,960 + 32,896 + 8,256 + 650 = 242,762 parameters. Most sit in the first layer, because 784 pixels connect to every one of 256 neurons.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "784 -> 256",
+                200960
+              ],
+              [
+                "256 -> 128",
+                32896
+              ],
+              [
+                "128 -> 64",
+                8256
+              ],
+              [
+                "64 -> 10",
+                650
+              ]
+            ],
+            "labels": [
+              "layer 1",
+              "layer 2",
+              "layer 3",
+              "layer 4"
+            ],
+            "highlight": [
+              0
+            ],
+            "caption": "Weights + biases per layer, total 242,762"
+          }
+        }
+      },
+      {
+        "title": "One hidden layer solves XOR",
+        "body": "No single line separates XOR: (0,1) and (1,0) give 1, (0,0) and (1,1) give 0. Two hidden ReLU units fix it: h1 = relu(x1 + x2), h2 = relu(x1 + x2 - 1), output = h1 - 2 h2. For (1,1): h1 = 2, h2 = 1, output 0; for (1,0): h1 = 1, h2 = 0, output 1. The hidden layer created features that make the problem linear.",
+        "visual": {
+          "type": "NeuralNetworkVisualizer",
+          "props": {
+            "layers": [
+              2,
+              2,
+              1
+            ],
+            "labels": {
+              "input": [
+                "x1",
+                "x2"
+              ],
+              "output": [
+                "XOR"
+              ]
+            },
+            "caption": "2 inputs -> 2 hidden ReLU units -> 1 output"
+          }
+        }
+      },
+      {
+        "title": "Depth builds a hierarchy",
+        "body": "In image networks, first-layer units typically respond to edges, the next combine edges into corners and textures, later ones into parts and objects. Each layer only has to learn a modest step on top of the previous representation, which is often more parameter-efficient than one very wide layer.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              "pixels",
+              "edges",
+              "textures, corners",
+              "parts",
+              "object classes"
+            ],
+            "caption": "What successive layers tend to represent"
+          }
+        }
+      },
+      {
+        "title": "Width versus depth",
+        "body": "In theory one wide enough hidden layer can approximate any continuous function (the universal approximation theorem), but it may need an impractical number of neurons. Deeper, narrower networks usually reach the same accuracy with fewer parameters, as long as they can still be trained."
+      },
+      {
+        "title": "Depth needs help to train",
+        "body": "Gradients pass back through every layer, multiplied by each layer's weights and activation slopes, so in deep plain networks they can shrink or explode. ReLU activations, careful initialisation (He or Xavier), normalisation layers and residual connections are what make dozens of layers trainable."
+      }
+    ],
+    "takeaway": "Layers are feature builders: each turns the previous representation into a more useful one. Count parameters to know your model's size, add depth for compositional problems, and use the standard tricks that keep deep gradients healthy."
+  }
 }

@@ -448,5 +448,138 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "In a DCGAN the generator grows a 1 x 1 noise vector into a 32 x 32 image with transposed convolutions that double the height and width at each layer, while the discriminator mirrors it with strided convolutions that halve them down to one real-or-fake score.",
+    "steps": [
+      {
+        "title": "Transposed convolutions upsample",
+        "body": "Output size = (input - 1) x stride - 2 x padding + kernel. The first layer, kernel 4, stride 1, padding 0, turns 1 x 1 into 4 x 4. Each later layer, kernel 4, stride 2, padding 1, gives (4 - 1) x 2 - 2 + 4 = 8, then 16, then 32. Each input value spreads its weighted kernel over an output region and overlaps add up.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "z",
+                "100 x 1 x 1"
+              ],
+              [
+                "layer 1",
+                "256 x 4 x 4"
+              ],
+              [
+                "layer 2",
+                "128 x 8 x 8"
+              ],
+              [
+                "layer 3",
+                "64 x 16 x 16"
+              ],
+              [
+                "layer 4 + Tanh",
+                "1 x 32 x 32"
+              ]
+            ],
+            "labels": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4"
+            ],
+            "caption": "DCGenerator shapes: channels shrink as the image grows"
+          }
+        }
+      },
+      {
+        "title": "The discriminator runs it backwards",
+        "body": "Conv2d with kernel 4, stride 2, padding 1 halves the size: 32 to 16 to 8 to 4, while channels grow 64 to 128 to 256. A final 4 x 4 convolution with no padding reduces 4 x 4 to 1 x 1, and a sigmoid gives the probability that the image is real."
+      },
+      {
+        "title": "Architecture rules that stabilise training",
+        "body": "The DCGAN recipe: no pooling, only strided and transposed convolutions; batch norm in both networks except the generator's output and the discriminator's input; ReLU in the generator, LeakyReLU(0.2) in the discriminator so negative inputs still pass gradient; Tanh output so pixels lie in [-1, 1], matching real images normalised to that range.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Generator",
+              "code": "ConvTranspose2d, stride 2\nBatchNorm + ReLU\nTanh on the output"
+            },
+            "right": {
+              "label": "Discriminator",
+              "code": "Conv2d, stride 2\nBatchNorm + LeakyReLU(0.2)\nSigmoid on the output"
+            },
+            "caption": "Mirror-image networks"
+          }
+        }
+      },
+      {
+        "title": "Initialisation and optimizer settings",
+        "body": "All conv and batch-norm weights start from a normal distribution with mean 0 and std 0.02, as in the DCGAN paper. Adam uses lr = 0.0002 and beta1 = 0.5 instead of the default 0.9: less momentum keeps the two players from overshooting each other."
+      },
+      {
+        "title": "Mode collapse and how to spot it",
+        "body": "Sometimes the generator finds a few outputs that fool the discriminator and produces only those, for example the same digit for every z. Watch a fixed batch of noise vectors over training: if all samples start to look alike, the generator has collapsed. Remedies include lowering the learning rate, adding noise to the discriminator's inputs, or using other GAN losses.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "fixed z batch",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "generate every N steps",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "samples varied?",
+                "type": "decision"
+              },
+              {
+                "id": "n3",
+                "label": "if alike: mode collapse",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "adjust lr / add noise / change loss",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Monitoring for collapse"
+          }
+        }
+      }
+    ],
+    "takeaway": "DCGAN is the GAN game played with convolutions: transposed convs build images up, strided convs judge them, and a handful of empirical rules on normalisation, activations, initialisation and Adam settings keep the game stable."
   }
 }

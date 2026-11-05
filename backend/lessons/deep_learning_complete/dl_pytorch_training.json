@@ -543,5 +543,125 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A Dataset says how to fetch one sample, a DataLoader shuffles the indices each epoch, fetches samples, and stacks them into batch tensors, and the training loop runs one optimizer step per batch, then measures validation loss and accuracy in eval mode.",
+    "steps": [
+      {
+        "title": "Dataset: length and one item",
+        "body": "SyntheticDataset implements __len__ (1,000) and __getitem__(idx), which returns (X[idx], y[idx]): 10 features and a label that is 1 when 2 x0 + x1 - 1 > 0. That is all a Dataset needs; it can just as well read files from disk inside __getitem__."
+      },
+      {
+        "title": "random_split and batching",
+        "body": "random_split(dataset, [800, 200]) shuffles the indices once and gives two Subsets. DataLoader(train_set, batch_size=32, shuffle=True) draws a new random order every epoch, fetches 32 items, and its collate function stacks them into tensors of shape (32, 10) and (32,). 800 / 32 = 25 batches per epoch; validation has 7, the last holding 8 samples.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "train",
+                800,
+                25
+              ],
+              [
+                "validation",
+                200,
+                7
+              ]
+            ],
+            "labels": [
+              "subset",
+              "subset"
+            ],
+            "caption": "Samples and batches per epoch with batch_size 32"
+          }
+        }
+      },
+      {
+        "title": "The inner loop",
+        "body": "For each batch: pred = model(X_batch) gives (32, 2) logits; CrossEntropyLoss compares them with the labels; zero_grad, backward and step update all weights. train_loss accumulates loss.item(), which copies the number out of the graph so memory is not held across batches.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "for X_batch, y_batch in train_loader",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "pred = model(X_batch)  (32, 2)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "loss = criterion(pred, y_batch)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "zero_grad, backward, step",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "train_loss += loss.item()",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One epoch of training"
+          }
+        }
+      },
+      {
+        "title": "Dropout behaves differently in each mode",
+        "body": "In model.train() mode, Dropout(0.2) zeroes each hidden value with probability 0.2 and multiplies the survivors by 1 / 0.8 = 1.25, so the expected sum stays the same. model.eval() turns dropout into a no-op, so validation uses the full network.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "model.train()",
+              "code": "Dropout active: ~20% zeroed\nsurvivors scaled x1.25"
+            },
+            "right": {
+              "label": "model.eval()",
+              "code": "Dropout off\nall units used as-is"
+            },
+            "caption": "Why switching modes matters"
+          }
+        }
+      },
+      {
+        "title": "Validation metrics",
+        "body": "Under torch.no_grad(), each validation batch adds its loss, and pred.argmax(1) == y_batch counts correct predictions. Dividing the summed loss by the number of batches (7) and correct by 200 gives average validation loss and accuracy for the epoch, which you log to watch for overfitting."
+      }
+    ],
+    "takeaway": "Dataset fetches, DataLoader batches and shuffles, the loop updates, eval mode measures. When training misbehaves, check each piece separately: one sample, one batch's shapes, one step's loss change, then the validation numbers."
   }
 }

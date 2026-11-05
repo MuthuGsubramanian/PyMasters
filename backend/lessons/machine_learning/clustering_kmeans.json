@@ -377,5 +377,114 @@
     "path_memberships": [
       "unsupervised_learning"
     ]
+  },
+  "under_the_hood": {
+    "summary": "K-Means alternates two moves until nothing changes: assign every point to its nearest centroid, then move each centroid to the mean of its points. Each round can only lower the total squared distance.",
+    "steps": [
+      {
+        "title": "Place K starting centroids",
+        "body": "scikit-learn's default init is k-means++: the first centroid is a random data point, and each next one is chosen with probability proportional to its squared distance from the nearest centroid already picked. Far-apart starts make a bad local minimum less likely than purely random starts."
+      },
+      {
+        "title": "Assignment step: nearest centroid wins",
+        "body": "Take points 1, 2, 3, 10, 11, 12 and deliberately poor starting centroids 1 and 2. Every point goes to the closer centroid: 1 joins centroid 1, while 2, 3, 10, 11 and 12 all join centroid 2. Distance is Euclidean, so features on large scales dominate unless you scale them first.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                2,
+                3,
+                10,
+                11,
+                12
+              ],
+              [
+                "c1",
+                "c2",
+                "c2",
+                "c2",
+                "c2",
+                "c2"
+              ]
+            ],
+            "labels": [
+              "point",
+              "round 1"
+            ],
+            "highlight": [
+              [
+                1,
+                1
+              ],
+              [
+                1,
+                2
+              ]
+            ],
+            "caption": "Round 1 assignments with centroids at 1 and 2"
+          }
+        }
+      },
+      {
+        "title": "Update step: centroid moves to the mean",
+        "body": "Each centroid jumps to the average of its points: c1 = 1 and c2 = (2+3+10+11+12)/5 = 7.6. Now 2 and 3 are closer to c1, so round 2 reassigns them, giving c1 = (1+2+3)/3 = 2 and c2 = (10+11+12)/3 = 11.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "c1=1",
+                "c2=2"
+              ],
+              [
+                "c1=1",
+                "c2=7.6"
+              ],
+              [
+                "c1=2",
+                "c2=11"
+              ],
+              [
+                "c1=2",
+                "c2=11"
+              ]
+            ],
+            "labels": [
+              "start",
+              "round 1",
+              "round 2",
+              "round 3"
+            ],
+            "highlight": [
+              3
+            ],
+            "caption": "Centroids stop moving after round 2: converged"
+          }
+        }
+      },
+      {
+        "title": "Stop when assignments stop changing",
+        "body": "Round 3 produces the same assignments, so the centroids stay put and the algorithm stops (or max_iter is reached). Inertia, the sum of squared distances to the own centroid, is now (1+0+1) + (1+0+1) = 4. Both steps can only lower inertia, which is why the loop always ends, though possibly in a local minimum, so n_init restarts keep the best run."
+      },
+      {
+        "title": "Choosing K: elbow and silhouette",
+        "body": "Inertia always falls as K grows, so the elbow method plots it and looks for the bend where extra clusters stop helping much. The silhouette of one point is (b - a) / max(a, b), with a its mean distance to its own cluster and b to the nearest other cluster: a = 1 and b = 9 gives 0.89, a well-placed point. Average it over all points for each K.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              "K=1 inertia high",
+              "K=2 big drop",
+              "K=3 small drop",
+              "elbow at K=2"
+            ],
+            "caption": "The elbow is where the drop flattens"
+          }
+        }
+      }
+    ],
+    "takeaway": "K-Means is just 'assign to nearest, move to mean, repeat'. That explains its limits: it needs K up front, it likes round clusters of similar size, it depends on feature scale, and it can stall in a local minimum."
   }
 }
