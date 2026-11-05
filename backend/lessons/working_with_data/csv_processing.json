@@ -168,5 +168,126 @@
     "category": "data",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "The csv module reads text one character at a time through a small state machine that knows when a comma is a separator and when it is inside quotes, then hands you each record as a list or dict.",
+    "steps": [
+      {
+        "title": "Why split(',') breaks",
+        "body": "A person named Bob, Jr. is stored in the file as \"Bob, Jr.\",Hardware,80, with quotes around the name. split(',') does not know about quotes, so it returns 4 pieces and every column after the name shifts by one. The comma inside the quotes is data, not a separator.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "line.split(',')",
+              "code": "['\"Bob', ' Jr.\"', 'Hardware', '80']\n# 4 fields, wrong"
+            },
+            "right": {
+              "label": "csv.reader",
+              "code": "['Bob, Jr.', 'Hardware', '80']\n# 3 fields, right"
+            },
+            "title": "Same line, two parsers"
+          }
+        }
+      },
+      {
+        "title": "A state machine reads each character",
+        "body": "The C parser in the _csv module keeps a state: at the start of a field, inside an unquoted field, inside a quoted field, or just after a quote. A comma ends the field only in the unquoted states. Inside quotes, commas and even newlines are kept as part of the field.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "start",
+                "label": "start of field",
+                "type": "start"
+              },
+              {
+                "id": "unq",
+                "label": "in unquoted field"
+              },
+              {
+                "id": "q",
+                "label": "in quoted field"
+              },
+              {
+                "id": "qq",
+                "label": "quote seen inside quotes",
+                "type": "decision"
+              },
+              {
+                "id": "end",
+                "label": "field done",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "start",
+                "to": "unq",
+                "label": "other char"
+              },
+              {
+                "from": "start",
+                "to": "q",
+                "label": "\""
+              },
+              {
+                "from": "q",
+                "to": "qq",
+                "label": "\""
+              },
+              {
+                "from": "qq",
+                "to": "q",
+                "label": "\" again = literal quote"
+              },
+              {
+                "from": "qq",
+                "to": "end",
+                "label": ","
+              },
+              {
+                "from": "unq",
+                "to": "end",
+                "label": ","
+              }
+            ],
+            "executionPath": [
+              "start",
+              "q",
+              "qq",
+              "end"
+            ],
+            "title": "How one quoted field is read"
+          }
+        }
+      },
+      {
+        "title": "Doubled quotes are escaped quotes",
+        "body": "Inside a quoted field, \"\" means one literal \" character. So \"She said \"\"hi\"\"\",x,1 is read as the three fields She said \"hi\", x and 1. The writer does the reverse, doubling quotes and adding outer quotes only when a field needs them (QUOTE_MINIMAL is the default)."
+      },
+      {
+        "title": "Why newline='' matters",
+        "body": "Open CSV files with newline='' so Python's text layer does not translate line endings. The csv module then sees the raw \\r\\n and \\n itself, can keep newlines inside quoted fields, and the writer's default \\r\\n line ending is not turned into \\r\\r\\n on Windows."
+      },
+      {
+        "title": "DictReader zips the header onto every row",
+        "body": "DictReader reads the first row as fieldnames, for example ['name', 'dept', 'sales']. For every later row it builds a dict by pairing those names with the row's values. Every value is still a string: '80', not 80, so convert with int() yourself.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "name": "Bob, Jr.",
+              "dept": "Hardware",
+              "sales": "80"
+            },
+            "title": "One DictReader row"
+          }
+        }
+      }
+    ],
+    "takeaway": "CSV is a format with quoting rules, not text with commas. Let the csv module's parser handle quotes and newlines, open the file with newline='', and convert types after reading."
+  }
 }

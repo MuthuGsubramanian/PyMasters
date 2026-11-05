@@ -149,5 +149,89 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "uv resolves a whole dependency graph into a lockfile and installs from a global cache by linking files into each venv, Ruff parses each file once and runs all lint rules over that syntax tree in Rust, and ty type-checks with incremental, cached analysis.",
+    "steps": [
+      {
+        "title": "uv add updates two files",
+        "body": "`uv add requests` writes the requirement into `pyproject.toml`, runs the resolver over every package and version constraint in the project, and records the exact chosen versions, with hashes, in `uv.lock`. The lockfile is universal: it covers the platforms and Python versions the project supports.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "uv add requests",
+                "detail": "edit pyproject.toml"
+              },
+              {
+                "label": "resolve",
+                "detail": "pick compatible versions"
+              },
+              {
+                "label": "uv.lock",
+                "detail": "exact versions + hashes"
+              },
+              {
+                "label": "sync",
+                "detail": ".venv matches the lock"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "A global cache feeds every venv",
+        "body": "uv keeps downloaded and unpacked wheels in one cache directory. Installing into a project's `.venv` links or copies files from that cache (hard links or copy-on-write clones where the file system supports them), so the second project that needs the same package installs almost instantly and uses little extra disk."
+      },
+      {
+        "title": "uv run syncs before running",
+        "body": "`uv run python app.py` checks that `.venv` matches `uv.lock`, installs or removes whatever differs, then runs the command inside that environment. For a single script, the inline `# /// script` block (PEP 723) lists dependencies, and uv builds a cached environment just for that script.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "# /// script\n# requires-python = \">=3.12\"\n# dependencies = [\"httpx\", \"rich\"]\n# ///\nimport httpx",
+            "highlightSequence": [
+              1,
+              3,
+              5
+            ],
+            "stepDescriptions": [
+              {
+                "description": "uv reads this TOML block from the comment."
+              },
+              {
+                "description": "Resolves and caches an environment with these packages."
+              },
+              {
+                "description": "The script then runs inside that environment."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Ruff: one parse, many rules",
+        "body": "`ruff check .` parses each file once into a syntax tree and token stream, then runs every enabled rule (pyflakes, pycodestyle, isort, bugbear and many more) over that same tree, in parallel across files, caching results for unchanged files. `ruff format` uses the same parser to reprint the code in a consistent style.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Older toolchain",
+              "code": "flake8 parses the file\nisort parses it again\nblack parses it again"
+            },
+            "right": {
+              "label": "Ruff",
+              "code": "parse once\nrun all lint rules on one tree\nformat from the same parser"
+            }
+          }
+        }
+      },
+      {
+        "title": "ty: a type checker built for speed",
+        "body": "ty, also from Astral, reads your annotations and infers types without running the code, like mypy. It is designed around incremental computation: results are cached per file and function, so after an edit only the affected parts are rechecked."
+      }
+    ],
+    "takeaway": "The speed of the new tools comes from design, not only from Rust: lock once and link from a cache (uv), parse once and run every rule (Ruff), recheck only what changed (ty)."
+  }
 }

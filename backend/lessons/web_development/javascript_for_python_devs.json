@@ -396,5 +396,85 @@
       "web_development"
     ]
   },
-  "uth_example": "from functools import reduce\n\nnumbers = [1, 2, 3, 4, 5]\ndoubled = list(map(lambda n: n * 2, numbers))         # numbers.map(n => n * 2)\nevens = [n for n in numbers if n % 2 == 0]            # numbers.filter(n => n % 2 === 0)\ntotal = reduce(lambda acc, n: acc + n, numbers, 0)    # numbers.reduce((a, n) => a + n, 0)\n\nstudent = {\"name\": \"Alice\", \"grades\": [90, 85, 95]}   # const student = {name: 'Alice', ...}\nname = student[\"name\"]                                 # student.name\ngrades_copy = [*student[\"grades\"], 100]                # [...student.grades, 100]\n\nempties = {\"[]\": [], \"{}\": {}}                        # falsy in Python, TRUTHY in JS\nprint(\"Doubled:\", doubled, \"Evens:\", evens, \"Sum:\", total)\nprint(name, grades_copy, {k: bool(v) for k, v in empties.items()})\n"
+  "uth_example": "from functools import reduce\n\nnumbers = [1, 2, 3, 4, 5]\ndoubled = list(map(lambda n: n * 2, numbers))         # numbers.map(n => n * 2)\nevens = [n for n in numbers if n % 2 == 0]            # numbers.filter(n => n % 2 === 0)\ntotal = reduce(lambda acc, n: acc + n, numbers, 0)    # numbers.reduce((a, n) => a + n, 0)\n\nstudent = {\"name\": \"Alice\", \"grades\": [90, 85, 95]}   # const student = {name: 'Alice', ...}\nname = student[\"name\"]                                 # student.name\ngrades_copy = [*student[\"grades\"], 100]                # [...student.grades, 100]\n\nempties = {\"[]\": [], \"{}\": {}}                        # falsy in Python, TRUTHY in JS\nprint(\"Doubled:\", doubled, \"Evens:\", evens, \"Sum:\", total)\nprint(name, grades_copy, {k: bool(v) for k, v in empties.items()})\n",
+  "under_the_hood": {
+    "summary": "Browser JavaScript runs on a single thread with an event loop: your code runs to completion on the call stack, while timers, clicks and network replies queue callbacks that run only when the stack is empty.",
+    "steps": [
+      {
+        "title": "One thread, one call stack",
+        "body": "Like a single Python thread, JavaScript in a page executes one function at a time on a call stack. A long loop blocks everything: clicks, scrolling and repaints all wait until it finishes. That is why slow work in the browser is always written to wait asynchronously rather than block."
+      },
+      {
+        "title": "fetch returns a Promise immediately",
+        "body": "fetch('/api/items') starts the network request in the browser's own network code and immediately returns a Promise, a placeholder for the future response. Your code continues to the next line. When the reply arrives, the Promise is resolved and its .then callback, or the code after await, is queued to run.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "fetch('/api/items')",
+                "detail": "request handed to the browser"
+              },
+              {
+                "label": "returns Promise",
+                "detail": "pending"
+              },
+              {
+                "label": "stack empties",
+                "detail": "other code and events run"
+              },
+              {
+                "label": "response arrives",
+                "detail": "Promise resolves"
+              },
+              {
+                "label": "continuation queued",
+                "detail": "code after await runs"
+              }
+            ],
+            "title": "What happens around one fetch"
+          }
+        }
+      },
+      {
+        "title": "The event loop orders the work",
+        "body": "When the stack is empty, the event loop first runs all queued microtasks (promise continuations), then takes the next task, such as a timer or a click handler. So console.log('A'); setTimeout(() => console.log('B'), 0); Promise.resolve().then(() => console.log('C')); console.log('D') prints A, D, C, B.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "A",
+              "D",
+              "C   <- promise microtask runs first",
+              "B   <- timer task runs after"
+            ],
+            "title": "Output order"
+          }
+        }
+      },
+      {
+        "title": "await looks like Python, works like Python",
+        "body": "async function load() { const r = await fetch(url); const data = await r.json(); } reads like Python's async def. At each await the function pauses and gives the thread back to the event loop, just as an asyncio coroutine yields to its loop. The difference is that the browser always has an event loop running; you never start one yourself."
+      },
+      {
+        "title": "Equality and scope surprises",
+        "body": "== converts types before comparing, so 0 == '' and '1' == 1 are both true; === compares without conversion, like Python's ==, so always use it. let and const are block-scoped like you would expect, while old var is function-scoped and visible outside the if block where it was declared.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Python",
+              "code": "0 == ''      # False\n'1' == 1     # False\nx inside if: visible after (function scope)"
+            },
+            "right": {
+              "label": "JavaScript",
+              "code": "0 == ''      // true  (coercion)\n0 === ''     // false\nlet x inside if: not visible after"
+            },
+            "title": "Where Python habits mislead"
+          }
+        }
+      }
+    ],
+    "takeaway": "JavaScript's model is one thread plus an event loop. Never block it, use await for anything slow, and use === so comparisons mean what you expect."
+  }
 }

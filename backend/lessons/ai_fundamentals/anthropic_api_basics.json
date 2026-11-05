@@ -365,5 +365,117 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A Claude API call sends a model name, a max_tokens limit, an optional system prompt and the list of messages; the model returns a list of content blocks, text or tool_use, plus a stop_reason and token usage.",
+    "steps": [
+      {
+        "title": "The request shape",
+        "body": "client.messages.create(model=..., max_tokens=1024, system='You are a Python tutor.', messages=[{'role': 'user', 'content': 'Explain list comprehensions'}]). max_tokens is required and caps the reply length. The system prompt is its own parameter rather than a message, and messages alternate between user and assistant."
+      },
+      {
+        "title": "The response is a list of blocks",
+        "body": "The reply's content is a list. A plain answer holds one text block; a tool request holds a tool_use block. stop_reason says why generation ended: 'end_turn' when finished, 'max_tokens' when cut off, 'tool_use' when Claude wants a tool. usage reports input_tokens and output_tokens.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "content[0]",
+                "type: text",
+                "List comprehensions build a list..."
+              ],
+              [
+                "stop_reason",
+                "end_turn",
+                ""
+              ],
+              [
+                "usage",
+                "input_tokens: 24",
+                "output_tokens: 180"
+              ]
+            ],
+            "labels": [
+              "field",
+              "field",
+              "field"
+            ],
+            "caption": "Main parts of a Messages API response"
+          }
+        }
+      },
+      {
+        "title": "No memory between calls",
+        "body": "Each call is independent. For a second question in the same chat, you send the earlier user message, Claude's earlier reply as an assistant message, and the new user message together. The conversation lives in your messages list, not on the server."
+      },
+      {
+        "title": "Tool use is a two-call round trip",
+        "body": "Pass tools=[{'name': 'get_weather', 'description': ..., 'input_schema': {JSON Schema}}]. If Claude needs it, the reply has stop_reason 'tool_use' and a block with an id, the name and an input like {'city': 'Chennai'}. You run the function and send a user message containing a tool_result block with that tool_use_id. Claude then writes the final answer.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "user question + tools",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "Claude: tool_use {id, name, input}",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "your code runs get_weather",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "send tool_result with tool_use_id",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "Claude: final text answer",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One tool round trip"
+          }
+        }
+      },
+      {
+        "title": "Streaming sends events",
+        "body": "With streaming, the HTTP response arrives as server-sent events: message_start, then content_block_start, many content_block_delta events carrying text pieces, content_block_stop, message_delta with the stop_reason and usage, and message_stop. The SDK's text_stream helper yields just the text pieces so you can print them as they come."
+      }
+    ],
+    "takeaway": "The Messages API is stateless and block-based: you own the conversation list, read the content blocks and stop_reason, and answer every tool_use with a matching tool_result."
   }
 }

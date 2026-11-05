@@ -452,5 +452,110 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A Python stack is just a list used from one end: append writes to the next free slot and pop removes the last one, so neither has to shift anything.",
+    "steps": [
+      {
+        "title": "The top is the end of the list",
+        "body": "When you use a list as a stack, the top is the last index. push(x) is items.append(x) and pop() is items.pop(), both working on the slot at len(items) - 1. No other element moves, so both are O(1) (append is amortised O(1) because the array occasionally grows).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [],
+            "title": "push('a'), push('b'), push('c'), then pop()",
+            "operations": [
+              {
+                "action": "append",
+                "value": "a"
+              },
+              {
+                "action": "append",
+                "value": "b"
+              },
+              {
+                "action": "append",
+                "value": "c"
+              },
+              {
+                "action": "pop"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Last in, first out",
+        "body": "Because only the top is reachable, items come out in the reverse order they went in. Push 'a', 'b', 'c' and three pops return 'c', 'b', 'a'. This reversal is exactly what you need when the most recent thing must be finished first."
+      },
+      {
+        "title": "Matching brackets with a stack",
+        "body": "To check '([]{})', push every opening bracket. On a closing bracket, pop and check that it matches. If a pop finds the wrong bracket, or the stack is empty, or anything is left at the end, the string is unbalanced.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "char",
+                "values": [
+                  "(",
+                  "[",
+                  "]",
+                  "{",
+                  "}",
+                  ")"
+                ]
+              },
+              {
+                "variable": "stack",
+                "values": [
+                  "['(']",
+                  "['(', '[']",
+                  "['(']",
+                  "['(', '{']",
+                  "['(']",
+                  "[]"
+                ]
+              }
+            ],
+            "title": "Scanning '([]{})'"
+          }
+        }
+      },
+      {
+        "title": "Your program already runs on a stack",
+        "body": "Every function call pushes a frame (its local variables and where to return) onto the call stack, and every return pops it. If main calls load, and load calls parse, parse's frame is on top and must finish before load can continue.",
+        "visual": {
+          "type": "MemoryStack",
+          "props": {
+            "frames": [
+              {
+                "name": "parse()",
+                "variables": {
+                  "line": "'a,b'"
+                }
+              },
+              {
+                "name": "load()",
+                "variables": {
+                  "path": "'data.csv'"
+                }
+              },
+              {
+                "name": "main()",
+                "variables": {}
+              }
+            ],
+            "title": "The call stack is a LIFO stack"
+          }
+        }
+      },
+      {
+        "title": "Popping an empty stack",
+        "body": "list.pop() on an empty list raises IndexError: pop from empty list. A Stack class usually checks is_empty() first, or catches that error, so the program fails with a clear message instead."
+      }
+    ],
+    "takeaway": "A stack is the shape of 'finish the newest thing first': undo history, bracket matching and function calls all use it, and a Python list gives it to you in O(1) per operation."
   }
 }

@@ -382,5 +382,132 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Most string algorithms reduce to counting characters in a dict, walking two pointers toward each other, or sliding a pattern along the text and comparing character by character.",
+    "steps": [
+      {
+        "title": "Anagrams: count, then compare counts",
+        "body": "Counter('listen') builds a dict of character counts: {'l': 1, 'i': 1, 's': 1, 't': 1, 'e': 1, 'n': 1}. 'silent' produces the same dict, so Counter equality says True. Counting is one O(n) pass, cheaper than sorting both strings in O(n log n).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "l": 1,
+              "i": 1,
+              "s": 1,
+              "t": 1,
+              "e": 1,
+              "n": 1
+            },
+            "title": "Counter('listen') == Counter('silent')"
+          }
+        }
+      },
+      {
+        "title": "Palindromes: two pointers meet in the middle",
+        "body": "Put i at index 0 and j at the last index. While i < j, compare s[i] with s[j]; any mismatch means not a palindrome, otherwise move both inward. 'racecar' needs only 3 comparisons for 7 characters.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "r",
+              "a",
+              "c",
+              "e",
+              "c",
+              "a",
+              "r"
+            ],
+            "title": "Compare r/r, a/a, c/c; the middle e needs no partner",
+            "operations": [
+              {
+                "action": "highlight",
+                "index": 0
+              },
+              {
+                "action": "highlight",
+                "index": 6
+              },
+              {
+                "action": "highlight",
+                "index": 1
+              },
+              {
+                "action": "highlight",
+                "index": 5
+              },
+              {
+                "action": "highlight",
+                "index": 2
+              },
+              {
+                "action": "highlight",
+                "index": 4
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Naive pattern matching slides and compares",
+        "body": "To find 'abc' in 'abcabcabc', line the pattern up at position 0 and compare up to 3 characters, then shift by one and repeat. Matches at 0, 3 and 6. With text length n and pattern length m this is O(n x m) in the worst case, because each shift may re-compare characters already seen.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "position",
+                "values": [
+                  0,
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ]
+              },
+              {
+                "variable": "text[pos:pos+3]",
+                "values": [
+                  "abc",
+                  "bca",
+                  "cab",
+                  "abc",
+                  "bca",
+                  "cab",
+                  "abc"
+                ]
+              },
+              {
+                "variable": "match",
+                "values": [
+                  "yes",
+                  "no",
+                  "no",
+                  "yes",
+                  "no",
+                  "no",
+                  "yes"
+                ]
+              }
+            ],
+            "title": "Sliding 'abc' along 'abcabcabc'"
+          }
+        }
+      },
+      {
+        "title": "Smarter matchers skip ahead",
+        "body": "Algorithms like KMP precompute, from the pattern alone, how far it can safely shift after a mismatch, so no text character is compared twice: O(n + m). Python's str.find and the in operator use their own optimised search in C, so prefer them over a hand-written loop."
+      },
+      {
+        "title": "Compression is run-length counting",
+        "body": "'aaabbc' becomes 'a3b2c1' by walking once and counting how many times the current character repeats. Collect the pieces in a list and ''.join them at the end; strings are immutable, so += would rebuild the result each time."
+      }
+    ],
+    "takeaway": "Before writing nested loops over a string, ask whether a Counter, two pointers or a built-in search already does the job in one pass."
   }
 }

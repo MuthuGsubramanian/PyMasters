@@ -438,5 +438,190 @@
     ],
     "category": "automation",
     "path_memberships": []
+  },
+  "under_the_hood": {
+    "summary": "The quiz is a loop over a shuffled list of question dicts; each turn blocks on input() for a line of text, normalises it, compares it with the stored answer and updates the score and lives state.",
+    "steps": [
+      {
+        "title": "Questions are data, not code",
+        "body": "Each question is a dict like {'q': 'Which keyword defines a function?', 'options': ['A) func', 'B) def', 'C) fn'], 'answer': 'B'}, and the quiz is a list of them. Adding a question means adding a dict; the game loop never changes.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "dict",
+            "data": {
+              "q": "Which keyword defines a function?",
+              "options": "[A) func, B) def, C) fn]",
+              "answer": "B"
+            },
+            "title": "One question record"
+          }
+        }
+      },
+      {
+        "title": "shuffle reorders the list in place",
+        "body": "random.shuffle(questions) runs the Fisher-Yates algorithm: for i from the last index down to 1, pick a random j between 0 and i and swap items i and j. Every ordering is equally likely, it takes O(n) time, and it returns None because it changes the list itself.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "Q1",
+              "Q2",
+              "Q3",
+              "Q4"
+            ],
+            "title": "Fisher-Yates: swap from the end backwards",
+            "operations": [
+              {
+                "action": "highlight",
+                "index": 3
+              },
+              {
+                "action": "highlight",
+                "index": 1
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "input() waits for a whole line",
+        "body": "input('Your answer: ') prints the prompt, then blocks until the player presses Enter. It returns the typed line as a str without the trailing newline, so ' b ' arrives exactly like that. answer.strip().upper() turns it into 'B' before comparing."
+      },
+      {
+        "title": "Each turn updates the game state",
+        "body": "Correct answers add to score; wrong ones subtract a life. The loop checks lives after every turn and breaks out early at 0, so the game state is just a few variables changing as the loop runs.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "turn",
+                "values": [
+                  1,
+                  2,
+                  3,
+                  4
+                ]
+              },
+              {
+                "variable": "player typed",
+                "values": [
+                  "b",
+                  "A",
+                  " c ",
+                  "b"
+                ]
+              },
+              {
+                "variable": "score",
+                "values": [
+                  1,
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "variable": "lives",
+                "values": [
+                  3,
+                  2,
+                  2,
+                  2
+                ]
+              }
+            ],
+            "title": "State across four turns"
+          }
+        }
+      },
+      {
+        "title": "The final percentage",
+        "body": "At the end, percent = score / questions_asked * 100, formatted with f'{percent:.0f}%'. Dividing by the number asked rather than the list length keeps the result honest when the player ran out of lives early.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "ask",
+                "label": "ask next question"
+              },
+              {
+                "id": "check",
+                "label": "answer correct?",
+                "type": "decision"
+              },
+              {
+                "id": "up",
+                "label": "score += 1"
+              },
+              {
+                "id": "down",
+                "label": "lives -= 1"
+              },
+              {
+                "id": "alive",
+                "label": "lives > 0 and questions left?",
+                "type": "decision"
+              },
+              {
+                "id": "end",
+                "label": "show score and %",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "ask",
+                "to": "check"
+              },
+              {
+                "from": "check",
+                "to": "up",
+                "label": "yes"
+              },
+              {
+                "from": "check",
+                "to": "down",
+                "label": "no"
+              },
+              {
+                "from": "up",
+                "to": "alive"
+              },
+              {
+                "from": "down",
+                "to": "alive"
+              },
+              {
+                "from": "alive",
+                "to": "ask",
+                "label": "yes"
+              },
+              {
+                "from": "alive",
+                "to": "end",
+                "label": "no"
+              }
+            ],
+            "executionPath": [
+              "ask",
+              "check",
+              "down",
+              "alive",
+              "ask",
+              "check",
+              "up",
+              "alive",
+              "end"
+            ],
+            "title": "The game loop"
+          }
+        }
+      }
+    ],
+    "takeaway": "A terminal game is a loop around blocking input and a few state variables. Keep the questions as data, normalise what the player types, and the logic stays tiny."
   }
 }

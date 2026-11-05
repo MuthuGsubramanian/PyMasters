@@ -458,5 +458,84 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
+  },
+  "under_the_hood": {
+    "summary": "A Python list is a dynamic array of pointers: it keeps spare slots so append is usually instant, and grows by allocating a bigger array and copying the pointers.",
+    "steps": [
+      {
+        "title": "An array of references",
+        "body": "A list object holds a pointer to a separate array of object pointers, plus two numbers: `ob_size` (how many items) and `allocated` (how many slots exist). The items themselves live elsewhere; the list only stores addresses, which is why one list can hold an int, a str and another list.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "-> 'Delhi'",
+              "-> 'Agra'",
+              "-> 'Jaipur'",
+              "(spare)"
+            ],
+            "highlight": [
+              3
+            ],
+            "label": "ob_size = 3, allocated = 4",
+            "caption": "Spare slots make the next append cheap"
+          }
+        }
+      },
+      {
+        "title": "Indexing is arithmetic",
+        "body": "`trains[2]` computes the address of slot 2 directly from the array start, so it takes the same time for a list of 3 or 3 million items: O(1). A negative index such as -1 is turned into `len + index` first."
+      },
+      {
+        "title": "append uses spare capacity",
+        "body": "When `ob_size < allocated`, append writes the pointer into the next free slot and adds 1 to ob_size. When the array is full, CPython 3.11 allocates about 12.5% extra plus a little, so the capacities as you append one by one are 4, 8, 16, 24, 32, 40, 52, 64, 76. Most appends do no copying, which makes append O(1) on average.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "allocated (growing by append)",
+                "values": [
+                  "0",
+                  "4",
+                  "8",
+                  "16",
+                  "24",
+                  "32",
+                  "40",
+                  "52",
+                  "64",
+                  "76"
+                ],
+                "data_type": "int"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Inserting at the front shifts everything",
+        "body": "`insert(0, x)` and `pop(0)` must move every other pointer one slot, so they cost O(n). `append` and `pop()` at the end touch only one slot. If you need fast work at both ends, `collections.deque` is built for that.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "End of list: O(1)",
+              "code": "items.append(x)\nitems.pop()"
+            },
+            "right": {
+              "label": "Front of list: O(n)",
+              "code": "items.insert(0, x)\nitems.pop(0)\n# every pointer shifts"
+            }
+          }
+        }
+      },
+      {
+        "title": "Searching scans every slot",
+        "body": "`'Agra' in trains` and `trains.index('Agra')` compare item by item with `==` from slot 0 until they find a match. For long lists that are searched often, a set or dict is much faster."
+      }
+    ],
+    "takeaway": "Lists are fast at the end and at a known index, slow at the front and when searching. Choosing where you add and remove items is the biggest performance decision you make with a list."
   }
 }

@@ -417,5 +417,99 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "re.compile parses the pattern into a list of opcodes for a small backtracking engine written in C; matching runs those opcodes against the string, and compiled patterns are cached so repeated calls skip the parse.",
+    "steps": [
+      {
+        "title": "The pattern is parsed",
+        "body": "`re.compile(r'\\d{3}-\\d{4}')` first parses the text into a tree of pieces: a repeat of 'digit' exactly 3 times, a literal '-', a repeat of 'digit' 4 times. Syntax errors such as an unclosed '(' are raised here as `re.error`.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "pattern text",
+                "detail": "r'\\d{3}-\\d{4}'"
+              },
+              {
+                "label": "parse",
+                "detail": "tree of pieces"
+              },
+              {
+                "label": "compile",
+                "detail": "opcode list"
+              },
+              {
+                "label": "_sre engine",
+                "detail": "runs on strings"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Compiled to engine opcodes",
+        "body": "The tree is turned into a flat list of codes such as IN (character class), REPEAT, LITERAL and SUCCESS, which the C module `_sre` executes. A Pattern object wraps this code list plus the flags."
+      },
+      {
+        "title": "The engine tries positions in order",
+        "body": "`pattern.search('call 555-1234')` tries to match starting at index 0; if it fails it tries index 1, then 2, and so on until a position succeeds. `match()` only tries index 0, and `findall()` keeps going after each match to collect all non-overlapping ones.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "c",
+              "a",
+              "l",
+              "l",
+              " ",
+              "5",
+              "5",
+              "5",
+              "-",
+              "1",
+              "2",
+              "3",
+              "4"
+            ],
+            "highlight": [
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12
+            ],
+            "label": "search succeeds starting at index 5"
+          }
+        }
+      },
+      {
+        "title": "Classes and quantifiers",
+        "body": "`\\d` matches one character in the digit class, `\\w` a word character, `\\s` whitespace. Quantifiers say how many: `+` one or more, `*` zero or more, `?` optional, `{3}` exactly three. They are greedy, taking as many as possible and giving back characters only if the rest of the pattern fails.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Pattern piece",
+              "code": "\\d\n\\w\n\\s\n[aeiou]\n+  *  ?  {3}"
+            },
+            "right": {
+              "label": "Matches",
+              "code": "one digit 0-9\nletter, digit or _\nspace, tab, newline\none vowel\n1+, 0+, 0-1, exactly 3"
+            }
+          }
+        }
+      },
+      {
+        "title": "Module functions use a cache",
+        "body": "`re.search(p, s)` compiles `p` behind the scenes and keeps the result in a module-level cache (up to 512 entries in CPython 3.11), so calling it in a loop does not re-parse every time. Still, `re.compile` once and reuse it makes intent clear."
+      }
+    ],
+    "takeaway": "A regex is a tiny program: parsed, compiled to opcodes, then run by an engine that tries each starting position. Write r-strings so backslashes reach the regex parser intact."
   }
 }

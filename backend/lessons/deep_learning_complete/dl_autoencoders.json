@@ -466,5 +466,140 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "An autoencoder squeezes each input through a narrow middle layer and is trained to rebuild the original from that code; a VAE makes the code a probability distribution and samples from it, so new codes can be decoded into new data.",
+    "steps": [
+      {
+        "title": "Encoder, bottleneck, decoder",
+        "body": "For 28 x 28 digits, the encoder maps 784 pixel values down to a 32-number latent code, about 24 times smaller, and the decoder maps the code back to 784 values. Because the code is so small, the network cannot copy the input; it must keep only what matters most for rebuilding it.",
+        "visual": {
+          "type": "NeuralNetworkVisualizer",
+          "props": {
+            "layers": [
+              8,
+              4,
+              2,
+              4,
+              8
+            ],
+            "caption": "Shape of an autoencoder: wide -> narrow code -> wide (scaled down)"
+          }
+        }
+      },
+      {
+        "title": "Loss: how well it rebuilds",
+        "body": "Training compares the output with the input itself, with MSE or, for pixels in 0 to 1, binary cross-entropy. No labels are needed. Minimising this reconstruction loss teaches the encoder to place similar inputs at similar codes."
+      },
+      {
+        "title": "Anomaly detection from reconstruction error",
+        "body": "Trained only on normal data, the autoencoder rebuilds normal inputs well and unusual ones badly. Measure each input's reconstruction error, pick a threshold such as the 99th percentile of errors on normal validation data, and flag anything above it.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "normal transaction",
+                0.012
+              ],
+              [
+                "normal transaction",
+                0.018
+              ],
+              [
+                "unusual transaction",
+                0.21
+              ]
+            ],
+            "labels": [
+              "input 1",
+              "input 2",
+              "input 3"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "Reconstruction errors (illustrative); threshold 0.05 flags input 3"
+          }
+        }
+      },
+      {
+        "title": "VAE: encode a distribution, then sample",
+        "body": "A VAE's encoder outputs a mean mu and a log-variance for each latent dimension. It samples z = mu + sigma x epsilon with epsilon drawn from a standard normal: with mu = 0.5, sigma = 1 and epsilon = -0.4, z = 0.1. This reparameterisation trick keeps the sampling step differentiable, so gradients reach mu and sigma.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "x",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "encoder -> mu, log_var",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "sample eps ~ N(0, 1)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "z = mu + sigma * eps",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "decoder(z) -> x_hat",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "loss = reconstruction + KL",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "One VAE forward pass"
+          }
+        }
+      },
+      {
+        "title": "The KL term organises the latent space",
+        "body": "The VAE loss adds a KL divergence that pulls each code's distribution towards a standard normal: -1/2 x sum(1 + log_var - mu² - sigma²). For mu = 0.5 and sigma = 1 that dimension costs 0.125. Because codes are kept near N(0, 1), drawing a random z from N(0, 1) and decoding it produces a new, plausible sample."
+      }
+    ],
+    "takeaway": "An autoencoder learns compression by trying to rebuild its input; its error tells you how 'normal' an input is. A VAE adds sampling and a KL penalty so the code space is smooth enough to generate from."
   }
 }

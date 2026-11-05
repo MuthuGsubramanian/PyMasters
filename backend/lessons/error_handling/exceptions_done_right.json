@@ -170,5 +170,78 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "def parse_age(text, log):\n    try:\n        age = int(text)                  # the risky part\n    except ValueError:\n        log.append(f\"bad input {text!r}\")\n        age = None                       # expected failure, handled\n    else:\n        log.append(f\"parsed {age}\")      # only when no exception\n    finally:\n        log.append(\"done\")               # always runs\n    return age\n\nlog = []\nages = [parse_age(t, log) for t in [\"42\", \"forty\"]]\nprint(ages)\nprint(log)\n"
+  "uth_example": "def parse_age(text, log):\n    try:\n        age = int(text)                  # the risky part\n    except ValueError:\n        log.append(f\"bad input {text!r}\")\n        age = None                       # expected failure, handled\n    else:\n        log.append(f\"parsed {age}\")      # only when no exception\n    finally:\n        log.append(\"done\")               # always runs\n    return age\n\nlog = []\nages = [parse_age(t, log) for t in [\"42\", \"forty\"]]\nprint(ages)\nprint(log)\n",
+  "under_the_hood": {
+    "summary": "The compiler lays out try/except/else/finally as a protected range plus handlers in an exception table: except clauses are tested in order with an isinstance check, else runs only when the range finished cleanly, and finally is copied onto every exit path.",
+    "steps": [
+      {
+        "title": "Only the try range is protected",
+        "body": "In CPython 3.11 the compiler records which bytecode offsets belong to the `try` body and where its handler starts. Code in `else` and `finally` is outside that range, so an error raised in `else` is not caught by the same `except` clauses.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "table",
+            "data": [
+              "try body: offsets 4-22 -> handler at 28",
+              "handler: offsets 28-36 -> cleanup at 46"
+            ],
+            "label": "ExceptionTable (simplified from dis output)"
+          }
+        }
+      },
+      {
+        "title": "except clauses are tested top to bottom",
+        "body": "When an exception lands in the handler, CHECK_EXC_MATCH tests it against each clause in order. The first clause whose class matches (including subclasses) runs; the rest are skipped. So put specific classes such as FileNotFoundError before general ones such as OSError.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "FileNotFoundError raised",
+                "detail": "enter handler"
+              },
+              {
+                "label": "except FileNotFoundError",
+                "detail": "match -> run"
+              },
+              {
+                "label": "except OSError",
+                "detail": "skipped"
+              },
+              {
+                "label": "finally",
+                "detail": "runs"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "else is the 'no exception' path",
+        "body": "`else:` runs only if the try body finished without raising. Putting `log('read ok')` there keeps it out of the protected range, so a bug inside `log` is not mistaken for a file error and swallowed."
+      },
+      {
+        "title": "finally runs on every exit",
+        "body": "The compiler emits the finally code on the normal path and on the exception path, and runs it before a `return`, `break` or `continue` leaves the block. If finally itself executes `return`, it overrides any exception in flight, so avoid returning from finally.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Path",
+              "code": "try ok\ntry raises, caught\ntry raises, not caught\nreturn inside try"
+            },
+            "right": {
+              "label": "What runs",
+              "code": "try -> else -> finally\ntry -> except -> finally\ntry -> finally -> exception propagates\ntry -> finally -> return"
+            }
+          }
+        }
+      },
+      {
+        "title": "Why a bare except is a blindfold",
+        "body": "`except:` with no class matches BaseException, which includes KeyboardInterrupt and SystemExit, so Ctrl-C and clean shutdowns are swallowed. `except Exception` is the widest catch you normally want, and naming the exact types is better still. Also, the name in `except E as err` is deleted when the handler ends."
+      }
+    ],
+    "takeaway": "Each part of a try statement has one job: try for the risky line, except for failures you expect, else for the success path, finally for cleanup. The compiler wires them so only the try body is guarded."
+  }
 }

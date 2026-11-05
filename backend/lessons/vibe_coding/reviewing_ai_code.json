@@ -163,5 +163,142 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A senior review traces how data flows through the change, from where input enters to where it lands (a database, a shell, a file, the response), and checks intent, boundaries, error paths and dangerous sinks along that path instead of judging how the code looks.",
+    "steps": [
+      {
+        "title": "Accepting is approving",
+        "body": "Clicking accept is the same act as approving a pull request: you are now responsible for that code. The question is not 'does this look like working code?', which AI output is optimised to satisfy, but 'does it do exactly what was asked, and nothing dangerous?'"
+      },
+      {
+        "title": "Trace sources to sinks",
+        "body": "Start where data enters: a request parameter, a file, user input. Follow it through each line to where it is used. Sinks that need care are SQL queries, shell commands, file paths, HTML output and logs. Any path from an untrusted source to a sink without validation or escaping is a finding.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "src",
+                "label": "request.args['file']",
+                "type": "start"
+              },
+              {
+                "id": "val",
+                "label": "validated or sanitised?",
+                "type": "decision"
+              },
+              {
+                "id": "sink",
+                "label": "open(path) / SQL / shell"
+              },
+              {
+                "id": "ok",
+                "label": "safe use",
+                "type": "end"
+              },
+              {
+                "id": "bug",
+                "label": "finding: untrusted input reaches sink",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "src",
+                "to": "val"
+              },
+              {
+                "from": "val",
+                "to": "sink",
+                "label": "yes"
+              },
+              {
+                "from": "val",
+                "to": "bug",
+                "label": "no"
+              },
+              {
+                "from": "sink",
+                "to": "ok"
+              }
+            ],
+            "executionPath": [
+              "src",
+              "val",
+              "bug"
+            ],
+            "title": "Following one input"
+          }
+        }
+      },
+      {
+        "title": "Check intent against the request",
+        "body": "Compare the diff with what you asked for. AI changes often do more (an extra 'helpful' refactor in a file you did not mention), or less (the edge case in your prompt silently ignored). Every changed line should trace back to the request."
+      },
+      {
+        "title": "Boundaries and error paths",
+        "body": "Look at every comparison and loop limit (< versus <=, off-by-one ranges), at what happens with empty, None or huge input, and at except blocks: a bare except: pass hides failures. These are the spots where plausible code is most often wrong.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "def get_page(items, page, size=10):",
+                "explanation": "Page numbers: from 0 or 1? The request said 1."
+              },
+              {
+                "code": "    start = page * size",
+                "explanation": "With page=1 this skips the first 10 items: off by one."
+              },
+              {
+                "code": "    try: return items[start:start + size]",
+                "explanation": ""
+              },
+              {
+                "code": "    except Exception: return []",
+                "explanation": "Swallows every error; a real bug would look like 'no results'."
+              }
+            ],
+            "title": "A one-minute review in action"
+          }
+        }
+      },
+      {
+        "title": "Make it a checklist",
+        "body": "Intent matches? Inputs validated? Boundaries right? Errors surfaced, not swallowed? Secrets and dangerous sinks handled? Tests cover the new behaviour? Running the same short list on every accept turns review from a mood into a habit.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "check",
+                "values": [
+                  "intent",
+                  "inputs",
+                  "boundaries",
+                  "errors",
+                  "sinks/secrets",
+                  "tests"
+                ]
+              },
+              {
+                "variable": "question",
+                "values": [
+                  "only what was asked?",
+                  "validated at entry?",
+                  "< vs <=, empty, None?",
+                  "raised or logged, not hidden?",
+                  "SQL/shell/path/HTML safe?",
+                  "new behaviour tested?"
+                ]
+              }
+            ],
+            "title": "The senior review checklist"
+          }
+        }
+      }
+    ],
+    "takeaway": "Review AI code by following the data, not by admiring the style. Intent, boundaries, error paths and dangerous sinks are where plausible code goes wrong."
+  }
 }

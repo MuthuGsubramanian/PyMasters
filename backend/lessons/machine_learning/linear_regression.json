@@ -379,5 +379,133 @@
     "path_memberships": [
       "supervised_learning"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Linear regression picks the weights that make the sum of squared vertical errors as small as possible, either in one shot by solving the least-squares equations or step by step with gradient descent.",
+    "steps": [
+      {
+        "title": "The model is a weighted sum",
+        "body": "A prediction is y_hat = w1*x1 + ... + wn*xn + b. For one feature it is a line with slope w and intercept b. Training only means choosing those numbers."
+      },
+      {
+        "title": "Cost: mean of squared errors",
+        "body": "For data x = [1, 2, 3], y = [2, 4, 5], each candidate line gets a cost MSE = mean((y_hat - y) squared). Squaring makes every error positive and punishes big misses more: one miss of 2 costs as much as four misses of 1.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                2,
+                3
+              ],
+              [
+                2,
+                4,
+                5
+              ],
+              [
+                2.17,
+                3.67,
+                5.17
+              ],
+              [
+                -0.17,
+                0.33,
+                -0.17
+              ]
+            ],
+            "labels": [
+              "x",
+              "y",
+              "y_hat",
+              "error"
+            ],
+            "caption": "Best line y = 1.5x + 0.67 and its errors"
+          }
+        }
+      },
+      {
+        "title": "Least squares solves it directly",
+        "body": "Setting the derivative of the cost to zero gives slope = sum((x - x_mean)(y - y_mean)) / sum((x - x_mean) squared). Here x_mean = 2 and y_mean = 3.67, so slope = (1.67 + 0 + 1.33) / 2 = 1.5, and b = 3.67 - 1.5 x 2 = 0.67. In matrix form this is w = (XᵀX)⁻¹Xᵀy; scikit-learn's LinearRegression solves it with a least-squares routine instead of inverting the matrix."
+      },
+      {
+        "title": "Or walk downhill with gradient descent",
+        "body": "Gradient descent starts from w = 0, b = 0 and repeats: compute the slope of the cost for each weight, then step against it scaled by a learning rate. It reaches the same answer and scales to millions of rows (SGDRegressor) where building XᵀX would be too costly.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "start w=0, b=0",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "predict y_hat = w*x + b",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "gradient of MSE for w and b",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "w -= lr * grad_w, b -= lr * grad_b",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "cost still falling?",
+                "type": "decision"
+              },
+              {
+                "id": "n5",
+                "label": "stop: line fitted",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "The iterative route to the same line"
+          }
+        }
+      },
+      {
+        "title": "Read the fit: R² and coefficients",
+        "body": "R² = 1 - SS_res / SS_tot compares the errors to simply predicting the mean. Here SS_res = 0.17 and SS_tot = 4.67, so R² = 0.96. The slope 1.5 means each extra unit of x adds 1.5 to the prediction, holding other features fixed; coefficients are only comparable across features if they share a scale."
+      }
+    ],
+    "takeaway": "Fitting a line is minimising squared error. The closed-form solution is exact for small problems; gradient descent is the same idea scaled up, and it is exactly how neural networks are trained too."
   }
 }

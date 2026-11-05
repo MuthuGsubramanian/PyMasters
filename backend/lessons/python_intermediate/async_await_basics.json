@@ -529,5 +529,83 @@
     "path_memberships": [
       "python_intermediate"
     ]
+  },
+  "under_the_hood": {
+    "summary": "The asyncio event loop is a single-threaded scheduler: it runs ready callbacks from a queue, keeps sleeping tasks in a timer heap, and asks the OS which sockets are ready while it has nothing else to do.",
+    "steps": [
+      {
+        "title": "Three things the loop keeps",
+        "body": "An asyncio event loop holds a queue of callbacks that are ready to run now (`_ready`), a heap of timers ordered by wake-up time (`_scheduled`), and a selector that watches sockets and pipes. Every Task resumption is just a callback placed in the ready queue.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Loop state",
+              "code": "_ready\n_scheduled\nselector"
+            },
+            "right": {
+              "label": "Holds",
+              "code": "callbacks to run right now (FIFO)\ntimers sorted by due time (heap)\nsockets waiting to be readable/writable"
+            }
+          }
+        }
+      },
+      {
+        "title": "One iteration of the loop",
+        "body": "Each turn, the loop works out how long it may sleep: zero if callbacks are ready, otherwise until the earliest timer. It calls the selector (epoll on Linux, kqueue on macOS) with that timeout, moves due timers and ready sockets into the ready queue, then runs every callback that was queued.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "compute timeout",
+                "detail": "0 if work is ready, else next timer"
+              },
+              {
+                "label": "selector.select(timeout)",
+                "detail": "OS reports ready sockets"
+              },
+              {
+                "label": "move due timers",
+                "detail": "into _ready"
+              },
+              {
+                "label": "run _ready callbacks",
+                "detail": "each resumes one task step"
+              }
+            ],
+            "caption": "BaseEventLoop._run_once, simplified"
+          }
+        }
+      },
+      {
+        "title": "A coroutine runs until it awaits",
+        "body": "When a task's callback runs, the coroutine executes ordinary Python until it reaches an `await` on something not finished yet. At that point it returns control to the loop. Nothing interrupts it before then; the loop is cooperative, not preemptive."
+      },
+      {
+        "title": "Sleeping is just a timer",
+        "body": "`await asyncio.sleep(1)` creates a future and schedules `call_later(1, ...)`, which pushes a timer onto the heap. One second later the loop pops it, the future gets its result, and the waiting task is put back in the ready queue.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "heap",
+            "data": [
+              "t+0.5s: wake task C",
+              "t+1.0s: wake task A",
+              "t+2.0s: wake task B"
+            ],
+            "highlight": [
+              0
+            ],
+            "label": "_scheduled (earliest first)"
+          }
+        }
+      },
+      {
+        "title": "Why there is no speed-up for CPU work",
+        "body": "All of this happens on one thread. While a coroutine crunches numbers without awaiting, the loop cannot select, cannot fire timers and cannot resume anyone else. asyncio wins only when tasks spend most of their time waiting on I/O."
+      }
+    ],
+    "takeaway": "The event loop is a while-loop around three queues: ready callbacks, timers and OS readiness. Every await is a promise to hand control back to it, which is what lets one thread juggle thousands of waiting connections."
   }
 }

@@ -432,5 +432,115 @@
     "path_memberships": [
       "supervised_learning"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A decision tree tries every feature and threshold, keeps the split that lowers Gini impurity the most, and repeats inside each child until the nodes are pure or a limit stops it.",
+    "steps": [
+      {
+        "title": "Gini impurity measures how mixed a node is",
+        "body": "Gini = 1 - sum of p squared over the classes. A node with 6 'yes' and 4 'no' has p = 0.6 and 0.4, so Gini = 1 - (0.36 + 0.16) = 0.48. A pure node scores 0, and a 50/50 binary node scores the maximum 0.5.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "yes",
+                6,
+                0.6
+              ],
+              [
+                "no",
+                4,
+                0.4
+              ]
+            ],
+            "labels": [
+              "class",
+              "class"
+            ],
+            "caption": "Root node: count and share per class, Gini = 1 - 0.36 - 0.16 = 0.48"
+          }
+        }
+      },
+      {
+        "title": "Candidate thresholds come from the data",
+        "body": "For each feature the tree sorts the values and tries thresholds halfway between neighbouring distinct values. With 4 features and 100 distinct values each, that is up to 4 x 99 candidate splits, each scored the same way. scikit-learn's CART builds only binary splits."
+      },
+      {
+        "title": "Score a split by weighted child impurity",
+        "body": "Split A sends 4 samples (4 yes, 0 no) left, Gini 0, and 6 samples (2 yes, 4 no) right, Gini 1 - (1/9 + 4/9) = 0.444. Weighted: 0.4 x 0 + 0.6 x 0.444 = 0.267, a decrease of 0.48 - 0.267 = 0.213. Split B gives two 3-yes/2-no children, Gini 0.48 each, a decrease of 0. The tree keeps split A.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Split A",
+              "code": "left  4 yes / 0 no -> Gini 0\nright 2 yes / 4 no -> Gini 0.444\nweighted 0.267, gain 0.213"
+            },
+            "right": {
+              "label": "Split B",
+              "code": "left  3 yes / 2 no -> Gini 0.48\nright 3 yes / 2 no -> Gini 0.48\nweighted 0.48, gain 0"
+            },
+            "caption": "The bigger impurity drop wins"
+          }
+        }
+      },
+      {
+        "title": "Recurse until a stopping rule",
+        "body": "The same search runs again inside each child on only the samples that reached it. It stops when a node is pure, or max_depth, min_samples_split or min_samples_leaf would be violated. Without limits the tree keeps splitting until every leaf is pure, which memorises noise: that is overfitting."
+      },
+      {
+        "title": "Prediction walks one path",
+        "body": "A new sample starts at the root, answers each node's question such as 'petal length <= 2.45?', and follows the left or right branch until it reaches a leaf. The leaf predicts its majority class, and predict_proba returns the class shares in that leaf. That is only depth-many comparisons per prediction.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "petal length <= 2.45?",
+                "type": "decision"
+              },
+              {
+                "id": "n1",
+                "label": "No: petal width <= 1.75?",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "Yes: leaf versicolor (49 of 54)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "predict versicolor",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3"
+            ],
+            "caption": "One sample's path through an iris tree"
+          }
+        }
+      }
+    ],
+    "takeaway": "A tree is a greedy search: the best split now, never revisited later. That makes it fast and readable but unstable and prone to overfit, which is exactly what depth limits, pruning and random forests correct."
   }
 }

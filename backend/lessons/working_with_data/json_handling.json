@@ -166,5 +166,87 @@
     "category": "data",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "json.loads scans the text token by token and builds dicts, lists, strings, numbers, True/False and None; json.dumps walks your Python objects recursively and writes each one in its JSON spelling.",
+    "steps": [
+      {
+        "title": "Parsing is a scanner over tokens",
+        "body": "json.loads reads the text left to right. A { starts a dict, a [ starts a list, a \" starts a string, and digits start a number; nested values are parsed recursively. CPython uses a fast C scanner from the _json module when it is available. Any unexpected character raises json.JSONDecodeError with the exact line and column.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "'{'",
+                "detail": "start a dict"
+              },
+              {
+                "label": "'\"name\"'",
+                "detail": "a key string"
+              },
+              {
+                "label": "':'",
+                "detail": "then its value"
+              },
+              {
+                "label": "'\"Ada\"'",
+                "detail": "store data['name'] = 'Ada'"
+              },
+              {
+                "label": "',' or '}'",
+                "detail": "next pair, or close the dict"
+              }
+            ],
+            "title": "Scanning {\"name\": \"Ada\", ...}"
+          }
+        }
+      },
+      {
+        "title": "Each JSON type has one Python type",
+        "body": "object -> dict, array -> list, string -> str, true/false -> True/False, null -> None. Numbers without a fraction or exponent become int, others become float: 1 stays 1, 1.0 becomes 1.0, and 1e3 becomes 1000.0.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "JSON text",
+              "code": "{\"admin\": true,\n \"age\": 36,\n \"score\": 1e3,\n \"boss\": null}"
+            },
+            "right": {
+              "label": "Python after loads",
+              "code": "{'admin': True,\n 'age': 36,\n 'score': 1000.0,\n 'boss': None}"
+            },
+            "title": "The type mapping"
+          }
+        }
+      },
+      {
+        "title": "Serializing walks the objects",
+        "body": "json.dumps checks each object's type: dicts become {...}, lists and tuples become [...], str gets quotes and escapes, and so on down the nesting. With the default ensure_ascii=True, non-ASCII characters are written as escapes, so 'é' becomes \\u00e9; pass ensure_ascii=False to keep the real character."
+      },
+      {
+        "title": "What does not survive a round trip",
+        "body": "JSON object keys must be strings, so {1: 'a'} is written as {\"1\": \"a\"} and comes back with the key '1'. Tuples come back as lists. Types JSON has no word for, such as datetime or set, raise TypeError: Object of type datetime is not JSON serializable, unless you give dumps a default= function that converts them.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Python in",
+              "code": "{1: 'a', 'pair': (1, 2)}"
+            },
+            "right": {
+              "label": "Python back out",
+              "code": "{'1': 'a', 'pair': [1, 2]}"
+            },
+            "title": "json.loads(json.dumps(x)) is not always x"
+          }
+        }
+      },
+      {
+        "title": "load and dump add the file",
+        "body": "json.load(f) is json.loads(f.read()) and json.dump(obj, f) writes the same text dumps would produce straight into the file. indent=2 only adds whitespace for humans; the data is identical."
+      }
+    ],
+    "takeaway": "JSON is text, and the json module is a translator between that text and plain dicts and lists. Know the type mapping and the lossy cases (int keys, tuples, dates) and nothing about it will surprise you."
+  }
 }

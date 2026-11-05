@@ -382,5 +382,161 @@
     "path_memberships": [
       "unsupervised_learning"
     ]
+  },
+  "under_the_hood": {
+    "summary": "DBSCAN grows clusters from dense points, agglomerative clustering merges the two closest groups again and again, and a GMM gives every point a probability per cluster through repeated E and M steps.",
+    "steps": [
+      {
+        "title": "DBSCAN counts neighbours inside eps",
+        "body": "For every point DBSCAN counts how many points lie within distance eps. In scikit-learn the point itself counts, so with eps=0.5 and min_samples=4 a point needs 3 other points inside that radius to be a core point. A point that is not core but sits within eps of a core point is a border point; everything else is noise."
+      },
+      {
+        "title": "Clusters grow by chaining core points",
+        "body": "Start at an unvisited core point, give it a new cluster id, and pull in every neighbour. Each neighbour that is itself a core point adds its own neighbours too, so the cluster spreads along any dense path, even a crescent. Border points join but never spread further. Points never reached keep label -1.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "Pick an unvisited core point",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "New cluster id",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "Add all eps-neighbours",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "Neighbour is core? add its neighbours too",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "No more to add: cluster done",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "Leftover points get label -1",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "How one DBSCAN cluster grows"
+          }
+        }
+      },
+      {
+        "title": "Agglomerative: merge the closest pair",
+        "body": "Hierarchical clustering starts with every point as its own cluster and repeatedly merges the two closest clusters. Take points 1, 2, 6, 7, 15 on a line with single linkage: merge {1,2} at distance 1, {6,7} at 1, then {1,2,6,7} at 4 (gap 2 to 6), and finally 15 joins at 8 (gap 7 to 15)."
+      },
+      {
+        "title": "The dendrogram records each merge height",
+        "body": "Each merge is stored with the distance at which it happened, which is the dendrogram. Cutting the tree at height 5 leaves two clusters, {1,2,6,7} and {15}; cutting at 2 leaves three. The linkage rule decides what 'distance between clusters' means: single uses the closest pair, complete the farthest pair, average the mean, and ward the merge that adds least within-cluster variance.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "{1} + {2}",
+                1
+              ],
+              [
+                "{6} + {7}",
+                1
+              ],
+              [
+                "{1,2} + {6,7}",
+                4
+              ],
+              [
+                "{1,2,6,7} + {15}",
+                8
+              ]
+            ],
+            "labels": [
+              "merge 1",
+              "merge 2",
+              "merge 3",
+              "merge 4"
+            ],
+            "highlight": [
+              2
+            ],
+            "caption": "Single-linkage merges and their heights; cut at 5 gives 2 clusters"
+          }
+        }
+      },
+      {
+        "title": "GMM E-step: soft responsibilities",
+        "body": "A Gaussian Mixture Model keeps, for each component k, a weight, a mean and a covariance. In the E-step it scores each point under every component: weight times Gaussian density. If component A scores 0.3 and B scores 0.1, the point's responsibilities are 0.3/0.4 = 0.75 for A and 0.25 for B.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0.75,
+                0.25
+              ],
+              [
+                0.1,
+                0.9
+              ],
+              [
+                0.5,
+                0.5
+              ]
+            ],
+            "labels": [
+              "point 1",
+              "point 2",
+              "point 3"
+            ],
+            "caption": "Responsibility matrix: rows are points, columns are components A and B"
+          }
+        }
+      },
+      {
+        "title": "GMM M-step: refit from the soft counts",
+        "body": "Each component's new mean is the responsibility-weighted average of all points, its covariance is the weighted spread, and its weight is the average responsibility. E and M alternate, and the data's log-likelihood never decreases, so the loop stops when it improves by less than tol. predict_proba simply returns the final responsibilities."
+      }
+    ],
+    "takeaway": "Pick by the shape of your groups: DBSCAN for dense blobs of any shape plus noise, hierarchical when you want to choose the number of clusters after seeing the merge tree, and GMM when you need probabilities rather than hard labels."
   }
 }

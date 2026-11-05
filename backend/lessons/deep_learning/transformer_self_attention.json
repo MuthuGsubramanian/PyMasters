@@ -390,5 +390,151 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Self-attention multiplies the token matrix X by three learned matrices to get Q, K and V, scores every pair of tokens with QKᵀ / sqrt(d_k), applies softmax row by row, and multiplies by V; multiple heads do this in parallel on smaller slices.",
+    "steps": [
+      {
+        "title": "Project X into Q, K and V",
+        "body": "X holds one row per token, shape (seq_len, d_model). Q = X W_Q, K = X W_K, V = X W_V, each with its own learned matrix, for example 512 x 64 per head. The same token gets three different roles: what it looks for, what it offers to be found by, and what it passes on."
+      },
+      {
+        "title": "Score every pair at once",
+        "body": "Toy example with 3 tokens and d_k = 2: let Q = K = [[1, 0], [0, 1], [1, 1]]. QKᵀ is a 3 x 3 matrix of all dot products: [[1, 0, 1], [0, 1, 1], [1, 1, 2]]. Row i holds token i's score against every token, itself included. Dividing by sqrt(2) keeps the values moderate: the last row becomes [0.71, 0.71, 1.41].",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                1,
+                0,
+                1
+              ],
+              [
+                0,
+                1,
+                1
+              ],
+              [
+                1,
+                1,
+                2
+              ]
+            ],
+            "labels": [
+              "token 1",
+              "token 2",
+              "token 3"
+            ],
+            "caption": "QKᵀ: each row is one token's scores"
+          }
+        }
+      },
+      {
+        "title": "Softmax each row",
+        "body": "Row by row, softmax turns scaled scores into weights that sum to 1. Token 1's row [0.71, 0, 0.71] becomes [0.40, 0.20, 0.40]; token 3's row becomes [0.25, 0.25, 0.50]. Without the sqrt(d_k) scaling, large dot products in high dimensions would push softmax towards one-hot weights with tiny gradients.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0.4,
+                0.2,
+                0.4
+              ],
+              [
+                0.2,
+                0.4,
+                0.4
+              ],
+              [
+                0.25,
+                0.25,
+                0.5
+              ]
+            ],
+            "labels": [
+              "token 1",
+              "token 2",
+              "token 3"
+            ],
+            "highlight": [
+              [
+                2,
+                2
+              ]
+            ],
+            "caption": "Attention weights after scaling and softmax"
+          }
+        }
+      },
+      {
+        "title": "Blend the values",
+        "body": "Multiply the weights by V. With V = [[1, 0], [0, 2], [1, 1]], token 1's output is 0.40 x [1, 0] + 0.20 x [0, 2] + 0.40 x [1, 1] = [0.80, 0.80], and token 3's is [0.75, 1.0]. Every output row is a context-aware mix of all tokens' values, computed for all tokens in one matrix product."
+      },
+      {
+        "title": "Many heads, then recombine",
+        "body": "With d_model = 512 and 8 heads, each head has its own 64-dimensional Q, K and V and its own attention pattern; one might track syntax, another nearby words. The 8 outputs of 64 are concatenated back to 512 and multiplied by W_O. Cost grows with seq_len², since every token scores every other.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "X (n x 512)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "8 heads: Q, K, V (n x 64 each)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "per head: softmax(QKᵀ / 8) V",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "concatenate -> n x 512",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "multiply by W_O",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "Multi-head self-attention (sqrt(64) = 8)"
+          }
+        }
+      }
+    ],
+    "takeaway": "Self-attention is three matrix multiplications and a softmax: softmax(QKᵀ / sqrt(d_k)) V. Each token gets an output that mixes in every other token by learned relevance, all in parallel, at a cost that grows with the square of sequence length."
+  }
 }

@@ -322,5 +322,134 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Every operation on a tensor with requires_grad=True records a node pointing back to its inputs; backward() walks that graph from the loss to the leaves, multiplying local derivatives by the chain rule and adding the results into each leaf's .grad.",
+    "steps": [
+      {
+        "title": "The forward pass records a graph",
+        "body": "With w = 2 and b = 1 (both requires_grad=True) and input x = 3: y_hat = w * x + b = 7 and loss = (y_hat - 5)² = 4. Each result carries a grad_fn: loss.grad_fn is PowBackward0, which points to the subtraction's node, then AddBackward0, then MulBackward0, back to the leaves w and b.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "w = 2, x = 3 -> Mul -> 6",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "+ b = 1 -> Add -> 7",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "- 5 -> Sub -> 2",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "square -> Pow -> loss 4",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "graph ready for backward()",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "The graph built during the forward pass"
+          }
+        }
+      },
+      {
+        "title": "Backward starts with dloss/dloss = 1",
+        "body": "loss.backward() seeds the gradient 1 at the loss and visits nodes in reverse. Pow's local derivative is 2 x (y_hat - 5) = 4, so 4 flows back to y_hat. Add passes the gradient unchanged to both inputs: b.grad = 4. Mul sends gradient x x = 4 x 3 = 12 to w: w.grad = 12.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "loss",
+                1
+              ],
+              [
+                "y_hat",
+                4
+              ],
+              [
+                "b",
+                4
+              ],
+              [
+                "w",
+                12
+              ]
+            ],
+            "labels": [
+              "node",
+              "node",
+              "leaf",
+              "leaf"
+            ],
+            "highlight": [
+              2,
+              3
+            ],
+            "caption": "Gradient arriving at each node"
+          }
+        }
+      },
+      {
+        "title": "Only leaves keep .grad",
+        "body": "By default .grad is filled for leaf tensors you created with requires_grad=True, like weights. Intermediate results such as y_hat get gradients during the walk but do not store them, unless you call y_hat.retain_grad(). The graph's saved values are freed after backward, so calling it twice needs retain_graph=True."
+      },
+      {
+        "title": "Gradients add up until you clear them",
+        "body": "backward() adds into .grad instead of overwriting. Run the same forward and backward again without clearing and w.grad becomes 24. That is useful for accumulating over several small batches, but in a normal loop it is a bug, which is why each step starts with optimizer.zero_grad().",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "w.grad after 1st backward: 12",
+              "w.grad after 2nd backward (no zero_grad): 24",
+              "after optimizer.zero_grad(): None or 0"
+            ],
+            "caption": "Accumulation in action"
+          }
+        }
+      },
+      {
+        "title": "Switching tracking off",
+        "body": "Inside with torch.no_grad(): operations build no graph, which saves memory and time during evaluation. tensor.detach() returns a tensor that shares data but is cut off from the graph, for example when logging values or feeding a prediction back as fixed input."
+      }
+    ],
+    "takeaway": "Autograd is the chain rule run in reverse over a graph recorded during the forward pass. Know that gradients accumulate in leaves, clear them each step, and turn recording off when you are not training."
+  }
 }

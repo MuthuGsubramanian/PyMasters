@@ -333,5 +333,119 @@
     "path_memberships": [
       "supervised_learning"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A random forest trains many decision trees, each on a bootstrap sample of the rows and a random subset of features at every split, then averages their predicted probabilities so their separate mistakes cancel.",
+    "steps": [
+      {
+        "title": "Bootstrap: sample rows with replacement",
+        "body": "Each tree gets n rows drawn at random with replacement from the n training rows. Some rows appear twice or more and about 36.8% (that is (1 - 1/n)^n, roughly 1/e) are left out. Every tree therefore sees a slightly different dataset.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "tree 1",
+                "rows 3, 3, 7, 1, 9, 2, 7, 5, 0, 4"
+              ],
+              [
+                "tree 2",
+                "rows 8, 1, 1, 6, 0, 2, 9, 9, 3, 5"
+              ]
+            ],
+            "labels": [
+              "sample",
+              "sample"
+            ],
+            "caption": "Two bootstrap samples of 10 rows: repeats in, some rows out"
+          }
+        }
+      },
+      {
+        "title": "Random features at every split",
+        "body": "At each node a tree may only choose among a random subset of features. For classification scikit-learn's default is max_features='sqrt': with 16 features, each split looks at just 4. This stops every tree from splitting on the same dominant feature, so trees stay different."
+      },
+      {
+        "title": "Average the trees",
+        "body": "For a new sample each tree outputs class probabilities from its leaf. scikit-learn averages these probabilities across trees and predicts the class with the highest mean. If 100 trees give class A an average of 0.62, the forest says A with probability 0.62. Regression forests average the predicted numbers.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "new sample",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "tree 1 -> A (0.9)",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "tree 2 -> B (0.6 B)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "... tree 100",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "average probabilities",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "A: 0.62 -> predict A",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5"
+            ],
+            "caption": "Combining 100 trees"
+          }
+        }
+      },
+      {
+        "title": "Why averaging helps",
+        "body": "One deep tree has low bias but high variance: small data changes reshape it. Averaging B trees with correlation rho gives variance rho*sigma² + (1 - rho)*sigma²/B. More trees shrink the second term; random features lower rho, shrinking the first. That is why both kinds of randomness matter."
+      },
+      {
+        "title": "Free validation and importances",
+        "body": "With oob_score=True, each row is scored only by the trees that never saw it, about a third of them, giving a validation estimate without a holdout. feature_importances_ adds up how much each feature reduced impurity across all splits, weighted by samples reaching them; it can favour high-cardinality features, so permutation importance is a useful check."
+      }
+    ],
+    "takeaway": "A forest works because its trees are different. Bootstrapped rows and random feature subsets make the errors less correlated, and averaging then removes much of the variance that makes a single tree unreliable."
   }
 }

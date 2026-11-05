@@ -409,5 +409,143 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A stacked LSTM passes each layer's hidden states up to the next layer at every time step and returns the top layer's outputs plus each layer's final (h, c); a GRU does the same job with two gates and no separate cell state.",
+    "steps": [
+      {
+        "title": "Shapes of a two-layer LSTM",
+        "body": "nn.LSTM(input_size=10, hidden_size=32, num_layers=2, batch_first=True, dropout=0.2) on x of shape (4, 20, 10) returns output (4, 20, 32), the top layer's hidden state at every step, and h_n and c_n of shape (2, 4, 32), the last step's states for each of the 2 layers. output[:, -1] equals h_n[-1].",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "x",
+                "(4, 20, 10)"
+              ],
+              [
+                "output",
+                "(4, 20, 32)"
+              ],
+              [
+                "h_n",
+                "(2, 4, 32)"
+              ],
+              [
+                "c_n",
+                "(2, 4, 32)"
+              ]
+            ],
+            "labels": [
+              "in",
+              "out",
+              "out",
+              "out"
+            ],
+            "caption": "batch 4, 20 steps, 10 features, hidden 32, 2 layers"
+          }
+        }
+      },
+      {
+        "title": "Stacking: layer 2 reads layer 1",
+        "body": "At each time step, layer 1's hidden state becomes layer 2's input. The dropout=0.2 argument applies dropout to those connections between layers (not to the last layer's output), which is why PyTorch warns if you set dropout with num_layers=1.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "x_t",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "LSTM layer 1 -> h1_t",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "dropout",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "LSTM layer 2 -> h2_t",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "output[:, t] = h2_t",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One time step through two stacked layers"
+          }
+        }
+      },
+      {
+        "title": "The GRU update, worked",
+        "body": "A GRU computes an update gate z and a reset gate r with sigmoids, a candidate n = tanh(W x + r * (U h_prev)), and blends: h = (1 - z) * n + z * h_prev. With h_prev = 0.8, z = 0.7 and n = -0.2: h = 0.3 x (-0.2) + 0.7 x 0.8 = 0.50. A z near 1 copies the old state forward almost untouched, which preserves memory and gradients.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "h_prev",
+                "value": 0.8
+              },
+              {
+                "variable": "z (update)",
+                "value": 0.7
+              },
+              {
+                "variable": "candidate n",
+                "value": -0.2
+              },
+              {
+                "variable": "h",
+                "value": 0.5
+              }
+            ],
+            "caption": "h = (1 - z) n + z h_prev"
+          }
+        }
+      },
+      {
+        "title": "Three gates' worth of weights, not four",
+        "body": "Each gate needs its own input and hidden weights. For input 10 and hidden 32, one LSTM layer has 4 x (32 x 10 + 32 x 32 + 64) = 5,632 parameters, a GRU layer 3 x (...) = 4,224, a quarter fewer. GRUs are a bit faster and often just as accurate; LSTMs' separate cell can help on very long dependencies."
+      },
+      {
+        "title": "Bidirectional and packed sequences",
+        "body": "bidirectional=True runs a second LSTM from the end of the sequence backwards and concatenates both directions, doubling output features to 64. For batches of different-length sequences, pack_padded_sequence lets the LSTM skip padding steps so the final states come from each sequence's real last token."
+      }
+    ],
+    "takeaway": "Know the shapes, (batch, time, hidden) for outputs and (layers, batch, hidden) for final states, and the gate arithmetic. LSTM and GRU differ in bookkeeping, not in purpose: both keep a gated memory path through time."
   }
 }

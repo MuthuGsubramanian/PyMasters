@@ -378,5 +378,58 @@
       },
       "correct": 3
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Every value is an object whose header points at its type; the type decides how the bytes inside are stored and which operations are allowed.",
+    "steps": [
+      {
+        "title": "Each object carries its type",
+        "body": "In CPython every object starts with a header: a reference count and a pointer to its type object. `type(42)` simply follows that pointer and returns `int`. The type is attached to the value, not to the variable, which is why one name can hold an int now and a str later."
+      },
+      {
+        "title": "int: arbitrary size, built from 30-bit digits",
+        "body": "CPython 3.11 stores an int as an array of 30-bit 'digits'. Small numbers need one digit; `2**100` simply uses more. That is why Python ints never overflow, and why `sys.getsizeof(2**60)` (36 bytes) is larger than `sys.getsizeof(1)` (28 bytes) on a 64-bit build.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "int digits",
+            "data": [
+              "digit 0: low 30 bits",
+              "digit 1: next 30 bits",
+              "digit 2: ..."
+            ],
+            "label": "How 2**100 is laid out",
+            "caption": "More digits for bigger numbers; no fixed limit"
+          }
+        }
+      },
+      {
+        "title": "float: a 64-bit IEEE 754 double",
+        "body": "A float is a fixed 8-byte binary fraction, giving about 15-17 significant decimal digits. Many decimals have no exact binary form, so `0.1 + 0.2` gives `0.30000000000000004`. That is a property of the storage format, not a Python bug."
+      },
+      {
+        "title": "str: compact code points, bool and None",
+        "body": "A str stores Unicode code points using 1, 2 or 4 bytes per character, chosen by the widest character in it (PEP 393). `bool` is a subclass of int, so `True + True == 2`. `None` is a single shared object of type NoneType; every `None` in a program is the same object.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Type",
+              "code": "int\nfloat\nstr\nbool\nNoneType"
+            },
+            "right": {
+              "label": "Stored as",
+              "code": "array of 30-bit digits\n8-byte IEEE 754 double\n1/2/4 bytes per code point\nint subclass: 0 or 1\none shared singleton"
+            },
+            "caption": "What sits behind each core type"
+          }
+        }
+      },
+      {
+        "title": "The type decides what operators do",
+        "body": "`3 + 4` asks the int type to add and gives 7; `'3' + '4'` asks the str type to concatenate and gives '34'. `'3' + 4` raises TypeError because neither type knows how to combine with the other. Python checks this at run time, on the actual objects."
+      }
+    ],
+    "takeaway": "Types live on objects, not on names. Knowing the storage behind each type explains why ints never overflow, why floats round, and why mixing types needs an explicit conversion."
+  }
 }

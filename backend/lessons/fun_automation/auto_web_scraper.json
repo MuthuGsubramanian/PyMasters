@@ -270,5 +270,130 @@
     ],
     "category": "automation",
     "path_memberships": []
+  },
+  "under_the_hood": {
+    "summary": "requests sends an HTTP GET and gets back raw HTML bytes; BeautifulSoup parses that text into a tree of tag objects, and CSS selectors walk the tree to find the elements you want.",
+    "steps": [
+      {
+        "title": "The request is a short text message",
+        "body": "requests.get(url) resolves the host name to an IP address, opens a TCP connection (with TLS for https), and sends a request line plus headers such as GET /news HTTP/1.1, Host and User-Agent: python-requests/2.x. The server answers with a status code, headers and a body of HTML bytes.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "DNS lookup",
+                "detail": "example.com -> IP address"
+              },
+              {
+                "label": "TCP + TLS",
+                "detail": "connect to port 443"
+              },
+              {
+                "label": "GET /news",
+                "detail": "request line + headers"
+              },
+              {
+                "label": "200 OK",
+                "detail": "headers + HTML body"
+              }
+            ],
+            "title": "What requests.get does on the wire",
+            "direction": "right"
+          }
+        }
+      },
+      {
+        "title": "Bytes become text",
+        "body": "response.content is the raw bytes; response.text decodes them using the charset named in the Content-Type header, for example text/html; charset=utf-8. If the server names no charset for a text/* type, requests falls back to ISO-8859-1, which can garble non-English text; setting response.encoding = 'utf-8' (or using response.apparent_encoding) fixes it. Check response.status_code or call raise_for_status() before parsing."
+      },
+      {
+        "title": "Parsing builds a tree",
+        "body": "BeautifulSoup(html, 'html.parser') reads the tags in order and nests them: html contains body, body contains div class='story', which contains an h2 and an a. It also repairs broken HTML, such as unclosed tags, the way browsers do. You now have objects with .name, .attrs, .text and child lists instead of one long string.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "id": "html",
+                "label": "<html>"
+              },
+              {
+                "id": "body",
+                "label": "<body>"
+              },
+              {
+                "id": "div",
+                "label": "<div class='story'>"
+              },
+              {
+                "id": "h2",
+                "label": "<h2> headline text"
+              },
+              {
+                "id": "a",
+                "label": "<a href='/item/1'>"
+              }
+            ],
+            "edges": [
+              {
+                "from": "html",
+                "to": "body",
+                "label": ""
+              },
+              {
+                "from": "body",
+                "to": "div",
+                "label": ""
+              },
+              {
+                "from": "div",
+                "to": "h2",
+                "label": ""
+              },
+              {
+                "from": "div",
+                "to": "a",
+                "label": ""
+              }
+            ],
+            "title": "The parse tree"
+          }
+        }
+      },
+      {
+        "title": "Selectors walk the tree",
+        "body": "soup.select('div.story h2') means: every h2 that is anywhere inside a div with class story. The matcher checks each element in the tree against that rule and returns a list of Tag objects. .get_text(strip=True) gathers the text inside a tag, and tag['href'] reads an attribute.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "resp = requests.get(url, timeout=10)",
+                "explanation": "Fetch the HTML."
+              },
+              {
+                "code": "soup = BeautifulSoup(resp.text, 'html.parser')",
+                "explanation": "Build the tree."
+              },
+              {
+                "code": "for h in soup.select('div.story h2'):",
+                "explanation": "Every matching element."
+              },
+              {
+                "code": "    print(h.get_text(strip=True))",
+                "explanation": "Text inside, whitespace trimmed."
+              }
+            ],
+            "title": "Request, parse, select, extract"
+          }
+        }
+      },
+      {
+        "title": "What the scraper cannot see",
+        "body": "requests does not run JavaScript. If a page builds its content in the browser after loading, the HTML you download has an empty container, and select() finds nothing. In that case look for the JSON API the page calls, or use a browser automation tool. Respect robots.txt, add a delay between requests, and set timeout= so a slow server cannot hang your script."
+      }
+    ],
+    "takeaway": "A scraper is an HTTP client plus a tree search. If the data is in the HTML the server sends, selectors will find it; if JavaScript adds it later, they will not."
   }
 }

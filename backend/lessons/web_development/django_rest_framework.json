@@ -401,5 +401,92 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A DRF request goes through APIView.dispatch: the body is parsed, the user authenticated, permissions checked, then the router-chosen ViewSet action runs and a serializer converts between model instances and JSON-ready data.",
+    "steps": [
+      {
+        "title": "The router writes the URL patterns",
+        "body": "router.register('posts', PostViewSet) generates two patterns: posts/ and posts/<pk>/. Each maps HTTP methods to ViewSet actions: GET posts/ to list, POST posts/ to create, GET posts/7/ to retrieve, PUT and PATCH to update and partial_update, DELETE to destroy. DefaultRouter also adds an API root view.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "GET posts/ -> list()",
+              "POST posts/ -> create()",
+              "GET posts/7/ -> retrieve()",
+              "PUT posts/7/ -> update()",
+              "PATCH posts/7/ -> partial_update()",
+              "DELETE posts/7/ -> destroy()"
+            ],
+            "title": "What one register() call creates"
+          }
+        }
+      },
+      {
+        "title": "dispatch runs the checks in order",
+        "body": "Before your action runs, DRF wraps the Django request in a Request, parses the body with the parser that matches Content-Type (JSONParser for application/json), runs the authentication classes to set request.user, then the permission classes and throttles. A failure stops here with 401, 403 or 429.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "Request wrapper",
+                "detail": "lazy request.data"
+              },
+              {
+                "label": "authentication",
+                "detail": "set request.user"
+              },
+              {
+                "label": "permissions",
+                "detail": "403 if denied"
+              },
+              {
+                "label": "throttling",
+                "detail": "429 if too many"
+              },
+              {
+                "label": "action",
+                "detail": "e.g. create()"
+              },
+              {
+                "label": "renderer",
+                "detail": "JSON or browsable HTML"
+              }
+            ],
+            "title": "APIView.dispatch pipeline"
+          }
+        }
+      },
+      {
+        "title": "ModelSerializer builds fields from the model",
+        "body": "class PostSerializer(ModelSerializer) with Meta.model = Post and fields = ['id', 'title', 'views'] inspects the model and creates matching serializer fields: CharField(max_length=200) for title, IntegerField for views, id read-only. Its output for one post is a plain dict, which the renderer turns into JSON.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Post instance",
+              "code": "Post(id=7, title='Hello DRF', views=42)"
+            },
+            "right": {
+              "label": "serializer.data",
+              "code": "{'id': 7, 'title': 'Hello DRF', 'views': 42}"
+            },
+            "title": "Serialising one object"
+          }
+        }
+      },
+      {
+        "title": "Incoming JSON is validated, then saved",
+        "body": "On create, serializer = PostSerializer(data=request.data); serializer.is_valid() runs each field's checks (type, max_length, required) and any validate_<field> methods, collecting errors into a dict. If valid, serializer.save() calls create(validated_data), which runs Post.objects.create(...) and an INSERT. Invalid data returns 400 with the errors."
+      },
+      {
+        "title": "Content negotiation picks the format",
+        "body": "The same view can answer as JSON or as the browsable HTML API. DRF looks at the request's Accept header (and format suffixes) and chooses a renderer: a browser asking for text/html gets the browsable page, while requests or fetch asking for application/json get raw JSON."
+      }
+    ],
+    "takeaway": "DRF is a pipeline around your data: router to action, parse, authenticate, permit, then serializers translate between model instances and JSON in both directions."
   }
 }

@@ -333,5 +333,100 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "A while loop is a test at the top and a jump back to it at the bottom; break jumps out past the loop, continue jumps back to the test.",
+    "steps": [
+      {
+        "title": "The condition is tested before every pass",
+        "body": "`while hour < 6:` evaluates `hour < 6` and checks its truthiness. If it is False the first time, the body never runs at all. If True, Python runs the body once and then goes back to test again."
+      },
+      {
+        "title": "The bottom of the body is a backward jump",
+        "body": "In CPython 3.11 the loop is compiled into the test, a forward jump that leaves the loop when the test is False, the body, and a JUMP_BACKWARD to the test. A loop is nothing more than a jump that points backwards.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "test: hour < 6",
+                "detail": "False -> leave loop"
+              },
+              {
+                "label": "body runs",
+                "detail": "patrol(); hour += 1"
+              },
+              {
+                "label": "JUMP_BACKWARD",
+                "detail": "back to the test"
+              }
+            ],
+            "caption": "One pass of a while loop"
+          }
+        }
+      },
+      {
+        "title": "The loop variable must change",
+        "body": "Python never changes `hour` for you. If the body does not move the condition toward False, the same test gives the same answer forever: an infinite loop. Each pass below shows `hour` moving toward the exit.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "hour",
+                "values": [
+                  "3",
+                  "4",
+                  "5",
+                  "6"
+                ],
+                "data_type": "int"
+              },
+              {
+                "variable": "hour < 6",
+                "values": [
+                  "True",
+                  "True",
+                  "True",
+                  "False"
+                ],
+                "data_type": "bool"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "break and continue are jumps",
+        "body": "`break` jumps straight past the loop, skipping any remaining body code and the `else:` block. `continue` jumps back to the test, skipping only the rest of the current pass. Neither involves an exception; both are compiled to plain jump instructions."
+      },
+      {
+        "title": "while ... else",
+        "body": "A while loop may have an `else:` block. It runs when the condition becomes False, but not when the loop is left with `break`. That makes it a neat 'searched everything and found nothing' branch.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "n = 0\nwhile n < 5:\n    if n == target:\n        break\n    n += 1\nelse:\n    print('not found')",
+            "highlightSequence": [
+              2,
+              4,
+              7
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Test the condition."
+              },
+              {
+                "description": "Found: jump out, else is skipped."
+              },
+              {
+                "description": "Condition became False without break: else runs."
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "A while loop is a test plus a backward jump. Your code is responsible for changing the state the test reads; break and continue are just shortcuts to the exit or to the test."
+  }
 }

@@ -159,5 +159,71 @@
     "category": "ai_assisted_dev",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A language model writes each token by picking from a probability distribution learned from text, without looking anything up, so a method name that sounds likely can be generated even when the installed library has no such attribute.",
+    "steps": [
+      {
+        "title": "Next-token prediction, not lookup",
+        "body": "After 'data = requests.' the model scores every token in its vocabulary and turns the scores into probabilities. It then picks a likely one. Nothing in that step opens the requests package or its documentation; the probabilities come only from patterns in the training text.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "get  (very likely)",
+              "post (likely)",
+              "get_json (plausible, but not real)",
+              "Session (less likely)"
+            ],
+            "title": "Candidates after 'requests.' (illustrative ranking)",
+            "highlight": [
+              2
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why invented names sound right",
+        "body": "Many libraries do have helpers named get_json or read_json, and 'fetch JSON' often appears near those names in text. The model blends those patterns, so requests.get_json gets a high score even though the real code is requests.get(url).json(). The more convenient a hallucinated method looks, the more suspicious you should be."
+      },
+      {
+        "title": "Versions make it worse",
+        "body": "Training text mixes many versions of a library. A method renamed or removed years ago, or one added recently, can be produced with the same confidence as a current one. pandas' DataFrame.append, for example, was removed in pandas 2.0, yet code using it still appears in old examples.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Plausible but wrong",
+              "code": "df = df.append(row)            # removed in pandas 2.0\ndata = requests.get_json(url)  # never existed"
+            },
+            "right": {
+              "label": "Real API",
+              "code": "df = pd.concat([df, pd.DataFrame([row])])\ndata = requests.get(url).json()"
+            },
+            "title": "Generated from patterns vs checked against the library"
+          }
+        }
+      },
+      {
+        "title": "Python exposes the lie at runtime",
+        "body": "When the line runs, Python looks up the attribute on the actual module object. If it is missing you get AttributeError: module 'requests' has no attribute 'get_json'. A wrong keyword argument gives TypeError: ... got an unexpected keyword argument. These errors are the fastest hallucination detectors you have.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "AttributeError: module 'requests' has no attribute 'get_json'",
+              "TypeError: read_csv() got an unexpected keyword argument 'skip_blank'"
+            ],
+            "title": "What hallucinations look like when run"
+          }
+        }
+      },
+      {
+        "title": "Ask the installed library",
+        "body": "Check names against the code you actually have: 'get_json' in dir(requests), inspect.signature(pd.read_csv), help(df.drop_duplicates), and pip show pandas for the version. An editor's autocomplete, which reads the installed package, is another quick check."
+      }
+    ],
+    "takeaway": "The model predicts names; your installed library defines them. Treat every unfamiliar method as a guess until running it or inspecting the library confirms it."
+  }
 }

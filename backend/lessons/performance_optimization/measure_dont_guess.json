@@ -167,5 +167,89 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "import cProfile\nimport pstats\nimport io\n\ndef slow_lookup(names, wanted):\n    return [n for n in wanted if n in names]      # list membership\n\ndef build_report():\n    names = [f\"user{i}\" for i in range(30)]\n    wanted = [f\"user{i}\" for i in range(0, 60, 3)]\n    return len(slow_lookup(names, wanted))\n\nprofiler = cProfile.Profile()\nfound = profiler.runcall(build_report)\nout = io.StringIO()\nstats = pstats.Stats(profiler, stream=out).sort_stats(\"cumulative\")\nstats.print_stats(3)\nhot = [line for line in out.getvalue().splitlines() if \"slow_lookup\" in line]\nprint(\"found\", found, \"| hot spot:\", hot[0].split()[-1] if hot else \"?\")\n"
+  "uth_example": "import cProfile\nimport pstats\nimport io\n\ndef slow_lookup(names, wanted):\n    return [n for n in wanted if n in names]      # list membership\n\ndef build_report():\n    names = [f\"user{i}\" for i in range(30)]\n    wanted = [f\"user{i}\" for i in range(0, 60, 3)]\n    return len(slow_lookup(names, wanted))\n\nprofiler = cProfile.Profile()\nfound = profiler.runcall(build_report)\nout = io.StringIO()\nstats = pstats.Stats(profiler, stream=out).sort_stats(\"cumulative\")\nstats.print_stats(3)\nhot = [line for line in out.getvalue().splitlines() if \"slow_lookup\" in line]\nprint(\"found\", found, \"| hot spot:\", hot[0].split()[-1] if hot else \"?\")\n",
+  "under_the_hood": {
+    "summary": "cProfile hooks every function call and return to count calls and accumulate time per function, while timeit runs a small statement many times in a tight loop with garbage collection off and reports the best of several repeats.",
+    "steps": [
+      {
+        "title": "cProfile listens to call events",
+        "body": "`cProfile.run('main()')` installs a C-level profiling hook. Every time any Python function (or built-in) is called or returns, the hook records a timestamp. From those events it builds a table per function: how many calls, time spent in the function itself (tottime) and time including everything it called (cumtime).",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "function called",
+                "detail": "hook: start timer"
+              },
+              {
+                "label": "function returns",
+                "detail": "hook: stop timer"
+              },
+              {
+                "label": "per function",
+                "detail": "ncalls, tottime, cumtime"
+              },
+              {
+                "label": "pstats",
+                "detail": "sort and print"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Reading the table",
+        "body": "Sorting by cumulative time puts the call path that dominates the run at the top; sorting by tottime shows where the CPU actually spends its own time. A function called 200,000 times with a tiny tottime each can still be the bottleneck.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "   ncalls  tottime  cumtime  filename:lineno(function)",
+              "        1    0.002    3.104  app.py:40(main)",
+              "   200000    1.950    2.870  app.py:12(format_row)",
+              "   200000    0.920    0.920  {method 'format' of 'str' objects}",
+              "        1    0.150    0.150  app.py:30(load)"
+            ],
+            "caption": "Here format_row, not load, is the bottleneck"
+          }
+        }
+      },
+      {
+        "title": "The profiler has a cost",
+        "body": "Because the hook runs on every call, cProfile makes call-heavy code noticeably slower, and slows small frequently called functions more than big ones. Use it to find where time goes, then confirm improvements with a plain timer on the unprofiled program."
+      },
+      {
+        "title": "timeit for small comparisons",
+        "body": "`timeit.timeit('x in s', setup='s = set(range(1000)); x = 500', number=1_000_000)` compiles the statement into a loop that runs it a million times, measures with `time.perf_counter`, and turns off garbage collection during the run so collection pauses do not add noise. `timeit.repeat` does that several times; the minimum is the best estimate of the true cost.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "import timeit\nt = timeit.repeat('x in s',\n    setup='s = set(range(1000)); x = 500',\n    number=1_000_000, repeat=5)\nprint(min(t))",
+            "highlightSequence": [
+              3,
+              4,
+              5
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Setup runs once per repeat, outside the timing."
+              },
+              {
+                "description": "The statement runs a million times per repeat."
+              },
+              {
+                "description": "Take the minimum: other runs were slowed by noise."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Measure the real workload",
+        "body": "Micro-benchmarks answer 'which of two lines is faster', not 'why is my program slow'. Profile with realistic input sizes, because a step that is negligible on 100 rows can dominate on a million."
+      }
+    ],
+    "takeaway": "Profile first to find where time really goes, then use timeit to compare alternatives for that spot. Intuition about bottlenecks is usually wrong; the call counts and cumulative times are not."
+  }
 }

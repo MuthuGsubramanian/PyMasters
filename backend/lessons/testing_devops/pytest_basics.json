@@ -461,5 +461,119 @@
     "path_memberships": [
       "testing_devops"
     ]
+  },
+  "under_the_hood": {
+    "summary": "pytest collects test_ functions by name, rewrites their assert statements at import time so failures show the values involved, and injects fixtures by matching parameter names.",
+    "steps": [
+      {
+        "title": "Collection by naming rules",
+        "body": "pytest walks the folders for files named test_*.py or *_test.py, imports them, and collects functions named test_* and classes named Test* (without an __init__). Each one becomes a test item with an id such as tests/test_calc.py::test_sum.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "find files",
+                "detail": "test_*.py, *_test.py"
+              },
+              {
+                "label": "import",
+                "detail": "with assert rewriting"
+              },
+              {
+                "label": "collect",
+                "detail": "test_* functions, Test* classes"
+              },
+              {
+                "label": "run items",
+                "detail": "fixtures resolved first"
+              }
+            ],
+            "title": "What `pytest` does before running anything"
+          }
+        }
+      },
+      {
+        "title": "Assert rewriting",
+        "body": "A plain assert would only raise AssertionError with no detail. pytest installs an import hook that rewrites the assert statements in your test modules, turning them into code that saves each sub-expression. So assert add(2, 2) == 5 reports the actual values, not just 'False'.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "    def test_add():",
+              ">       assert add(2, 2) == 5",
+              "E       assert 4 == 5",
+              "E        +  where 4 = add(2, 2)"
+            ],
+            "title": "What the rewritten assert reports"
+          }
+        }
+      },
+      {
+        "title": "Fixtures are matched by parameter name",
+        "body": "When test_sum(sample_list) is collected, pytest sees the parameter name sample_list, finds a function decorated with @pytest.fixture of that name, calls it and passes the return value in. Fixtures can ask for other fixtures the same way, so pytest builds a small dependency graph and calls them in order.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "steps": [
+              {
+                "code": "@pytest.fixture",
+                "explanation": "Register a fixture."
+              },
+              {
+                "code": "def sample_list():",
+                "explanation": "Its name is the lookup key."
+              },
+              {
+                "code": "    return [1, 2, 3, 4, 5]",
+                "explanation": "Value handed to the test."
+              },
+              {
+                "code": "def test_sum(sample_list):",
+                "explanation": "Parameter name matches, so pytest calls the fixture."
+              },
+              {
+                "code": "    assert sum(sample_list) == 15",
+                "explanation": ""
+              }
+            ],
+            "title": "Dependency injection by name"
+          }
+        }
+      },
+      {
+        "title": "Scope and teardown",
+        "body": "By default a fixture runs once per test (scope='function'), so every test gets a fresh value. scope='module' or 'session' caches the value for longer. A fixture that uses yield runs the code after the yield as teardown, even when the test fails."
+      },
+      {
+        "title": "parametrize makes several items",
+        "body": "@pytest.mark.parametrize('a,b,expected', [(1, 2, 3), (2, 3, 5)]) makes two separate test items, test_add[1-2-3] and test_add[2-3-5]. Each passes or fails on its own, so one bad case does not hide the others.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "test id",
+                "values": [
+                  "test_add[1-2-3]",
+                  "test_add[2-3-5]",
+                  "test_add[0-0-1]"
+                ]
+              },
+              {
+                "variable": "result",
+                "values": [
+                  "passed",
+                  "passed",
+                  "FAILED"
+                ]
+              }
+            ],
+            "title": "One function, three items"
+          }
+        }
+      }
+    ],
+    "takeaway": "pytest's power comes from three pieces of machinery: naming-based collection, assert rewriting for rich failures, and fixtures injected by parameter name."
   }
 }

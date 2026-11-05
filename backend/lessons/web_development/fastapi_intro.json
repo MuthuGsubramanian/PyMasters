@@ -399,5 +399,147 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "FastAPI reads each path function's signature once at startup to decide where every parameter comes from; for each request, Uvicorn calls the ASGI app, Starlette routes it, Pydantic validates the inputs, and the return value is serialised to JSON.",
+    "steps": [
+      {
+        "title": "Uvicorn speaks ASGI",
+        "body": "uvicorn main:app runs an event loop and listens for connections. For each HTTP request it builds a scope dict (type 'http', method, path, headers) and awaits app(scope, receive, send), the ASGI call. Unlike WSGI's single function call, ASGI is async, so one process can have many requests waiting on I/O at once.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "client",
+                "detail": "GET /items/5?q=pen"
+              },
+              {
+                "label": "Uvicorn",
+                "detail": "scope = {'method': 'GET', 'path': '/items/5', ...}"
+              },
+              {
+                "label": "await app(scope, receive, send)",
+                "detail": "FastAPI / Starlette"
+              },
+              {
+                "label": "send()",
+                "detail": "status, headers, JSON body"
+              }
+            ],
+            "title": "One request through ASGI",
+            "direction": "right"
+          }
+        }
+      },
+      {
+        "title": "The signature is the specification",
+        "body": "For def read_item(item_id: int, q: str | None = None) on path /items/{item_id}, FastAPI decides at startup: item_id appears in the path, so it is a path parameter and must be an int; q is a simple type not in the path, so it is an optional query parameter. A parameter typed as a Pydantic model would be read from the JSON body.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "parameter",
+                "values": [
+                  "item_id: int",
+                  "q: str | None = None",
+                  "item: Item (BaseModel)"
+                ]
+              },
+              {
+                "variable": "comes from",
+                "values": [
+                  "path /items/{item_id}",
+                  "query string ?q=",
+                  "JSON body"
+                ]
+              }
+            ],
+            "title": "Where each parameter is read from"
+          }
+        }
+      },
+      {
+        "title": "Validation before your code runs",
+        "body": "For GET /items/abc, converting 'abc' to int fails, so FastAPI never calls your function. It returns 422 Unprocessable Entity with a JSON list of errors giving the location ['path', 'item_id'] and the message. Your function only ever sees values of the declared types.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "req",
+                "label": "request arrives",
+                "type": "start"
+              },
+              {
+                "id": "route",
+                "label": "Starlette matches /items/{item_id}"
+              },
+              {
+                "id": "validate",
+                "label": "inputs match the types?",
+                "type": "decision"
+              },
+              {
+                "id": "call",
+                "label": "call read_item(5, 'pen')"
+              },
+              {
+                "id": "r422",
+                "label": "422 with error details",
+                "type": "end"
+              },
+              {
+                "id": "json",
+                "label": "return value -> JSON 200",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "req",
+                "to": "route"
+              },
+              {
+                "from": "route",
+                "to": "validate"
+              },
+              {
+                "from": "validate",
+                "to": "call",
+                "label": "yes"
+              },
+              {
+                "from": "validate",
+                "to": "r422",
+                "label": "no"
+              },
+              {
+                "from": "call",
+                "to": "json"
+              }
+            ],
+            "executionPath": [
+              "req",
+              "route",
+              "validate",
+              "call",
+              "json"
+            ],
+            "title": "Where validation happens"
+          }
+        }
+      },
+      {
+        "title": "async def and def run differently",
+        "body": "An async def endpoint is awaited directly on the event loop, so it must not block; use await for database or HTTP calls. A plain def endpoint is run in a thread pool so its blocking calls do not freeze other requests. Either way, the dict or model you return is converted with jsonable_encoder and sent as a JSONResponse."
+      },
+      {
+        "title": "The docs come from the same information",
+        "body": "The path, parameter types and Pydantic models that drive validation are also turned into an OpenAPI schema served at /openapi.json. Swagger UI at /docs and ReDoc at /redoc read that schema, so the documentation can never drift from the code."
+      }
+    ],
+    "takeaway": "In FastAPI the type hints are the API contract: they decide where inputs come from, validate them before your code runs, and generate the documentation."
   }
 }

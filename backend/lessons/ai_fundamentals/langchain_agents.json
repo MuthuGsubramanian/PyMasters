@@ -469,5 +469,113 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A LangChain agent repeatedly gives the model the question, the tool descriptions and the steps so far; the model replies with either a tool call or a final answer, and the executor runs the tool and appends the observation.",
+    "steps": [
+      {
+        "title": "Tools are described in the prompt",
+        "body": "Each tool has a name, a description and an argument schema, created for example with the @tool decorator on a Python function. These descriptions are sent with every model call. The model chooses a tool only from what the description says, so a vague description leads to wrong choices."
+      },
+      {
+        "title": "Reason, act, observe",
+        "body": "For 'Is it warmer in Chennai or Delhi right now?': Thought, I need Chennai's temperature; Action, get_weather('Chennai'); Observation, 33 C. Then the same for Delhi, 24 C. Then: Final Answer, Chennai is warmer by 9 degrees. Each observation is appended so the next thought can use it.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "question + tool descriptions",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "Thought: need Chennai weather",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "Action: get_weather('Chennai') -> 33 C",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "Action: get_weather('Delhi') -> 24 C",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "Final Answer: Chennai, by 9 degrees",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "A ReAct trace"
+          }
+        }
+      },
+      {
+        "title": "The executor runs the loop",
+        "body": "In the classic AgentExecutor, each round parses the model's output into a tool call or a finish. For a tool call it looks up the function, runs it, and appends the result to the scratchpad of intermediate steps. max_iterations (15 by default) stops a looping agent. Newer LangChain code builds the same loop with LangGraph.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "step 1",
+                "get_weather",
+                "Chennai",
+                "33 C"
+              ],
+              [
+                "step 2",
+                "get_weather",
+                "Delhi",
+                "24 C"
+              ]
+            ],
+            "labels": [
+              "scratchpad",
+              "scratchpad"
+            ],
+            "caption": "Intermediate steps sent back to the model"
+          }
+        }
+      },
+      {
+        "title": "Parsing is a failure point",
+        "body": "With text-based ReAct, the model must write 'Action:' and 'Action Input:' exactly; if it does not, parsing fails. handle_parsing_errors=True sends the error back so the model can correct itself. Native tool calling, where the API returns structured tool calls, avoids most of these errors."
+      },
+      {
+        "title": "Chains versus agents",
+        "body": "A chain runs fixed steps in a fixed order, so it is predictable and cheap. An agent decides its steps at runtime, which handles open-ended tasks but costs more calls and can wander. Use a chain when you know the steps; reach for an agent when you do not."
+      }
+    ],
+    "takeaway": "A ReAct agent is a loop of model decisions and tool results. Good tool descriptions, a step limit and structured tool calls make it reliable; when the steps are known in advance, a plain chain is better."
   }
 }

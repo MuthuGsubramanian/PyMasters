@@ -364,5 +364,126 @@
       },
       "correct": 1
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "An LSTM keeps a separate cell state that is updated by addition: a forget gate scales the old memory, an input gate adds new candidate information, and an output gate decides how much of the memory to reveal as the hidden state.",
+    "steps": [
+      {
+        "title": "Four signals from the same inputs",
+        "body": "At each step the LSTM looks at h_(t-1) and x_t and computes four vectors: forget gate f, input gate i and output gate o, each squashed by a sigmoid to 0..1, and a candidate g squashed by tanh to -1..1. Gates are soft switches: 0 blocks, 1 lets everything through.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "h_(t-1), x_t",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "f = sigmoid(...)  keep how much old memory",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "i = sigmoid(...), g = tanh(...)  what to write",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "c_t = f * c_(t-1) + i * g",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "h_t = o * tanh(c_t)",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One LSTM step"
+          }
+        }
+      },
+      {
+        "title": "Worked: updating the cell",
+        "body": "With c_(t-1) = 2.0, f = 0.9, i = 0.2, g = 0.5 and o = 0.8: c_t = 0.9 x 2.0 + 0.2 x 0.5 = 1.8 + 0.1 = 1.9. The hidden state is h_t = 0.8 x tanh(1.9) = 0.8 x 0.956 = 0.765. Most of the old memory survived, a little new information was written.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              2.0,
+              1.8,
+              0.1,
+              1.9,
+              0.765
+            ],
+            "labels": [
+              "c_prev",
+              "f * c_prev",
+              "i * g",
+              "c_t",
+              "h_t"
+            ],
+            "highlight": [
+              3
+            ],
+            "caption": "One cell update, step by step"
+          }
+        }
+      },
+      {
+        "title": "Why gradients survive",
+        "body": "Along the cell path, dc_t / dc_(t-1) is just f. If the network learns f close to 1 for information worth keeping, the gradient is multiplied by about 0.9 per step instead of a small tanh-and-weight factor: 0.9^10 = 0.35, compared with 0.001 for the plain RNN with w_h = 0.5.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Plain RNN",
+              "code": "gradient x (w_h * tanh') per step\n0.5^10 = 0.001 after 10 steps"
+            },
+            "right": {
+              "label": "LSTM cell path",
+              "code": "gradient x f per step\n0.9^10 = 0.35 after 10 steps"
+            },
+            "caption": "Gradient after 10 steps back"
+          }
+        }
+      },
+      {
+        "title": "Four times the weights",
+        "body": "Each gate has its own weights on both x_t and h_(t-1), so an LSTM layer has about four times the parameters of a plain RNN. In PyTorch, nn.LSTM(10, 20) has 4 x (20 x 10 + 20 x 20 + 20 + 20) = 2,560 parameters, counting its two bias vectors. It returns output plus a tuple (h_n, c_n)."
+      },
+      {
+        "title": "GRU: a lighter variant",
+        "body": "A GRU merges the cell and hidden state and uses two gates, update and reset, instead of three. It has about three quarters of the LSTM's parameters and often performs similarly; LSTMs can be better on tasks needing very long memory."
+      }
+    ],
+    "takeaway": "The LSTM's key idea is additive memory with learned gates: old information is scaled, not repeatedly squashed, so both memories and gradients can last for many steps."
+  }
 }

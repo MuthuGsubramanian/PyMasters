@@ -411,5 +411,96 @@
     "path_memberships": [
       "evaluation"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Every classification metric is computed from four counts, true and false positives and negatives, after the predicted probabilities are cut at a threshold; moving the threshold trades one count for another.",
+    "steps": [
+      {
+        "title": "Count the four outcomes",
+        "body": "Test 100 patients, 10 of them sick. The model flags 13: 8 truly sick (TP) and 5 healthy (FP). It misses 2 sick patients (FN) and correctly clears 85 healthy ones (TN). Every metric below is built from these four numbers.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "TP 8",
+                "FN 2"
+              ],
+              [
+                "FP 5",
+                "TN 85"
+              ]
+            ],
+            "labels": [
+              "actual sick",
+              "actual healthy"
+            ],
+            "highlight": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "caption": "Confusion matrix: columns are predicted sick, predicted healthy"
+          }
+        }
+      },
+      {
+        "title": "Accuracy hides the minority",
+        "body": "Accuracy = (8 + 85) / 100 = 93%. But a lazy model that calls everyone healthy scores 90% while catching no one. With imbalanced classes accuracy mostly measures the majority class."
+      },
+      {
+        "title": "Precision, recall and F1",
+        "body": "Precision = TP / (TP + FP) = 8/13 = 0.62: of those flagged, how many are sick. Recall = TP / (TP + FN) = 8/10 = 0.80: of the sick, how many were caught. F1 is their harmonic mean, 2PR / (P + R) = 0.70; it is high only if both are high.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "accuracy",
+                "value": 0.93
+              },
+              {
+                "variable": "precision",
+                "value": 0.62
+              },
+              {
+                "variable": "recall",
+                "value": 0.8
+              },
+              {
+                "variable": "F1",
+                "value": 0.7
+              }
+            ],
+            "caption": "Metrics from the same four counts"
+          }
+        }
+      },
+      {
+        "title": "The threshold moves the trade-off",
+        "body": "predict uses p > 0.5, but predict_proba gives the raw probabilities. Lowering the threshold to 0.3 flags more patients: recall rises, precision usually falls. For a disease screen you might accept many false alarms to miss fewer sick patients; for a spam filter you might do the opposite.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              "threshold 0.7: few flags, high precision",
+              "threshold 0.5: balanced",
+              "threshold 0.3: many flags, high recall"
+            ],
+            "caption": "Same model, different operating points"
+          }
+        }
+      },
+      {
+        "title": "ROC-AUC summarises every threshold",
+        "body": "The ROC curve plots recall (true positive rate) against false positive rate as the threshold sweeps from 1 to 0. Its area, ROC-AUC, equals the probability that a randomly chosen sick patient gets a higher score than a randomly chosen healthy one: 0.5 is guessing, 1.0 is perfect ranking."
+      }
+    ],
+    "takeaway": "Choose the metric from the cost of each mistake. Write down what a false positive and a false negative cost, then pick the threshold and metric that reflect that, instead of trusting accuracy by default."
   }
 }

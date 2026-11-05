@@ -145,5 +145,99 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "ai_suggestions = [\n    (\"str\", \"removeprefix\"),\n    (\"str\", \"count_unique\"),            # plausible, but invented\n    (\"list\", \"sort\"),\n    (\"dict\", \"get_or_default\"),         # plausible, but invented\n]\ntypes = {\"str\": str, \"list\": list, \"dict\": dict}\n\nverdicts = {}\nfor type_name, method in ai_suggestions:\n    exists = hasattr(types[type_name], method)\n    verdicts[f\"{type_name}.{method}\"] = \"real\" if exists else \"HALLUCINATED\"\n\nwords = \"the cat and the hat\".split()\nunique_count = len(set(words))          # the boring, real way\nprint(verdicts)\nprint(\"unique words:\", unique_count)\n"
+  "uth_example": "ai_suggestions = [\n    (\"str\", \"removeprefix\"),\n    (\"str\", \"count_unique\"),            # plausible, but invented\n    (\"list\", \"sort\"),\n    (\"dict\", \"get_or_default\"),         # plausible, but invented\n]\ntypes = {\"str\": str, \"list\": list, \"dict\": dict}\n\nverdicts = {}\nfor type_name, method in ai_suggestions:\n    exists = hasattr(types[type_name], method)\n    verdicts[f\"{type_name}.{method}\"] = \"real\" if exists else \"HALLUCINATED\"\n\nwords = \"the cat and the hat\".split()\nunique_count = len(set(words))          # the boring, real way\nprint(verdicts)\nprint(\"unique words:\", unique_count)\n",
+  "under_the_hood": {
+    "summary": "A chat model keeps no memory between calls: each turn, the tool resends the conversation and any attached files as one block of tokens, the model answers from that block alone, and anything that does not fit or was not sent does not exist for it.",
+    "steps": [
+      {
+        "title": "Every request starts from zero",
+        "body": "The model's weights are fixed after training; talking to it does not change them. What feels like memory is the chat tool pasting the earlier messages back into each new request. Start a new chat and that history is simply not sent.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "system instructions",
+                "detail": "set by the tool"
+              },
+              {
+                "label": "earlier messages",
+                "detail": "resent every turn"
+              },
+              {
+                "label": "attached files",
+                "detail": "only what the tool includes"
+              },
+              {
+                "label": "your new message",
+                "detail": "appended last"
+              },
+              {
+                "label": "model",
+                "detail": "answers from this block only"
+              }
+            ],
+            "title": "What one request actually contains"
+          }
+        }
+      },
+      {
+        "title": "The context window is a fixed budget",
+        "body": "That block is measured in tokens (roughly 3 to 4 characters of English each) and has a maximum size. Long sessions fill it, and tools then drop or summarise older turns. A decision you made an hour ago can quietly fall out, and the model will contradict it without knowing it did.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "turn",
+                "values": [
+                  1,
+                  10,
+                  40,
+                  80
+                ]
+              },
+              {
+                "variable": "context used",
+                "values": [
+                  "5%",
+                  "30%",
+                  "90%",
+                  "full: older turns dropped or summarised"
+                ]
+              }
+            ],
+            "title": "A long session filling the window (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "It only knows the code it was shown",
+        "body": "If your helper parse_order() lives in a file that was not attached, the model cannot see it and will write a new one, or call a function with the name it guesses you used. It does not know your folder layout, your database columns or your library versions unless they are in the context."
+      },
+      {
+        "title": "Confidence is not a signal",
+        "body": "Generation produces fluent text whether the underlying pattern was common in training or barely present. The tone of an invented answer and a correct one is the same, and the model does not stop to check documentation on its own. You supply the doubt: ask it to show the source, or verify by running.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Human junior",
+              "code": "unsure about an API -> 'let me check the docs'\nremembers yesterday's decisions\nknows the repo layout"
+            },
+            "right": {
+              "label": "AI pair",
+              "code": "unsure -> still answers fluently\nno memory between chats\nsees only what is in the context"
+            },
+            "title": "Same eagerness, different failure modes"
+          }
+        }
+      },
+      {
+        "title": "Working with the intern you have",
+        "body": "Paste the exact code, signatures and error it needs; restate key decisions in long sessions; start a fresh chat with a short summary when the old one drifts; and verify anything it claims about libraries. You are the memory and the fact-checker in this pair."
+      }
+    ],
+    "takeaway": "The AI sees exactly one block of text per request. Put the right facts in that block, assume nothing outside it is known, and check what comes back."
+  }
 }

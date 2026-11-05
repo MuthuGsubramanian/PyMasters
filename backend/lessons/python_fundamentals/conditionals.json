@@ -476,5 +476,78 @@
     "real_world_application": [],
     "category": "python_core",
     "path_memberships": []
+  },
+  "under_the_hood": {
+    "summary": "An if/elif/else chain compiles into tests and jump instructions: Python checks each condition's truthiness in order and jumps over every block that should not run.",
+    "steps": [
+      {
+        "title": "The condition is reduced to True or False",
+        "body": "`if speed > 50:` first evaluates `speed > 50`, which gives a bool. If the condition is some other object, like a list, Python asks it for its truthiness: `__bool__` if defined, otherwise `__len__() != 0`. An empty list is falsy, so `if items:` means 'if there is at least one item'."
+      },
+      {
+        "title": "Each test becomes a conditional jump",
+        "body": "In CPython 3.11 an `if` is compiled to the test followed by `POP_JUMP_FORWARD_IF_FALSE`. When the test is False the interpreter jumps past the block; when True it falls through into the block. There is no 'if object' at run time, only jumps over bytecode.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "if light == 'green':\n    go()\nelif light == 'yellow':\n    slow()\nelse:\n    stop()",
+            "highlightSequence": [
+              1,
+              3,
+              6
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Test 1: if False, jump to the elif test."
+              },
+              {
+                "description": "Test 2: if False, jump to the else block."
+              },
+              {
+                "description": "No test left: else runs. Every finished branch jumps to the end."
+              }
+            ],
+            "caption": "Tests run top to bottom until one is True"
+          }
+        }
+      },
+      {
+        "title": "Only the first true branch runs",
+        "body": "After a block finishes, a jump skips the remaining elif and else blocks. So with `score = 95`, `if score > 50` wins and `elif score > 90` is never tested, even though it is also true. Order your conditions from most specific to most general.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "if score > 90",
+                "detail": "False -> jump"
+              },
+              {
+                "label": "elif score > 70",
+                "detail": "True -> run block"
+              },
+              {
+                "label": "elif score > 50",
+                "detail": "skipped"
+              },
+              {
+                "label": "else",
+                "detail": "skipped"
+              }
+            ],
+            "caption": "score = 85"
+          }
+        }
+      },
+      {
+        "title": "Conditions short-circuit too",
+        "body": "`if user and user.is_admin:` checks `user` first. If it is None, the second part is never evaluated, so there is no AttributeError. The same jumping logic that skips blocks also skips the right side of `and` and `or`."
+      },
+      {
+        "title": "The conditional expression",
+        "body": "`label = 'adult' if age >= 18 else 'minor'` uses the same jump mechanism but produces a value. Only one of the two result expressions is evaluated, never both."
+      }
+    ],
+    "takeaway": "An if chain is a list of tests with jumps between them. Python stops at the first truthy test and skips the rest, so the order of your conditions is part of the logic."
   }
 }

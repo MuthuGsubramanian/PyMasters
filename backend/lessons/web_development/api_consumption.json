@@ -392,5 +392,150 @@
     "path_memberships": [
       "web_development"
     ]
+  },
+  "under_the_hood": {
+    "summary": "requests builds the full URL and headers, sends them over a pooled connection, and gives you a Response with the status, headers and raw body; .json() parses the body, and timeouts, retries and pagination are your responsibility.",
+    "steps": [
+      {
+        "title": "params become the query string",
+        "body": "requests.get(url, params={'q': 'python web', 'page': 2}) URL-encodes the dict and appends it: ?q=python+web&page=2. The space becomes + and special characters are percent-encoded, which is why you should never glue user input into a URL by hand.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "you pass",
+                "values": [
+                  "{'q': 'python web'}",
+                  "{'page': 2}"
+                ]
+              },
+              {
+                "variable": "in the URL",
+                "values": [
+                  "q=python+web",
+                  "page=2"
+                ]
+              }
+            ],
+            "title": "Query string encoding"
+          }
+        }
+      },
+      {
+        "title": "A Session reuses connections",
+        "body": "Each plain requests.get may open a new TCP and TLS connection. A requests.Session keeps a connection pool (from urllib3), so later calls to the same host reuse the open connection and skip the handshakes. It also keeps default headers and cookies for every call.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "requests.get in a loop",
+              "code": "100 calls -> up to 100 TCP + TLS handshakes"
+            },
+            "right": {
+              "label": "with requests.Session() as s",
+              "code": "100 calls -> one connection reused"
+            },
+            "title": "Connection reuse"
+          }
+        }
+      },
+      {
+        "title": "The Response holds bytes until you parse",
+        "body": "response.status_code is the number from the status line and response.headers is a case-insensitive dict. response.content holds the raw body bytes; response.json() decodes them and runs json.loads, raising an error if the body is not JSON (an HTML error page, for example). raise_for_status() turns any 4xx or 5xx status into an HTTPError."
+      },
+      {
+        "title": "Always set a timeout",
+        "body": "requests has no default timeout: if the server accepts the connection but never answers, the call waits forever. timeout=(3.05, 10) means up to about 3 seconds to connect and 10 seconds between bytes of the response. Then catch requests.Timeout and decide whether to retry.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "call",
+                "label": "send request",
+                "type": "start"
+              },
+              {
+                "id": "ok",
+                "label": "response in time?",
+                "type": "decision"
+              },
+              {
+                "id": "status",
+                "label": "status 429 or 5xx?",
+                "type": "decision"
+              },
+              {
+                "id": "wait",
+                "label": "wait (Retry-After or 1s, 2s, 4s...)"
+              },
+              {
+                "id": "parse",
+                "label": "response.json()",
+                "type": "end"
+              },
+              {
+                "id": "fail",
+                "label": "give up after N tries",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "call",
+                "to": "ok"
+              },
+              {
+                "from": "ok",
+                "to": "status",
+                "label": "yes"
+              },
+              {
+                "from": "ok",
+                "to": "wait",
+                "label": "timeout"
+              },
+              {
+                "from": "status",
+                "to": "wait",
+                "label": "yes"
+              },
+              {
+                "from": "status",
+                "to": "parse",
+                "label": "no"
+              },
+              {
+                "from": "wait",
+                "to": "call",
+                "label": "retry"
+              },
+              {
+                "from": "wait",
+                "to": "fail",
+                "label": "too many"
+              }
+            ],
+            "executionPath": [
+              "call",
+              "ok",
+              "status",
+              "wait",
+              "call",
+              "ok",
+              "status",
+              "parse"
+            ],
+            "title": "A polite retry loop"
+          }
+        }
+      },
+      {
+        "title": "Rate limits and pages",
+        "body": "APIs cap how fast you may call them; going over returns 429 Too Many Requests, often with a Retry-After header saying how many seconds to wait. Big result sets come in pages: keep requesting with page=2, 3... or the next URL or cursor the API returns, until it signals there are no more."
+      }
+    ],
+    "takeaway": "An API call is an HTTP exchange you control: encode inputs with params, reuse a Session, always set a timeout, check the status before parsing, and back off when the server says slow down."
   }
 }

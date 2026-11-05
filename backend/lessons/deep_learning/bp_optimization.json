@@ -13,7 +13,7 @@
   "xp_reward": 70,
   "next_unlock": "cnn_convolutions",
   "story_variants": {
-    "en": "## Optimizers: SGD, Momentum, and Adam\n\nVanilla gradient descent works but is slow and gets stuck in ravines. Modern optimizers add **memory** and **adaptive learning rates** to converge faster.\n\n### SGD with Momentum\n\nMomentum accumulates a velocity vector in the gradient direction:\n\n```\nv ← β·v − η·∇L\nw ← w + v\n```\n\n- `β` is the momentum coefficient (typically 0.9).\n- Like a ball rolling downhill — it builds speed.\n\n### RMSProp\n\nAdapts the learning rate for each parameter individually based on recent gradient magnitudes:\n\n```\nE[g²] ← β·E[g²] + (1−β)·g²\nw ← w − η · g / √(E[g²] + ε)\n```\n\n### Adam: The Best of Both\n\n**Adam** (Adaptive Moment Estimation) combines momentum (first moment) and RMSProp (second moment):\n\n```python\ndef adam_update(w, g, m, v, t, lr=0.001, b1=0.9, b2=0.999, eps=1e-8):\n    m = b1 * m + (1 - b1) * g          # first moment\n    v = b2 * v + (1 - b2) * g**2       # second moment\n    m_hat = m / (1 - b1**t)            # bias correction\n    v_hat = v / (1 - b2**t)            # bias correction\n    w = w - lr * m_hat / (v**0.5 + eps)\n    return w, m, v\n```\n\n### Optimizer Comparison\n\n| Optimizer | Adaptive LR | Momentum | Typical Use |\n|-----------|------------|---------|-------------|\n| SGD | No | No | Simple baselines |\n| SGD + Momentum | No | Yes | Image classification |\n| RMSProp | Yes | No | RNNs |\n| Adam | Yes | Yes | General purpose |\n| AdamW | Yes | Yes | Transformers |\n\n> **Key Concept:** Adam is the default choice for most deep learning tasks. If Adam doesn't converge, try SGD with momentum and a learning rate schedule."
+    "en": "## Optimizers: SGD, Momentum, and Adam\n\nVanilla gradient descent works but is slow and gets stuck in ravines. Modern optimizers add **memory** and **adaptive learning rates** to converge faster.\n\n### SGD with Momentum\n\nMomentum accumulates a velocity vector in the gradient direction:\n\n```\nv ← β·v − η·∇L\nw ← w + v\n```\n\n- `β` is the momentum coefficient (typically 0.9).\n- Like a ball rolling downhill — it builds speed.\n\n### RMSProp\n\nAdapts the learning rate for each parameter individually based on recent gradient magnitudes:\n\n```\nE[g²] ← β·E[g²] + (1−β)·g²\nw ← w − η · g / √(E[g²] + ε)\n```\n\n### Adam: The Best of Both\n\n**Adam** (Adaptive Moment Estimation) combines momentum (first moment) and RMSProp (second moment):\n\n```python\ndef adam_update(w, g, m, v, t, lr=0.001, b1=0.9, b2=0.999, eps=1e-8):\n    m = b1 * m + (1 - b1) * g          # first moment\n    v = b2 * v + (1 - b2) * g**2       # second moment\n    m_hat = m / (1 - b1**t)            # bias correction\n    v_hat = v / (1 - b2**t)            # bias correction\n    w = w - lr * m_hat / (v_hat**0.5 + eps)\n    return w, m, v\n```\n\n### Optimizer Comparison\n\n| Optimizer | Adaptive LR | Momentum | Typical Use |\n|-----------|------------|---------|-------------|\n| SGD | No | No | Simple baselines |\n| SGD + Momentum | No | Yes | Image classification |\n| RMSProp | Yes | No | RNNs |\n| Adam | Yes | Yes | General purpose |\n| AdamW | Yes | Yes | Transformers |\n\n> **Key Concept:** Adam is the default choice for most deep learning tasks. If Adam doesn't converge, try SGD with momentum and a learning rate schedule."
   },
   "animation_sequence": [
     {
@@ -329,8 +329,8 @@
     },
     {
       "q": {
-        "en": "In the lesson's adam_update, which line has a mistake in the weight update?",
-        "ta": "பாடத்தின் adam_update-இல், weight புதுப்பிப்பில் எந்த வரியில் தவறு உள்ளது?"
+        "en": "A student writes `w = w - lr * m_hat / (v**0.5 + eps)` in adam_update. What is the mistake in the weight update?",
+        "ta": "ஒரு மாணவர் adam_update-இல் `w = w - lr * m_hat / (v**0.5 + eps)` என்று எழுதுகிறார். weight புதுப்பிப்பில் என்ன தவறு?"
       },
       "options": {
         "en": [
@@ -369,5 +369,121 @@
       },
       "correct": 2
     }
-  ]
+  ],
+  "under_the_hood": {
+    "summary": "Optimizers decide how a gradient becomes a step: momentum keeps a running velocity so consistent directions speed up, RMSProp divides each weight's step by its recent gradient size, and Adam does both with bias correction.",
+    "steps": [
+      {
+        "title": "Plain SGD reacts only to now",
+        "body": "SGD steps w = w - lr * g using the current mini-batch gradient alone. In a long narrow valley the gradient points mostly across the valley, so SGD zig-zags between the walls while creeping slowly along the floor."
+      },
+      {
+        "title": "Momentum accumulates velocity",
+        "body": "v = beta * v - lr * g, then w = w + v. With beta = 0.9, lr = 0.1 and a steady gradient of 1, v goes -0.1, -0.19, -0.271, -0.344 and approaches -1.0, ten times the plain step. Directions that keep agreeing build speed; directions that flip sign cancel out, damping the zig-zag.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              -0.1,
+              -0.19,
+              -0.271,
+              -0.344
+            ],
+            "labels": [
+              "step 1",
+              "step 2",
+              "step 3",
+              "step 4"
+            ],
+            "caption": "Velocity under a constant gradient, heading to -1.0"
+          }
+        }
+      },
+      {
+        "title": "RMSProp scales per weight",
+        "body": "RMSProp keeps an average of squared gradients for each weight, E[g²], and divides the step by its square root. A weight with gradients around 10 and one with gradients around 0.1 end up taking similar-sized steps, so one global learning rate suits parameters on very different scales."
+      },
+      {
+        "title": "Adam: both moments, bias corrected",
+        "body": "Adam keeps m, an average of gradients (momentum), and v, an average of squared gradients (RMSProp). Both start at 0, so early averages are too small; dividing by (1 - beta^t) corrects that. On step 1 with g = 0.5: m = 0.05, v = 0.00025, corrected 0.5 and 0.25, step = lr x 0.5 / 0.5 = lr. With g = 50 the first step is still lr: Adam's step size is set by lr, not by the raw gradient size.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "gradient g",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "m = 0.9 m + 0.1 g",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "v = 0.999 v + 0.001 g²",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "m_hat = m / (1 - 0.9^t), v_hat = v / (1 - 0.999^t)",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "w -= lr * m_hat / (sqrt(v_hat) + eps)",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One Adam update"
+          }
+        }
+      },
+      {
+        "title": "AdamW and schedules",
+        "body": "AdamW applies weight decay directly to the weights instead of mixing it into the gradient, which is what most transformer training uses. Many runs also change the learning rate over time, warming up for the first steps and then decaying it, so early updates are gentle and late updates fine-tune.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "SGD + momentum",
+              "code": "one lr for all weights\nvelocity smooths direction\noften strong for image models with a schedule"
+            },
+            "right": {
+              "label": "Adam / AdamW",
+              "code": "per-weight step sizes\nmomentum + scaling\ngood default, especially for transformers"
+            },
+            "caption": "Two common choices"
+          }
+        }
+      }
+    ],
+    "takeaway": "An optimizer is a rule for turning gradients into steps. Momentum remembers direction, adaptive methods normalise scale, and Adam combines them, which is why it is the usual first choice."
+  }
 }

@@ -499,5 +499,86 @@
     "path_memberships": [
       "dsa_track"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Linear search checks items one by one; binary search keeps a low/high window over sorted data and halves it each step, and the bisect module does the same thing in C.",
+    "steps": [
+      {
+        "title": "Linear search: one comparison per item",
+        "body": "for i, val in enumerate(arr) compares each value with the target and stops at the first match. It works on any list, sorted or not, but in the worst case (target last or missing) it does n comparisons.",
+        "visual": {
+          "type": "AlgorithmVisualizer",
+          "props": {
+            "algorithm": "linear_search",
+            "data": [
+              4,
+              9,
+              2,
+              7,
+              5,
+              1
+            ],
+            "target": 5,
+            "title": "Linear search for 5"
+          }
+        }
+      },
+      {
+        "title": "Binary search needs sorted data",
+        "body": "Sorted order means one comparison with the middle item tells you which half the target must be in. Without sorting, the middle item tells you nothing about either half, so binary search cannot be used."
+      },
+      {
+        "title": "Halve the window each step",
+        "body": "Keep left and right indexes. mid = (left + right) // 2. If arr[mid] < target, set left = mid + 1; if larger, right = mid - 1; if equal, done. In [1, 3, 5, 7, 9, 11, 13] searching for 11: mid 7, go right; mid 11, found in 2 comparisons.",
+        "visual": {
+          "type": "AlgorithmVisualizer",
+          "props": {
+            "algorithm": "binary_search",
+            "data": [
+              1,
+              3,
+              5,
+              7,
+              9,
+              11,
+              13
+            ],
+            "target": 11,
+            "title": "Binary search for 11"
+          }
+        }
+      },
+      {
+        "title": "bisect returns an insertion point",
+        "body": "bisect.bisect_left(arr, x) runs the same halving loop but returns the leftmost index where x could be inserted while keeping the list sorted. For [1, 3, 5, 7, 9, 11] and x = 6 it returns 3. insort uses that index and then list.insert, so the search is O(log n) but the insert still shifts items in O(n).",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              1,
+              3,
+              5,
+              7,
+              9,
+              11
+            ],
+            "title": "bisect_left(arr, 6) == 3, insort puts 6 there",
+            "operations": [
+              {
+                "action": "insert",
+                "index": 3,
+                "value": 6
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "The numbers",
+        "body": "For n = 1,000,000 linear search may need 1,000,000 comparisons; binary search needs at most 20, because 2^20 > 1,000,000. If you search the same data many times, sorting once (O(n log n)) and then using bisect pays off quickly."
+      }
+    ],
+    "takeaway": "Binary search wins by throwing away half the candidates per comparison, but only sorted data lets you know which half to throw away."
   }
 }

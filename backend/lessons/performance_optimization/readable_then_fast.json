@@ -165,5 +165,98 @@
     "estimated_minutes": 18,
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A program's total time is the sum of its parts, so speeding up a part can save at most that part's share of the runtime (Amdahl's law); profiling finds the small hot share, and tests let you optimise it without breaking behaviour.",
+    "steps": [
+      {
+        "title": "Time concentrates in a few places",
+        "body": "Profiles of real programs usually show a handful of functions taking most of the time, often inside loops that run millions of times. The rest of the code, the part people most often 'optimise', contributes little to the total.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "list",
+            "data": [
+              "parse_rows: 62%",
+              "format_output: 21%",
+              "load_config: 1%",
+              "everything else: 16%"
+            ],
+            "highlight": [
+              0,
+              1
+            ],
+            "label": "example profile of one run"
+          }
+        }
+      },
+      {
+        "title": "Amdahl's law sets the ceiling",
+        "body": "If a part takes fraction p of the runtime and you make it s times faster, the overall speed-up is 1 / ((1 - p) + p / s). Doubling the speed of a function that takes 62% of the time gives about 1.45x overall; making a 1% function infinitely fast gives about 1.01x.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "part optimised",
+                "values": [
+                  "parse_rows 62%, 2x faster",
+                  "parse_rows 62%, 10x faster",
+                  "load_config 1%, infinitely fast"
+                ]
+              },
+              {
+                "variable": "whole program",
+                "values": [
+                  "about 1.45x",
+                  "about 2.26x",
+                  "about 1.01x"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Readable code is easier to speed up",
+        "body": "Clear functions with one job show up as separate lines in a profile, so the hot one is easy to spot and replace. Tangled, pre-optimised code hides where the time goes and is harder to change safely."
+      },
+      {
+        "title": "The workflow",
+        "body": "Write it clearly, cover it with tests, profile with realistic data, optimise only the top entries, then rerun the tests and the profile to confirm the gain. Keep the readable version where the profile says time does not matter.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "write clearly",
+                "detail": "simple, correct"
+              },
+              {
+                "label": "test",
+                "detail": "lock in behaviour"
+              },
+              {
+                "label": "profile",
+                "detail": "find the hot 3%"
+              },
+              {
+                "label": "optimise that spot",
+                "detail": "better algorithm or structure"
+              },
+              {
+                "label": "re-measure + re-test",
+                "detail": "keep only real wins"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "What 'fast' usually means",
+        "body": "The biggest wins in the hot spot usually come from better complexity (a set instead of a list scan), less repeated work (caching, hoisting) or moving the loop into C (built-ins, NumPy), not from clever one-line tricks."
+      }
+    ],
+    "takeaway": "Optimise where the profile points, because the share of time a part takes caps what you can gain from it. Everywhere else, readability is the better investment."
+  }
 }

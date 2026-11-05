@@ -458,5 +458,129 @@
     "path_memberships": [
       "ai_fundamentals"
     ]
+  },
+  "under_the_hood": {
+    "summary": "In production each user request passes through your API server, which checks the caller, applies a rate limit, tries a cache, and only then calls the model provider with a timeout and retries, recording tokens and latency on the way out.",
+    "steps": [
+      {
+        "title": "The server wraps the model call",
+        "body": "A FastAPI endpoint receives the request, Pydantic validates the body, and your code builds the prompt. The provider's API key stays on the server in an environment variable; the browser never sees it. Because LLM calls take seconds, async handlers let one process serve other requests while it waits.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "POST /ask",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "validate body + authenticate user",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "rate limit OK?",
+                "type": "decision"
+              },
+              {
+                "id": "n3",
+                "label": "cache hit?",
+                "type": "decision"
+              },
+              {
+                "id": "n4",
+                "label": "call model (timeout, retries)",
+                "type": "process"
+              },
+              {
+                "id": "n5",
+                "label": "store in cache, log tokens + latency",
+                "type": "process"
+              },
+              {
+                "id": "n6",
+                "label": "JSON response",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              },
+              {
+                "from": "n4",
+                "to": "n5"
+              },
+              {
+                "from": "n5",
+                "to": "n6"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4",
+              "n5",
+              "n6"
+            ],
+            "caption": "One request through the server"
+          }
+        }
+      },
+      {
+        "title": "Rate limiting with a token bucket",
+        "body": "A common limiter gives each user a bucket of, say, 10 tokens that refills at 1 per second. Each request takes one token; an empty bucket means HTTP 429 'Too Many Requests'. Short bursts are allowed, but sustained traffic is capped at the refill rate, which also caps your spending per user."
+      },
+      {
+        "title": "Caching identical requests",
+        "body": "The cache key is a hash of everything that affects the answer: model name, prompt text and settings such as temperature. If the same key was answered recently, return the stored response instantly at no model cost. Exact-match caching helps most for repeated questions and deterministic settings."
+      },
+      {
+        "title": "Cost is counted in tokens",
+        "body": "Providers bill input and output tokens separately, so the cost of a call is input_tokens x input price + output_tokens x output price. Shorter prompts, a max_tokens limit on replies, and routing easy requests to a smaller model reduce both terms. The response's usage field reports the exact counts to log.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "input_tokens",
+                "value": 1200
+              },
+              {
+                "variable": "output_tokens",
+                "value": 300
+              },
+              {
+                "variable": "cost",
+                "value": "1200 x in_price + 300 x out_price"
+              }
+            ],
+            "caption": "Read usage from every response"
+          }
+        }
+      },
+      {
+        "title": "Retries, fallbacks and monitoring",
+        "body": "Provider errors such as 429 or 5xx are retried with exponential backoff, waiting about 1, 2, then 4 seconds plus a little randomness so many clients do not retry in sync. After the last retry the app returns a graceful message or switches to a fallback model. Dashboards track latency percentiles, error rate and tokens per day."
+      }
+    ],
+    "takeaway": "The model call is one step in a request pipeline you control. Protect it with authentication and rate limits, avoid it with caching, bound it with timeouts and max_tokens, and measure every call's tokens and latency."
   }
 }
