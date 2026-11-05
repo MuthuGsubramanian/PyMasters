@@ -486,5 +486,121 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A perceptron computes z = w·x + b and passes it through an activation: a hard step gives a 0/1 decision that can implement logic gates, while the sigmoid used in the lesson's nn.Linear(2, 1) model gives a smooth probability that gradient descent can train.",
+    "steps": [
+      {
+        "title": "Logic gates by hand",
+        "body": "With weights [1, 1], the bias sets the gate. Bias -1.5 makes AND: only (1, 1) reaches 1 + 1 - 1.5 = 0.5 >= 0. Bias -0.5 makes OR: any single 1 gives 0.5 >= 0. Weight -1 with bias 0.5 makes NOT. One neuron, different numbers, different logic.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "AND",
+                "[1, 1]",
+                -1.5
+              ],
+              [
+                "OR",
+                "[1, 1]",
+                -0.5
+              ],
+              [
+                "NOT",
+                "[-1]",
+                0.5
+              ]
+            ],
+            "labels": [
+              "gate",
+              "gate",
+              "gate"
+            ],
+            "caption": "Columns: gate, weights, bias (step activation)"
+          }
+        }
+      },
+      {
+        "title": "The step has no useful slope",
+        "body": "The step function jumps from 0 to 1 at z = 0 and is flat everywhere else, so its derivative is 0 almost everywhere. Gradient descent gets no signal about which way to move the weights, which is why the classic perceptron used its own mistake-driven update rule instead."
+      },
+      {
+        "title": "Sigmoid makes it trainable",
+        "body": "The lesson's Perceptron is nn.Linear(2, 1) followed by torch.sigmoid. The sigmoid is a smoothed step: for the AND weights scaled by 10, sigmoid(10 x (1 + 1 - 1.5)) = sigmoid(5) = 0.993 and for (1, 0) sigmoid(-5) = 0.007. Now the output says how confident the neuron is, and every weight has a gradient.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "step activation",
+              "code": "output 0 or 1\nslope 0 almost everywhere\ntrained by the perceptron rule"
+            },
+            "right": {
+              "label": "sigmoid activation",
+              "code": "output between 0 and 1\nslope sigmoid(1 - sigmoid)\ntrained by gradient descent"
+            },
+            "caption": "Same weighted sum, different activation"
+          }
+        }
+      },
+      {
+        "title": "What nn.Linear(2, 1) holds",
+        "body": "It stores weight of shape (1, 2) and bias of shape (1,), both initialised to small random values from a uniform range of about plus or minus 1/sqrt(2) = 0.71. For x = [1.0, 0.5] it computes w1 x 1.0 + w2 x 0.5 + b, and the sigmoid turns that into the printed output, which is random until training.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "x = [1.0, 0.5]",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "z = x @ weight.T + bias",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "sigmoid(z)",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "probability of class 1",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3"
+            ],
+            "caption": "Perceptron.forward"
+          }
+        }
+      },
+      {
+        "title": "The line it cannot bend",
+        "body": "Whatever the activation, the decision boundary w·x + b = 0 is a straight line. AND, OR and NOT are linearly separable; XOR is not, so a single perceptron, step or sigmoid, cannot learn it. Adding a hidden layer of such neurons removes that limit."
+      }
+    ],
+    "takeaway": "A perceptron is a weighted sum plus a decision function. With a step it is a logic gate; with a sigmoid it becomes a trainable probability model. Either way it draws only one straight boundary."
   }
 }

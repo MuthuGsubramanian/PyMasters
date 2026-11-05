@@ -473,5 +473,151 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "Following a tensor through LeNet-5, a VGG block and a residual block shows each design's mechanism: LeNet shrinks a 32 x 32 image to 400 numbers before classifying, VGG repeats 3 x 3 convs then halves the size, and ResNet adds each block's input back to its output.",
+    "steps": [
+      {
+        "title": "LeNet-5, shape by shape",
+        "body": "Conv2d(1, 6, 5) turns [1, 1, 32, 32] into [1, 6, 28, 28] since 32 - 5 + 1 = 28. AvgPool2d(2) halves it to 14. Conv2d(6, 16, 5) gives 10 x 10, pooling gives 5 x 5. Flattening 16 x 5 x 5 gives the 400 inputs of Linear(400, 120), then 84, then 10 class scores.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "input",
+                "1 x 32 x 32"
+              ],
+              [
+                "conv 5x5",
+                "6 x 28 x 28"
+              ],
+              [
+                "avgpool",
+                "6 x 14 x 14"
+              ],
+              [
+                "conv 5x5",
+                "16 x 10 x 10"
+              ],
+              [
+                "avgpool",
+                "16 x 5 x 5"
+              ],
+              [
+                "flatten",
+                400
+              ],
+              [
+                "fc",
+                "120 -> 84 -> 10"
+              ]
+            ],
+            "labels": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6"
+            ],
+            "highlight": [
+              5
+            ],
+            "caption": "LeNet-5 tensor shapes"
+          }
+        }
+      },
+      {
+        "title": "Where LeNet's 61,706 weights are",
+        "body": "conv1 has 6 x (25 + 1) = 156 parameters, conv2 16 x (6 x 25 + 1) = 2,416, and the dense layers 48,120 + 10,164 + 850. Over 95% sit in the dense layers, while the convolutions, which do the seeing, are tiny thanks to weight sharing."
+      },
+      {
+        "title": "A VGG block: same size, then halve",
+        "body": "make_vgg_block stacks Conv2d(in, out, 3, padding=1) + ReLU layers, which keep the height and width because padding 1 replaces the 2 pixels a 3 x 3 kernel would trim, then ends with MaxPool2d(2, 2), which halves them. VGG-16 repeats this 5 times: 224, 112, 56, 28, 14, 7, while channels grow 64 to 512.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              "224 x 224 x 64",
+              "112 x 112 x 128",
+              "56 x 56 x 256",
+              "28 x 28 x 512",
+              "14 x 14 x 512",
+              "7 x 7 x 512"
+            ],
+            "caption": "VGG-16 after each block"
+          }
+        }
+      },
+      {
+        "title": "A residual block adds its input back",
+        "body": "ResidualBlock saves residual = x, runs conv-BN-ReLU-conv-BN, adds residual and applies ReLU. If the best thing for a block is to change nothing, it only has to push its convolution weights towards zero, which is easy; a plain block would have to learn an exact identity mapping, which is hard.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "x (saved as residual)",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "conv 3x3 -> BN -> ReLU",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "conv 3x3 -> BN",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "out = out + residual",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "ReLU",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "ResidualBlock.forward"
+          }
+        }
+      },
+      {
+        "title": "When shapes change, the shortcut adapts",
+        "body": "x + F(x) needs both tensors to have the same shape. When a block halves the size or doubles the channels, ResNet's shortcut becomes a 1 x 1 convolution with stride 2 (plus batch norm) so the skip path matches. Everywhere else the shortcut is a free identity, which keeps a direct gradient path through the whole network."
+      }
+    ],
+    "takeaway": "Read architectures as shape transformations: what each layer does to (channels, height, width). LeNet set the pattern, VGG made it uniform and deep, and ResNet's identity shortcuts made very deep versions trainable."
   }
 }

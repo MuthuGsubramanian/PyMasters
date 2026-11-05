@@ -486,5 +486,141 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "A transformer is wired from a positional-encoding buffer added to embeddings, an encoder stack that reads the whole source, and a decoder stack that reads the shifted target under a causal mask, attends to the encoder, and ends in a vocabulary layer.",
+    "steps": [
+      {
+        "title": "Positional encoding as a fixed buffer",
+        "body": "PositionalEncoding builds a (max_len, d_model) table once. div_term = exp(arange(0, d_model, 2) x -(ln 10000 / d_model)) gives frequencies 1, 1/100 for d_model = 4. Position 5 then gets sin(5) = -0.959 and cos(5) = 0.284 in the fast pair, and sin(0.05) = 0.050 and cos(0.05) = 0.999 in the slow pair. The table is registered as a buffer: saved with the model, never trained.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                0,
+                1,
+                0,
+                1
+              ],
+              [
+                -0.959,
+                0.284,
+                0.05,
+                0.999
+              ]
+            ],
+            "labels": [
+              "pos 0",
+              "pos 5"
+            ],
+            "caption": "PE rows for d_model = 4"
+          }
+        }
+      },
+      {
+        "title": "Encoder: read the whole source at once",
+        "body": "Source tokens are embedded, scaled by sqrt(d_model), added to the positional encoding, and passed through N encoder layers of self-attention plus feed-forward. The result, often called memory, has one d_model-sized vector per source token, each informed by the whole sentence."
+      },
+      {
+        "title": "Decoder input is the target shifted right",
+        "body": "During training with teacher forcing, the decoder receives '<sos> Je suis' and must predict 'Je suis étudiant': every position predicts the next target token. A square subsequent mask (upper triangle set to -inf) stops position 2 from attending to position 3, so it cannot copy the answer.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "0",
+                "-inf",
+                "-inf"
+              ],
+              [
+                "0",
+                "0",
+                "-inf"
+              ],
+              [
+                "0",
+                "0",
+                "0"
+              ]
+            ],
+            "labels": [
+              "pos 1",
+              "pos 2",
+              "pos 3"
+            ],
+            "caption": "Causal mask added to decoder attention scores"
+          }
+        }
+      },
+      {
+        "title": "Cross-attention connects the halves",
+        "body": "Each decoder layer has masked self-attention over the target so far, then cross-attention whose queries come from the decoder and whose keys and values come from the encoder memory, then a feed-forward network. Cross-attention is where the translation 'looks back' at the relevant source words.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "target embeddings + PE",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "masked self-attention",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "cross-attention: Q from decoder, K and V from encoder memory",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "feed-forward",
+                "type": "process"
+              },
+              {
+                "id": "n4",
+                "label": "Linear -> vocabulary logits",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              },
+              {
+                "from": "n3",
+                "to": "n4"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3",
+              "n4"
+            ],
+            "caption": "One decoder layer and the output head"
+          }
+        }
+      },
+      {
+        "title": "Inference decodes step by step",
+        "body": "At inference there is no target to shift. Start with '<sos>', run the decoder, take the most likely (or sampled) next token, append it, and run again until '<eos>' or a length limit. The encoder runs once; the decoder runs once per output token, which is why generation is slower than training."
+      }
+    ],
+    "takeaway": "A transformer is embeddings plus positions, an encoder that reads everything, and a decoder that writes one token at a time under a causal mask while consulting the encoder. Getting the masks and the shift right is most of the implementation work."
   }
 }

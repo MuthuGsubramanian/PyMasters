@@ -430,5 +430,113 @@
     "path_memberships": [
       "deep_learning_complete"
     ]
+  },
+  "under_the_hood": {
+    "summary": "In PyTorch, optimizer.step() reads each parameter's .grad and applies the optimizer's update rule in place, using any state it keeps such as momentum buffers, while a learning-rate scheduler changes the step size between epochs.",
+    "steps": [
+      {
+        "title": "The optimizer owns the parameters",
+        "body": "torch.optim.SGD(model.parameters(), lr=0.01) stores references to every weight and bias of nn.Linear(10, 1), 11 numbers. After loss.backward() fills each .grad, step() updates those tensors in place, and zero_grad() clears the .grad fields for the next batch."
+      },
+      {
+        "title": "SGD with momentum, PyTorch style",
+        "body": "PyTorch keeps a buffer v and computes v = momentum x v + g, then p = p - lr x v. Start p = 1.0, lr = 0.1, momentum 0.9. Step 1, g = 0.5: v = 0.5, p = 0.95. Step 2, g = 0.4: v = 0.45 + 0.4 = 0.85, p = 0.865. The second step is larger than its gradient alone would give, because the earlier direction carries over.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "data": [
+              [
+                "step 1",
+                0.5,
+                0.5,
+                0.95
+              ],
+              [
+                "step 2",
+                0.4,
+                0.85,
+                0.865
+              ]
+            ],
+            "labels": [
+              "t1",
+              "t2"
+            ],
+            "caption": "Columns: step, gradient g, buffer v, parameter p"
+          }
+        }
+      },
+      {
+        "title": "Adam keeps two buffers per parameter",
+        "body": "torch.optim.Adam(model.parameters(), lr=0.001) stores, for every parameter, a running mean of gradients and of squared gradients. Each step divides the first by the square root of the second, so every parameter gets its own effective step size. That memory doubles the optimizer state compared with the weights themselves."
+      },
+      {
+        "title": "Schedulers change lr over time",
+        "body": "StepLR(optimizer, step_size=30, gamma=0.1) multiplies lr by 0.1 every 30 epochs: 0.1, then 0.01, then 0.001. CosineAnnealingLR follows lr = lr_min + 1/2 (lr_max - lr_min)(1 + cos(pi t / T)); halfway through, with lr_max = 0.1 and lr_min = 0.001, it is about 0.05. Call scheduler.step() once per epoch, after optimizer.step().",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "StepLR:   epoch 0-29 lr=0.1 | 30-59 lr=0.01 | 60+ lr=0.001",
+              "Cosine:   t=0 lr=0.1 | t=T/2 lr=0.0505 | t=T lr=0.001"
+            ],
+            "caption": "Two learning-rate schedules"
+          }
+        }
+      },
+      {
+        "title": "Weight decay as part of the step",
+        "body": "Passing weight_decay=1e-4 adds 1e-4 x p to each gradient in SGD and Adam, gently shrinking weights every step. AdamW instead subtracts lr x weight_decay x p directly from the weights, separate from the adaptive scaling, which behaves more predictably and is the usual choice for transformers.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              {
+                "id": "n0",
+                "label": "loss.backward(): fill .grad",
+                "type": "start"
+              },
+              {
+                "id": "n1",
+                "label": "optimizer.step(): update rule + momentum / Adam state",
+                "type": "process"
+              },
+              {
+                "id": "n2",
+                "label": "optimizer.zero_grad()",
+                "type": "process"
+              },
+              {
+                "id": "n3",
+                "label": "scheduler.step() at epoch end",
+                "type": "end"
+              }
+            ],
+            "edges": [
+              {
+                "from": "n0",
+                "to": "n1"
+              },
+              {
+                "from": "n1",
+                "to": "n2"
+              },
+              {
+                "from": "n2",
+                "to": "n3"
+              }
+            ],
+            "executionPath": [
+              "n0",
+              "n1",
+              "n2",
+              "n3"
+            ],
+            "caption": "Where each object acts in the loop"
+          }
+        }
+      }
+    ],
+    "takeaway": "The optimizer is a small state machine around your parameters: gradients in, updated weights out, with momentum or Adam statistics remembered between steps. Pick the update rule, then let a schedule shape the learning rate over the run."
   }
 }
