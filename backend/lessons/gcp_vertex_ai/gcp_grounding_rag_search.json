@@ -42,5 +42,100 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "retrieved = [\n    {\"id\": \"policy-3\", \"text\": \"refunds are accepted within 30 days\"},\n    {\"id\": \"policy-7\", \"text\": \"shipping is free above 50 dollars\"},\n]\nanswer_claims = [\n    \"refunds are accepted within 30 days\",\n    \"refunds include a free gift\",\n]\n\ndef support(claim):\n    words = set(claim.split())\n    best = max(retrieved, key=lambda d: len(words & set(d[\"text\"].split())))\n    overlap = len(words & set(best[\"text\"].split())) / len(words)\n    return best[\"id\"], round(overlap, 2)\n\ngrounded = []\nfor claim in answer_claims:\n    source, score = support(claim)\n    grounded.append({\"claim\": claim, \"source\": source if score >= 0.8 else None, \"score\": score})\n\nfor g in grounded:\n    print(g)\n"
+  "uth_example": "retrieved = [\n    {\"id\": \"policy-3\", \"text\": \"refunds are accepted within 30 days\"},\n    {\"id\": \"policy-7\", \"text\": \"shipping is free above 50 dollars\"},\n]\nanswer_claims = [\n    \"refunds are accepted within 30 days\",\n    \"refunds include a free gift\",\n]\n\ndef support(claim):\n    words = set(claim.split())\n    best = max(retrieved, key=lambda d: len(words & set(d[\"text\"].split())))\n    overlap = len(words & set(best[\"text\"].split())) / len(words)\n    return best[\"id\"], round(overlap, 2)\n\ngrounded = []\nfor claim in answer_claims:\n    source, score = support(claim)\n    grounded.append({\"claim\": claim, \"source\": source if score >= 0.8 else None, \"score\": score})\n\nfor g in grounded:\n    print(g)\n",
+  "under_the_hood": {
+    "summary": "Grounding makes Gemini answer from retrieved evidence: the question is used to search Google Search or your own indexed data, the best passages are added to the prompt, and the response comes back with citations linking claims to sources.",
+    "steps": [
+      {
+        "title": "Ingest: parse, chunk, index",
+        "body": "With Vertex AI Search or RAG Engine, documents from Cloud Storage, BigQuery or websites are parsed, split into chunks and embedded. The chunks are stored in an index that supports keyword and vector search.",
+        "visual": {
+          "type": "FlowDiagram",
+          "props": {
+            "nodes": [
+              "PDFs / HTML in Cloud Storage",
+              "Parse layout",
+              "Chunk",
+              "Embed",
+              "Search index"
+            ],
+            "edges": [
+              {
+                "from": "PDFs / HTML in Cloud Storage",
+                "to": "Parse layout"
+              },
+              {
+                "from": "Parse layout",
+                "to": "Chunk"
+              },
+              {
+                "from": "Chunk",
+                "to": "Embed"
+              },
+              {
+                "from": "Embed",
+                "to": "Search index"
+              }
+            ],
+            "description": "Ingestion"
+          }
+        }
+      },
+      {
+        "title": "Retrieve for each question",
+        "body": "At query time, the question is embedded and run against the index; the system returns the top-ranked chunks, often combining keyword and semantic scores and re-ranking."
+      },
+      {
+        "title": "Augment the prompt",
+        "body": "The retrieved chunks are placed in the model's context with an instruction to answer only from them. The model never 'knows' your documents; it reads them in this request.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "system": "Answer only from the sources; cite them",
+              "source [1]": "HR policy, section 4.2 ...",
+              "source [2]": "Leave FAQ, Q7 ...",
+              "user": "How many carry-over leave days are allowed?"
+            },
+            "caption": "What the model actually receives"
+          }
+        }
+      },
+      {
+        "title": "Generate with grounding metadata",
+        "body": "The response includes grounding metadata: which parts of the answer are supported by which source chunks, with support scores. Your app can show citations or reject answers with weak support.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "answer: 'Up to 5 days can be carried over [1].'",
+              "grounding support: segment 0 -> source [1], score 0.92",
+              "sources: [1] hr-policy.pdf p.12"
+            ],
+            "caption": "Grounded answer, simplified"
+          }
+        }
+      },
+      {
+        "title": "Search grounding vs your data",
+        "body": "Grounding with Google Search uses public web results, good for fresh public facts. Grounding on Vertex AI Search or RAG Engine uses only your indexed data, which is what enterprise answers need.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Google Search",
+              "code": "public web, fresh\nnot your private policies"
+            },
+            "right": {
+              "label": "Your data store",
+              "code": "your documents only\naccess-controlled, citable"
+            },
+            "description": "Two grounding sources"
+          }
+        }
+      }
+    ],
+    "takeaway": "Answer quality is capped by retrieval quality. Measure whether the right chunk is retrieved before tuning prompts, and use citations to let users verify."
+  }
 }

@@ -42,5 +42,101 @@
     "path_memberships": []
   },
   "generated": false,
-  "uth_example": "endpoint = {\"deployed\": {\"v1\": 90, \"v2\": 10}, \"min_replicas\": 1, \"max_replicas\": 4}\ncanary_stats = {\"v1\": {\"requests\": 900, \"errors\": 9}, \"v2\": {\"requests\": 100, \"errors\": 0}}\n\ndef error_rate(version):\n    s = canary_stats[version]\n    return s[\"errors\"] / s[\"requests\"]\n\nif error_rate(\"v2\") <= error_rate(\"v1\"):\n    endpoint[\"deployed\"] = {\"v1\": 0, \"v2\": 100}         # promote the challenger\nelse:\n    endpoint[\"deployed\"] = {\"v1\": 100, \"v2\": 0}         # roll back\n\nserving = {\n    \"online\": {\"latency\": \"~100 ms\", \"pays_for\": \"replicas always on\"},\n    \"batch\": {\"latency\": \"minutes\", \"pays_for\": \"only the job\"},\n}\nprint(\"traffic split now:\", endpoint[\"deployed\"])\nprint(\"nightly scoring of 1M rows ->\", \"batch\", serving[\"batch\"])\n"
+  "uth_example": "endpoint = {\"deployed\": {\"v1\": 90, \"v2\": 10}, \"min_replicas\": 1, \"max_replicas\": 4}\ncanary_stats = {\"v1\": {\"requests\": 900, \"errors\": 9}, \"v2\": {\"requests\": 100, \"errors\": 0}}\n\ndef error_rate(version):\n    s = canary_stats[version]\n    return s[\"errors\"] / s[\"requests\"]\n\nif error_rate(\"v2\") <= error_rate(\"v1\"):\n    endpoint[\"deployed\"] = {\"v1\": 0, \"v2\": 100}         # promote the challenger\nelse:\n    endpoint[\"deployed\"] = {\"v1\": 100, \"v2\": 0}         # roll back\n\nserving = {\n    \"online\": {\"latency\": \"~100 ms\", \"pays_for\": \"replicas always on\"},\n    \"batch\": {\"latency\": \"minutes\", \"pays_for\": \"only the job\"},\n}\nprint(\"traffic split now:\", endpoint[\"deployed\"])\nprint(\"nightly scoring of 1M rows ->\", \"batch\", serving[\"batch\"])\n",
+  "under_the_hood": {
+    "summary": "A Vertex AI endpoint is a stable URL with one or more deployed models behind it; each request is routed by the endpoint's traffic split to a deployed model, served by one of its replicas on the chosen machine type, while autoscaling adjusts replicas between min and max.",
+    "steps": [
+      {
+        "title": "Model, endpoint, deployed model",
+        "body": "A model in the registry is just artifacts plus a serving container. Deploying it to an endpoint creates a DeployedModel with a machine type, min and max replica counts and a traffic percentage.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure_type": "dict",
+            "data": {
+              "DeployedModel A (v4)": "n1-standard-4, replicas 2-10, traffic 90%",
+              "DeployedModel B (v5)": "n1-standard-4, replicas 1-3, traffic 10%"
+            },
+            "caption": "Endpoint 'churn-prod'"
+          }
+        }
+      },
+      {
+        "title": "Routing a prediction",
+        "body": "A predict call to the endpoint is authenticated with IAM, routed by traffic split to a deployed model, then load-balanced to one of its replicas, where the serving container runs the model and returns predictions.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "POST :predict to endpoint",
+                "type": "input"
+              },
+              {
+                "label": "IAM check",
+                "type": "process"
+              },
+              {
+                "label": "Traffic split picks v4 (90%)",
+                "type": "process"
+              },
+              {
+                "label": "Load balance to a replica",
+                "type": "process"
+              },
+              {
+                "label": "Container runs model",
+                "type": "process"
+              },
+              {
+                "label": "Predictions returned",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "One online prediction"
+          }
+        }
+      },
+      {
+        "title": "Autoscaling on utilisation",
+        "body": "Vertex keeps at least min replicas running and adds replicas when CPU or accelerator utilisation passes a target, up to max. Because min replicas never go to zero, an idle endpoint still costs money every hour.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "min=2 max=10 target utilisation 60%",
+              "traffic spike: utilisation 90% on 2 replicas",
+              "-> scale to 3, then 4 as load stays high",
+              "night: utilisation 10% -> back to min 2 (never 0)"
+            ],
+            "caption": "Scaling a deployed model (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Batch prediction has no endpoint",
+        "body": "A batch prediction job reads inputs from Cloud Storage or BigQuery, starts workers, writes outputs and shuts everything down. You pay only while the job runs, which suits nightly scoring.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Online endpoint",
+              "code": "always-on replicas\nlow latency per request"
+            },
+            "right": {
+              "label": "Batch prediction",
+              "code": "workers only during the job\nhigh throughput, no latency SLA"
+            },
+            "description": "Online vs batch"
+          }
+        }
+      },
+      {
+        "title": "Safe rollouts by traffic split",
+        "body": "To release v5, deploy it to the same endpoint at 10%, compare error rates and latency, then shift to 50% and 100%. Rolling back is setting v4 back to 100%; no client changes its URL."
+      }
+    ],
+    "takeaway": "An endpoint is a router plus replica pools. Choose online only when someone waits for the answer, size min replicas carefully, and roll out new versions by traffic percentage."
+  }
 }

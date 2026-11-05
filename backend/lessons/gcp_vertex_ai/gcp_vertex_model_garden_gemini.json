@@ -41,5 +41,105 @@
     "category": "enterprise_cloud",
     "path_memberships": []
   },
-  "generated": false
+  "generated": false,
+  "under_the_hood": {
+    "summary": "A Gemini call on Vertex AI is an IAM-authorised request to a regional (or global) model endpoint: your contents are tokenised, the model generates output tokens one at a time until a stop condition, and you are billed for input and output tokens separately.",
+    "steps": [
+      {
+        "title": "Model Garden is a catalog of ways to run models",
+        "body": "Google models such as Gemini are called as managed APIs. Partner models are also offered as managed APIs, and open models such as Gemma or Llama are deployed onto your own Vertex endpoints. The call path differs, so the cost model differs too.",
+        "visual": {
+          "type": "ConceptMap",
+          "props": {
+            "nodes": [
+              {
+                "label": "Model Garden",
+                "children": [
+                  "Google models: managed API",
+                  "Partner models: managed API",
+                  "Open models: deploy to your endpoint"
+                ]
+              }
+            ],
+            "description": "Model Garden entries"
+          }
+        }
+      },
+      {
+        "title": "The request is authorised like any GCP API",
+        "body": "The Google Gen AI SDK with vertexai=True gets an OAuth token from your credentials and calls generateContent on a model in a location. IAM checks aiplatform permissions on the project, and quotas are checked for that model and region.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "nodes": [
+              {
+                "label": "client.models.generate_content(...)",
+                "type": "input"
+              },
+              {
+                "label": "OAuth token + project + location",
+                "type": "process"
+              },
+              {
+                "label": "IAM + quota check",
+                "type": "process"
+              },
+              {
+                "label": "Tokenise system instruction + contents",
+                "type": "process"
+              },
+              {
+                "label": "Generate output tokens",
+                "type": "process"
+              },
+              {
+                "label": "Response + usage metadata",
+                "type": "output"
+              }
+            ],
+            "direction": "vertical",
+            "caption": "One generate_content call"
+          }
+        }
+      },
+      {
+        "title": "Everything becomes tokens",
+        "body": "The system instruction, the conversation history and any images or PDFs are converted to tokens. The model then generates one token at a time, each conditioned on everything before it, until it emits a stop or reaches max_output_tokens.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "prompt_token_count:     1,850",
+              "candidates_token_count:   240",
+              "total_token_count:      2,090"
+            ],
+            "caption": "usage_metadata of one response (illustrative)"
+          }
+        }
+      },
+      {
+        "title": "Tiers trade quality for speed and cost",
+        "body": "Pro handles the hardest reasoning; Flash is the balanced default; Flash-Lite is the cheapest and fastest. The same request can be routed to a different tier by changing only the model name."
+      },
+      {
+        "title": "Caching and batch change the bill",
+        "body": "Context caching stores a large, repeated prefix such as a manual, so later requests refer to it instead of resending it at the full input rate. Batch prediction runs many requests asynchronously at a lower rate when you do not need answers now.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "No cache",
+              "code": "100k input tokens each call\nfull input rate every time"
+            },
+            "right": {
+              "label": "Context cache",
+              "code": "manual cached once\nlater calls reference it at a reduced rate"
+            },
+            "description": "Resending a 100k-token manual on every question"
+          }
+        }
+      }
+    ],
+    "takeaway": "Count tokens before you pick a model. Most LLM cost and latency comes from input size, so trim history, cache shared context, and use the smallest tier that passes your evals."
+  }
 }
