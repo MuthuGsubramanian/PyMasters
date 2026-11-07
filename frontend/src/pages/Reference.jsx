@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ErrorState } from '../components/StateViews';
 import {
@@ -72,8 +73,23 @@ function getTopicIcon(slug) {
 // Reference `section.code` / `section.example` are self-contained snippets, so
 // they run standalone (no lesson-scope prelude). RunnableCode falls back to a
 // read-only copy-able block for non-Python content.
-function CodeBlock({ code, language = 'python' }) {
-  return <RunnableCode code={code} language={language} dark copy />;
+function CodeBlock({ code, language = 'python', onOpenPlayground }) {
+  return (
+    <div className="space-y-1.5">
+      <RunnableCode code={code} language={language} dark copy />
+      {language === 'python' && onOpenPlayground && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => onOpenPlayground(code)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 hover:bg-cyan-500/20 transition-colors"
+          >
+            <Terminal size={12} /> Open in Playground
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ─── Loading skeleton ───────────────────────────────────────────────────────
@@ -135,7 +151,11 @@ function TopicCard({ topic, onClick }) {
 
 // ─── Detail view ────────────────────────────────────────────────────────────
 function TopicDetail({ topic, data, onBack, loading: detailLoading }) {
+  const navigate = useNavigate();
   const colors = CATEGORY_COLORS[topic.category] || CATEGORY_COLORS['python-basics'];
+  const openPlayground = (snippet) => {
+    navigate(`/dashboard/playground?code=${encodeURIComponent(snippet)}`);
+  };
 
   if (detailLoading) {
     return (
@@ -213,8 +233,8 @@ function TopicDetail({ topic, data, onBack, loading: detailLoading }) {
                   </ReactMarkdown>
                 </div>
               )}
-              {section.code && <CodeBlock code={section.code} language={section.language || 'python'} />}
-              {section.example && <CodeBlock code={section.example} language="python" />}
+              {section.code && <CodeBlock code={section.code} language={section.language || 'python'} onOpenPlayground={openPlayground} />}
+              {section.example && <CodeBlock code={section.example} language="python" onOpenPlayground={openPlayground} />}
               {section.notes && (
                 <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
                   <p className="text-xs text-amber-600 flex items-center gap-1 font-semibold mb-1">

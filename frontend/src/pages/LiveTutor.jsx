@@ -261,7 +261,29 @@ export default function LiveTutor() {
             <Card className="p-5">
                 <form onSubmit={submit} className="space-y-5" noValidate>
                     <FormField label={t('tutor.topic', 'What do you want to work on?')}>
-                        {(id) => <Input id={id} minLength={3} maxLength={300} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder={t('tutor.topic_ph', 'e.g. Debugging my decorators lesson, or planning an ML learning path')} />}
+                        {(id) => (
+                            <div className="space-y-2.5">
+                                <Input id={id} minLength={3} maxLength={300} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder={t('tutor.topic_ph', 'e.g. Debugging my decorators lesson, or planning an ML learning path')} />
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                    <span className="text-xs text-text-muted mr-1">Quick pick:</span>
+                                    {[
+                                        '🌱 School (Class 6–12): Python Basics & Exam Doubt Clearing',
+                                        '🎓 College: DSA & Coding Placement Mock Interview',
+                                        '🚀 Pro: FastAPI / Async / Python Architecture Review',
+                                        '🤖 AI & ML: RAG, LLM Agents & Project Mentoring',
+                                    ].map((suggestion) => (
+                                        <button
+                                            key={suggestion}
+                                            type="button"
+                                            onClick={() => setTopic(suggestion)}
+                                            className="px-2.5 py-1 rounded-lg border border-border-default bg-bg-elevated text-xs text-text-secondary hover:border-accent-primary/50 hover:text-text-primary transition-colors text-left"
+                                        >
+                                            {suggestion}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </FormField>
 
                     <section aria-labelledby="tutor-when" className="space-y-3">

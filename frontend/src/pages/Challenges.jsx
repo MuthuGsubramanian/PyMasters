@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import { getWeeklyChallenge, submitChallenge, getChallengeLeaderboard, getChallengeArchive } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import { Card, Button, Badge, Table, TBody, TD } from '../components/ui';
+import PythonEditor from '../components/PythonEditor';
 
 // ─── Difficulty badge colors ────────────────────────────────────────────────
 const DIFFICULTY = {
@@ -118,7 +119,7 @@ function LeaderboardRow({ entry, rank }) {
 }
 
 // ─── F6: browsable challenge archive, filterable by the learner's weak concepts ──
-function ChallengeArchive() {
+function ChallengeArchive({ onSelectChallenge, activeId }) {
   const [items, setItems] = useState([]);
   const [weakOnly, setWeakOnly] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -144,7 +145,7 @@ function ChallengeArchive() {
             <Code2 size={18} className="text-accent-primary" /> Challenge Archive
           </h2>
           <p className="text-xs text-text-muted">
-            Browse every challenge{weakCount > 0 ? ` — ${weakCount} of your concepts need reinforcement` : ''}.
+            Click any challenge to load it in the editor{weakCount > 0 ? ` — ${weakCount} of your concepts need reinforcement` : ''}.
           </p>
         </div>
         <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
@@ -171,11 +172,20 @@ function ChallengeArchive() {
         <div className="grid sm:grid-cols-2 gap-3">
           {items.map((c) => {
             const d = diffCls(c.difficulty);
+            const isSelected = activeId === c.id;
             return (
-              <div
+              <button
                 key={c.id}
-                className={clsx('rounded-xl border p-4 bg-bg-elevated transition-colors',
-                  c.targets_weak_concept ? 'border-accent-primary/40' : 'border-border-default')}
+                type="button"
+                onClick={() => onSelectChallenge?.(c)}
+                className={clsx(
+                  'text-left rounded-xl border p-4 bg-bg-elevated transition-all hover:border-accent-primary/60 hover:shadow-sm cursor-pointer',
+                  isSelected
+                    ? 'border-accent-primary ring-1 ring-accent-primary/40'
+                    : c.targets_weak_concept
+                    ? 'border-accent-primary/40'
+                    : 'border-border-default'
+                )}
               >
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <h3 className="text-sm font-semibold text-text-primary">{c.title}</h3>
@@ -189,8 +199,11 @@ function ChallengeArchive() {
                       <Flame size={10} /> {c.weak_concepts?.length ? `Weak: ${c.weak_concepts.slice(0, 2).join(', ')}` : 'Weak area'}
                     </span>
                   )}
+                  <span className="ml-auto text-xs font-semibold text-accent-primary flex items-center gap-0.5">
+                    Solve <ChevronRight size={12} />
+                  </span>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -454,17 +467,12 @@ export default function Challenges() {
               </div>
 
               <div className="relative">
-                <textarea
-                  ref={editorRef}
+                <PythonEditor
+                  key={challenge?.id || 'weekly'}
                   value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  spellCheck={false}
-                  className={clsx(
-                    'w-full min-h-[320px] p-5 font-mono text-sm leading-relaxed resize-y',
-                    'surface-code',
-                    'focus:outline-none placeholder:text-text-muted',
-                    'border-none'
-                  )}
+                  onChange={setCode}
+                  onRun={handleSubmit}
+                  height="320px"
                   placeholder="# Write your Python solution here..."
                 />
               </div>
@@ -590,13 +598,26 @@ export default function Challenges() {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.35 + i * 0.05 }}
+                    onClick={() => {
+                      if (isLocked) return;
+                      setChallenge((prev) => ({
+                        ...prev,
+                        ...pc,
+                        week: pc.week_number ?? pc.week ?? prev?.week,
+                        xp: pc.xp_reward ?? pc.xp ?? 200,
+                        hints: Array.isArray(pc.hints) ? pc.hints[0] : pc.hints,
+                      }));
+                      setCode(pc.starter_code || `# Solution for ${pc.title}\n`);
+                      setResult(null);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
                     className={clsx(
-                      'flex items-center gap-3 px-4 py-3 rounded-xl transition-colors',
+                      'flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-pointer',
                       isCompleted
                         ? 'bg-green-500/5 hover:bg-green-500/10 border border-green-500/10'
                         : isLocked
-                          ? 'bg-bg-elevated border border-border-default opacity-60'
-                          : 'bg-bg-elevated border border-border-default hover:bg-bg-elevated/70'
+                          ? 'bg-bg-elevated border border-border-default opacity-60 cursor-not-allowed'
+                          : 'bg-bg-elevated border border-border-default hover:bg-bg-elevated/70 hover:border-accent-primary/50'
                     )}
                   >
                     {isCompleted ? (
@@ -666,7 +687,20 @@ export default function Challenges() {
         </div>
 
         {/* F6: browsable archive filtered by weak concepts */}
-        <ChallengeArchive />
+        <ChallengeArchive
+          activeId={challenge?.id}
+          onSelectChallenge={(c) => {
+            setChallenge((prev) => ({
+              ...prev,
+              ...c,
+              xp: c.xp_reward ?? c.xp ?? 200,
+              hints: Array.isArray(c.hints) ? c.hints[0] : c.hints,
+            }));
+            setCode(c.starter_code || `# Write your solution for ${c.title}\n`);
+            setResult(null);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
       </div>
     </div>
   );

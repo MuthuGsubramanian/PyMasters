@@ -21,6 +21,18 @@ GOAL_TO_PATH = {
     "ai_ml": "ml_engineer_path",
     "data_science": "data_scientist_path",
     "games": "fun_projects_path",
+    "school_academics": "python_zero_to_hero",
+    "dsa_interviews": "dsa_interview_path",
+    "devops_cloud": "testing_devops_path",
+}
+
+USER_TYPE_TO_PATH = {
+    "high_school_student": "python_zero_to_hero",
+    "college_student": "dsa_interview_path",
+    "junior_developer": "python_for_programmers",
+    "senior_developer": "testing_devops_path",
+    "career_switcher": "python_zero_to_hero",
+    "hobbyist": "fun_projects_path",
 }
 
 
@@ -30,7 +42,7 @@ def recommend_path(user_id: str) -> dict | None:
     conn.row_factory = sqlite3.Row
 
     profile = conn.execute(
-        "SELECT motivation, goal, prior_experience, skill_level FROM user_profiles WHERE user_id = ?",
+        "SELECT motivation, goal, prior_experience, skill_level, user_type FROM user_profiles WHERE user_id = ?",
         [user_id],
     ).fetchone()
 
@@ -41,11 +53,12 @@ def recommend_path(user_id: str) -> dict | None:
     motivation = profile["motivation"] or ""
     goal = profile["goal"] or ""
     experience = profile["prior_experience"] or "none"
+    user_type = (profile["user_type"] or "").strip()
 
     motivations = set(m.strip() for m in motivation.split(",") if m.strip())
     goals = set(g.strip() for g in goal.split(",") if g.strip())
 
-    # Priority: goal > motivation
+    # Priority: goal > motivation > user_type
     path_id = None
     for g in goals:
         if g in GOAL_TO_PATH:
@@ -58,10 +71,13 @@ def recommend_path(user_id: str) -> dict | None:
                 path_id = MOTIVATION_TO_PATH[m]
                 break
 
+    if not path_id and user_type in USER_TYPE_TO_PATH:
+        path_id = USER_TYPE_TO_PATH[user_type]
+
     if not path_id:
         path_id = "python_zero_to_hero"
 
-    # Beginners always start with fundamentals
+    # Beginners with no prior coding experience always start with an approachable path
     if experience == "none" and path_id not in ("python_zero_to_hero", "fun_projects_path"):
         path_id = "python_zero_to_hero"
 

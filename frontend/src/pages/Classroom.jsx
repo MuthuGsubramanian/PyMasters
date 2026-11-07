@@ -16,7 +16,7 @@ import {
     BookOpen, ChevronRight, Play, RotateCcw,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
     Bot, Gamepad2, Wrench, Globe2, Cpu, Volume2, VolumeX, ThumbsUp, ThumbsDown, Headphones, Mic,
-    MessageCircle, X, Cloud, Building2, Network, GraduationCap, Lightbulb, Loader2, History
+    MessageCircle, X, Cloud, Building2, Network, GraduationCap, Lightbulb, Loader2, History, Search
 } from 'lucide-react';
 import ErrorBoundary from '../components/ErrorBoundary';
 import useTTS from '../hooks/useTTS';
@@ -341,6 +341,18 @@ const TRACK_META = {
         accent: '#14b8a6',
         gradient: 'from-teal-500/10 to-emerald-500/5',
     },
+    trending_ai: {
+        name: 'Trending AI & Frontier Tech',
+        icon: <Sparkles size={16} />,
+        accent: '#f97316',
+        gradient: 'from-orange-500/10 to-rose-500/5',
+    },
+    fresh: {
+        name: 'Fresh Releases & Deep Dives',
+        icon: <Zap size={16} />,
+        accent: '#06b6d4',
+        gradient: 'from-cyan-500/10 to-blue-500/5',
+    },
     generated: {
         name: 'Custom Modules',
         icon: <Sparkles size={16} />,
@@ -403,16 +415,58 @@ const TRACK_META = {
 const DEFAULT_TRACK_ORDER = [
     'assigned',
     'python_fundamentals', 'python_intermediate', 'fun_automation',
-    'web_development', 'dsa',
+    'working_with_data', 'web_development', 'dsa',
     'ai_fundamentals', 'ai_ml_foundations', 'machine_learning',
-    'deep_learning', 'deep_learning_complete',
+    'deep_learning', 'deep_learning_complete', 'transformers_scratch',
+    'ai_agents', 'ai_engineering', 'vibe_coding', 'trending_ai', 'fresh',
+    'python_modern', 'functional_python', 'error_handling', 'debugging_mastery',
+    'regex_mastery', 'async_concurrency', 'performance_optimization', 'python_internals',
     'testing_devops',
     'azure_enterprise', 'azure_ai_foundry', 'aws_enterprise',
     'gcp_vertex_ai', 'cross_cloud_architecture', 'frontier_ai_platforms',
     'generated'
 ];
 
+const STAGE_TRACK_GROUPS = {
+    school: new Set([
+        'assigned', 'python_fundamentals', 'fun_automation', 'python_intermediate',
+        'ai_fundamentals', 'working_with_data', 'vibe_coding', 'generated'
+    ]),
+    college: new Set([
+        'assigned', 'python_fundamentals', 'python_intermediate', 'dsa', 'web_development',
+        'working_with_data', 'ai_fundamentals', 'ai_ml_foundations', 'machine_learning',
+        'error_handling', 'debugging_mastery', 'regex_mastery', 'testing_devops',
+        'vibe_coding', 'generated'
+    ]),
+    pro: new Set([
+        'assigned', 'ai_engineering', 'ai_agents', 'deep_learning', 'deep_learning_complete',
+        'transformers_scratch', 'machine_learning', 'vibe_coding', 'trending_ai', 'fresh',
+        'async_concurrency', 'python_internals', 'performance_optimization', 'python_modern',
+        'functional_python', 'testing_devops', 'debugging_mastery', 'web_development',
+        'azure_enterprise', 'azure_ai_foundry', 'aws_enterprise', 'gcp_vertex_ai',
+        'cross_cloud_architecture', 'frontier_ai_platforms', 'generated'
+    ]),
+};
+
 const PROFILE_WELCOME = {
+    school: {
+        title: 'Your School Coding & AI Classroom (Class 6–12)',
+        subtitle: 'Master Python fundamentals, CBSE/ICSE Computer Science, logic building, and fun automation projects.',
+        icon: <GraduationCap size={14} />,
+        color: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300',
+    },
+    college: {
+        title: 'Your College, DSA & Placement Classroom',
+        subtitle: 'Crack coding interviews with Data Structures & Algorithms, build full-stack APIs, and ship AI projects.',
+        icon: <Cpu size={14} />,
+        color: 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300',
+    },
+    pro: {
+        title: 'Your Professional Engineering & AI Studio',
+        subtitle: 'Production AI Agents, RAG, Deep Learning, Async Concurrency, Python Internals, and Cloud DevOps.',
+        icon: <Zap size={14} />,
+        color: 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-500/30 dark:bg-purple-500/10 dark:text-purple-300',
+    },
     hobby: {
         title: 'Your Fun & Automation Lab',
         subtitle: 'Build cool scripts, automate boring stuff, and have fun with Python!',
@@ -433,7 +487,7 @@ const PROFILE_WELCOME = {
     },
     general: {
         title: 'Your Learning Journey',
-        subtitle: 'Explore Python from fundamentals to advanced topics at your own pace.',
+        subtitle: 'Explore Python from school foundations to college DSA and production AI engineering.',
         icon: <BookOpen size={14} />,
         color: 'border-purple-200 bg-purple-50 text-purple-600',
     },
@@ -443,11 +497,29 @@ const PROFILE_WELCOME = {
 // Phase: select — lesson list grouped by track
 // ──────────────────────────────────────────────────────────────────────────────
 function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint = 'general', primaryTracks = null, completedLessons = new Set() }) {
+    const [searchParams] = useSearchParams();
+    const initialStage = searchParams.get('stage');
     const [expandedTrack, setExpandedTrack] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [stageFilter, setStageFilter] = useState(
+        ['school', 'college', 'pro'].includes(initialStage) ? initialStage : 'all'
+    );
 
+    const qLower = searchQuery.trim().toLowerCase();
     const grouped = {};
     lessons.forEach((lesson) => {
         const track = lesson.track || 'other';
+        if (stageFilter === 'school' && !STAGE_TRACK_GROUPS.school.has(track)) return;
+        if (stageFilter === 'college' && !STAGE_TRACK_GROUPS.college.has(track)) return;
+        if (stageFilter === 'pro' && !STAGE_TRACK_GROUPS.pro.has(track)) return;
+        if (qLower) {
+            const titleStr = String(resolveText(lesson.title, language) || '').toLowerCase();
+            const descStr = String(resolveText(lesson.description, language) || '').toLowerCase();
+            const trackStr = String(TRACK_META[track]?.name || track).toLowerCase();
+            if (!titleStr.includes(qLower) && !descStr.includes(qLower) && !trackStr.includes(qLower)) {
+                return;
+            }
+        }
         if (!grouped[track]) grouped[track] = [];
         grouped[track].push(lesson);
     });
@@ -457,19 +529,30 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
         ? [...primaryTracks, ...DEFAULT_TRACK_ORDER.filter(t => !primaryTracks.includes(t))]
         : DEFAULT_TRACK_ORDER;
 
-    const presentTracks = trackOrder.filter((t) => grouped[t]?.length > 0);
+    const presentTracks = trackOrder.filter((t) => {
+        if (!grouped[t]?.length) return false;
+        if (stageFilter === 'in_progress') {
+            return grouped[t].some((l) => completedLessons.has(l.id));
+        }
+        return true;
+    });
     Object.keys(grouped).forEach((t) => {
-        if (!presentTracks.includes(t)) presentTracks.push(t);
+        if (!presentTracks.includes(t)) {
+            if (stageFilter !== 'in_progress' || grouped[t].some((l) => completedLessons.has(l.id))) {
+                presentTracks.push(t);
+            }
+        }
     });
 
-    const welcome = PROFILE_WELCOME[profileHint] || PROFILE_WELCOME.general;
+    const activeHint = stageFilter !== 'all' && PROFILE_WELCOME[stageFilter] ? stageFilter : profileHint;
+    const welcome = PROFILE_WELCOME[activeHint] || PROFILE_WELCOME.general;
 
     // Auto-expand first track
     useEffect(() => {
-        if (presentTracks.length > 0 && !expandedTrack) {
+        if (presentTracks.length > 0 && (!expandedTrack || !presentTracks.includes(expandedTrack))) {
             setExpandedTrack(presentTracks[0]);
         }
-    }, [presentTracks.length]);
+    }, [presentTracks.length, stageFilter, qLower]);
 
     return (
         <div className="animate-fade-in space-y-4 max-w-5xl mx-auto">
@@ -481,6 +564,56 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                 <h1 className="text-3xl font-bold font-display text-text-primary">{welcome.title}</h1>
                 <p className="text-text-muted">{welcome.subtitle}</p>
             </header>
+
+            {/* Stage Filter & Search Bar */}
+            {!loading && lessons.length > 0 && (
+                <div className="rounded-2xl border border-border-default bg-bg-surface p-3.5 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {[
+                                { id: 'all', label: 'All Tracks' },
+                                { id: 'school', label: '🌱 School (Class 6–12)' },
+                                { id: 'college', label: '🎓 College, DSA & Web' },
+                                { id: 'pro', label: '🚀 Pro, AI & Cloud' },
+                                { id: 'in_progress', label: '⚡ In Progress' },
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => setStageFilter(tab.id)}
+                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                                        stageFilter === tab.id
+                                            ? 'border-purple-500 bg-purple-500/12 text-purple-700 dark:text-purple-300 shadow-sm'
+                                            : 'border-transparent bg-bg-elevated text-text-secondary hover:text-text-primary hover:border-border-default'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="relative sm:w-64">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search lessons or tracks..."
+                                className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-bg-elevated border border-border-default text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500"
+                            />
+                            {searchQuery && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearchQuery('')}
+                                    aria-label="Clear lesson search"
+                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                                >
+                                    <X size={12} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {loading ? (
                 <div className="flex flex-col items-center justify-center h-40 gap-3">

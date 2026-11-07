@@ -21,43 +21,43 @@ import {
 const RELEASE_NOTES = [
     {
         version: '2.0.0',
-        date: '2026-06-09',
-        title: 'Four New Deep-Dive Tracks',
-        subtitle: 'Master AI-assisted development, Python internals, and transformers — taught hands-on, found nowhere else.',
+        date: '2026-11-07',
+        title: 'Built for Every Stage — School to Pro',
+        subtitle: 'Tailored pathways for School Students (Class 6–12), College & Placement Prep, and Working Professionals.',
         features: [
             {
-                icon: Sparkles,
-                title: 'Vibe-Coding Track',
+                icon: Route,
+                title: 'Stage-Aware Learning Modes',
                 description:
-                    'The dos & don’ts of building with AI: verify don’t trust, catch hallucinated APIs, stay the architect. 14 lessons.',
+                    'Switch anytime between School (Class 6–12 CBSE/ICSE/State CS & AI), College & DSA Placement Prep, and Pro AI Engineering.',
                 color: 'from-emerald-500 to-cyan-600',
             },
             {
-                icon: Cpu,
-                title: 'Python Internals Track',
+                icon: Sparkles,
+                title: 'Vibe-Coding & AI Engineering Tracks',
                 description:
-                    'How Python really works — the object model, refcounting & GC, the GIL, descriptors, metaclasses. 10 lessons.',
+                    'Build with AI responsibly, master LLM agents & RAG, and explore 500+ interactive lessons across 30+ tracks.',
                 color: 'from-violet-500 to-purple-600',
             },
             {
                 icon: BrainCircuit,
-                title: 'Transformers from Scratch',
+                title: 'Transformers, Internals & Async Deep-Dives',
                 description:
-                    'Build softmax, attention, and the transformer block by hand in pure Python. 8 lessons.',
+                    'Hands-on tracks for experienced developers: build attention & transformers in pure Python, master the GIL & event loop.',
                 color: 'from-amber-500 to-orange-600',
             },
             {
-                icon: Zap,
-                title: 'Async & Concurrency',
+                icon: Code2,
+                title: 'Playground Starter Templates & Visual Explains',
                 description:
-                    'The event loop, await/gather, async vs threads vs processes, structured concurrency. 5 lessons.',
+                    'Jump straight into runnable School, DSA, and AI code templates plus 32 interactive visual essays.',
                 color: 'from-blue-500 to-indigo-600',
             },
             {
                 icon: ShieldCheck,
-                title: 'Smarter, Safer Tutoring',
+                title: 'Smarter, Safer Vaathiyaar Tutoring',
                 description:
-                    'Vaathiyaar now escalates help when you’re stuck, and the code sandbox is hardened.',
+                    'Step-by-step adaptive hints in English, Tamil, Telugu & Malayalam with a hardened zero-setup Python sandbox.',
                 color: 'from-rose-500 to-pink-600',
             },
         ],

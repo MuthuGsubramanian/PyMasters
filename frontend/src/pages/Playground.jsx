@@ -30,6 +30,110 @@ import { Button, Badge, Modal, Drawer, Input } from '../components/ui';
 const TAP = 'min-h-11 lg:min-h-0';
 const TAP_ICON = 'min-h-11 min-w-11 justify-center lg:min-h-0 lg:min-w-0';
 
+const STARTER_TEMPLATES = [
+    {
+        id: 'school_stars',
+        label: '🌱 School: Star Pyramid & Quiz',
+        code: `# 🌱 School Starter (Class 6–12): Loops & Functions
+def star_pyramid(rows):
+    for i in range(1, rows + 1):
+        spaces = " " * (rows - i)
+        stars = "★ " * i
+        print(f"{spaces}{stars}")
+
+print("=== Welcome to PyMasters School Lab ===")
+star_pyramid(5)
+
+marks = [88, 92, 79, 95, 91]
+avg = sum(marks) / len(marks)
+print(f"\\nClass Average: {avg:.1f}% | Top Score: {max(marks)}%")
+`,
+    },
+    {
+        id: 'college_dsa',
+        label: '🎓 College: Binary Search & Two Sum',
+        code: `# 🎓 College & Placement Prep: O(n) Two Sum + O(log n) Binary Search
+def two_sum(nums, target):
+    seen = {}
+    for idx, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return (seen[complement], idx)
+        seen[num] = idx
+    return None
+
+def binary_search(arr, target):
+    lo, hi = 0, len(arr) - 1
+    while lo <= hi:
+        mid = (lo + hi) // 2
+        if arr[mid] == target:
+            return mid
+        elif arr[mid] < target:
+            lo = mid + 1
+        else:
+            hi = mid - 1
+    return -1
+
+nums = [2, 7, 11, 15, 21, 34]
+print("Two Sum indices for 26:", two_sum(nums, 26))
+print("Binary Search index for 15:", binary_search(nums, 15))
+`,
+    },
+    {
+        id: 'pro_decorator',
+        label: '🚀 Pro: Timing & Retry Decorator',
+        code: `# 🚀 Professional Python: Functools Decorator + Context Manager
+import time
+from functools import wraps
+
+def benchmark(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        t0 = time.perf_counter()
+        result = func(*args, **kwargs)
+        elapsed_ms = (time.perf_counter() - t0) * 1000
+        print(f"[TRACE] {func.__name__}{args} -> {elapsed_ms:.3f} ms")
+        return result
+    return wrapper
+
+@benchmark
+def compute_primes(limit: int) -> list[int]:
+    sieve = [True] * (limit + 1)
+    for p in range(2, int(limit ** 0.5) + 1):
+        if sieve[p]:
+            sieve[p * p : limit + 1 : p] = [False] * len(range(p * p, limit + 1, p))
+    return [p for p in range(2, limit + 1) if sieve[p]]
+
+primes = compute_primes(500)
+print(f"Found {len(primes)} primes up to 500. Last 5: {primes[-5:]}")
+`,
+    },
+    {
+        id: 'pro_rag_sim',
+        label: '🤖 AI/ML: Mini Vector Search',
+        code: `# 🤖 AI Engineering: Pure-Python Cosine Similarity Vector Search
+import math
+
+def cosine_sim(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = math.sqrt(sum(x * x for x in a))
+    norm_b = math.sqrt(sum(y * y for y in b))
+    return dot / (norm_a * norm_b) if norm_a and norm_b else 0.0
+
+docs = {
+    "Python Loops (Class 6-12)": [0.9, 0.1, 0.0],
+    "Graph BFS & Dynamic Programming": [0.5, 0.8, 0.2],
+    "RAG Pipelines & Vector Embeddings": [0.1, 0.3, 0.95],
+}
+query_vec = [0.15, 0.25, 0.92]  # Query: "How do LLM embeddings work?"
+
+ranked = sorted(docs.items(), key=lambda kv: cosine_sim(query_vec, kv[1]), reverse=True)
+for rank, (title, vec) in enumerate(ranked, 1):
+    print(f"#{rank} {title:34s} (score={cosine_sim(query_vec, vec):.3f})")
+`,
+    },
+];
+
 export default function Playground() {
     const { user } = useAuth();
     const [voiceOpen, setVoiceOpen] = useState(false);
@@ -66,8 +170,16 @@ export default function Playground() {
         try { if (!key) return; if (val) localStorage.setItem(key, val); else localStorage.removeItem(key); } catch { /* storage unavailable */ }
     };
     // Restore once, when the user is known — but never clobber code already injected
-    // from a Vaathiyaar demo deep-link.
+    // from a Vaathiyaar demo deep-link or URL ?code= parameter.
     useEffect(() => {
+        try {
+            const urlCode = new URLSearchParams(window.location?.search || '').get('code');
+            if (urlCode && !code.trim()) {
+                replaceCode(urlCode);
+                hydratedRef.current = true;
+                return;
+            }
+        } catch { /* ignore */ }
         if (!user?.id || hydratedRef.current) return;
         const saved = readBuffer(`pm_playground_code_${user.id}`);
         if (saved && !code.trim()) {
@@ -481,6 +593,25 @@ export default function Playground() {
                             </button>
                             <span className="hidden sm:inline whitespace-nowrap text-xs text-code-foreground/60 font-mono ml-1">Python 3</span>
                         </div>
+                    </div>
+
+                    {/* Starter templates bar — 1-click runnable code for School, College & Pro */}
+                    <div className="flex items-center gap-2 px-3 sm:px-4 py-2 border-b border-border-strong surface-code overflow-x-auto flex-shrink-0">
+                        <span className="text-xs font-semibold text-code-foreground/70 whitespace-nowrap">Starter Templates:</span>
+                        {STARTER_TEMPLATES.map((tpl) => (
+                            <button
+                                key={tpl.id}
+                                type="button"
+                                onClick={() => {
+                                    replaceCode(tpl.code);
+                                    setCurrentFile(null);
+                                    setSavedCode(null);
+                                }}
+                                className="min-h-11 lg:min-h-0 whitespace-nowrap text-xs font-medium text-code-foreground/70 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 hover:bg-white/10 hover:text-code-foreground transition-all"
+                            >
+                                {tpl.label}
+                            </button>
+                        ))}
                     </div>
 
                     {/* Two-column body: code editor on the LEFT, output on the RIGHT.

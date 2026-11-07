@@ -137,7 +137,7 @@ export default function Layout() {
     const navItems = useMemo(() => {
         const items = [
             { icon: LayoutDashboard, label: t('nav.overview', 'Overview'), path: '/dashboard', desc: t('nav.overview.desc', 'Your command center') , group: 'learn' },
-            { icon: Map, label: t('nav.evolution', 'Evolution'), path: '/dashboard/paths', desc: t('nav.evolution.desc', 'Your AI learning journey') , group: 'learn' },
+            { icon: Map, label: t('nav.evolution', 'Learning Paths'), path: '/dashboard/paths', desc: t('nav.evolution.desc', 'Structured roadmaps from school to pro') , group: 'learn' },
             { icon: Brain, label: t('nav.knowledge', 'Knowledge Map'), path: '/dashboard/knowledge', desc: t('nav.knowledge.desc', 'What you know, mapped live') , group: 'learn' },
             { icon: GraduationCap, label: t('nav.classroom', 'Classroom'), path: '/dashboard/classroom', desc: t('nav.classroom.desc', 'AI-guided lessons') , group: 'learn' },
             { icon: Sparkles, label: t('nav.playground', 'Playground'), path: '/dashboard/playground', desc: t('nav.playground.desc', 'Free-form chat') , group: 'learn' },

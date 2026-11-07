@@ -433,6 +433,8 @@ def get_profile(user_id: str, caller: str = Depends(get_current_user_id)):
             "learning_style": _normalize_learning_style(profile.get("learning_style")),
             "daily_goal": _normalize_daily_goal(s["daily_goal"] if (s and s["daily_goal"] is not None) else "30"),
             "difficulty": (s["difficulty_preference"] if (s and s["difficulty_preference"]) else "beginner"),
+            "user_type": profile.get("user_type") or "",
+            "goal": profile.get("goal") or "",
             "vaathiyaar": {
                 "voice_mode": bool(s["voice_enabled"]) if (s and s["voice_enabled"] is not None) else False,
                 "voice_speed": (s["voice_speed"] if (s and s["voice_speed"] is not None) else 1.0),
@@ -699,6 +701,8 @@ class UserSettingsUpdate(BaseModel):
     learning_style: str = ""
     daily_goal: str = "30min"
     difficulty_preference: str = "intermediate"
+    user_type: str = ""
+    goal: str = ""
     voice_enabled: bool = False
     voice_speed: float = 1.0
     voice_name: str = ""
@@ -752,6 +756,8 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = D
         learning_style = prefs.get("learning_style") if prefs.get("learning_style") is not None else data.learning_style
         daily_goal = str(prefs.get("daily_goal") if prefs.get("daily_goal") is not None else data.daily_goal)
         difficulty_preference = prefs.get("difficulty") or data.difficulty_preference or "intermediate"
+        user_type = prefs.get("user_type") if prefs.get("user_type") is not None else data.user_type
+        goal = prefs.get("goal") if prefs.get("goal") is not None else data.goal
         voice_enabled = 1 if (v.get("voice_mode") if "voice_mode" in v else data.voice_enabled) else 0
         voice_speed = float(v.get("voice_speed") if v.get("voice_speed") is not None else data.voice_speed)
         voice_name = v.get("voice_selection") if v.get("voice_selection") is not None else data.voice_name
@@ -822,6 +828,8 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = D
         lang_given = _given("preferred_language", "preferred_language") and not lang_blocked
         safe_preferred_language = "en" if lang_blocked else preferred_language
         style_given = _given("learning_style", "learning_style")
+        user_type_given = _given("user_type", "user_type")
+        goal_given = _given("goal", "goal")
         cursor.execute("SELECT user_id FROM user_profiles WHERE user_id = ?", [user_id])
         if cursor.fetchone():
             p_cols, p_vals = [], []
@@ -831,6 +839,12 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = D
             if style_given:
                 p_cols.append("learning_style = ?")
                 p_vals.append(learning_style)
+            if user_type_given:
+                p_cols.append("user_type = ?")
+                p_vals.append(user_type)
+            if goal_given:
+                p_cols.append("goal = ?")
+                p_vals.append(goal)
             if p_cols:
                 cursor.execute(
                     f"UPDATE user_profiles SET {', '.join(p_cols)} WHERE user_id = ?",
@@ -838,9 +852,9 @@ def update_user_settings(user_id: str, data: UserSettingsUpdate, caller: str = D
                 )
         else:
             cursor.execute(
-                """INSERT INTO user_profiles (user_id, preferred_language, learning_style, onboarding_completed)
-                   VALUES (?, ?, ?, 1)""",
-                [user_id, safe_preferred_language, learning_style],
+                """INSERT INTO user_profiles (user_id, preferred_language, learning_style, user_type, goal, onboarding_completed)
+                   VALUES (?, ?, ?, ?, ?, 1)""",
+                [user_id, safe_preferred_language, learning_style, user_type or "", goal or ""],
             )
 
         # 3. Upsert user_settings table (bio + voice/animation/misc) — provided columns only.
