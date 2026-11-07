@@ -29,10 +29,10 @@ VISUAL = {
     "type": "object",
     "properties": {
         "type": {"type": "string", "enum": ["title", "code", "bullets", "compare", "output"]},
-        "heading": {"type": "string", "description": "<= 40 chars, on-screen heading"},
-        "code": {"type": "string", "description": "for code/output: <= 12 lines, <= 46 chars per line"},
+        "heading": {"type": "string", "description": "<= 36 chars, on-screen heading"},
+        "code": {"type": "string", "description": "for code/output: Short <= 7 lines and <= 30 chars per line; Long <= 12 lines and <= 44 chars per line"},
         "highlight_lines": {"type": "array", "items": {"type": "integer"}},
-        "bullets": {"type": "array", "items": {"type": "string"}, "description": "<= 4 bullets, <= 32 chars each"},
+        "bullets": {"type": "array", "items": {"type": "string"}, "description": "<= 4 bullets, <= 30 chars each"},
         "left": {"type": "string", "description": "compare: left label + code/text"},
         "right": {"type": "string", "description": "compare: right label + code/text"},
     },
@@ -157,10 +157,9 @@ CRITIC_SCHEMA = {
 
 
 def short_prompt(les, feedback=None, previous=None):
-    return f"""Write a YouTube Short (40-50 seconds spoken, 90-120 words in total across hook, scenes and cta) teaching ONE
-specific, useful idea from this PyMasters lesson. The hook must land in the first 2 seconds. Each scene's narration is
-1-2 sentences and its visual shows exactly what is being said (prefer real code). End on the cta.
-On-screen code for a Short is read on a phone: at most 8 lines and 32 characters per line.
+    return f"""Write a YouTube Short (40-50 seconds spoken, strictly 90-115 words in total across hook + all scenes[].narration + cta) teaching ONE
+specific, useful idea from this PyMasters lesson. The hook must land in the first 2 seconds (<= 11 words). Use 5 scenes, each with 16-20 spoken words, and a brief cta (<= 12 words) that mentions pymasters.net.
+On-screen code for a Short is read on a phone: strictly at most 7 lines and at most 30 characters per line (wrap or shorten variable names so no line exceeds 30 chars).
 {_fb(feedback, previous)}
 LESSON MATERIAL:
 {material_block(les)}"""

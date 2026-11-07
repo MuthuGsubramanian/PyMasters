@@ -89,13 +89,13 @@ def items(status=None, kind=None, limit=100) -> list:
 
 
 def recently_used_sources(days: int = config.NO_REPEAT_DAYS, rejected_days: int = 14) -> set:
-    """(source_key, kind) pairs used in the last `days`, or rejected/failed in the last `rejected_days`
-    (so the bot moves on to other material instead of retrying the same lesson)."""
+    """(source_key, kind) pairs used in the last `days`, or rejected by the quality gate in the last `rejected_days`
+    (transient 'failed' LLM/network runs do not poison lessons)."""
     now = datetime.now(timezone.utc)
     since, since_rej = (now - timedelta(days=days)).isoformat(), (now - timedelta(days=rejected_days)).isoformat()
     with db() as c:
         rows = c.execute("SELECT source_key, kind FROM items WHERE (status NOT IN ('rejected','failed') AND created_at >= ?)"
-                         " OR (status IN ('rejected','failed') AND created_at >= ?)", [since, since_rej]).fetchall()
+                         " OR (status = 'rejected' AND created_at >= ?)", [since, since_rej]).fetchall()
     return {(r["source_key"], r["kind"]) for r in rows}
 
 

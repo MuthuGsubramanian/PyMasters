@@ -343,7 +343,7 @@ def _gemini_complete(messages: list, options: dict) -> str:
     cfg = types.GenerateContentConfig(
         system_instruction=system or None,
         temperature=options.get("temperature", 0.7),
-        max_output_tokens=options.get("num_predict", 1500),
+        max_output_tokens=max(options.get("num_predict", 4096), 4096),
     )
     resp = client.models.generate_content(model=GEMINI_MODEL, contents=contents, config=cfg)
     return resp.text or ""
@@ -356,7 +356,7 @@ def _gemini_stream(messages: list, options: dict):
     cfg = types.GenerateContentConfig(
         system_instruction=system or None,
         temperature=options.get("temperature", 0.7),
-        max_output_tokens=options.get("num_predict", 1500),
+        max_output_tokens=max(options.get("num_predict", 4096), 4096),
     )
     for chunk in client.models.generate_content_stream(model=GEMINI_MODEL, contents=contents, config=cfg):
         txt = getattr(chunk, "text", None)

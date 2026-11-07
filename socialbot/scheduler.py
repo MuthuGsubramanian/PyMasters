@@ -19,13 +19,17 @@ def upcoming_slots(kind, days=14):
     c = config.CADENCE[kind]
     hh, mm = map(int, c["publish_hhmm"].split(":"))
     now = datetime.now(TZ)
+    taken = _taken(kind)
     out = []
     for i in range(days):
         day = (now + timedelta(days=i)).date()
         if day.weekday() in c["weekdays"]:
             slot = datetime(day.year, day.month, day.day, hh, mm, tzinfo=TZ)
-            if slot > now + timedelta(hours=2):
-                out.append(slot.astimezone(timezone.utc).replace(microsecond=0).isoformat())
+            slot_iso = slot.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+            if i == 0 and slot_iso not in taken:
+                out.append(slot_iso)
+            elif slot > now + timedelta(minutes=15):
+                out.append(slot_iso)
     return out
 
 
@@ -43,12 +47,12 @@ def assign_slots():
                 store.update_item(it["id"], publish_at=free.pop(0))
 
 
-def produce_ahead():
+def produce_ahead(ahead=AHEAD):
     from socialbot import pipeline
     for kind in ("linkedin", "short", "long"):
-        slots = upcoming_slots(kind)[:AHEAD]
+        slots = upcoming_slots(kind)[:ahead]
         have = len([it for it in store.items(kind=kind, limit=50)
-                    if it["status"] in ("rendered", "scheduled") and it["publish_at"] and it["publish_at"] in slots])
+                    if it["status"] in ("rendered", "scheduled", "published") and it["publish_at"] and it["publish_at"] in slots])
         unslotted = len([it for it in store.items(status="rendered", kind=kind) if not it["publish_at"]])
         need = len(slots) - have - unslotted
         for _ in range(max(0, need)):
@@ -134,10 +138,25 @@ def resume_interrupted():
 
 
 def tick():
-    resume_interrupted()
-    hour = datetime.now(TZ).hour
-    if 1 <= hour < 6:
-        produce_ahead()
-        if hour == 5:
-            refresh_metrics()
-    publish_due()
+    import fcntl
+    config.ensure_dirs()
+    lock_file = open(config.STATE_DIR / "tick.lock", "w")
+    try:
+        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        log.info("another socialbot tick is already running; skipping")
+        return
+    try:
+        resume_interrupted()
+        hour = datetime.now(TZ).hour
+        if 1 <= hour < 6:
+            produce_ahead(ahead=AHEAD)
+            if hour == 5:
+                refresh_metrics()
+        else:
+            # Daytime catch-up: ensure today's / next immediate slot is filled if the night window missed it
+            produce_ahead(ahead=1)
+        publish_due()
+    finally:
+        fcntl.flock(lock_file, fcntl.LOCK_UN)
+        lock_file.close()
