@@ -42,18 +42,20 @@ def test_every_lesson(lesson, browser):
     langs = sorted(full["title"]) if isinstance(full.get("title"), dict) else ["en"]
     for lang in langs:
         ctx = browser.new_context(viewport={"width": 1366, "height": 850}, extra_http_headers={"X-Forwarded-For": u["ip"]})
-        page = ctx.new_page()
-        problems = []
-        page.on("pageerror", lambda e: problems.append(f"pageerror: {str(e)[:200]}"))
-        page.on("console", lambda m: problems.append(f"console: {m.text[:200]}") if m.type == "error" else None)
-        page.goto(f"{BASE}/login", wait_until="domcontentloaded")
-        page.evaluate("([u, v, lang]) => { localStorage.setItem('pm_user', JSON.stringify(u));"
-                      " localStorage.setItem('pm_release_seen', v); localStorage.setItem('pm_language', lang); }",
-                      [session_payload(u), RELEASE_VERSION, lang])
-        page.goto(f"{BASE}/dashboard/classroom/{lesson['id']}", wait_until="networkidle")
-        page.get_by_role("button", name="Start Practice").wait_for(timeout=30000)
-        page.wait_for_timeout(1000)                      # let the intro animation play its first steps (≤ 1 s rule)
-        ctx.close()
+        try:
+            page = ctx.new_page()
+            problems = []
+            page.on("pageerror", lambda e: problems.append(f"pageerror: {str(e)[:200]}"))
+            page.on("console", lambda m: problems.append(f"console: {m.text[:200]}") if m.type == "error" else None)
+            page.goto(f"{BASE}/login", wait_until="domcontentloaded")
+            page.evaluate("([u, v, lang]) => { localStorage.setItem('pm_user', JSON.stringify(u));"
+                          " localStorage.setItem('pm_release_seen', v); localStorage.setItem('pm_language', lang); }",
+                          [session_payload(u), RELEASE_VERSION, lang])
+            page.goto(f"{BASE}/dashboard/classroom/{lesson['id']}", wait_until="networkidle")
+            page.get_by_role("button", name="Start Practice").wait_for(timeout=30000)
+            page.wait_for_timeout(1000)                      # let the intro animation play its first steps (≤ 1 s rule)
+        finally:
+            ctx.close()
         assert not problems, (lang, problems[:3])
 
     # Every practice challenge (not just the first) has a verified solution that the real grader accepts.

@@ -2,6 +2,7 @@
 # Collects PyMasters + GCP status facts into a markdown file for the daily email.
 # Read-only: changes nothing in GCP, GitHub or on the VM.
 set -u
+export CLOUDSDK_CORE_DISABLE_PROMPTS=1
 REPO=~/Documents/Development/PyMasters
 OUT=~/pymasters-ops/reports/status-$(date +%F).md
 APP=pymasters-app
@@ -16,17 +17,22 @@ sec() { echo; echo "## $1"; }
 # owner's gmail account for every read it is allowed (billing, BigQuery, storage, compute list) and flag it;
 # IAP SSH to the VM still needs the org account, so the VM sections will say "SSH to VM failed".
 ORG_AUTH=ok
-if ! timeout 30 gcloud auth print-access-token --account=muthu@pymasters.net >/dev/null 2>&1; then
+if ! timeout 15 gcloud auth print-access-token --quiet --account=muthu@pymasters.net >/dev/null 2>&1; then
   ORG_AUTH=expired
   export CLOUDSDK_CORE_ACCOUNT=muthu.g.subramanian@gmail.com
   WA=$GA
+fi
+GMAIL_AUTH=ok
+if ! timeout 15 gcloud auth print-access-token --quiet --account=muthu.g.subramanian@gmail.com >/dev/null 2>&1; then
+  GMAIL_AUTH=expired
 fi
 
 {
 echo "# PyMasters daily status — $(date '+%F %H:%M %Z')"
 
 sec "Open reminders"
-[ "$ORG_AUTH" = expired ] && echo "- ACTION FOR OWNER (urgent): the laptop's gcloud login for muthu@pymasters.net expired. Run: gcloud auth login muthu@pymasters.net (on this laptop). Until then the VM checks and the nightly laptop DB backup cannot run (the VM's own Cloud Storage backup is unaffected)."
+[ "$ORG_AUTH" = expired ] && echo "- ACTION FOR OWNER (urgent): the laptop's gcloud login for muthu@pymasters.net expired. Run: ~/pymasters-ops/gcloud_reauth.sh (or gcloud auth login muthu@pymasters.net) on this laptop. Until then the VM checks and the nightly laptop DB backup cannot run (the VM's own Cloud Storage backup is unaffected)."
+[ "$GMAIL_AUTH" = expired ] && echo "- ACTION FOR OWNER: the laptop's fallback gcloud login for muthu.g.subramanian@gmail.com also expired. Run: ~/pymasters-ops/gcloud_reauth.sh (or gcloud auth login muthu.g.subramanian@gmail.com)."
 [ -s ~/pymasters-ops/reminders.txt ] && cat ~/pymasters-ops/reminders.txt || echo "- none"
 Y=$(date -d yesterday +%F)
 [ -e ~/pymasters-ops/reports/sent-$Y ] || echo "- ACTION FOR OPS: the daily status email for $Y was NOT sent (check ~/pymasters-ops/reports/send-$Y.log)."
@@ -82,13 +88,18 @@ echo "- open PRs: $(cd "$REPO" && gh pr list --json number -q 'length' 2>/dev/nu
 echo "- Vaathiyaar training stats: $(curl -s -m 15 https://pymasters.net/api/classroom/training/stats)"
 
 sec "Production VM"
-timeout 90 gcloud compute ssh pymasters-vm --project $APP --zone us-central1-a --quiet --tunnel-through-iap --command \
- 'echo "- $(uptime -p), load $(cut -d" " -f1-3 /proc/loadavg)"; free -m | awk "/Mem/{print \"- RAM used \"\$3\"/\"\$2\" MB\"} /Swap/{print \"- swap used \"\$3\" MB\"}"; df -h / | awk "NR==2{print \"- disk \"\$5\" used\"}"; sudo docker ps --format "- container {{.Names}}: {{.Status}}"; systemctl is-failed pymasters-update.service pymasters-learn.service | paste -sd" " | sed "s/^/- timers update\/learn: /"' 2>/dev/null || echo "- SSH to VM failed"
+if [ "$ORG_AUTH" = ok ]; then
+  timeout 90 gcloud compute ssh pymasters-vm --project $APP --zone us-central1-a --quiet --tunnel-through-iap --account=muthu@pymasters.net --command \
+   'echo "- $(uptime -p), load $(cut -d" " -f1-3 /proc/loadavg)"; free -m | awk "/Mem/{print \"- RAM used \"\$3\"/\"\$2\" MB\"} /Swap/{print \"- swap used \"\$3\" MB\"}"; df -h / | awk "NR==2{print \"- disk \"\$5\" used\"}"; sudo docker ps --format "- container {{.Names}}: {{.Status}}"; systemctl is-failed pymasters-update.service pymasters-learn.service | paste -sd" " | sed "s/^/- timers update\/learn: /"' 2>/dev/null || echo "- SSH to VM failed"
+else
+  echo "- SSH to VM failed (org gcloud login expired)"
+fi
 
 sec "AI tutor (Vaathiyaar) and nightly content job"
 # Read-only: last nightly content-job result + how often learners saw the "breather" (all AI providers failed) in 24 h.
-timeout 90 gcloud compute ssh pymasters-vm --project $APP --zone us-central1-a --quiet --tunnel-through-iap --command \
- 'sudo docker exec pymasters-app python3 -c "
+if [ "$ORG_AUTH" = ok ]; then
+  timeout 90 gcloud compute ssh pymasters-vm --project $APP --zone us-central1-a --quiet --tunnel-through-iap --account=muthu@pymasters.net --command \
+   'sudo docker exec pymasters-app python3 -c "
 import sqlite3,os,json
 c=sqlite3.connect(\"file:\"+os.environ[\"DB_PATH\"]+\"?mode=ro\",uri=True)
 r=c.execute(\"select window,result from job_runs where job=\x27content\x27 order by id desc limit 1\").fetchone()
@@ -96,6 +107,9 @@ if r:
     d=json.loads(r[1]); print(\"- content job\",r[0],\"published\" if d.get(\"published\") else \"NOT published: \"+str(d.get(\"reason\",\"\"))[:220])
 q=c.execute(\"select status,count(*) from content_queue group by 1\").fetchall(); print(\"- content queue\",dict(q))
 "; echo "- AI provider failures shown to learners (24h): $(sudo docker logs pymasters-app --since 24h 2>&1 | grep -ciE "usage limit|status code: 429|401 Client Error|all providers")"' 2>/dev/null || echo "- SSH to VM failed"
+else
+  echo "- SSH to VM failed (org gcloud login expired)"
+fi
 
 sec "Backups"
 echo "- Litestream replica (gs://pymasters-app-db/vm): last write $(gcloud storage ls -l -r gs://pymasters-app-db/vm/ 2>/dev/null | grep -v TOTAL | sort -k2 | tail -1 | awk '{print $2}')"
@@ -106,8 +120,8 @@ sec "GCP cost guards"
 # Old Cloud Run services were deleted 2026-11-01 (prod is the VM); any service here is unexpected spend.
 cr=$(gcloud run services list $WA --project $APP --format='value(metadata.name,region)' 2>/dev/null | paste -sd';')
 echo "- Cloud Run services in $APP: ${cr:-none (expected)}"
-echo "- running VMs in $APP: $(gcloud compute instances list --project $APP --format='value(name,machineType.basename(),status)' | paste -sd';')"
-for p in $( (gcloud projects list $GA --format='value(projectId)'; gcloud projects list $WA --format='value(projectId)') | sort -u); do
+echo "- running VMs in $APP: $(gcloud compute instances list $WA --project $APP --format='value(name,machineType.basename(),status)' 2>/dev/null | paste -sd';')"
+for p in $( (gcloud projects list $GA --format='value(projectId)' 2>/dev/null; gcloud projects list $WA --format='value(projectId)' 2>/dev/null) | sort -u); do
   b=$(gcloud billing projects describe $p $GA --format='value(billingEnabled,billingAccountName.basename())' 2>/dev/null || gcloud billing projects describe $p $WA --format='value(billingEnabled,billingAccountName.basename())' 2>/dev/null)
   echo "- project $p billing=$b"
 done
@@ -134,10 +148,10 @@ sec "Social bot (YouTube + LinkedIn)"
 echo "- last bot runs: $(journalctl --user -u pymasters-social.service --since '24 hours ago' --no-pager -o cat 2>/dev/null | grep -c -E 'Finished|Deactivated') ok, $(journalctl --user -u pymasters-social.service --since '24 hours ago' --no-pager -o cat 2>/dev/null | grep -c -i 'failed') failed"
 
 sec "Free tier usage (month to date)"
-python3 - <<'PY'
-import json, subprocess, datetime, urllib.request, urllib.parse
-A="$WA"
-tok=subprocess.run(["gcloud","auth","print-access-token",A],capture_output=True,text=True).stdout.strip()
+python3 - "$WA" <<'PY'
+import json, subprocess, datetime, urllib.request, urllib.parse, sys
+A=sys.argv[1]
+tok=subprocess.run(["gcloud","auth","print-access-token","--quiet",A],capture_output=True,text=True).stdout.strip()
 now=datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None); start=now.replace(day=1,hour=0,minute=0,second=0,microsecond=0)
 def q(metric, group, per=None):
     params={"filter":f'metric.type="{metric}"',"interval.startTime":start.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -151,6 +165,8 @@ def q(metric, group, per=None):
         out[k[0] if k else "all"]=float(v.get("int64Value") or v.get("doubleValue") or 0)
     return out
 try:
+    if not tok:
+        raise RuntimeError("gcloud access token unavailable (re-login required)")
     ops=q("storage.googleapis.com/api/request_count","metric.label.method")
     class_a=sum(v for k,v in ops.items() if k in ("WriteObject","ListObjects","ComposeObject","CopyObject","RewriteObject","InsertObject","ListBuckets","SetIamPolicy","GetIamPolicy","UpdateObject"))
     print(f"- GCS Class A operations: {class_a:,.0f} of 5,000 free")
@@ -160,7 +176,7 @@ except Exception as e:
     print("- monitoring query failed:", e)
 PY
 echo "- Artifact Registry images: $(gcloud artifacts docker images list us-central1-docker.pkg.dev/pymasters-app/cloud-run-source-deploy/pymasters $WA --format='value(metadata.imageSizeBytes)' 2>/dev/null | awk '{s+=$1;n++} END {printf "%d images, %.2f GB (before layer sharing)", n, s/1e9}') — 0.5 GB free; policy keeps the newest 2"
-echo "- Secret Manager active versions: $(for s in $(gcloud secrets list --project pymasters-app $WA --format='value(name)'); do gcloud secrets versions list $s --project pymasters-app $WA --filter='state=enabled' --format='value(name)'; done | wc -l) of 6 free"
+echo "- Secret Manager active versions: $(for s in $(gcloud secrets list --project pymasters-app $WA --format='value(name)' 2>/dev/null); do gcloud secrets versions list $s --project pymasters-app $WA --filter='state=enabled' --format='value(name)' 2>/dev/null; done | wc -l) of 6 free"
 echo "- Budget: one budget, INR 5,000/month ceiling (owner limit), alerts at 2/5/25/50/90/100% + forecast"
 
 sec "GCP spend (billing export)"

@@ -1,0 +1,12 @@
+[Unit]
+Description=PyMasters: keep the laptop awake (owner request 2026-11-04: "Keep the laptop always on. do not go to sleep")
+# Holds a logind inhibitor lock: hypridle (Eternity idle policy) skips lock / screen-off while it is held, and
+# the machine does not suspend (incl. on lid close). Stop/disable this unit to restore the normal idle policy.
+
+[Service]
+ExecStart=/usr/bin/systemd-inhibit --what=idle:sleep:handle-lid-switch --who=PyMasters-ops --why="Owner: keep the laptop always on (live audits, bots)" --mode=block /usr/bin/sleep infinity
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -423,8 +423,9 @@ def _posix_limits(timeout: int, ids=None):
     and, when the server runs as root (Cloud Run image), drop to the
     unprivileged `sandbox` uid so learner code cannot read the app DB, env of
     PID 1, or anything else root-only (audit 2026-10-23 P0)."""
+    import resource  # imported in parent before fork() so preexec_fn never acquires the import lock in the child
+
     def _apply():
-        import resource
         os.setsid()  # own process group → timeout can kill the whole tree
         if ids is not None:
             uid, gid = ids

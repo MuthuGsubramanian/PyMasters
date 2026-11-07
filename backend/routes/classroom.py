@@ -1306,37 +1306,38 @@ def evaluate(request: EvaluateRequest, caller: str = Depends(get_current_user_id
 
         try:
             conn = sqlite3.connect(db_path)
+            try:
+                # Check if already completed — only award XP once per lesson
+                existing = conn.execute(
+                    "SELECT 1 FROM lesson_completions WHERE user_id = ? AND lesson_id = ?",
+                    [request.user_id, lesson_id_for_completion],
+                ).fetchone()
 
-            # Check if already completed — only award XP once per lesson
-            existing = conn.execute(
-                "SELECT 1 FROM lesson_completions WHERE user_id = ? AND lesson_id = ?",
-                [request.user_id, lesson_id_for_completion],
-            ).fetchone()
+                if not existing:
+                    conn.execute("UPDATE users SET points = points + ? WHERE id = ?", [xp_reward, request.user_id])
+                    conn.execute(
+                        "INSERT INTO lesson_completions (user_id, lesson_id, xp_awarded) VALUES (?, ?, ?)",
+                        [request.user_id, lesson_id_for_completion, xp_reward],
+                    )
+                    xp_earned = xp_reward
+                else:
+                    xp_earned = 0
 
-            if not existing:
-                conn.execute("UPDATE users SET points = points + ? WHERE id = ?", [xp_reward, request.user_id])
-                conn.execute(
-                    "INSERT INTO lesson_completions (user_id, lesson_id, xp_awarded) VALUES (?, ?, ?)",
-                    [request.user_id, lesson_id_for_completion, xp_reward],
-                )
-                xp_earned = xp_reward
-            else:
-                xp_earned = 0
+                # Passing a challenge is daily learning activity — advance the streak
+                # (idempotent per day; counts retakes too). Never breaks XP/commit.
+                from streaks import touch_streak
+                touch_streak(conn, request.user_id)
 
-            # Passing a challenge is daily learning activity — advance the streak
-            # (idempotent per day; counts retakes too). Never breaks XP/commit.
-            from streaks import touch_streak
-            touch_streak(conn, request.user_id)
-
-            conn.commit()
-            # Arcade unlocks (games/boards earned by this completion); bookkeeping only.
-            if not existing:
-                try:
-                    from arcade.unlocks import evaluate as _arcade_evaluate
-                    unlocked = _arcade_evaluate(conn, request.user_id)
-                except Exception as _exc:  # noqa: BLE001
-                    print(f"[arcade] unlock evaluation failed: {_exc}")
-            conn.close()
+                conn.commit()
+                # Arcade unlocks (games/boards earned by this completion); bookkeeping only.
+                if not existing:
+                    try:
+                        from arcade.unlocks import evaluate as _arcade_evaluate
+                        unlocked = _arcade_evaluate(conn, request.user_id)
+                    except Exception as _exc:  # noqa: BLE001
+                        print(f"[arcade] unlock evaluation failed: {_exc}")
+            finally:
+                conn.close()
         except Exception:
             xp_earned = 0
 
