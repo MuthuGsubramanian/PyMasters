@@ -140,6 +140,8 @@ def verdict(kind, draft, les):
     """Returns (passed, score, critique, problems)."""
     problems = hard_checks(kind, draft)
     attach_real_outputs(kind, draft)
+    if problems:
+        return False, 0.0, {}, problems
     c = critique(kind, draft, les)
     score = float(c.get("overall") or 0)
     problems += [f"factual error: {e}" for e in c.get("factual_errors") or []]

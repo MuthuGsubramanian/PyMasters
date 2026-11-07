@@ -200,19 +200,17 @@ jobs:
           echo "last health body: $body"
           exit 1
 
-      - name: Prune old images from Artifact Registry (keep newest 5)
+      - name: Prune old images from Artifact Registry (keep newest 2)
         if: github.event_name == 'push'
-        # Every deploy pushes a ~1GB image tagged with the commit SHA; with the
-        # 30-min automation loops this compounds into the largest silent cost
-        # line (storage is billed per GB-month, forever). Keep the 5 newest for
-        # rollback and delete the rest. Non-fatal: if the deploy SA lacks
-        # delete permission, the deploy itself must still succeed.
+        # Every deploy pushes a ~580MB image tagged with the commit SHA; keeping
+        # only the 2 newest images keeps Artifact Registry storage right at the
+        # 0.5 GB free tier while preserving the previous digest for rollback.
         continue-on-error: true
         run: |
           REPO="us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/pymasters"
           gcloud artifacts docker images list "$REPO" \
             --sort-by=~UPDATE_TIME --format='value(version)' \
-            | tail -n +6 \
+            | tail -n +3 \
             | while read -r digest; do
                 gcloud artifacts docker images delete "$REPO@$digest" --delete-tags --quiet || true
               done

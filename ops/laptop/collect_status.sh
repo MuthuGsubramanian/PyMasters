@@ -184,12 +184,13 @@ T=$(bq ls --project_id=pymasters-app --format=json billing_export 2>/dev/null | 
 if [ -n "$T" ]; then
   bq query --project_id=pymasters-app --use_legacy_sql=false --format=pretty "
    SELECT project.id AS project, service.description AS service,
-          ROUND(SUM(IF(DATE(usage_start_time,'Asia/Kolkata')=DATE_SUB(CURRENT_DATE('Asia/Kolkata'),INTERVAL 1 DAY),cost,0)),2) AS yesterday,
-          ROUND(SUM(IF(DATE_TRUNC(DATE(usage_start_time,'Asia/Kolkata'),MONTH)=DATE_TRUNC(CURRENT_DATE('Asia/Kolkata'),MONTH),cost,0)),2) AS month_to_date,
+          ROUND(SUM(IF(DATE(usage_start_time,'Asia/Kolkata')=DATE_SUB(CURRENT_DATE('Asia/Kolkata'),INTERVAL 1 DAY),cost + IFNULL((SELECT SUM(c.amount) FROM UNNEST(credits) c),0),0)),2) AS yesterday_net,
+          ROUND(SUM(IF(DATE_TRUNC(DATE(usage_start_time,'Asia/Kolkata'),MONTH)=DATE_TRUNC(CURRENT_DATE('Asia/Kolkata'),MONTH),cost + IFNULL((SELECT SUM(c.amount) FROM UNNEST(credits) c),0),0)),2) AS mtd_net,
+          ROUND(SUM(IF(DATE_TRUNC(DATE(usage_start_time,'Asia/Kolkata'),MONTH)=DATE_TRUNC(CURRENT_DATE('Asia/Kolkata'),MONTH),cost,0)),2) AS mtd_gross,
           ANY_VALUE(currency) AS cur
    FROM \`pymasters-app.billing_export.$T\`
    WHERE usage_start_time >= TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 35 DAY)
-   GROUP BY 1,2 HAVING month_to_date > 0 ORDER BY month_to_date DESC LIMIT 15" 2>&1
+   GROUP BY 1,2 HAVING mtd_gross > 0 OR mtd_net > 0 ORDER BY mtd_net DESC, mtd_gross DESC LIMIT 15" 2>&1
   echo "- totals (gross = list price, net = after credits). If data_through is more than 2 days old the export is lagging/backfilling: say spend is not yet known, do not treat it as low:"
   bq query --project_id=pymasters-app --use_legacy_sql=false --format=pretty "
    SELECT invoice.month AS month, ANY_VALUE(currency) AS cur, ROUND(SUM(cost),2) AS gross,

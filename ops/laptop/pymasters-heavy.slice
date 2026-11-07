@@ -1,6 +1,5 @@
 [Unit]
 Description=PyMasters heavy ops work (builds, test containers, browsers, renders) - capped so the laptop cannot overheat
 [Slice]
-# 200% reached 97 C in 20 s (TTS render + grading container, 2026-11-03); one core sustained holds ~78 C.
-CPUQuota=100%
+CPUQuota=200%
 MemoryHigh=8G

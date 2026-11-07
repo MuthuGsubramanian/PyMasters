@@ -5,15 +5,17 @@ After=network-online.target
 [Service]
 Type=oneshot
 WorkingDirectory=%h/Documents/Development/PyMasters
+EnvironmentFile=%h/.config/pymasters-ops/ops.env
 Environment=PYTHONPATH=%h/Documents/Development/PyMasters
 Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=CLOUDSDK_CORE_DISABLE_PROMPTS=1
 UnsetEnvironment=VIRTUAL_ENV
 ExecStart=%h/pymasters-ops/social-venv/bin/python -m socialbot tick
 TimeoutStartSec=3h
 Nice=15
 CPUWeight=20
 # Heat: the laptop power-cut itself at 100 C while rendering at full load (2026-11-02). Cap at 1.5 of 8 cores;
-# pymasters-thermal-guard also pauses this unit above 82 C.
+# pymasters-thermal-guard also pauses this unit above 80 C.
 CPUQuota=150%
 # All heavy ops work shares pymasters-heavy.slice (2 of 8 CPUs in total; frozen by the thermal guard >= 80 C).
 Slice=pymasters-heavy.slice

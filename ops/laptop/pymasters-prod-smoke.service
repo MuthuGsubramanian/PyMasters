@@ -6,5 +6,5 @@ Type=oneshot
 EnvironmentFile=%h/.config/pymasters-ops/ops.env
 ExecStart=%h/pymasters-ops/e2e-venv/bin/python %h/Documents/Development/PyMasters/ops/e2e/prod_smoke.py
 TimeoutStartSec=900
-# Headless Chromium: capped with the other heavy work so the guard can freeze it (heat rules, 2026-11-03).
-Slice=pymasters-heavy.slice
+Nice=10
+CPUQuota=100%

@@ -1,0 +1,9 @@
+[Unit]
+Description=PyMasters intelligent workspace cleanup (merged worktrees, squash-merged branches, core dumps)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/pymasters-ops/cleanup_workspace.sh
+TimeoutStartSec=600
+Nice=15

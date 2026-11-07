@@ -20,28 +20,19 @@ jobs:
       contents: read
       id-token: write
     env:
-      IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/pymasters:latest
+      IMAGE: pymasters-nightly:${{ github.sha }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud (Workload Identity Federation — keyless)
-        uses: google-github-actions/auth@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
-          service_account: ${{ secrets.GCP_DEPLOY_SA }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Pull the production image
+      - name: Build production image locally (zero GCP Artifact Registry egress cost)
         run: |
-          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
-          docker pull "$IMAGE"
+          docker build \
+            --platform linux/amd64 \
+            --build-arg BUILD_SHA=${{ github.sha }} \
+            -t "$IMAGE" \
+            .
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
