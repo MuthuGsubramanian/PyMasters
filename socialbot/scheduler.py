@@ -138,13 +138,25 @@ def resume_interrupted():
 
 
 def tick():
-    resume_interrupted()
-    hour = datetime.now(TZ).hour
-    if 1 <= hour < 6:
-        produce_ahead(ahead=AHEAD)
-        if hour == 5:
-            refresh_metrics()
-    else:
-        # Daytime catch-up: ensure today's / next immediate slot is filled if the night window missed it
-        produce_ahead(ahead=1)
-    publish_due()
+    import fcntl
+    config.ensure_dirs()
+    lock_file = open(config.STATE_DIR / "tick.lock", "w")
+    try:
+        fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        log.info("another socialbot tick is already running; skipping")
+        return
+    try:
+        resume_interrupted()
+        hour = datetime.now(TZ).hour
+        if 1 <= hour < 6:
+            produce_ahead(ahead=AHEAD)
+            if hour == 5:
+                refresh_metrics()
+        else:
+            # Daytime catch-up: ensure today's / next immediate slot is filled if the night window missed it
+            produce_ahead(ahead=1)
+        publish_due()
+    finally:
+        fcntl.flock(lock_file, fcntl.LOCK_UN)
+        lock_file.close()
