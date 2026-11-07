@@ -136,17 +136,19 @@ def record_login(user_id: str, request: Optional[Request], db_path: str = None):
     try:
         ip = client_ip(request) if request is not None else None
         login_id = str(uuid.uuid4())
-        conn = sqlite3.connect(db)
         country, region, city = _cloudflare_geo(request) if request is not None else (None, None, None)
-        conn.execute(
-            "INSERT INTO login_events (id, user_id, ip, country, region, city) VALUES (?, ?, ?, ?, ?, ?)",
-            [login_id, user_id, ip, country, region, city],
-        )
-        conn.execute(
-            "UPDATE users SET last_seen_at = CURRENT_TIMESTAMP WHERE id = ?", [user_id]
-        )
-        conn.commit()
-        conn.close()
+        conn = sqlite3.connect(db)
+        try:
+            conn.execute(
+                "INSERT INTO login_events (id, user_id, ip, country, region, city) VALUES (?, ?, ?, ?, ?, ?)",
+                [login_id, user_id, ip, country, region, city],
+            )
+            conn.execute(
+                "UPDATE users SET last_seen_at = CURRENT_TIMESTAMP WHERE id = ?", [user_id]
+            )
+            conn.commit()
+        finally:
+            conn.close()
     except Exception as exc:
         print(f"[telemetry.record_login] non-fatal: {exc!r}")
 
@@ -177,17 +179,19 @@ def track_visit(ping: VisitPing, request: Request, caller: Optional[str] = Depen
     _ensure_once()
     try:
         conn = sqlite3.connect(DB_PATH)
-        conn.execute(
-            "INSERT INTO site_visits (id, user_id, path) VALUES (?, ?, ?)",
-            [str(uuid.uuid4()), ping.user_id, (ping.path or "")[:200]],
-        )
-        if ping.user_id:
+        try:
             conn.execute(
-                "UPDATE users SET last_seen_at = CURRENT_TIMESTAMP WHERE id = ?",
-                [ping.user_id],
+                "INSERT INTO site_visits (id, user_id, path) VALUES (?, ?, ?)",
+                [str(uuid.uuid4()), ping.user_id, (ping.path or "")[:200]],
             )
-        conn.commit()
-        conn.close()
+            if ping.user_id:
+                conn.execute(
+                    "UPDATE users SET last_seen_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    [ping.user_id],
+                )
+            conn.commit()
+        finally:
+            conn.close()
     except Exception as exc:
         print(f"[telemetry.visit] non-fatal: {exc!r}")
     return {"ok": True}
@@ -204,12 +208,14 @@ def track_ping(ping: VisitPing, request: Request, caller: Optional[str] = Depend
     try:
         if ping.user_id:
             conn = sqlite3.connect(DB_PATH)
-            conn.execute(
-                "UPDATE users SET last_seen_at = CURRENT_TIMESTAMP WHERE id = ?",
-                [ping.user_id],
-            )
-            conn.commit()
-            conn.close()
+            try:
+                conn.execute(
+                    "UPDATE users SET last_seen_at = CURRENT_TIMESTAMP WHERE id = ?",
+                    [ping.user_id],
+                )
+                conn.commit()
+            finally:
+                conn.close()
     except Exception as exc:
         print(f"[telemetry.ping] non-fatal: {exc!r}")
     return {"ok": True}

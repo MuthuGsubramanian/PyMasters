@@ -2,6 +2,7 @@
 # Nightly consistent SQLite backup of production, pulled to the ops laptop (free: ~1 MB/day egress).
 # Safety net behind Litestream, which syncs to GCS only every 30 min to stay in the free tier.
 set -euo pipefail
+export CLOUDSDK_CORE_DISABLE_PROMPTS=1
 MEDIA=/mnt/eternity-store/EternityModels/pymasters-social
 [ -d "${MEDIA%/*}" ] || MEDIA=~/.local/share/pymasters-social/media   # machines without the Eternity model store
 DEST=$MEDIA/db-backups

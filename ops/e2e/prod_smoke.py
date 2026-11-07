@@ -98,25 +98,28 @@ def run(base: str) -> dict:
         bad = []
         with sync_playwright() as p:
             b = p.chromium.launch()
-            ctx = b.new_context(viewport={"width": 1366, "height": 850})
-            page = ctx.new_page()
-            errors = []
-            page.on("pageerror", lambda e: errors.append(str(e)[:160]))
-            page.on("console", lambda m: errors.append(m.text[:160]) if m.type == "error" else None)
-            page.goto(f"{base}/login", wait_until="domcontentloaded")
-            release = page.evaluate("() => localStorage.getItem('pm_release_seen')")
-            page.evaluate("([u, v]) => { localStorage.setItem('pm_user', JSON.stringify(u));"
-                          " if (v) localStorage.setItem('pm_release_seen', v); }", [user, release])
-            for path in PAGES:
-                errors.clear()
-                # Not "networkidle": on production it never comes (2026-11-04) - Cloudflare's injected bot-detection
-                # script holds a connection open, and headless Chromium leaves a memory-cached font request
-                # unfinished. Real users are unaffected; wait for load, let the app render, then check.
-                page.goto(f"{base}{path}", wait_until="load", timeout=60000)
-                page.wait_for_timeout(3000)
-                if not page.locator("body").inner_text().strip() or errors:
-                    bad.append(f"{path}: {errors[:2] or 'blank'}")
-            b.close()
+            try:
+                ctx = b.new_context(viewport={"width": 1366, "height": 850})
+                page = ctx.new_page()
+                errors = []
+                page.on("pageerror", lambda e: errors.append(str(e)[:160]))
+                page.on("console", lambda m: errors.append(m.text[:160])
+                        if m.type == "error" and "static.cloudflareinsights.com" not in m.text else None)
+                page.goto(f"{base}/login", wait_until="domcontentloaded", timeout=60000)
+                release = page.evaluate("() => localStorage.getItem('pm_release_seen')")
+                page.evaluate("([u, v]) => { localStorage.setItem('pm_user', JSON.stringify(u));"
+                              " if (v) localStorage.setItem('pm_release_seen', v); }", [user, release])
+                for path in PAGES:
+                    errors.clear()
+                    # Not "networkidle": on production it never comes (2026-11-04) - Cloudflare's injected bot-detection
+                    # script holds a connection open, and headless Chromium leaves a memory-cached font request
+                    # unfinished. Real users are unaffected; wait for load, let the app render, then check.
+                    page.goto(f"{base}{path}", wait_until="load", timeout=60000)
+                    page.wait_for_timeout(3000)
+                    if not page.locator("body").inner_text().strip() or errors:
+                        bad.append(f"{path}: {errors[:2] or 'blank'}")
+            finally:
+                b.close()
         assert not bad, bad
         return f"{len(PAGES)} pages clean"
 

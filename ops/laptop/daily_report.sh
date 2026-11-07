@@ -19,9 +19,9 @@ FORMAT (htmlBody, simple inline-styled HTML that renders in Gmail; no external C
 Status rules: 🔴 if site not OK, live build != main, CI failed, backup older than 6 h, overheat power-off, or month spend > ₹4,500;
 🔴 if AI provider failures shown to learners (24h) > 20; 🟡 if the content job did not publish or AI provider failures > 0, or if RAM/disk > 85%, any free-tier item over its free amount, a Cloud Run service exists, a new billed project, bot publish errors, or laptop max temp > 85C;
 else 🟢. Keep it short and factual; use only the raw status below, never invent numbers.
-Send it with the Gmail send_message tool to muthu.g.subramanian@gmail.com, subject 'PyMasters daily status — $(date +%F)', as htmlBody. Send it exactly once. Do nothing else.
+Send it with the Gmail send_message tool to muthu.g.subramanian@gmail.com, subject 'PyMasters daily status — $(date +%F)', as htmlBody. Send it exactly once, and include 'message id <id>' (the 16-hex-char Gmail message id returned by the tool) in your final text reply.
 
 $(cat "$F")"
 claude -p "$PROMPT" --allowedTools mcp__claude_ai_Gmail__send_message --output-format text > ~/pymasters-ops/reports/send-$(date +%F).log 2>&1
 # Success only when a Gmail message id is reported; otherwise no marker, so the 11:00/15:00 retries try again.
-grep -q -i -E "message id[^0-9a-f]*[0-9a-f]{16}" ~/pymasters-ops/reports/send-$(date +%F).log && touch "$MARK"
+grep -q -i -E "(message id[^0-9a-f]*[0-9a-f]{16}|\b[0-9a-f]{16}\b)" ~/pymasters-ops/reports/send-$(date +%F).log && touch "$MARK"
