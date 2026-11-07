@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, Sparkles, Target, ChevronRight, X, GraduationCap, Lock } from 'lucide-react';
+import { Brain, Sparkles, Target, ChevronRight, X, GraduationCap, Lock, Search } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
 import { getKnowledgeMap, getConceptRecommendations, getKnowledgeGaps, getConceptDetail } from '../api';
@@ -99,6 +99,8 @@ export default function KnowledgeMap() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [linking, setLinking] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // "Learn this in the Classroom" — deep-link to the lesson that TEACHES the
   // selected concept (live-QA finding 2026-07-02: the CTA dropped learners on
@@ -158,8 +160,18 @@ export default function KnowledgeMap() {
 
   const byCategory = useMemo(() => {
     if (!mapData?.nodes) return [];
+    const q = searchQuery.trim().toLowerCase();
     const groups = new Map();
     for (const n of mapData.nodes) {
+      const m = n.mastery ?? 0;
+      if (statusFilter === 'mastered' && m < MASTERED) continue;
+      if (statusFilter === 'in_progress' && !(m > 0 && m < MASTERED)) continue;
+      if (statusFilter === 'not_started' && m > 0) continue;
+      if (q) {
+        const nameMatch = String(n.name || '').toLowerCase().includes(q);
+        const catMatch = prettyCategory(n.category).toLowerCase().includes(q);
+        if (!nameMatch && !catMatch) continue;
+      }
       const key = n.category || 'General';
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(n);
@@ -169,7 +181,7 @@ export default function KnowledgeMap() {
       category,
       nodes: nodes.sort((a, b) => (order[a.difficulty] ?? 1) - (order[b.difficulty] ?? 1)),
     }));
-  }, [mapData]);
+  }, [mapData, searchQuery, statusFilter]);
 
   const stats = useMemo(() => {
     const nodes = mapData?.nodes || [];
@@ -252,6 +264,53 @@ export default function KnowledgeMap() {
           </div>
         )}
       </section>
+
+      {/* Filter & Search Bar */}
+      <div className="panel rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {[
+            { id: 'all', label: `All (${stats.total})` },
+            { id: 'mastered', label: `Mastered (${stats.mastered})` },
+            { id: 'in_progress', label: `In Progress (${stats.inProgress})` },
+            { id: 'not_started', label: `Not Started (${Math.max(0, stats.total - stats.mastered - stats.inProgress)})` },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setStatusFilter(tab.id)}
+              className={clsx(
+                'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all',
+                statusFilter === tab.id
+                  ? 'border-accent-primary bg-accent-subtle text-accent-primary shadow-sm'
+                  : 'border-transparent bg-bg-elevated text-text-secondary hover:text-text-primary hover:border-border-default'
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative sm:w-64">
+          <Search className="h-4 w-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search 270+ concepts..."
+            aria-label="Search concepts"
+            className="w-full pl-9 pr-8 py-1.5 rounded-xl bg-bg-elevated border border-border-default text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+            >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Concept map by category */}
       <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,340px)]">

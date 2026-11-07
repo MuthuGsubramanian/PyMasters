@@ -304,6 +304,7 @@ export default function Profile() {
     const [learningStyle, setLearningStyle] = useState('mixed');
     const [dailyGoal, setDailyGoal] = useState('30');
     const [difficulty, setDifficulty] = useState('beginner');
+    const [userType, setUserType] = useState('');
 
     // ─── Vaathiyaar Settings ────────────────────────────────────────────────
     const [voiceMode, setVoiceMode] = useState(false);
@@ -393,6 +394,7 @@ export default function Profile() {
                 setLearningStyle(prefs.learning_style || 'mixed');
                 setDailyGoal(String(prefs.daily_goal || '30'));
                 setDifficulty(prefs.difficulty || 'beginner');
+                setUserType(prefs.user_type || p.user_type || '');
 
                 // Vaathiyaar settings
                 const vs = prefs.vaathiyaar || {};
@@ -493,6 +495,7 @@ export default function Profile() {
                     learning_style: learningStyle,
                     daily_goal: parseInt(dailyGoal, 10),
                     difficulty,
+                    user_type: userType,
                     vaathiyaar: {
                         voice_mode: voiceMode,
                         voice_speed: voiceSpeed,
@@ -892,6 +895,36 @@ export default function Profile() {
                                 options={DAILY_GOALS}
                                 icon={Target}
                             />
+
+                            {/* Learner Stage / Persona selector */}
+                            <div>
+                                <span className="text-sm font-medium text-text-secondary mb-1.5 block">Learner Stage / Persona</span>
+                                <p className="text-xs text-text-muted mb-2">Tailors track ordering, paths, and examples from Class 6–12 to experienced pros.</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    {[
+                                        { value: 'high_school_student', label: '🌱 School (Class 6–12)' },
+                                        { value: 'college_student', label: '🎓 College / University' },
+                                        { value: 'career_switcher', label: '🔄 Career Switcher' },
+                                        { value: 'junior_developer', label: '💻 Junior Developer' },
+                                        { value: 'senior_developer', label: '🚀 Senior / Pro Dev' },
+                                        { value: 'hobbyist', label: '🎮 Hobbyist & Fun' },
+                                    ].map((opt) => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => { setUserType(opt.value); setIsDirty(true); }}
+                                            className={clsx(
+                                                'flex items-center justify-start px-3 py-2 rounded-xl border text-xs font-semibold transition-all duration-200',
+                                                userType === opt.value
+                                                    ? 'border-accent-primary bg-accent-subtle text-accent-primary shadow-sm'
+                                                    : 'border-border-default bg-bg-elevated text-text-secondary hover:border-border-strong',
+                                            )}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
 
                             {/* Difficulty - pill selector */}
                             <div>

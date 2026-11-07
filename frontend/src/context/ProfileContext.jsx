@@ -70,10 +70,24 @@ export function ProfileProvider({ children }) {
     setProfile((p) => (p ? { ...p, preferred_language: code } : p));
   };
 
+  const setUserPersona = (userType) => {
+    if (user?.id) {
+      updateProfileSettings(user.id, {
+        user_type: userType,
+        preferences: { user_type: userType },
+      }).catch(() => { /* best-effort */ });
+    }
+    setProfile((p) => (p ? {
+      ...p,
+      user_type: userType,
+      preferences: { ...(p.preferences || {}), user_type: userType },
+    } : { user_type: userType, preferences: { user_type: userType } }));
+  };
+
   const refreshProfile = () => fetchProfile();
 
   return (
-    <ProfileContext.Provider value={{ profile, loading, refreshProfile, language, setLanguage }}>
+    <ProfileContext.Provider value={{ profile, loading, refreshProfile, language, setLanguage, setUserPersona }}>
       {children}
     </ProfileContext.Provider>
   );

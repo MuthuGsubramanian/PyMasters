@@ -18,7 +18,22 @@ const QUESTIONS = [
         key: 'preferred_language',
         type: 'language',
         text: "Which language should Vaathiyaar speak with you?",
-        hint: "You can change this anytime from your profile.",
+        hint: "Choose English, Tamil, Telugu, Malayalam & more — you can switch anytime.",
+    },
+    {
+        key: 'user_type',
+        text: "Which best describes you right now?",
+        hint: "PyMasters adapts lessons, examples, and paths from Class 6–12 students to senior engineers.",
+        type: 'choice',
+        multi: false,
+        options: [
+            { value: 'high_school_student', icon: School, label: 'School Student (Class 6–12)', desc: 'CBSE / ICSE / State Board CS & AI, logic building & fun coding' },
+            { value: 'college_student', icon: GraduationCap, label: 'College / University Student', desc: 'Engineering / Arts & Science CS, AI & DS, projects & placements' },
+            { value: 'junior_developer', icon: Laptop, label: 'Junior Developer', desc: 'Early in my tech career (0–2 yrs) building real-world skills' },
+            { value: 'senior_developer', icon: Rocket, label: 'Senior Developer / Architect', desc: 'Experienced professional (3+ yrs) mastering AI, async & internals' },
+            { value: 'career_switcher', icon: RefreshCw, label: 'Career Switcher', desc: 'Transitioning into software, data science, or AI roles' },
+            { value: 'hobbyist', icon: Gamepad2, label: 'Hobbyist / Enthusiast', desc: 'Learning for fun, automation, and curiosity' },
+        ],
     },
     {
         key: 'motivation',
@@ -27,27 +42,12 @@ const QUESTIONS = [
         text: "What brings you to Python?",
         hint: "Pick all that apply.",
         options: [
-            { value: 'career_switch', icon: Briefcase, label: 'Career Switch' },
-            { value: 'student',       icon: GraduationCap, label: 'I\'m a Student' },
-            { value: 'hobby',         icon: Gamepad2, label: 'Just for Fun' },
-            { value: 'ai_ml',         icon: Bot, label: 'AI / ML' },
-            { value: 'work',          icon: Building2, label: 'Need it for Work' },
-            { value: 'data_science',  icon: BarChart3, label: 'Data Science' },
-        ],
-    },
-    {
-        key: 'user_type',
-        text: "Tell me about yourself",
-        hint: "This helps me tailor everything for you.",
-        type: 'choice',
-        multi: false,
-        options: [
-            { value: 'high_school_student', icon: School, label: 'High School Student', desc: 'Learning the ropes in school' },
-            { value: 'college_student', icon: GraduationCap, label: 'College / University Student', desc: 'Studying CS or a related field' },
-            { value: 'junior_developer', icon: Laptop, label: 'Junior Developer', desc: 'Early in my dev career (0-2 yrs)' },
-            { value: 'senior_developer', icon: Rocket, label: 'Senior Developer', desc: 'Experienced dev (3+ years)' },
-            { value: 'career_switcher', icon: RefreshCw, label: 'Career Switcher', desc: 'Transitioning into tech' },
-            { value: 'hobbyist', icon: Gamepad2, label: 'Hobbyist / Enthusiast', desc: 'Learning for fun and curiosity' },
+            { value: 'student',       icon: GraduationCap, label: 'School / College Academics' },
+            { value: 'career_switch', icon: Briefcase, label: 'Placements / Career Growth' },
+            { value: 'ai_ml',         icon: Bot, label: 'AI / Machine Learning' },
+            { value: 'data_science',  icon: BarChart3, label: 'Data Science & Analytics' },
+            { value: 'work',          icon: Building2, label: 'Production Work & Automation' },
+            { value: 'hobby',         icon: Gamepad2, label: 'Just for Fun & Games' },
         ],
     },
     {
@@ -56,8 +56,8 @@ const QUESTIONS = [
         text: "How much coding experience do you have?",
         options: [
             { value: 'none',            icon: Sprout, label: 'Total Beginner' },
-            { value: 'some',            icon: PenLine, label: 'A Little Bit' },
-            { value: 'other_language',  icon: Code2, label: 'Know Another Language' },
+            { value: 'some',            icon: PenLine, label: 'A Little Bit (Loops & Basics)' },
+            { value: 'other_language',  icon: Code2, label: 'Know Another Language (C/C++/Java/JS)' },
             { value: 'python',          icon: FileCode2, label: 'Already Know Some Python' },
         ],
     },
@@ -66,25 +66,27 @@ const QUESTIONS = [
         type: 'choice',
         text: "How do you learn best?",
         options: [
-            { value: 'visual',    icon: Eye, label: 'Visual — Charts & Diagrams' },
-            { value: 'hands_on',  icon: Wrench, label: 'Hands-On — Build Things' },
-            { value: 'reading',   icon: BookOpen, label: 'Reading — Theory First' },
-            { value: 'projects',  icon: Hammer, label: 'Project-Driven' },
+            { value: 'visual',    icon: Eye, label: 'Visual — Interactive Animations & Diagrams' },
+            { value: 'hands_on',  icon: Wrench, label: 'Hands-On — Write Code & Solve Challenges' },
+            { value: 'reading',   icon: BookOpen, label: 'Structured — Concept First, Then Code' },
+            { value: 'projects',  icon: Hammer, label: 'Project-Driven — Build Real Apps' },
         ],
     },
     {
         key: 'goal',
         type: 'choice',
         multi: true,
-        text: "What do you want to build with Python?",
+        text: "What do you want to master with Python?",
         hint: "Pick all that apply.",
         options: [
-            { value: 'web',          icon: Globe, label: 'Web Development' },
-            { value: 'data_science', icon: BarChart3, label: 'Data Science' },
-            { value: 'automation',   icon: Settings, label: 'Automate Tasks' },
-            { value: 'ai_ml',        icon: Brain, label: 'AI / Machine Learning' },
-            { value: 'games',        icon: Gamepad2, label: 'Game Development' },
-            { value: 'unknown',      icon: Compass, label: 'Not Sure Yet' },
+            { value: 'school_academics', icon: School, label: 'School CS / Board Exams & Logic' },
+            { value: 'dsa_interviews',   icon: Target, label: 'DSA & Placement Coding Interviews' },
+            { value: 'ai_ml',            icon: Brain, label: 'AI, LLMs & Machine Learning' },
+            { value: 'data_science',     icon: BarChart3, label: 'Data Science & Visualization' },
+            { value: 'web',              icon: Globe, label: 'Full-Stack Web & APIs (FastAPI)' },
+            { value: 'devops_cloud',     icon: Wrench, label: 'Testing, DevOps & Production Code' },
+            { value: 'automation',       icon: Settings, label: 'Automate Everyday Tasks' },
+            { value: 'games',            icon: Gamepad2, label: 'Games & Creative Coding' },
         ],
     },
     {
@@ -266,10 +268,37 @@ function QuestionCard({ q, index, answers, setAnswers }) {
             </div>
 
             {q.type === 'language' && (
-                <LanguageSelector
-                    currentLanguage={answers.preferred_language || 'en'}
-                    onSelect={(code) => setAnswers((p) => ({ ...p, preferred_language: code }))}
-                />
+                <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                        {[
+                            { code: 'en', label: 'English' },
+                            { code: 'ta', label: 'தமிழ் (Tamil)' },
+                            { code: 'te', label: 'తెలుగు (Telugu)' },
+                            { code: 'ml', label: 'മലയാളം (Malayalam)' },
+                        ].map((lang) => {
+                            const active = (answers.preferred_language || 'en') === lang.code;
+                            return (
+                                <button
+                                    key={lang.code}
+                                    type="button"
+                                    onClick={() => setAnswers((p) => ({ ...p, preferred_language: lang.code }))}
+                                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                                        active
+                                            ? 'border-cyan-500 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 shadow-sm'
+                                            : 'border-border-default bg-bg-elevated text-text-secondary hover:border-border-strong'
+                                    }`}
+                                >
+                                    <Globe size={14} aria-hidden="true" />
+                                    <span>{lang.label}</span>
+                                </button>
+                            );
+                        })}
+                        <LanguageSelector
+                            currentLanguage={answers.preferred_language || 'en'}
+                            onSelect={(code) => setAnswers((p) => ({ ...p, preferred_language: code }))}
+                        />
+                    </div>
+                </div>
             )}
 
             {q.type === 'choice' && (
@@ -287,6 +316,11 @@ function QuestionCard({ q, index, answers, setAnswers }) {
 
             {q.type === 'social' && (
                 <div className="space-y-3">
+                    {answers.user_type === 'high_school_student' && (
+                        <p className="text-xs text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-xl px-3.5 py-2">
+                            School student? You can skip this step completely — it is mainly for college & professional portfolios.
+                        </p>
+                    )}
                     <div className="relative">
                         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.32 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.79M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>

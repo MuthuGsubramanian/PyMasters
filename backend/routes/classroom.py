@@ -768,7 +768,7 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                 conn = sqlite3.connect(_get_db_path())
                 conn.row_factory = sqlite3.Row
                 profile = conn.execute(
-                    "SELECT skill_level, goal, motivation FROM user_profiles WHERE user_id = ?",
+                    "SELECT skill_level, goal, motivation, user_type FROM user_profiles WHERE user_id = ?",
                     [user_id],
                 ).fetchone()
                 conn.close()
@@ -777,12 +777,17 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                     skill_level = profile["skill_level"] or "beginner"
                     goal = profile["goal"] or ""
                     motivation = profile["motivation"] or ""
+                    user_type = (profile["user_type"] or "").strip()
 
                     # Parse comma-separated multi-select values
                     goals = set(g.strip() for g in goal.split(",") if g.strip())
                     motivations = set(m.strip() for m in motivation.split(",") if m.strip())
 
-                    # ── Determine primary track order based on motivation + goal ──
+                    # ── Determine primary track order based on user_type + motivation + goal ──
+
+                    is_school = user_type == "high_school_student" or "school_academics" in goals
+                    is_college_dsa = user_type == "college_student" or "dsa_interviews" in goals
+                    is_pro_eng = user_type in ("junior_developer", "senior_developer") or "devops_cloud" in goals
 
                     # Check if user is hobby/fun/automation oriented
                     is_hobby = bool(
@@ -801,7 +806,11 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                     )
 
                     # Build prioritized track list based on profile
-                    if is_hobby:
+                    if is_school:
+                        primary_tracks = ["python_fundamentals", "fun_automation", "python_intermediate", "working_with_data", "vibe_coding"]
+                        secondary_tracks = ["ai_ml_foundations", "ai_fundamentals", "web_development", "dsa", "python_modern",
+                                            "error_handling", "debugging_mastery", "machine_learning", "deep_learning"]
+                    elif is_hobby:
                         # Fun/automation users see fun_automation first, then fundamentals
                         primary_tracks = ["fun_automation", "python_fundamentals", "vibe_coding", "python_modern"]
                         secondary_tracks = ["python_intermediate", "ai_ml_foundations", "deep_learning",
@@ -815,6 +824,12 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                                           "machine_learning", "deep_learning", "deep_learning_complete"]
                         secondary_tracks = ["python_intermediate", "python_modern", "fun_automation",
                                             "web_development", "dsa", "testing_devops"]
+                    elif is_college_dsa:
+                        primary_tracks = ["python_fundamentals", "dsa", "python_intermediate", "web_development", "vibe_coding", "ai_ml_foundations"]
+                        secondary_tracks = ["python_modern", "testing_devops", "ai_agents", "ai_engineering", "machine_learning", "deep_learning"]
+                    elif is_pro_eng:
+                        primary_tracks = ["python_modern", "vibe_coding", "async_concurrency", "testing_devops", "ai_engineering", "ai_agents", "python_internals"]
+                        secondary_tracks = ["performance_optimization", "debugging_mastery", "functional_python", "web_development", "dsa", "transformers_scratch"]
                     elif is_career:
                         # Career-focused: solid fundamentals first, then modern Python + AI
                         primary_tracks = ["python_fundamentals", "python_intermediate",
@@ -890,10 +905,16 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
 
                     # ── Add profile_hint for frontend personalization ──
                     profile_hint = "general"
-                    if is_hobby:
+                    if is_school:
+                        profile_hint = "school"
+                    elif is_hobby:
                         profile_hint = "hobby"
                     elif is_ai_ml:
                         profile_hint = "ai_ml"
+                    elif is_college_dsa:
+                        profile_hint = "college"
+                    elif is_pro_eng:
+                        profile_hint = "pro"
                     elif is_career:
                         profile_hint = "career"
 

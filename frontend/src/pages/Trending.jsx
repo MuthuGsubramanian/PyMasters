@@ -811,6 +811,7 @@ const DAILY_PICKS_IDS = [1, 5, 9];
 export default function Trending() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('All');
+  const [activeDifficulty, setActiveDifficulty] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   // Code previews open in a popup (instead of expanding inline) so card
   // heights stay uniform and the grid stays tidy.
@@ -846,6 +847,7 @@ export default function Trending() {
   const filtered = useMemo(() => {
     return topics.filter(t => {
       const matchCat = activeCategory === 'All' || t.category === activeCategory;
+      const matchDiff = activeDifficulty === 'All' || t.difficulty === activeDifficulty;
       const q = searchQuery.toLowerCase();
       const concepts = Array.isArray(t.concepts) ? t.concepts : [];
       const matchSearch = !q
@@ -853,9 +855,9 @@ export default function Trending() {
         || (t.summary || '').toLowerCase().includes(q)
         || concepts.some(c => (c || '').toLowerCase().includes(q))
         || (t.category || '').toLowerCase().includes(q);
-      return matchCat && matchSearch;
+      return matchCat && matchDiff && matchSearch;
     });
-  }, [topics, activeCategory, searchQuery]);
+  }, [topics, activeCategory, activeDifficulty, searchQuery]);
 
   const dailyPicks = useMemo(() => {
     const byId = topics.filter(t => DAILY_PICKS_IDS.includes(t.id));
@@ -911,21 +913,44 @@ export default function Trending() {
         ))}
       </motion.div>
 
-      {/* Search Bar */}
+      {/* Search & Level Filter Bar */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25, duration: 0.4 }}
-        className="relative max-w-xl"
+        className="flex flex-col md:flex-row md:items-center gap-4"
       >
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
-        <input
-          type="text"
-          placeholder="Search trending topics..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          className="w-full pl-12 pr-4 py-3 rounded-xl bg-bg-surface border border-border-default text-text-primary placeholder-text-disabled focus:outline-none focus:border-border-focus focus:bg-bg-elevated transition-all"
-        />
+        <div className="relative flex-1 max-w-xl">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
+          <input
+            type="text"
+            placeholder="Search trending topics..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 rounded-xl bg-bg-surface border border-border-default text-text-primary placeholder-text-disabled focus:outline-none focus:border-border-focus focus:bg-bg-elevated transition-all"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {[
+            { id: 'All', label: 'All Levels' },
+            { id: 'Beginner', label: '🌱 Beginner / School' },
+            { id: 'Intermediate', label: '🎓 Intermediate / College' },
+            { id: 'Advanced', label: '🚀 Advanced / Pro' },
+          ].map((lvl) => (
+            <button
+              key={lvl.id}
+              type="button"
+              onClick={() => setActiveDifficulty(lvl.id)}
+              className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                activeDifficulty === lvl.id
+                  ? 'border-purple-500 bg-purple-500/15 text-purple-700 dark:text-purple-300 shadow-sm'
+                  : 'border-border-default bg-bg-surface text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              {lvl.label}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {/* Main Content */}

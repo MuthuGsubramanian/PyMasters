@@ -30,6 +30,7 @@ const TIERS = [
   {
     name: 'Free Trial',
     tag: '7 days',
+    bestFor: '🌱 All Starters & Class 6–12 Explorers',
     price: '₹0',
     period: 'full access for 7 days',
     icon: GraduationCap,
@@ -38,25 +39,26 @@ const TIERS = [
       'Full curriculum — {tracks} tracks, {lessons} lessons',
       'Vaathiyaar, your AI tutor (chat + voice)',
       'Live Knowledge Map of what you know',
-      'Code Playground with real execution',
-      'Weekly challenges, XP, streaks & leaderboard',
-      'English + Tamil',
+      'Code Playground with real execution & templates',
+      'Arcade games, weekly challenges, XP & streaks',
+      'English, Tamil, Telugu, Malayalam & more',
     ],
     cta: { label: 'Start Free Trial', kind: 'primary' },
   },
   {
     name: 'Beginner',
     tag: 'Monthly',
+    bestFor: '🎓 School (Class 6–12) & College Foundations',
     price: '₹299',
-    period: 'per month',
+    period: 'per month · Free 3 mos with School/College ID',
     icon: GraduationCap,
     blurb: 'Keep learning after your trial, at student-friendly pricing.',
     features: [
       'Everything in the trial, ongoing',
-      'Full lesson library & learning paths',
-      'Vaathiyaar chat tutor',
-      'Challenges, XP & community leaderboard',
-      'Progress tracking & streaks',
+      'School CS/AI syllabus & college foundation paths',
+      'Vaathiyaar step-by-step chat tutor',
+      'Challenges, arcade games, XP & leaderboard',
+      'Progress tracking, spaced review & streaks',
     ],
     planKey: 'beginner',
     cta: { label: 'Get Beginner', kind: 'ghost', mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20Beginner%20plan' },
@@ -64,15 +66,17 @@ const TIERS = [
   {
     name: 'Pro',
     tag: 'Power learners',
+    bestFor: '🚀 Placement DSA & Working Professionals',
     price: '₹999',
     period: 'per month',
     icon: Sparkles,
-    blurb: 'For learners who want to go deeper, faster.',
+    blurb: 'For placement prep, AI engineers, and working developers.',
     features: [
       'Everything in Beginner',
+      'DSA interviews, Production AI/RAG, Async & Internals tracks',
       'Priority Vaathiyaar responses (chat + voice)',
       'Advanced progress analytics & Knowledge Map insights',
-      'Early access to new tracks',
+      'Early access to new tracks & AI-generated custom modules',
     ],
     planKey: 'pro',
     cta: { label: 'Get Pro', kind: 'ghost', mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20Pro%20plan' },
@@ -80,17 +84,18 @@ const TIERS = [
   {
     name: 'Organizations',
     tag: 'Custom',
+    bestFor: '🏫 Schools, Colleges, Training Centres & Teams',
     price: 'Custom',
     period: 'schools · universities · enterprise',
     icon: Building2,
-    blurb: 'For schools, universities and enterprises.',
+    blurb: 'For schools, universities, training institutes and teams.',
     features: [
       'Everything in Pro, for every seat',
       'Admin console with roles & cohort dashboards',
-      'Custom learning paths for your program',
-      'Org challenges & private leaderboards',
-      'Organization roles, audit log & priority support',
-      'Pilot programs available',
+      'Custom learning paths for your syllabus or batch',
+      'Batch coding competitions & private leaderboards',
+      'Custom branding, audit log & priority support',
+      'Free one-batch / one-class pilot available',
     ],
     cta: { label: 'Talk to Sales', kind: 'ghost', mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20for%20Organizations' },
   },
@@ -166,9 +171,9 @@ export default function Pricing() {
       {/* Tiers */}
       <section className="px-4 sm:px-6 pb-10">
         <div className="max-w-7xl mx-auto grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {TIERS.map(({ name, tag, price, period, icon: Icon, blurb, features, cta, note, planKey }) => (
+          {TIERS.map(({ name, tag, bestFor, price, period, icon: Icon, blurb, features, cta, note, planKey }) => (
             <div key={name} className="flex flex-col rounded-2xl border border-white/10 bg-white/[0.03] p-6 hover:border-white/20 transition-colors">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-2">
                 <span className="inline-flex items-center gap-2 text-white font-display font-semibold text-lg">
                   <Icon size={18} className="text-cyan-400" aria-hidden="true" /> {name}
                 </span>
@@ -176,6 +181,11 @@ export default function Pricing() {
                   {tag}
                 </span>
               </div>
+              {bestFor && (
+                <div className="mb-3 inline-flex w-fit items-center rounded-lg bg-cyan-500/10 border border-cyan-500/20 px-2.5 py-1 text-xs font-semibold text-cyan-300">
+                  {bestFor}
+                </div>
+              )}
               <div className="mb-3">
                 <span className="text-3xl font-bold font-display text-white">{price}</span>
                 <span className="block text-xs text-slate-500 mt-0.5">{period}</span>

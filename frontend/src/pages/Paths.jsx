@@ -118,7 +118,12 @@ function PathCard({ path, index, onClick, isRecommended }) {
 
     const iconMap = {
         python: '🐍', data: '📊', web: '🌐', ai: '🤖', ml: '🧠',
-        automation: '⚙️', default: '📚',
+        automation: '⚙️',
+        rocket: '🚀', zap: '⚡', globe: '🌐', bar_chart: '📊',
+        brain: '🧠', cpu: '🤖', layers: '🧬', settings: '⚙️',
+        trophy: '🏆', shield: '🛡️', package: '📦', boxes: '🧱',
+        gamepad: '🎮', sparkles: '✨', flame: '🔥',
+        default: '📚',
     };
     const icon = iconMap[path.icon] || iconMap[path.category?.toLowerCase()] || iconMap.default;
 
@@ -208,6 +213,7 @@ function PathList() {
     const [recommended, setRecommended] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
+    const [stageFilter, setStageFilter] = useState('all');
 
     useEffect(() => {
         const params = user?.id ? `?user_id=${user.id}` : '';
@@ -234,9 +240,20 @@ function PathList() {
         }).finally(() => setLoading(false));
     }, [user]);
 
-    const filteredPaths = filter === 'all'
-        ? paths
-        : paths.filter(p => p.difficulty_start === filter);
+    const STAGE_PATH_IDS = {
+        school: new Set(['zero_to_coder', 'python_automation', 'game_dev_basics', 'ai_foundations']),
+        college: new Set(['zero_to_coder', 'python_mastery', 'dsa_problem_solving', 'fullstack_python', 'data_science_track', 'ml_engineer', 'ai_foundations']),
+        pro: new Set(['python_mastery', 'ai_engineer_pro', 'deep_learning_path', 'ml_engineer', 'devops_testing', 'cybersecurity_python', 'fullstack_python']),
+    };
+
+    const filteredPaths = paths.filter(p => {
+        if (filter !== 'all' && p.difficulty_start !== filter) return false;
+        if (stageFilter !== 'all' && STAGE_PATH_IDS[stageFilter] && !STAGE_PATH_IDS[stageFilter].has(p.id)) {
+            if (stageFilter === 'school' && p.difficulty_start !== 'beginner') return false;
+            if (stageFilter === 'pro' && p.difficulty_start === 'beginner') return false;
+        }
+        return true;
+    });
 
     return (
         <div className="animate-fade-in space-y-8">
@@ -245,16 +262,16 @@ function PathList() {
                 <div>
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-500/25 dark:bg-cyan-500/10 dark:text-cyan-300 text-xs font-bold tracking-wider uppercase mb-3">
                         <Map size={12} />
-                        Evolution
+                        Learning Paths
                     </div>
                     <motion.h1
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="text-3xl font-bold mb-1 font-display"
                     >
-                        Evolution
+                        Structured Learning Paths
                     </motion.h1>
-                    <p className="text-text-secondary">Your AI learning journey, tailored to your goals.</p>
+                    <p className="text-text-secondary">Step-by-step roadmaps from school foundations to college placements and production AI.</p>
                 </div>
             </header>
 
@@ -327,8 +344,30 @@ function PathList() {
 
             {/* All Paths */}
             <section>
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-text-primary font-display">All Paths</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-lg font-bold text-text-primary font-display mr-2">All Paths</h2>
+                        {[
+                            { id: 'all', label: 'All Stages' },
+                            { id: 'school', label: '🌱 School (Class 6–12)' },
+                            { id: 'college', label: '🎓 College & Placements' },
+                            { id: 'pro', label: '🚀 Working Professionals' },
+                        ].map((st) => (
+                            <button
+                                key={st.id}
+                                type="button"
+                                onClick={() => setStageFilter(st.id)}
+                                className={clsx(
+                                    'text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-200 border',
+                                    stageFilter === st.id
+                                        ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30'
+                                        : 'text-text-muted hover:text-text-secondary hover:bg-bg-elevated border-transparent'
+                                )}
+                            >
+                                {st.label}
+                            </button>
+                        ))}
+                    </div>
                     <div className="flex items-center gap-2">
                         <Filter size={14} className="text-text-muted" />
                         {['all', 'beginner', 'intermediate', 'advanced'].map(f => (
@@ -342,7 +381,7 @@ function PathList() {
                                         : 'text-text-muted hover:text-text-secondary hover:bg-bg-elevated border border-transparent'
                                 )}
                             >
-                                {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+                                {f === 'all' ? 'All Levels' : f.charAt(0).toUpperCase() + f.slice(1)}
                             </button>
                         ))}
                     </div>
@@ -490,7 +529,7 @@ function PathDetail() {
                 className="mb-6 flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors group"
             >
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-                Back to Evolution
+                Back to Learning Paths
             </button>
 
             {/* Header */}
@@ -577,14 +616,14 @@ function PathDetail() {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: idx * 0.04 }}
                                 className={clsx(
-                                    'group relative flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300',
+                                    'group relative flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 cursor-pointer hover:shadow-md hover:-translate-y-0.5',
                                     isCompleted
                                         ? 'bg-green-50/50 border-green-200/60 dark:bg-green-500/5 dark:border-green-500/20'
                                         : isNext
-                                        ? 'bg-bg-surface border-cyan-200 dark:border-cyan-500/30 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5'
-                                        : 'bg-bg-elevated/50 border-transparent opacity-60'
+                                        ? 'bg-bg-surface border-cyan-200 dark:border-cyan-500/30 shadow-sm'
+                                        : 'bg-bg-elevated/50 border-transparent opacity-75 hover:opacity-100 hover:border-border-default'
                                 )}
-                                onClick={isNext ? () => navigate(`/dashboard/classroom?lesson=${encodeURIComponent(lesson.id)}`) : undefined}
+                                onClick={() => navigate(`/dashboard/classroom?lesson=${encodeURIComponent(lesson.id)}`)}
                             >
                                 {/* Status icon */}
                                 <div className={clsx(

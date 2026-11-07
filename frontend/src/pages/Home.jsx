@@ -112,19 +112,44 @@ function AmbientOrbs() {
     );
 }
 
-/* ─── REPL demo (lightweight typewriter) ─────────────────────────────────── */
+/* ─── REPL demo (lightweight typewriter with stage switcher) ─────────────── */
+const REPL_SCRIPTS = {
+    school: [
+        { input: '>>> from pymasters import vaathiyaar' },
+        { input: '>>> vaathiyaar.teach("loops_and_variables", level="class_6_to_12")' },
+        { output: 'Vaathiyaar > Think of a variable as a labeled magic box...' },
+        { input: '>>> for star in range(1, 4): print("⭐" * star)' },
+        { output: '⭐  ⭐⭐  ⭐⭐⭐  (+50 XP · Ready for CBSE/ICSE CS & AI!)' },
+    ],
+    college: [
+        { input: '>>> from pymasters import vaathiyaar' },
+        { input: '>>> vaathiyaar.teach("graphs_bfs_dfs", goal="placements")' },
+        { output: 'Vaathiyaar > BFS explores level by level using a queue (O(V+E))...' },
+        { input: '>>> vaathiyaar.next_lesson()' },
+        { output: 'Loaded: Shortest Path & Cycle Detection + FastAPI Capstone' },
+    ],
+    pro: [
+        { input: '>>> from pymasters import vaathiyaar' },
+        { input: '>>> vaathiyaar.teach("rag_and_async_internals", level="pro")' },
+        { output: 'Vaathiyaar > Hybrid retrieval + CrossEncoder reranking cuts hallucinations...' },
+        { input: '>>> vaathiyaar.next_lesson()' },
+        { output: 'Loaded: Building Production AI Agents & Async Concurrency' },
+    ],
+};
+
 function HeroREPL({ reduced }) {
+    const [stage, setStage] = useState('school');
     const [lines, setLines] = useState([]);
     const [current, setCurrent] = useState('');
     const [idx, setIdx] = useState(0);
 
-    const script = [
-        { input: '>>> from pymasters import vaathiyaar' },
-        { input: '>>> vaathiyaar.teach("decorators")' },
-        { output: 'Vaathiyaar > A decorator is a function that wraps another function...' },
-        { input: '>>> vaathiyaar.next_lesson()' },
-        { output: 'Loaded: Closures & Higher-Order Functions (5 min)' },
-    ];
+    const script = REPL_SCRIPTS[stage] || REPL_SCRIPTS.school;
+
+    useEffect(() => {
+        setLines([]);
+        setCurrent('');
+        setIdx(0);
+    }, [stage]);
 
     useEffect(() => {
         if (reduced) {
@@ -162,10 +187,30 @@ function HeroREPL({ reduced }) {
         }, 50);
         return () => clearInterval(ivl);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [idx, reduced]);
+    }, [idx, reduced, stage]);
 
     return (
-        <div className="relative max-w-xl mx-auto mt-12 w-full">
+        <div className="relative max-w-xl mx-auto mt-10 w-full">
+            <div className="flex flex-wrap justify-center gap-2 mb-3">
+                {[
+                    { id: 'school', label: '🌱 School (Class 6–12)' },
+                    { id: 'college', label: '🎓 College & Placements' },
+                    { id: 'pro', label: '🚀 Working Professionals' },
+                ].map((tab) => (
+                    <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setStage(tab.id)}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                            stage === tab.id
+                                ? 'bg-purple-600/30 border-purple-400 text-white shadow-sm'
+                                : 'bg-white/[0.03] border-white/10 text-slate-300 hover:border-white/25 hover:text-white'
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
             <div className="absolute -inset-4 rounded-3xl blur-2xl bg-gradient-to-r from-purple-600/15 to-cyan-500/15" aria-hidden="true" />
             <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-purple-900/30 bg-[#0d1117]">
                 <div className="bg-slate-800/80 border-b border-white/5 px-4 py-2.5 flex items-center gap-2">
@@ -604,7 +649,7 @@ export default function Home() {
                             </span>
                         </h2>
                         <p className="text-slate-300/90 text-sm leading-relaxed mb-6">
-                            Upload your student ID and get <span className="text-white font-semibold">3 months of full access, completely free</span> —
+                            Upload your <span className="text-white font-semibold">School ID (Class 6–12) or College / University ID</span> and get <span className="text-white font-semibold">3 months of full access, completely free</span> —
                             every track, Vaathiyaar, live code execution, all of it. We verify IDs manually and reply within a day.
                         </p>
                         <button

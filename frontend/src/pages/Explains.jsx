@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
-import { Lightbulb, Clock, ArrowRight } from 'lucide-react';
+import { Lightbulb, Clock, ArrowRight, Search, X } from 'lucide-react';
 import ScrollyExplain from '../components/ScrollyExplain';
 import GradientDescentVisual from '../components/explains/GradientDescentVisual';
 import TrainTestSplitVisual from '../components/explains/TrainTestSplitVisual';
@@ -371,24 +371,125 @@ export const ESSAYS = [
     QUANTIZATION,
 ];
 
+const ESSAY_CATEGORY_MAP = {
+    'gradient-descent': 'Foundations & Evaluation',
+    'train-test-split': 'Foundations & Evaluation',
+    'eda': 'Foundations & Evaluation',
+    'confusion-matrix': 'Foundations & Evaluation',
+    'cross-validation': 'Foundations & Evaluation',
+    'roc-auc': 'Foundations & Evaluation',
+    'bias-variance': 'Foundations & Evaluation',
+    'regularization': 'Foundations & Evaluation',
+    'bootstrap': 'Foundations & Evaluation',
+    'ab-testing': 'Foundations & Evaluation',
+    'bayesian-inference': 'Foundations & Evaluation',
+    'fuzzy-logic': 'Foundations & Evaluation',
+    'linear-regression': 'Supervised ML & Trees',
+    'logistic-regression': 'Supervised ML & Trees',
+    'decision-trees': 'Supervised ML & Trees',
+    'random-forest': 'Supervised ML & Trees',
+    'xgboost': 'Supervised ML & Trees',
+    'knn': 'Supervised ML & Trees',
+    'naive-bayes': 'Supervised ML & Trees',
+    'svm': 'Supervised ML & Trees',
+    'time-series-forecasting': 'Supervised ML & Trees',
+    'kmeans': 'Clustering & Explainability',
+    'dbscan': 'Clustering & Explainability',
+    'hierarchical-clustering': 'Clustering & Explainability',
+    'gaussian-mixture': 'Clustering & Explainability',
+    'pca': 'Clustering & Explainability',
+    'anomaly-detection': 'Clustering & Explainability',
+    'shap-values': 'Clustering & Explainability',
+    'neural-network': 'Deep Learning & LLMs',
+    'embeddings': 'Deep Learning & LLMs',
+    'attention': 'Deep Learning & LLMs',
+    'quantization': 'Deep Learning & LLMs',
+};
+
+const EXPLAIN_CATEGORIES = [
+    'All',
+    'Foundations & Evaluation',
+    'Supervised ML & Trees',
+    'Clustering & Explainability',
+    'Deep Learning & LLMs',
+];
+
 // ── Index page ────────────────────────────────────────────────────────────────
 function ExplainsIndex() {
     const navigate = useNavigate();
+    const [activeCategory, setActiveCategory] = useState('All');
+    const [searchQuery, setSearchQuery] = useState('');
     useEffect(() => { document.title = 'Explains — PyMasters'; }, []);
+
+    const filteredEssays = useMemo(() => {
+        const q = searchQuery.trim().toLowerCase();
+        return ESSAYS.filter((essay) => {
+            const cat = ESSAY_CATEGORY_MAP[essay.slug] || 'Foundations & Evaluation';
+            if (activeCategory !== 'All' && cat !== activeCategory) return false;
+            if (q) {
+                const matchTitle = String(essay.title || '').toLowerCase().includes(q);
+                const matchTag = String(essay.tagline || '').toLowerCase().includes(q);
+                const matchSub = String(essay.subtitle || '').toLowerCase().includes(q);
+                if (!matchTitle && !matchTag && !matchSub) return false;
+            }
+            return true;
+        });
+    }, [activeCategory, searchQuery]);
+
     return (
-        <div className="min-h-screen">
-            <header className="mb-6 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center text-white shadow-glow">
-                    <Lightbulb size={20} />
+        <div className="min-h-screen space-y-6">
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center text-white shadow-glow">
+                        <Lightbulb size={20} />
+                    </div>
+                    <div>
+                        <h1 className="text-2xl font-bold font-display text-text-primary">Explains</h1>
+                        <p className="text-xs text-text-muted">32 visual, scroll-driven essays — one concept at a time</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 className="text-2xl font-bold font-display text-text-primary">Explains</h1>
-                    <p className="text-xs text-text-muted">Visual, scroll-driven essays — one concept at a time</p>
+                <div className="relative sm:w-72">
+                    <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search visual essays..."
+                        aria-label="Search visual essays"
+                        className="w-full pl-9 pr-8 py-2 rounded-xl bg-bg-surface border border-border-default text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-primary"
+                    />
+                    {searchQuery && (
+                        <button
+                            type="button"
+                            onClick={() => setSearchQuery('')}
+                            aria-label="Clear essay search"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                        >
+                            <X size={13} />
+                        </button>
+                    )}
                 </div>
             </header>
 
+            <div className="flex flex-wrap gap-2">
+                {EXPLAIN_CATEGORIES.map((cat) => (
+                    <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setActiveCategory(cat)}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                            activeCategory === cat
+                                ? 'bg-gradient-primary text-white border-transparent shadow-sm'
+                                : 'bg-bg-surface border-border-default text-text-secondary hover:text-text-primary'
+                        }`}
+                    >
+                        {cat}
+                    </button>
+                ))}
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {ESSAYS.map((essay) => (
+                {filteredEssays.map((essay) => (
                     <button
                         key={essay.slug}
                         onClick={() => navigate(`/dashboard/explains/${essay.slug}`)}
@@ -398,12 +499,19 @@ function ExplainsIndex() {
                         <div className="h-32 rounded-xl bg-bg-inset mb-4 overflow-hidden pointer-events-none" aria-hidden="true">
                             <essay.Visual stepIndex={6} />
                         </div>
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-xs font-semibold text-accent-primary">
+                                {ESSAY_CATEGORY_MAP[essay.slug] || 'Foundations'}
+                            </span>
+                            <span className="text-xs text-text-muted flex items-center gap-1">
+                                <Clock size={11} />{essay.minutes} min
+                            </span>
+                        </div>
                         <h2 className="text-base font-bold font-display text-text-primary group-hover:text-accent-primary transition-colors">
                             {essay.title}
                         </h2>
                         <p className="text-sm text-text-secondary mt-1">{essay.tagline}</p>
                         <p className="text-xs text-text-muted mt-3 flex items-center gap-3">
-                            <span className="flex items-center gap-1"><Clock size={11} />{essay.minutes} min</span>
                             <span className="flex items-center gap-1 text-accent-primary font-medium">
                                 Scroll the story <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
                             </span>
@@ -411,12 +519,11 @@ function ExplainsIndex() {
                     </button>
                 ))}
 
-                {/* Coming-next card keeps the grid honest about scope */}
-                <div className="rounded-2xl border border-dashed border-border-strong p-5 flex flex-col items-start justify-center text-left opacity-70">
-                    <h2 className="text-sm font-bold font-display text-text-primary">More on the way</h2>
+                {/* Request-a-concept card */}
+                <div className="rounded-2xl border border-dashed border-border-strong p-5 flex flex-col items-start justify-center text-left opacity-80">
+                    <h2 className="text-sm font-bold font-display text-text-primary">Want another concept explained visually?</h2>
                     <p className="text-xs text-text-muted mt-1 leading-relaxed">
-                        A new essay lands most days — time-series forecasting · transformers · ensemble methods are queued.
-                        Tell Vaathiyaar which concept you'd like explained visually next.
+                        From school recursion & sorting to college graph algorithms and production LoRA/RAG — ask Vaathiyaar in any Classroom lesson to generate a custom visual Explain on the spot.
                     </p>
                 </div>
             </div>

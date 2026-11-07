@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
 import { API_URL } from '../api';
 import ReviewQueue from '../components/ReviewQueue';
 import WarmUp from '../components/WarmUp';
@@ -279,6 +280,7 @@ function rankProgressPct(xp) {
 // ─── Overview ──────────────────────────────────────────────────────────────
 export function Overview() {
     const { user } = useAuth();
+    const { setUserPersona } = useProfile();
     const audience = useAudience();
     const navigate = useNavigate();
 
@@ -388,58 +390,91 @@ export function Overview() {
             animate="visible"
             className="space-y-8 pb-8"
         >
-            {/* ─── F8: Review queue is the default landing for a RETURNING learner.
-                It self-hides when nothing is due, so a caught-up / new learner sees the
-                normal dashboard; a learner with decayed recall lands on their reviews
-                first, at full width, instead of one panel down the left column. ─── */}
-            <ReviewQueue userId={user?.id} />
-            <WarmUp lang={user?.preferred_language || 'en'} />
-            <MisconceptionRadar />
-
-            {/* ─── Welcome Banner ────────────────────────────────────────── */}
+            {/* ─── Welcome Banner (Always First Above the Fold) ──────────── */}
             <motion.div variants={itemVariants}>
                 <Card className="relative overflow-hidden shadow-sm">
-                <div className="relative p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 text-xs text-text-secondary mb-2">
-                            <Calendar size={12} aria-hidden="true" />
-                            <span>{formatDate()}</span>
-                            {audience.orgName && (
-                                <span className="font-semibold text-text-primary" data-testid="org-identity">&middot; {audience.orgName}</span>
+                <div className="relative p-6 sm:p-8 flex flex-col gap-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-text-secondary mb-2">
+                                <Calendar size={12} aria-hidden="true" />
+                                <span>{formatDate()}</span>
+                                {audience.orgName && (
+                                    <span className="font-semibold text-text-primary" data-testid="org-identity">&middot; {audience.orgName}</span>
+                                )}
+                            </div>
+                            <h1 className="text-2xl sm:text-3xl font-bold font-display text-text-primary mb-2">
+                                {getGreeting()}, {user.name || user.username}
+                            </h1>
+                            {audience.welcome ? (
+                                // The organisation's own welcome (Console -> Branding), in place of a generic quote.
+                                <p className="text-sm text-text-secondary max-w-lg" data-testid="org-welcome">{audience.welcome}</p>
+                            ) : audience.mode !== 'professional' && (
+                                <p className="text-sm text-text-secondary italic max-w-lg">
+                                    &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-text-secondary">&mdash; {dailyQuote.author}</span>
+                                </p>
                             )}
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-bold font-display text-text-primary mb-2">
-                            {getGreeting()}, {user.name || user.username}
-                        </h1>
-                        {audience.welcome ? (
-                            // The organisation's own welcome (Console -> Branding), in place of a generic quote.
-                            <p className="text-sm text-text-secondary max-w-lg" data-testid="org-welcome">{audience.welcome}</p>
-                        ) : audience.mode !== 'professional' && (
-                            <p className="text-sm text-text-secondary italic max-w-lg">
-                                &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-text-secondary">&mdash; {dailyQuote.author}</span>
-                            </p>
-                        )}
+
+                        {/* Streak badge */}
+                        <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.3, type: 'spring' }}
+                            className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-orange-500/12 border border-orange-500/25 shadow-sm self-start"
+                        >
+                            <Flame size={24} aria-hidden="true" className="text-orange-600 dark:text-orange-300" />
+                            <div>
+                                <div className="text-xl font-bold font-display text-orange-600 dark:text-orange-300">{streak}</div>
+                                <div className="text-xs font-bold uppercase tracking-wider text-orange-700 dark:text-orange-300">day streak</div>
+                            </div>
+                        </motion.div>
                     </div>
 
-                    {/* Streak badge */}
-                    <motion.div
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.3, type: 'spring' }}
-                        className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-orange-500/12 border border-orange-500/25 shadow-sm self-start"
-                    >
-                        <Flame size={24} aria-hidden="true" className="text-orange-600 dark:text-orange-300" />
-                        <div>
-                            <div className="text-xl font-bold font-display text-orange-600 dark:text-orange-300">{streak}</div>
-                            <div className="text-xs font-bold uppercase tracking-wider text-orange-700 dark:text-orange-300">day streak</div>
+                    {/* Stage / Persona Quick Switcher */}
+                    <div className="pt-4 border-t border-border-default flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-bold uppercase tracking-wider text-text-muted mr-1">
+                                Learning Stage:
+                            </span>
+                            {[
+                                { id: 'high_school_student', persona: 'school', label: '🌱 School (Class 6–12)' },
+                                { id: 'college_student', persona: 'college', label: '🎓 College & Placements' },
+                                { id: 'junior_developer', persona: 'professional', label: '🚀 Working Professional' },
+                            ].map((st) => {
+                                const active = audience.persona === st.persona;
+                                return (
+                                    <button
+                                        key={st.id}
+                                        type="button"
+                                        onClick={() => setUserPersona?.(st.id)}
+                                        className={clsx(
+                                            'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all',
+                                            active
+                                                ? 'border-cyan-500 bg-cyan-500/12 text-cyan-700 dark:text-cyan-300 shadow-sm'
+                                                : 'border-border-default bg-bg-elevated text-text-secondary hover:border-border-strong'
+                                        )}
+                                    >
+                                        {st.label}
+                                    </button>
+                                );
+                            })}
                         </div>
-                    </motion.div>
+                        <button
+                            type="button"
+                            onClick={() => navigate(`/dashboard/classroom?stage=${audience.persona || 'all'}`)}
+                            className="text-xs font-semibold text-accent-primary hover:underline inline-flex items-center gap-1"
+                        >
+                            Browse {audience.personaInfo?.shortLabel || 'Stage'} Curriculum
+                            <ArrowRight size={12} />
+                        </button>
+                    </div>
                 </div>
                 </Card>
             </motion.div>
 
-                {/* ─── Daily Recommendation Card ─────────────────────── */}
-                <motion.div variants={itemVariants}>
+            {/* ─── Daily Recommendation Card ─────────────────────── */}
+            <motion.div variants={itemVariants}>
                 <Card interactive className="relative overflow-hidden shadow-sm group">
                     <div className="relative p-6 sm:p-8">
                         <div className="flex items-center gap-3 mb-4">
@@ -491,7 +526,12 @@ export function Overview() {
                         )}
                     </div>
                 </Card>
-                </motion.div>
+            </motion.div>
+
+            {/* ─── F8: Review queue & Warm-up (self-hides when nothing is due) ─── */}
+            <ReviewQueue userId={user?.id} />
+            <WarmUp lang={user?.preferred_language || 'en'} />
+            <MisconceptionRadar />
 
             {/* ─── Stats Row ─────────────────────────────────────────────── */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -564,7 +604,7 @@ export function Overview() {
                                 >
                                 <Card
                                     interactive
-                                    onClick={() => !loading && navigate('/dashboard/classroom')}
+                                    onClick={() => !loading && navigate(`/dashboard/classroom?topic=${encodeURIComponent(trend.title || '')}`)}
                                     className="p-5 cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group"
                                 >
                                     {loading ? (
@@ -687,17 +727,17 @@ export function Overview() {
                                     text: 'text-cyan-700 dark:text-cyan-300',
                                 },
                                 {
-                                    label: 'Practice Mode',
-                                    icon: <Code2 size={18} />,
-                                    to: '/dashboard/classroom',
+                                    label: 'Daily Challenges',
+                                    icon: <Trophy size={18} />,
+                                    to: '/dashboard/challenges',
                                     colors: 'from-purple-500 to-violet-500',
                                     bg: 'bg-purple-500/10 hover:bg-purple-500/20',
                                     text: 'text-purple-700 dark:text-purple-300',
                                 },
                                 {
-                                    label: 'Ask Vaathiyaar',
-                                    icon: <MessageCircle size={18} />,
-                                    to: '/dashboard/classroom',
+                                    label: 'Code Playground',
+                                    icon: <Code2 size={18} />,
+                                    to: '/dashboard/playground',
                                     colors: 'from-amber-500 to-orange-500',
                                     bg: 'bg-amber-500/10 hover:bg-amber-500/20',
                                     text: 'text-amber-700 dark:text-amber-300',
