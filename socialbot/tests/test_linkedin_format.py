@@ -41,27 +41,497 @@ def test_linkedin_refuses_to_post_without_a_gif(fake_api):
     assert not fake_api, "nothing may be uploaded or posted when the GIF is missing"
 
 
-def test_fun_with_python_prompt_asks_for_a_playful_real_world_example():
-    p = briefs.linkedin_prompt(LES, style="fun")
-    assert "Fun with Python" in p
-    assert "real-world" in p
-    assert LES["url"] in p
-    assert "jargon, made simple" not in p
+def test_strictly_professional_variety_formats_include_pymasters_link_and_page_tag():
+    for style_name in config.LINKEDIN_STYLES:
+        p = briefs.linkedin_prompt(LES, style=style_name)
+        assert "strictly professional" in p
+        assert "@PyMasters" in p
+        assert LES["url"] in p
+        assert "https://pymasters.net" in p
 
 
 def test_default_prompt_keeps_the_jargon_made_simple_format():
-    assert "jargon, made simple" in briefs.linkedin_prompt(LES)
+    assert "jargon, made simple" in briefs.linkedin_prompt(LES, style="jargon")
 
 
-def test_linkedin_style_is_picked_at_random_with_both_formats_appearing():
+def test_linkedin_style_alternates_between_business_and_tech_tracks_without_repeats(monkeypatch):
+    fake = _FakeStore()
+    monkeypatch.setattr(pipeline, "store", fake)
     rng = random.Random(7)
-    styles = {pipeline.linkedin_style(rng) for _ in range(50)}
-    assert styles == {"fun", "jargon"}
+    picked = []
+    for i in range(1, 60):
+        st = pipeline.linkedin_style(rng)
+        if picked:
+            assert st != picked[-1], "consecutive LinkedIn posts must not repeat the same format"
+            prev_is_biz = picked[-1] in config.LINKEDIN_BUSINESS_STYLES
+            curr_is_biz = st in config.LINKEDIN_BUSINESS_STYLES
+            assert prev_is_biz != curr_is_biz, "LinkedIn must alternate between Business-Simple and Technical-Detail tracks"
+        picked.append(st)
+        fake.rows[i] = {"id": i, "kind": "linkedin", "status": "rendered", "draft": {"format_variety": st}}
+    assert set(picked) == set(config.LINKEDIN_STYLES)
 
 
-def test_the_editor_judges_a_fun_post_by_the_fun_rules():
-    fun = briefs.critic_prompt("linkedin", {"style": "fun", "post": "x"}, LES)
-    jargon = briefs.critic_prompt("linkedin", {"style": "jargon", "post": "x"}, LES)
-    assert "Fun with Python" in fun and "everyday" in fun
-    assert "original, precise analogy" in jargon
-    assert "original, precise analogy" not in fun
+def test_every_linkedin_post_tags_pymasters_page_and_links_to_pymasters_net():
+    out1 = linkedin.little_text("Latency audit with @PyMasters on https://pymasters.net", ["#Python", "#AI", "#Risk"])
+    assert "@[PyMasters](urn:li:organization:113061910)" in out1
+    assert "https://pymasters.net" in out1
+
+    # Even if a draft omitted the URL or @ prefix, little_text guarantees both the page tag and https://pymasters.net
+    out2 = linkedin.little_text("Deterministic verification with PyMasters", ["#Python", "#AI", "#Engineering"])
+    assert "@[PyMasters](urn:li:organization:113061910)" in out2
+    assert "https://pymasters.net" in out2
+
+
+def test_the_editor_enforces_strictly_professional_rules_and_rejects_casual_filler():
+    crit = briefs.critic_prompt("linkedin", {"style": "tech_deep_dive", "post": "x"}, LES)
+    assert "strictly professional" in crit and "@PyMasters" in crit
+    casual_draft = {
+        "style": "tech_deep_dive",
+        "post": "A" * 850 + " splitting a restaurant bill with @PyMasters https://pymasters.net",
+        "code_snippet": "print(1)",
+        "hashtags": ["#Python", "#AI", "#Engineering"],
+        "animation": {"title": "Check", "beats": [{"kind": "reveal", "caption": "ok", "big": "OK", "sub": "ok"}]},
+    }
+    errs = quality.hard_checks("linkedin", casual_draft)
+    assert any("banned phrase: restaurant bill" in e for e in errs)
+
+
+def test_business_track_posts_allow_no_code_wall_while_tech_track_requires_runnable_code():
+    biz_draft = {
+        "style": "business_story",
+        "post": "A" * 850 + " @PyMasters https://pymasters.net",
+        "code_snippet": "",
+        "hashtags": ["#AI", "#Leadership", "#PyMasters"],
+        "animation": {
+            "title": "Cost per 1M Decisions",
+            "beats": [
+                {
+                    "kind": "metric",
+                    "step_badge": "1 · THE COST GAP",
+                    "caption": "Guarded routing cuts monthly inference spend by 68%.",
+                    "metrics": [
+                        {"label": "UNROUTED", "value": "$42,000/mo", "sub": "Every ticket hits 70B LLM"},
+                        {"label": "GUARDED", "value": "$13,400/mo", "sub": "82% resolved by deterministic rules"},
+                    ],
+                }
+            ],
+        },
+    }
+    assert not quality.hard_checks("linkedin", biz_draft)
+
+    tech_missing_code = {**biz_draft, "style": "tech_deep_dive", "code_snippet": ""}
+    errs = quality.hard_checks("linkedin", tech_missing_code)
+    assert any("technical LinkedIn format requires a non-empty runnable code_snippet" in e for e in errs)
+
+
+# ---------- 5-hour LinkedIn cadence (owner, 2026-11-10) ----------
+from datetime import datetime, timedelta, timezone
+
+from socialbot import config, quality, scheduler
+
+
+class _FakeStore:
+    def __init__(self, items=()):
+        self.rows = {it["id"]: dict(it) for it in items}
+
+    def items(self, status=None, kind=None, limit=50):
+        rows = [r for r in self.rows.values() if (status is None or r["status"] == status) and (kind is None or r["kind"] == kind)]
+        return sorted(rows, key=lambda r: -r["id"])[:limit]
+
+    def update_item(self, item_id, **kw):
+        self.rows[item_id].update(kw)
+
+
+def _freeze(monkeypatch, now):
+    class _DT(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return now.astimezone(tz) if tz else now.replace(tzinfo=None)
+    monkeypatch.setattr(scheduler, "datetime", _DT)
+
+
+def _secs(slots):
+    ts = [datetime.fromisoformat(s) for s in slots]
+    return {int((b - a).total_seconds()) for a, b in zip(ts, ts[1:])}
+
+
+def test_linkedin_cadence_is_every_5_hours_all_week():
+    c = config.CADENCE["linkedin"]
+    assert c["interval_hours"] == 5 and c["per_week"] == 35 and c["weekdays"] == [0, 1, 2, 3, 4, 5, 6]
+
+
+def test_linkedin_slots_are_exactly_5_hours_apart(monkeypatch):
+    monkeypatch.setattr(scheduler, "store", _FakeStore())
+    slots = scheduler.upcoming_slots("linkedin", days=3)
+    assert len(slots) >= 14   # 72h / 5h
+    assert _secs(slots) == {18000}
+
+
+def test_linkedin_slots_cross_midnight_on_the_fixed_grid(monkeypatch):
+    monkeypatch.setattr(scheduler, "store", _FakeStore())
+    _freeze(monkeypatch, datetime(2026, 11, 1, 3, 0, tzinfo=scheduler.TZ))
+    slots = [datetime.fromisoformat(s).astimezone(scheduler.TZ) for s in scheduler.upcoming_slots("linkedin", days=2)]
+    # 22:45 the evening before is the still-open (untaken) window, then the grid runs on in strict 5h steps
+    assert [f"{s:%H:%M}" for s in slots[:7]] == ["22:45", "03:45", "08:45", "13:45", "18:45", "23:45", "04:45"]
+    assert _secs([s.isoformat() for s in slots]) == {18000}
+    # the same grid on every run: a later run sees the same future slots
+    _freeze(monkeypatch, datetime(2026, 11, 1, 9, 0, tzinfo=scheduler.TZ))
+    later = [datetime.fromisoformat(s).astimezone(scheduler.TZ) for s in scheduler.upcoming_slots("linkedin", days=2)]
+    assert later[1:5] == slots[3:7]
+
+
+def test_open_window_is_kept_until_taken(monkeypatch):
+    now = datetime(2026, 11, 10, 10, 0, tzinfo=scheduler.TZ)   # 08:45 window is open (grid: ... 05:45, 10:45 on day 10)
+    _freeze(monkeypatch, now)
+    monkeypatch.setattr(scheduler, "store", _FakeStore())
+    first = scheduler.upcoming_slots("linkedin", days=1)[0]
+    assert datetime.fromisoformat(first) <= now < datetime.fromisoformat(first) + timedelta(hours=5)
+    taken = _FakeStore([{"id": 1, "kind": "linkedin", "status": "published", "publish_at": first}])
+    monkeypatch.setattr(scheduler, "store", taken)
+    assert scheduler.upcoming_slots("linkedin", days=1)[0] > first
+
+
+def test_rendered_linkedin_post_is_pulled_forward_into_the_next_free_slot(monkeypatch):
+    _freeze(monkeypatch, datetime(2026, 11, 10, 10, 0, tzinfo=scheduler.TZ))
+    monkeypatch.setattr(scheduler, "store", _FakeStore())
+    slots = scheduler.upcoming_slots("linkedin", days=3)
+    fake = _FakeStore([{"id": 7, "kind": "linkedin", "status": "rendered", "publish_at": slots[6]},
+                       {"id": 8, "kind": "linkedin", "status": "rendered", "publish_at": None},
+                       {"id": 9, "kind": "short", "status": "rendered", "publish_at": "2099-01-01T13:00:00+00:00"}])
+    monkeypatch.setattr(scheduler, "store", fake)
+    scheduler.assign_slots()
+    assert fake.rows[7]["publish_at"] == slots[0]
+    assert fake.rows[8]["publish_at"] == slots[1]
+    assert fake.rows[9]["publish_at"] == "2099-01-01T13:00:00+00:00", "video slots are not reshuffled"
+
+
+def test_tick_keeps_linkedin_ahead_by_day_and_videos_at_night(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(config, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(config, "ensure_dirs", lambda: None)
+    for name in ("refresh_daily_trends", "resume_interrupted", "publish_due", "refresh_metrics"):
+        monkeypatch.setattr(scheduler, name, lambda: None)
+    monkeypatch.setattr(scheduler, "produce_ahead", lambda ahead=2, kinds=(): calls.append((tuple(kinds), ahead)))
+    _freeze(monkeypatch, datetime(2026, 11, 10, 14, 0, tzinfo=scheduler.TZ))
+    scheduler.tick()
+    assert calls == [(("linkedin",), 2), (("thematic",), 1), (("short", "long"), 1)]
+    calls.clear()
+    _freeze(monkeypatch, datetime(2026, 11, 10, 3, 0, tzinfo=scheduler.TZ))
+    scheduler.tick()
+    assert calls == [(("linkedin",), 2), (("thematic",), 1), (("short", "long"), 2)]
+
+
+def test_snippets_run_in_the_social_venv_so_taught_packages_import():
+    if quality.SOCIAL_VENV_PY.exists():
+        assert quality.snippet_python() == str(quality.SOCIAL_VENV_PY)
+    ok, out, _ = quality.run_snippet("print(sum(range(10)))")
+    assert ok and out.strip() == "45"
+
+
+# ---------- Hugging Face Spaces random one-by-one rotation (owner, 2026-11-10) ----------
+from socialbot import sources
+
+
+def test_all_five_hf_spaces_have_runnable_code_blocks():
+    spaces = sources.hf_space_candidates()
+    assert len(spaces) == 5
+    for sp in spaces:
+        assert sp["is_hf_space"] is True
+        assert sp["space_url"].startswith("https://huggingface.co/spaces/Muthu88/pymasters-")
+        assert len(sp["code_blocks"]) >= 2
+        for code in sp["code_blocks"]:
+            ok, out, err = quality.run_snippet(code)
+            assert ok, f"{sp['key']} snippet failed: {err}"
+            assert out.strip(), f"{sp['key']} snippet printed nothing"
+
+
+def test_hf_spaces_are_picked_one_by_one_randomly_without_repeats_across_linkedin_and_shorts(monkeypatch):
+    fake_store = _FakeStore()
+    monkeypatch.setattr(sources, "store", fake_store)
+    rng = random.Random(42)
+
+    # First cycle of 5 on LinkedIn covers all 5 unique Spaces one-by-one in random order
+    linkedin_first_cycle = []
+    for i in range(1, 6):
+        chosen = sources.pick_hf_space("linkedin", rng=rng)
+        assert chosen["key"] not in linkedin_first_cycle, "repeated an HF Space before all 5 were covered"
+        linkedin_first_cycle.append(chosen["key"])
+        fake_store.rows[i] = {"id": i, "kind": "linkedin", "status": "rendered", "source_key": chosen["key"]}
+    assert len(set(linkedin_first_cycle)) == 5
+
+    # Shorts track its own independent 5-Space cycle
+    short_first_cycle = []
+    for i in range(10, 15):
+        chosen = sources.pick_hf_space("short", rng=rng)
+        assert chosen["key"] not in short_first_cycle
+        short_first_cycle.append(chosen["key"])
+        fake_store.rows[i] = {"id": i, "kind": "short", "status": "rendered", "source_key": chosen["key"]}
+    assert len(set(short_first_cycle)) == 5
+
+    # Once all 5 have been posted on LinkedIn, the second cycle resets and covers all 5 again without repeats
+    linkedin_second_cycle = []
+    for i in range(20, 25):
+        chosen = sources.pick_hf_space("linkedin", rng=rng)
+        assert chosen["key"] not in linkedin_second_cycle
+        linkedin_second_cycle.append(chosen["key"])
+        fake_store.rows[i] = {"id": i, "kind": "linkedin", "status": "rendered", "source_key": chosen["key"]}
+    assert len(set(linkedin_second_cycle)) == 5
+
+
+def test_hf_space_prompts_and_hard_checks_require_space_url_and_pymasters():
+    sp = sources.hf_space_candidates()[0]
+    li_prompt = briefs.linkedin_prompt(sp)
+    sh_prompt = briefs.short_prompt(sp)
+    assert sp["space_url"] in li_prompt and "pymasters.net" in li_prompt
+    assert sp["space_url"] in sh_prompt and "pymasters.net" in sh_prompt
+
+    # Missing HF Space URL is caught by hard_checks for both LinkedIn and Short
+    bad_li = {
+        "style": "hf_space",
+        "is_hf_space": True,
+        "space_url": sp["space_url"],
+        "post": "A" * 900 + " https://pymasters.net",
+        "code_snippet": "print(1)",
+        "hashtags": ["#Python", "#AI", "#HuggingFace"],
+        "animation": {"title": "AST", "beats": [{"kind": "reveal", "caption": "ok", "big": "AST", "sub": "check"}]},
+    }
+    errs_li = quality.hard_checks("linkedin", bad_li)
+    assert any("Hugging Face Space link" in e for e in errs_li)
+
+    good_li = {**bad_li, "post": "A" * 850 + f" {sp['space_url']} https://pymasters.net"}
+    assert not quality.hard_checks("linkedin", good_li)
+
+
+# ---------- Daily Live Trending Topics across 5 Pillars (owner, 2026-11-10) ----------
+from socialbot import trends
+
+
+def test_daily_trends_capture_all_five_pillars_with_verified_python_code(tmp_path, monkeypatch):
+    monkeypatch.setattr(trends, "TRENDS_DIR", tmp_path / "daily_trends")
+    monkeypatch.setattr(trends, "OPS_REVIEW_MD", tmp_path / "TRENDS_DAILY.md")
+    items = trends.capture_daily_trends(day="2026-11-10", force=True, live_network=False)
+    assert [it["pillar_id"] for it in items] == [
+        "ai_finance",
+        "ai_risk",
+        "ai_cards_banking",
+        "ai_around_the_world",
+        "ai_key_concepts",
+    ]
+    assert (tmp_path / "TRENDS_DAILY.md").exists()
+    for it in items:
+        assert it["is_daily_trend"] is True
+        assert "How PyMasters helps you master this" in it["story"]
+        assert "pymasters.net" in it["story"]
+        for code in it["code_blocks"]:
+            ok, out, err = quality.run_snippet(code)
+            assert ok and out.strip(), f"{it['key']} failed: {err}"
+            first_line = out.strip().splitlines()[0].strip()
+            assert first_line in it["story"], f"exact output {first_line!r} missing from {it['key']} story"
+
+
+def test_daily_trend_pillars_rotate_one_by_one_without_repeats(tmp_path, monkeypatch):
+    monkeypatch.setattr(trends, "TRENDS_DIR", tmp_path / "daily_trends")
+    monkeypatch.setattr(trends, "OPS_REVIEW_MD", tmp_path / "TRENDS_DAILY.md")
+    fake_store = _FakeStore()
+    monkeypatch.setattr(trends, "store", fake_store)
+    rng = random.Random(99)
+
+    seen_pillars = []
+    for i in range(1, 6):
+        chosen = trends.pick_daily_trend("linkedin", rng=rng, day="2026-11-10", live_network=False)
+        assert chosen["pillar_id"] not in seen_pillars
+        seen_pillars.append(chosen["pillar_id"])
+        fake_store.rows[i] = {"id": i, "kind": "linkedin", "status": "rendered", "source_key": chosen["key"]}
+    assert set(seen_pillars) == {
+        "ai_finance",
+        "ai_risk",
+        "ai_cards_banking",
+        "ai_around_the_world",
+        "ai_key_concepts",
+    }
+
+
+def test_trend_prompts_and_animation_beat_helper_scope(tmp_path, monkeypatch):
+    monkeypatch.setattr(trends, "TRENDS_DIR", tmp_path / "daily_trends")
+    monkeypatch.setattr(trends, "OPS_REVIEW_MD", tmp_path / "TRENDS_DAILY.md")
+    tr = trends.capture_daily_trends(day="2026-11-10", force=True, live_network=False)[0]
+    li_p = briefs.linkedin_prompt(tr)
+    sh_p = briefs.short_prompt(tr)
+    assert "AI in Finance" in li_p and "how @PyMasters helps professionals" in li_p
+    assert "AI in Finance" in sh_p and "pymasters.net" in sh_p
+
+    # Animation beat calling a helper defined in code_snippet succeeds via fallback scope
+    draft = {
+        "style": "trend",
+        "post": "A" * 900 + " https://pymasters.net",
+        "code_snippet": "def double(x):\n    return x * 2\nprint(double(21))",
+        "hashtags": ["#Python", "#AIFinance", "#PyMasters"],
+        "animation": {
+            "title": "Position Sizing",
+            "beats": [{"kind": "code", "caption": "Call helper", "code": "print(double(21))", "output": "42"}],
+        },
+    }
+    assert not quality.hard_checks("linkedin", draft)
+
+
+def test_weekly_thematic_analysis_cadence_and_verified_research_candidates(tmp_path, monkeypatch):
+    c = config.CADENCE["thematic"]
+    assert c["per_week"] == 1 and c["weekdays"] == [6]
+    monkeypatch.setattr(trends, "THEMATIC_DIR", tmp_path / "weekly_thematic")
+    monkeypatch.setattr(trends, "OPS_THEMATIC_MD", tmp_path / "THEMATIC_WEEKLY.md")
+    items = trends.capture_weekly_thematic(week_id="2026-W46", force=True, live_network=False)
+    assert len(items) == 3
+    assert (tmp_path / "THEMATIC_WEEKLY.md").exists()
+    for it in items:
+        assert it["is_thematic"] is True
+        assert "@PyMasters" in it["story"] and "https://pymasters.net" in it["story"]
+        for code in it["code_blocks"]:
+            ok, out, err = quality.run_snippet(code)
+            assert ok and out.strip(), f"{it['key']} failed: {err}"
+            assert out.strip().splitlines()[0].strip() in it["story"]
+
+
+def test_weekly_thematic_rotates_without_repeats_and_uses_thematic_brief(tmp_path, monkeypatch):
+    monkeypatch.setattr(trends, "THEMATIC_DIR", tmp_path / "weekly_thematic")
+    monkeypatch.setattr(trends, "OPS_THEMATIC_MD", tmp_path / "THEMATIC_WEEKLY.md")
+    fake_store = _FakeStore()
+    monkeypatch.setattr(trends, "store", fake_store)
+    rng = random.Random(123)
+    seen = []
+    for i in range(1, 4):
+        chosen = trends.pick_weekly_thematic(rng=rng, week_id="2026-W46", live_network=False)
+        assert chosen["key"] not in seen
+        seen.append(chosen["key"])
+        fake_store.rows[i] = {"id": i, "kind": "thematic", "status": "rendered", "source_key": chosen["key"]}
+    assert len(set(seen)) == 3
+
+    th = items = trends.capture_weekly_thematic(week_id="2026-W46", live_network=False)[0]
+    tp = briefs.thematic_prompt(th)
+    cp = briefs.critic_prompt("thematic", {"style": "thematic", "post": "x"}, th)
+    assert "Thematic Analysis Research Brief" in tp and "@PyMasters" in tp and "https://pymasters.net" in tp
+    assert "Weekly Thematic Analysis Research posts" in cp
+
+
+def test_youtube_short_rejects_monotonous_visuals_and_accepts_self_explanatory_multi_visuals():
+    from socialbot.render import scenes as render_scenes
+
+    monotonous_short = {
+        "title": "Why Naive Retries Break Payment APIs",
+        "description": "Learn more at https://pymasters.net",
+        "tags": ["Python", "AI", "Payments"],
+        "scenes": [
+            {"narration": f"Scene {i} narration with plenty of words so total word count exceeds sixty words easily across five scenes.",
+             "visual": {"type": "code", "heading": f"Step {i}", "code": "print(42)", "output": "42"}}
+            for i in range(1, 6)
+        ],
+    }
+    errs = quality.hard_checks("short", monotonous_short)
+    assert any("use at least 3 different self-explanatory visual types" in e for e in errs)
+
+    self_explanatory_short = {
+        "title": "Why Naive Retries Break Payment APIs",
+        "hook": "Why do blind payment retries double-charge customers?",
+        "cta": "Practice deterministic Python risk engineering at pymasters.net.",
+        "description": "Full lesson at https://pymasters.net",
+        "tags": ["Python", "AI", "Payments"],
+        "scenes": [
+            {
+                "narration": "When a payment gateway times out under load, blind retries can charge a customer card twice in under a second.",
+                "visual": {
+                    "type": "metric",
+                    "step_badge": "1 · THE BUSINESS RISK",
+                    "heading": "Duplicate Charge Exposure",
+                    "note": "Blind retries turn a 300ms timeout into duplicate card settlement.",
+                    "metrics": [
+                        {"label": "BLIND RETRY", "value": "3.4% Dupes", "sub": "Charged twice on timeout"},
+                        {"label": "IDEMPOTENT KEY", "value": "0.0% Dupes", "sub": "Safe deterministic replay"},
+                    ],
+                },
+            },
+            {
+                "narration": "An idempotency key hashes the user ID, cart items, and timestamp bucket before calling the external gateway.",
+                "visual": {
+                    "type": "flow",
+                    "step_badge": "2 · SYSTEM FLOW",
+                    "heading": "Idempotent Payment Pipeline",
+                    "note": "Every retry carries the exact same deterministic SHA-256 token.",
+                    "nodes": ["Checkout", "SHA-256 Key", "Ledger Lock", "Gateway"],
+                    "edges": [[0, 1], [1, 2], [2, 3]],
+                },
+            },
+            {
+                "narration": "Here is the exact three-line Python guard that deduplicates payment requests in memory before settlement.",
+                "visual": {
+                    "type": "code",
+                    "step_badge": "3 · LIVE PYTHON GUARD",
+                    "heading": "Deterministic Dedup Check",
+                    "note": "setdefault returns the cached receipt on any retry.",
+                    "code": "seen = {}\ntx = seen.setdefault('k9', 100)\nprint(tx)",
+                    "output": "100",
+                },
+            },
+            {
+                "narration": "Notice the difference between unguarded retries and idempotent state locking during a gateway timeout.",
+                "visual": {
+                    "type": "compare",
+                    "step_badge": "4 · BEFORE VS AFTER",
+                    "heading": "Retry Behavior Under Timeout",
+                    "note": "Idempotency guarantees at-most-once settlement.",
+                    "left_title": "Naive Retry",
+                    "left": "3 timeouts = 3 charges\nCustomer billed $300",
+                    "right_title": "Idempotent Key",
+                    "right": "3 timeouts = 1 charge\nCached receipt replayed",
+                },
+            },
+            {
+                "narration": "Lock the transaction key before the network call so every retry replays the original receipt safely.",
+                "visual": {
+                    "type": "reveal",
+                    "step_badge": "5 · KEY TAKEAWAY",
+                    "heading": "Zero Duplicate Charges",
+                    "note": "Hash the intent first, then call the payment network.",
+                    "big": "1 Key = 1 Charge",
+                    "sub": "pymasters.net · AI in Cards & Banking",
+                },
+            },
+        ],
+    }
+    assert not quality.hard_checks("short", self_explanatory_short)
+
+    # Verify draw_frame renders step_badge, metric cards, and note banner cleanly in 1080x1920 and 1080x1080
+    f_portrait = render_scenes.Frame(1080, 1920)
+    f_square = render_scenes.Frame(1080, 1080)
+    sample_words = [("Idempotency", 0.0, 0.4), ("locks", 0.4, 0.8), ("settlement.", 0.8, 1.2)]
+    for sc in self_explanatory_short["scenes"]:
+        img_portrait = render_scenes.draw_frame(f_portrait, sc["visual"], 0.6, 0.5, words=sample_words, now=0.5)
+        assert img_portrait.size == (1080, 1920)
+        img_square = render_scenes.draw_frame(f_square, sc["visual"], 0.6, 0.5, caption="Self-explanatory takeaway")
+        assert img_square.size == (1080, 1080)
+
+
+def test_never_uses_hindi_words_while_permitting_tamil_and_plain_english():
+    for hindi_word in ("chai", "samosa", "tapri", "jugaad", "paisa", "lakh", "crore", "namaste", "तत्काल"):
+        bad_draft = {
+            "style": "business_story",
+            "post": "A" * 850 + f" {hindi_word} @PyMasters https://pymasters.net",
+            "code_snippet": "",
+            "hashtags": ["#AI", "#Python", "#PyMasters"],
+            "animation": {"title": "Plain English Check", "beats": [{"kind": "reveal", "caption": "ok", "big": "OK", "sub": "ok"}]},
+        }
+        errs = quality.hard_checks("linkedin", bad_draft)
+        assert errs, f"expected hard_checks to reject Hindi word: {hindi_word}"
+
+    # Verify Tamil words (vanakkam, nanba, vaathiyaar) are permitted alongside plain English
+    tamil_permitted_draft = {
+        "style": "business_story",
+        "post": "A" * 850 + " Vanakkam nanba, Vaathiyaar explains AI risk with @PyMasters https://pymasters.net",
+        "code_snippet": "",
+        "hashtags": ["#AI", "#Python", "#PyMasters"],
+        "animation": {"title": "Plain English Check", "beats": [{"kind": "reveal", "caption": "ok", "big": "OK", "sub": "ok"}]},
+    }
+    assert not quality.hard_checks("linkedin", tamil_permitted_draft)
+
+    # Verify little_text normalizes fancy Unicode hyphens/spaces to plain ASCII English
+    normalized = linkedin.little_text("Real\u2011time latency: 50\u202fms with @PyMasters https://pymasters.net", ["#Python", "#AI", "#Risk"])
+    assert "\u2011" not in normalized and "\u202f" not in normalized
+    assert "Real-time latency: 50 ms" in normalized

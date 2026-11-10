@@ -785,17 +785,19 @@ def parse_vaathiyaar_response(raw: str) -> dict:
     return _finish({"message": raw, **_DEFAULTS})
 
 
+_VALID_JSON_ESCAPES = frozenset('"\\/bfnrtu')
+
+
 def repair_json_control_chars(text: str) -> str:
-    """Escape bare control characters (newline, tab, carriage return) found
-    inside JSON string literals, leaving already-valid JSON untouched.
+    """Escape bare control characters (newline, tab, carriage return) and bare
+    non-JSON backslash sequences (e.g. regex \\d, \\w, \\s) found inside JSON
+    string literals, leaving already-valid JSON untouched.
 
     The strict JSON spec requires control characters inside a string to be
-    escaped (\\n, not a literal newline), but models asked for multi-line
-    prose/markdown as a JSON string value routinely emit raw newlines —
-    valid-looking JSON that json.loads() rejects outright. This is a pure
-    repair pass: it tracks whether each character is inside a double-quoted
-    span (honoring backslash escapes) and only rewrites control characters
-    found there.
+    escaped (\\n, not a literal newline), and rejects non-JSON escapes like \\d.
+    Models asked for multi-line prose/code as a JSON string value routinely
+    emit both. This repair pass tracks whether each character is inside a
+    double-quoted span and repairs bare control chars and invalid escapes there.
     """
     out = []
     in_string = False
@@ -803,6 +805,8 @@ def repair_json_control_chars(text: str) -> str:
     for ch in text:
         if in_string:
             if escaped:
+                if ch not in _VALID_JSON_ESCAPES:
+                    out.append("\\")
                 out.append(ch)
                 escaped = False
             elif ch == "\\":

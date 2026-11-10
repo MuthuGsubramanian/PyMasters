@@ -55,6 +55,8 @@ def upload(item: dict) -> dict:
     from googleapiclient.http import MediaFileUpload
     d, media, kind = item["draft"], item["media"], item["kind"]
     desc = d["description"].strip()
+    if media.get("space_url") and media["space_url"] not in desc:
+        desc += f"\n\nTry the live Hugging Face Space: {media['space_url']}"
     if media.get("lesson_url") and media["lesson_url"] not in desc:
         desc += f"\n\nFull interactive lesson (free): {media['lesson_url']}"
     if kind == "long" and media.get("chapters_text"):

@@ -1,0 +1,15 @@
+[Unit]
+Description=PyMasters topic innovation + lesson review cycle (Claude Code, zero GCP cost; drafts wait for owner review)
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+Slice=pymasters-heavy.slice
+Nice=15
+CPUQuota=100%
+IOSchedulingClass=idle
+EnvironmentFile=%h/.config/pymasters-ops/ops.env
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=%h/pymasters-ops/backend-venv/bin/python %h/pymasters-ops/innovate_topics.py --once
+# thermal waits (<= 45 min) + Claude Code drafting (<= 45 min) + text-mode repair rounds
+TimeoutStartSec=3h

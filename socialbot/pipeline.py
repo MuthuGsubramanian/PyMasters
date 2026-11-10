@@ -13,24 +13,59 @@ WRITERS = {
     "short": (briefs.short_prompt, briefs.SHORT_SCHEMA),
     "long": (briefs.long_prompt, briefs.LONG_SCHEMA),
     "linkedin": (briefs.linkedin_prompt, briefs.LINKEDIN_SCHEMA),
+    "thematic": (briefs.thematic_prompt, briefs.LINKEDIN_SCHEMA),
 }
 
 
 def linkedin_style(rng=random):
-    """LinkedIn mixes our "jargon, made simple" posts with random "Fun with Python" real-world posts (owner, 2026-11-04)."""
-    return "fun" if rng.random() < config.LINKEDIN_FUN_SHARE else "jargon"
+    """LinkedIn alternates and rotates randomly between Business-Audience (Simple Terms) formats and Technical-Detail
+    formats without ever repeating the previous post's format (owner, 2026-11-10)."""
+    styles = list(config.LINKEDIN_STYLES)
+    last_variety = None
+    try:
+        for it in store.items(kind="linkedin", limit=5):
+            if it.get("status") not in ("rejected", "failed") and isinstance(it.get("draft"), dict):
+                last_variety = it["draft"].get("format_variety") or it["draft"].get("style")
+                if last_variety in styles:
+                    break
+    except Exception:
+        pass
+    if last_variety in config.LINKEDIN_BUSINESS_STYLES:
+        pool = list(config.LINKEDIN_TECH_STYLES)
+    elif last_variety in config.LINKEDIN_TECH_STYLES:
+        pool = list(config.LINKEDIN_BUSINESS_STYLES)
+    else:
+        pool = [s for s in styles if s != last_variety] or styles
+    return rng.choice(pool)
 
 
 def write_until_good(kind, les):
     prompt_fn, schema = WRITERS[kind]
-    style = linkedin_style() if kind == "linkedin" else None
+    if kind == "thematic":
+        style, variety = "thematic", "thematic"
+    elif kind == "linkedin":
+        variety = linkedin_style()
+        if les.get("is_thematic"):
+            style = "thematic"
+        elif les.get("is_hf_space"):
+            style = "hf_space"
+        elif les.get("is_daily_trend"):
+            style = "trend"
+        else:
+            style = variety
+    else:
+        style, variety = None, None
     feedback, cost, last, best = None, 0.0, None, None
     for attempt in range(1, config.MAX_ATTEMPTS + 1):
         previous = last[0] if last else None
-        prompt = prompt_fn(les, feedback, previous, style=style) if style else prompt_fn(les, feedback, previous)
+        prompt = prompt_fn(les, feedback, previous, style=style, sub_style=variety) if style else prompt_fn(les, feedback, previous)
         draft = llm.ask_json(prompt, schema, system=briefs.BRAND)
         if style:
             draft["style"] = style   # the critic judges each format by its own rules
+            draft["format_variety"] = variety
+        if les.get("is_hf_space"):
+            draft["is_hf_space"] = True
+            draft["space_url"] = les.get("space_url", "")
         cost += draft.pop("_cost_usd", 0) or 0
         ok, score, crit, problems = quality.verdict(kind, draft, les)
         cost += crit.pop("_cost_usd", 0) or 0
@@ -77,7 +112,7 @@ def _fmt_ts(s):
 
 
 def render(kind, draft, les, out_dir: Path):
-    if kind == "linkedin":
+    if kind in ("linkedin", "thematic"):
         return video.render_loop(draft["animation"], out_dir)
     if kind == "short":
         media = video.render_narrated(_segments_short(draft), out_dir, 1080, 1920, captions=True)
@@ -118,5 +153,7 @@ def produce(kind, lesson_key=None):
         store.update_item(item_id, status="failed", error=f"render: {e}"[:500])
         return item_id
     media["lesson_url"] = les["url"]
+    if les.get("space_url"):
+        media["space_url"] = les["space_url"]
     store.update_item(item_id, status="rendered", media=media)
     return item_id

@@ -25,13 +25,19 @@ DB_PATH = STATE_DIR / "state.db"
 SITE = "https://pymasters.net"
 YOUTUBE_CHANNEL_ID = "UCH8b9RG8cx8HnFlOJ8-zs1Q"   # PyMasters (@Py-Masters)
 LINKEDIN_ORG_URN = os.getenv("PMSOCIAL_LINKEDIN_ORG_URN", "urn:li:organization:113061910")  # PyMasters page
+LINKEDIN_ORG_NAME = os.getenv("PMSOCIAL_LINKEDIN_ORG_NAME", "PyMasters")
+LINKEDIN_ORG_MENTION = f"@[{LINKEDIN_ORG_NAME}]({LINKEDIN_ORG_URN})"
 
 # Owner decisions (2026-11-02): auto-publish when the quality gate passes; a post every day on both channels.
 CADENCE = {
     "short": {"per_week": 7, "weekdays": [0, 1, 2, 3, 4, 5, 6], "publish_hhmm": "18:30"},     # daily, IST
     "long": {"per_week": 1, "weekdays": [5], "publish_hhmm": "10:00"},                       # Saturday
-    "linkedin": {"per_week": 7, "weekdays": [0, 1, 2, 3, 4, 5, 6], "publish_hhmm": "08:45"},  # daily
+    # every 5 hours around the clock, on a fixed grid through 08:45 IST (03:45, 08:45, 13:45, ... then +5h across midnight)
+    "linkedin": {"per_week": 35, "weekdays": [0, 1, 2, 3, 4, 5, 6], "publish_hhmm": "08:45", "interval_hours": 5},
+    # weekly cross-domain thematic analysis research post on LinkedIn (Sunday 11:00 IST)
+    "thematic": {"per_week": 1, "weekdays": [6], "publish_hhmm": "11:00"},
 }
+INTERVAL_EPOCH = (2026, 11, 1)   # day the interval grid starts from (at publish_hhmm IST); fixed so slots never shift
 TIMEZONE = "Asia/Kolkata"
 
 # LLM: Claude Code CLI in headless mode, no tools, pinned model, JSON output.
@@ -45,7 +51,19 @@ TTS_SPEED = 1.06
 QUALITY_MIN_SCORE = 7.5      # calibrated critic score (8 = strong senior-engineer post) + no errors/blockers
 MAX_ATTEMPTS = 4             # write -> critique -> rewrite rounds before a draft is dropped
 NO_REPEAT_DAYS = 120         # same lesson/topic is not reused within this window
-LINKEDIN_FUN_SHARE = 0.35    # share of LinkedIn posts in the random "Fun with Python" real-world format
+LINKEDIN_BUSINESS_STYLES = (
+    "business_story",        # real-world banking/finance/product story in plain English (no code wall)
+    "boardroom_explainer",   # 60-second executive mental model of an AI/risk concept in simple terms
+    "executive_playbook",    # before-vs-after industry decision matrix & ROI breakdown
+)
+LINKEDIN_TECH_STYLES = (
+    "tech_deep_dive",        # under-the-hood engineering walkthrough with runnable Python 3.11
+    "myth_vs_benchmark",     # technical misconception vs executed Python benchmark
+    "production_code_audit", # principal-engineer bug/risk audit with verified Python fix
+)
+LINKEDIN_STYLES = LINKEDIN_BUSINESS_STYLES + LINKEDIN_TECH_STYLES
+HF_SPACE_SHARE = 0.35        # share of LinkedIn posts & YouTube Shorts showcasing our live Hugging Face Spaces one-by-one
+TREND_SHARE = 0.40           # share of LinkedIn posts & YouTube Shorts covering the 5 daily live trending pillars one-by-one
 
 
 def ensure_dirs():

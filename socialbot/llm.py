@@ -1,11 +1,13 @@
 """Multi-provider structured-JSON LLM client for the PyMasters social bot.
 
-Provider order (configurable via PMSOCIAL_LLM_PROVIDERS, default "gemini,claude,ollama"):
-  1. gemini  — GCP Vertex AI (gemini-3.5-flash -> gemini-3.1-pro-preview) on pymasters-app (global).
-               Cost-effective (~0.15 INR per item), fast (~12s), native JSON mode, no weekly CLI cap.
+Provider order (configurable via PMSOCIAL_LLM_PROVIDERS, default "ollama,claude,local"), all zero GCP cost:
+  1. ollama  — Ollama Cloud API (gpt-oss:120b) via OLLAMA_API_KEY (env or ~/.config/pymasters-ops/ops.env),
+               with automatic 429 cooldown.
   2. claude  — Claude Code CLI in headless mode (--output-format json --json-schema). Automatically
                enters a cooldown when weekly usage_limit_reached (429) occurs.
-  3. ollama  — Ollama Cloud API (gpt-oss:120b) via OLLAMA_API_KEY, with automatic 429 cooldown.
+  3. local   — local llama-server OpenAI-compatible endpoint (PMSOCIAL_LOCAL_LLM_URL, default :8080).
+Opt-in only (bills GCP Vertex AI, never used by default):
+     gemini  — Vertex AI (gemini-3.5-flash -> gemini-3.1-pro-preview); add "gemini" to PMSOCIAL_LLM_PROVIDERS.
 """
 import json
 import logging
@@ -30,9 +32,34 @@ GEMINI_MODELS = [
 ]
 PROVIDERS = [
     p.strip()
-    for p in os.getenv("PMSOCIAL_LLM_PROVIDERS", "gemini,claude,ollama").split(",")
+    for p in os.getenv("PMSOCIAL_LLM_PROVIDERS", "ollama,claude,local").split(",")
     if p.strip()
 ]
+LOCAL_LLM_URL = os.getenv("PMSOCIAL_LOCAL_LLM_URL", "http://127.0.0.1:8080/v1/chat/completions")
+LOCAL_LLM_KEY_FILE = Path("/run/user/1000/eternity/keys/llama-8080.key")
+OPS_ENV_FILE = Path.home() / ".config/pymasters-ops/ops.env"
+
+
+def _load_ops_env_key(name: str) -> None:
+    """Populate os.environ[name] from ops.env when running outside systemd (no EnvironmentFile)."""
+    if os.environ.get(name):
+        return
+    try:
+        for line in OPS_ENV_FILE.read_text().splitlines():
+            line = line.strip()
+            if line.startswith("export "):
+                line = line[7:].lstrip()
+            key, sep, val = line.partition("=")
+            if sep and key.strip() == name:
+                val = val.strip().strip("'\"")
+                if val:
+                    os.environ[name] = val
+                return
+    except OSError:
+        pass
+
+
+_load_ops_env_key("OLLAMA_API_KEY")
 
 _gcp_token_cache = {"token": None, "expires_at": 0.0}
 _FENCE_RE = re.compile(r"^\s*```(?:json)?\s*|\s*```\s*$", re.S)
@@ -159,6 +186,7 @@ def _ask_claude(prompt: str, schema: dict, system: str, timeout: int, effort: st
         "--strict-mcp-config",
         "--no-session-persistence",
         "--setting-sources", "",
+        "--dangerously-skip-permissions",
     ]
     if system:
         cmd += ["--system-prompt", system]
@@ -219,6 +247,46 @@ def _ask_ollama(prompt: str, schema: dict, system: str, timeout: int) -> dict:
     return data
 
 
+def _ask_local(prompt: str, schema: dict, system: str, timeout: int) -> dict:
+    full_prompt = (
+        f"{prompt}\n\n"
+        "Respond ONLY with a single valid JSON object conforming strictly to this JSON Schema:\n"
+        f"{json.dumps(schema)}"
+    )
+    msgs = []
+    if system:
+        msgs.append({"role": "system", "content": system})
+    msgs.append({"role": "user", "content": full_prompt})
+    headers = {"Content-Type": "application/json"}
+    try:
+        key = LOCAL_LLM_KEY_FILE.read_text().strip()
+        if key:
+            headers["Authorization"] = f"Bearer {key}"
+    except OSError:
+        pass
+    try:
+        r = requests.post(
+            LOCAL_LLM_URL,
+            headers=headers,
+            json={
+                "messages": msgs,
+                "response_format": {"type": "json_object"},
+                "temperature": 0.4,
+            },
+            timeout=timeout,
+        )
+    except requests.RequestException as e:
+        raise LLMError(f"local llama-server unreachable at {LOCAL_LLM_URL}: {e}") from e
+    if not r.ok:
+        raise LLMError(f"local llama-server HTTP {r.status_code}: {r.text[:200]}")
+    content = ((r.json().get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+    content = _FENCE_RE.sub("", content).strip()
+    data = json.loads(content)
+    _validate_schema(data, schema)
+    data["_cost_usd"] = 0.0
+    return data
+
+
 def ask_json(prompt: str, schema: dict, system: str = "", timeout: int = config.LLM_TIMEOUT_S,
              effort: str = "medium") -> dict:
     errors = []
@@ -230,6 +298,8 @@ def ask_json(prompt: str, schema: dict, system: str = "", timeout: int = config.
                 return _ask_claude(prompt, schema, system, timeout, effort)
             if prov == "ollama":
                 return _ask_ollama(prompt, schema, system, timeout)
+            if prov == "local":
+                return _ask_local(prompt, schema, system, timeout)
         except Exception as e:
             errors.append(f"{prov}: {e}")
             log.warning("LLM provider %s failed: %s", prov, e)

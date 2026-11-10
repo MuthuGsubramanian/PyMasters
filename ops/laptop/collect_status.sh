@@ -147,6 +147,33 @@ sec "Social bot (YouTube + LinkedIn)"
 (cd "$REPO" && env -u VIRTUAL_ENV PYTHONPATH="$REPO" ~/pymasters-ops/social-venv/bin/python -m socialbot report 2>/dev/null) || echo "- social bot report failed"
 echo "- last bot runs: $(journalctl --user -u pymasters-social.service --since '24 hours ago' --no-pager -o cat 2>/dev/null | grep -c -E 'Finished|Deactivated') ok, $(journalctl --user -u pymasters-social.service --since '24 hours ago' --no-pager -o cat 2>/dev/null | grep -c -i 'failed') failed"
 
+sec "Topic Innovation (24/7 Claude Code queue)"
+python3 - <<'PY'
+import json, os
+p = os.path.expanduser("~/pymasters-ops/innovation/queue.json")
+try:
+    q = json.load(open(p))
+except (OSError, ValueError):
+    q = None
+if not q:
+    print("- no innovation queue yet (pymasters-innovate.timer has not completed a cycle)")
+else:
+    ts = q.get("topics", [])
+    by = {}
+    for t in ts:
+        by.setdefault(t.get("status", "queued"), []).append(t)
+    print(f"- {len(ts)} topics innovated: {len(by.get('queued', []))} queued, {len(by.get('validated', []))} validated "
+          f"lessons awaiting review, {len(by.get('failed', []))} failed, {len(by.get('promoted', []))} promoted")
+    for t in by.get("validated", []):
+        print(f"- REVIEW: `{t['id']}` ({t.get('track')}) {t.get('title', '')} - ~/pymasters-ops/innovation/review/{t['id']}.json")
+    for t in sorted(by.get("queued", []), key=lambda t: -float(t.get("score") or 0))[:5]:
+        print(f"- queued: `{t['id']}` (score {t.get('score')}) {t.get('title', '')}")
+    c = (q.get("cycles") or [None])[-1]
+    if c:
+        print(f"- last cycle {c.get('finished', '')[:16]}: +{len(c.get('topics_added', []))} topics, drafted {c.get('drafted')}")
+PY
+echo "- timer: $(systemctl --user is-active pymasters-innovate.timer); runs last 24h: $(journalctl --user -u pymasters-innovate.service --since '24 hours ago' --no-pager -o cat 2>/dev/null | grep -c 'cycle: done') done"
+
 sec "Free tier usage (month to date)"
 python3 - "$WA" <<'PY'
 import json, subprocess, datetime, urllib.request, urllib.parse, sys

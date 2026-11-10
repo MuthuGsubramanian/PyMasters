@@ -92,12 +92,29 @@ def _h(extra=None):
 
 
 _RESERVED = re.compile(r"([\\|{}@\[\]()<>#*_~])")
+_PLAIN_MAP = str.maketrans({
+    "\u2010": "-", "\u2011": "-", "\u2012": "-", "\u2013": "-", "\u2014": " - ",
+    "\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"',
+    "\u00a0": " ", "\u202f": " ", "\u2009": " ",
+})
 
 
 def little_text(post: str, hashtags) -> str:
-    """Posts API 'commentary' uses LinkedIn's little-text format: reserved characters must be escaped, and
-    hashtags are written as {hashtag|\\#|Tag} so they render as real, clickable hashtags."""
-    body = _RESERVED.sub(r"\\\1", post.rstrip())
+    """Posts API 'commentary' uses LinkedIn's little-text format: reserved characters must be escaped, every post must
+    be plain English, link to https://pymasters.net, tag the PyMasters company page (@[PyMasters](urn:li:organization:...)),
+    and render hashtags as {hashtag|\\#|Tag}."""
+    raw = (post or "").translate(_PLAIN_MAP).rstrip()
+    if config.SITE not in raw:
+        raw = f"{raw}\n\n{config.SITE}".strip()
+    body = _RESERVED.sub(r"\\\1", raw)
+    mention = config.LINKEDIN_ORG_MENTION
+    if r"\@PyMasters" in body:
+        body = body.replace(r"\@PyMasters", mention)
+    elif "PyMasters" in body:
+        head, sep, tail = body.rpartition("PyMasters")
+        body = f"{head}{mention}{tail}"
+    else:
+        body = f"{body}\n\n{mention}"
     tags = " ".join("{hashtag|\\#|" + re.sub(r"\W", "", t.lstrip("#")) + "}" for t in hashtags)
     return f"{body}\n\n{tags}" if tags else body
 

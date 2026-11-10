@@ -1,7 +1,8 @@
 """Cadence: decide what to make, when it goes out, and publish what is due.
 
 `tick` runs every 15 minutes from a systemd timer:
-  - between 01:00 and 06:00 IST it renders ahead (heavy work at night), keeping the next 2 slots of each kind filled;
+  - between 01:00 and 06:00 IST it renders videos ahead (heavy work at night), keeping the next 2 slots filled;
+  - LinkedIn posts go out every 5 hours around the clock, so their next 2 slots are kept filled at any hour;
   - YouTube items are uploaded as soon as they are rendered, scheduled with publishAt = their slot;
   - LinkedIn items are posted when their slot time arrives (the API has no native scheduling)."""
 import logging
@@ -15,17 +16,39 @@ TZ = ZoneInfo(config.TIMEZONE)
 AHEAD = 2
 
 
+def _iso(dt):
+    return dt.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _interval_slots(c, now, days, taken):
+    """Slots every `interval_hours` on a fixed grid (epoch day at publish_hhmm, stepping in absolute time), so each slot
+    is exactly interval_hours after the previous one, across midnight too, and the same on every run. The window that
+    is open right now is kept until it is taken, so a missed slot is still filled and posted straight away."""
+    hh, mm = map(int, c["publish_hhmm"].split(":"))
+    step = timedelta(hours=c["interval_hours"])
+    epoch = datetime(*config.INTERVAL_EPOCH, hh, mm, tzinfo=TZ)
+    current = epoch + step * ((now - epoch) // step)      # latest slot <= now
+    out, slot, end = [], current, now + timedelta(days=days)
+    while slot < end:
+        if slot.weekday() in c["weekdays"] and (slot > now or _iso(slot) not in taken):
+            out.append(_iso(slot))
+        slot += step
+    return out
+
+
 def upcoming_slots(kind, days=14):
     c = config.CADENCE[kind]
-    hh, mm = map(int, c["publish_hhmm"].split(":"))
     now = datetime.now(TZ)
     taken = _taken(kind)
+    if c.get("interval_hours"):
+        return _interval_slots(c, now, days, taken)
+    hh, mm = map(int, c["publish_hhmm"].split(":"))
     out = []
     for i in range(days):
         day = (now + timedelta(days=i)).date()
         if day.weekday() in c["weekdays"]:
             slot = datetime(day.year, day.month, day.day, hh, mm, tzinfo=TZ)
-            slot_iso = slot.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+            slot_iso = _iso(slot)
             if i == 0 and slot_iso not in taken:
                 out.append(slot_iso)
             elif slot > now + timedelta(minutes=15):
@@ -39,17 +62,26 @@ def _taken(kind):
 
 
 def assign_slots():
-    """Give every rendered item without a slot the earliest free slot of its kind."""
-    for kind in config.CADENCE:
-        free = [s for s in upcoming_slots(kind) if s not in _taken(kind)]
-        for it in sorted(store.items(status="rendered", kind=kind), key=lambda x: x["id"]):
-            if not it["publish_at"] and free:
+    """Give every rendered item without a slot the earliest free slot of its kind. Interval kinds (LinkedIn) also pull
+    rendered-but-unposted items forward, so the next due slot is never empty while a post waits further out."""
+    for kind, c in config.CADENCE.items():
+        free = sorted(s for s in upcoming_slots(kind) if s not in _taken(kind))
+        rendered = sorted(store.items(status="rendered", kind=kind), key=lambda x: (x["publish_at"] or "~", x["id"]))
+        for it in rendered:
+            if not free:
+                break
+            if not it["publish_at"]:
                 store.update_item(it["id"], publish_at=free.pop(0))
+            elif c.get("interval_hours") and it["publish_at"] > free[0]:
+                free.append(it["publish_at"])
+                store.update_item(it["id"], publish_at=free.pop(0))
+                free.sort()
 
 
-def produce_ahead(ahead=AHEAD):
+def produce_ahead(ahead=AHEAD, kinds=("linkedin", "short", "long")):
     from socialbot import pipeline
-    for kind in ("linkedin", "short", "long"):
+    assign_slots()   # slot (and pull forward) what is already rendered before counting what is missing
+    for kind in kinds:
         slots = upcoming_slots(kind)[:ahead]
         have = len([it for it in store.items(kind=kind, limit=50)
                     if it["status"] in ("rendered", "scheduled", "published") and it["publish_at"] and it["publish_at"] in slots])
@@ -69,13 +101,13 @@ def publish_due(dry_run=False):
     for it in reversed(store.items(status="rendered", limit=50)):
         if not it["publish_at"]:
             continue
-        if it["kind"] == "linkedin" and it["publish_at"] > now:
+        if it["kind"] in ("linkedin", "thematic") and it["publish_at"] > now:
             continue
         if dry_run:
             log.info("would publish #%s %s %s at %s", it["id"], it["kind"], it["topic"], it["publish_at"])
             continue
         try:
-            if it["kind"] == "linkedin":
+            if it["kind"] in ("linkedin", "thematic"):
                 from socialbot.publish import linkedin
                 res = linkedin.publish(it)
                 store.update_item(it["id"], status="published", remote_id=res["id"], remote_url=res["url"])
@@ -99,7 +131,7 @@ def refresh_metrics():
     pub = store.items(status="published", limit=200)
     taken = store.now_iso()
     yt_ids = {it["remote_id"]: it["id"] for it in pub if it["kind"] in ("short", "long") and it["remote_id"]}
-    li_ids = {it["remote_id"]: it["id"] for it in pub if it["kind"] == "linkedin" and it["remote_id"]}
+    li_ids = {it["remote_id"]: it["id"] for it in pub if it["kind"] in ("linkedin", "thematic") and it["remote_id"]}
     rows = []
     try:
         for vid, s in youtube.stats(list(yt_ids)).items():
@@ -137,6 +169,15 @@ def resume_interrupted():
             store.update_item(it["id"], status="failed", error=f"render: {e}"[:500])
 
 
+def refresh_daily_trends():
+    try:
+        from socialbot import trends
+        trends.capture_daily_trends(live_network=True)
+        trends.capture_weekly_thematic(live_network=True)
+    except Exception as e:
+        log.warning("daily trends capture: %s", e)
+
+
 def tick():
     import fcntl
     config.ensure_dirs()
@@ -147,15 +188,17 @@ def tick():
         log.info("another socialbot tick is already running; skipping")
         return
     try:
+        refresh_daily_trends()
         resume_interrupted()
         hour = datetime.now(TZ).hour
-        if 1 <= hour < 6:
-            produce_ahead(ahead=AHEAD)
-            if hour == 5:
-                refresh_metrics()
-        else:
-            # Daytime catch-up: ensure today's / next immediate slot is filled if the night window missed it
-            produce_ahead(ahead=1)
+        night = 1 <= hour < 6
+        # LinkedIn posts every 5 hours around the clock and weekly thematic research posts are light to render: keep ahead.
+        produce_ahead(ahead=AHEAD, kinds=("linkedin",))
+        produce_ahead(ahead=1, kinds=("thematic",))
+        # Video rendering is heavy: fill ahead at night; by day only catch up the next immediate slot.
+        produce_ahead(ahead=AHEAD if night else 1, kinds=("short", "long"))
+        if hour == 5:
+            refresh_metrics()
         publish_due()
     finally:
         fcntl.flock(lock_file, fcntl.LOCK_UN)

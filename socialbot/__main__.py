@@ -20,7 +20,7 @@ def main(argv=None):
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     ap = argparse.ArgumentParser(prog="pmsocial")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("produce"); p.add_argument("kind", choices=["short", "long", "linkedin"]); p.add_argument("--lesson")
+    p = sub.add_parser("produce"); p.add_argument("kind", choices=["short", "long", "linkedin", "thematic"]); p.add_argument("--lesson")
     p = sub.add_parser("publish"); p.add_argument("--dry-run", action="store_true")
     sub.add_parser("tick")
     p = sub.add_parser("status"); p.add_argument("--limit", type=int, default=15)

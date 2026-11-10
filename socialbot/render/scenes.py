@@ -70,8 +70,8 @@ class Frame:
         self.stack = h >= w * 0.95         # portrait and square: panels stack vertically
         self.s = min(w, h) / 1080          # scale unit
         self.fs = 1.32 if self.portrait else 1.0   # type scale: phones need bigger text
-        # space kept free at the bottom for karaoke captions (portrait) or the caption bar (square)
-        self.bottom = int((430 if self.portrait else 215 if self.square else 110) * self.s)
+        # space kept free at the bottom for note banner + karaoke captions (portrait/landscape) or caption bar (square)
+        self.bottom = int((500 if self.portrait else 215 if self.square else 230) * self.s)
         self.pad = int(70 * self.s)
         self.bg = gradient(w, h)
 
@@ -206,10 +206,20 @@ def scene_title(img, F, spec, t):
 
 
 def _content_top(F, img, spec, t):
+    y = F.pad + F.px(210 if F.portrait else 30)
+    badge = (spec.get("step_badge") or "").strip()
+    if badge:
+        d = ImageDraw.Draw(img)
+        bf = T.font(T.FONT_MONO, F.px(24 if F.portrait else 22))
+        tw = d.textlength(badge.upper(), font=bf)
+        pw, ph = tw + F.px(44), F.px(42)
+        px0 = (F.w - pw) / 2
+        rounded(d, [px0, y, px0 + pw, y + ph], F.px(21), fill=(26, 34, 62), outline=T.CYAN, width=max(1, F.px(2)))
+        d.text((px0 + F.px(22), y + F.px(7)), badge.upper(), font=bf, fill=T.CYAN)
+        y += ph + F.px(18)
     if spec.get("heading"):
-        return heading(img, F, spec["heading"], F.pad + F.px(250 if F.portrait else 30),
-                       size=54 if F.portrait else 50, k=ease(t * 4)) + F.px(30)
-    return F.pad + F.px(250 if F.portrait else 60)
+        return heading(img, F, spec["heading"], y, size=54 if F.portrait else 50, k=ease(t * 4)) + F.px(28)
+    return y + F.px(30)
 
 
 def scene_code(img, F, spec, t):
@@ -562,19 +572,120 @@ def scene_plot(img, F, spec, t):
             d.text((min(cx + F.px(18), x1 - tw), cy - F.px(46)), lab, font=lf, fill=T.TEXT)
 
 
+def scene_metric(img, F, spec, t):
+    """Self-explanatory KPI / Business & Engineering stat cards with animated accent bars."""
+    top = _content_top(F, img, spec, t)
+    d = ImageDraw.Draw(img)
+    metrics = (spec.get("metrics") or [])[:4]
+    if not metrics:
+        return scene_bullets(img, F, spec, t)
+    n = len(metrics)
+    avail_h = F.h - top - F.bottom - F.px(30)
+    gap = F.px(24)
+    palette = [T.CYAN, T.AMBER, T.GREEN, T.VIOLET]
+    if F.portrait or n <= 2:
+        card_h = min(F.px(240), (avail_h - gap * max(0, n - 1)) // max(1, n))
+        y0 = top + max(0, (avail_h - (card_h * n + gap * max(0, n - 1))) // 2)
+        boxes = [(F.pad, y0 + i * (card_h + gap), F.w - F.pad, y0 + i * (card_h + gap) + card_h) for i in range(n)]
+    else:
+        cols = 2
+        rows = (n + 1) // 2
+        cw = (F.w - 2 * F.pad - gap) // cols
+        ch = min(F.px(250), (avail_h - gap * max(0, rows - 1)) // max(1, rows))
+        boxes = []
+        for i in range(n):
+            r, c = divmod(i, cols)
+            x = F.pad + c * (cw + gap)
+            y = top + r * (ch + gap)
+            boxes.append((x, y, x + cw, y + ch))
+    vf = T.font(T.FONT_SANS_BOLD, F.px(64 if F.portrait else 58))
+    lf = T.font(T.FONT_SANS_BOLD, F.px(30))
+    sf = T.font(T.FONT_SANS, F.px(26))
+    for i, (box, m) in enumerate(zip(boxes, metrics)):
+        k = ease(seg(t, 0.06 + i * 0.16, 0.38 + i * 0.16))
+        if k <= 0:
+            continue
+        x0, y0, x1, y1 = box
+        col = palette[i % len(palette)]
+        rounded(d, box, F.px(22), fill=lerp_color(T.BG_TOP, T.SURFACE, k),
+                outline=lerp_color(T.BG_TOP, col, k), width=max(2, F.px(3)))
+        # Left accent bar
+        d.rounded_rectangle([x0 + F.px(10), y0 + F.px(18), x0 + F.px(20), y1 - F.px(18)], radius=F.px(5),
+                            fill=lerp_color(T.BG_TOP, col, k))
+        val = str(m.get("value") or "")[:18]
+        lab = str(m.get("label") or "")[:34]
+        sub = str(m.get("sub") or "")[:48]
+        d.text((x0 + F.px(42), y0 + F.px(20)), lab.upper(), font=lf, fill=lerp_color(T.BG_TOP, T.MUTED, k))
+        d.text((x0 + F.px(42), y0 + F.px(62)), val, font=vf, fill=lerp_color(T.BG_TOP, col, k))
+        if sub:
+            d.text((x0 + F.px(42), y1 - F.px(46)), sub, font=sf, fill=lerp_color(T.BG_TOP, T.TEXT, k))
+
+
 KINDS = {"plot": scene_plot, "title": scene_title, "code": scene_code, "output": scene_output, "bullets": scene_bullets,
          "compare": scene_compare, "trace": scene_trace, "flow": scene_flow, "timeline": scene_timeline,
-         "reveal": scene_reveal}
+         "reveal": scene_reveal, "metric": scene_metric}
 
 
 # ---------- overlays ----------
+# Option 4 PyMasters mark ("Modern FinTech Mobius P Ribbon"): continuous folded gradient ribbon forming a slanted P
+# (indigo/violet -> electric cyan -> luminous emerald) with three ascending white mastery bars inside the bowl.
+_MOBIUS_INNER = [(27, 64), (34, 33), (42, 20), (56, 15), (69, 19), (77, 30), (75, 44), (66, 55), (50, 57), (38, 57),
+                 (42, 42), (48, 29), (58, 24), (67, 29), (68, 40), (60, 48), (35, 56)]
+_MOBIUS_ARCH = [(25, 66), (32, 32), (38, 19), (52, 13), (67, 15), (76, 21), (80, 32), (73, 22), (61, 19),
+                (47, 20), (39, 28), (35, 41), (29, 63)]
+_MOBIUS_SWEEP = [(67, 15), (77, 20), (82, 32), (80, 46), (74, 58), (61, 64), (45, 65), (33, 69), (22, 86),
+                 (34, 84), (39, 73), (49, 69), (65, 66), (76, 59), (81, 45), (82, 31), (76, 19)]
+_MOBIUS_TAIL = [(22, 86), (27, 74), (35, 67), (44, 65), (39, 73), (34, 84)]
+_MOBIUS_BARS = [
+    [(44, 52), (49.5, 51.4), (53, 41), (47.5, 41.6)],
+    [(52, 51.1), (57.5, 50.5), (63, 34), (57.5, 34.6)],
+    [(60, 50.2), (65.5, 49.6), (73, 27), (67.5, 27.6)],
+]
+_BADGE_CACHE = {}
+
+
+def brand_badge(size):
+    """Dark navy rounded badge with the Option 4 Modern FinTech Mobius 'P' Ribbon mark + 3 ascending white mastery bars,
+    as RGBA. Uses the high-resolution master mark asset (with vector polygon fallback); cached per size."""
+    if size in _BADGE_CACHE:
+        return _BADGE_CACHE[size]
+    from pathlib import Path
+    mark_path = Path(__file__).resolve().parent.parent / "assets" / "pymasters_logo_opt4_mark.png"
+    S = 4
+    n = size * S
+    k = n / 100
+    if mark_path.exists():
+        body = Image.open(mark_path).convert("RGBA").resize((n, n), Image.LANCZOS)
+        d = ImageDraw.Draw(body)
+        d.rounded_rectangle([1.5 * k, 1.5 * k, n - 1.5 * k, n - 1.5 * k], radius=22.5 * k,
+                            outline=(34, 211, 238, 175), width=max(1, int(2.6 * k)))
+    else:
+        body = Image.new("RGBA", (n, n), (7, 11, 24, 255))
+        d = ImageDraw.Draw(body)
+        d.rounded_rectangle([1.5 * k, 1.5 * k, n - 1.5 * k, n - 1.5 * k], radius=22.5 * k,
+                            outline=(34, 211, 238, 150), width=max(1, int(2.6 * k)))
+        d.polygon([(x * k, y * k) for x, y in _MOBIUS_INNER], fill=(30, 58, 138, 255))
+        d.polygon([(x * k, y * k) for x, y in _MOBIUS_ARCH], fill=(99, 102, 241, 255))
+        d.polygon([(x * k, y * k) for x, y in _MOBIUS_SWEEP], fill=(34, 211, 238, 255))
+        d.polygon([(x * k, y * k) for x, y in _MOBIUS_TAIL], fill=(16, 185, 129, 255))
+        for i, bar in enumerate(_MOBIUS_BARS):
+            d.polygon([(x * k, y * k) for x, y in bar], fill=(255, 255, 255, 225 + 15 * i))
+    mask = Image.new("L", (n, n), 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, n - 1, n - 1], radius=24 * k, fill=255)
+    body.putalpha(ImageChops.multiply(body.getchannel("A"), mask))
+    _BADGE_CACHE[size] = body.resize((size, size), Image.LANCZOS)
+    return _BADGE_CACHE[size]
+
+
 def chrome(img, F, progress, brand=True):
     d = ImageDraw.Draw(img)
     if brand:
         f = T.font(T.FONT_SANS_BOLD, F.px(30))
-        d.rounded_rectangle([F.pad, F.px(34), F.pad + F.px(44), F.px(78)], radius=F.px(10), fill=T.VIOLET)
-        d.text((F.pad + F.px(11), F.px(37)), "P", font=f, fill=T.TEXT)
-        d.text((F.pad + F.px(58), F.px(38)), "PyMasters", font=f, fill=T.TEXT)
+        badge = brand_badge(F.px(44))
+        img.paste(badge, (F.pad, F.px(34)), badge)
+        x = F.pad + F.px(58)
+        d.text((x, F.px(38)), "Py", font=f, fill=T.TEXT)
+        d.text((x + d.textlength("Py", font=f), F.px(38)), "Masters", font=f, fill=(165, 243, 252))
     d.rectangle([0, 0, int(F.w * progress), F.px(8)], fill=T.CYAN)
 
 
@@ -613,7 +724,7 @@ def karaoke(img, F, words, now):
     start, end = next(((a, b) for a, b in groups if a <= cur < b), (cur, cur + 1))
     texts = [w[0] for w in words[start:end]]
     total = sum(d.textlength(x + " ", font=f) for x in texts)
-    y = F.h * (0.80 if F.portrait else 0.86)
+    y = F.h * (0.835 if F.portrait else 0.88)
     x = (F.w - total) / 2
     bx = [x - F.px(28), y - F.px(18), x + total + F.px(14), y + f.size * 1.25]
     d.rounded_rectangle(bx, radius=F.px(22), fill=(6, 6, 12))
@@ -639,11 +750,32 @@ def caption_bar(img, F, text, k):
                fill=lerp_color(T.BG_BOTTOM, T.TEXT, ease(k)))
 
 
+def note_banner(img, F, text, k):
+    """Self-explanatory callout strip shown above karaoke captions on YouTube Shorts & Tutorials so any frame
+    makes complete sense even on mute."""
+    if not text:
+        return
+    d = ImageDraw.Draw(img)
+    f = T.font(T.FONT_SANS_BOLD, F.px(30 if F.portrait else 28))
+    lines = wrap(text, f, F.w - 2 * F.pad - F.px(60), d)[:2]
+    h = len(lines) * int(f.size * 1.28) + F.px(26)
+    y = F.h - F.bottom + F.px(4)
+    rounded(d, [F.pad, y, F.w - F.pad, y + h], F.px(16),
+            fill=lerp_color(T.BG_BOTTOM, (16, 24, 46), ease(k)),
+            outline=lerp_color(T.BG_BOTTOM, T.CYAN, ease(k)), width=max(1, F.px(2)))
+    for i, ln in enumerate(lines):
+        w = d.textlength(ln, font=f)
+        d.text(((F.w - w) / 2, y + F.px(12) + i * int(f.size * 1.28)), ln, font=f,
+               fill=lerp_color(T.BG_BOTTOM, T.CYAN if i == 0 else T.TEXT, ease(k)))
+
+
 def draw_frame(F, spec, t, progress, words=None, now=0.0, caption=None, caption_k=1.0):
     img = F.bg.copy()
     KINDS.get(spec.get("type") or spec.get("kind"), scene_bullets)(img, F, spec, t)
     chrome(img, F, progress)
     if words:
+        if spec.get("note"):
+            note_banner(img, F, spec.get("note"), seg(t, 0.05, 0.35))
         karaoke(img, F, words, now)
     elif caption:
         caption_bar(img, F, caption, caption_k)
