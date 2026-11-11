@@ -30,11 +30,12 @@ describe('Linked Snake rules', () => {
     expect(s.dir).toBe('up')
   })
 
-  it('crashes into walls and into itself', () => {
+  it('wraps around walls to the other side and crashes into itself', () => {
     let s = run({ snake: [{ x: COLS - 1, y: 5, value: '▶' }, { x: COLS - 2, y: 5, value: '1' }], dir: 'right', nextDir: 'right' })
     const r = step(s)
-    expect(r.events.map((e) => e.type)).toContain('crash')
-    expect(r.state.alive).toBe(false)
+    expect(r.state.alive).toBe(true)
+    expect(r.state.snake[0].x).toBe(0)
+    expect(r.state.snake[0].y).toBe(5)
     const body = [{ x: 5, y: 5, value: '▶' }, { x: 5, y: 6, value: 'a' }, { x: 4, y: 6, value: 'b' }, { x: 4, y: 5, value: 'c' }, { x: 4, y: 4, value: 'd' }]
     s = run({ snake: body, dir: 'left', nextDir: 'left' })
     expect(step(s).events.map((e) => e.type)).toContain('crash')

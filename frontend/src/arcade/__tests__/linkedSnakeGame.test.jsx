@@ -46,8 +46,8 @@ describe('Linked Snake game', () => {
     r.unmount()
   })
 
-  it('crashing ends the run and shows the end screen with XP', async () => {
-    const initial = { snake: [{ x: COLS - 1, y: 6, value: '▶' }, { x: COLS - 2, y: 6, value: '1' }, { x: COLS - 3, y: 6, value: '2' }], dir: 'right', nextDir: 'right', started: true }
+  it('crashing into itself ends the run and shows the end screen with XP', async () => {
+    const initial = { snake: [{ x: 5, y: 5, value: '▶' }, { x: 5, y: 6, value: 'a' }, { x: 4, y: 6, value: 'b' }, { x: 4, y: 5, value: 'c' }, { x: 4, y: 4, value: 'd' }], dir: 'left', nextDir: 'left', started: true }
     const r = render(<MemoryRouter><Game gameId="linked_snake" reducedMotion initial={initial} onQuit={() => {}} /></MemoryRouter>)
     await flush(r)
     await r.act(async () => { vi.advanceTimersByTime(1200) })

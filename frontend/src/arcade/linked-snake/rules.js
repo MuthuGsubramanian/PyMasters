@@ -38,15 +38,19 @@ export function step(state) {
   const dir = state.nextDir;
   const [dx, dy] = DELTA[dir];
   const head = state.snake[0];
-  const nx = head.x + dx, ny = head.y + dy;
-  if (nx < 0 || ny < 0 || nx >= state.cols || ny >= state.rows || occupied(state.snake, nx, ny, true)) {
+  const rawX = head.x + dx, rawY = head.y + dy;
+  const wrapped = rawX < 0 || rawY < 0 || rawX >= state.cols || rawY >= state.rows;
+  const nx = (rawX + state.cols) % state.cols;
+  const ny = (rawY + state.rows) % state.rows;
+  if (occupied(state.snake, nx, ny, true)) {
     events.push({ type: 'crash', at: { x: nx, y: ny } });
-    return { state: { ...state, dir, alive: false, lastOp: 'IndexError: the snake ran off the list' }, events };
+    return { state: { ...state, dir, alive: false, lastOp: 'IndexError: the snake ran into itself' }, events };
   }
   // Nodes keep their order (and values); only the cells shift forward by one.
   const cells = [{ x: nx, y: ny }, ...state.snake.slice(0, -1).map((n) => ({ x: n.x, y: n.y }))];
   const snake = cells.map((c, i) => ({ ...c, value: i === 0 ? HEAD : state.snake[i].value }));
-  let next = { ...state, dir, snake, ticks: state.ticks + 1 };
+  const lastOp = wrapped ? `snake.head = (${nx}, ${ny})  # modulo wrap` : state.lastOp;
+  let next = { ...state, dir, snake, ticks: state.ticks + 1, lastOp };
   const food = state.foods.find((f) => f.x === nx && f.y === ny);
   if (food) {
     events.push({ type: 'eat', choiceIndex: food.choiceIndex, label: food.label, food });

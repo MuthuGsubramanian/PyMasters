@@ -55,7 +55,7 @@ export function draw(ctx, state, { progress = 0, particles, flash = 0, reducedMo
   // snake links then nodes (tail → head so the head draws on top)
   const nodes = state.snake;
   const dirDelta = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[state.dir] || [0, 0];
-  const headShift = reducedMotion ? 0 : progress;  // smooth slide toward the next cell
+  const headShift = (reducedMotion || state.started === false) ? 0 : progress;  // smooth slide toward the next cell
   const pos = (n, i) => {
     let x = n.x, y = n.y;
     if (i === 0 && state.alive) { x += dirDelta[0] * headShift * 0.6; y += dirDelta[1] * headShift * 0.6; }
@@ -65,6 +65,7 @@ export function draw(ctx, state, { progress = 0, particles, flash = 0, reducedMo
   ctx.lineWidth = 4;
   ctx.lineCap = 'round';
   for (let i = nodes.length - 1; i > 0; i--) {
+    if (Math.abs(nodes[i].x - nodes[i - 1].x) > 1 || Math.abs(nodes[i].y - nodes[i - 1].y) > 1) continue;
     const a = pos(nodes[i], i), b = pos(nodes[i - 1], i - 1);
     ctx.beginPath(); ctx.moveTo(a.cx, a.cy); ctx.lineTo(b.cx, b.cy); ctx.stroke();
   }

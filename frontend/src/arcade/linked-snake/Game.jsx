@@ -15,8 +15,14 @@ import { shortcutsBlocked } from '../../games/engine/keys';
 import { newRun, turn, step, placeFoods, applyEatResult, speedFor, COLS, ROWS } from './rules.js';
 import { draw, CELL, fieldSize } from './render.js';
 
-const mirror = (s) => ({ dir: s.dir, alive: s.alive, started: s.started, score: s.score, level: s.level, eaten: s.eaten, correct: s.correct, wrong: s.wrong,
+const mirror = (s) => ({ dir: s.nextDir || s.dir, alive: s.alive, started: s.started, score: s.score, level: s.level, eaten: s.eaten, correct: s.correct, wrong: s.wrong,
   lastOp: s.lastOp, prompt: s.prompt, foods: s.foods, length: s.snake.length, nodes: s.snake.slice(0, 6).map((n) => n.value) });
+
+const PACE_OPTIONS = [
+  { id: 'slow', label: '🐢 Slow', mul: 2.8 },
+  { id: 'normal', label: '🚶 Normal', mul: 2.0 },
+  { id: 'fast', label: '⚡ Fast', mul: 1.35 },
+];
 
 /**
  * Linked Snake: steer, eat the right answer to append a node, the wrong one pops your tail.
@@ -38,7 +44,8 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
   const finished = useRef(false);
   const [done, setDone] = useState(false);
   const [paused, setPaused] = useState(false);
-  const paceMul = initial ? 1 : 1.85;
+  const [paceId, setPaceId] = useState('slow');
+  const paceMul = initial ? 1 : (PACE_OPTIONS.find((p) => p.id === paceId)?.mul ?? 2.8);
   const stepSpeed = useCallback((s) => speedFor(s.level) * paceMul, [paceMul]);
 
   // Hand the snake a new prompt whenever the session has one and the field is empty.
@@ -146,16 +153,10 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
 
   const steer = useCallback((action) => {
     if (['up', 'down', 'left', 'right'].includes(action)) {
-      const prev = stateRef.current;
-      const next = turn(prev, action);
-      stateRef.current = next;
-      // Take the first step in the newly chosen direction on the very next frame for crisp feel.
-      if (!prev.started || next.nextDir !== prev.dir) {
-        acc.current = stepSpeed(next);
-      }
-      setHud(mirror(next));
+      stateRef.current = turn(stateRef.current, action);
+      setHud(mirror(stateRef.current));
     }
-  }, [stepSpeed]);
+  }, []);
   useInput({ onAction: steer, enabled: !done && !paused, target: wrapRef });
 
   // Keyboard shortcuts 1–4 to directly eat the corresponding answer choice without steering.
@@ -243,16 +244,30 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
                   </span>
                 )}
               </div>
-              <div className="flex items-center gap-1 font-mono text-[11px]" aria-label="Linked nodes">
-                {(hud.nodes || []).map((val, idx) => (
-                  <span key={idx} className="inline-flex items-center gap-1">
-                    <span className={`rounded px-1.5 py-0.5 border ${idx === 0 ? 'bg-teal-500/20 border-teal-400 text-teal-300 font-bold' : 'bg-bg-inset border-border-default text-text-secondary'}`}>
-                      {idx === 0 ? 'HEAD' : val}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1" role="group" aria-label="Snake speed">
+                  {PACE_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setPaceId(opt.id)}
+                      className={`rounded-md px-1.5 py-0.5 text-[11px] font-mono border transition-colors ${paceId === opt.id ? 'bg-teal-500/20 border-teal-400 text-teal-300 font-bold' : 'bg-bg-inset border-border-default text-text-muted hover:text-text-primary'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-1 font-mono text-[11px]" aria-label="Linked nodes">
+                  {(hud.nodes || []).map((val, idx) => (
+                    <span key={idx} className="inline-flex items-center gap-1">
+                      <span className={`rounded px-1.5 py-0.5 border ${idx === 0 ? 'bg-teal-500/20 border-teal-400 text-teal-300 font-bold' : 'bg-bg-inset border-border-default text-text-secondary'}`}>
+                        {idx === 0 ? 'HEAD' : val}
+                      </span>
+                      {idx < (hud.nodes?.length || 0) - 1 && <span className="text-teal-400">→</span>}
                     </span>
-                    {idx < (hud.nodes?.length || 0) - 1 && <span className="text-teal-400">→</span>}
-                  </span>
-                ))}
-                {hud.length > 6 && <span className="text-text-muted">… ({hud.length} nodes)</span>}
+                  ))}
+                  {hud.length > 6 && <span className="text-text-muted">… ({hud.length} nodes)</span>}
+                </div>
               </div>
             </div>
           </Hud>
