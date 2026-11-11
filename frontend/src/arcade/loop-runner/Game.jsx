@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowDown, ArrowLeft, ArrowUp, RotateCcw } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Clock, RotateCcw } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { usePlayT } from '../../games/engine/i18n';
+import { shortcutsBlocked } from '../../games/engine/keys';
 import { ArcadeShell } from '../engine/ArcadeShell';
 import { Hud } from '../engine/Hud';
 import { useArcadeSession } from '../engine/useArcadeSession';
@@ -14,8 +15,14 @@ import { play as sfx, haptic } from '../engine/sfx';
 import { newRun, spawnPair, addGate, step, gateEveryMs, STAGE, GROUND_Y, ROBOT_X, LANE } from './rules.js';
 import { draw } from './render.js';
 
-const mirror = (s) => ({ lives: s.lives, alive: s.alive, score: s.score, combo: s.combo, passes: s.passes, lane: s.lane, scene: s.scene,
-  gate: s.gates.find((g) => !g.resolved) || null, correct: s.correct, wrong: s.wrong });
+const DECISION_ZONE_X = ROBOT_X + 340;
+const HOLD_ZONE_X = ROBOT_X + 120;
+const THINK_MS = 25000;
+
+const mirror = (s, thinkLeftMs = THINK_MS) => ({
+  lives: s.lives, alive: s.alive, score: s.score, combo: s.combo, passes: s.passes, lane: s.lane, scene: s.scene,
+  gate: s.gates.find((g) => !g.resolved) || null, correct: s.correct, wrong: s.wrong, thinkLeftMs,
+});
 
 /**
  * Loop Runner: auto-run through the neon city; jump or slide through the gate whose label is the
@@ -39,6 +46,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
   const finished = useRef(false);
   const itemRef = useRef(null);
   const deckEmpty = useRef(false);
+  const thinkLeftRef = useRef(THINK_MS);
 
   // Keep the next item to spawn at hand; note when the deck is empty (the loop ends the run).
   useEffect(() => {
@@ -56,43 +64,81 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
     const result = await session.answer(gateEvt.itemId, gateEvt.choiceIndex, ms);
     grading.current = false;
     const correct = Boolean(result?.correct);
-    if (result) { setReveal({ correct, why: result.why }); setTimeout(() => setReveal(null), 1800); }
+    if (result) { setReveal({ correct, why: result.why }); setTimeout(() => setReveal(null), 2400); }
     pendingInput.current.verdict = { gateId: gateEvt.gateId, correct: result ? correct : null };   // no verdict → neutral
     if (correct) { sfx('gate'); if (!reducedMotion) burst(particles.current, ROBOT_X, GROUND_Y - 40, { count: 16, color: ['#facc15', '#fff', '#22d3ee'], speed: 220 }); }
     else if (result) { sfx('stumble'); haptic(30); }
     itemRef.current = null;
+    thinkLeftRef.current = THINK_MS;
     if (session.queue.length || session.item) session.take();
-  }, [session, reducedMotion, t]);
+  }, [session, reducedMotion]);
+
+  // Lock in a gate choice immediately (via ↑/↓, keys 1/2, swipe, or buttons) so the learner
+  // never misses a gate due to jump duration expiring early.
+  const pickGate = useCallback((which) => {
+    const s = stateRef.current;
+    const g = s.gates.find((x) => !x.resolved);
+    if (!g || grading.current) return;
+    const choice = which === 'upper' ? g.upper : g.lower;
+    const targetLane = which === 'upper' ? LANE.UPPER : LANE.LOWER;
+    sfx(which === 'upper' ? 'jump' : 'gate');
+    stateRef.current = {
+      ...s,
+      lane: targetLane,
+      laneT: 900,
+      gates: s.gates.map((x) => (x.id === g.id ? { ...x, x: Math.min(x.x, ROBOT_X - 4), resolved: true, pending: true } : x)),
+    };
+    setHud(mirror(stateRef.current, thinkLeftRef.current));
+    grade({ gateId: g.id, itemId: g.itemId, choiceIndex: choice.choiceIndex, lane: which });
+  }, [grade]);
 
   const update = useCallback((dt) => {
     const s = stateRef.current;
     if (!s.alive) return;
     stepParticles(particles.current, dt);
     // spawn the next gate when the lane is clear
-    const active = s.gates.some((g) => !g.resolved);
+    const activeGate = s.gates.find((g) => !g.resolved);
     let state = s;
-    if (!active && !itemRef.current && deckEmpty.current && s.passes + s.stumbles > 0) { setDone(true); return; }
-    if (!active && itemRef.current) {
+    if (!activeGate && !itemRef.current && deckEmpty.current && s.passes + s.stumbles > 0) { setDone(true); return; }
+    if (!activeGate && itemRef.current) {
       spawnIn.current -= dt;
       if (spawnIn.current <= 0) {
         state = addGate(state, spawnPair(itemRef.current, rng));
         askedAt.current = Date.now();
+        thinkLeftRef.current = THINK_MS;
         spawnIn.current = gateEveryMs(state.passes);
       }
     }
     const input = pendingInput.current;
     pendingInput.current = {};
-    const r = step(state, dt, input);
+
+    // Bullet-Time / Thinking Zone: once an unresolved gate enters DECISION_ZONE_X, slow world
+    // scroll dramatically and hold at HOLD_ZONE_X for up to THINK_MS (25s) so the learner has
+    // plenty of time to read the Python snippet and pick Upper (↑) or Lower (↓).
+    const gateNow = state.gates.find((g) => !g.resolved);
+    let worldDt = dt;
+    if (gateNow && !input.verdict) {
+      if (gateNow.x <= DECISION_ZONE_X) {
+        thinkLeftRef.current = Math.max(0, thinkLeftRef.current - dt);
+        if (thinkLeftRef.current > 0) {
+          worldDt = gateNow.x <= HOLD_ZONE_X ? 0 : dt * 0.12;
+        }
+      }
+    }
+
+    const r = step(state, worldDt, input);
     stateRef.current = r.state;
     for (const e of r.events) {
       if (e.type === 'gate' && e.choiceIndex !== null) grade(e);
-      if (e.type === 'gate' && e.choiceIndex === null) { sfx('stumble'); itemRef.current = null; if (session.queue.length || session.item) session.take(); }
+      if (e.type === 'gate' && e.choiceIndex === null) { sfx('stumble'); itemRef.current = null; thinkLeftRef.current = THINK_MS; if (session.queue.length || session.item) session.take(); }
       if (e.type === 'jump') sfx('jump');
       if (e.type === 'checkpoint') sfx('win');
       if (e.type === 'game_over') { sfx('lose'); setDone(true); }
       if (e.type === 'stumble' && !reducedMotion) burst(particles.current, ROBOT_X, GROUND_Y, { count: 10, color: '#9ca3af', speed: 120, ttl: 400 });
     }
-    if (Math.floor(r.state.time / 100) !== Math.floor(s.time / 100)) setHud(mirror(r.state));
+    if (Math.floor(r.state.time / 100) !== Math.floor(s.time / 100) || worldDt === 0 || r.events.length) {
+      setHud(mirror(r.state, thinkLeftRef.current));
+    }
   }, [grade, rng, session, reducedMotion]);
 
   const render = useCallback(() => {
@@ -119,20 +165,28 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
   }, [done]);
 
   const act = useCallback((action) => {
-    if (action === 'up' || action === 'jump' || action === 'tap') pendingInput.current.jump = true;
-    else if (action === 'down') pendingInput.current.slide = true;
-  }, []);
+    const hasGate = stateRef.current.gates.some((g) => !g.resolved);
+    if (action === 'up' || action === 'jump' || action === 'tap') {
+      if (hasGate) pickGate('upper');
+      else pendingInput.current.jump = true;
+    } else if (action === 'down') {
+      if (hasGate) pickGate('lower');
+      else pendingInput.current.slide = true;
+    }
+  }, [pickGate]);
   useInput({ onAction: act, enabled: !done && !paused, target: wrapRef });
 
-  // Accessible path: pick the gate directly.
-  const pickGate = useCallback((which) => {
-    const s = stateRef.current;
-    const g = s.gates.find((x) => !x.resolved);
-    if (!g || grading.current) return;
-    const choice = which === 'upper' ? g.upper : g.lower;
-    g.resolved = true; g.pending = true;
-    grade({ gateId: g.id, itemId: g.itemId, choiceIndex: choice.choiceIndex, lane: which });
-  }, [grade]);
+  // Also allow number keys 1 (upper) and 2 (lower) to pick the gate directly.
+  useEffect(() => {
+    if (done || paused) return undefined;
+    const onKey = (e) => {
+      if (shortcutsBlocked(e)) return;
+      if (e.key === '1') { e.preventDefault(); pickGate('upper'); }
+      else if (e.key === '2') { e.preventDefault(); pickGate('lower'); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [done, paused, pickGate]);
 
   useEffect(() => {
     if (!done || finished.current) return;
@@ -186,28 +240,48 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
   }
 
   const gate = hud.gate;
+  const thinkSec = Math.ceil((hud.thinkLeftMs ?? THINK_MS) / 1000);
+  const thinkPct = Math.max(0, Math.min(100, ((hud.thinkLeftMs ?? THINK_MS) / THINK_MS) * 100));
   return (
     <ArcadeShell title="Loop Runner" subtitle={`${hud.passes} gates · ${t('arcade.combo', 'Combo ×{n}', { n: hud.combo })}`} score={hud.score} lives={hud.lives} onQuit={onQuit} paused={paused} onPauseChange={setPaused}
-      footer={t('arcade.runner_help', 'Tap, Space or ↑ to jump through the upper gate; swipe down or ↓ to slide through the lower one.')}>
+      footer={t('arcade.runner_help', 'Gates slow down in the Thinking Zone so you can read the code. Press ↑ / Space / 1 for Upper Gate, or ↓ / 2 for Lower Gate.')}>
       {() => (
         <div className="flex flex-col gap-3" data-lives={hud.lives} data-lane={hud.lane} data-paused={paused ? '1' : '0'}>
           <Hud item={session.item || (gate ? { prompt: { code: '' } } : null)} reveal={reveal}>
-            <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-border-default/60 text-xs text-text-muted font-mono">
-              <span>for gate_idx in range({hud.passes}, ∞):</span>
-              <span>Lane: <strong className="text-accent-primary uppercase">{hud.lane}</strong> · Combo ×{hud.combo}</span>
+            <div className="flex flex-col gap-1.5 pt-1 border-t border-border-default/60 text-xs text-text-muted font-mono">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span>for gate_idx in range({hud.passes}, ∞):</span>
+                <span className="flex items-center gap-2">
+                  {gate && (
+                    <span className="inline-flex items-center gap-1 text-amber-400 font-semibold">
+                      <Clock size={12} aria-hidden="true" /> Thinking Time: {thinkSec}s
+                    </span>
+                  )}
+                  <span>Lane: <strong className="text-accent-primary uppercase">{hud.lane}</strong> · Combo ×{hud.combo}</span>
+                </span>
+              </div>
+              {gate && (
+                <div className="h-1.5 rounded-full bg-bg-inset overflow-hidden" aria-hidden="true">
+                  <div className="h-full bg-amber-400 transition-all duration-150" style={{ width: `${thinkPct}%` }} />
+                </div>
+              )}
             </div>
           </Hud>
+          {gate && (
+            <div role="group" aria-label={t('arcade.choices', 'Answers')} className="grid grid-cols-2 gap-2.5">
+              <Button variant="outline" data-gate="upper" data-choice={gate.upper.choiceIndex} className="min-h-12 font-mono text-sm border-2 border-cyan-500/40 hover:border-cyan-400" onClick={() => pickGate('upper')}>
+                <ArrowUp size={16} className="text-cyan-400" /> [↑ / 1] Upper: {gate.upper.label}
+              </Button>
+              <Button variant="outline" data-gate="lower" data-choice={gate.lower.choiceIndex} className="min-h-12 font-mono text-sm border-2 border-amber-500/40 hover:border-amber-400" onClick={() => pickGate('lower')}>
+                <ArrowDown size={16} className="text-amber-400" /> [↓ / 2] Lower: {gate.lower.label}
+              </Button>
+            </div>
+          )}
           <div ref={wrapRef} className="w-full flex justify-center">
             <canvas ref={canvasRef} width={STAGE.w} height={STAGE.h} role="img" aria-label={t('arcade.runner_help', 'Tap, Space or ↑ to jump through the upper gate; swipe down or ↓ to slide through the lower one.')}
               className="rounded-2xl border border-border-strong shadow-lg max-w-full touch-none select-none" />
           </div>
           <p data-stage-text className="sr-only" aria-live="polite">{gate ? `Upper gate ${gate.upper.label}, lower gate ${gate.lower.label}.` : 'Running. Waiting for the next gate.'} Lane {hud.lane}.</p>
-          {gate && (
-            <div role="group" aria-label={t('arcade.choices', 'Answers')} className="grid grid-cols-2 gap-2">
-              <Button variant="outline" data-gate="upper" data-choice={gate.upper.choiceIndex} className="min-h-12 font-mono" onClick={() => pickGate('upper')}><ArrowUp size={16} /> {gate.upper.label}</Button>
-              <Button variant="outline" data-gate="lower" data-choice={gate.lower.choiceIndex} className="min-h-12 font-mono" onClick={() => pickGate('lower')}><ArrowDown size={16} /> {gate.lower.label}</Button>
-            </div>
-          )}
         </div>
       )}
     </ArcadeShell>

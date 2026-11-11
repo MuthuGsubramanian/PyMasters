@@ -27,16 +27,17 @@ function startLine(ctx, track) {
 
 function signpost(ctx, track, fork) {
   const cp = track.checkpoints[fork.checkpoint];
-  for (const l of fork.lanes) {
+  const sorted = [...fork.lanes].sort((a, b) => a.lane - b.lane);
+  sorted.forEach((l, idx) => {
     const p = laneOffset(track, cp.s - 50, l.lane);
     ctx.save();
     ctx.translate(p.x, p.y);
-    ctx.fillStyle = 'rgba(2,6,23,0.85)';
-    roundedRect(ctx, -40, -11, 80, 22, 6); ctx.fill();
-    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.5; roundedRect(ctx, -40, -11, 80, 22, 6); ctx.stroke();
+    ctx.fillStyle = 'rgba(2,6,23,0.92)';
+    roundedRect(ctx, -50, -13, 100, 26, 7); ctx.fill();
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2; roundedRect(ctx, -50, -13, 100, 26, 7); ctx.stroke();
     ctx.restore();
-    drawLabel(ctx, l.label, p.x, p.y, { font: '700 11px JetBrains Mono, monospace', color: '#fff', maxWidth: 74 });
-  }
+    drawLabel(ctx, `[${idx + 1}] ${l.label}`, p.x, p.y, { font: '700 11px JetBrains Mono, monospace', color: '#fff', maxWidth: 92 });
+  });
   // gate posts
   const a = laneOffset(track, cp.s, -1.7), b = laneOffset(track, cp.s, 1.7);
   ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]);

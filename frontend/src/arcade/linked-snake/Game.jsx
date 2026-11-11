@@ -11,10 +11,11 @@ import { useInput } from '../engine/useInput';
 import { createPool, burst, step as stepParticles } from '../engine/particles';
 import { fitCanvas } from '../engine/sprites';
 import { play as sfx } from '../engine/sfx';
+import { shortcutsBlocked } from '../../games/engine/keys';
 import { newRun, turn, step, placeFoods, applyEatResult, speedFor, COLS, ROWS } from './rules.js';
 import { draw, CELL, fieldSize } from './render.js';
 
-const mirror = (s) => ({ dir: s.dir, alive: s.alive, score: s.score, level: s.level, eaten: s.eaten, correct: s.correct, wrong: s.wrong,
+const mirror = (s) => ({ dir: s.dir, alive: s.alive, started: s.started, score: s.score, level: s.level, eaten: s.eaten, correct: s.correct, wrong: s.wrong,
   lastOp: s.lastOp, prompt: s.prompt, foods: s.foods, length: s.snake.length, nodes: s.snake.slice(0, 6).map((n) => n.value) });
 
 /**
@@ -37,13 +38,20 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
   const finished = useRef(false);
   const [done, setDone] = useState(false);
   const [paused, setPaused] = useState(false);
+  const paceMul = initial ? 1 : 1.85;
+  const stepSpeed = useCallback((s) => speedFor(s.level) * paceMul, [paceMul]);
 
   // Hand the snake a new prompt whenever the session has one and the field is empty.
   useEffect(() => {
     const s = stateRef.current;
     if (!s.alive || s.prompt || s.pendingEat || session.state !== 'ready') return;
     if (session.item && session.item.id !== s.lastPromptId) {
-      stateRef.current = { ...placeFoods(s, session.item, rng), lastPromptId: session.item.id };
+      // Study-Pause: whenever a new Python prompt is placed on the board, pause the snake
+      // in place (`started: false`) so the learner has unlimited time to read the code before
+      // pressing an Arrow key to slither or pressing 1–4 to answer directly.
+      const keepStarted = Boolean(initial?.started && !s.lastPromptId);
+      stateRef.current = { ...placeFoods(s, session.item, rng), lastPromptId: session.item.id, started: keepStarted };
+      acc.current = 0;
       askedAt.current = Date.now();
       setHud(mirror(stateRef.current));
     } else if (!session.item && session.queue.length) {
@@ -51,7 +59,7 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
     } else if (!session.item && !session.queue.length && session.exhausted && s.lastPromptId) {
       setDone(true);                       // the deck is empty: the run ends with what was scored
     }
-  }, [session.state, session.item, session.queue.length, session.exhausted, session, rng, hud.prompt, hud.length]);
+  }, [session.state, session.item, session.queue.length, session.exhausted, session, rng, hud.prompt, hud.length, initial]);
 
   const onEat = useCallback(async (evt) => {
     const s0 = stateRef.current;
@@ -60,7 +68,7 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
     const ms = Date.now() - askedAt.current;
     const result = await session.answer(s0.prompt.id, evt.choiceIndex, ms);
     if (!result) {                       // no verdict (network): neither grow nor shrink, move on
-      stateRef.current = { ...stateRef.current, pendingEat: null, prompt: null };
+      stateRef.current = { ...stateRef.current, pendingEat: null, prompt: null, started: false };
       answering.current = false;
       setHud(mirror(stateRef.current));
       if (session.queue.length || session.item) session.take();
@@ -68,7 +76,8 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
     }
     const correct = Boolean(result.correct);
     const r = applyEatResult(stateRef.current, correct, evt.label);
-    stateRef.current = r.state;
+    stateRef.current = { ...r.state, started: false };
+    acc.current = 0;
     answering.current = false;
     const head = r.state.snake[0];
     if (correct) { sfx('crunch'); if (!reducedMotion) burst(particles.current, head.x * CELL + CELL / 2, head.y * CELL + CELL / 2, { count: 18, color: ['#5eead4', '#f59e0b', '#fff'], speed: 220 }); }
@@ -85,7 +94,7 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
   const eatChoice = useCallback((food) => {
     const s = stateRef.current;
     if (!s.alive || !s.prompt || answering.current) return;
-    stateRef.current = { ...s, foods: [], pendingEat: food };
+    stateRef.current = { ...s, foods: [], pendingEat: food, started: false };
     setHud(mirror(stateRef.current));
     onEat({ choiceIndex: food.choiceIndex, label: food.label });
   }, [onEat]);
@@ -96,7 +105,7 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
     stepParticles(particles.current, dt);
     flash.current = Math.max(0, flash.current - dt / 400);
     acc.current += dt;
-    const speed = speedFor(s.level);
+    const speed = stepSpeed(s);
     if (acc.current < speed) return;
     acc.current -= speed;
     const r = step(s);
@@ -105,8 +114,8 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
       if (e.type === 'crash') { sfx('thud'); flash.current = 1; setHud(mirror(r.state)); setDone(true); }
       if (e.type === 'eat') onEat(e);
     }
-    if (r.state.ticks % 2 === 0) setHud(mirror(r.state));
-  }, [onEat]);
+    if (r.state.ticks % 2 === 0 || r.state.dir !== s.dir) setHud(mirror(r.state));
+  }, [onEat, stepSpeed]);
 
   const render = useCallback(() => {
     const canvas = canvasRef.current;
@@ -114,8 +123,8 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const s = stateRef.current;
-    draw(ctx, s, { progress: Math.min(1, acc.current / speedFor(s.level)), particles: particles.current, flash: flash.current, reducedMotion });
-  }, [reducedMotion]);
+    draw(ctx, s, { progress: Math.min(1, acc.current / stepSpeed(s)), particles: particles.current, flash: flash.current, reducedMotion });
+  }, [reducedMotion, stepSpeed]);
 
   useGameLoop({ update, draw: render, running: !done && hud.alive && !paused });
 
@@ -136,9 +145,36 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
   }, [done]);
 
   const steer = useCallback((action) => {
-    if (['up', 'down', 'left', 'right'].includes(action)) { stateRef.current = turn(stateRef.current, action); setHud(mirror(stateRef.current)); }
-  }, []);
+    if (['up', 'down', 'left', 'right'].includes(action)) {
+      const prev = stateRef.current;
+      const next = turn(prev, action);
+      stateRef.current = next;
+      // Take the first step in the newly chosen direction on the very next frame for crisp feel.
+      if (!prev.started || next.nextDir !== prev.dir) {
+        acc.current = stepSpeed(next);
+      }
+      setHud(mirror(next));
+    }
+  }, [stepSpeed]);
   useInput({ onAction: steer, enabled: !done && !paused, target: wrapRef });
+
+  // Keyboard shortcuts 1–4 to directly eat the corresponding answer choice without steering.
+  useEffect(() => {
+    if (done || paused) return undefined;
+    const onKey = (e) => {
+      if (shortcutsBlocked(e)) return;
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        const s = stateRef.current;
+        const food = s.foods.find((f) => f.choiceIndex === Number(e.key) - 1) || s.foods[Number(e.key) - 1];
+        if (food) {
+          e.preventDefault();
+          eatChoice(food);
+        }
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [done, paused, eatChoice]);
 
   // Game over → report once.
   useEffect(() => {
@@ -194,12 +230,19 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
   const foodsText = hud.foods.map((f) => `${f.label} at column ${f.x + 1}, row ${f.y + 1}`).join('; ');
   return (
     <ArcadeShell title="Linked Snake" subtitle={`Level ${hud.level} · len(snake) == ${hud.length}`} score={hud.score} onQuit={onQuit} paused={paused} onPauseChange={setPaused}
-      footer={t('arcade.steer', 'Arrow keys or swipe to steer. Eat the right answer.')}>
+      footer={t('arcade.steer', 'Snake pauses on every new question so you can read! Press 1–4 (or click an answer) to eat directly, or press Arrow keys to slither to the food.')}>
       {() => (
         <div className="flex flex-col gap-3" data-dir={hud.dir} data-paused={paused ? '1' : '0'}>
           <Hud item={hud.prompt} reveal={reveal}>
             <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-border-default/60 text-xs">
-              <code className="text-text-muted font-mono">{hud.lastOp}</code>
+              <div className="flex items-center gap-2 flex-wrap">
+                <code className="text-text-muted font-mono">{hud.lastOp}</code>
+                {!hud.started && hud.foods.length > 0 && (
+                  <span className="rounded-full bg-amber-500/15 border border-amber-400/50 px-2 py-0.5 text-[11px] font-mono font-semibold text-amber-300">
+                    ⏸ Study Mode — Take your time! Click an answer below (1–4) or press an Arrow key to slither
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-1 font-mono text-[11px]" aria-label="Linked nodes">
                 {(hud.nodes || []).map((val, idx) => (
                   <span key={idx} className="inline-flex items-center gap-1">
@@ -213,16 +256,27 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
               </div>
             </div>
           </Hud>
+          {hud.foods.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="group" aria-label={t('arcade.choices', 'Answers')}>
+              {hud.foods.map((f, idx) => (
+                <button
+                  key={f.choiceIndex}
+                  type="button"
+                  data-eat={f.choiceIndex}
+                  onClick={() => eatChoice(f)}
+                  className="min-h-11 rounded-xl border-2 border-amber-400/60 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-2 font-mono text-xs sm:text-sm font-bold text-text-primary flex items-center justify-between gap-1.5 shadow-sm transition-colors"
+                >
+                  <span className="text-[11px] text-amber-300">[{idx + 1}]</span>
+                  <span className="truncate">{f.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
           <div ref={wrapRef} className="w-full flex justify-center">
             <canvas ref={canvasRef} width={COLS * CELL} height={ROWS * CELL} role="img" aria-label={t('arcade.steer', 'Arrow keys or swipe to steer. Eat the right answer.')}
               className="rounded-2xl border border-border-strong shadow-lg max-w-full touch-none" />
           </div>
           <p data-field-text className="sr-only" aria-live="polite">{foodsText ? `Foods: ${foodsText}.` : 'Waiting for the next question.'} Snake length {hud.length}, heading {hud.dir}.</p>
-          {hud.foods.length > 0 && (
-            <div className="sr-only" role="group" aria-label={t('arcade.choices', 'Answers')}>
-              {hud.foods.map((f) => <button key={f.choiceIndex} type="button" data-eat={f.choiceIndex} onClick={() => eatChoice(f)}>{f.label}</button>)}
-            </div>
-          )}
             <div className="grid grid-cols-3 gap-1 w-40 mx-auto sm:hidden" aria-label="Steer">
               <span />
               <Button variant="outline" size="icon" className="min-h-12 min-w-12" aria-label="Up" onClick={() => steer('up')}><ArrowUp size={18} /></Button>

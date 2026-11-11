@@ -36,20 +36,21 @@ export function draw(ctx, state, { progress = 0, particles, flash = 0, reducedMo
   for (let y = 0; y <= state.rows; y++) { ctx.beginPath(); ctx.moveTo(0, y * CELL + 0.5); ctx.lineTo(w, y * CELL + 0.5); ctx.stroke(); }
 
   // foods
-  for (const f of state.foods) {
+  state.foods.forEach((f, idx) => {
     const cx = f.x * CELL + CELL / 2, cy = f.y * CELL + CELL / 2;
     ctx.save();
     if (!reducedMotion) { ctx.shadowColor = COLORS.food; ctx.shadowBlur = 14; }
     ctx.fillStyle = COLORS.food;
-    roundedRect(ctx, cx - CELL * 0.46, cy - CELL * 0.38, CELL * 0.92, CELL * 0.76, 8);
+    roundedRect(ctx, cx - CELL * 0.48, cy - CELL * 0.40, CELL * 0.96, CELL * 0.80, 8);
     ctx.fill();
     ctx.restore();
     ctx.strokeStyle = COLORS.foodEdge;
     ctx.lineWidth = 1.5;
-    roundedRect(ctx, cx - CELL * 0.46, cy - CELL * 0.38, CELL * 0.92, CELL * 0.76, 8);
+    roundedRect(ctx, cx - CELL * 0.48, cy - CELL * 0.40, CELL * 0.96, CELL * 0.80, 8);
     ctx.stroke();
-    drawLabel(ctx, f.label.length > 7 ? f.label.slice(0, 6) + '…' : f.label, cx, cy, { font: '700 12px JetBrains Mono, monospace', color: '#1f1300', outline: 'rgba(255,255,255,0.35)' });
-  }
+    drawLabel(ctx, `[${idx + 1}]`, cx, cy - CELL * 0.40 - 6, { font: '700 9px JetBrains Mono, monospace', color: '#fde68a', outline: 'rgba(0,0,0,0.85)' });
+    drawLabel(ctx, f.label.length > 7 ? f.label.slice(0, 6) + '…' : f.label, cx, cy, { font: '700 11px JetBrains Mono, monospace', color: '#1f1300', outline: 'rgba(255,255,255,0.35)' });
+  });
 
   // snake links then nodes (tail → head so the head draws on top)
   const nodes = state.snake;
