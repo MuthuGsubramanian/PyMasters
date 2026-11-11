@@ -190,7 +190,12 @@ export default function Game({ reducedMotion = false, onQuit, laps = LAPS, rng =
       footer={t('arcade.prix_help', '↑ throttle, ↓ brake, ← → steer. At a fork, drive through the lane with the right answer for a boost; wrong lanes are oil.')}>
       {() => (
         <div className="flex flex-col gap-3" data-lap={hud.lap} data-kart={hud.kart} data-paused={paused ? '1' : '0'}>
-          <Hud item={session.item && fork ? session.item : null} reveal={reveal} />
+          <Hud item={session.item && fork ? session.item : null} reveal={reveal}>
+            <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-border-default/60 text-xs font-mono text-text-muted">
+              <span>Race Position: <strong className="text-text-primary">P{hud.place || (hud.positions.indexOf('you') + 1) || 1}</strong> · Lap {hud.lap}/{hud.laps}</span>
+              <span>Kart: <strong className={hud.kart === 'boost' ? 'text-amber-400' : hud.kart === 'spin' ? 'text-red-400' : 'text-emerald-400'}>{hud.kart}</strong></span>
+            </div>
+          </Hud>
           <div ref={wrapRef} className="w-full flex justify-center">
             <canvas ref={canvasRef} width={STAGE.w} height={STAGE.h} role="img" aria-label={t('arcade.prix_help', '↑ throttle, ↓ brake, ← → steer. At a fork, drive through the lane with the right answer for a boost; wrong lanes are oil.')}
               className="rounded-2xl border border-border-strong shadow-lg max-w-full touch-none select-none" />

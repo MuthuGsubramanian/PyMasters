@@ -90,8 +90,12 @@ export function draw(ctx, state, { progress = 0, particles, flash = 0, reducedMo
         ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx + ox, cy - 3, 4, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#0b1020'; ctx.beginPath(); ctx.arc(cx + ox + ex, cy - 3 + ey, 2, 0, Math.PI * 2); ctx.fill();
       }
+      drawLabel(ctx, 'HEAD', cx, cy - size / 2 - 6, { font: '700 9px JetBrains Mono, monospace', color: '#5eead4', outline: 'rgba(0,0,0,0.75)' });
     } else {
       drawLabel(ctx, n.value.length > 5 ? n.value.slice(0, 4) + '…' : n.value, cx, cy, { font: '600 11px JetBrains Mono, monospace', color: COLORS.text, outline: 'rgba(0,0,0,0.4)' });
+      if (i === nodes.length - 1) {
+        drawLabel(ctx, 'TAIL', cx, cy - size / 2 - 6, { font: '700 9px JetBrains Mono, monospace', color: '#94a3b8', outline: 'rgba(0,0,0,0.75)' });
+      }
     }
   }
 

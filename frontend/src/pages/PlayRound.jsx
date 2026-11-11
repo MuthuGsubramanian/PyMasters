@@ -94,8 +94,15 @@ export default function PlayRound() {
 
   const total = session.items.length || Number(params.get('n')) || 0;
   const header = session.round?.level || level || 1;
+  let streak = 0;
+  for (let i = 0; i <= session.index && i < session.items.length; i++) {
+    const rev = session.reveals[session.items[i]?.id];
+    if (!rev) continue;
+    if (rev.correct) streak += 1;
+    else streak = 0;
+  }
   return (
-    <GameShell title={title} level={header} index={session.index} total={total} score={score} onQuit={() => navigate('/dashboard/play')}
+    <GameShell title={title} level={header} topic={session.item?.topic} streak={streak} index={session.index} total={total} score={score} onQuit={() => navigate('/dashboard/play')}
       footer={mode === 'daily' ? t('round.footer_daily', 'Daily challenge: the same items for everyone today, one scored attempt.') : t('round.footer_practice', 'Practice round. Items you have seen recently are skipped.')}>
       {({ paused }) => (
         <div className="flex flex-col gap-4">
@@ -108,7 +115,7 @@ export default function PlayRound() {
           )}
           {session.state === 'revealing' && session.item && (
             <Reveal item={session.item} revealItem={session.reveals[session.item.id]} learnerResponse={session.responses[session.item.id]}
-              gameTitle={title} onNext={session.next} />
+              gameTitle={title} streak={streak} onNext={session.next} />
           )}
           {session.state === 'answering' && <p className="text-sm text-text-muted" role="status">{t('round.checking', 'Checking…')}</p>}
           {session.state === 'finishing' && <p className="text-sm text-text-muted" role="status">{t('round.scoring', 'Scoring your round…')}</p>}

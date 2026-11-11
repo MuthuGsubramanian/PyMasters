@@ -46,6 +46,8 @@ describe('Gradient Golf game', () => {
     const r2 = render(<Game item={shelf} onAnswer={() => {}} disabled={false} reducedMotion />)
     expect(r2.container.querySelector('input[name="momentum"]')).toBeTruthy()
     expect(r2.container.querySelector('input[name="decay"]')).toBeTruthy()
+    expect(r2.container.textContent).toContain('Loss L(x)')
+    expect(r2.container.textContent).toContain('Slope |∇L|')
     r2.unmount()
   })
 })

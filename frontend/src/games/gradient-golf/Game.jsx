@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Flag, RotateCw } from 'lucide-react';
+import { Compass, Flag, RotateCw } from 'lucide-react';
 import { Button } from '../../components/ui';
-import { simulate, holeScore } from './levels.js';
+import { simulate, holeScore, loss, gradient } from './levels.js';
 import { drawHole, themeColors } from './draw.js';
 
 const STEP_FRAMES_REDUCED = 5;
+
+const CLUB_PRESETS = [
+  { id: 'putter', label: 'Putter (lr 0.05)', lr: 0.05, steps: 15 },
+  { id: 'iron', label: '7-Iron (lr 0.25)', lr: 0.25, steps: 10 },
+  { id: 'driver', label: 'Driver (lr 0.80)', lr: 0.80, steps: 8 },
+];
 
 function Slider({ name, label, value, min, max, step, onChange, format = (v) => v, disabled }) {
   const id = `gg-${name}`;
@@ -82,6 +88,9 @@ export default function Game({ item, onAnswer, disabled, reducedMotion }) {
 
   if (!hole) return null;
   const dist = Math.sqrt(sim.final.reduce((acc, v, i) => acc + (v - hole.params.min[i]) ** 2, 0));
+  const curLoss = loss(hole, sim.final);
+  const curGrad = gradient(hole, sim.final, () => 0.5);
+  const gradNorm = Math.sqrt(curGrad.reduce((acc, g) => acc + g * g, 0));
   const status = sim.diverged
     ? 'Off the course! The learning rate was too high — each step landed farther away.'
     : sim.converged
@@ -93,12 +102,43 @@ export default function Game({ item, onAnswer, disabled, reducedMotion }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <p className="text-sm text-text-secondary"><Flag size={14} className="inline mr-1" aria-hidden="true" />{hole.name} · hole {hole.level}</p>
-        <p className="text-xs text-text-muted">Swings: {swings.length}/{hole.max_swings}</p>
+        <p className="text-sm text-text-secondary font-medium"><Flag size={14} className="inline mr-1 text-emerald-500" aria-hidden="true" />{hole.name} · hole {hole.level}</p>
+        <p className="text-xs text-text-muted font-mono">Swings: {swings.length}/{hole.max_swings}</p>
       </div>
+
+      <dl className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div className="rounded-xl bg-bg-inset px-3 py-2">
+          <dt className="text-text-muted">Position x</dt>
+          <dd className="font-mono font-semibold text-text-primary tabular-nums">{sim.final.map((v) => v.toFixed(2)).join(', ')}</dd>
+        </div>
+        <div className="rounded-xl bg-bg-inset px-3 py-2">
+          <dt className="text-text-muted">Loss L(x)</dt>
+          <dd className="font-mono font-semibold text-text-primary tabular-nums">{Number.isFinite(curLoss) ? curLoss.toFixed(3) : '∞'}</dd>
+        </div>
+        <div className="rounded-xl bg-bg-inset px-3 py-2">
+          <dt className="text-text-muted">Slope |∇L|</dt>
+          <dd className="font-mono font-semibold text-accent-primary tabular-nums">{Number.isFinite(gradNorm) ? gradNorm.toFixed(2) : '∞'}</dd>
+        </div>
+        <div className="rounded-xl bg-bg-inset px-3 py-2">
+          <dt className="text-text-muted">Dist to Flag</dt>
+          <dd className="font-mono font-semibold text-emerald-500 tabular-nums">{dist.toFixed(3)} (tol {hole.tol})</dd>
+        </div>
+      </dl>
+
       <canvas ref={canvasRef} className="w-full h-[260px] sm:h-[300px] rounded-xl border border-border-default bg-bg-elevated" role="img"
         aria-label={`Loss landscape for ${hole.name}: ${status}`} />
       <p className="text-sm text-text-secondary" aria-live="polite">{status}</p>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-text-muted flex items-center gap-1"><Compass size={12} className="text-accent-primary" aria-hidden="true" /> Caddie presets:</span>
+        {CLUB_PRESETS.map((c) => (
+          <button key={c.id} type="button" disabled={disabled || finished}
+            onClick={() => { setLr(c.lr); setSteps(c.steps); }}
+            className={`text-xs rounded-lg border px-2.5 py-1 font-mono transition-colors ${Math.abs(lr - c.lr) < 0.005 ? 'border-accent-primary bg-accent-primary/15 text-accent-primary font-semibold' : 'border-border-default bg-bg-surface text-text-secondary hover:border-accent-primary'}`}>
+            {c.label}
+          </button>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Slider name="lr" label="Learning rate" value={lr} min={0.01} max={3} step={0.01} onChange={setLr} format={(v) => v.toFixed(2)} disabled={disabled || finished} />

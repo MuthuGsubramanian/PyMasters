@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { isReducedMotion } from '../../hooks/useReducedMotion';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BookOpen, CheckCircle2, MessageCircleQuestion, XCircle } from 'lucide-react';
+import { ArrowRight, BookOpen, CheckCircle2, Flame, Lightbulb, MessageCircleQuestion, XCircle } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { usePlayT } from './i18n';
 import { shortcutsBlocked } from './keys';
@@ -32,7 +32,7 @@ function formatAnswer(item, answer) {
  * (correct answer + why) arrives with the round result, so when `revealItem` is
  * missing we show only what the learner answered.
  */
-export function Reveal({ item, revealItem, learnerResponse, gameTitle, onNext }) {
+export function Reveal({ item, revealItem, learnerResponse, gameTitle, streak = 0, onNext }) {
   const t = usePlayT();
   const correct = revealItem?.correct;
   const yourAnswer = formatAnswer(item, learnerResponse);
@@ -61,13 +61,26 @@ export function Reveal({ item, revealItem, learnerResponse, gameTitle, onNext })
   };
 
   return (
-    <section ref={rootRef} aria-live="polite" className="rounded-2xl border border-border-default bg-bg-elevated p-4 sm:p-5 flex flex-col gap-3">
-      <div className="flex items-center gap-2">
-        {correct === true && <CheckCircle2 className="text-emerald-600 dark:text-emerald-300" size={22} aria-hidden="true" />}
-        {correct === false && <XCircle className="text-red-600 dark:text-red-300" size={22} aria-hidden="true" />}
-        <p className="font-semibold text-text-primary">
-          {correct === true ? t('reveal.correct', 'Correct') : correct === false ? t('reveal.wrong', 'Not quite') : t('reveal.recorded', 'Answer recorded')}
-        </p>
+    <section ref={rootRef} aria-live="polite"
+      className={`rounded-2xl border p-4 sm:p-5 flex flex-col gap-3 transition-colors ${correct === true ? 'border-emerald-500/40 bg-emerald-500/5' : correct === false ? 'border-red-500/40 bg-red-500/5' : 'border-border-default bg-bg-elevated'}`}>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          {correct === true && <CheckCircle2 className="text-emerald-600 dark:text-emerald-300" size={22} aria-hidden="true" />}
+          {correct === false && <XCircle className="text-red-600 dark:text-red-300" size={22} aria-hidden="true" />}
+          <p className="font-semibold text-text-primary">
+            {correct === true ? t('reveal.correct', 'Correct') : correct === false ? t('reveal.wrong', 'Not quite') : t('reveal.recorded', 'Answer recorded')}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {correct === true && streak >= 2 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-500 px-2.5 py-0.5 text-xs font-semibold">
+              <Flame size={12} aria-hidden="true" /> {streak} in a row!
+            </span>
+          )}
+          {revealItem?.score !== undefined && (
+            <span className="text-xs font-mono font-semibold text-accent-primary">+{revealItem.score} pts</span>
+          )}
+        </div>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
         <dt className="text-text-muted">{t('reveal.you_said', 'You said')}</dt>
@@ -75,11 +88,16 @@ export function Reveal({ item, revealItem, learnerResponse, gameTitle, onNext })
         {rightAnswer !== null && correct === false && (
           <>
             <dt className="text-text-muted">{t('reveal.answer', 'Answer')}</dt>
-            <dd className="font-mono text-text-primary whitespace-pre-wrap break-words">{rightAnswer}</dd>
+            <dd className="font-mono text-emerald-600 dark:text-emerald-300 font-semibold whitespace-pre-wrap break-words">{rightAnswer}</dd>
           </>
         )}
       </dl>
-      {revealItem?.why && <p className="text-sm text-text-secondary leading-relaxed">{revealItem.why}</p>}
+      {revealItem?.why && (
+        <div className="rounded-xl bg-bg-surface/90 border border-border-default p-3 flex items-start gap-2.5">
+          <Lightbulb size={16} className="text-amber-500 shrink-0 mt-0.5" aria-hidden="true" />
+          <p className="text-sm text-text-secondary leading-relaxed">{revealItem.why}</p>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2 pt-1">
         {revealItem?.lesson_id && (
           <Button as={Link} to={`/dashboard/classroom/${revealItem.lesson_id}`} variant="outline" size="sm" className="min-h-11">

@@ -33,9 +33,14 @@ describe('Bug Hunt interaction', () => {
     r.unmount()
   })
 
-  it('shows the failing test so the learner knows what "fixed" means', () => {
+  it('shows the failing test so the learner knows what "fixed" means, plus live patch diff preview', () => {
     const r = render(<Game item={item} onAnswer={() => {}} disabled={false} reducedMotion />)
     expect(r.container.textContent).toContain('assert label(0) == "match"')
+    r.click(r.container.querySelectorAll('[data-line]')[1])
+    const diff = r.container.querySelector('[data-diff-preview]')
+    expect(diff).toBeTruthy()
+    expect(diff.textContent).toContain('-     if n = 0:')
+    expect(diff.textContent).toContain('+     if n == 0:')
     r.unmount()
   })
 })

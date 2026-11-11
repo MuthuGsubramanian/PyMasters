@@ -30,6 +30,7 @@ describe('Overfit Detective game', () => {
     const q = { ...item, id: 'quintic', dataset: datasetById('quintic') }
     const r2 = render(<Game item={q} onAnswer={() => {}} disabled={false} reducedMotion />)
     expect(r2.container.querySelector('input[name="lam"]')).toBeTruthy()
+    expect(r2.container.textContent).toContain('Bias–Variance Diagnostic')
     r2.unmount()
   })
 })

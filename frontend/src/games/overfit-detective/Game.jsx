@@ -1,10 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ScatterChart, Lock } from 'lucide-react';
+import { Activity, Lock, ScatterChart } from 'lucide-react';
 import { Button } from '../../components/ui';
 import { makeDataset, fit, mse, predict, evaluate, MAX_DEGREE } from './levels.js';
 import { themeColors } from '../gradient-golf/draw.js';
 
 const LAMBDAS = [0, 0.001, 0.01, 0.05, 0.1, 0.3, 1];
+
+function complexityDiag(degree, nTrain, lam) {
+  const ratio = degree / Math.max(1, nTrain);
+  if (degree <= 2) return { zone: 'High Bias · Underfit Risk', tone: 'text-amber-500', desc: 'Low polynomial capacity — may miss bends in the true signal.' };
+  if (ratio >= 0.45 && lam < 0.05) return { zone: 'High Variance · Overfit Warning', tone: 'text-red-500', desc: `Degree ${degree} on ${nTrain} points can memorize random noise unless regularised.` };
+  return { zone: 'Balanced Capacity · Sweet Spot', tone: 'text-emerald-500', desc: 'Flexible enough to capture curves without chasing every noisy point.' };
+}
 
 function draw(ctx, { width, height, data, w, showTest, colors, reduced }) {
   const pad = 22;
@@ -15,6 +22,15 @@ function draw(ctx, { width, height, data, w, showTest, colors, reduced }) {
   ctx.clearRect(0, 0, width, height);
   ctx.strokeStyle = colors.border; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(pad, sy(0)); ctx.lineTo(width - pad, sy(0)); ctx.stroke();
+  // residual stems from training points to fitted curve
+  if (w) {
+    ctx.strokeStyle = colors.accent; ctx.lineWidth = 1; ctx.globalAlpha = 0.28;
+    data.train_x.forEach((x, i) => {
+      const yHat = Math.max(yMin - 5, Math.min(yMax + 5, predict(w, x)));
+      ctx.beginPath(); ctx.moveTo(sx(x), sy(data.train_y[i])); ctx.lineTo(sx(x), sy(yHat)); ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+  }
   // fitted curve
   if (w) {
     ctx.strokeStyle = colors.accent; ctx.lineWidth = 2; ctx.beginPath();
@@ -75,18 +91,35 @@ export default function Game({ item, onAnswer, disabled, reducedMotion }) {
 
   if (!ds || !data) return null;
   const ratio = result ? result.test_mse / Math.max(result.best_test_mse, 1e-12) : null;
+  const diag = complexityDiag(degree, ds.n_train, lam);
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <p className="text-sm text-text-secondary"><ScatterChart size={14} className="inline mr-1" aria-hidden="true" />{ds.name} · {ds.n_train} training points (filled dots)</p>
+        <p className="text-sm text-text-secondary font-medium"><ScatterChart size={14} className="inline mr-1 text-accent-primary" aria-hidden="true" />{ds.name} · {ds.n_train} training points (filled dots)</p>
         <p className="text-xs text-text-muted">{committed ? 'Test points: hollow squares' : <><Lock size={11} className="inline" aria-hidden="true" /> {ds.n_test} test points hidden</>}</p>
       </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+        <div className="rounded-xl bg-bg-inset px-3 py-2">
+          <span className="text-text-muted block">Train MSE (visible)</span>
+          <span className="font-mono font-semibold text-text-primary tabular-nums">{trainMse.toFixed(4)}</span>
+        </div>
+        <div className="rounded-xl bg-bg-inset px-3 py-2">
+          <span className="text-text-muted block">Hidden Test MSE</span>
+          <span className="font-mono font-semibold text-emerald-500 tabular-nums">{result ? result.test_mse.toFixed(4) : '🔒 Locked'}</span>
+        </div>
+        <div className="rounded-xl bg-bg-inset px-3 py-2">
+          <span className="text-text-muted flex items-center gap-1"><Activity size={11} aria-hidden="true" /> Bias–Variance Diagnostic</span>
+          <span className={`font-semibold ${diag.tone}`}>{diag.zone}</span>
+        </div>
+      </div>
+
       <canvas ref={canvasRef} className="w-full h-[240px] sm:h-[280px] rounded-xl border border-border-default bg-bg-elevated" role="img"
         aria-label={`Scatter of training points with a degree ${degree} polynomial fit; training error ${trainMse.toFixed(4)}`} />
       <p className="text-sm text-text-secondary" aria-live="polite">
         {result
           ? `Test error ${result.test_mse.toFixed(4)} vs best achievable ${result.best_test_mse.toFixed(4)} (degree ${result.best_degree}). ${ratio <= 1.1 ? 'Excellent generalisation.' : ratio <= 1.5 ? 'Close.' : degree > result.best_degree ? 'Overfit: the curve chased the noise.' : 'Underfit: the model was too simple.'}`
-          : `Training error ${trainMse.toFixed(4)}. Lower training error is not the goal — the hidden test points are.`}
+          : `Training error ${trainMse.toFixed(4)}. ${diag.desc} Lower training error is not the goal — the hidden test points are.`}
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label htmlFor="od-degree" className="flex flex-col gap-1 text-xs text-text-muted">

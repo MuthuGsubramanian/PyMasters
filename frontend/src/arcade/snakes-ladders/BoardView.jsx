@@ -79,7 +79,7 @@ export function Board({ boardKey, layout, players, turned, highlight, reducedMot
     squares.push(
       <g key={n}>
         <rect x={x - 5} y={y - 5} width={CELL} height={CELL} fill={dark ? theme.paper : '#ffffff'} stroke={theme.ink} strokeOpacity="0.18" strokeWidth="0.3" />
-        <text x={x - 4.2} y={y - 2.6} fontSize="2.2" fill={theme.ink} fillOpacity="0.55" fontFamily="JetBrains Mono, monospace">{n}</text>
+        <text x={x - 4.2} y={y - 2.6} fontSize="2.2" fill={theme.ink} fillOpacity="0.55" fontFamily="JetBrains Mono, monospace">{n === 100 ? '★100' : n === 1 ? '1▶' : n}</text>
         {highlight === n && <rect x={x - 5} y={y - 5} width={CELL} height={CELL} fill={theme.accent} fillOpacity="0.22" stroke={theme.accent} strokeWidth="0.6" />}
       </g>,
     );

@@ -4,14 +4,43 @@ import { useCallback, useEffect, useState } from 'react';
 
 const KEY = 'pm_arcade_sound';
 const EVT = 'pm:arcade-sound';
+let memSoundOn = true;
+
+function storageGet(k) {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage && typeof window.localStorage.getItem === 'function') {
+      return window.localStorage.getItem(k);
+    }
+    if (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function') {
+      return localStorage.getItem(k);
+    }
+  } catch { /* ignore */ }
+  return null;
+}
+
+function storageSet(k, v) {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage && typeof window.localStorage.setItem === 'function') {
+      window.localStorage.setItem(k, v);
+      return;
+    }
+    if (typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
+      localStorage.setItem(k, v);
+    }
+  } catch { /* private mode */ }
+}
 
 export function isSoundOn() {
-  try { return localStorage.getItem(KEY) !== '0'; } catch { return true; }
+  const stored = storageGet(KEY);
+  if (stored === '0') return false;
+  if (stored === '1') return true;
+  return memSoundOn;
 }
 
 export function setSoundOn(on) {
-  try { localStorage.setItem(KEY, on ? '1' : '0'); } catch { /* private mode */ }
-  try { window.dispatchEvent(new CustomEvent(EVT, { detail: { on } })); } catch { /* ssr */ }
+  memSoundOn = Boolean(on);
+  storageSet(KEY, memSoundOn ? '1' : '0');
+  try { window.dispatchEvent(new CustomEvent(EVT, { detail: { on: memSoundOn } })); } catch { /* ssr */ }
 }
 
 export function useSoundPref() {

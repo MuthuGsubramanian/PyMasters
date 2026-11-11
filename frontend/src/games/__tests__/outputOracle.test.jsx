@@ -63,6 +63,15 @@ describe('Output Oracle interaction', () => {
     vi.useRealTimers()
     r.unmount()
   })
+  it('shows Python concept clues and toggles the mental trace pad', () => {
+    const r = render(<Game item={choiceItem} onAnswer={() => {}} disabled={false} reducedMotion />)
+    expect(r.container.textContent).toContain('Integer Math')
+    const toggle = [...r.container.querySelectorAll('button')].find((b) => /Mental trace pad/i.test(b.textContent))
+    expect(toggle).toBeTruthy()
+    r.click(toggle)
+    expect(r.container.querySelector('input[placeholder*="i=0"]')).toBeTruthy()
+    r.unmount()
+  })
 })
 
 describe('keyboard shortcuts behind a modal', () => {

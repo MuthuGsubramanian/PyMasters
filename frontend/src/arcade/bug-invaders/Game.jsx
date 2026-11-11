@@ -214,7 +214,14 @@ export default function Game({ reducedMotion = false, onQuit, shields, rng = Mat
       footer={t('arcade.invaders_help', '← → or drag to move, Space or tap to fire. Shoot the guilty line, then the fix that makes the test pass.')}>
       {() => (
         <div className="flex flex-col gap-3" data-shields={hud.shields} data-wave={hud.wave + 1} data-phase={hud.phase} data-paused={paused ? '1' : '0'}>
-          <Hud item={testLine ? { prompt: { code: `# failing test\n${testLine}` } } : null} reveal={reveal} />
+          <Hud item={testLine ? { prompt: { code: `# failing test\n${testLine}` } } : null} reveal={reveal}>
+            <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-border-default/60 text-xs">
+              <span className="font-mono text-text-muted">
+                {hud.phase === 'line' ? '🎯 Phase 1: Shoot the buggy line' : hud.phase === 'fix' ? '🛠️ Phase 2: Shoot the patch ship' : '⚡ Preparing next wave…'}
+              </span>
+              <span className="font-mono text-text-muted">Shields: <strong className="text-cyan-400">{hud.shields}</strong> · Wave <strong className="text-text-primary">{hud.wave + 1}</strong></span>
+            </div>
+          </Hud>
           <div ref={wrapRef} className="w-full flex justify-center">
             <canvas ref={canvasRef} width={STAGE.w} height={STAGE.h} role="img" aria-label={t('arcade.invaders_help', '← → or drag to move, Space or tap to fire. Shoot the guilty line, then the fix that makes the test pass.')}
               className="rounded-2xl border border-border-strong shadow-lg max-w-full touch-none select-none"

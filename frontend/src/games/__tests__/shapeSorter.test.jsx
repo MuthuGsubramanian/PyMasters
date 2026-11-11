@@ -9,6 +9,8 @@ describe('Shape Sorter interaction', () => {
     const onAnswer = vi.fn()
     const r = render(<Game item={item} onAnswer={onAnswer} disabled={false} reducedMotion />)
     expect(r.container.textContent).toContain('Unique tags on a post')
+    expect(r.container.textContent).toContain('{a, b, c}')
+    expect(r.container.textContent).toContain('Signal: Uniqueness')
     const bins = r.container.querySelectorAll('button[data-bin]')
     expect(bins.length).toBe(4)
     r.click(bins[2])

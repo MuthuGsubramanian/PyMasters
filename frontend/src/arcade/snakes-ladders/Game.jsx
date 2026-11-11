@@ -224,6 +224,15 @@ export default function Game({ board = 'variables', reducedMotion = false, onQui
 
   const yourTurn = phase === 'idle' && game.players[game.turn]?.id === YOU && session.state === 'ready';
   const shownPlayers = game.players.map((p) => ({ ...p, pos: shown[p.id] ?? p.pos }));
+  const youPos = game.players[0]?.pos || 0;
+  const rivalPos = rival && game.players[1] ? game.players[1].pos || 0 : 0;
+  const upcoming = [];
+  for (let d = 1; d <= 6; d++) {
+    const sq = youPos + d;
+    if (sq > 100) break;
+    if (game.layout?.ladders?.[sq] && !game.turned?.[sq]) upcoming.push({ roll: d, type: 'ladder', from: sq, to: game.layout.ladders[sq] });
+    else if (game.layout?.snakes?.[sq]) upcoming.push({ roll: d, type: 'snake', from: sq, to: game.layout.snakes[sq] });
+  }
   return (
     <ArcadeShell title={`Snakes & Ladders · ${theme.title}`} subtitle={theme.subtitle} score={tally.correct * 100} onQuit={onQuit} paused={paused} onPauseChange={setPaused}
       footer={t('round.footer_practice', 'Practice round. Items you have seen recently are skipped.')}>
@@ -234,9 +243,28 @@ export default function Game({ board = 'variables', reducedMotion = false, onQui
             <div className="rounded-2xl border border-border-default bg-bg-elevated p-4 flex items-center gap-4">
               <Die value={die} rolling={rolling} reducedMotion={reducedMotion} />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-text-primary">{yourTurn ? t('arcade.your_turn', 'Your turn') : (phase === 'rival' ? t('arcade.rival_turn', 'Bugsy is rolling…') : ' ')}</p>
+                <p className="text-sm font-semibold text-text-primary">{yourTurn ? t('arcade.your_turn', 'Your turn') : (phase === 'rival' ? t('arcade.rival_turn', 'Bugsy is rolling…') : ' ')}</p>
                 <Button data-roll onClick={roll} disabled={!yourTurn || paused} className="min-h-11 mt-2 w-full"><Dices size={16} /> {t('arcade.roll', 'Roll the die')}</Button>
               </div>
+            </div>
+            <div className="rounded-2xl border border-border-default bg-bg-surface p-3 text-xs flex flex-col gap-2" aria-label="Race telemetry">
+              <div className="flex justify-between font-medium text-text-secondary">
+                <span>You (Py): Sq {youPos}/100</span>
+                {rival && <span>Bugsy: Sq {rivalPos}/100</span>}
+              </div>
+              <div className="h-2 rounded-full bg-bg-inset overflow-hidden relative" aria-hidden="true">
+                {rival && <div className="absolute inset-y-0 left-0 bg-orange-500/60 transition-all" style={{ width: `${rivalPos}%` }} />}
+                <div className="absolute inset-y-0 left-0 bg-blue-600 transition-all" style={{ width: `${youPos}%` }} />
+              </div>
+              {upcoming.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {upcoming.map((u) => (
+                    <span key={u.from} className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${u.type === 'ladder' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-red-500/15 text-red-400'}`}>
+                      Roll {u.roll}: {u.type === 'ladder' ? `🪜 ${u.from}→${u.to}` : `🐍 ${u.from}→${u.to}`}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="rounded-2xl border border-border-default bg-bg-surface p-3 text-sm flex flex-col gap-1" aria-live="polite">
               <p className="text-text-secondary min-h-5">{message}</p>

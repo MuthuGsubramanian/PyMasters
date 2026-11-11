@@ -97,6 +97,11 @@ export function draw(ctx, { state, particles, reducedMotion = false, flash = 0 }
   for (const g of state.ghosts) ghost(ctx, g, g.x * CELL + CELL / 2, g.y * CELL + CELL / 2, { x: px, y: py }, state.time, reducedMotion);
   if (particles) drawParticles(particles, ctx);
   if (state.hurriedT > 0) { ctx.fillStyle = `rgba(239,68,68,${reducedMotion ? 0.12 : 0.12 + 0.05 * Math.sin(state.time / 100)})`; ctx.fillRect(0, 0, w, h); }
+  if (state.frightenedT > 0 || state.hurriedT > 0) {
+    const frac = Math.min(1, Math.max(0, (state.frightenedT || state.hurriedT) / 6000));
+    ctx.fillStyle = state.frightenedT > 0 ? '#3b82f6' : '#ef4444';
+    ctx.fillRect(0, 0, w * frac, 4);
+  }
   if (flash > 0 && !reducedMotion) { ctx.fillStyle = `rgba(255,255,255,${0.4 * flash})`; ctx.fillRect(0, 0, w, h); }
   drawLabel(ctx, `L${state.level}`, w - 14, 16, { font: '700 12px JetBrains Mono, monospace', align: 'right', color: pal.glow });
   ctx.restore();

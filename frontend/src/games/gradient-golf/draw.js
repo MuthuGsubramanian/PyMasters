@@ -1,6 +1,6 @@
 // Canvas drawing for Gradient Golf. Pure functions of (ctx, hole, path, opts);
 // colours come from the page's CSS tokens so light/dark both work.
-import { loss } from './levels.js'
+import { loss, gradient } from './levels.js'
 
 export function themeColors() {
   const fallback = { accent: '#7c3aed', text: '#6b6b80', surface: '#ffffff', border: '#c9c9d6', flag: '#059669', warn: '#dc2626' }
@@ -46,6 +46,12 @@ export function drawHole1D(ctx, hole, path, { width, height, colors, diverged })
   ctx.stroke()
   // flag (triangle on a pole) at the global minimum; a hollow marker at a local minimum
   const fx = sx(hole.params.min[0]), fy = sy(loss(hole, hole.params.min))
+  // green tolerance band around the hole
+  const tolLeft = sx(hole.params.min[0] - (hole.tol || 0.05))
+  const tolRight = sx(hole.params.min[0] + (hole.tol || 0.05))
+  ctx.fillStyle = colors.flag; ctx.globalAlpha = 0.14
+  ctx.fillRect(tolLeft, pad, Math.max(4, tolRight - tolLeft), height - 2 * pad)
+  ctx.globalAlpha = 1
   ctx.strokeStyle = colors.flag; ctx.fillStyle = colors.flag; ctx.lineWidth = 2
   ctx.beginPath(); ctx.moveTo(fx, fy); ctx.lineTo(fx, fy - 34); ctx.stroke()
   ctx.beginPath(); ctx.moveTo(fx, fy - 34); ctx.lineTo(fx + 16, fy - 28); ctx.lineTo(fx, fy - 22); ctx.closePath(); ctx.fill()
@@ -71,11 +77,26 @@ export function drawHole1D(ctx, hole, path, { width, height, colors, diverged })
       ctx.beginPath(); ctx.arc(sx(cx), sy(loss(hole, [cx])), 3, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1
     })
   }
-  // ball
+  // ball + downhill gradient direction vector (-∇L)
   const last = path[path.length - 1]
   const bx = Math.max(x0, Math.min(x1, last[0]))
+  const ballPx = sx(bx), ballPy = sy(loss(hole, [bx])) - 6
+  if (!diverged) {
+    try {
+      const g = gradient(hole, [bx], () => 0.5)[0]
+      if (Math.abs(g) > 1e-3) {
+        const dir = -Math.sign(g)
+        const arrowLen = Math.min(36, Math.max(14, Math.log10(Math.abs(g) + 1) * 22))
+        const ax = ballPx + dir * arrowLen
+        ctx.strokeStyle = colors.flag; ctx.lineWidth = 2
+        ctx.beginPath(); ctx.moveTo(ballPx, ballPy - 12); ctx.lineTo(ax, ballPy - 12); ctx.stroke()
+        ctx.fillStyle = colors.flag
+        ctx.beginPath(); ctx.moveTo(ax, ballPy - 12); ctx.lineTo(ax - dir * 5, ballPy - 16); ctx.lineTo(ax - dir * 5, ballPy - 8); ctx.closePath(); ctx.fill()
+      }
+    } catch { /* ignore */ }
+  }
   ctx.fillStyle = diverged ? colors.warn : colors.accent
-  ctx.beginPath(); ctx.arc(sx(bx), sy(loss(hole, [bx])) - 6, 7, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath(); ctx.arc(ballPx, ballPy, 7, 0, Math.PI * 2); ctx.fill()
   ctx.strokeStyle = colors.surface; ctx.lineWidth = 2; ctx.stroke()
   if (diverged) {
     ctx.fillStyle = colors.warn; ctx.font = '12px system-ui, sans-serif'; ctx.textAlign = 'center'

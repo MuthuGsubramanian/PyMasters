@@ -16,9 +16,20 @@ function playHref(game) {
   return `/dashboard/play/arcade/${game.id}`;
 }
 
+const ARCADE_META = {
+  snakes_ladders: '8 Python topic boards · Roll & climb ladders',
+  linked_snake: 'collections.deque · Grow head→tail linked nodes',
+  code_slingshot: 'Expression physics · Aim at the right value',
+  loop_runner: 'Neon loop courier · Jump/slide through gates',
+  bug_invaders: '2-phase space shooter · Blast bug line then patch',
+  dict_dash: 'Hash-table maze · Corner power pellets frighten ghosts',
+  big_o_grand_prix: 'Complexity kart racing · Hit O(1)/O(log n) boosts',
+};
+
 function GameCard({ game, index, t }) {
   const Icon = ARCADE_ICONS[game.id] || Gamepad2;
   const href = game.unlocked && !game.needs_content ? playHref(game) : null;
+  const meta = ARCADE_META[game.id];
   return (
     <GlassCard index={index} className="flex flex-col gap-3 p-5" data-arcade-card={game.id}>
       <div className="flex items-start gap-3">
@@ -28,6 +39,7 @@ function GameCard({ game, index, t }) {
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-text-primary leading-tight">{game.title}</h3>
           <p className="text-xs text-text-muted mt-0.5">{game.blurb}</p>
+          {meta && <p className="text-[11px] text-accent-primary/90 font-medium mt-1">{meta}</p>}
         </div>
         <Badge variant={game.unlocked ? 'success' : 'default'}>{game.unlocked ? t('arcade.unlocked', 'Unlocked') : t('arcade.locked', 'Locked')}</Badge>
       </div>

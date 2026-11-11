@@ -10,18 +10,44 @@ import { UNLOCK_EVENT } from '../arcade/unlocks';
 
 const topicLabel = (t) => String(t || '').replace(/_/g, ' ');
 
+const DRILL_META = {
+  output_oracle: { pillar: 'Mental Interpreter', skill: 'Trace stdout, slices, mutability & scope' },
+  bug_hunt: { pillar: 'Interactive Debugger', skill: 'Spot the buggy line & preview the patch diff' },
+  shape_sorter: { pillar: 'Data Structures', skill: 'Match requirements to list, tuple, set & dict' },
+  big_o_sprint: { pillar: 'Algorithmic Scaling', skill: 'Analyze loop growth & watch live op-count races' },
+  gradient_golf: { pillar: 'Optimization Physics', skill: 'Tune learning rate & momentum on loss curves' },
+  overfit_detective: { pillar: 'ML Generalization', skill: 'Balance polynomial degree & λ against noise' },
+};
+
 function GameCard({ game, index, t }) {
   const Icon = GAME_ICONS[game.id] || Gamepad2;
   const playable = hasComponent(game.id);
+  const meta = DRILL_META[game.id];
+  const maxLvl = game.levels || 6;
+  const curLvl = game.best_level ?? game.suggested_level ?? 1;
+  const lvlPct = Math.min(100, Math.round((curLvl / maxLvl) * 100));
   return (
     <GlassCard index={index} className="flex flex-col gap-3 p-5">
       <div className="flex items-start gap-3">
         <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-primary text-white flex items-center justify-center"><Icon size={20} /></div>
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-text-primary leading-tight">{game.title}</h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-semibold text-text-primary leading-tight">{game.title}</h3>
+            {meta && <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent-primary/10 text-accent-primary">{meta.pillar}</span>}
+          </div>
           <p className="text-xs text-text-muted mt-0.5">{game.blurb}</p>
+          {meta && <p className="text-[11px] text-text-secondary mt-1">{meta.skill}</p>}
         </div>
         {game.daily_done && <Badge variant="success"><CalendarCheck size={10} /> {t('play.daily', 'Daily')} ✓</Badge>}
+      </div>
+      <div className="flex flex-col gap-1" aria-hidden="true">
+        <div className="flex justify-between text-[11px] text-text-muted">
+          <span>Mastery Level {curLvl}/{maxLvl}</span>
+          <span>{lvlPct}%</span>
+        </div>
+        <div className="h-1.5 rounded-full bg-bg-inset overflow-hidden">
+          <div className="h-full bg-accent-primary transition-all" style={{ width: `${lvlPct}%` }} />
+        </div>
       </div>
       <dl className="grid grid-cols-3 gap-2 text-center text-xs">
         <div className="rounded-lg bg-bg-inset py-1.5"><dt className="text-text-muted">{t('play.best', 'Best')}</dt><dd className="font-semibold text-text-primary tabular-nums">{game.best_score ?? '—'}</dd></div>

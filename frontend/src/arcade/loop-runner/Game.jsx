@@ -191,7 +191,12 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
       footer={t('arcade.runner_help', 'Tap, Space or ↑ to jump through the upper gate; swipe down or ↓ to slide through the lower one.')}>
       {() => (
         <div className="flex flex-col gap-3" data-lives={hud.lives} data-lane={hud.lane} data-paused={paused ? '1' : '0'}>
-          <Hud item={session.item || (gate ? { prompt: { code: '' } } : null)} reveal={reveal} />
+          <Hud item={session.item || (gate ? { prompt: { code: '' } } : null)} reveal={reveal}>
+            <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-border-default/60 text-xs text-text-muted font-mono">
+              <span>for gate_idx in range({hud.passes}, ∞):</span>
+              <span>Lane: <strong className="text-accent-primary uppercase">{hud.lane}</strong> · Combo ×{hud.combo}</span>
+            </div>
+          </Hud>
           <div ref={wrapRef} className="w-full flex justify-center">
             <canvas ref={canvasRef} width={STAGE.w} height={STAGE.h} role="img" aria-label={t('arcade.runner_help', 'Tap, Space or ↑ to jump through the upper gate; swipe down or ↓ to slide through the lower one.')}
               className="rounded-2xl border border-border-strong shadow-lg max-w-full touch-none select-none" />
@@ -199,8 +204,8 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
           <p data-stage-text className="sr-only" aria-live="polite">{gate ? `Upper gate ${gate.upper.label}, lower gate ${gate.lower.label}.` : 'Running. Waiting for the next gate.'} Lane {hud.lane}.</p>
           {gate && (
             <div role="group" aria-label={t('arcade.choices', 'Answers')} className="grid grid-cols-2 gap-2">
-              <Button variant="outline" data-gate="upper" data-choice={gate.upper.choiceIndex} className="min-h-12" onClick={() => pickGate('upper')}><ArrowUp size={16} /> {gate.upper.label}</Button>
-              <Button variant="outline" data-gate="lower" data-choice={gate.lower.choiceIndex} className="min-h-12" onClick={() => pickGate('lower')}><ArrowDown size={16} /> {gate.lower.label}</Button>
+              <Button variant="outline" data-gate="upper" data-choice={gate.upper.choiceIndex} className="min-h-12 font-mono" onClick={() => pickGate('upper')}><ArrowUp size={16} /> {gate.upper.label}</Button>
+              <Button variant="outline" data-gate="lower" data-choice={gate.lower.choiceIndex} className="min-h-12 font-mono" onClick={() => pickGate('lower')}><ArrowDown size={16} /> {gate.lower.label}</Button>
             </div>
           )}
         </div>

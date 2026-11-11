@@ -15,7 +15,7 @@ import { newRun, turn, step, placeFoods, applyEatResult, speedFor, COLS, ROWS } 
 import { draw, CELL, fieldSize } from './render.js';
 
 const mirror = (s) => ({ dir: s.dir, alive: s.alive, score: s.score, level: s.level, eaten: s.eaten, correct: s.correct, wrong: s.wrong,
-  lastOp: s.lastOp, prompt: s.prompt, foods: s.foods, length: s.snake.length });
+  lastOp: s.lastOp, prompt: s.prompt, foods: s.foods, length: s.snake.length, nodes: s.snake.slice(0, 6).map((n) => n.value) });
 
 /**
  * Linked Snake: steer, eat the right answer to append a node, the wrong one pops your tail.
@@ -198,7 +198,20 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
       {() => (
         <div className="flex flex-col gap-3" data-dir={hud.dir} data-paused={paused ? '1' : '0'}>
           <Hud item={hud.prompt} reveal={reveal}>
-            <code className="text-xs text-text-muted font-mono">{hud.lastOp}</code>
+            <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-border-default/60 text-xs">
+              <code className="text-text-muted font-mono">{hud.lastOp}</code>
+              <div className="flex items-center gap-1 font-mono text-[11px]" aria-label="Linked nodes">
+                {(hud.nodes || []).map((val, idx) => (
+                  <span key={idx} className="inline-flex items-center gap-1">
+                    <span className={`rounded px-1.5 py-0.5 border ${idx === 0 ? 'bg-teal-500/20 border-teal-400 text-teal-300 font-bold' : 'bg-bg-inset border-border-default text-text-secondary'}`}>
+                      {idx === 0 ? 'HEAD' : val}
+                    </span>
+                    {idx < (hud.nodes?.length || 0) - 1 && <span className="text-teal-400">→</span>}
+                  </span>
+                ))}
+                {hud.length > 6 && <span className="text-text-muted">… ({hud.length} nodes)</span>}
+              </div>
+            </div>
           </Hud>
           <div ref={wrapRef} className="w-full flex justify-center">
             <canvas ref={canvasRef} width={COLS * CELL} height={ROWS * CELL} role="img" aria-label={t('arcade.steer', 'Arrow keys or swipe to steer. Eat the right answer.')}

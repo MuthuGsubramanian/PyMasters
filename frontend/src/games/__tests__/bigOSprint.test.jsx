@@ -22,6 +22,7 @@ describe('Big-O Sprint', () => {
     const fig = r.container.querySelector('figure')
     expect(fig).toBeTruthy()
     expect(fig.textContent).toContain('3,000')
+    expect(fig.textContent).toContain('10× input → 10.0× ops')
     r.unmount()
   })
 })

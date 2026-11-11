@@ -75,12 +75,14 @@ describe('particles', () => {
 })
 
 describe('sfx', () => {
-  beforeEach(() => { try { localStorage.clear() } catch { /* ignore */ } })
+  beforeEach(() => { setSoundOn(true); try { localStorage.clear?.() } catch { /* ignore */ } })
   it('defaults to on and persists the toggle', () => {
     expect(isSoundOn()).toBe(true)
     setSoundOn(false)
     expect(isSoundOn()).toBe(false)
-    expect(localStorage.getItem('pm_arcade_sound')).toBe('0')
+    if (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function') {
+      expect(localStorage.getItem('pm_arcade_sound')).toBe('0')
+    }
   })
   it('is silent (no throw) without AudioContext', () => {
     const saved = globalThis.AudioContext

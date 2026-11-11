@@ -108,7 +108,7 @@ export function draw(ctx, { state, particles, reducedMotion = false, confetti = 
   const pos = state.positions.length ? state.positions.indexOf('you') + 1 : [...state.karts].sort((a, b) => (b.lap * state.track.length + b.s) - (a.lap * state.track.length + a.s)).findIndex((k) => k.id === 'you') + 1;
   const you = state.karts.find((k) => k.id === 'you');
   drawLabel(ctx, `P${pos}  ·  LAP ${Math.min(state.laps, you.lap + 1)}/${state.laps}`, 16, 22, { font: '700 14px Outfit, sans-serif', align: 'left' });
-  drawLabel(ctx, `${Math.round(Math.abs(you.speed))} px/s`, 16, 42, { font: '600 11px JetBrains Mono, monospace', align: 'left', color: 'rgba(255,255,255,0.8)' });
+  drawLabel(ctx, `${Math.round(Math.abs(you.speed))} px/s${you.boostT > 0 ? ' · NITRO O(1)!' : you.spinT > 0 ? ' · OIL SPIN!' : ''}`, 16, 42, { font: '600 11px JetBrains Mono, monospace', align: 'left', color: you.boostT > 0 ? '#facc15' : you.spinT > 0 ? '#f87171' : 'rgba(255,255,255,0.8)' });
   if (confetti > 0 && !reducedMotion) {
     for (let i = 0; i < 60; i++) { ctx.fillStyle = ['#f472b6', '#22d3ee', '#facc15', '#a3e635'][i % 4]; ctx.fillRect((i * 97 + state.time / 6) % STAGE.w, ((i * 53) + state.time / 3) % STAGE.h, 6, 10); }
   }

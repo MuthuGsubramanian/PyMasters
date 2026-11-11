@@ -185,7 +185,12 @@ export default function Game({ reducedMotion = false, onQuit, lives, rng = Math.
       footer={t('arcade.dash_help', 'Arrow keys or swipe to steer. Eat the corner pellet with the right answer: ghosts turn blue. The wrong one makes them hurry.')}>
       {() => (
         <div className="flex flex-col gap-3" data-lives={hud.lives} data-ghosts={hud.ghosts} data-paused={paused ? '1' : '0'}>
-          <Hud item={hud.prompt} reveal={reveal} />
+          <Hud item={hud.prompt} reveal={reveal}>
+            <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-border-default/60 text-xs font-mono text-text-muted">
+              <span>Ghosts: <strong className={hud.ghosts === 'frightened' ? 'text-blue-400' : hud.ghosts === 'hurried' ? 'text-red-400' : 'text-text-primary'}>{hud.ghosts}</strong></span>
+              <span>Pellets left: <strong className="text-amber-400">{hud.pellets}</strong> · Level {hud.level}</span>
+            </div>
+          </Hud>
           <div ref={wrapRef} className="w-full flex justify-center">
             <canvas ref={canvasRef} width={fieldSize(stateRef.current).w} height={fieldSize(stateRef.current).h} role="img"
               aria-label={t('arcade.dash_help', 'Arrow keys or swipe to steer. Eat the corner pellet with the right answer: ghosts turn blue. The wrong one makes them hurry.')}

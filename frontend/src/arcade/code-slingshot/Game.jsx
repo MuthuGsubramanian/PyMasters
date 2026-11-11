@@ -284,7 +284,21 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
       footer={t('arcade.aim', 'Drag the bird back and release. Arrow keys aim, hold Space for power.')}>
       {() => (
         <div className="flex flex-col gap-3" data-birds={hud.birdsLeft} data-angle={aim.angle} data-flying={flying ? '1' : '0'} data-paused={paused ? '1' : '0'}>
-          <Hud item={hud.question} reveal={reveal} />
+          <Hud item={hud.question} reveal={reveal}>
+            <div className="flex items-center justify-between gap-2 flex-wrap pt-1 border-t border-border-default/60 text-xs text-text-muted">
+              <span className="font-mono">Launch Angle: <strong className="text-text-primary">{aim.angle}°</strong> · Birds: <strong className="text-text-primary">{hud.birdsLeft}</strong></span>
+              <div className="flex items-center gap-1.5">
+                <span>Quick angle:</span>
+                {[20, 35, 55].map((ang) => (
+                  <button key={ang} type="button" disabled={paused || flying}
+                    onClick={() => setAim((a) => ({ ...a, angle: ang }))}
+                    className={`px-2 py-0.5 rounded border font-mono text-[11px] ${aim.angle === ang ? 'border-accent-primary bg-accent-primary/15 text-accent-primary font-bold' : 'border-border-default bg-bg-inset text-text-secondary'}`}>
+                    {ang}°
+                  </button>
+                ))}
+              </div>
+            </div>
+          </Hud>
           <div ref={wrapRef} className="w-full flex justify-center">
             <canvas ref={canvasRef} width={STAGE.w} height={STAGE.h} role="img" aria-label={t('arcade.aim', 'Drag the bird back and release. Arrow keys aim, hold Space for power.')}
               className="rounded-2xl border border-border-strong shadow-lg max-w-full touch-none select-none"

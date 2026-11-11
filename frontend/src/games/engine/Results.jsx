@@ -14,15 +14,32 @@ export function Results({ result, gameTitle, onAgain, onBack }) {
   const pct = Math.round((result.accuracy || 0) * 100);
   const levelUp = result.next_level > result.level;
   const levelDown = result.next_level < result.level;
+  const tier = pct >= 90 ? { label: 'Python Grandmaster', variant: 'success' }
+    : pct >= 70 ? { label: 'Sharp Pythonista', variant: 'primary' }
+    : pct >= 50 ? { label: 'Steady Builder', variant: 'default' }
+    : { label: 'Warming Up', variant: 'warning' };
   return (
     <section aria-live="polite" className="rounded-2xl border border-border-default bg-bg-surface p-5 sm:p-6 flex flex-col gap-5 max-w-xl mx-auto w-full mb-24 sm:mb-0">
-      <header className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-gradient-primary text-white flex items-center justify-center"><Trophy size={22} /></div>
-        <div>
-          <h2 className="font-display text-xl font-bold text-text-primary">{t('results.complete', '{game} — round complete', { game: gameTitle })}</h2>
-          <p className="text-xs text-text-muted">{t('play.level', 'Level')} {result.level}{result.mode === 'daily' ? ` · ${t('play.daily', 'Daily')}` : ''}</p>
+      <header className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-gradient-primary text-white flex items-center justify-center"><Trophy size={22} /></div>
+          <div>
+            <h2 className="font-display text-xl font-bold text-text-primary">{t('results.complete', '{game} — round complete', { game: gameTitle })}</h2>
+            <p className="text-xs text-text-muted">{t('play.level', 'Level')} {result.level}{result.mode === 'daily' ? ` · ${t('play.daily', 'Daily')}` : ''}</p>
+          </div>
         </div>
+        <Badge variant={tier.variant}>{tier.label}</Badge>
       </header>
+
+      <div className="flex flex-col gap-1.5" aria-hidden="true">
+        <div className="flex justify-between text-xs text-text-muted">
+          <span>Round Mastery</span>
+          <span className="font-mono font-semibold text-text-primary">{pct}%</span>
+        </div>
+        <div className="h-2.5 rounded-full bg-bg-inset overflow-hidden">
+          <div className={`h-full transition-all duration-500 ${pct >= 80 ? 'bg-emerald-500' : pct >= 50 ? 'bg-accent-primary' : 'bg-amber-500'}`} style={{ width: `${Math.max(4, pct)}%` }} />
+        </div>
+      </div>
 
       <dl className="grid grid-cols-3 gap-3 text-center">
         <div className="rounded-xl bg-bg-inset p-3"><dt className="text-xs uppercase tracking-wide text-text-muted">{t('results.score', 'Score')}</dt><dd className="text-2xl font-bold text-text-primary tabular-nums">{result.score}<span className="text-sm text-text-muted">/{result.max_score}</span></dd></div>

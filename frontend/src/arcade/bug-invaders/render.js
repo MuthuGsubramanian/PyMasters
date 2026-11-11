@@ -37,6 +37,12 @@ function ship(ctx, sh) {
 
 function cannon(ctx, x) {
   ctx.save();
+  // vertical laser targeting guide
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.22)';
+  ctx.setLineDash([4, 8]);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(x, CANNON_Y - 32); ctx.lineTo(x, 40); ctx.stroke();
+  ctx.setLineDash([]);
   ctx.translate(x, CANNON_Y);
   ctx.fillStyle = '#0ea5e9';
   roundedRect(ctx, -26, -10, 52, 20, 5); ctx.fill();
