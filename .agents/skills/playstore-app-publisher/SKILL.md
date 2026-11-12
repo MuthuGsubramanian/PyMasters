@@ -1,104 +1,164 @@
 ---
 name: playstore-app-publisher
-description: End-to-end Google Play Store Android app publishing, cloud CI AAB building, Google Play Billing v7 IAP integration, Digital Asset Links dual-SHA256 verification, 10/10 App Content policy declarations, multi-track rollout (Internal, Closed, Open, Production), and Play Console CDP automation without Android Studio or local emulators. Use when preparing, testing, auditing, or publishing an Android or WebView/TWA app to Google Play Store.
+description: End-to-end Google Play Store Android app publishing, WebView/SPA touch-scroll pre-flight verification, cloud CI AAB building, Play Billing v8+ IAP integration, Digital Asset Links dual-SHA256 verification, Sign-in details + 10/10 App Content declarations, multi-track rollout (Internal, Closed Alpha, Open Beta, Production), and Play Console CDP automation without Android Studio or local emulators. Use when preparing, testing, auditing, updating, or publishing an Android or WebView/TWA app to Google Play Store.
 ---
 
 # Google Play Store App Publisher (`playstore-app-publisher`)
 
-End-to-end zero-emulator, zero-Android-Studio workflow for building, testing, policy-declaring, monetizing (Google Play Billing v7, Zero Ads), and publishing Android apps to **Google Play Store** via GitHub Actions cloud runners, the **Google Play Android Publisher API v3**, and **Eighty Browser CDP**.
+End-to-end zero-emulator workflow for hardening, verifying, packaging (`.aab`), declaring, and shipping Android or WebView/TWA apps to **Google Play Store** via GitHub Actions cloud runners, the **Google Play Android Publisher API v3**, and **Eighty Browser CDP**.
 
-> **Deep Technical Reference**: Read [references/play-console-deep-dive.md](references/play-console-deep-dive.md) for empirically validated Play Console AngularDart DOM automation rules, Personal vs. Organization account Closed Testing gates, Google Play Payments Policy WebView rules, and all 12 Play Store rejection traps.
+> **Deep Technical Reference**: Read [references/play-console-deep-dive.md](./references/play-console-deep-dive.md) for empirically validated Play Console AngularDart DOM rules, Personal vs. Organization Closed Testing gates, Google Play Payments Policy WebView rules, and all 16 Play Store rejection & review-block traps.
+
+---
+
+## Bundled Reusable Tooling
+
+| Tool | Purpose |
+| :--- | :--- |
+| [scripts/verify_mobile_webview_scroll.mjs](./scripts/verify_mobile_webview_scroll.mjs) | Pre-flight CDP touch-swipe audit (`Input.dispatchTouchEvent`) across public + logged-in routes (`scrollWidth <= innerWidth`, downward/upward scroll movement, zero pull-to-refresh reload). |
+| [scripts/capture_playstore_screenshots.py](./scripts/capture_playstore_screenshots.py) | Captures validated `1080×2400` (`360×800 @ 3x`) phone screenshots into a release pack and Fastlane directory using an isolated CDP tab. |
+| [scripts/play_publish_api.py](./scripts/play_publish_api.py) | Uploads signed `.aab` + multi-locale (`en-GB,en-US`) Fastlane listings & graphics via Google Play Android Publisher API v3 (keyless impersonation or JSON key). |
+| [scripts/play_console_cdp.mjs](./scripts/play_console_cdp.mjs) | Automated Play Console UI toolkit (`inspect`, `set-sign-in-details`, `sync-listing`, `release-track` with `Add from library`, and `/publishing` review submission). |
 
 ---
 
 ## Core Constraints
 
-1. **Zero Local Emulator / Zero Android Studio**: Never launch Android Studio, `qemu-system`, or heavy local `./gradlew` builds on thermally constrained machines. Run `./gradlew test lintRelease assembleRelease bundleRelease --no-daemon` on GitHub Actions (`ubuntu-latest`, JDK 21) and capture `1080×2400` (`360×800` @ `3x`) phone screenshots via Eighty Browser CDP.
-2. **Browser Rule**: Always control **Eighty Browser** (`/usr/local/bin/eighty`) via direct page-target WebSocket CDP on port `9222`. Never launch `/usr/bin/chromium` directly.
-3. **Secret Hygiene**: Never commit `.jks` keystores, `keystore.properties`, or service account JSON keys. Store signing secrets in `~/.config/<app>/keystore/` (chmod `600`) and GitHub Actions Secrets, and use keyless service account impersonation (`--impersonate`) for API uploads.
+1. **Zero Local Emulator / Zero Android Studio**: Run `./gradlew test compileDebugAndroidTestKotlin lintRelease assembleRelease bundleRelease --no-daemon` on GitHub Actions (`ubuntu-latest`, JDK 21). Never launch Android Studio or `qemu-system`.
+2. **Browser Rule**: Always control **Eighty Browser** (`/usr/local/bin/eighty`) via `127.0.0.1:9222`. Create temporary tabs (`PUT /json/new?about:blank`), run `Emulation.clearDeviceMetricsOverride` before disconnect, and close temporary tabs in `finally`.
+3. **Secret Hygiene**: Never commit `.jks` keystores, `keystore.properties`, reviewer credentials, or service account JSON keys. Keep signing secrets in `~/.config/<app>/keystore/` and reviewer demo logins in `~/.config/<app>/reviewer_credentials.json` (`chmod 600`).
 
 ---
 
-## 8-Phase Play Store Publishing Workflow
+## 9-Phase Play Store Publishing & Update Workflow
 
-### Phase 1: Android Manifest, Play Billing v8+ (IAP), & Zero-Ads Hardening
+### Phase 1: Android Shell, Billing v8+, Zero-Ads, & Scroll Hardening
 
-1. **SDK & Versioning (`app/build.gradle.kts`)**:
-   - Set `compileSdk = 36` and `targetSdk = 36` (Google Play mandatory API target requirement).
-   - Add `androidx.fragment:fragment-ktx:1.8.6+` explicitly so `lintVitalAnalyzeRelease` passes `InvalidFragmentVersionForActivityResult`.
-   - Increment `versionCode` monotonically for every Play Console upload (`versionCode` can never be reused once uploaded, even on `internal` draft edits).
-2. **In-App Purchases (`com.android.billingclient:billing-ktx:8.3.0+`)**:
-   - **Mandatory Play Billing v8+ Floor**: Google Play Console rejects releases compiled with `billing-ktx:7.x` (`7.1.1`) with a blocking release error (`Your app currently uses Play Billing Library version 7.1.1 and must be updated to at least version 8.0.0`). Always use **`com.android.billingclient:billing-ktx:8.3.0`** (or newer), where `queryProductDetailsAsync` delivers `(BillingResult, QueryProductDetailsResult)` (`result.productDetailsList`), and add `<uses-permission android:name="com.android.vending.BILLING" />`. Without this permission in an uploaded `.aab`, Play Console locks **Monetize with Play → Subscriptions / One-time products**.
-   - **Critical WebView Payments Policy Rule**: If your app embeds a web frontend, **never** load third-party web checkouts (Razorpay, Stripe, PayPal) for digital goods/subscriptions inside the Android WebView (`IN_APP_HOSTS` must exclude payment gateway domains). Detect the Android bridge (`window.<AppBridge>?.isAndroidApp?.()`) and route digital upgrades exclusively through `BillingClient.launchBillingFlow()`, verifying `purchaseToken` server-side via `androidpublisher` v3 (`purchases.subscriptionsv2.get` / `purchases.products.get`).
-3. **Hard Zero-Ads Enforcement**:
-   - If the app has **no ads**, add `<uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />` in `AndroidManifest.xml` so transitive libraries never inject `AD_ID`, matching Play Console's `Ads = No` and `Advertising ID = No` declarations.
+1. **SDK, Versioning & Tests (`android/app/build.gradle.kts`)**:
+   - Set `compileSdk = 36`, `targetSdk = 36`, and `androidx.fragment:fragment-ktx:1.8.6+`.
+   - Bump `versionCode` monotonically on every Play Console upload (never reuse a `versionCode`).
+   - Avoid dead `SwipeRefreshLayout` dependencies in `build.gradle.kts` / `androidTest` — gate `compileDebugAndroidTestKotlin` in CI alongside `test`, `lintRelease`, `assembleRelease`, and `bundleRelease`.
+2. **WebView Scroll & Pull-to-Refresh Anti-Trap (`MainActivity.kt` + Web SPA)**:
+   - Do **not** wrap `WebView` in `SwipeRefreshLayout` when hosting scrollable web content.
+   - Set `webView.overScrollMode = View.OVER_SCROLL_NEVER`, `webView.isNestedScrollingEnabled = false`, and inject `html,body{overscroll-behavior-y:none !important;overscroll-behavior-x:none !important;}` in `onPageCommitVisible` / `onPageFinished`.
+   - Keep authenticated mobile shells (`<lg` / `<1024px`) scrollable at the **document/window** level rather than trapping content inside `h-[100dvh] overflow-hidden` + `<main overflow-y-auto>` (which keeps `window.scrollY === 0` permanently and triggers pull-to-refresh on downward drags).
+   - Expand `MainActivity` `android:configChanges` to `orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode|density` with `windowSoftInputMode="adjustResize"`.
+3. **Play Billing v8+ & Payments Policy**:
+   - Use **`com.android.billingclient:billing-ktx:8.3.0+`** (Google Play rejects `< 8.0.0`) with `<uses-permission android:name="com.android.vending.BILLING" />`.
+   - Never load third-party web checkouts (Stripe, Razorpay, PayPal) inside Android `WebView` (`IN_APP_HOSTS` must exclude them); route digital purchases via `BillingClient.launchBillingFlow()` and verify receipts server-side.
+4. **Hard Zero-Ads Enforcement**:
+   - Declare `<uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />` in `AndroidManifest.xml` when `Ads = No` and `Advertising ID = No`.
 
-### Phase 2: Web + Mobile State Synchronization & OAuth Parity
+### Phase 2: Pre-Flight Live Mobile Touch-Scroll Audit
 
-1. **Single Authoritative Backend**: Point Android (`BuildConfig.BASE_URL`), Web, and any companion PWAs (via `/api/*` server-to-server reverse proxy) to the same backend database and JWT issuer so lessons, completions, XP, streaks, and Pro entitlements sync in `<1s`.
-2. **WebView Storage & OAuth Whitelist**: Enable `domStorageEnabled = true`, call `CookieManager.getInstance().flush()` in `onPause()` and `onPageFinished()`, and keep OAuth provider paths (`accounts.google.com`, `github.com/login`, `www.linkedin.com/oauth/`) inside the WebView so `HttpOnly; SameSite=Lax` OAuth state cookies survive redirects.
-
-### Phase 3: Cloud CI Build, Unit Tests, & Lint (`ubuntu-latest`)
-
-1. Run `./gradlew test lintRelease assembleRelease bundleRelease --no-daemon` in GitHub Actions with `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`.
-2. **GitHub Actions YAML Gotcha**: Never write `if: secrets.MY_SECRET != ''` at the step level (GitHub Actions rejects the workflow in `0s` with `"workflow file issue"`). Bind the secret in `env:` and check `if [ -n "$MY_SECRET" ]; then ... fi` inside `run:`.
-3. Trigger and download artifacts without local compilation:
-   ```bash
-   gh workflow run android.yml --ref main
-   RUN_ID=$(gh run list --workflow=android.yml --limit 1 --json databaseId -q '.[0].databaseId')
-   gh run watch "$RUN_ID" --exit-status
-   gh run download "$RUN_ID" -D ./artifacts
-   ```
-
-### Phase 4: Create App & Link Keyless Publisher Service Account
-
-1. Create the app manually once in Play Console (`Create app` — Google Play API cannot create a brand-new app; the first `.aab` or app creation happens in UI, after which `androidpublisher` v3 automates everything).
-2. In **Users and permissions → Invite new users**, invite `<publisher-sa>@<gcp-project>.iam.gserviceaccount.com` and grant **Admin (all permissions)** on the app.
-
-### Phase 5: Dual-SHA256 Digital Asset Links (`/.well-known/assetlinks.json`)
-
-1. Upload your first `.aab` so Google Play App Signing generates its production certificate.
-2. Read the **App signing key certificate SHA-256** from Play Console (`Test and release → App integrity → Play app signing` / `/keymanagement`).
-3. Serve **both** your **Upload key SHA-256** and **Play App Signing SHA-256** at `https://<domain>/.well-known/assetlinks.json` (`Content-Type: application/json`, `Cache-Control: no-cache`, explicit Nginx `location /.well-known/` block so missing files never return `200 text/html` SPA fallback).
-
-### Phase 6: Complete All 10 App Content Declarations & Store Settings (`11 of 11`)
-
-Complete every item under **Monitor and improve → Policy and programmes → App content** plus **Grow users → Store presence → Store settings**:
-1. **Privacy policy**: Live HTTPS URL (`https://<domain>/privacy`).
-2. **App access**: Provide test credentials if login-gated, or `All functionality is available without special access` if guest mode exists.
-3. **Ads**: `No, my app does not contain ads` (when ad-free).
-4. **Content rating (IARC)**: Select category, accept IARC Terms checkbox, set **Digital goods / In-App Purchases = `Yes`** when offering subscriptions/IAP.
-5. **Target audience**: Select `13–15`, `16–17`, `18 and over` (selecting under-13 triggers strict Google Play Families Policy restrictions).
-6. **Data safety**: Declare `Encrypted in transit = Yes`, live `Delete account URL` (`https://<domain>/delete-account`), auth methods, and exact data types (`Email address` → `Collected`, `Not ephemeral`, `App functionality` + `Account management`; plus `Purchase history` if storing IAP receipts).
-7. **Advertising ID**: `No` (paired with `tools:node="remove"` on `AD_ID`).
-8. **Government apps / Financial features / Health apps**: Declare accurately (`My app doesn't provide any financial features` applies even when selling standard digital subscriptions via Google Play Billing).
-9. **Store settings (`11 of 11`)**: Select **App category** (e.g., `Education`) and save **Store Listing contact details** (`Email address` + `Website` via **Save and publish**). Completing `11 of 11` unlocks **Closed testing**.
-
-> **Monetization Prerequisite**: To create Subscriptions or One-Time Products in Play Console (`Monetise with Play → Products`), the developer account owner must complete **Set up a merchant account** (Google Payments Merchant profile + bank/tax verification) AND have uploaded at least one `.aab` containing `com.android.vending.BILLING`.
-
-### Phase 7: Automated API Upload & Multi-Track Progression
-
-Use `scripts/play_publish_api.py` to upload the `.aab`, `en-GB` + `en-US` store listings, `512×512` icon, `1024×500` feature graphic, and `1080×2400` phone screenshots:
+Before building or uploading a release, verify real finger drags on the live Web/Companion URLs across both public and authenticated screens:
 
 ```bash
-uv run --with google-api-python-client --with google-auth python3 \
-  ~/.gemini/config/skills/playstore-app-publisher/scripts/play_publish_api.py \
-  --package "com.example.app" \
-  --aab "./artifacts/app-release.aab" \
-  --metadata-dir "android/fastlane/metadata/android/en-US" \
-  --languages "en-GB,en-US" \
-  --contact-email "support@example.com" \
-  --contact-website "https://example.com" \
-  --impersonate "play-publisher@my-gcp-project.iam.gserviceaccount.com" \
-  --track internal \
-  --status completed
+node ./scripts/verify_mobile_webview_scroll.mjs \
+  --origin "https://example.com" \
+  --routes "/,/pricing,/guides" \
+  --auth-routes "/dashboard,/dashboard/classroom,/dashboard/playground" \
+  --login-path "/login" \
+  --credentials-file "$HOME/.config/myapp/reviewer_credentials.json"
 ```
+**Validation**: Confirm `ALL N/N mobile touch-scroll & overflow checks PASSED` (`overflowPx <= 0`, downward swipe increases `scrollY`, upward swipe decreases `scrollY` without triggering page reload).
 
-### Phase 8: Testing Phases & Production Gate (`Internal` → `Closed` → `Open` → `Production`)
+### Phase 3: Cloud CI Build & Artifact Download (`ubuntu-latest`)
 
-| Track (`--track`) | Purpose & Speed | Tester Setup | Production Gate Rules |
-| :--- | :--- | :--- | :--- |
-| **`internal`** | Instant QA distribution (live in seconds, bypasses review delay) | Email list (up to 100 testers) + `Join on the web` URL (`https://play.google.com/apps/internaltest/...`) | Required sanity check for Play App Signing, deep links, and license-tester Play Billing flows. |
-| **`alpha` (Closed testing)** | Mandatory pre-production verification & Google Play policy review | Countries/regions (`All countries`) + Email list / Google Group + submit in **Publishing overview** | **Personal accounts (created after Nov 13, 2023)**: Must have **>= 12 testers opted-in continuously for 14 days** on Closed Testing before **Apply for production** unlocks.<br>**Organization accounts**: No 12-tester/14-day hold; can promote directly to `beta` / `production` once reviewed. |
-| **`beta` (Open testing)** | Public beta on Play Store search without tester list cap | Set countries + optional tester cap | Unlocks after Closed Testing / Production access requirements are satisfied. |
-| **`production`** | Full public Google Play release | Countries/regions + staged or 100% rollout | Submit release + click **Send changes for review** in **Publishing overview** if Managed Publishing is on. |
+Trigger or watch GitHub Actions until `test`, `compileDebugAndroidTestKotlin`, `lintRelease`, `assembleRelease`, and `bundleRelease` pass, then download the signed `.aab` + `.apk`:
+
+```bash
+gh workflow run android.yml --ref main
+RUN_ID=$(gh run list --workflow=android.yml --limit 1 --json databaseId -q '.[0].databaseId')
+gh run watch "$RUN_ID" --exit-status
+gh run download "$RUN_ID" -D ./scratch/release
+```
+> Bind CI secrets (`ANDROID_KEYSTORE_BASE64`, `PLAY_SERVICE_ACCOUNT_JSON`) via `env:` and check `if [ -n "$VAR" ]; then ...` in shell — never put `secrets.*` directly in step-level `if:`.
+
+### Phase 4: Dual-SHA256 Digital Asset Links (`/.well-known/assetlinks.json`)
+
+1. After uploading the first `.aab`, copy the **App signing key certificate SHA-256** from Play Console (`App integrity → Play app signing`).
+2. Publish **both** your Upload key SHA-256 and Play App Signing SHA-256 at `https://<domain>/.well-known/assetlinks.json` (`Content-Type: application/json`, explicit Nginx `location /.well-known/` handler).
+
+### Phase 5: Phone Screenshots & Dual-Locale Store Listing (`en-GB` + `en-US`)
+
+1. Capture clean `1080×2400` phone screenshots:
+   ```bash
+   uv run --with websockets python3 ./scripts/capture_playstore_screenshots.py \
+     --out-dir ./scratch/screenshots \
+     --fastlane-dir android/fastlane/metadata/android/en-US/images/phoneScreenshots \
+     --url 01-home.png=https://example.com/ \
+     --url 02-features.png=https://example.com/pricing
+   ```
+2. Update `title.txt` (<=30 chars), `short_description.txt` (<=80 chars), `full_description.txt` (<=4000 chars), and `changelogs/<versionCode>.txt` (<=500 chars).
+3. Sync across **both `en-GB` and `en-US`** (API or CDP):
+   ```bash
+   node ./scripts/play_console_cdp.mjs sync-listing \
+     --dev-id "<DEV_ID>" --app-id "<APP_ID>" \
+     --metadata-dir android/fastlane/metadata/android/en-US
+   ```
+
+### Phase 6: Sign-in Details (`App access`) & App Content (`11 of 11`)
+
+Every login-gated or dashboard-first app **must** provide working reviewer credentials, or Play Console blocks submission with **`Missing sign-in details`** during `/publishing` checks:
+
+1. Provision a dedicated non-admin demo account (with onboarding pre-completed) in `~/.config/<app>/reviewer_credentials.json`.
+2. Submit it via Play Console **Sign-in details** (`/app-content/testing-credentials`):
+   ```bash
+   node ./scripts/play_console_cdp.mjs set-sign-in-details \
+     --dev-id "<DEV_ID>" --app-id "<APP_ID>" \
+     --name "Standard Reviewer Account" \
+     --credentials-file "$HOME/.config/myapp/reviewer_credentials.json"
+   ```
+3. Complete the remaining App Content items (`Privacy policy`, `Ads = No`, `IARC Content rating` with `Digital goods = Yes` if IAP exists, `Target audience = 13+`, `Data safety` + live `Delete account URL`, `Advertising ID = No`, `Financial/Health/Government`) and **Store settings** (`App category` + contact email/website -> **Save and publish**).
+
+### Phase 7: Automated API Upload vs. Play Console CDP Release
+
+- **API Route (when `PLAY_SERVICE_ACCOUNT_JSON` / impersonation is linked as Admin in Play Console)**:
+  ```bash
+  uv run --with google-api-python-client --with google-auth python3 ./scripts/play_publish_api.py \
+    --package "com.example.app" \
+    --aab "./scratch/release/PyMasters-Android-AAB/app-release.aab" \
+    --metadata-dir "android/fastlane/metadata/android/en-US" \
+    --languages "en-GB,en-US" \
+    --contact-email "support@example.com" \
+    --contact-website "https://example.com" \
+    --impersonate "play-publisher@my-gcp.iam.gserviceaccount.com" \
+    --track internal --status completed
+  ```
+- **CDP Route (zero service-account dependency; supports library reuse + Closed Alpha + `/publishing` submit)**:
+  ```bash
+  # 1. Roll out immediately to Internal testers
+  node ./scripts/play_console_cdp.mjs release-track \
+    --dev-id "<DEV_ID>" --app-id "<APP_ID>" --track internal \
+    --aab "./scratch/release/PyMasters-Android-AAB/app-release.aab" \
+    --version-code 8 --version-name "1.1.6" \
+    --notes-file android/fastlane/metadata/android/en-US/changelogs/8.txt
+
+  # 2. Promote the exact same bundle from library to Closed Testing (Alpha) & submit for review
+  node ./scripts/play_console_cdp.mjs release-track \
+    --dev-id "<DEV_ID>" --app-id "<APP_ID>" --track alpha \
+    --version-code 8 --version-name "1.1.6" \
+    --notes-file android/fastlane/metadata/android/en-US/changelogs/8.txt \
+    --submit
+  ```
+
+### Phase 8: Track Progression & Production Gate (`Internal` -> `Closed` -> `Production`)
+
+| Track | Availability & Speed | Production Access Gate |
+| :--- | :--- | :--- |
+| **`internal`** | Live in seconds for tester email list (`<=100`); skips Play review delay. | Immediate verification of Play App Signing, deep links, scrolling, and billing. |
+| **`alpha` (Closed)** | Pre-release testers + full Google Play policy review. | **Personal accounts (post-Nov 2023)**: Requires **>= 12 opted-in testers continuously for 14 days** before **Apply for production** unlocks.<br>**Organization accounts**: No 12-tester/14-day hold. |
+| **`beta` (Open)** | Open Play Store test link without closed email list cap. | Available once closed/production requirements are met. |
+| **`production`** | Full global Google Play Store release. | Submit release + resolve any `/publishing` checks (`View issues`) -> **`Submit changes for review`**. |
+
+### Phase 9: Final Verification Gate
+
+Run `inspect` and verify zero unresolved blockers remain:
+```bash
+node ./scripts/play_console_cdp.mjs inspect --dev-id "<DEV_ID>" --app-id "<APP_ID>"
+```
+Confirm:
+- `Internal testing` shows the new `versionCode (versionName)` as **`Available to internal testers`**.
+- `Closed testing - Alpha` shows the new release **`In review`** or **`Available to selected testers`** (not stuck on an old `versionCode` in `Changes not yet submitted for review`).
+- `/publishing` has zero `1 issue affects all of your changes` error banners.
