@@ -190,14 +190,25 @@ def main() -> int:
                                 ).execute()
 
         print(f"3. Uploading {aab_path.name} ({aab_path.stat().st_size / 1024:.1f} KB)...")
-        media = MediaFileUpload(str(aab_path), mimetype="application/octet-stream", resumable=True)
-        bundle_res = edits.bundles().upload(
-            packageName=args.package,
-            editId=edit_id,
-            media_body=media,
-        ).execute()
-        version_code = bundle_res["versionCode"]
-        print(f"   Uploaded bundle versionCode={version_code}")
+        try:
+            media = MediaFileUpload(str(aab_path), mimetype="application/octet-stream", resumable=True)
+            bundle_res = edits.bundles().upload(
+                packageName=args.package,
+                editId=edit_id,
+                media_body=media,
+            ).execute()
+            version_code = bundle_res["versionCode"]
+            print(f"   Uploaded bundle versionCode={version_code}")
+        except HttpError as upload_err:
+            err_body = upload_err.content.decode("utf-8", errors="replace")
+            if "already been used" in err_body:
+                existing = edits.bundles().list(packageName=args.package, editId=edit_id).execute().get("bundles", [])
+                if not existing:
+                    raise
+                version_code = max(b["versionCode"] for b in existing)
+                print(f"   Bundle versionCode={version_code} already uploaded; reusing existing bundle.")
+            else:
+                raise
 
         changelog_file = meta_dir / "changelogs" / f"{version_code}.txt"
         release_notes = []

@@ -65,3 +65,15 @@ Google AI Studio uses **two distinct container architectures** for Preview vs. P
         ```
 10. **Never Click AI Studio's `Force push to <owner>/<repo>` on a Pruned Monorepo**:
     - Under **Settings → GitHub → More options**, AI Studio offers `Force push to <owner>/<repo>`, which **replaces `main` with the pruned AI Studio workspace** (wiping `backend/tests/`, `android/`, `docs/`, CI workflows!). Always push full repo commits from local Git (`git push origin main`) and sync runtime code *into* AI Studio via `.zip` upload.
+
+---
+
+## 4. Google Play Store TWA & Play Console CDP Gotchas
+
+1. **Dual SHA-256 Fingerprints Required in `/.well-known/assetlinks.json`**:
+   - Google Play App Signing re-signs uploaded `.aab` bundles with a Google-managed **App Signing key** whose SHA-256 differs from your local **Upload key** SHA-256.
+   - Read the production SHA-256 from Play Console (`/app/<app-id>/keymanagement`) after uploading your first `.aab`, and include **both** the Upload key SHA-256 and Play App Signing SHA-256 in `sha256_cert_fingerprints` so Trusted Web Activity (TWA) URL-bar removal succeeds on both local APK installs and Play Store installs.
+2. **Play Console AngularDart Requires Real CDP Mouse Events**:
+   - Play Console (`play.google.com/console`) uses AngularDart (`material-button`, `material-checkbox`, `ess-cell`). Synthetic `element.click()` often fails to open drawers/modals (such as Data Safety's `Open <type> questions`). Always set a wide desktop viewport (`1440×960`) and dispatch real CDP `Input.dispatchMouseEvent` (`mousePressed` + `mouseReleased`) at the element's bounding-box center.
+3. **Keyless `androidpublisher` v3 API Publishing**:
+   - When GCP org policies block service account JSON keys (`iam.disableServiceAccountKeyCreation`), invite `<sa>@<project>.iam.gserviceaccount.com` in Play Console **Users and permissions** and authenticate via `google.auth.impersonated_credentials.Credentials` (`scope: https://www.googleapis.com/auth/androidpublisher`).
