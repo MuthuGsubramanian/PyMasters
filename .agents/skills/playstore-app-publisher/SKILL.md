@@ -21,13 +21,14 @@ End-to-end zero-emulator, zero-Android-Studio workflow for building, testing, po
 
 ## 8-Phase Play Store Publishing Workflow
 
-### Phase 1: Android Manifest, Play Billing v7 (IAP), & Zero-Ads Hardening
+### Phase 1: Android Manifest, Play Billing v8+ (IAP), & Zero-Ads Hardening
 
 1. **SDK & Versioning (`app/build.gradle.kts`)**:
    - Set `compileSdk = 36` and `targetSdk = 36` (Google Play mandatory API target requirement).
+   - Add `androidx.fragment:fragment-ktx:1.8.6+` explicitly so `lintVitalAnalyzeRelease` passes `InvalidFragmentVersionForActivityResult`.
    - Increment `versionCode` monotonically for every Play Console upload (`versionCode` can never be reused once uploaded, even on `internal` draft edits).
-2. **In-App Purchases (`com.android.billingclient:billing-ktx:7.1.1`)**:
-   - Add `com.android.billingclient:billing-ktx:7.1.1` and `<uses-permission android:name="com.android.vending.BILLING" />`. Without this permission in an uploaded `.aab`, Play Console locks **Monetize with Play → Subscriptions / One-time products**.
+2. **In-App Purchases (`com.android.billingclient:billing-ktx:8.3.0+`)**:
+   - **Mandatory Play Billing v8+ Floor**: Google Play Console rejects releases compiled with `billing-ktx:7.x` (`7.1.1`) with a blocking release error (`Your app currently uses Play Billing Library version 7.1.1 and must be updated to at least version 8.0.0`). Always use **`com.android.billingclient:billing-ktx:8.3.0`** (or newer), where `queryProductDetailsAsync` delivers `(BillingResult, QueryProductDetailsResult)` (`result.productDetailsList`), and add `<uses-permission android:name="com.android.vending.BILLING" />`. Without this permission in an uploaded `.aab`, Play Console locks **Monetize with Play → Subscriptions / One-time products**.
    - **Critical WebView Payments Policy Rule**: If your app embeds a web frontend, **never** load third-party web checkouts (Razorpay, Stripe, PayPal) for digital goods/subscriptions inside the Android WebView (`IN_APP_HOSTS` must exclude payment gateway domains). Detect the Android bridge (`window.<AppBridge>?.isAndroidApp?.()`) and route digital upgrades exclusively through `BillingClient.launchBillingFlow()`, verifying `purchaseToken` server-side via `androidpublisher` v3 (`purchases.subscriptionsv2.get` / `purchases.products.get`).
 3. **Hard Zero-Ads Enforcement**:
    - If the app has **no ads**, add `<uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove" />` in `AndroidManifest.xml` so transitive libraries never inject `AD_ID`, matching Play Console's `Ads = No` and `Advertising ID = No` declarations.

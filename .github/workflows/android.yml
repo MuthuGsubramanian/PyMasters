@@ -99,7 +99,7 @@ jobs:
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
-      - name: Build, Push & Deploy Mobile Companion PWA + APK Server to Google Cloud Run
+      - name: Build & Push Mobile Companion PWA + APK Image to Artifact Registry
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         working-directory: mobile-companion
         env:
@@ -107,6 +107,13 @@ jobs:
         run: |
           docker build --platform linux/amd64 -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:latest" .
           docker push --all-tags "$IMAGE"
+
+      - name: Deploy Mobile Companion PWA + APK Server to Google Cloud Run
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        env:
+          IMAGE: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/cloud-run-source-deploy/pymasters-mobile
+        run: |
           gcloud run deploy pymasters-mobile \
             --image "$IMAGE:${{ github.sha }}" \
             --region us-central1 \

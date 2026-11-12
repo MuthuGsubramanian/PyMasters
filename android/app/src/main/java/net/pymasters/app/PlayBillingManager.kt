@@ -14,13 +14,14 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryProductDetailsResult
 import com.android.billingclient.api.QueryPurchasesParams
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Production Google Play Billing Library v7 manager for PyMasters Android.
+ * Production Google Play Billing Library v8 manager for PyMasters Android.
  *
  * Handles BillingClient lifecycle, product detail queries, subscription & one-time
  * purchase flows, purchase acknowledgment, interrupted-purchase recovery on resume,
@@ -83,9 +84,11 @@ class PlayBillingManager(
 
     private val billingClient: BillingClient = BillingClient.newBuilder(activity)
         .setListener(purchasesUpdatedListener)
+        .enableAutoServiceReconnection()
         .enablePendingPurchases(
             PendingPurchasesParams.newBuilder()
                 .enableOneTimeProducts()
+                .enablePrepaidPlans()
                 .build()
         )
         .build()
@@ -161,7 +164,8 @@ class PlayBillingManager(
                     .setProductList(productList)
                     .build()
 
-                billingClient.queryProductDetailsAsync(params) { billingResult, detailsList ->
+                billingClient.queryProductDetailsAsync(params) { billingResult: BillingResult, productDetailsResult: QueryProductDetailsResult ->
+                    val detailsList = productDetailsResult.productDetailsList
                     val arr = JSONArray()
                     if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                         for (details in detailsList) {
@@ -235,8 +239,8 @@ class PlayBillingManager(
                     )
                     .build()
 
-                billingClient.queryProductDetailsAsync(queryParams) { billingResult, detailsList ->
-                    val details = detailsList.firstOrNull()
+                billingClient.queryProductDetailsAsync(queryParams) { billingResult: BillingResult, productDetailsResult: QueryProductDetailsResult ->
+                    val details = productDetailsResult.productDetailsList.firstOrNull()
                     if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && details != null) {
                         productDetailsCache[details.productId] = details
                         runOnMain {
@@ -437,6 +441,7 @@ class PlayBillingManager(
             json.put("billingPeriod", phase?.billingPeriod.orEmpty())
         } else {
             val oneTime = details.oneTimePurchaseOfferDetails
+                ?: details.oneTimePurchaseOfferDetailsList?.firstOrNull()
             json.put("formattedPrice", oneTime?.formattedPrice.orEmpty())
             json.put("priceAmountMicros", oneTime?.priceAmountMicros ?: 0L)
             json.put("priceCurrencyCode", oneTime?.priceCurrencyCode.orEmpty())
