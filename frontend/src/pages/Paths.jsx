@@ -368,7 +368,7 @@ function PathList() {
                             </button>
                         ))}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                         <Filter size={14} className="text-text-muted" />
                         {['all', 'beginner', 'intermediate', 'advanced'].map(f => (
                             <button
@@ -641,7 +641,7 @@ function PathDetail() {
 
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                                         <h3 className={clsx(
                                             'text-sm font-bold font-display transition-colors',
                                             isCompleted ? 'text-green-700 dark:text-green-300' :

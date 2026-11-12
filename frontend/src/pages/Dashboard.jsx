@@ -581,9 +581,9 @@ export function Overview() {
             </div>
 
             {/* ─── Main Content Grid ─────────────────────────────────────── */}
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Left Column (2/3) */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="lg:col-span-2 min-w-0 space-y-6">
                     {/* Review queue moved to the top of the dashboard (F8). */}
                     {/* ─── Trending in AI/Python ──────────────────────────── */}
                     <motion.div variants={itemVariants}>
@@ -645,7 +645,7 @@ export function Overview() {
                 </div>
 
                 {/* Right Column (1/3) */}
-                <div className="space-y-6">
+                <div className="min-w-0 space-y-6">
                     {/* ─── Learning Progress ─────────────────────────────── */}
                     <motion.div variants={itemVariants}>
                     <Card className="shadow-sm overflow-hidden">

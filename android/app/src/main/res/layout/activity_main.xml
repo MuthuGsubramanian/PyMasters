@@ -5,19 +5,15 @@
     android:layout_height="match_parent"
     android:background="@color/pm_bg">
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipeRefresh"
+    <WebView
+        android:id="@+id/webView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <WebView
-            android:id="@+id/webView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/pm_bg"
-            android:focusable="true"
-            android:focusableInTouchMode="true" />
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+        android:layout_height="match_parent"
+        android:background="@color/pm_bg"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:overScrollMode="ifContentScrolls"
+        android:scrollbars="vertical" />
 
     <ProgressBar
         android:id="@+id/topProgress"

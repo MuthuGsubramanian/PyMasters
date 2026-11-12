@@ -35,6 +35,7 @@ import { getAdminCheck, getProfileStats, getAccessStatus } from '../api';
 import useI18n from '../hooks/useI18n';
 import useOrgBranding from '../hooks/useOrgBranding';
 import useAudience from '../hooks/useAudience';
+import { registerAndroidBackHandler } from '../lib/androidBack';
 
 export default function Layout() {
     const { user, logout, activeOrg } = useAuth();
@@ -55,6 +56,21 @@ export default function Layout() {
         return () => { delete document.documentElement.dataset.audience; };
     }, [audience.mode]);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const mainRef = useRef(null);
+    // Reset inner <main> scroll position on route navigation so new screens start at top.
+    useEffect(() => {
+        if (mainRef.current) {
+            mainRef.current.scrollTo({ top: 0, behavior: 'instant' });
+        }
+    }, [location.pathname]);
+    // Close mobile sidebar drawer on Android System Back before navigating history.
+    useEffect(() => {
+        if (!sidebarOpen) return undefined;
+        return registerAndroidBackHandler(() => {
+            setSidebarOpen(false);
+            return true;
+        });
+    }, [sidebarOpen]);
     // Desktop-only collapsed (icon-rail) state. Default false preserves the full
     // sidebar everywhere; child pages (e.g. Classroom during a lesson) can request
     // collapse via the Outlet context below.
@@ -192,15 +208,75 @@ export default function Layout() {
     };
     const rc = rankColors[rank];
 
+    const mobileQuickTabs = [
+        {
+            key: 'home',
+            label: t('nav.mobile.home', 'Home'),
+            icon: LayoutDashboard,
+            path: '/dashboard',
+            active: location.pathname === '/dashboard',
+        },
+        {
+            key: 'learn',
+            label: t('nav.mobile.learn', 'Learn'),
+            icon: GraduationCap,
+            path: '/dashboard/classroom',
+            active: location.pathname.startsWith('/dashboard/classroom'),
+        },
+        {
+            key: 'paths',
+            label: t('nav.mobile.paths', 'Paths'),
+            icon: Map,
+            path: '/dashboard/paths',
+            active: location.pathname.startsWith('/dashboard/paths'),
+        },
+        {
+            key: 'code',
+            label: t('nav.mobile.code', 'Code'),
+            icon: Sparkles,
+            path: '/dashboard/playground',
+            active: location.pathname.startsWith('/dashboard/playground'),
+        },
+    ];
+    const isSecondaryMobileRoute =
+        !mobileQuickTabs.some((tab) => tab.active) && location.pathname.startsWith('/dashboard');
+
     return (
-        <div className="flex h-screen overflow-hidden bg-bg-base text-text-secondary font-sans">
+        <div className="flex h-[100dvh] w-full max-w-full overflow-hidden bg-bg-base text-text-secondary font-sans">
             {/* Mobile header bar */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-bg-surface backdrop-blur-xl border-b border-border-default flex items-center justify-between px-4">
-                <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-bg-elevated transition-colors" aria-label="Open menu">
+            <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-bg-surface/95 backdrop-blur-xl border-b border-border-default flex items-center justify-between px-3 gap-2">
+                <button
+                    onClick={() => setSidebarOpen(true)}
+                    className="min-w-10 min-h-10 p-2 rounded-lg hover:bg-bg-elevated transition-colors flex items-center justify-center shrink-0"
+                    aria-label="Open menu"
+                >
                     <Menu size={20} className="text-text-muted" />
                 </button>
-                <span className="font-display font-bold text-text-primary tracking-tight truncate max-w-[60vw]">{portalName}</span>
-                <div className="w-9" /> {/* Spacer for centering */}
+                <button
+                    type="button"
+                    onClick={() => navigate('/dashboard')}
+                    className="font-display font-bold text-sm sm:text-base text-text-primary tracking-tight truncate max-w-[50vw]"
+                >
+                    {portalName}
+                </button>
+                <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs font-mono text-text-muted inline-flex items-center gap-1 px-2 py-1 rounded-full bg-bg-elevated border border-border-default" title="XP">
+                        <Trophy size={12} className="text-amber-500" aria-hidden="true" />
+                        {points}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => navigate('/dashboard/profile')}
+                        aria-label="Open profile"
+                        className="min-w-9 min-h-9 flex items-center justify-center rounded-full"
+                    >
+                        <span className="w-7 h-7 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-500 via-blue-500 to-purple-500 block">
+                            <span className="w-full h-full rounded-full bg-bg-surface flex items-center justify-center text-text-secondary font-bold text-xs">
+                                {displayName.substring(0, 2).toUpperCase()}
+                            </span>
+                        </span>
+                    </button>
+                </div>
             </div>
 
             {/* Mobile overlay */}
@@ -356,7 +432,10 @@ export default function Layout() {
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-1 overflow-y-auto relative bg-gradient-to-b from-bg-elevated via-bg-base to-bg-base pt-14 lg:pt-0">
+            <main
+                ref={mainRef}
+                className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch] relative bg-gradient-to-b from-bg-elevated via-bg-base to-bg-base pt-14 pb-20 lg:pt-0 lg:pb-0"
+            >
                 <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
                     style={{
                         backgroundImage: `
@@ -366,10 +445,54 @@ export default function Layout() {
                         backgroundSize: '60px 60px',
                     }}
                 />
-                <div className="p-6 max-w-7xl mx-auto relative z-10 min-h-full">
+                <div className="px-3.5 py-4 sm:p-6 max-w-7xl mx-auto relative z-10 min-h-full">
                     <Outlet context={{ sidebarCollapsed: collapsed, setSidebarCollapsed: setCollapsed, setVaathiyaarHidden }} />
                 </div>
             </main>
+
+            {/* Mobile Thumb-Zone Bottom Quick Navigation Bar */}
+            <nav
+                aria-label="Mobile quick navigation"
+                className="lg:hidden fixed bottom-0 left-0 right-0 z-40 h-16 bg-bg-surface/95 backdrop-blur-xl border-t border-border-default grid grid-cols-5 items-stretch px-1"
+            >
+                {mobileQuickTabs.map((tab) => {
+                    const TabIcon = tab.icon;
+                    return (
+                        <button
+                            key={tab.key}
+                            type="button"
+                            onClick={() => {
+                                setSidebarOpen(false);
+                                navigate(tab.path);
+                            }}
+                            aria-current={tab.active ? 'page' : undefined}
+                            className={clsx(
+                                'flex flex-col items-center justify-center gap-0.5 rounded-xl my-1 transition-colors',
+                                tab.active
+                                    ? 'text-accent-primary bg-accent-subtle font-semibold'
+                                    : 'text-text-muted hover:text-text-secondary'
+                            )}
+                        >
+                            <TabIcon size={18} aria-hidden="true" />
+                            <span className="text-xs leading-tight truncate max-w-full px-1">{tab.label}</span>
+                        </button>
+                    );
+                })}
+                <button
+                    type="button"
+                    onClick={() => setSidebarOpen((open) => !open)}
+                    aria-expanded={sidebarOpen}
+                    className={clsx(
+                        'flex flex-col items-center justify-center gap-0.5 rounded-xl my-1 transition-colors',
+                        sidebarOpen || isSecondaryMobileRoute
+                            ? 'text-accent-primary bg-accent-subtle font-semibold'
+                            : 'text-text-muted hover:text-text-secondary'
+                    )}
+                >
+                    <Menu size={18} aria-hidden="true" />
+                    <span className="text-xs leading-tight truncate max-w-full px-1">{t('nav.mobile.more', 'More')}</span>
+                </button>
+            </nav>
 
             <GlobalSearch />
             <ReleaseNotes />

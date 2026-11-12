@@ -42,12 +42,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var rootContainer: FrameLayout
-    private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var webView: WebView
     private lateinit var topProgress: ProgressBar
     private lateinit var offlineOverlay: LinearLayout
@@ -95,7 +93,6 @@ class MainActivity : ComponentActivity() {
         setContentView(R.layout.activity_main)
 
         rootContainer = findViewById(R.id.rootContainer)
-        swipeRefresh = findViewById(R.id.swipeRefresh)
         webView = findViewById(R.id.webView)
         topProgress = findViewById(R.id.topProgress)
         offlineOverlay = findViewById(R.id.offlineOverlay)
@@ -106,7 +103,6 @@ class MainActivity : ComponentActivity() {
         }
 
         applyWindowInsets()
-        configureSwipeRefresh()
         configureWebView()
         registerBackHandler()
         registerNetworkMonitor()
@@ -183,19 +179,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun configureSwipeRefresh() {
-        swipeRefresh.setColorSchemeColors(Color.parseColor("#38BDF8"))
-        swipeRefresh.setProgressBackgroundColorSchemeColor(Color.parseColor("#0F172A"))
-        // Prevent accidental pull-to-refresh inside Arcade games, Python Playground, or scrolled pages
-        swipeRefresh.setOnChildScrollUpCallback { _, _ ->
-            webView.scrollY > 0 || UrlRouter.isSwipeGestureProtected(webView.url)
-        }
-        swipeRefresh.setOnRefreshListener {
-            mainFrameFailed = false
-            webView.reload()
-        }
-    }
-
     @SuppressLint("SetJavaScriptEnabled")
     private fun configureWebView() {
         val cookieManager = CookieManager.getInstance()
@@ -203,6 +186,10 @@ class MainActivity : ComponentActivity() {
         cookieManager.setAcceptThirdPartyCookies(webView, true)
 
         webView.setBackgroundColor(Color.parseColor("#020617"))
+        webView.isVerticalScrollBarEnabled = true
+        webView.isHorizontalScrollBarEnabled = false
+        webView.overScrollMode = View.OVER_SCROLL_IF_CONTENT_SCROLLS
+
         val nativeBridge = PyMastersBridge(
             context = this,
             billingManager = playBillingManager,
@@ -224,7 +211,7 @@ class MainActivity : ComponentActivity() {
             builtInZoomControls = false
             displayZoomControls = false
             useWideViewPort = true
-            loadWithOverviewMode = true
+            loadWithOverviewMode = false
             userAgentString = "$userAgentString PyMastersAndroid/${BuildConfig.VERSION_NAME}"
         }
 
@@ -261,7 +248,6 @@ class MainActivity : ComponentActivity() {
                 super.onPageFinished(view, url)
                 currentMainFrameUrl = url ?: view.url
                 splashReady = true
-                swipeRefresh.isRefreshing = false
                 topProgress.visibility = View.GONE
                 CookieManager.getInstance().flush()
                 if (!mainFrameFailed) {
@@ -278,7 +264,6 @@ class MainActivity : ComponentActivity() {
                 if (request.isForMainFrame) {
                     mainFrameFailed = true
                     splashReady = true
-                    swipeRefresh.isRefreshing = false
                     topProgress.visibility = View.GONE
                     offlineOverlay.visibility = View.VISIBLE
                 }
@@ -389,11 +374,28 @@ class MainActivity : ComponentActivity() {
                 if (offlineOverlay.visibility == View.VISIBLE && webView.canGoBack()) {
                     offlineOverlay.visibility = View.GONE
                     webView.goBack()
-                } else if (webView.canGoBack()) {
-                    webView.goBack()
-                } else {
-                    isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
+                    return
+                }
+                // Let the React SPA close open mobile drawers, chat panels, or step back
+                // from an active lesson phase before popping WebView history.
+                webView.evaluateJavascript(
+                    "(function(){ try { return !!(window.__pymastersHandleBack && window.__pymastersHandleBack()); } catch(e) { return false; } })()"
+                ) { result ->
+                    if (result == "true") {
+                        return@evaluateJavascript
+                    }
+                    val currentPath = runCatching { Uri.parse(webView.url.orEmpty()).path.orEmpty() }
+                        .getOrDefault("")
+                        .trimEnd('/')
+                    if (webView.canGoBack() && currentPath != "/dashboard" && currentPath != "/login") {
+                        webView.goBack()
+                    } else if (currentPath.startsWith("/dashboard/") && currentPath != "/dashboard") {
+                        loadTargetUrl(BuildConfig.BASE_URL.trimEnd('/') + "/dashboard")
+                    } else {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                        isEnabled = true
+                    }
                 }
             }
         })

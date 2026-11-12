@@ -41,6 +41,7 @@ import TraceViewer from '../components/TraceViewer';
 import UnderTheHood from '../components/animations/UnderTheHood';
 import TopicUnderTheHood from '../components/animations/TopicUnderTheHood';
 import { useTranslation } from '../i18n';
+import { registerAndroidBackHandler } from '../lib/androidBack';
 
 // Display labels for the F5 "not available in your language yet" notice.
 const LANG_LABELS = {
@@ -2463,6 +2464,19 @@ export default function Classroom() {
         if (routeLessonId) navigate('/dashboard/classroom'); // clear the lesson from the URL (F3)
     };
 
+    // Android System Back support: close open voice/podcast/chat overlays first,
+    // then return from an active lesson phase back to the lesson catalogue.
+    useEffect(() => {
+        if (!voiceOpen && !podcastOpen && !chatOpen && phase === 'select') return undefined;
+        return registerAndroidBackHandler(() => {
+            if (voiceOpen) { setVoiceOpen(false); return true; }
+            if (podcastOpen) { setPodcastOpen(false); return true; }
+            if (chatOpen) { setChatOpen(false); return true; }
+            if (phase !== 'select') { handleBackToSelect(); return true; }
+            return false;
+        });
+    });
+
     // "Explain this visually" — generate an on-demand Explains essay for the open
     // lesson and jump to it. LLM-backed; degrades gracefully if unavailable.
     const [explainBusy, setExplainBusy] = useState(false);
@@ -2491,7 +2505,7 @@ export default function Classroom() {
 
     return (
         <div className="min-h-screen pb-48">
-            <div className="max-w-6xl mx-auto px-6 py-8">
+            <div className="max-w-6xl mx-auto px-1 sm:px-6 py-3 sm:py-8">
                 <VaathiyaarMessage />
                 {/* F3: deep-link to an unknown lesson id → graceful notice, not a crash. */}
                 {lessonNotFound && phase === 'select' && (
@@ -2710,7 +2724,7 @@ export default function Classroom() {
                         stacked TTS + local chat + global panel launchers. */}
                     <TTSControls tts={tts} className="!right-24" />
                     {chatOpen && (
-                        <div className="fixed bottom-24 right-4 sm:right-6 z-50 w-[min(94vw,400px)] max-h-[70vh] flex flex-col pointer-events-auto rounded-2xl border border-border-default bg-bg-surface backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.28)] overflow-hidden">
+                        <div className="fixed bottom-36 lg:bottom-24 right-4 sm:right-6 z-50 w-[min(94vw,400px)] max-h-[65vh] lg:max-h-[70vh] flex flex-col pointer-events-auto rounded-2xl border border-border-default bg-bg-surface backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.28)] overflow-hidden">
                             <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border-default flex-shrink-0">
                                 <div className="flex items-center gap-2 min-w-0">
                                     <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-xs flex-shrink-0">{'\u{1F9D1}‍\u{1F3EB}'}</div>
@@ -2797,7 +2811,7 @@ export default function Classroom() {
                     {/* Floating toggle icon — opens/closes the chat popover above */}
                     <button
                         onClick={() => setChatOpen((o) => !o)}
-                        className="fixed bottom-6 right-4 sm:right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
+                        className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
                         title="Ask Vaathiyaar"
                         aria-label={chatOpen ? 'Close Vaathiyaar chat' : 'Open Vaathiyaar chat'}
                     >
@@ -2813,9 +2827,9 @@ export default function Classroom() {
             {phase === 'select' && !voiceOpen && (
                 <button
                     onClick={() => setVoiceOpen(true)}
-                    // right-24 keeps this clear of the global Vaathiyaar chat
-                    // launcher (fixed bottom-5 right-5) shown on the selector.
-                    className="fixed bottom-6 right-24 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
+                    // right-20/right-24 keeps this clear of the global Vaathiyaar chat
+                    // launcher shown on the selector, and bottom-20 clears mobile nav.
+                    className="fixed bottom-20 right-20 lg:bottom-6 lg:right-24 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
                     title="Talk to Vaathiyaar (voice)"
                 >
                     <Mic size={18} /> <span className="text-sm font-semibold hidden sm:inline">Talk to Vaathiyaar</span>

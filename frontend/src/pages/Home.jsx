@@ -5,18 +5,22 @@ import {
     ArrowRight, Sparkles, Brain, Layers, Code2, Zap,
     BookOpen, MessageSquare, Cpu, GraduationCap,
     Play, Terminal, Building2, ShieldCheck, Mail,
-    LifeBuoy, CalendarClock, BadgeCheck
+    LifeBuoy, CalendarClock, BadgeCheck, Smartphone, Download
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api';
 import SupportModal from '../components/SupportModal';
 import HowALessonWorks from '../components/landing/HowALessonWorks';
+import { isAndroidWebView } from '../lib/playBilling';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
 // Official OpenEDG partnership badge (edube.org partner resources), used unaltered per the Python Institute
 // brand guideline: never recoloured or stretched, always on a light panel with clear space around it.
 import OpenEdgEducationBadge from '../assets/openedg-education-partner.png';
 
 const PI_CERT_PATH = 'https://pythoninstitute.org/certification-tracks';
+const PLAY_STORE_TESTING_URL = 'https://play.google.com/apps/testing/net.pymasters.app';
+const PLAY_STORE_LISTING_URL = 'https://play.google.com/store/apps/details?id=net.pymasters.app';
+const ANDROID_APK_DOWNLOAD_URL = 'https://pymasters-mobile-977064896391.us-central1.run.app/download/PyMasters.apk';
 import PymastersHero from '../assets/pymasters-hero.svg';
 
 /* ─── Tracks ─────────────────────────────────────────────────────────────── */
@@ -295,6 +299,7 @@ function TrackCard({ track, delay, reduced }) {
 export default function Home() {
     const { user } = useAuth();
     const reduced = useReducedMotion();
+    const inAndroidApp = isAndroidWebView();
     const ctaTarget = user ? '/dashboard/classroom' : '/login?mode=signup';
     const navRef = useRef(null);
     const [scrolled, setScrolled] = useState(false);
@@ -338,6 +343,12 @@ export default function Home() {
                         <a href="#curriculum" className="hidden lg:inline whitespace-nowrap text-sm text-slate-300 hover:text-white transition-colors">Curriculum</a>
                         <a href="#how-it-works" className="hidden lg:inline whitespace-nowrap text-sm text-slate-300 hover:text-white transition-colors">How it works</a>
                         <a href="#organizations" className="hidden lg:inline whitespace-nowrap text-sm text-slate-300 hover:text-white transition-colors">For organisations</a>
+                        {!inAndroidApp && (
+                            <a href="#android-app" className="hidden xl:inline-flex items-center gap-1.5 whitespace-nowrap text-sm text-emerald-300 hover:text-emerald-200 transition-colors">
+                                <Smartphone size={14} aria-hidden="true" />
+                                Android App
+                            </a>
+                        )}
                         <button onClick={() => openSupport('issue')} className="hidden lg:inline whitespace-nowrap text-sm text-slate-300 hover:text-white transition-colors">Support</button>
                         <Link to="/pricing" className="whitespace-nowrap text-sm text-slate-300 hover:text-white transition-colors">Pricing</Link>
                         {user ? (
@@ -401,6 +412,27 @@ export default function Home() {
                             Explore Curriculum
                         </button>
                     </div>
+
+                    {!inAndroidApp && (
+                        <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 text-xs sm:text-sm">
+                            <a
+                                href={PLAY_STORE_TESTING_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-4 py-2 font-semibold text-emerald-200 hover:bg-emerald-500/20 hover:border-emerald-300/60 transition-colors"
+                            >
+                                <Smartphone size={15} className="text-emerald-300" aria-hidden="true" />
+                                Get Android App on Google Play
+                            </a>
+                            <a
+                                href={ANDROID_APK_DOWNLOAD_URL}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-2 font-medium text-slate-200 hover:bg-white/[0.08] hover:border-white/30 transition-colors"
+                            >
+                                <Download size={14} className="text-cyan-300" aria-hidden="true" />
+                                Download APK
+                            </a>
+                        </div>
+                    )}
 
                     <nav aria-label="Who PyMasters is for" className="mt-8 flex flex-wrap justify-center gap-2 text-sm">
                         {[
@@ -717,6 +749,48 @@ export default function Home() {
                 </div>
             </section>
 
+            {/* ── ANDROID MOBILE APP ── */}
+            {!inAndroidApp && (
+                <section id="android-app" aria-labelledby="android-app-title" className="relative px-4 sm:px-6 pb-12">
+                    <div className="max-w-5xl mx-auto rounded-2xl border border-emerald-400/20 bg-white/[0.03] p-5 sm:p-7 flex flex-col lg:flex-row items-center justify-between gap-6">
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+                            <div className="shrink-0 w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center">
+                                <Smartphone size={24} className="text-emerald-300" aria-hidden="true" />
+                            </div>
+                            <div>
+                                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-200 mb-2">
+                                    Synced across Web &amp; Mobile
+                                </div>
+                                <h2 id="android-app-title" className="text-white text-xl sm:text-2xl font-bold font-display">
+                                    Learn Python anywhere with the PyMasters Android App
+                                </h2>
+                                <p className="text-slate-300/90 text-sm leading-relaxed mt-1.5 max-w-xl">
+                                    Your lessons, XP, streaks, playground code, and Vaathiyaar AI progress stay automatically synced in real time between <span className="text-white font-medium">pymasters.net</span> and your Android phone.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto shrink-0">
+                            <a
+                                href={PLAY_STORE_TESTING_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 transition-colors"
+                            >
+                                <Smartphone size={17} aria-hidden="true" />
+                                Google Play Access
+                            </a>
+                            <a
+                                href={ANDROID_APK_DOWNLOAD_URL}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.05] hover:bg-white/[0.10] px-5 py-3 text-sm font-semibold text-white transition-colors"
+                            >
+                                <Download size={16} aria-hidden="true" />
+                                Direct APK
+                            </a>
+                        </div>
+                    </div>
+                </section>
+            )}
+
             {/* ── PARTNERSHIP ── */}
             <section id="partners" aria-labelledby="partners-title" className="relative px-4 sm:px-6 pb-12">
                 <div className="max-w-5xl mx-auto rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 flex flex-col sm:flex-row items-center gap-5 sm:gap-8">
@@ -754,7 +828,10 @@ export default function Home() {
                                 className="h-6 w-auto" loading="lazy" />
                         </span>
                     </div>
-                    <nav className="flex items-center gap-5 text-xs text-slate-400" aria-label="Footer">
+                    <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-slate-400" aria-label="Footer">
+                        {!inAndroidApp && (
+                            <a href={PLAY_STORE_LISTING_URL} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-300 transition-colors">Android App</a>
+                        )}
                         <Link to="/pricing" className="hover:text-cyan-400 transition-colors">Pricing</Link>
                         <Link to="/terms" className="hover:text-cyan-400 transition-colors">Terms</Link>
                         <Link to="/privacy" className="hover:text-cyan-400 transition-colors">Privacy</Link>

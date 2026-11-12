@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import api, { getAuthHeaders } from '../api';
 import ChatBar from './ChatBar';
 import { parseSSELine, extractMessageFromJSON } from '../utils/streaming';
+import { registerAndroidBackHandler } from '../lib/androidBack';
 
 // Friendly page descriptions keyed by route — sent to Vaathiyaar as context so
 // answers can reference what the learner is currently looking at.
@@ -111,12 +112,19 @@ export default function VaathiyaarPanel() {
         if (open) endRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, loading, open]);
 
-    // Esc closes the panel.
+    // Esc or Android System Back closes the panel.
     useEffect(() => {
-        if (!open) return;
+        if (!open) return undefined;
         const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
         window.addEventListener('keydown', onKey);
-        return () => window.removeEventListener('keydown', onKey);
+        const unregisterBack = registerAndroidBackHandler(() => {
+            setOpen(false);
+            return true;
+        });
+        return () => {
+            window.removeEventListener('keydown', onKey);
+            unregisterBack();
+        };
     }, [open]);
 
     // Other surfaces (Playground "Send to Vaathiyaar" / "Ask AI for help")
@@ -220,7 +228,7 @@ export default function VaathiyaarPanel() {
                     onClick={() => setOpen(true)}
                     aria-label="Open Vaathiyaar chat"
                     title="Chat with Vaathiyaar"
-                    className="fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-gradient-primary shadow-glow flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95"
+                    className="fixed bottom-20 right-4 lg:bottom-5 lg:right-5 z-40 w-12 h-12 rounded-full bg-gradient-primary shadow-glow flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95"
                 >
                     <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[55%] h-[55%]" />
                 </button>

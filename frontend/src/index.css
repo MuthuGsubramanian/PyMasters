@@ -108,9 +108,23 @@
     font-family: var(--font-mono);
   }
 
-  /* Smooth scroll */
+  /* Smooth scroll & mobile viewport width clamp */
   html {
     scroll-behavior: smooth;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  body {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  /* Avoid fixed-background repaint stalls inside Android WebView & mobile browsers */
+  @media (max-width: 1023px) {
+    body {
+      background-attachment: scroll;
+    }
   }
 
   /* Global visible focus ring for keyboard users (WCAG AA) */

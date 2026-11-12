@@ -118,7 +118,7 @@ export default function LearnAnything({ userId, onLessonReady, onOpenLesson, ini
     const label = STAGE_LABELS[status?.status] || 'Working…';
 
     return (
-        <div className="rounded-2xl border border-purple-200 dark:border-border-default bg-gradient-to-br from-purple-50 via-white to-cyan-50 dark:bg-none dark:bg-bg-surface p-5 shadow-sm">
+        <div className="rounded-2xl border border-purple-200 dark:border-border-default bg-gradient-to-br from-purple-50 via-white to-cyan-50 dark:bg-none dark:bg-bg-surface p-4 sm:p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-1">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-white shadow-md">
                     <Wand2 size={16} />
@@ -147,17 +147,17 @@ export default function LearnAnything({ userId, onLessonReady, onOpenLesson, ini
                     </motion.div>
                 ) : (
                     <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="mt-3">
-                        <form onSubmit={start} className="flex items-center gap-2">
-                            <div className="flex-1 flex items-center gap-2 rounded-xl border border-purple-200 dark:border-border-default bg-white dark:bg-bg-elevated px-3 py-2.5 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-200 dark:focus-within:ring-accent-primary/30 transition-all">
+                        <form onSubmit={start} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                            <div className="flex-1 min-w-0 flex items-center gap-2 rounded-xl border border-purple-200 dark:border-border-default bg-white dark:bg-bg-elevated px-3 py-2.5 focus-within:border-purple-400 focus-within:ring-1 focus-within:ring-purple-200 dark:focus-within:ring-accent-primary/30 transition-all">
                                 <Sparkles size={16} className="text-purple-400 flex-shrink-0" />
                                 <input
                                     value={topic}
                                     onChange={(e) => setTopic(e.target.value)}
                                     placeholder="e.g. How do Python generators work?"
-                                    className="flex-1 bg-transparent text-sm text-slate-800 dark:text-text-primary placeholder-slate-400 dark:placeholder:text-text-muted outline-none"
+                                    className="flex-1 min-w-0 w-full bg-transparent text-sm text-slate-800 dark:text-text-primary placeholder-slate-400 dark:placeholder:text-text-muted outline-none"
                                 />
                             </div>
-                            <button type="submit" disabled={!topic.trim()} className="btn-neo btn-neo-primary text-sm py-2.5 px-5 disabled:opacity-40 disabled:cursor-not-allowed">
+                            <button type="submit" disabled={!topic.trim()} className="btn-neo btn-neo-primary text-sm py-2.5 px-5 disabled:opacity-40 disabled:cursor-not-allowed shrink-0">
                                 Generate
                             </button>
                         </form>
