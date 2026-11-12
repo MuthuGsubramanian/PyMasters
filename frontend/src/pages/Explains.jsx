@@ -36,6 +36,7 @@ import NEURAL_NETWORK from '../components/explains/essays/neuralNetworkEssay';
 import BOOTSTRAP from '../components/explains/essays/bootstrapEssay';
 import AB_TESTING from '../components/explains/essays/abTestEssay';
 import QUANTIZATION from '../components/explains/essays/quantizationEssay';
+import PAGERANK from '../components/explains/essays/pageRankEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -369,6 +370,7 @@ export const ESSAYS = [
     BOOTSTRAP,
     AB_TESTING,
     QUANTIZATION,
+    PAGERANK,
 ];
 
 const ESSAY_CATEGORY_MAP = {
@@ -404,6 +406,7 @@ const ESSAY_CATEGORY_MAP = {
     'embeddings': 'Deep Learning & LLMs',
     'attention': 'Deep Learning & LLMs',
     'quantization': 'Deep Learning & LLMs',
+    'pagerank': 'Foundations & Evaluation',
 };
 
 const EXPLAIN_CATEGORIES = [
@@ -445,7 +448,7 @@ function ExplainsIndex() {
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold font-display text-text-primary">Explains</h1>
-                        <p className="text-xs text-text-muted">32 visual, scroll-driven essays — one concept at a time</p>
+                        <p className="text-xs text-text-muted">33 visual, scroll-driven essays — one concept at a time</p>
                     </div>
                 </div>
                 <div className="relative sm:w-72">
