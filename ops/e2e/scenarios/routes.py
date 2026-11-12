@@ -20,6 +20,7 @@ ROUTES = [
     Route("terms", "/terms", "/terms", "public", ()),
     Route("privacy", "/privacy", "/privacy", "public", ()),
     Route("security", "/security", "/security", "public", ()),
+    Route("delete_account", "/delete-account", "/delete-account", "public", (401,)),
     Route("not_found", "*", "/this-page-does-not-exist", "public", ()),
     Route("onboarding", "/onboarding", "/onboarding", "fresh", ()),
     Route("overview", "index", "/dashboard", "learner", ()),
