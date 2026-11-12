@@ -19,12 +19,6 @@ object UrlRouter {
         "accounts.google.com"
     )
 
-    private val GESTURE_PROTECTED_PREFIXES = listOf(
-        "/dashboard/play",
-        "/dashboard/playground",
-        "/play"
-    )
-
     /**
      * Resolves an incoming deep link (https://pymasters.net/... or pymasters://...) into a safe HTTPS URL.
      */
@@ -110,21 +104,6 @@ object UrlRouter {
             val scheme = uri.scheme?.lowercase().orEmpty()
             val host = uri.host?.lowercase().orEmpty()
             scheme == "https" && uri.userInfo == null && host in TRUSTED_BRIDGE_HOSTS
-        } catch (_: Exception) {
-            false
-        }
-    }
-
-    /**
-     * Returns true for routes with touch-canvas games or code editors where vertical swipe
-     * must not trigger SwipeRefreshLayout.
-     */
-    fun isSwipeGestureProtected(url: String?): Boolean {
-        val raw = url?.trim().orEmpty()
-        if (raw.isEmpty()) return false
-        return try {
-            val path = URI(raw).rawPath?.lowercase().orEmpty()
-            GESTURE_PROTECTED_PREFIXES.any { path.startsWith(it) }
         } catch (_: Exception) {
             false
         }

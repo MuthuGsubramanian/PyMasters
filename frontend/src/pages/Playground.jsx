@@ -458,8 +458,8 @@ export default function Playground() {
     const remainingPct = total > 0 ? Math.min((remaining / total) * 100, 100) : 0;
 
     return (
-        // Height = viewport minus Layout's shell (header + mobile bottom nav) — avoids page-level double scroll.
-        <div className="h-[calc(100dvh-8.5rem)] lg:h-[calc(100dvh-6.5rem)] flex flex-col overflow-hidden">
+        // On desktop, fit viewport for split panes; on mobile, allow natural document flow inside WebView.
+        <div className="min-h-[calc(100dvh-8.5rem)] lg:h-[calc(100dvh-6.5rem)] flex flex-col lg:overflow-hidden">
             <VaathiyaarMessage />
 
             {/* ── Toolbar: title, credits meter, voice — one compact row ──── */}
@@ -616,7 +616,7 @@ export default function Playground() {
                     {/* Two-column body: code editor on the LEFT, output on the RIGHT.
                         Side-by-side on desktop (≥lg); stacks vertically on smaller
                         screens so the editor never collapses to a sliver. */}
-                    <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
+                    <div className="flex-1 lg:min-h-0 flex flex-col lg:flex-row lg:overflow-hidden">
                         {/* Left column — editor + toolbar + package installer */}
                         <div className="flex flex-col flex-none lg:min-h-0 lg:flex-1 lg:w-3/5 lg:border-r border-border-strong">
                             <div className="h-[50vh] lg:h-auto lg:flex-1 min-h-[180px] overflow-hidden">

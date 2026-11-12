@@ -61,11 +61,12 @@ export default function Layout() {
     }, [audience.mode]);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const mainRef = useRef(null);
-    // Reset inner <main> scroll position on route navigation so new screens start at top.
+    // Reset both desktop inner <main> and mobile document scroll position on route navigation.
     useEffect(() => {
         if (mainRef.current) {
             mainRef.current.scrollTo({ top: 0, behavior: 'instant' });
         }
+        window.scrollTo({ top: 0, behavior: 'instant' });
     }, [location.pathname]);
     // Close mobile sidebar drawer on Android System Back before navigating history.
     useEffect(() => {
@@ -243,7 +244,7 @@ export default function Layout() {
         !mobileQuickTabs.some((tab) => tab.active) && location.pathname.startsWith('/dashboard');
 
     return (
-        <div className="flex h-[100dvh] w-full max-w-full overflow-hidden bg-bg-base text-text-secondary font-sans">
+        <div className="flex min-h-[100dvh] lg:h-[100dvh] w-full max-w-full overflow-x-clip lg:overflow-hidden bg-bg-base text-text-secondary font-sans">
             {/* Mobile header bar */}
             <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-bg-surface/95 backdrop-blur-xl border-b border-border-default flex items-center justify-between px-3 gap-2">
                 <button
@@ -471,10 +472,10 @@ export default function Layout() {
                 </div>
             </aside>
 
-            {/* Main Content Area */}
+            {/* Main Content Area — mobile uses native document scroll so Android WebView.scrollY stays accurate; desktop uses locked flex scroll */}
             <main
                 ref={mainRef}
-                className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch] relative bg-gradient-to-b from-bg-elevated via-bg-base to-bg-base pt-14 pb-20 lg:pt-0 lg:pb-0"
+                className="flex-1 min-w-0 lg:overflow-y-auto overflow-x-clip overscroll-y-none lg:overscroll-y-contain [-webkit-overflow-scrolling:touch] relative bg-gradient-to-b from-bg-elevated via-bg-base to-bg-base pt-14 pb-20 lg:pt-0 lg:pb-0"
             >
                 <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
                     style={{

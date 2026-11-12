@@ -44,7 +44,7 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew test lintRelease assembleRelease bundleRelease --no-daemon
+        run: ./gradlew test compileDebugAndroidTestKotlin lintRelease assembleRelease bundleRelease --no-daemon
 
       - name: Upload Ready-to-Install APK Artifact
         uses: actions/upload-artifact@v4

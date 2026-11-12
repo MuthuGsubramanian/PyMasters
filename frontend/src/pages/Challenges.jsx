@@ -219,9 +219,12 @@ export default function Challenges() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const scrollMainToTop = () => {
-    const target = document.querySelector('main') || window;
-    if (typeof target.scrollTo === 'function') {
-      target.scrollTo({ top: 0, behavior: 'smooth' });
+    const main = document.querySelector('main');
+    if (main && typeof main.scrollTo === 'function') {
+      main.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    if (typeof window.scrollTo === 'function') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
   const [challenge, setChallenge] = useState(null);

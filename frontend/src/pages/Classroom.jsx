@@ -2569,7 +2569,8 @@ export default function Classroom() {
         if (!nextLesson) { handleContinue(); return; }
         handleSelectLesson(nextLesson).finally(() => {
             const m = document.querySelector('main');
-            if (m) m.scrollTop = 0; // land at the top of the new lesson, not mid-scroll
+            if (m) m.scrollTop = 0; // land at the top of the new lesson on desktop
+            window.scrollTo({ top: 0, behavior: 'instant' }); // land at top on mobile root scroll
         });
     };
 

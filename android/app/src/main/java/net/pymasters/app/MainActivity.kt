@@ -187,8 +187,10 @@ class MainActivity : ComponentActivity() {
 
         webView.setBackgroundColor(Color.parseColor("#020617"))
         webView.isVerticalScrollBarEnabled = true
+        webView.isScrollbarFadingEnabled = true
         webView.isHorizontalScrollBarEnabled = false
-        webView.overScrollMode = View.OVER_SCROLL_IF_CONTENT_SCROLLS
+        webView.overScrollMode = View.OVER_SCROLL_NEVER
+        webView.isNestedScrollingEnabled = false
 
         val nativeBridge = PyMastersBridge(
             context = this,
@@ -239,6 +241,7 @@ class MainActivity : ComponentActivity() {
                 super.onPageCommitVisible(view, url)
                 currentMainFrameUrl = url ?: view.url
                 splashReady = true
+                injectScrollHardeningCss(view)
                 if (!mainFrameFailed) {
                     offlineOverlay.visibility = View.GONE
                 }
@@ -249,6 +252,7 @@ class MainActivity : ComponentActivity() {
                 currentMainFrameUrl = url ?: view.url
                 splashReady = true
                 topProgress.visibility = View.GONE
+                injectScrollHardeningCss(view)
                 CookieManager.getInstance().flush()
                 if (!mainFrameFailed) {
                     offlineOverlay.visibility = View.GONE
@@ -410,6 +414,13 @@ class MainActivity : ComponentActivity() {
                 }
             }
         })
+    }
+
+    private fun injectScrollHardeningCss(view: WebView) {
+        view.evaluateJavascript(
+            "(function(){try{var id='pym-webview-scroll-guard';if(document.getElementById(id))return;var s=document.createElement('style');s.id=id;s.textContent='html,body{overscroll-behavior-y:none !important;overscroll-behavior-x:none !important;}';(document.head||document.documentElement).appendChild(s);}catch(e){}})();",
+            null
+        )
     }
 
     private fun isOnline(): Boolean {

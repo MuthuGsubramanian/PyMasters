@@ -108,16 +108,18 @@
     font-family: var(--font-mono);
   }
 
-  /* Smooth scroll & mobile viewport width clamp */
+  /* Smooth scroll, mobile viewport width clamp & disable pull-to-refresh bounce */
   html {
     scroll-behavior: smooth;
     max-width: 100%;
     overflow-x: clip;
+    overscroll-behavior-y: none;
   }
 
   body {
     max-width: 100%;
     overflow-x: clip;
+    overscroll-behavior-y: none;
   }
 
   /* Avoid fixed-background repaint stalls inside Android WebView & mobile browsers */

@@ -81,15 +81,6 @@ class UrlRouterTest {
     }
 
     @Test
-    fun protectsTouchGesturesOnPlayAndPlaygroundRoutes() {
-        assertTrue(UrlRouter.isSwipeGestureProtected("https://pymasters.net/dashboard/play"))
-        assertTrue(UrlRouter.isSwipeGestureProtected("https://pymasters.net/dashboard/play/linked_snake"))
-        assertTrue(UrlRouter.isSwipeGestureProtected("https://pymasters.net/dashboard/playground"))
-        assertFalse(UrlRouter.isSwipeGestureProtected("https://pymasters.net/dashboard/classroom"))
-        assertFalse(UrlRouter.isSwipeGestureProtected("https://pymasters.net/dashboard"))
-    }
-
-    @Test
     fun parsesAndNormalizesPlayBillingSkusSafely() {
         assertEquals(
             listOf("pymasters_beginner_monthly", "pymasters_pro_monthly"),

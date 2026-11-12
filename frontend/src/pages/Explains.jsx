@@ -665,9 +665,12 @@ export default function Explains({ publicMode = false }) {
 
     useEffect(() => {
         document.title = activeEssay ? `${activeEssay.title} — PyMasters` : 'Explains — PyMasters';
-        const scrollContainer = document.querySelector('main') || window;
-        if (typeof scrollContainer.scrollTo === 'function') {
-            scrollContainer.scrollTo({ top: 0, behavior: 'instant' });
+        const main = document.querySelector('main');
+        if (main && typeof main.scrollTo === 'function') {
+            main.scrollTo({ top: 0, behavior: 'instant' });
+        }
+        if (typeof window.scrollTo === 'function') {
+            window.scrollTo({ top: 0, behavior: 'instant' });
         }
     }, [slug, activeEssay]);
 
