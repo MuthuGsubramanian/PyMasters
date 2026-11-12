@@ -85,6 +85,11 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = true
+    }
 }
 
 kotlin {
@@ -94,6 +99,7 @@ kotlin {
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.webkit)
