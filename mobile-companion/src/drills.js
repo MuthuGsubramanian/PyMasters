@@ -1,0 +1,93 @@
+export const DRILLS = [
+  {
+    id: 'slice-step',
+    topic: 'Lists & Slicing',
+    title: 'Negative Step Slice',
+    code: `nums = [10, 20, 30, 40, 50]\nprint(nums[3:0:-1])`,
+    choices: ['[40, 30, 20]', '[40, 30, 20, 10]', '[20, 30, 40]', '[]'],
+    answer: 0,
+    why: 'Start at index 3 (40) and step backward by -1, stopping just before index 0 (so 10 is excluded).',
+  },
+  {
+    id: 'dict-get',
+    topic: 'Dictionaries',
+    title: 'Safe Lookup with .get()',
+    code: `scores = {"abi": 92, "bala": 88}\nprint(scores.get("chitra", 0) + scores["abi"])`,
+    choices: ['KeyError', '92', '180', 'None'],
+    answer: 1,
+    why: 'scores.get("chitra", 0) returns the default 0 instead of raising KeyError, and 0 + 92 == 92.',
+  },
+  {
+    id: 'mutable-default',
+    topic: 'Functions',
+    title: 'Mutable Default Trap',
+    code: `def add_tag(tag, bag=[]):\n    bag.append(tag)\n    return bag\n\nadd_tag("py")\nprint(add_tag("ai"))`,
+    choices: ['["ai"]', '["py", "ai"]', '["py"]', 'TypeError'],
+    answer: 1,
+    why: 'Default list [] is created once at function definition time and shared across calls unless None is used.',
+  },
+  {
+    id: 'set-comp',
+    topic: 'Comprehensions',
+    title: 'Set Deduplication',
+    code: `words = ["py", "ai", "python", "ml"]\nlengths = {len(w) for w in words}\nprint(sorted(lengths))`,
+    choices: ['[2, 2, 6, 2]', '[2, 6]', '{2, 6}', '[6, 2]'],
+    answer: 1,
+    why: '{...} builds a set of unique lengths {2, 6}, and sorted() always returns a list: [2, 6].',
+  },
+  {
+    id: 'big-o-set',
+    topic: 'Big-O Complexity',
+    title: 'Membership Lookup Speed',
+    code: `seen = set(range(100_000))\nfound = 99_999 in seen`,
+    choices: ['O(1) average', 'O(n)', 'O(log n)', 'O(n²)'],
+    answer: 0,
+    why: 'Python sets use a hash table under the hood, making `x in seen` an O(1) average-time lookup.',
+  },
+  {
+    id: 'unpacking',
+    topic: 'Unpacking',
+    title: 'Starred Unpacking',
+    code: `first, *middle, last = [1, 2, 3, 4, 5]\nprint(sum(middle))`,
+    choices: ['9', '6', '15', '5'],
+    answer: 0,
+    why: 'first=1, last=5, and *middle captures [2, 3, 4], whose sum is 9.',
+  },
+  {
+    id: 'short-circuit',
+    topic: 'Booleans',
+    title: 'Truthy `or` Return Value',
+    code: `name = "" or "Learner"\nprint(name)`,
+    choices: ['True', '""', 'Learner', 'False'],
+    answer: 2,
+    why: 'In Python, `a or b` returns `a` if `a` is truthy, otherwise it returns `b` ("Learner").',
+  },
+  {
+    id: 'enumerate-start',
+    topic: 'Loops',
+    title: 'Enumerate Start Index',
+    code: `items = ["a", "b"]\npairs = list(enumerate(items, start=1))\nprint(pairs[1])`,
+    choices: ['(1, "b")', '(2, "b")', '(1, "a")', '["b", 2]'],
+    answer: 1,
+    why: 'With start=1, index 0 is (1, "a") and index 1 is (2, "b").',
+  },
+];
+
+export const CODE_TEMPLATES = [
+  {
+    label: 'List Comp',
+    code: `nums = [1, 2, 3, 4, 5, 6]\nsquares = [n * n for n in nums if n % 2 == 0]\nprint("Even squares:", squares)`,
+  },
+  {
+    label: 'Word Count',
+    code: `from collections import Counter\n\ntext = "python ai python code ai python"\ncounts = Counter(text.split())\nfor word, total in counts.most_common():\n    print(f"{word}: {total}")`,
+  },
+  {
+    label: 'Fibonacci',
+    code: `def fib(n):\n    a, b = 0, 1\n    out = []\n    for _ in range(n):\n        out.append(a)\n        a, b = b, a + b\n    return out\n\nprint(fib(10))`,
+  },
+  {
+    label: 'Decorator',
+    code: `def trace(fn):\n    def wrapper(*args):\n        res = fn(*args)\n        print(f"{fn.__name__}{args} -> {res}")\n        return res\n    return wrapper\n\n@trace\ndef add(x, y):\n    return x + y\n\nadd(7, 5)`,
+  },
+];

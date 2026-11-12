@@ -90,7 +90,13 @@ if (typeof window !== 'undefined') {
 /** Vibrate only after the learner has interacted (browsers block and log it otherwise). */
 export function haptic(ms = 30) {
   if (!gestured) return;
-  try { navigator.vibrate?.(ms); } catch { /* unsupported */ }
+  try {
+    if (typeof window !== 'undefined' && window.PyMastersAndroid?.haptic) {
+      window.PyMastersAndroid.haptic(ms);
+      return;
+    }
+    navigator.vibrate?.(ms);
+  } catch { /* unsupported */ }
 }
 
 let ctx = null;

@@ -13,3 +13,23 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 )
+
+if (typeof window !== 'undefined') {
+  window.pymastersShare = async ({ title = 'PyMasters', text = '', url = window.location.href } = {}) => {
+    if (window.PyMastersAndroid && typeof window.PyMastersAndroid.share === 'function') {
+      window.PyMastersAndroid.share(title, text, url)
+      return true
+    }
+    if (navigator.share) {
+      await navigator.share({ title, text, url })
+      return true
+    }
+    return false
+  }
+
+  if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {})
+    })
+  }
+}
