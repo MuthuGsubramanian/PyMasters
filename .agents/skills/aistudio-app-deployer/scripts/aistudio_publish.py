@@ -46,6 +46,7 @@ async def publish_in_aistudio(app_id: str, project_id: str, slug: str, descripti
                 c,
                 """Array.from(document.querySelectorAll("mat-dialog-container button")).find(b => (b.innerText || "").includes("Republish"))?.click()""",
             )
+            await asyncio.sleep(6.0)
         else:
             # Click 'Get started' if shown
             await eval_js(
@@ -157,7 +158,9 @@ async def publish_in_aistudio(app_id: str, project_id: str, slug: str, descripti
         while time.time() - start < 240:
             await asyncio.sleep(4.0)
             p_txt = await eval_js(ws, c, """document.querySelector("ms-settings-publish-panel")?.innerText || "" """)
-            if ("Status\nReady" in p_txt or "is published!" in p_txt) and "Publishing your app" not in p_txt:
+            if ("Status\nReady" in p_txt or "is published!" in p_txt) and not any(
+                busy in p_txt for busy in ("Publishing your app", "Republishing", "Deploying", "Status\nPublishing")
+            ):
                 print(f"Published in {int(time.time() - start)}s!")
                 break
 
