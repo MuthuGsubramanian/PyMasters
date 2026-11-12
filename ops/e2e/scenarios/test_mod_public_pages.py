@@ -124,7 +124,7 @@ def test_learner_side_apis():
     assert s.get(f"{BASE}/api/misconceptions", timeout=30).status_code == 200
     assert s.get(f"{BASE}/api/trending/personalized/{u['id']}", timeout=30).status_code == 200
     creds = s.get(f"{BASE}/api/credentials/mine", timeout=30)
-    assert creds.status_code == 200 and "earned" in creds.json(), creds.text[:200]
+    assert creds.status_code == 200 and "issued" in creds.json(), creds.text[:200]
     rev = s.post(f"{BASE}/api/classroom/code-review", json={"code": "def add(a, b):\n    return a + b\n"}, timeout=30)
     assert rev.status_code == 200 and "strengths" in rev.json(), rev.text[:200]
     tb = s.post(f"{BASE}/api/classroom/teach-back", json={

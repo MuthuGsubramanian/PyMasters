@@ -58,7 +58,7 @@ def _sidebar_and_dashboard(page):
 
 
 def test_employee_sees_their_company_not_a_game(logged_in_page):
-    """Redesign PR 2: an enterprise member's app carries the company's name and welcome; no CADET, no quote."""
+    """Enterprise members see their company name and welcome; no game rank, no quote."""
     admin = create_user(kind="organization", org_type="enterprise")
     db("grandfather-org", admin["org_id"])
     r = api(admin["ip"], admin["token"]).put(f"{BASE}/api/org/{admin['org_id']}/branding", timeout=30,
@@ -70,7 +70,7 @@ def test_employee_sees_their_company_not_a_game(logged_in_page):
     org_name = member["org"].get("org_name") or member["org"].get("name")
     assert org_name and org_name in aside, (org_name, aside[:200])
     page.get_by_test_id("org-welcome").get_by_text(WELCOME).wait_for(timeout=15000)
-    assert "CADET" not in aside, "game rank shown to an employee"
+    assert "Novice" not in aside and "CADET" not in aside, "game rank shown to an employee"
     assert page.get_by_test_id("org-identity").inner_text().endswith(org_name)
     assert page.evaluate("document.documentElement.dataset.audience") == "professional"
 
@@ -82,7 +82,7 @@ def test_student_sees_their_school_and_levels(logged_in_page):
     page = logged_in_page(member)
     aside, _ = _sidebar_and_dashboard(page)
     org_name = member["org"].get("org_name") or member["org"].get("name")
-    assert org_name in aside and "level 1" in aside.lower() and "CADET" not in aside, aside[:300]   # chip is CSS-uppercased
+    assert org_name in aside and "level 1" in aside.lower() and "Novice" not in aside and "CADET" not in aside, aside[:300]
     assert page.evaluate("document.documentElement.dataset.audience") == "education"
 
 
@@ -90,6 +90,6 @@ def test_individual_keeps_their_rank_and_sees_their_name(logged_in_page):
     u = create_user(name="Priya Raman")
     page = logged_in_page(u)
     aside, _ = _sidebar_and_dashboard(page)
-    assert "Priya Raman" in aside and "CADET" in aside and "PYMASTERS" in aside, aside[:300]
+    assert "Priya Raman" in aside and "Novice" in aside and "PYMASTERS" in aside, aside[:300]
     assert u["username"] not in aside.split("Priya Raman")[0], "sidebar shows the raw username instead of the name"
     assert page.evaluate("document.documentElement.dataset.audience") == "individual"
