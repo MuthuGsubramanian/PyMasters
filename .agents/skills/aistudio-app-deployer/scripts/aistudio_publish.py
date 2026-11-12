@@ -35,7 +35,9 @@ async def publish_in_aistudio(app_id: str, project_id: str, slug: str, descripti
         for _ in range(25):
             await asyncio.sleep(1.0)
             txt = await eval_js(ws, c, """document.querySelector("mat-dialog-container")?.innerText || "" """)
-            if txt and "Loading publication state" not in txt:
+            if txt and "Loading publication state" not in txt and any(
+                ready in txt for ready in ("Republish", "is published!", "Get started", "Confirm project", "Publish your app")
+            ):
                 break
 
         # If already published, click Republish directly
