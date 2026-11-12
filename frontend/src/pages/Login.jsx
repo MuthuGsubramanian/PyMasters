@@ -584,7 +584,7 @@ export default function Login() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
-                    className="mt-8 text-center"
+                    className="mt-8 text-center space-y-2"
                 >
                     <button
                         onClick={switchMode}
@@ -596,6 +596,16 @@ export default function Login() {
                             <>Already have an account? <span className="text-accent-primary font-semibold">Sign in</span></>
                         )}
                     </button>
+                    <div>
+                        <a
+                            href="https://t.me/boost/PyMasterscommunity"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-sky-700 dark:text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 transition-colors"
+                        >
+                            Need help? Telegram Support &amp; Community ↗
+                        </a>
+                    </div>
                 </motion.div>
             </motion.div>
         </div>

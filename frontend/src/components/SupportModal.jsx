@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { GraduationCap, Bug, Upload, CheckCircle2, Loader2, FileText, X } from 'lucide-react';
+import { GraduationCap, Bug, Upload, CheckCircle2, Loader2, FileText, X, MessageSquare, ExternalLink } from 'lucide-react';
 import { Modal, Button, Input, FormField, Tabs } from './ui';
 import { submitAccessRequest, submitIssueReport } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import useI18n from '../hooks/useI18n';
+
+const TELEGRAM_SUPPORT_URL = 'https://t.me/boost/PyMasterscommunity';
 
 const MAX_FILE_MB = 5;
 const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
@@ -102,6 +104,30 @@ export default function SupportModal({ open, onClose, initialTab = 'access', use
 
     return (
         <Modal open={open} onClose={close} title={t('support.title', 'Support')} className="p-5">
+            <div className="mb-4 rounded-xl border border-sky-500/30 bg-sky-500/10 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                        <MessageSquare size={15} className="text-sky-700 dark:text-sky-300" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-xs font-bold text-text-primary">
+                            {t('support.telegram_title', 'Telegram Support & Discussion Community')}
+                        </p>
+                        <p className="text-xs text-text-secondary leading-relaxed mt-0.5">
+                            {t('support.telegram_desc', 'Get quick support, ask Python & AI questions, and discuss with learners and mentors.')}
+                        </p>
+                    </div>
+                </div>
+                <a
+                    href={TELEGRAM_SUPPORT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-400 hover:bg-sky-300 px-3.5 py-2 text-xs font-bold text-slate-950 transition-colors"
+                >
+                    {t('support.telegram_cta', 'Telegram Support')}
+                    <ExternalLink size={12} aria-hidden="true" />
+                </a>
+            </div>
             {done ? (
                 <div className="text-center py-8 space-y-3">
                     <CheckCircle2 size={40} className="mx-auto text-emerald-500" aria-hidden="true" />

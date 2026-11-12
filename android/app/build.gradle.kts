@@ -29,8 +29,8 @@ android {
         applicationId = "net.pymasters.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.1.3"
+        versionCode = 6
+        versionName = "1.1.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "BASE_URL", "\"https://pymasters.net\"")

@@ -662,7 +662,7 @@ export default function App() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  🚀 Boost Telegram Community ↗
+                  💬 Telegram Support &amp; Community ↗
                 </a>
                 {installPrompt && (
                   <button

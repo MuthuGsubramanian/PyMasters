@@ -356,6 +356,7 @@ export default function Pricing() {
           © {new Date().getFullYear()} PyMasters · 100% Ad-Free Learning ·{' '}
           <button onClick={() => navigate('/terms')} className="hover:text-cyan-400 transition-colors">Terms</button> ·{' '}
           <button onClick={() => navigate('/privacy')} className="hover:text-cyan-400 transition-colors">Privacy</button> ·{' '}
+          <a href="https://t.me/boost/PyMasterscommunity" target="_blank" rel="noopener noreferrer" className="hover:text-sky-300 transition-colors">Telegram Support</a> ·{' '}
           <a href="mailto:legal@pymasters.net" className="hover:text-cyan-400 transition-colors">Contact</a>
         </p>
       </footer>

@@ -21,7 +21,8 @@ import {
     BookOpen,
     Shield,
     Brain,
-    Lightbulb
+    Lightbulb,
+    MessageCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -255,11 +256,22 @@ export default function Layout() {
                 <button
                     type="button"
                     onClick={() => navigate('/dashboard')}
-                    className="font-display font-bold text-sm sm:text-base text-text-primary tracking-tight truncate max-w-[50vw]"
+                    className="font-display font-bold text-sm sm:text-base text-text-primary tracking-tight truncate max-w-[38vw]"
                 >
                     {portalName}
                 </button>
                 <div className="flex items-center gap-1.5 shrink-0">
+                    <a
+                        href="https://t.me/boost/PyMasterscommunity"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Telegram Support & Community"
+                        title="Telegram Support & Discussion Community"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/12 border border-sky-500/30 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20 text-xs font-semibold transition-colors"
+                    >
+                        <MessageCircle size={12} aria-hidden="true" />
+                        <span>Support</span>
+                    </a>
                     <span className="text-xs font-mono text-text-muted inline-flex items-center gap-1 px-2 py-1 rounded-full bg-bg-elevated border border-border-default" title="XP">
                         <Trophy size={12} className="text-amber-500" aria-hidden="true" />
                         {points}
@@ -411,6 +423,19 @@ export default function Layout() {
 
                 {/* Footer */}
                 <div className="px-3 py-2.5 border-t border-border-default space-y-1.5">
+                    <a
+                        href="https://t.me/boost/PyMasterscommunity"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Telegram Support & Discussion Community"
+                        className={clsx(
+                            "w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-500/12 hover:bg-sky-500/20 border border-sky-500/30 transition-colors",
+                            collapsed && "lg:px-0"
+                        )}
+                    >
+                        <MessageCircle size={13} aria-hidden="true" className="shrink-0" />
+                        <span className={clsx("truncate", collapsed && "lg:hidden")}>Telegram Support &amp; Discuss</span>
+                    </a>
                     <div className={clsx("flex items-center gap-2", collapsed && "lg:flex-col")}>
                         <button
                             onClick={logout}
@@ -426,9 +451,9 @@ export default function Layout() {
                             href="https://t.me/boost/PyMasterscommunity"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline transition-colors"
+                            className="text-xs font-semibold text-sky-700 dark:text-sky-300 hover:underline transition-colors"
                         >
-                            Telegram
+                            Support
                         </a>
                         <span className="text-text-muted text-xs" aria-hidden="true">&middot;</span>
                         <Link to="/terms" className="text-xs text-text-muted hover:text-accent-primary transition-colors">Terms</Link>

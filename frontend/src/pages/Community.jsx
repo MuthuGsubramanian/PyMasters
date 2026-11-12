@@ -53,9 +53,9 @@ export default function Community() {
                     href="https://t.me/boost/PyMasterscommunity"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 hover:bg-sky-400 px-4 py-2.5 text-xs font-bold text-slate-950 transition-colors shrink-0"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-400 hover:bg-sky-300 px-4 py-2.5 text-xs font-bold text-slate-950 transition-colors shrink-0"
                 >
-                    Boost Telegram Community ↗
+                    Telegram Support &amp; Discuss ↗
                 </a>
             </div>
 

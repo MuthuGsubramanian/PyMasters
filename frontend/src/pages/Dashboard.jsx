@@ -460,14 +460,25 @@ export function Overview() {
                                 );
                             })}
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => navigate(`/dashboard/classroom?stage=${audience.persona || 'all'}`)}
-                            className="text-xs font-semibold text-accent-primary hover:underline inline-flex items-center gap-1"
-                        >
-                            Browse {audience.personaInfo?.shortLabel || 'Stage'} Curriculum
-                            <ArrowRight size={12} />
-                        </button>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <a
+                                href="https://t.me/boost/PyMasterscommunity"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-sky-500/35 bg-sky-500/12 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20 transition-colors"
+                            >
+                                <MessageCircle size={13} aria-hidden="true" />
+                                Telegram Support &amp; Discuss ↗
+                            </a>
+                            <button
+                                type="button"
+                                onClick={() => navigate(`/dashboard/classroom?stage=${audience.persona || 'all'}`)}
+                                className="text-xs font-semibold text-accent-primary hover:underline inline-flex items-center gap-1"
+                            >
+                                Browse {audience.personaInfo?.shortLabel || 'Stage'} Curriculum
+                                <ArrowRight size={12} />
+                            </button>
+                        </div>
                     </div>
                 </div>
                 </Card>
@@ -776,7 +787,7 @@ export function Overview() {
                     </Card>
                     </motion.div>
 
-                    {/* ─── Telegram Community Boost Card (Web + Android App Main Screen) ─── */}
+                    {/* ─── Telegram Support & Discussion Community Card (Web + Android App Main Screen) ─── */}
                     <motion.div variants={itemVariants}>
                     <Card className="shadow-sm overflow-hidden border border-sky-500/25 bg-gradient-to-br from-sky-500/10 via-bg-surface to-cyan-500/10">
                         <div className="p-4 flex items-center justify-between gap-3">
@@ -786,10 +797,10 @@ export function Overview() {
                                 </div>
                                 <div className="min-w-0">
                                     <h3 className="text-sm font-bold text-text-primary font-display truncate">
-                                        PyMasters Telegram Community
+                                        Telegram Support &amp; Community
                                     </h3>
                                     <p className="text-xs text-text-secondary leading-snug">
-                                        Join &amp; boost our official learner channel
+                                        Support &amp; discuss with learners and mentors
                                     </p>
                                 </div>
                             </div>
@@ -797,10 +808,10 @@ export function Overview() {
                                 href="https://t.me/boost/PyMasterscommunity"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 px-3.5 py-2 text-xs font-bold text-slate-950 transition-colors"
+                                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-sky-400 hover:bg-sky-300 px-3.5 py-2 text-xs font-bold text-slate-950 transition-colors"
                             >
-                                <Zap size={13} aria-hidden="true" />
-                                Boost
+                                <MessageCircle size={13} aria-hidden="true" />
+                                Discuss
                             </a>
                         </div>
                     </Card>

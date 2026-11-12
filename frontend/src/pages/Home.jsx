@@ -21,7 +21,7 @@ const PI_CERT_PATH = 'https://pythoninstitute.org/certification-tracks';
 const PLAY_STORE_TESTING_URL = 'https://play.google.com/apps/testing/net.pymasters.app';
 const PLAY_STORE_LISTING_URL = 'https://play.google.com/store/apps/details?id=net.pymasters.app';
 const ANDROID_APK_DOWNLOAD_URL = 'https://pymasters-mobile-977064896391.us-central1.run.app/download/PyMasters.apk';
-const TELEGRAM_BOOST_URL = 'https://t.me/boost/PyMasterscommunity';
+const TELEGRAM_SUPPORT_URL = 'https://t.me/boost/PyMasterscommunity';
 import PymastersHero from '../assets/pymasters-hero.svg';
 
 /* ─── Tracks ─────────────────────────────────────────────────────────────── */
@@ -436,13 +436,13 @@ export default function Home() {
                             </>
                         )}
                         <a
-                            href={TELEGRAM_BOOST_URL}
+                            href={TELEGRAM_SUPPORT_URL}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-2 rounded-full border border-sky-400/35 bg-sky-500/10 px-4 py-2 font-semibold text-sky-200 hover:bg-sky-500/20 hover:border-sky-300/60 transition-colors"
                         >
                             <MessageSquare size={15} className="text-sky-300" aria-hidden="true" />
-                            Boost PyMasters on Telegram
+                            Telegram Support &amp; Community
                         </a>
                     </div>
 
@@ -730,6 +730,33 @@ export default function Home() {
                         </Link>
                     </div>
                 </div>
+                <div className="max-w-6xl mx-auto mt-5 rounded-3xl border border-sky-400/25 bg-gradient-to-br from-sky-950/30 via-slate-900/40 to-transparent p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-5">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+                        <div className="shrink-0 w-11 h-11 rounded-2xl bg-sky-500/15 border border-sky-400/30 flex items-center justify-center">
+                            <MessageSquare size={22} className="text-sky-300" aria-hidden="true" />
+                        </div>
+                        <div>
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 mb-2 rounded-full text-xs font-semibold uppercase tracking-wider text-sky-200 bg-sky-500/15 border border-sky-400/30">
+                                Community Support
+                            </span>
+                            <h3 className="text-white text-xl sm:text-2xl font-bold font-display">
+                                Need help or want to discuss Python &amp; AI?
+                            </h3>
+                            <p className="text-slate-300/90 text-sm leading-relaxed mt-1 max-w-2xl">
+                                Reach our official Telegram Support &amp; Discussion Community for lesson help, account questions, coding discussions, and mentor guidance.
+                            </p>
+                        </div>
+                    </div>
+                    <a
+                        href={TELEGRAM_SUPPORT_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-sky-400 hover:bg-sky-300 px-6 py-3 text-sm font-bold text-slate-950 transition-colors"
+                    >
+                        <MessageSquare size={16} aria-hidden="true" />
+                        Support &amp; Discuss on Telegram
+                    </a>
+                </div>
             </section>
 
             {/* ── FINAL CTA ── */}
@@ -810,21 +837,21 @@ export default function Home() {
                             </div>
                             <div>
                                 <h2 id={inAndroidApp ? 'android-app-title' : undefined} className="text-white text-lg sm:text-xl font-bold font-display">
-                                    Join &amp; Boost the PyMasters Telegram Community
+                                    PyMasters Support &amp; Discussion Telegram Community
                                 </h2>
                                 <p className="text-slate-300/90 text-sm leading-relaxed mt-1 max-w-xl">
-                                    Connect with fellow Python &amp; AI learners, get daily coding drops, and boost our official Telegram channel.
+                                    Get support, ask Python &amp; AI questions, and discuss lessons with fellow learners and mentors on Telegram.
                                 </p>
                             </div>
                         </div>
                         <a
-                            href={TELEGRAM_BOOST_URL}
+                            href={TELEGRAM_SUPPORT_URL}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-sky-400 hover:bg-sky-300 px-5 py-3 text-sm font-bold text-slate-950 transition-colors"
                         >
-                            <Zap size={16} aria-hidden="true" />
-                            Boost on Telegram
+                            <MessageSquare size={16} aria-hidden="true" />
+                            Telegram Support &amp; Discuss
                         </a>
                     </div>
                 </div>
@@ -871,7 +898,7 @@ export default function Home() {
                         {!inAndroidApp && (
                             <a href={PLAY_STORE_LISTING_URL} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-300 transition-colors">Android App</a>
                         )}
-                        <a href={TELEGRAM_BOOST_URL} target="_blank" rel="noopener noreferrer" className="hover:text-sky-300 transition-colors">Telegram Community</a>
+                        <a href={TELEGRAM_SUPPORT_URL} target="_blank" rel="noopener noreferrer" className="hover:text-sky-300 transition-colors">Telegram Support</a>
                         <Link to="/pricing" className="hover:text-cyan-400 transition-colors">Pricing</Link>
                         <Link to="/terms" className="hover:text-cyan-400 transition-colors">Terms</Link>
                         <Link to="/privacy" className="hover:text-cyan-400 transition-colors">Privacy</Link>
