@@ -65,6 +65,8 @@ Google AI Studio uses **two distinct container architectures** for Preview vs. P
         ```
 10. **Never Click AI Studio's `Force push to <owner>/<repo>` on a Pruned Monorepo**:
     - Under **Settings → GitHub → More options**, AI Studio offers `Force push to <owner>/<repo>`, which **replaces `main` with the pruned AI Studio workspace** (wiping `backend/tests/`, `android/`, `docs/`, CI workflows!). Always push full repo commits from local Git (`git push origin main`) and sync runtime code *into* AI Studio via `.zip` upload.
+11. **Never Define a Root `"postinstall"` Script Calling `bun install` / `npm install`**:
+    - AI Studio runs `bun install` at `/` before starting preview. If root `package.json` defines `"postinstall": "node aistudio-bootstrap.mjs sync"` which spawns nested `bun install`, AI Studio aborts with `Error: Dependency installation failed. Please check your package.json.`. Omit `"postinstall"` and install subdirectory dependencies lazily inside `"dev"` and `"build"` instead.
 
 ---
 
