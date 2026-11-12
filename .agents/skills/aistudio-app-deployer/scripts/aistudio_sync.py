@@ -175,7 +175,6 @@ def ensure_bootstrap_files(repo: pathlib.Path, frontend_dir: str, backend_origin
             "version": "1.0.0",
             "type": "module",
             "scripts": {
-                "postinstall": "node aistudio-bootstrap.mjs sync",
                 "dev": "node aistudio-bootstrap.mjs dev",
                 "build": "node aistudio-bootstrap.mjs build",
                 "start": "node aistudio-bootstrap.mjs start",

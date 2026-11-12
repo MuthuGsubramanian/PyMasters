@@ -193,7 +193,7 @@ function startProductionServer() {
       const ext = path.extname(candidate).toLowerCase();
       res.writeHead(200, {
         'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
-        'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=31536000, immutable',
+        'Cache-Control': ext === '.html' || ext === '.json' ? 'no-cache' : 'public, max-age=31536000, immutable',
       });
       fs.createReadStream(candidate).pipe(res);
       return;
