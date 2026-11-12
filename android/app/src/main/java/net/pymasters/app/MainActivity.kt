@@ -15,6 +15,7 @@ import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.os.Looper
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
@@ -50,6 +51,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var webView: WebView
     private lateinit var topProgress: ProgressBar
     private lateinit var offlineOverlay: LinearLayout
+    private lateinit var playBillingManager: PlayBillingManager
+
+    @Volatile
+    private var currentMainFrameUrl: String? = null
 
     private var splashReady = false
     private var mainFrameFailed = false
@@ -96,11 +101,16 @@ class MainActivity : ComponentActivity() {
         offlineOverlay = findViewById(R.id.offlineOverlay)
         val retryButton: Button = findViewById(R.id.retryButton)
 
+        playBillingManager = PlayBillingManager(this) {
+            if (::webView.isInitialized) webView else null
+        }
+
         applyWindowInsets()
         configureSwipeRefresh()
         configureWebView()
         registerBackHandler()
         registerNetworkMonitor()
+        playBillingManager.start()
 
         retryButton.setOnClickListener {
             if (isOnline()) {
@@ -117,6 +127,7 @@ class MainActivity : ComponentActivity() {
 
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState)
+            currentMainFrameUrl = webView.url
             splashReady = true
         } else {
             val targetUrl = UrlRouter.resolveIncomingUrl(intent?.dataString, BuildConfig.BASE_URL)
@@ -148,10 +159,16 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         webView.onResume()
+        if (::playBillingManager.isInitialized) {
+            playBillingManager.onResume()
+        }
     }
 
     override fun onDestroy() {
         unregisterNetworkMonitor()
+        if (::playBillingManager.isInitialized) {
+            playBillingManager.destroy()
+        }
         webView.destroy()
         super.onDestroy()
     }
@@ -186,7 +203,13 @@ class MainActivity : ComponentActivity() {
         cookieManager.setAcceptThirdPartyCookies(webView, true)
 
         webView.setBackgroundColor(Color.parseColor("#020617"))
-        webView.addJavascriptInterface(PyMastersBridge(this), "PyMastersAndroid")
+        val nativeBridge = PyMastersBridge(
+            context = this,
+            billingManager = playBillingManager,
+            currentUrlProvider = ::activeFrameUrl
+        )
+        webView.addJavascriptInterface(nativeBridge, "PyMastersAndroid")
+        webView.addJavascriptInterface(nativeBridge, "PyMastersBilling")
 
         webView.settings.apply {
             javaScriptEnabled = true
@@ -219,6 +242,7 @@ class MainActivity : ComponentActivity() {
 
             override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                currentMainFrameUrl = url ?: view.url
                 mainFrameFailed = false
                 topProgress.progress = 10
                 topProgress.visibility = View.VISIBLE
@@ -226,6 +250,7 @@ class MainActivity : ComponentActivity() {
 
             override fun onPageCommitVisible(view: WebView, url: String?) {
                 super.onPageCommitVisible(view, url)
+                currentMainFrameUrl = url ?: view.url
                 splashReady = true
                 if (!mainFrameFailed) {
                     offlineOverlay.visibility = View.GONE
@@ -234,6 +259,7 @@ class MainActivity : ComponentActivity() {
 
             override fun onPageFinished(view: WebView, url: String?) {
                 super.onPageFinished(view, url)
+                currentMainFrameUrl = url ?: view.url
                 splashReady = true
                 swipeRefresh.isRefreshing = false
                 topProgress.visibility = View.GONE
@@ -327,11 +353,19 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun loadTargetUrl(url: String) {
+        currentMainFrameUrl = url
         if (!isOnline()) {
             offlineOverlay.visibility = View.VISIBLE
         }
         webView.loadUrl(url)
     }
+
+    private fun activeFrameUrl(): String? =
+        if (Looper.myLooper() == Looper.getMainLooper() && ::webView.isInitialized) {
+            webView.url ?: currentMainFrameUrl
+        } else {
+            currentMainFrameUrl
+        }
 
     private fun openExternalUri(uri: Uri) {
         val scheme = uri.scheme?.lowercase().orEmpty()

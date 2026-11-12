@@ -29,8 +29,8 @@ android {
         applicationId = "net.pymasters.app"
         minSdk = 24
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "BASE_URL", "\"https://pymasters.net\"")
@@ -98,6 +98,7 @@ dependencies {
     implementation(libs.androidx.swiperefreshlayout)
     implementation(libs.androidx.webkit)
     implementation(libs.androidx.browser)
+    implementation(libs.play.billing.ktx)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.core)

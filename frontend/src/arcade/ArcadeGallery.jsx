@@ -39,7 +39,7 @@ function GameCard({ game, index, t }) {
         <div className="min-w-0 flex-1">
           <h3 className="font-semibold text-text-primary leading-tight">{game.title}</h3>
           <p className="text-xs text-text-muted mt-0.5">{game.blurb}</p>
-          {meta && <p className="text-[11px] text-accent-primary/90 font-medium mt-1">{meta}</p>}
+          {meta && <p className="text-xs text-accent-primary/90 font-medium mt-1">{meta}</p>}
         </div>
         <Badge variant={game.unlocked ? 'success' : 'default'}>{game.unlocked ? t('arcade.unlocked', 'Unlocked') : t('arcade.locked', 'Locked')}</Badge>
       </div>

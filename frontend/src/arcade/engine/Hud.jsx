@@ -11,7 +11,7 @@ export function Hud({ item, reveal, children }) {
         <div className="flex items-start justify-between gap-2">
           <pre aria-live="polite" className="font-mono text-sm text-text-primary whitespace-pre-wrap break-words m-0 flex-1">{code}</pre>
           {topic && (
-            <span className="shrink-0 rounded-md bg-accent-primary/10 border border-accent-primary/30 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-primary">
+            <span className="shrink-0 rounded-md bg-accent-primary/10 border border-accent-primary/30 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent-primary">
               {topic}
             </span>
           )}

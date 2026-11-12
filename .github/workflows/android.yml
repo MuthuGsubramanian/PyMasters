@@ -38,13 +38,13 @@ jobs:
             echo "KEYSTORE_PATH=release-keystore.jks" >> "$GITHUB_ENV"
           fi
 
-      - name: Run Kotlin Unit Tests & Build Release APK + AAB
+      - name: Run Kotlin Unit Tests, Android Lint & Build Release APK + AAB
         working-directory: android
         env:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew test assembleRelease bundleRelease --no-daemon
+        run: ./gradlew test lintRelease assembleRelease bundleRelease --no-daemon
 
       - name: Upload Ready-to-Install APK Artifact
         uses: actions/upload-artifact@v4
@@ -59,14 +59,22 @@ jobs:
           path: android/app/build/outputs/bundle/release/*.aab
 
       - name: Publish Signed AAB & Metadata to Google Play Store (when Play Console is linked)
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.PLAY_SERVICE_ACCOUNT_JSON != ''
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        continue-on-error: true
         env:
           PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
         run: |
-          pip install --quiet google-api-python-client google-auth
-          python3 scripts/publish_play_store.py \
-            --aab android/app/build/outputs/bundle/release/app-release.aab \
-            --track production
+          if [ -n "$PLAY_SERVICE_ACCOUNT_JSON" ]; then
+            pip install --quiet google-api-python-client google-auth
+            python3 scripts/publish_play_store.py \
+              --aab android/app/build/outputs/bundle/release/app-release.aab \
+              --track internal
+            python3 scripts/publish_play_store.py \
+              --aab android/app/build/outputs/bundle/release/app-release.aab \
+              --track alpha || echo "Alpha track awaiting initial review unlock; internal track updated."
+          else
+            echo "PLAY_SERVICE_ACCOUNT_JSON secret not set; skipping automatic Play Store publish."
+          fi
 
       - name: Bundle APK into Mobile Companion PWA
         run: |

@@ -24,7 +24,7 @@ function CodeBlock({ code, activeLine, onSelectLine }) {
   const lines = String(code || '').split('\n');
   return (
     <div className="rounded-xl overflow-hidden border border-border-default bg-bg-code shadow-sm">
-      <div className="flex items-center justify-between px-3 py-1.5 bg-bg-inset/60 border-b border-border-default text-[11px] text-text-muted font-mono">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-bg-inset/60 border-b border-border-default text-xs text-text-muted font-mono">
         <span className="flex items-center gap-1.5"><Terminal size={12} className="text-accent-primary" aria-hidden="true" /> python3 snippet.py</span>
         <span>{lines.length} {lines.length === 1 ? 'line' : 'lines'} · click line to trace</span>
       </div>
@@ -147,7 +147,7 @@ export default function Game({ item, onAnswer, disabled, seconds = DEFAULT_SECON
 
       {showScratch && (
         <div className="rounded-xl border border-dashed border-accent-primary/50 bg-bg-inset/50 p-2.5 flex flex-col gap-1">
-          <label htmlFor={`scratch-${item.id}`} className="text-[11px] font-medium text-text-muted flex items-center gap-1">
+          <label htmlFor={`scratch-${item.id}`} className="text-xs font-medium text-text-muted flex items-center gap-1">
             <Eye size={11} aria-hidden="true" /> Scratchpad (jot variable values as you trace — not graded)
           </label>
           <input id={`scratch-${item.id}`} type="text" value={scratch} onChange={(e) => setScratch(e.target.value)}

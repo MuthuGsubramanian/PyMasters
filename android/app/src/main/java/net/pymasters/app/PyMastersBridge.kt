@@ -5,6 +5,8 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -12,15 +14,72 @@ import android.webkit.JavascriptInterface
 import android.widget.Toast
 
 /**
- * Lightweight native bridge exposed to JavaScript as `window.PyMastersAndroid`.
+ * Lightweight native bridge exposed to JavaScript as `window.PyMastersAndroid`
+ * (and `window.PyMastersBilling`).
  */
-class PyMastersBridge(private val context: Context) {
+class PyMastersBridge(
+    private val context: Context,
+    private val billingManager: PlayBillingManager?,
+    private val currentUrlProvider: () -> String?
+) {
+    constructor(context: Context) : this(
+        context = context,
+        billingManager = null,
+        currentUrlProvider = { null }
+    )
+
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     @JavascriptInterface
     fun isAndroidApp(): Boolean = true
 
     @JavascriptInterface
     fun getAppVersion(): String = BuildConfig.VERSION_NAME
+
+    @JavascriptInterface
+    fun isPlayBillingAvailable(): Boolean {
+        val manager = billingManager ?: return false
+        if (!UrlRouter.isTrustedBridgeOrigin(currentUrlProvider())) return false
+        return manager.isAvailable()
+    }
+
+    @JavascriptInterface
+    fun queryProducts(productIdsJson: String?, productType: String?) {
+        val manager = billingManager ?: return
+        mainHandler.post {
+            if (!UrlRouter.isTrustedBridgeOrigin(currentUrlProvider())) return@post
+            manager.queryProducts(productIdsJson, productType)
+        }
+    }
+
+    @JavascriptInterface
+    fun queryPlayProducts(productIdsJson: String?, productType: String?) {
+        queryProducts(productIdsJson, productType)
+    }
+
+    @JavascriptInterface
+    fun launchPlayBilling(productId: String?, productType: String?) {
+        launchPlayBilling(productId, productType, null)
+    }
+
+    @JavascriptInterface
+    fun launchPlayBilling(productId: String?, productType: String?, obfuscatedAccountId: String?) {
+        val manager = billingManager ?: return
+        mainHandler.post {
+            if (!UrlRouter.isTrustedBridgeOrigin(currentUrlProvider())) return@post
+            manager.launchBillingFlow(productId, productType, obfuscatedAccountId)
+        }
+    }
+
+    @JavascriptInterface
+    fun launchPurchase(productId: String?, planType: String?) {
+        launchPlayBilling(productId, planType, null)
+    }
+
+    @JavascriptInterface
+    fun launchPurchase(productId: String?, planType: String?, obfuscatedAccountId: String?) {
+        launchPlayBilling(productId, planType, obfuscatedAccountId)
+    }
 
     @JavascriptInterface
     fun haptic(durationMs: Int) {

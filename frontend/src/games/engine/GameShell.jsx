@@ -20,7 +20,7 @@ export function GameShell({ title, level, topic, streak = 0, index, total, score
             <h1 className="font-display text-xl sm:text-2xl font-bold text-text-primary truncate">{title}</h1>
             <Badge variant="primary">{t('play.level', 'Level')} {level}</Badge>
             {topicLabel && (
-              <span data-topic-badge className="inline-flex items-center gap-1 rounded-full bg-accent-primary/10 border border-accent-primary/30 px-2.5 py-0.5 text-[11px] font-medium text-accent-primary capitalize">
+              <span data-topic-badge className="inline-flex items-center gap-1 rounded-full bg-accent-primary/10 border border-accent-primary/30 px-2.5 py-0.5 text-xs font-medium text-accent-primary capitalize">
                 <Sparkles size={11} aria-hidden="true" /> {topicLabel}
               </span>
             )}

@@ -1,9 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, GraduationCap, Building2, Check, ArrowRight, Clock, Loader2 } from 'lucide-react';
+import { Sparkles, GraduationCap, Building2, Check, ArrowRight, Clock, Loader2, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { getAccessStatus, getPaymentConfig, createPaymentOrder, verifyPayment } from '../api';
+import {
+  getAccessStatus,
+  getPaymentConfig,
+  createPaymentOrder,
+  verifyPayment,
+  verifyGooglePlayPayment,
+} from '../api';
 import { loadRazorpay } from '../lib/razorpay';
+import {
+  isAndroidWebView,
+  isPlayBillingAvailable,
+  onRecoveredPlayPurchase,
+  purchaseWithGooglePlay,
+} from '../lib/playBilling';
 import SupportModal from '../components/SupportModal';
 
 /**
@@ -11,10 +23,13 @@ import SupportModal from '../components/SupportModal';
  * they visit directly). Makes no gated API calls, so the global 402 redirect
  * can never loop through this page.
  *
- * When Razorpay is configured (backend GET /api/payments/config → enabled),
- * the Beginner/Pro cards show real "Pay" buttons that open Razorpay Standard
- * Checkout. Otherwise they fall back to the "email us" flow. Organizations is
- * always a contact link (custom pricing).
+ * Platform-aware billing:
+ * - Inside the Android app (`isAndroidWebView()`), Razorpay is NEVER loaded or
+ *   referenced; Beginner and Pro subscriptions route exclusively through native
+ *   Google Play Billing (`purchaseWithGooglePlay` -> `verifyGooglePlayPayment`).
+ * - On Web, when Razorpay is configured (`GET /api/payments/config -> enabled`),
+ *   Beginner/Pro cards open Razorpay Standard Checkout; otherwise they fall back
+ *   to the email flow. Organizations is always a contact link (custom pricing).
  */
 
 const PLANS = [
@@ -24,7 +39,13 @@ const PLANS = [
     price: '₹299',
     period: 'per month',
     icon: GraduationCap,
-    features: ['Full lesson library & learning paths', 'Vaathiyaar chat tutor', 'Challenges, XP & leaderboard', 'Progress tracking & streaks'],
+    features: [
+      'Full lesson library & learning paths',
+      'Vaathiyaar chat tutor',
+      'Challenges, XP & leaderboard',
+      'Progress tracking & streaks',
+      '100% Ad-Free learning experience',
+    ],
     mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20Beginner%20plan',
   },
   {
@@ -34,7 +55,13 @@ const PLANS = [
     period: 'per month',
     icon: Sparkles,
     highlight: true,
-    features: ['Everything in Beginner', 'Priority Vaathiyaar responses', 'Advanced analytics & Knowledge Map insights', 'Early access to new tracks'],
+    features: [
+      'Everything in Beginner',
+      'Priority Vaathiyaar responses',
+      'Advanced analytics & Knowledge Map insights',
+      'Early access to new tracks',
+      '100% Ad-Free learning experience',
+    ],
     mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20Pro%20plan',
   },
   {
@@ -43,7 +70,12 @@ const PLANS = [
     price: 'Custom',
     period: 'schools · universities · enterprise',
     icon: Building2,
-    features: ['Everything in Pro, every seat', 'Admin console & cohort dashboards', 'Custom learning paths', 'Organization roles, audit log & priority support'],
+    features: [
+      'Everything in Pro, every seat',
+      'Admin console & cohort dashboards',
+      'Custom learning paths',
+      'Organization roles, audit log & priority support',
+    ],
     mailto: 'mailto:muthu@pymasters.net?subject=PyMasters%20for%20Organizations',
   },
 ];
@@ -51,30 +83,97 @@ const PLANS = [
 export default function Upgrade() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
+  const inAndroidApp = isAndroidWebView();
   const [access, setAccess] = useState(null);
   const [payEnabled, setPayEnabled] = useState(false);
+  const [playConfig, setPlayConfig] = useState(null);
   const [busyPlan, setBusyPlan] = useState(null); // plan key currently checking out
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [studentOpen, setStudentOpen] = useState(false);
+  const activePurchaseRef = useRef(false);
 
   useEffect(() => {
     document.title = 'Upgrade — PyMasters';
   }, []);
 
   useEffect(() => {
-    if (!user?.id) return;
     let cancelled = false;
-    getAccessStatus(user.id)
-      .then((r) => !cancelled && setAccess(r.data))
-      .catch(() => {});
+    if (user?.id) {
+      getAccessStatus(user.id)
+        .then((r) => !cancelled && setAccess(r.data))
+        .catch(() => {});
+    }
     getPaymentConfig()
-      .then((r) => !cancelled && setPayEnabled(!!r.data?.enabled))
+      .then((r) => {
+        if (cancelled) return;
+        setPayEnabled(!!r.data?.enabled);
+        if (r.data?.google_play) {
+          setPlayConfig(r.data.google_play);
+        }
+      })
       .catch(() => {});
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
 
-  async function handlePay(planKey) {
+  // Auto-sync any interrupted Google Play purchase recovered on app resume.
+  useEffect(() => {
+    if (!inAndroidApp || !user?.id) return undefined;
+    return onRecoveredPlayPurchase(async (receipt) => {
+      if (activePurchaseRef.current) return;
+      try {
+        const { data } = await verifyGooglePlayPayment(receipt);
+        if (data?.success) {
+          updateUser({ plan: data.plan });
+          setSuccess('Google Play subscription synced — your plan is active. Redirecting…');
+          setTimeout(() => navigate('/dashboard'), 1200);
+        }
+      } catch {
+        // Silent on background recovery probe
+      }
+    });
+  }, [inAndroidApp, user?.id, updateUser, navigate]);
+
+  async function handleGooglePlaySubscribe(planKey) {
+    setError('');
+    setSuccess('');
+    setBusyPlan(planKey);
+    activePurchaseRef.current = true;
+    try {
+      const receipt = await purchaseWithGooglePlay(planKey, {
+        userId: user?.id,
+        products: playConfig?.products,
+      });
+      const { data } = await verifyGooglePlayPayment(receipt);
+      if (data?.success) {
+        updateUser({ plan: data.plan || planKey });
+        setSuccess('Subscription active via Google Play! Redirecting…');
+        setTimeout(() => navigate('/dashboard'), 1200);
+      } else {
+        setError('We could not confirm your Google Play subscription. Please contact support.');
+      }
+    } catch (e) {
+      if (e?.canceled || e?.code === 'USER_CANCELED') {
+        // User dismissed the Google Play sheet — not an error.
+        return;
+      }
+      setError(
+        e?.response?.data?.detail ||
+          e?.message ||
+          'Could not complete Google Play subscription. Please try again.'
+      );
+    } finally {
+      activePurchaseRef.current = false;
+      setBusyPlan(null);
+    }
+  }
+
+  async function handleWebPay(planKey) {
+    if (inAndroidApp) {
+      return handleGooglePlaySubscribe(planKey);
+    }
     setError('');
     setSuccess('');
     setBusyPlan(planKey);
@@ -137,24 +236,31 @@ export default function Upgrade() {
   const expired = access?.status === 'expired';
   const onTrial = access?.status === 'trial';
   const active = access?.status === 'active';
+  const playReady = inAndroidApp && (isPlayBillingAvailable() || Boolean(playConfig?.enabled) || inAndroidApp);
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
       <div className="text-center">
-        <span className="inline-flex items-center gap-2 rounded-full border border-border-default bg-bg-surface px-3 py-1 text-xs font-semibold text-text-secondary">
-          <Clock className="h-3.5 w-3.5 text-accent-primary" aria-hidden="true" />
-          {expired && 'Your 7-day free trial has ended'}
-          {onTrial && `Free trial — ${access.trial_days_left} day${access.trial_days_left === 1 ? '' : 's'} left`}
-          {active && 'Your access is active'}
-          {!access && 'Plans'}
-        </span>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="inline-flex items-center gap-2 rounded-full border border-border-default bg-bg-surface px-3 py-1 text-xs font-semibold text-text-secondary">
+            <Clock className="h-3.5 w-3.5 text-accent-primary" aria-hidden="true" />
+            {expired && 'Your 7-day free trial has ended'}
+            {onTrial && `Free trial — ${access.trial_days_left} day${access.trial_days_left === 1 ? '' : 's'} left`}
+            {active && 'Your access is active'}
+            {!access && 'Plans'}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            100% Ad-Free Learning
+          </span>
+        </div>
         <h1 className="mt-4 font-display text-3xl font-bold text-text-primary">
           {expired ? 'Keep learning with Vaathiyaar' : 'Choose your plan'}
         </h1>
         <p className="mx-auto mt-2 max-w-xl text-sm text-text-secondary">
           {expired
-            ? 'Your progress, XP and Knowledge Map are safe. Pick a plan and continue exactly where you left off.'
-            : 'Upgrade anytime — your progress always carries over.'}
+            ? 'Your progress, XP and Knowledge Map are safe. Pick a plan and continue 100% ad-free right where you left off.'
+            : 'Upgrade anytime — 100% ad-free learning and your progress always carries over across Web and Android.'}
         </p>
       </div>
 
@@ -171,7 +277,7 @@ export default function Upgrade() {
 
       <div className="grid gap-5 md:grid-cols-3">
         {PLANS.map(({ name, planKey, price, period, icon: Icon, features, mailto, highlight }) => {
-          const payable = payEnabled && !!planKey;
+          const payable = !!planKey && (inAndroidApp ? playReady : payEnabled);
           const busy = busyPlan === planKey;
           return (
             <div key={name}
@@ -193,10 +299,16 @@ export default function Upgrade() {
                 ))}
               </ul>
               {payable ? (
-                <button type="button" disabled={!!busyPlan} onClick={() => handlePay(planKey)}
-                  className={`btn-neo mt-auto w-full justify-center ${highlight ? 'btn-neo-primary' : ''} ${busyPlan ? 'opacity-70' : ''}`}>
+                <button
+                  type="button"
+                  disabled={!!busyPlan}
+                  onClick={() => (inAndroidApp ? handleGooglePlaySubscribe(planKey) : handleWebPay(planKey))}
+                  className={`btn-neo mt-auto w-full justify-center ${highlight ? 'btn-neo-primary' : ''} ${busyPlan ? 'opacity-70' : ''}`}
+                >
                   {busy ? (
                     <><Loader2 className="mr-1.5 h-4 w-4 animate-spin" aria-hidden="true" /> Processing…</>
+                  ) : inAndroidApp ? (
+                    <>Subscribe with Google Play · {price} <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" /></>
                   ) : (
                     <>Pay {price} <ArrowRight className="ml-1.5 h-4 w-4" aria-hidden="true" /></>
                   )}
@@ -223,8 +335,10 @@ export default function Upgrade() {
       </div>
 
       <p className="text-center text-xs text-text-muted">
-        {payEnabled
-          ? 'Secure payments powered by Razorpay. Your plan activates instantly after payment.'
+        {inAndroidApp
+          ? 'Subscriptions on Android are billed securely via Google Play Subscriptions — manage or cancel anytime in Google Play Store → Payments & subscriptions. Every PyMasters tier is 100% Ad-Free.'
+          : payEnabled
+          ? 'Secure payments powered by Razorpay. Your plan activates instantly after payment with 100% Ad-Free learning.'
           : 'Online payments are launching soon — until then, email us and your plan is enabled within a day. Already arranged a plan? It activates automatically once assigned.'}{' '}
         <button type="button" onClick={() => navigate('/pricing')} className="text-accent-primary hover:underline">
           Full pricing details

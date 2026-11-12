@@ -292,7 +292,7 @@ export default function Game({ reducedMotion = false, onQuit, lives, birdsPerQue
                 {[20, 35, 55].map((ang) => (
                   <button key={ang} type="button" disabled={paused || flying}
                     onClick={() => setAim((a) => ({ ...a, angle: ang }))}
-                    className={`px-2 py-0.5 rounded border font-mono text-[11px] ${aim.angle === ang ? 'border-accent-primary bg-accent-primary/15 text-accent-primary font-bold' : 'border-border-default bg-bg-inset text-text-secondary'}`}>
+                    className={`px-2 py-0.5 rounded border font-mono text-xs ${aim.angle === ang ? 'border-accent-primary bg-accent-primary/15 text-accent-primary font-bold' : 'border-border-default bg-bg-inset text-text-secondary'}`}>
                     {ang}°
                   </button>
                 ))}

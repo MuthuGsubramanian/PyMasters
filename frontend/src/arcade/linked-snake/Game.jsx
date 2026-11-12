@@ -239,7 +239,7 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
               <div className="flex items-center gap-2 flex-wrap">
                 <code className="text-text-muted font-mono">{hud.lastOp}</code>
                 {!hud.started && hud.foods.length > 0 && (
-                  <span className="rounded-full bg-amber-500/15 border border-amber-400/50 px-2 py-0.5 text-[11px] font-mono font-semibold text-amber-300">
+                  <span className="rounded-full bg-amber-500/15 border border-amber-400/50 px-2 py-0.5 text-xs font-mono font-semibold text-amber-300">
                     ⏸ Study Mode — Take your time! Click an answer below (1–4) or press an Arrow key to slither
                   </span>
                 )}
@@ -251,13 +251,13 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
                       key={opt.id}
                       type="button"
                       onClick={() => setPaceId(opt.id)}
-                      className={`rounded-md px-1.5 py-0.5 text-[11px] font-mono border transition-colors ${paceId === opt.id ? 'bg-teal-500/20 border-teal-400 text-teal-300 font-bold' : 'bg-bg-inset border-border-default text-text-muted hover:text-text-primary'}`}
+                      className={`rounded-md px-1.5 py-0.5 text-xs font-mono border transition-colors ${paceId === opt.id ? 'bg-teal-500/20 border-teal-400 text-teal-300 font-bold' : 'bg-bg-inset border-border-default text-text-muted hover:text-text-primary'}`}
                     >
                       {opt.label}
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center gap-1 font-mono text-[11px]" aria-label="Linked nodes">
+                <div className="flex items-center gap-1 font-mono text-xs" aria-label="Linked nodes">
                   {(hud.nodes || []).map((val, idx) => (
                     <span key={idx} className="inline-flex items-center gap-1">
                       <span className={`rounded px-1.5 py-0.5 border ${idx === 0 ? 'bg-teal-500/20 border-teal-400 text-teal-300 font-bold' : 'bg-bg-inset border-border-default text-text-secondary'}`}>
@@ -281,7 +281,7 @@ export default function Game({ reducedMotion = false, onQuit, initial = null, rn
                   onClick={() => eatChoice(f)}
                   className="min-h-11 rounded-xl border-2 border-amber-400/60 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-2 font-mono text-xs sm:text-sm font-bold text-text-primary flex items-center justify-between gap-1.5 shadow-sm transition-colors"
                 >
-                  <span className="text-[11px] text-amber-300">[{idx + 1}]</span>
+                  <span className="text-xs text-amber-300">[{idx + 1}]</span>
                   <span className="truncate">{f.label}</span>
                 </button>
               ))}

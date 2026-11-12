@@ -259,7 +259,7 @@ export default function Game({ board = 'variables', reducedMotion = false, onQui
               {upcoming.length > 0 && (
                 <div className="flex flex-wrap gap-1 pt-0.5">
                   {upcoming.map((u) => (
-                    <span key={u.from} className={`rounded px-1.5 py-0.5 font-mono text-[10px] ${u.type === 'ladder' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-red-500/15 text-red-400'}`}>
+                    <span key={u.from} className={`rounded px-1.5 py-0.5 font-mono text-xs ${u.type === 'ladder' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-red-500/15 text-red-400'}`}>
                       Roll {u.roll}: {u.type === 'ladder' ? `🪜 ${u.from}→${u.to}` : `🐍 ${u.from}→${u.to}`}
                     </span>
                   ))}

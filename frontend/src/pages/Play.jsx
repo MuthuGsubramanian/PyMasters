@@ -33,15 +33,15 @@ function GameCard({ game, index, t }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-text-primary leading-tight">{game.title}</h3>
-            {meta && <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent-primary/10 text-accent-primary">{meta.pillar}</span>}
+            {meta && <span className="text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent-primary/10 text-accent-primary">{meta.pillar}</span>}
           </div>
           <p className="text-xs text-text-muted mt-0.5">{game.blurb}</p>
-          {meta && <p className="text-[11px] text-text-secondary mt-1">{meta.skill}</p>}
+          {meta && <p className="text-xs text-text-secondary mt-1">{meta.skill}</p>}
         </div>
         {game.daily_done && <Badge variant="success"><CalendarCheck size={10} /> {t('play.daily', 'Daily')} ✓</Badge>}
       </div>
       <div className="flex flex-col gap-1" aria-hidden="true">
-        <div className="flex justify-between text-[11px] text-text-muted">
+        <div className="flex justify-between text-xs text-text-muted">
           <span>Mastery Level {curLvl}/{maxLvl}</span>
           <span>{lvlPct}%</span>
         </div>

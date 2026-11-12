@@ -64,7 +64,7 @@ export function CountRace({ counts }) {
           Lines executed inside the function, measured by actually running it
         </figcaption>
         {ratio10to100 && (
-          <span className="text-[11px] font-mono rounded-full bg-accent-primary/10 text-accent-primary px-2 py-0.5">
+          <span className="text-xs font-mono rounded-full bg-accent-primary/10 text-accent-primary px-2 py-0.5">
             10× input → {ratio10to100}× ops
           </span>
         )}
@@ -134,7 +134,7 @@ export default function Game({ item, onAnswer, disabled, reveal }) {
                 </div>
                 {meta && <span className={`h-1.5 rounded-full ${meta.bar}`} aria-hidden="true" />}
               </div>
-              {meta && <span className="text-[10px] text-text-muted leading-tight">{meta.desc}</span>}
+              {meta && <span className="text-xs text-text-muted leading-tight">{meta.desc}</span>}
             </button>
           );
         })}

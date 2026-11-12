@@ -1,4 +1,5 @@
 import http from 'node:http';
+import https from 'node:https';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -7,6 +8,7 @@ import { GoogleGenAI } from '@google/genai';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DIST_DIR = path.join(__dirname, 'dist');
 const PORT = Number(process.env.PORT || 8080);
+const BACKEND_URL = new URL(process.env.PYMASTERS_BACKEND_ORIGIN || 'https://pymasters.net');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -76,8 +78,54 @@ function sendJson(res, status, payload) {
   res.end(body);
 }
 
+/**
+ * Reverse-proxy `/api/*` (auth, classroom, content, profile, review, payments, etc.)
+ * directly to `PYMASTERS_BACKEND_ORIGIN` (`https://pymasters.net` by default) so
+ * Mobile Companion shares the exact same SQLite user database, lessons, XP, streaks,
+ * and completion records as Web (`pymasters.net` & `pymasters.ai.studio`).
+ */
+function proxyToPyMastersBackend(req, res, rawReqUrl) {
+  const transport = BACKEND_URL.protocol === 'https:' ? https : http;
+  const forwardedHeaders = { ...req.headers, host: BACKEND_URL.host };
+  if (forwardedHeaders.origin) {
+    forwardedHeaders.origin = BACKEND_URL.origin;
+  }
+  if (forwardedHeaders.referer) {
+    forwardedHeaders.referer = `${BACKEND_URL.origin}/`;
+  }
+
+  const proxyReq = transport.request(
+    {
+      protocol: BACKEND_URL.protocol,
+      hostname: BACKEND_URL.hostname,
+      port: BACKEND_URL.port || (BACKEND_URL.protocol === 'https:' ? 443 : 80),
+      method: req.method,
+      path: rawReqUrl,
+      headers: forwardedHeaders,
+    },
+    (proxyRes) => {
+      res.writeHead(proxyRes.statusCode || 502, proxyRes.headers);
+      proxyRes.pipe(res);
+    }
+  );
+
+  proxyReq.on('error', (err) => {
+    console.error('[mobile-companion] upstream proxy error:', err?.message || err);
+    if (!res.headersSent) {
+      sendJson(res, 502, {
+        detail: 'PyMasters backend is temporarily unreachable. Offline drills remain available.',
+      });
+    } else {
+      res.end();
+    }
+  });
+
+  req.pipe(proxyReq);
+}
+
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+  const rawReqUrl = req.url || '/';
+  const url = new URL(rawReqUrl, `http://${req.headers.host || 'localhost'}`);
 
   if (req.method === 'GET' && url.pathname === '/health') {
     const apkPath = path.join(DIST_DIR, 'download', 'PyMasters.apk');
@@ -85,11 +133,13 @@ const server = http.createServer(async (req, res) => {
     return sendJson(res, 200, {
       status: 'ok',
       service: 'pymasters-mobile-companion',
+      backendOrigin: BACKEND_URL.origin,
       apkAvailable: Boolean(apkStat),
       apkSizeBytes: apkStat ? apkStat.size : 0,
     });
   }
 
+  // Standalone pocket Gemini tutor fallback endpoint
   if (req.method === 'POST' && url.pathname === '/api/tutor') {
     try {
       const body = await readJsonBody(req);
@@ -117,6 +167,13 @@ const server = http.createServer(async (req, res) => {
         fallback: true,
       });
     }
+  }
+
+  // Route all PyMasters backend API endpoints (/api/auth/*, /api/classroom/*,
+  // /api/content/*, /api/profile/*, /api/review/*, /api/payments/*, etc.) to
+  // the real PyMasters backend origin.
+  if (url.pathname.startsWith('/api/') || url.pathname === '/api') {
+    return proxyToPyMastersBackend(req, res, rawReqUrl);
   }
 
   if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -164,5 +221,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`PyMasters Mobile Companion listening on http://0.0.0.0:${PORT}`);
+  console.log(
+    `PyMasters Mobile Companion listening on http://0.0.0.0:${PORT} -> backend ${BACKEND_URL.origin}`
+  );
 });

@@ -334,6 +334,7 @@ export const semanticRelated = (lessonId, k = 6) => api.get(`/semantic/related/$
 export const getPaymentConfig = () => api.get('/payments/config');
 export const createPaymentOrder = (plan) => api.post('/payments/create-order', { plan });
 export const verifyPayment = (payload) => api.post('/payments/verify', payload);
+export const verifyGooglePlayPayment = (payload) => api.post('/payments/google-play/verify', payload);
 
 // Support (public homepage entry points + super-admin review queue)
 export const submitAccessRequest = (formData) =>

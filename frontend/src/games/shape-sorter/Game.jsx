@@ -73,7 +73,7 @@ export default function Game({ item, onAnswer, disabled, reducedMotion }) {
       </div>
       <Card key={item.id} {...motionProps}
         className="mx-auto w-full max-w-lg rounded-2xl border border-border-strong bg-bg-elevated shadow-md p-6 text-center flex flex-col gap-2">
-        <span className="text-[11px] uppercase tracking-wider font-semibold text-accent-primary">Engineering Requirement</span>
+        <span className="text-xs uppercase tracking-wider font-semibold text-accent-primary">Engineering Requirement</span>
         <p className="text-base sm:text-lg font-semibold text-text-primary leading-snug" aria-live="polite">{item.prompt?.text}</p>
       </Card>
       <div role="group" aria-label="Bins" className={`grid gap-2.5 ${bins.length > 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-4'}`}>
@@ -84,11 +84,11 @@ export default function Game({ item, onAnswer, disabled, reducedMotion }) {
               aria-current={cursor === i ? 'true' : undefined}
               className={`min-h-20 rounded-xl border bg-bg-surface px-3 py-2.5 flex flex-col items-center justify-between gap-1 transition-all focus-visible:ring-2 ring-accent-primary disabled:opacity-60 ${cursor === i ? 'border-accent-primary shadow-cyan bg-bg-elevated' : 'border-border-default hover:border-accent-primary'}`}>
               <div className="flex items-center justify-between w-full">
-                <kbd className="inline-flex items-center justify-center w-5 h-5 rounded bg-bg-inset text-[11px] font-semibold text-text-muted" aria-hidden="true">{i + 1}</kbd>
-                {spec && <span className="font-mono text-[10px] text-accent-primary">{spec.syntax}</span>}
+                <kbd className="inline-flex items-center justify-center w-5 h-5 rounded bg-bg-inset text-xs font-semibold text-text-muted" aria-hidden="true">{i + 1}</kbd>
+                {spec && <span className="font-mono text-xs text-accent-primary">{spec.syntax}</span>}
               </div>
               <code className="font-mono text-sm font-bold text-text-primary">{b}</code>
-              {spec && <span className="text-[10px] text-text-muted text-center leading-tight">{spec.traits}</span>}
+              {spec && <span className="text-xs text-text-muted text-center leading-tight">{spec.traits}</span>}
             </button>
           );
         })}

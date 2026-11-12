@@ -263,7 +263,7 @@ export default function Game({ reducedMotion = false, onQuit, laps = LAPS, rng =
                   onClick={() => chooseLane(l.lane)}
                   className="min-h-12 rounded-xl border-2 border-amber-400/70 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-2 font-mono text-xs sm:text-sm font-bold text-text-primary flex items-center justify-between gap-1.5 shadow-sm transition-colors"
                 >
-                  <span className="text-[11px] uppercase tracking-wider text-amber-300">
+                  <span className="text-xs uppercase tracking-wider text-amber-300">
                     [{idx + 1}] {l.lane < 0 ? '◀ Left' : l.lane > 0 ? '▶ Right' : '● Center'}
                   </span>
                   <span className="truncate">{l.label}</span>

@@ -84,7 +84,7 @@ export default function Game({ item, onAnswer, disabled }) {
         <div className="flex flex-col gap-2.5" role="group" aria-label="Candidate fixes">
           {candidatePatch !== undefined && candidatePatch !== null && (
             <div data-diff-preview className="rounded-xl border border-border-default bg-bg-code p-3 font-mono text-xs flex flex-col gap-1">
-              <span className="text-[11px] text-text-muted flex items-center gap-1 font-sans mb-0.5">
+              <span className="text-xs text-text-muted flex items-center gap-1 font-sans mb-0.5">
                 <GitCompare size={12} className="text-accent-primary" aria-hidden="true" /> Live Patch Diff Preview (Line {line + 1})
               </span>
               <div className="rounded px-2 py-0.5 bg-red-500/15 text-red-400 whitespace-pre overflow-x-auto">- {lines[line]}</div>
