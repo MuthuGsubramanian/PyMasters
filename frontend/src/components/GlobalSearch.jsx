@@ -29,17 +29,26 @@ const MAX_RECENT = 5;
 const SEARCH_ITEMS = [
   // Pages
   { id: 'page-dashboard',   title: 'Dashboard',       path: '/dashboard',              category: 'Pages' },
-  { id: 'page-profile',     title: 'Profile',         path: '/dashboard/profile',      category: 'Pages' },
+  { id: 'page-paths',       title: 'Learning Paths',  path: '/dashboard/paths',        category: 'Pages' },
+  { id: 'page-knowledge',   title: 'Knowledge Map',   path: '/dashboard/knowledge',    category: 'Pages' },
   { id: 'page-classroom',   title: 'Classroom',       path: '/dashboard/classroom',    category: 'Pages' },
   { id: 'page-playground',  title: 'Playground',      path: '/dashboard/playground',   category: 'Pages' },
+  { id: 'page-play',        title: 'Play',            path: '/dashboard/play',         category: 'Pages' },
+  { id: 'page-challenges',  title: 'Challenges',      path: '/dashboard/challenges',   category: 'Pages' },
   { id: 'page-trending',    title: 'Trending',        path: '/dashboard/trending',     category: 'Pages' },
-  { id: 'page-paths',       title: 'Learning Paths',  path: '/dashboard/paths',        category: 'Pages' },
+  { id: 'page-reference',   title: 'Reference',       path: '/dashboard/reference',    category: 'Pages' },
+  { id: 'page-explains',    title: 'Explains',        path: '/dashboard/explains',     category: 'Pages' },
+  { id: 'page-guides',      title: 'Python Guides',   path: '/guides',                 category: 'Pages' },
+  { id: 'page-community',   title: 'Community',       path: '/dashboard/community',    category: 'Pages' },
+  { id: 'page-live-tutor',  title: 'Live Tutor',      path: '/dashboard/live-tutor',   category: 'Pages' },
+  { id: 'page-upgrade',     title: 'Upgrade',         path: '/dashboard/upgrade',      category: 'Pages' },
+  { id: 'page-profile',     title: 'Profile',         path: '/dashboard/profile',      category: 'Pages' },
 
   // Trending topics
   { id: 'trend-llm',           title: 'Large Language Models',         path: '/dashboard/trending', category: 'Trending' },
   { id: 'trend-rag',           title: 'RAG Pipelines',                 path: '/dashboard/trending', category: 'Trending' },
   { id: 'trend-agents',        title: 'AI Agents & Tool Use',          path: '/dashboard/trending', category: 'Trending' },
-  { id: 'trend-fine-tuning',   title: 'Fine-Tuning & LoRA',           path: '/dashboard/trending', category: 'Trending' },
+  { id: 'trend-fine-tuning',   title: 'Fine-Tuning & LoRA',            path: '/dashboard/trending', category: 'Trending' },
   { id: 'trend-fastapi',       title: 'FastAPI & Async Python',        path: '/dashboard/trending', category: 'Trending' },
   { id: 'trend-langchain',     title: 'LangChain & LangGraph',         path: '/dashboard/trending', category: 'Trending' },
   { id: 'trend-vector-db',     title: 'Vector Databases',              path: '/dashboard/trending', category: 'Trending' },
@@ -68,28 +77,48 @@ const CATEGORY_ICONS = {
 };
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Helpers — persists both static items and dynamic semantic lesson hits
 // ---------------------------------------------------------------------------
 
-/**
- * @returns {string[]}
- */
+function normalizeRecentEntry(entry) {
+  if (!entry) return null;
+  if (typeof entry === 'string') {
+    return SEARCH_ITEMS.find((i) => i.title.toLowerCase() === entry.toLowerCase()) || null;
+  }
+  if (typeof entry === 'object' && entry.id && entry.title && entry.path) {
+    return {
+      id: String(entry.id),
+      title: String(entry.title),
+      path: String(entry.path),
+      category: String(entry.category || 'Pages'),
+    };
+  }
+  return null;
+}
+
 function readRecent() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(normalizeRecentEntry).filter(Boolean);
   } catch {
     return [];
   }
 }
 
-/**
- * @param {string} query
- */
-function pushRecent(query) {
+function pushRecent(item) {
+  if (!item || !item.id || !item.title || !item.path) return;
   try {
-    const prev = readRecent().filter((q) => q !== query);
-    const next = [query, ...prev].slice(0, MAX_RECENT);
+    const entry = {
+      id: item.id,
+      title: item.title,
+      path: item.path,
+      category: item.category || 'Pages',
+    };
+    const prev = readRecent().filter((r) => r.id !== entry.id && r.path !== entry.path);
+    const next = [entry, ...prev].slice(0, MAX_RECENT);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   } catch {
     // silent
@@ -101,17 +130,8 @@ function pushRecent(query) {
 // ---------------------------------------------------------------------------
 
 /**
- * Global command-palette search overlay triggered by Ctrl+K / Cmd+K.
- *
- * Features:
- * - Fuzzy-ish substring matching across all navigable pages and topics
- * - Results grouped by category with contextual icons
- * - Full keyboard navigation (arrow keys, Enter, Escape)
- * - Recent searches persisted in localStorage
- * - Glassmorphism backdrop with Framer Motion open/close animation
- *
- * This component registers its own global keydown listener and manages its
- * own open/close state; no props required.
+ * Global command-palette search overlay triggered by Ctrl+K / Cmd+K or
+ * custom window event `pymasters:open-search`.
  */
 export default function GlobalSearch() {
   const [open, setOpen] = useState(false);
@@ -124,33 +144,37 @@ export default function GlobalSearch() {
   const navigate = useNavigate();
 
   // ---- Semantic lesson search (meaning-based, whole catalogue) ----
-  // Debounced against /api/semantic/search; silently absent until the
-  // backend index is ready, so the palette still works purely statically.
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     const q = query.trim();
-    if (!open || q.length < 3) { setLessonHits([]); return; }
+    if (!open || q.length < 3) {
+      setLessonHits([]);
+      return;
+    }
     debounceRef.current = setTimeout(() => {
       semanticSearch(q, 5)
         .then((r) => {
           const hits = (r.data?.ready ? r.data.results : []) || [];
-          setLessonHits(hits.map((m) => ({
-            id: `lesson-${m.id}`,
-            title: en(m.title),
-            path: `/dashboard/classroom?lesson=${encodeURIComponent(m.id)}`,
-            category: 'Lessons',
-          })));
+          setLessonHits(
+            hits.map((m) => ({
+              id: `lesson-${m.id}`,
+              title: en(m.title),
+              path: `/dashboard/classroom?lesson=${encodeURIComponent(m.id)}`,
+              category: 'Lessons',
+            }))
+          );
         })
         .catch(() => setLessonHits([]));
     }, 250);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [query, open]);
 
-  // ---- Global shortcut listener ----
+  // ---- Global shortcut + custom event listener ----
   useEffect(() => {
-    /** @param {KeyboardEvent} e */
     function onKeyDown(e) {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setOpen((prev) => !prev);
       }
@@ -158,8 +182,15 @@ export default function GlobalSearch() {
         setOpen(false);
       }
     }
+    function onOpenEvent() {
+      setOpen(true);
+    }
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('pymasters:open-search', onOpenEvent);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('pymasters:open-search', onOpenEvent);
+    };
   }, []);
 
   // Focus input when opening
@@ -167,7 +198,6 @@ export default function GlobalSearch() {
     if (open) {
       setQuery('');
       setActiveIndex(0);
-      // Small delay to allow the animation frame to paint
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [open]);
@@ -175,23 +205,20 @@ export default function GlobalSearch() {
   // ---- Filtered results ----
   const trimmed = query.trim().toLowerCase();
 
-  const results = trimmed.length === 0
-    ? []
-    : [
-        ...lessonHits,
-        ...SEARCH_ITEMS.filter((item) => item.title.toLowerCase().includes(trimmed)),
-      ];
+  const results =
+    trimmed.length === 0
+      ? []
+      : [
+          ...lessonHits,
+          ...SEARCH_ITEMS.filter((item) => item.title.toLowerCase().includes(trimmed)),
+        ];
 
-  // Build recent-searches section when query is empty
-  const recentQueries = trimmed.length === 0 ? readRecent() : [];
-  const recentItems = recentQueries
-    .map((q) => SEARCH_ITEMS.find((i) => i.title.toLowerCase() === q.toLowerCase()))
-    .filter(Boolean);
+  // Build recent-searches section when query is empty (includes recent lessons)
+  const recentItems = trimmed.length === 0 ? readRecent() : [];
 
   const displayItems = trimmed.length > 0 ? results : recentItems;
 
   // Group by category
-  /** @type {Record<string, typeof SEARCH_ITEMS>} */
   const grouped = {};
   for (const item of displayItems) {
     const cat = trimmed.length === 0 ? 'Recent' : item.category;
@@ -204,21 +231,20 @@ export default function GlobalSearch() {
 
   // ---- Navigate to selected ----
   const go = useCallback(
-    (/** @type {typeof SEARCH_ITEMS[0]} */ item) => {
+    (item) => {
       if (!item) return;
-      pushRecent(item.title);
+      pushRecent(item);
       navigate(item.path);
       setOpen(false);
     },
-    [navigate],
+    [navigate]
   );
 
   // ---- Keyboard navigation inside the list ----
-  /** @param {React.KeyboardEvent} e */
   function onInputKeyDown(e) {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActiveIndex((i) => Math.min(i + 1, flatItems.length - 1));
+      setActiveIndex((i) => Math.min(i + 1, Math.max(0, flatItems.length - 1)));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActiveIndex((i) => Math.max(i - 1, 0));
@@ -239,7 +265,6 @@ export default function GlobalSearch() {
     setActiveIndex(0);
   }, [query]);
 
-  // ---- Render ----
   return (
     <AnimatePresence>
       {open && (
@@ -252,8 +277,8 @@ export default function GlobalSearch() {
           className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh]"
           onClick={() => setOpen(false)}
         >
-          {/* Glassmorphism backdrop */}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
           {/* Palette */}
           <motion.div
@@ -262,7 +287,7 @@ export default function GlobalSearch() {
             exit={{ opacity: 0, scale: 0.95, y: -10 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-lg mx-4 rounded-2xl border border-border-default bg-bg-surface/90 backdrop-blur-xl shadow-2xl shadow-black/20 overflow-hidden"
+            className="relative w-full max-w-lg mx-4 rounded-2xl border border-border-default bg-bg-surface backdrop-blur-xl shadow-elegant overflow-hidden"
           >
             {/* Search input */}
             <div className="flex items-center gap-3 px-4 h-14 border-b border-border-default">
@@ -300,7 +325,7 @@ export default function GlobalSearch() {
                 return (
                   <div key={cat}>
                     <div className="px-4 pt-3 pb-1 text-xs font-bold uppercase tracking-widest text-text-muted flex items-center gap-1.5">
-                      <Icon size={11} />
+                      <Icon size={12} />
                       {cat}
                     </div>
                     {grouped[cat].map((item) => {
@@ -310,19 +335,20 @@ export default function GlobalSearch() {
                       return (
                         <button
                           key={item.id}
+                          type="button"
                           data-idx={flatIdx}
                           onClick={() => go(item)}
                           onMouseEnter={() => setActiveIndex(flatIdx)}
                           className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors duration-100 ${
                             isActive
-                              ? 'bg-cyan-50 text-cyan-700'
+                              ? 'bg-accent-subtle text-accent-primary font-medium'
                               : 'text-text-secondary hover:bg-bg-elevated'
                           }`}
                         >
-                          <CatIcon size={15} className={isActive ? 'text-cyan-500' : 'text-text-muted'} />
+                          <CatIcon size={15} className={isActive ? 'text-accent-primary' : 'text-text-muted'} />
                           <span className="flex-1 text-left truncate">{item.title}</span>
                           {isActive && (
-                            <CornerDownLeft size={13} className="text-cyan-400 shrink-0" />
+                            <CornerDownLeft size={13} className="text-accent-primary shrink-0" />
                           )}
                         </button>
                       );
@@ -335,12 +361,12 @@ export default function GlobalSearch() {
             {/* Footer hints */}
             <div className="flex items-center gap-4 px-4 h-10 border-t border-border-default text-xs text-text-muted bg-bg-elevated/60">
               <span className="flex items-center gap-1">
-                <ArrowUp size={10} />
-                <ArrowDown size={10} />
+                <ArrowUp size={11} />
+                <ArrowDown size={11} />
                 navigate
               </span>
               <span className="flex items-center gap-1">
-                <CornerDownLeft size={10} />
+                <CornerDownLeft size={11} />
                 open
               </span>
               <span className="flex items-center gap-1">
@@ -348,7 +374,7 @@ export default function GlobalSearch() {
                 close
               </span>
               <span className="ml-auto flex items-center gap-1">
-                <Command size={10} />
+                <Command size={11} />
                 <span className="font-mono text-xs">K</span>
               </span>
             </div>

@@ -80,6 +80,10 @@ export default function Play() {
 
   // Arcade catalog: evaluates unlocks server-side; newly earned keys get the toast.
   useEffect(() => {
+    document.title = 'Play — PyMasters';
+  }, []);
+
+  useEffect(() => {
     getArcadeCatalog().then((r) => {
       setArcade(r.data);
       if (r.data?.newly_unlocked?.length) window.dispatchEvent(new CustomEvent(UNLOCK_EVENT, { detail: r.data.newly_unlocked }));

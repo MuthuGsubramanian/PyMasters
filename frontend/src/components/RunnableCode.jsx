@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Play, Loader2, Check, X, Copy, Target } from 'lucide-react';
+import { Play, Loader2, Check, X, Copy, Target, Terminal } from 'lucide-react';
 import api from '../api';
 import ErrorExplainer from './ErrorExplainer';
 import { comparePrediction, recordPrediction } from '../utils/predict';
@@ -112,7 +112,16 @@ function isRunnablePython(code, className) {
  *    Trending snippet modal). `label` overrides the shown language; `copy`
  *    adds a copy-to-clipboard button (preserves Reference's affordance).
  */
-export default function RunnableCode({ children, className, code: rawCode, language, dark = false, copy = false, predict = false }) {
+export default function RunnableCode({
+    children,
+    className,
+    code: rawCode,
+    language,
+    dark = false,
+    copy = false,
+    predict = false,
+    onOpenPlayground,
+}) {
     const code = (rawCode != null ? rawCode : flattenText(children)).replace(/\n$/, '');
     const runnable = isRunnablePython(code, className || (language ? `language-${language}` : ''));
 
@@ -234,6 +243,16 @@ export default function RunnableCode({ children, className, code: rawCode, langu
                 <span className="text-xs font-mono text-slate-400 ml-1">{language || 'python'}</span>
                 <div className="ml-auto flex items-center gap-1">
                     {copyBtn}
+                    {onOpenPlayground && (
+                        <button
+                            type="button"
+                            onClick={() => onOpenPlayground(code)}
+                            className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-md text-cyan-300 bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/25 transition-colors"
+                        >
+                            <Terminal size={11} />
+                            <span>Open in Playground</span>
+                        </button>
+                    )}
                     {canPredict && (
                         <button
                             type="button"

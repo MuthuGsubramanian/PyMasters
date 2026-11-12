@@ -23,7 +23,12 @@ const STAGE_LABELS = {
     completed: 'Your lesson is ready!',
 };
 
-const SUGGESTIONS = ['Web scraping with Python', 'Decorators explained', 'How recursion works', 'Build a REST API', 'List comprehensions'];
+const SUGGESTIONS = [
+    'Asyncio & concurrency',
+    'Decorators explained',
+    'Build a FastAPI endpoint',
+    'Vector search from scratch',
+];
 
 // ──────────────────────────────────────────────────────────────────────────
 // "Learn anything" — type a topic, Vaathiyaar generates a tailor-made lesson.
@@ -185,7 +190,12 @@ export default function LearnAnything({ userId, onLessonReady, onOpenLesson, ini
                         )}
                         <div className="mt-2 flex flex-wrap gap-1.5">
                             {SUGGESTIONS.map((s) => (
-                                <button key={s} onClick={() => setTopic(s)} className="text-xs px-2.5 py-1 rounded-full bg-white dark:bg-bg-elevated border border-purple-200 dark:border-border-default text-purple-600 dark:text-accent-primary hover:bg-purple-50 dark:hover:bg-bg-inset transition-colors">
+                                <button
+                                    key={s}
+                                    type="button"
+                                    onClick={() => setTopic(s)}
+                                    className="text-xs px-2.5 py-1 rounded-full bg-white dark:bg-bg-elevated border border-purple-200 dark:border-border-default text-purple-600 dark:text-accent-primary hover:bg-purple-50 dark:hover:bg-bg-inset transition-colors"
+                                >
                                     {s}
                                 </button>
                             ))}

@@ -4,6 +4,7 @@ classroom.py — FastAPI APIRouter for the AI classroom experience.
 Prefix: /api/classroom
 """
 
+import ast
 import hashlib
 import hmac
 import json
@@ -19,7 +20,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Query, Header, Depends
 from fastapi.responses import Response, StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from auth import get_current_user_id, optional_user_id
 
@@ -226,8 +227,84 @@ _MODULE_ORDER = {
         "variables_and_types", "control_flow", "data_structures", "functions",
         "oop", "file_io", "error_handling", "testing", "packaging", "advanced",
     ],
-    "ai_agents": ["foundations", "frameworks", "protocols", "orchestration", "advanced"],
-    "deep_learning": ["nn_basics", "backpropagation", "pytorch", "cnn", "rnn", "transformers"],
+    "python_intermediate": [
+        "object_oriented_programming", "decorators_and_closures", "iterators_and_generators",
+        "resource_management", "data_processing", "text_processing", "standard_library",
+        "code_quality", "error_handling", "async_programming", "concurrency",
+    ],
+    "python_modern": [
+        "python314_features", "concurrency_modern", "developer_tools",
+    ],
+    "python_internals": [
+        "memory_model", "execution_model", "object_model",
+    ],
+    "ai_agents": [
+        "foundations", "frameworks", "orchestration", "protocols", "advanced", "from_scratch",
+    ],
+    "ai_engineering": [
+        "llm_patterns", "data_processing", "trending_ai",
+    ],
+    "trending_ai": [
+        "trending_ai",
+    ],
+    "ai_fundamentals": [
+        "ai_foundations", "prompt_engineering", "api_integration", "langchain",
+        "rag", "ai_applications", "ai_responsibility", "ai_advanced",
+    ],
+    "ai_ml_foundations": [
+        "numpy", "pandas", "visualization", "sklearn", "prompt_engineering",
+    ],
+    "deep_learning": [
+        "nn_basics", "backpropagation", "pytorch", "cnn", "rnn", "transformers",
+    ],
+    "deep_learning_complete": [
+        "neural_network_foundations", "training_fundamentals", "pytorch_mastery",
+        "convolutional_networks", "recurrent_networks", "attention_and_transformers",
+        "generative_models", "deployment",
+    ],
+    "transformers_scratch": [
+        "attention", "architecture", "training",
+    ],
+    "dsa": [
+        "complexity_analysis", "linear_structures", "hash_structures",
+        "tree_structures", "graph_structures", "sorting_searching",
+        "recursion_dp", "algorithm_strategies",
+    ],
+    "testing_devops": [
+        "testing_foundations", "ci_cd", "containers", "packaging",
+        "version_control", "observability",
+    ],
+    "testing_quality": [
+        "testing_foundations", "ci_cd", "containers", "packaging",
+        "version_control", "observability",
+    ],
+    "async_concurrency": [
+        "foundations", "practice",
+    ],
+    "debugging_mastery": [
+        "foundations", "technique",
+    ],
+    "error_handling": [
+        "foundations", "patterns",
+    ],
+    "functional_python": [
+        "foundations", "tools",
+    ],
+    "performance_optimization": [
+        "foundations", "practice",
+    ],
+    "regex_mastery": [
+        "foundations", "patterns",
+    ],
+    "vibe_coding": [
+        "foundations", "practices", "antipatterns", "mastery",
+    ],
+    "working_with_data": [
+        "foundations", "formats",
+    ],
+    "fun_automation": [
+        "automation_basics", "fun_projects", "automation_intermediate",
+    ],
     "machine_learning": [
         "ml_foundations", "data_preparation", "supervised_learning",
         "unsupervised_learning", "evaluation", "neural_networks", "production",
@@ -796,8 +873,8 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                     )
                     # Check if user is AI/ML/Data Science oriented
                     is_ai_ml = bool(
-                        motivations & {"ai_ml", "data_science"}
-                        or goals & {"ai_ml", "data_science"}
+                        motivations & {"ai_ml", "data_science", "data"}
+                        or goals & {"ai_ml", "data_science", "data"}
                     )
                     # Check if user is career/work oriented
                     is_career = bool(
@@ -808,33 +885,33 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                     # Build prioritized track list based on profile
                     if is_school:
                         primary_tracks = ["python_fundamentals", "fun_automation", "python_intermediate", "working_with_data", "vibe_coding"]
-                        secondary_tracks = ["ai_ml_foundations", "ai_fundamentals", "web_development", "dsa", "python_modern",
-                                            "error_handling", "debugging_mastery", "machine_learning", "deep_learning"]
+                        secondary_tracks = ["trending_ai", "ai_ml_foundations", "ai_fundamentals", "web_development", "dsa", "python_modern",
+                                            "error_handling", "debugging_mastery", "machine_learning", "deep_learning", "ai_engineering"]
                     elif is_hobby:
-                        # Fun/automation users see fun_automation first, then fundamentals
-                        primary_tracks = ["fun_automation", "python_fundamentals", "vibe_coding", "python_modern"]
+                        # Fun/automation users see fun_automation first, then fundamentals + trending_ai
+                        primary_tracks = ["fun_automation", "python_fundamentals", "vibe_coding", "python_modern", "trending_ai"]
                         secondary_tracks = ["python_intermediate", "ai_ml_foundations", "deep_learning",
                                             "web_development", "dsa", "ai_fundamentals",
                                             "machine_learning", "deep_learning_complete", "testing_devops",
                                             "ai_agents", "ai_engineering"]
                     elif is_ai_ml:
-                        # AI/ML users see fundamentals → AI Agents → AI Engineering → Deep Learning
-                        primary_tracks = ["python_fundamentals", "vibe_coding", "ai_agents", "ai_engineering",
+                        # AI/ML/data users see fundamentals → AI Agents → AI Engineering → Trending AI → Deep Learning
+                        primary_tracks = ["python_fundamentals", "vibe_coding", "ai_agents", "ai_engineering", "trending_ai",
                                           "ai_ml_foundations", "ai_fundamentals",
                                           "machine_learning", "deep_learning", "deep_learning_complete"]
                         secondary_tracks = ["python_intermediate", "python_modern", "fun_automation",
                                             "web_development", "dsa", "testing_devops"]
                     elif is_college_dsa:
                         primary_tracks = ["python_fundamentals", "dsa", "python_intermediate", "web_development", "vibe_coding", "ai_ml_foundations"]
-                        secondary_tracks = ["python_modern", "testing_devops", "ai_agents", "ai_engineering", "machine_learning", "deep_learning"]
+                        secondary_tracks = ["trending_ai", "python_modern", "testing_devops", "ai_agents", "ai_engineering", "machine_learning", "deep_learning"]
                     elif is_pro_eng:
-                        primary_tracks = ["python_modern", "vibe_coding", "async_concurrency", "testing_devops", "ai_engineering", "ai_agents", "python_internals"]
+                        primary_tracks = ["python_modern", "vibe_coding", "async_concurrency", "testing_devops", "ai_engineering", "trending_ai", "ai_agents", "python_internals"]
                         secondary_tracks = ["performance_optimization", "debugging_mastery", "functional_python", "web_development", "dsa", "transformers_scratch"]
                     elif is_career:
                         # Career-focused: solid fundamentals first, then modern Python + AI
                         primary_tracks = ["python_fundamentals", "python_intermediate",
                                           "vibe_coding", "python_modern", "web_development"]
-                        secondary_tracks = ["ai_agents", "ai_engineering", "fun_automation",
+                        secondary_tracks = ["trending_ai", "ai_agents", "ai_engineering", "fun_automation",
                                             "ai_ml_foundations", "deep_learning",
                                             "dsa", "ai_fundamentals", "machine_learning",
                                             "deep_learning_complete", "testing_devops"]
@@ -842,7 +919,7 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                         # Student / unknown: balanced view — fundamentals first, new tracks visible
                         primary_tracks = ["python_fundamentals", "vibe_coding", "python_intermediate",
                                           "python_modern", "fun_automation"]
-                        secondary_tracks = ["ai_agents", "ai_engineering", "ai_ml_foundations",
+                        secondary_tracks = ["trending_ai", "ai_agents", "ai_engineering", "ai_ml_foundations",
                                             "deep_learning", "web_development",
                                             "dsa", "ai_fundamentals", "machine_learning",
                                             "deep_learning_complete", "testing_devops"]
@@ -850,29 +927,35 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                     # ── Apply skill level visibility filter ──
 
                     skill_visible = {
-                        "beginner": {"python_fundamentals", "fun_automation", "vibe_coding"},
+                        "beginner": {"python_fundamentals", "fun_automation", "vibe_coding", "trending_ai"},
                         "intermediate": {"python_fundamentals", "fun_automation", "python_intermediate",
-                                         "ai_ml_foundations", "web_development", "dsa", "testing_devops",
+                                         "ai_ml_foundations", "ai_engineering", "trending_ai", "web_development", "dsa", "testing_devops",
                                          "python_modern", "vibe_coding", "python_internals", "async_concurrency",
                                          "performance_optimization", "debugging_mastery", "regex_mastery", "error_handling", "functional_python", "working_with_data"},
                         "advanced": {"python_fundamentals", "fun_automation", "python_intermediate",
                                      "ai_ml_foundations", "deep_learning", "web_development", "dsa",
                                      "ai_fundamentals", "machine_learning", "deep_learning_complete",
-                                     "testing_devops", "ai_agents", "python_modern", "ai_engineering",
+                                     "testing_devops", "ai_agents", "python_modern", "ai_engineering", "trending_ai",
                                      "vibe_coding", "python_internals", "transformers_scratch", "async_concurrency",
                                      "performance_optimization", "debugging_mastery", "regex_mastery", "error_handling", "functional_python", "working_with_data"},
                     }
-                    visible_tracks = skill_visible.get(skill_level, {"python_fundamentals", "fun_automation"})
+                    visible_tracks = set(skill_visible.get(skill_level, {"python_fundamentals", "fun_automation", "trending_ai"}))
 
                     # Always add primary tracks to visible (so hobby beginners see fun_automation)
                     for t in primary_tracks:
                         visible_tracks.add(t)
 
                     # ── Mark recommended / locked ──
-
+                    # Note: lessons in backend/lessons/trending_ai/ carry module == 'trending_ai'
+                    # and track == 'ai_engineering' (or 'trending_ai'), so check both!
                     for lesson in lessons:
                         track = lesson.get("track", "")
-                        if track in visible_tracks or track == "generated":
+                        module = lesson.get("module", "")
+                        if (
+                            track in visible_tracks
+                            or (module == "trending_ai" and "trending_ai" in visible_tracks)
+                            or track == "generated"
+                        ):
                             lesson["recommended"] = True
                         else:
                             lesson["recommended"] = False
@@ -892,14 +975,25 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                                     lesson["recommended"] = True
                                     recommended_count += 1
 
-                    # ── Sort: recommended first, primary tracks first, then order ──
+                    # ── Sort: recommended first, primary tracks first, module order, then lesson order ──
 
                     all_ordered_tracks = primary_tracks + secondary_tracks + ["generated"]
                     track_priority = {t: i for i, t in enumerate(all_ordered_tracks)}
 
+                    def _effective_track_rank(item: dict) -> int:
+                        trk = item.get("track", "")
+                        mod = item.get("module", "")
+                        ranks = []
+                        if trk in track_priority:
+                            ranks.append(track_priority[trk])
+                        if mod == "trending_ai" and "trending_ai" in track_priority:
+                            ranks.append(track_priority["trending_ai"])
+                        return min(ranks) if ranks else 99
+
                     lessons.sort(key=lambda l: (
                         0 if l.get("recommended") else 1,
-                        track_priority.get(l.get("track", ""), 99),
+                        _effective_track_rank(l),
+                        _module_rank(l.get("track") or "", l.get("module") or ""),
                         l.get("order", 0),
                     ))
 
@@ -1632,4 +1726,575 @@ def diagnostic(request: DiagnosticRequest, caller: str = Depends(get_current_use
     return {
         "challenge": challenge,
         "result": result,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Vaathiyaar Active Learning: Principal AST Code Review & Protégé Teach-Back
+# ---------------------------------------------------------------------------
+
+class CodeReviewRequest(BaseModel):
+    lesson_id: str = ""
+    code: str = Field(..., max_length=20000)
+    challenge_prompt: str = ""
+
+
+class TeachBackRequest(BaseModel):
+    concept: str
+    explanation: str
+    lesson_id: str = ""
+
+
+_NESTING_NODES = (ast.For, ast.AsyncFor, ast.While, ast.If, ast.Try, ast.With, ast.AsyncWith, ast.Match)
+
+
+def _max_nesting_depth(node: ast.AST, current: int = 0) -> int:
+    best = current
+    for child in ast.iter_child_nodes(node):
+        nxt = current + 1 if isinstance(child, _NESTING_NODES) else current
+        best = max(best, _max_nesting_depth(child, nxt))
+    return best
+
+
+def _is_range_len_call(node: ast.AST) -> bool:
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "range"
+        and len(node.args) == 1
+        and isinstance(node.args[0], ast.Call)
+        and isinstance(node.args[0].func, ast.Name)
+        and node.args[0].func.id == "len"
+    )
+
+
+def _is_mutable_default(node: Optional[ast.AST]) -> bool:
+    if node is None:
+        return False
+    if isinstance(node, (ast.List, ast.Dict, ast.Set)):
+        return True
+    return (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id in {"list", "dict", "set"}
+    )
+
+
+def _is_append_stmt(stmt: ast.stmt) -> bool:
+    return (
+        isinstance(stmt, ast.Expr)
+        and isinstance(stmt.value, ast.Call)
+        and isinstance(stmt.value.func, ast.Attribute)
+        and stmt.value.func.attr == "append"
+        and len(stmt.value.args) == 1
+        and not stmt.value.keywords
+    )
+
+
+def _is_simple_append_loop(node: ast.For) -> bool:
+    if node.orelse or len(node.body) != 1:
+        return False
+    stmt = node.body[0]
+    if _is_append_stmt(stmt):
+        return True
+    return (
+        isinstance(stmt, ast.If)
+        and not stmt.orelse
+        and len(stmt.body) == 1
+        and _is_append_stmt(stmt.body[0])
+    )
+
+
+def _ast_principal_review(code: str) -> dict:
+    """Deterministic, sub-millisecond Python AST Principal Code Reviewer."""
+    raw_lines = code.splitlines()
+    code_lines = [ln for ln in raw_lines if ln.strip() and not ln.lstrip().startswith("#")]
+    line_count = len(code_lines)
+
+    try:
+        tree = ast.parse(code)
+    except SyntaxError as syn:
+        lineno = syn.lineno or 1
+        return {
+            "score": 70,
+            "headline": f"Fix the syntax issue on line {lineno} so Vaathiyaar can review full structure.",
+            "strengths": [
+                f"Submitted {max(1, line_count)} line(s) of code for review — catching syntax errors early saves debugging time."
+            ],
+            "suggestions": [
+                f"SyntaxError on line {lineno}: {syn.msg}. Check matching brackets, quotes, colons after def/if/for, and 4-space indentation."
+            ],
+            "pythonic_tip": "Read Python SyntaxErrors right-to-left: an unclosed parenthesis on the previous line often triggers the error on the line below.",
+        }
+
+    fn_nodes = [n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+    fn_count = len(fn_nodes)
+    max_depth = _max_nesting_depth(tree, 0)
+
+    has_docstrings = bool(ast.get_docstring(tree)) or any(bool(ast.get_docstring(fn)) for fn in fn_nodes)
+    has_type_hints = any(
+        isinstance(n, ast.AnnAssign)
+        or (
+            isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and (
+                n.returns is not None
+                or any(a.annotation is not None for a in n.args.posonlyargs + n.args.args + n.args.kwonlyargs)
+            )
+        )
+        for n in ast.walk(tree)
+    )
+    has_comprehensions = any(
+        isinstance(n, (ast.ListComp, ast.DictComp, ast.SetComp, ast.GeneratorExp))
+        for n in ast.walk(tree)
+    )
+    with_nodes = [n for n in ast.walk(tree) if isinstance(n, (ast.With, ast.AsyncWith))]
+    has_fstrings = any(isinstance(n, ast.JoinedStr) for n in ast.walk(tree))
+
+    # Track open() calls directly managed by a with statement
+    managed_open_calls = set()
+    for wn in with_nodes:
+        for item in wn.items:
+            ctx = item.context_expr
+            if isinstance(ctx, ast.Call) and isinstance(ctx.func, ast.Name) and ctx.func.id == "open":
+                managed_open_calls.add(id(ctx))
+
+    # Track string-typed variables for loop += detection
+    str_vars = set()
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Assign) and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name):
+            val = n.value
+            if (isinstance(val, ast.Constant) and isinstance(val.value, str)) or isinstance(val, ast.JoinedStr):
+                str_vars.add(n.targets[0].id)
+
+    suggestions: list[str] = []
+    anti_patterns = 0
+    tips_pool: list[str] = []
+
+    # 1. range(len(...))
+    if any(isinstance(n, ast.For) and _is_range_len_call(n.iter) for n in ast.walk(tree)):
+        anti_patterns += 1
+        suggestions.append(
+            "Replace `for i in range(len(seq)):` with `for i, item in enumerate(seq):` (or `zip()` for parallel sequences) to avoid manual index lookups."
+        )
+        tips_pool.append("Use `enumerate(items, start=0)` whenever you need both index and value in a loop.")
+
+    # 2. open(...) outside a with context manager
+    unmanaged_open = any(
+        isinstance(n, ast.Call)
+        and isinstance(n.func, ast.Name)
+        and n.func.id == "open"
+        and id(n) not in managed_open_calls
+        for n in ast.walk(tree)
+    )
+    if unmanaged_open:
+        anti_patterns += 1
+        suggestions.append(
+            "Wrap `open(...)` in a `with open(...) as f:` context manager so the file descriptor closes deterministically even if an exception is raised."
+        )
+        tips_pool.append("Context managers (`with open(..., encoding='utf-8') as f:`) guarantee cleanup without manual `.close()` calls.")
+
+    # 3. Bare except: or except Exception: pass
+    broad_silent_except = False
+    for n in ast.walk(tree):
+        if isinstance(n, ast.ExceptHandler):
+            if n.type is None:
+                broad_silent_except = True
+                break
+            if (
+                isinstance(n.type, ast.Name)
+                and n.type.id in {"Exception", "BaseException"}
+                and len(n.body) == 1
+                and isinstance(n.body[0], ast.Pass)
+            ):
+                broad_silent_except = True
+                break
+    if broad_silent_except:
+        anti_patterns += 1
+        suggestions.append(
+            "Avoid bare `except:` or silent `except Exception: pass` — catch specific exceptions (such as `ValueError` or `KeyError`) so real bugs and `KeyboardInterrupt` are never hidden."
+        )
+        tips_pool.append("Catch the narrowest exception you expect and handle or log context explicitly.")
+
+    # 4. Mutable default arguments
+    mutable_def_fns = [
+        fn.name
+        for fn in fn_nodes
+        if any(_is_mutable_default(d) for d in list(fn.args.defaults) + list(fn.args.kw_defaults))
+    ]
+    if mutable_def_fns:
+        anti_patterns += 1
+        suggestions.append(
+            f"Mutable default argument in `{mutable_def_fns[0]}(...)` is shared across every call — default to `None` and initialize inside the function (`items = [] if items is None else items`)."
+        )
+        tips_pool.append("Python evaluates default argument expressions once at `def` time, not on each function call.")
+
+    # 5. == None / != None / == True / == False
+    none_eq = False
+    bool_eq = False
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Compare):
+            for op, comp in zip(n.ops, n.comparators):
+                if isinstance(op, (ast.Eq, ast.NotEq)) and isinstance(comp, ast.Constant):
+                    if comp.value is None:
+                        none_eq = True
+                    elif comp.value is True or comp.value is False:
+                        bool_eq = True
+    if none_eq:
+        anti_patterns += 1
+        suggestions.append(
+            "Use `is None` / `is not None` instead of `== None` / `!= None` — `None` is a singleton and custom `__eq__` methods can override equality."
+        )
+        tips_pool.append("PEP 8 rule of thumb: always test singletons like `None` by identity (`is` / `is not`).")
+    if bool_eq:
+        anti_patterns += 1
+        suggestions.append(
+            "Prefer truthiness checks (`if flag:` / `if not flag:`) instead of `== True` or `== False` for cleaner conditional expressions."
+        )
+        tips_pool.append("Direct truthiness (`if items:` / `if is_ready:`) reads like plain English in Python.")
+
+    # 6. Repeated string += inside loops
+    str_concat_in_loop = False
+    for loop in (n for n in ast.walk(tree) if isinstance(n, (ast.For, ast.AsyncFor, ast.While))):
+        for sub in ast.walk(loop):
+            if isinstance(sub, ast.AugAssign) and isinstance(sub.op, ast.Add):
+                is_str_rhs = (isinstance(sub.value, ast.Constant) and isinstance(sub.value.value, str)) or isinstance(sub.value, ast.JoinedStr)
+                is_str_lhs = isinstance(sub.target, ast.Name) and sub.target.id in str_vars
+                if is_str_rhs or is_str_lhs:
+                    str_concat_in_loop = True
+                    break
+        if str_concat_in_loop:
+            break
+    if str_concat_in_loop:
+        anti_patterns += 1
+        suggestions.append(
+            "Repeated `+=` string concatenation inside a loop reallocates new strings on each step — collect chunks in a list and join once with `\"\".join(parts)`."
+        )
+        tips_pool.append("`\"\".join(parts)` allocates the output buffer once in O(n) total time and memory.")
+
+    # 7. Simple append-only for loop
+    if any(isinstance(n, ast.For) and _is_simple_append_loop(n) for n in ast.walk(tree)):
+        suggestions.append(
+            "This single-statement `.append(...)` loop could be expressed as a list comprehension `[expr for x in iterable]` — compare both and keep whichever reads clearer."
+        )
+        tips_pool.append("List comprehensions shine for one-step transforms + filters; keep regular `for` loops when side effects or complex branches are involved.")
+
+    # 8. Deep nesting
+    if max_depth >= 4:
+        anti_patterns += 1
+        suggestions.append(
+            f"Control-flow nesting reaches depth {max_depth} — use guard clauses (`if not valid: return` / `continue`) or extract a helper function to flatten indentation."
+        )
+        tips_pool.append("Flat is better than nested: guard clauses handle edge cases up front so the happy path stays unindented.")
+
+    # Concrete strengths
+    strengths: list[str] = []
+    if anti_patterns == 0:
+        strengths.append("Zero Pythonic anti-patterns flagged across AST inspection.")
+    if fn_count >= 1:
+        strengths.append(f"Clean modular structure with {fn_count} well-scoped function{'s' if fn_count != 1 else ''}.")
+    if has_comprehensions:
+        strengths.append("Idiomatic comprehension expression used cleanly for data transformation.")
+    if with_nodes and not unmanaged_open:
+        strengths.append("Deterministic resource management via `with` context manager.")
+    if has_type_hints:
+        strengths.append("Explicit type annotations clarify inputs and return contracts.")
+    if has_docstrings:
+        strengths.append("Clear docstring documentation explains intent right at the definition.")
+    if has_fstrings:
+        strengths.append("Readable string interpolation using modern f-strings.")
+    if max_depth <= 2 and line_count <= 35:
+        strengths.append(f"Concise, low-nesting control flow ({line_count} code line{'s' if line_count != 1 else ''}, max nesting depth {max_depth}).")
+    if not strengths:
+        strengths.append(f"Valid, parseable Python implementation across {line_count} line{'s' if line_count != 1 else ''}.")
+
+    if not suggestions:
+        if fn_count >= 1 and not has_type_hints:
+            suggestions.append("Consider adding parameter and return type annotations (e.g., `def solve(items: list[int]) -> int:`) to document contracts.")
+        elif fn_count >= 1 and not has_docstrings:
+            suggestions.append("Add a concise one-line docstring summarizing preconditions and return value.")
+        else:
+            suggestions.append("Test boundary inputs (empty collections, single-element inputs, negative/zero values) to harden edge-case behavior.")
+
+    # Score in [70, 100]
+    raw_score = 94 - (anti_patterns * 6) - (2 if len(suggestions) > anti_patterns and anti_patterns > 0 else 0)
+    if has_type_hints:
+        raw_score += 2
+    if has_comprehensions or (with_nodes and not unmanaged_open):
+        raw_score += 2
+    if has_docstrings:
+        raw_score += 1
+    if anti_patterns > 0:
+        raw_score = min(raw_score, 90)
+    score = max(70, min(100, raw_score))
+
+    if score >= 92:
+        headline = "Clean, Pythonic craft — crisp structure with strong idiomatic habits."
+    elif score >= 82:
+        headline = "Solid working code with clear opportunities to make it more Pythonic."
+    else:
+        headline = "Good foundation — tightening a few Python idioms will boost clarity and safety."
+
+    pythonic_tip = (
+        tips_pool[0]
+        if tips_pool
+        else "Favor small pure functions, `enumerate`/`zip` over manual indexing, and `with` blocks for external resources."
+    )
+
+    return {
+        "score": int(score),
+        "headline": headline,
+        "strengths": strengths[:4],
+        "suggestions": suggestions[:5],
+        "pythonic_tip": pythonic_tip,
+    }
+
+
+@router.post("/code-review")
+def code_review(request: CodeReviewRequest, caller: str = Depends(get_current_user_id)):
+    """Run Vaathiyaar's deterministic Python AST Principal Code Reviewer (<50ms)."""
+    if not request.code or not request.code.strip():
+        raise HTTPException(status_code=422, detail="Code must not be empty.")
+    if len(request.code) > 20000:
+        raise HTTPException(status_code=422, detail="Code exceeds 20,000 characters.")
+
+    review = _ast_principal_review(request.code)
+
+    # Optional fast LLM enrichment when explicitly opted in via VAATHIYAAR_ACTIVE_LLM=1;
+    # deterministic AST review guarantees sub-50ms responses offline and in CI.
+    if os.getenv("VAATHIYAAR_ACTIVE_LLM", "0") == "1":
+        try:
+            prompt = (
+                "Refine ONLY the headline and pythonic_tip (1 sentence each) for this Python code review JSON:\n"
+                f"Lesson: {request.lesson_id}\nPrompt: {request.challenge_prompt[:300]}\n"
+                f"Code:\n{request.code[:1500]}\nBase review: {json.dumps(review)}\n"
+                'Return JSON {"headline": "...", "pythonic_tip": "..."}'
+            )
+            raw = vaathiyaar_complete([{"role": "user", "content": prompt}], {"temperature": 0.3, "num_predict": 180})
+            parsed = json.loads(_extract_json_object(raw))
+            if isinstance(parsed.get("headline"), str) and parsed["headline"].strip():
+                review["headline"] = parsed["headline"].strip()[:200]
+            if isinstance(parsed.get("pythonic_tip"), str) and parsed["pythonic_tip"].strip():
+                review["pythonic_tip"] = parsed["pythonic_tip"].strip()[:280]
+        except Exception:
+            pass
+
+    try:
+        record_signal(
+            _get_db_path(),
+            user_id=caller,
+            signal_type="code_review",
+            topic=request.lesson_id or "code_review",
+            value={"score": review["score"], "suggestions_count": len(review["suggestions"])},
+        )
+    except Exception:
+        pass
+
+    return review
+
+
+_CAUSAL_MARKERS = (
+    "because", "when", "since", "so that", "instead", "therefore", "returns",
+    "stores", "memory", "reference", "mutat", "iterat", "calls", "passes",
+    "raises", "yields", "maps", "lookup", "time", "step", "prevent", "allow",
+)
+_EXAMPLE_MARKERS = (
+    "`", "for example", "e.g.", "such as", "suppose", "imagine", "def ",
+    "for ", "while ", "return ", "->", "==", "[", "{",
+)
+_teach_back_awarded_mem: set[tuple[str, str]] = set()
+_teach_back_lock = threading.Lock()
+
+
+def _evaluate_teach_back_rubric(concept: str, explanation: str, lesson: Optional[dict] = None) -> dict:
+    text = explanation.strip()
+    low = text.lower()
+    words = re.findall(r"[A-Za-z0-9_']+", low)
+    word_count = len(words)
+    distinct_words = len(set(words))
+    sentences = [s.strip() for s in re.split(r"[.!?;\n]+", text) if s.strip()]
+
+    concept_tokens = [
+        tok for tok in re.split(r"[^a-z0-9]+", concept.lower())
+        if len(tok) >= 3 and tok not in {"the", "and", "for", "with", "how", "python"}
+    ]
+    if lesson:
+        title_en = _resolve_en(lesson.get("title")).lower()
+        for tok in re.split(r"[^a-z0-9]+", title_en):
+            if len(tok) >= 4 and tok not in concept_tokens and len(concept_tokens) < 8:
+                concept_tokens.append(tok)
+
+    aligned_tokens = [t for t in concept_tokens if t[:4] in low]
+    has_alignment = bool(aligned_tokens) or not concept_tokens
+    causal_hits = [m for m in _CAUSAL_MARKERS if m in low]
+    has_example = any(m in low for m in _EXAMPLE_MARKERS)
+
+    # Guard against repetitive / filler input
+    if distinct_words < 5 or (word_count > 0 and distinct_words / word_count < 0.28):
+        score = 1
+    else:
+        score = 2
+        if word_count >= 12 and (has_alignment or len(sentences) >= 2):
+            score = 3
+        if word_count >= 18 and has_alignment and (causal_hits or has_example):
+            score = 4
+        if word_count >= 24 and has_alignment and causal_hits and has_example and len(sentences) >= 2:
+            score = 5
+
+    if score >= 5:
+        verdict = "mastered"
+    elif score >= 3:
+        verdict = "solid"
+    else:
+        verdict = "needs_detail"
+
+    clean_concept = concept.strip()
+    if score >= 5:
+        what_landed = (
+            f"You nailed both the 'why' ({causal_hits[0]}) and a concrete illustration of {clean_concept} — "
+            "that combination proves genuine mental-model mastery."
+        )
+        follow_up = (
+            f"Stretch question: what subtle edge case or performance trade-off would bite a teammate misusing {clean_concept} in production?"
+        )
+    elif score == 4:
+        if has_example:
+            what_landed = f"Your concrete example grounded {clean_concept} clearly and made the mechanics easy to follow."
+            follow_up = f"Under the hood, WHY does Python behave that way when {clean_concept} runs, and what happens on an empty or invalid input?"
+        else:
+            what_landed = f"You explained the core mechanism behind {clean_concept} clearly using cause-and-effect reasoning."
+            follow_up = f"Can you sketch a 2-line Python snippet showing {clean_concept} in action on a real value?"
+    elif score == 3:
+        what_landed = f"You captured the high-level purpose of {clean_concept} in your own words."
+        follow_up = f"Walk me one level deeper: what goes in, what happens step by step, and what concrete example shows {clean_concept}?"
+    else:
+        what_landed = f"Good start naming {clean_concept} — let's flesh out how it actually works."
+        follow_up = f"In 2–3 sentences, explain WHEN you would use {clean_concept}, WHY it helps, and give one tiny code example."
+
+    return {
+        "clarity_score": int(score),
+        "verdict": verdict,
+        "what_landed": what_landed,
+        "follow_up_question": follow_up,
+    }
+
+
+def _record_teach_back_and_award_xp(db_path: str, user_id: str, concept: str, lesson_id: str, eval_data: dict) -> int:
+    """Record `teach_back` signal in `learning_signals` (if present) and award 15 XP at most once per (user_id, concept.lower())."""
+    concept_key = concept.strip().lower()
+    mem_key = (f"{db_path}|{user_id}", concept_key)
+    xp_awarded = 0
+
+    conn = sqlite3.connect(db_path, timeout=10.0)
+    try:
+        conn.execute("PRAGMA busy_timeout = 10000")
+        tables = {
+            r[0]
+            for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'").fetchall()
+        }
+
+        already_awarded = False
+        with _teach_back_lock:
+            if mem_key in _teach_back_awarded_mem:
+                already_awarded = True
+
+        if not already_awarded and "learning_signals" in tables:
+            prior = conn.execute(
+                """SELECT value FROM learning_signals
+                   WHERE user_id = ? AND signal_type = 'teach_back' AND lower(topic) = ?""",
+                [str(user_id), concept_key],
+            ).fetchall()
+            for (val_raw,) in prior:
+                try:
+                    parsed = json.loads(val_raw or "{}")
+                    if isinstance(parsed, dict) and int(parsed.get("xp_awarded") or 0) > 0:
+                        already_awarded = True
+                        break
+                except Exception:
+                    continue
+
+        if not already_awarded:
+            # Ensure xp_awards ledger exists so uniqueness is enforced cleanly in SQLite
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS xp_awards ("
+                " id INTEGER PRIMARY KEY AUTOINCREMENT,"
+                " user_id TEXT NOT NULL, source TEXT NOT NULL, ref TEXT NOT NULL,"
+                " amount INTEGER NOT NULL,"
+                " created_at TEXT DEFAULT CURRENT_TIMESTAMP,"
+                " UNIQUE(user_id, source, ref))"
+            )
+            cur = conn.execute(
+                "INSERT OR IGNORE INTO xp_awards (user_id, source, ref, amount) VALUES (?, 'teach_back', ?, 15)",
+                [str(user_id), concept_key],
+            )
+            if cur.rowcount == 1:
+                xp_awarded = 15
+                if "users" in tables:
+                    conn.execute(
+                        "UPDATE users SET points = COALESCE(points, 0) + 15 WHERE id = ?",
+                        [user_id],
+                    )
+                with _teach_back_lock:
+                    _teach_back_awarded_mem.add(mem_key)
+
+        if "learning_signals" in tables:
+            signal_payload = {
+                "concept": concept.strip(),
+                "lesson_id": lesson_id or "",
+                "clarity_score": eval_data["clarity_score"],
+                "verdict": eval_data["verdict"],
+                "xp_awarded": xp_awarded,
+            }
+            conn.execute(
+                "INSERT INTO learning_signals (id, user_id, signal_type, topic, value, session_id) VALUES (?, ?, 'teach_back', ?, ?, NULL)",
+                [str(uuid.uuid4()), str(user_id), concept_key, json.dumps(signal_payload)],
+            )
+
+        conn.commit()
+    except Exception as exc:
+        print(f"[classroom.teach_back] signal/xp error: {exc}")
+    finally:
+        conn.close()
+
+    return xp_awarded
+
+
+@router.post("/teach-back")
+def teach_back(request: TeachBackRequest, caller: str = Depends(get_current_user_id)):
+    """Evaluate a learner's explanation in Protégé Mode and award 15 XP once per (user_id, concept.lower())."""
+    concept = (request.concept or "").strip()
+    if not concept or len(concept) > 200:
+        raise HTTPException(status_code=422, detail="A non-empty concept (max 200 chars) is required.")
+
+    explanation = (request.explanation or "").strip()
+    if len(explanation) < 10 or len(explanation) > 4000:
+        raise HTTPException(
+            status_code=422,
+            detail="Explanation must be between 10 and 4,000 characters.",
+        )
+
+    lesson = _load_lesson_from_dir(request.lesson_id) if request.lesson_id else None
+    result = _evaluate_teach_back_rubric(concept, explanation, lesson=lesson)
+
+    if os.getenv("VAATHIYAAR_ACTIVE_LLM", "0") == "1":
+        try:
+            prompt = (
+                f"Student taught back '{concept}':\n\"\"\"{explanation[:1200]}\"\"\"\n"
+                f"Base score: {result['clarity_score']}/5 ({result['verdict']}).\n"
+                'Return JSON {"what_landed": "1 encouraging sentence", "follow_up_question": "1 Socratic question"}'
+            )
+            raw = vaathiyaar_complete([{"role": "user", "content": prompt}], {"temperature": 0.4, "num_predict": 180})
+            parsed = json.loads(_extract_json_object(raw))
+            if isinstance(parsed.get("what_landed"), str) and parsed["what_landed"].strip():
+                result["what_landed"] = parsed["what_landed"].strip()[:320]
+            if isinstance(parsed.get("follow_up_question"), str) and parsed["follow_up_question"].strip():
+                result["follow_up_question"] = parsed["follow_up_question"].strip()[:320]
+        except Exception:
+            pass
+
+    xp_awarded = _record_teach_back_and_award_xp(
+        _get_db_path(), caller, concept, request.lesson_id, result
+    )
+    return {
+        **result,
+        "xp_awarded": xp_awarded,
     }

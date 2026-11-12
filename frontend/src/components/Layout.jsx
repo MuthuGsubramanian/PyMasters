@@ -22,12 +22,14 @@ import {
     Shield,
     Brain,
     Lightbulb,
-    MessageCircle
+    MessageCircle,
+    Search
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
 import GlobalSearch from './GlobalSearch';
+import NotificationBell from './NotificationBell';
 import DarkModeToggle from './DarkModeToggle';
 import ReleaseNotes from './ReleaseNotes';
 import VaathiyaarPanel from './VaathiyaarPanel';
@@ -37,6 +39,7 @@ import useI18n from '../hooks/useI18n';
 import useOrgBranding from '../hooks/useOrgBranding';
 import useAudience from '../hooks/useAudience';
 import { registerAndroidBackHandler } from '../lib/androidBack';
+import { getRankInfo, formatRankLabel } from '../utils/xpRank';
 
 export default function Layout() {
     const { user, logout, activeOrg } = useAuth();
@@ -157,7 +160,7 @@ export default function Layout() {
             { icon: Map, label: t('nav.evolution', 'Learning Paths'), path: '/dashboard/paths', desc: t('nav.evolution.desc', 'Structured roadmaps from school to pro') , group: 'learn' },
             { icon: Brain, label: t('nav.knowledge', 'Knowledge Map'), path: '/dashboard/knowledge', desc: t('nav.knowledge.desc', 'What you know, mapped live') , group: 'learn' },
             { icon: GraduationCap, label: t('nav.classroom', 'Classroom'), path: '/dashboard/classroom', desc: t('nav.classroom.desc', 'AI-guided lessons') , group: 'learn' },
-            { icon: Sparkles, label: t('nav.playground', 'Playground'), path: '/dashboard/playground', desc: t('nav.playground.desc', 'Free-form chat') , group: 'learn' },
+            { icon: Sparkles, label: t('nav.playground', 'Playground'), path: '/dashboard/playground', desc: t('nav.playground.desc', 'Run & visualize Python code') , group: 'learn' },
             { icon: Gamepad2, label: t('nav.play', 'Play'), path: '/dashboard/play', desc: t('nav.play.desc', 'Learn while you play') , group: 'practice' },
             { icon: TrendingUp, label: t('nav.trending', 'Trending'), path: '/dashboard/trending', desc: t('nav.trending.desc', 'AI & Python trends') , group: 'explore' },
             { icon: Swords, label: t('nav.challenges', 'Challenges'), path: '/dashboard/challenges', desc: t('nav.challenges.desc', 'Weekly coding battles') , group: 'practice' },
@@ -198,16 +201,13 @@ export default function Layout() {
     if (!user) return <Outlet />;
 
     const points = liveXp != null ? liveXp : (user.points || 0);
-    const rank = points > 1000 ? 'ARCHITECT' : points > 500 ? 'ENGINEER' : 'CADET';
-    // Game ranks suit individual learners; schools see levels, companies see neither.
-    const rankLabel = audience.mode === 'education' ? `Level ${{ CADET: 1, ENGINEER: 2, ARCHITECT: 3 }[rank]}` : rank;
+    const rankInfo = getRankInfo(points);
+    const rankLabel = formatRankLabel(points, audience.mode);
     const displayName = String(user.name || user.username || '');
-    const rankColors = {
-        CADET: { bg: 'bg-cyan-500/10', text: 'text-cyan-700 dark:text-cyan-300', border: 'border-cyan-500/30' },
-        ENGINEER: { bg: 'bg-purple-500/10', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-500/30' },
-        ARCHITECT: { bg: 'bg-amber-500/10', text: 'text-amber-700 dark:text-amber-300', border: 'border-amber-500/30' },
+    const openSearch = () => {
+        setSidebarOpen(false);
+        window.dispatchEvent(new CustomEvent('pymasters:open-search'));
     };
-    const rc = rankColors[rank];
 
     const mobileQuickTabs = [
         {
@@ -260,19 +260,18 @@ export default function Layout() {
                 >
                     {portalName}
                 </button>
-                <div className="flex items-center gap-1.5 shrink-0">
-                    <a
-                        href="https://t.me/boost/PyMasterscommunity"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="Telegram Support & Community"
-                        title="Telegram Support & Discussion Community"
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-sky-500/12 border border-sky-500/30 text-sky-700 dark:text-sky-300 hover:bg-sky-500/20 text-xs font-semibold transition-colors"
+                <div className="flex items-center gap-1 shrink-0">
+                    <button
+                        type="button"
+                        onClick={openSearch}
+                        aria-label="Search"
+                        title="Search (⌘K)"
+                        className="min-w-11 min-h-11 p-2 rounded-lg hover:bg-bg-elevated transition-colors flex items-center justify-center text-text-secondary"
                     >
-                        <MessageCircle size={12} aria-hidden="true" />
-                        <span>Support</span>
-                    </a>
-                    <span className="text-xs font-mono text-text-muted inline-flex items-center gap-1 px-2 py-1 rounded-full bg-bg-elevated border border-border-default" title="XP">
+                        <Search size={18} aria-hidden="true" />
+                    </button>
+                    <NotificationBell align="right" />
+                    <span className="hidden sm:inline-flex text-xs font-mono text-text-muted items-center gap-1 px-2 py-1 rounded-full bg-bg-elevated border border-border-default" title="XP">
                         <Trophy size={12} className="text-amber-500" aria-hidden="true" />
                         {points}
                     </span>
@@ -317,12 +316,15 @@ export default function Layout() {
                             </div>
                         )}
                     </button>
-                    <span className={clsx("flex flex-col leading-tight min-w-0", collapsed && "lg:hidden")}>
+                    <span className={clsx("flex flex-col leading-tight min-w-0 flex-1", collapsed && "lg:hidden")}>
                         <span className="font-display font-bold text-base text-text-primary tracking-tight truncate">{portalName}</span>
                         {isCustomBrand && branding?.show_powered_by !== false && (
                             <span className="text-xs text-text-muted tracking-wide">Powered by PyMasters</span>
                         )}
                     </span>
+                    <div className={clsx("hidden lg:block shrink-0", collapsed && "lg:hidden")}>
+                        <NotificationBell align="left" />
+                    </div>
                 </div>
 
                 {/* Compact User Row */}
@@ -340,7 +342,7 @@ export default function Layout() {
                             <div className="text-text-primary font-bold text-sm truncate" title={user.username}>{displayName}</div>
                         </div>
                         {audience.mode !== 'professional' && (
-                            <div className={clsx("inline-flex items-center gap-1 text-xs uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full border", rc.bg, rc.text, rc.border, collapsed && "lg:hidden")}>
+                            <div className={clsx("inline-flex items-center gap-1 text-xs tracking-wide font-bold px-2 py-0.5 rounded-full border", rankInfo.badgeBg, rankInfo.badgeText, rankInfo.badgeBorder, collapsed && "lg:hidden")}>
                                 <Zap size={10} aria-hidden="true" />
                                 {rankLabel}
                             </div>
@@ -365,6 +367,19 @@ export default function Layout() {
                             Trial · {access.trial_days_left} day{access.trial_days_left === 1 ? '' : 's'} left
                         </button>
                     )}
+                    <button
+                        type="button"
+                        onClick={openSearch}
+                        aria-label="Search · ⌘K"
+                        title="Search pages, topics, settings (⌘K)"
+                        className={clsx(
+                            "mt-2.5 w-full min-h-11 flex items-center gap-2 rounded-xl border border-border-default bg-bg-elevated/70 hover:bg-bg-elevated hover:border-border-strong text-text-muted hover:text-text-primary text-xs font-semibold transition-colors",
+                            collapsed ? "px-3 lg:px-0 lg:justify-center" : "px-3"
+                        )}
+                    >
+                        <Search size={15} aria-hidden="true" className="shrink-0 text-accent-primary" />
+                        <span className={clsx("flex-1 text-left truncate", collapsed && "lg:hidden")}>Search · ⌘K</span>
+                    </button>
                 </div>
 
                 {/* Navigation */}
@@ -427,35 +442,26 @@ export default function Layout() {
                         href="https://t.me/boost/PyMasterscommunity"
                         target="_blank"
                         rel="noopener noreferrer"
-                        title="Telegram Support & Discussion Community"
+                        title="Telegram Community & Support"
                         className={clsx(
                             "w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-500/12 hover:bg-sky-500/20 border border-sky-500/30 transition-colors",
                             collapsed && "lg:px-0"
                         )}
                     >
                         <MessageCircle size={13} aria-hidden="true" className="shrink-0" />
-                        <span className={clsx("truncate", collapsed && "lg:hidden")}>Telegram Support &amp; Discuss</span>
+                        <span className={clsx("truncate", collapsed && "lg:hidden")}>Telegram Community</span>
                     </a>
                     <div className={clsx("flex items-center gap-2", collapsed && "lg:flex-col")}>
                         <button
                             onClick={logout}
                             title="Sign Out"
-                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold text-text-muted hover:text-red-500 hover:bg-red-50 transition-all duration-200 border border-transparent hover:border-red-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
+                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold text-text-muted hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all duration-200 border border-transparent hover:border-red-200 dark:hover:border-red-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
                         >
                             <LogOut size={13} /> <span className={clsx(collapsed && "lg:hidden")}>Sign Out</span>
                         </button>
                         <DarkModeToggle />
                     </div>
                     <div className={clsx("flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1", collapsed && "lg:hidden")}>
-                        <a
-                            href="https://t.me/boost/PyMasterscommunity"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-semibold text-sky-700 dark:text-sky-300 hover:underline transition-colors"
-                        >
-                            Support
-                        </a>
-                        <span className="text-text-muted text-xs" aria-hidden="true">&middot;</span>
                         <Link to="/terms" className="text-xs text-text-muted hover:text-accent-primary transition-colors">Terms</Link>
                         <span className="text-text-muted text-xs" aria-hidden="true">&middot;</span>
                         <Link to="/privacy" className="text-xs text-text-muted hover:text-accent-primary transition-colors">Privacy</Link>

@@ -87,15 +87,21 @@ def send_verification(user_id: str) -> bool:
     finally:
         conn.close()
     try:
-        from notifications.email_sender import send_email, APP_BASE_URL
+        from notifications.email_sender import send_email, APP_BASE_URL, _brand_header
         link = f"{APP_BASE_URL}/verify-email/{token}"
         text = (f"Vanakkam {name}! Please confirm this is your email address for PyMasters: {link}\n"
                 f"The link is valid for {TOKEN_HOURS} hours. If you didn't sign up, ignore this email.")
-        html = (f"<div style=\"font-family:-apple-system,sans-serif;max-width:500px;margin:0 auto;padding:20px\">"
-                f"<h2 style=\"color:#7c3aed\">PyMasters</h2><p style=\"color:#334155\">Vanakkam {_esc(name)}! Please confirm "
-                f"this is your email address.</p><a href=\"{link}\" style=\"display:inline-block;background:#7c3aed;"
-                f"color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold\">Confirm my email</a>"
-                f"<p style=\"color:#64748b;font-size:13px\">Valid for {TOKEN_HOURS} hours. Didn't sign up? Ignore this email.</p></div>")
+        html = (
+            f'<div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;max-width:520px;margin:0 auto;padding:20px;">'
+            f'{_brand_header("Email verification")}'
+            f'<div style="background:#ffffff;padding:26px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;">'
+            f'<p style="color:#0f172a;font-size:16px;margin-top:0;">Vanakkam {_esc(name)}!</p>'
+            f'<p style="color:#334155;">Please confirm this is your email address for PyMasters.</p>'
+            f'<a href="{link}" style="display:inline-block;background:linear-gradient(135deg,#0f256e,#1d4ed8);'
+            f'color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700;margin-top:12px;border:1px solid #e0b95e;">Confirm my email</a>'
+            f'<p style="color:#64748b;font-size:12px;margin-top:18px;">Valid for {TOKEN_HOURS} hours. Didn\'t sign up? Ignore this email.</p>'
+            f'</div></div>'
+        )
         threading.Thread(target=send_email, args=(to_email, "Confirm your PyMasters email", text, html), daemon=True).start()
         return True
     except Exception as e:

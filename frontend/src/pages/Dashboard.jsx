@@ -35,6 +35,7 @@ import ReviewQueue from '../components/ReviewQueue';
 import WarmUp from '../components/WarmUp';
 import MisconceptionRadar from '../components/MisconceptionRadar';
 import useAudience from '../hooks/useAudience';
+import { rankProgressPct } from '../utils/xpRank';
 import { Badge, Card, Button } from '../components/ui';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -254,28 +255,7 @@ function StatCard({ label, value, suffix, icon, accent, delay, children }) {
     );
 }
 
-// Progress (0–100) toward the NEXT RANK, using the canonical rank tiers from
-// the Profile page's getRankInfo: Novice 0–100, Apprentice 100–500,
-// Intermediate 500–1000, Advanced 1000–2000, Expert 2000–5000, Master 5000+.
-// The dashboard "Learning Progress" ring is labelled "to next rank" but used to
-// compute `totalXp % 100`, which only matches true rank progress below 100 XP
-// and reads a misleading 0% for e.g. an Apprentice at 300 XP (really 50% of the
-// way to 500). Returns the real percentage within the current band; Master
-// (no higher rank) is a full 100%. For xp < 100 this equals the old value, so
-// brand-new/Novice users are unchanged.
-function rankProgressPct(xp) {
-    const bands = [
-        { floor: 5000, next: null },
-        { floor: 2000, next: 5000 },
-        { floor: 1000, next: 2000 },
-        { floor: 500,  next: 1000 },
-        { floor: 100,  next: 500 },
-        { floor: 0,    next: 100 },
-    ];
-    const b = bands.find((band) => xp >= band.floor) || bands[bands.length - 1];
-    if (b.next === null) return 100;
-    return Math.min(100, Math.max(0, Math.round(((xp - b.floor) / (b.next - b.floor)) * 100)));
-}
+// Progress (0–100) toward the NEXT RANK uses unified bands from utils/xpRank.js.
 
 // ─── Overview ──────────────────────────────────────────────────────────────
 export function Overview() {

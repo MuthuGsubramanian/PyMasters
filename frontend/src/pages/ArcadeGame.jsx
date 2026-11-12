@@ -19,6 +19,11 @@ export default function ArcadeGame() {
 
   // The floating tutor launcher would sit on the canvas controls; hide it for the run.
   useEffect(() => {
+    const arcadeTitle = ARCADE_TITLES[gameId];
+    document.title = arcadeTitle ? `${arcadeTitle} — PyMasters` : 'Arcade — PyMasters';
+  }, [gameId]);
+
+  useEffect(() => {
     setVaathiyaarHidden?.(true);
     return () => setVaathiyaarHidden?.(false);
   }, [setVaathiyaarHidden]);

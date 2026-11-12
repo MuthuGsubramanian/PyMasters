@@ -12,6 +12,7 @@ import PodcastPlayer from '../components/PodcastPlayer';
 import { safeErrorMsg } from '../utils/errorUtils';
 import VaathiyaarMessage from '../components/VaathiyaarMessage';
 import RunnableCode from '../components/RunnableCode';
+import VaathiyaarGlyph from '../assets/vaathiyaar-glyph.svg';
 import {
     BookOpen, ChevronRight, Play, RotateCcw,
     Sparkles, Trophy, ArrowLeft, Zap, Star, Code2, Brain, Layers, MessageSquare,
@@ -472,25 +473,25 @@ const PROFILE_WELCOME = {
         title: 'Your Fun & Automation Lab',
         subtitle: 'Build cool scripts, automate boring stuff, and have fun with Python!',
         icon: <Gamepad2 size={14} />,
-        color: 'border-orange-200 bg-orange-50 text-orange-600',
+        color: 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-300',
     },
     ai_ml: {
         title: 'Your AI & Data Science Path',
         subtitle: 'Master the tools that power intelligent machines and data analysis.',
         icon: <Bot size={14} />,
-        color: 'border-purple-200 bg-purple-50 text-purple-600',
+        color: 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-500/30 dark:bg-purple-500/10 dark:text-purple-300',
     },
     career: {
         title: 'Your Career Accelerator',
         subtitle: 'Build a rock-solid Python foundation for your professional growth.',
         icon: <Zap size={14} />,
-        color: 'border-cyan-200 bg-cyan-50 text-cyan-600',
+        color: 'border-cyan-200 bg-cyan-50 text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-300',
     },
     general: {
         title: 'Your Learning Journey',
         subtitle: 'Explore Python from school foundations to college DSA and production AI engineering.',
         icon: <BookOpen size={14} />,
-        color: 'border-purple-200 bg-purple-50 text-purple-600',
+        color: 'border-purple-200 bg-purple-50 text-purple-700 dark:border-purple-500/30 dark:bg-purple-500/10 dark:text-purple-300',
     },
 };
 
@@ -1151,7 +1152,9 @@ export function IntroPhase({ lesson, language, onComplete, headerMeta = null }) 
             <div className="rounded-2xl bg-gradient-to-b from-[#0f172a] to-[#1a2236] px-6 py-5 shadow-lg">
                 <div className="flex items-start gap-3">
                     <div className="flex-shrink-0">
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-base shadow-md">{'\u{1F9D1}\u200D\u{1F3EB}'}</div>
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-base shadow-md">
+                            <img src={VaathiyaarGlyph} alt="" className="w-5 h-5" />
+                        </div>
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
@@ -1484,7 +1487,7 @@ export function PracticePhase({
             {/* Vaathiyaar instruction panel */}
             <div className="panel rounded-2xl p-4 border-l-4 border-l-purple-400 flex items-start gap-3">
                 <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-lg select-none shadow-lg shadow-purple-500/20">
-                    {'\u{1F9D1}\u200D\u{1F3EB}'}
+                    <img src={VaathiyaarGlyph} alt="" className="w-5 h-5" />
                 </div>
                 <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -1665,8 +1668,36 @@ function RelatedLessons({ lessonId, language, onOpen }) {
     );
 }
 
-export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0, lessonId, onOpenRelated, nextLesson = null, onNext, nextChallenge = null, onNextChallenge, submittedCode = '', userId, traceable = true }) {
+export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attemptCount = 0, lessonId, challengePrompt = '', onOpenRelated, nextLesson = null, onNext, nextChallenge = null, onNextChallenge, submittedCode = '', userId, traceable = true }) {
     const { trace, loading: tracing, error: traceError, visualize, fetchHeap, close: closeTrace } = useCodeTrace(userId);
+    const [reviewLoading, setReviewLoading] = useState(false);
+    const [codeReview, setCodeReview] = useState(null);
+    const [reviewError, setReviewError] = useState('');
+
+    useEffect(() => {
+        setCodeReview(null);
+        setReviewError('');
+        setReviewLoading(false);
+    }, [lessonId, submittedCode]);
+
+    const handleRequestCodeReview = async () => {
+        if (!submittedCode?.trim() || reviewLoading) return;
+        setReviewLoading(true);
+        setReviewError('');
+        try {
+            const res = await api.post('/classroom/code-review', {
+                lesson_id: lessonId || '',
+                code: submittedCode,
+                challenge_prompt: challengePrompt || '',
+            });
+            setCodeReview(res.data || null);
+        } catch (err) {
+            setReviewError(safeErrorMsg(err, 'Could not generate code review right now.'));
+        } finally {
+            setReviewLoading(false);
+        }
+    };
+
     const success = evalResult?.passed ?? evalResult?.success ?? false;
     // Backend flags `struggling` after repeated failures; fall back to a local
     // count so the supportive UI still appears even without the signal.
@@ -1698,19 +1729,19 @@ export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attem
                 transition={{ duration: 0.5, ease: 'backOut' }}
                 className={`rounded-2xl overflow-hidden border ${
                     success
-                        ? 'border-green-200 shadow-lg shadow-green-100/30'
+                        ? 'border-green-200 dark:border-emerald-500/30 shadow-lg shadow-green-100/30 dark:shadow-none'
                         : struggling
-                        ? 'border-purple-200 shadow-lg shadow-purple-100/30'
-                        : 'border-red-200 shadow-lg shadow-red-100/30'
+                        ? 'border-purple-200 dark:border-purple-500/30 shadow-lg shadow-purple-100/30 dark:shadow-none'
+                        : 'border-red-200 dark:border-red-500/30 shadow-lg shadow-red-100/30 dark:shadow-none'
                 }`}
             >
                 {/* Header: success / supportive struggle help / retry */}
                 <div className={`px-6 py-4 flex items-center gap-3 ${
                     success
-                        ? 'bg-gradient-to-r from-green-50 to-emerald-50'
+                        ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-emerald-950/50 dark:to-teal-950/40'
                         : struggling
-                        ? 'bg-gradient-to-r from-purple-50 to-indigo-50'
-                        : 'bg-gradient-to-r from-red-50 to-orange-50'
+                        ? 'bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/50 dark:to-indigo-950/40'
+                        : 'bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/50 dark:to-orange-950/40'
                 }`}>
                     {success ? (
                         <>
@@ -1718,8 +1749,8 @@ export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attem
                                 <Trophy size={20} />
                             </div>
                             <div>
-                                <p className="font-bold text-green-700 font-display">Excellent Work!</p>
-                                <p className="text-xs text-green-600/70">You nailed this challenge</p>
+                                <p className="font-bold text-green-700 dark:text-emerald-300 font-display">Excellent Work!</p>
+                                <p className="text-xs text-green-600/80 dark:text-emerald-200/80">You nailed this challenge</p>
                             </div>
                             {/* XP reward pill — the backend awards xp_earned on the FIRST
                                 successful completion of a lesson and returns it on /evaluate.
@@ -1727,9 +1758,9 @@ export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attem
                                 Guarded on > 0 so re-takes (xp_earned === 0) and any response
                                 without the field show nothing (no layout/behavior change). */}
                             {evalResult?.xp_earned > 0 && (
-                                <div className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 border border-amber-300">
+                                <div className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/30">
                                     <Zap size={12} className="text-amber-500 fill-amber-400" />
-                                    <span className="text-xs font-bold text-amber-700">+{evalResult.xp_earned} XP</span>
+                                    <span className="text-xs font-bold text-amber-700 dark:text-amber-300">+{evalResult.xp_earned} XP</span>
                                 </div>
                             )}
                             <div className={`flex items-center gap-1 ${evalResult?.xp_earned > 0 ? '' : 'ml-auto'}`}>
@@ -1751,8 +1782,8 @@ export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attem
                                 <Brain size={20} />
                             </div>
                             <div>
-                                <p className="font-bold text-purple-700 font-display">Vaathiyaar is Here to Help</p>
-                                <p className="text-xs text-purple-600/70">Great effort — let's work through this together</p>
+                                <p className="font-bold text-purple-700 dark:text-purple-300 font-display">Vaathiyaar is Here to Help</p>
+                                <p className="text-xs text-purple-600/80 dark:text-purple-200/80">Great effort — let's work through this together</p>
                             </div>
                             <div className="ml-auto">
                                 <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}>
@@ -1766,8 +1797,8 @@ export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attem
                                 <RotateCcw size={20} />
                             </div>
                             <div>
-                                <p className="font-bold text-red-700 font-display">Not Quite Right</p>
-                                <p className="text-xs text-red-600/70">Review the feedback and try again</p>
+                                <p className="font-bold text-red-700 dark:text-red-300 font-display">Not Quite Right</p>
+                                <p className="text-xs text-red-600/80 dark:text-red-200/80">Review the feedback and try again</p>
                             </div>
                         </>
                     )}
@@ -1777,7 +1808,7 @@ export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attem
                 <div className="panel border-0 rounded-none p-6 space-y-4">
                     <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-sm select-none shadow-md">
-                            {'\u{1F9D1}\u200D\u{1F3EB}'}
+                            <img src={VaathiyaarGlyph} alt="" className="w-5 h-5" />
                         </div>
                         <div className="text-text-secondary leading-relaxed flex-1">
                             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
@@ -1790,6 +1821,96 @@ export function FeedbackPhase({ evalResult, language, onContinue, onRetry, attem
                         <pre className="surface-code p-3 rounded-lg font-mono text-xs whitespace-pre-wrap max-h-32 overflow-auto border border-border-default">
                             {evalResult.output}
                         </pre>
+                    )}
+
+                    {/* Principal Code Review (Active Learning) */}
+                    {success && submittedCode?.trim() && (
+                        <div className="space-y-3 pt-1">
+                            {!codeReview && (
+                                <button
+                                    type="button"
+                                    onClick={handleRequestCodeReview}
+                                    disabled={reviewLoading}
+                                    className="inline-flex items-center gap-2 min-h-11 px-4 py-2 rounded-xl border border-border-strong bg-bg-elevated hover:bg-accent-subtle hover:border-accent-primary text-xs sm:text-sm font-bold text-text-primary transition-colors disabled:opacity-60"
+                                >
+                                    {reviewLoading ? (
+                                        <>
+                                            <Loader2 size={15} className="animate-spin text-accent-primary" />
+                                            <span>Reviewing AST &amp; Python idioms…</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles size={15} className="text-accent-primary" />
+                                            <span>Get Vaathiyaar Code Review</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
+
+                            {reviewError && (
+                                <p role="alert" className="text-xs text-red-600 dark:text-red-400">
+                                    {reviewError}
+                                </p>
+                            )}
+
+                            {codeReview && (
+                                <div className="rounded-2xl border border-border-strong bg-bg-elevated p-5 space-y-4">
+                                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                                        <div className="space-y-1">
+                                            <div className="text-xs font-bold uppercase tracking-wider text-accent-primary flex items-center gap-1.5">
+                                                <Code2 size={14} />
+                                                <span>Principal Python Code Review</span>
+                                            </div>
+                                            <p className="text-sm font-bold text-text-primary">
+                                                {codeReview.headline}
+                                            </p>
+                                        </div>
+                                        <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold tabular-nums">
+                                            Score: {codeReview.score}/100
+                                        </span>
+                                    </div>
+
+                                    {Array.isArray(codeReview.strengths) && codeReview.strengths.length > 0 && (
+                                        <div className="space-y-1.5">
+                                            <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                                                Strengths
+                                            </div>
+                                            <ul className="space-y-1 text-xs sm:text-sm text-text-secondary">
+                                                {codeReview.strengths.map((s, idx) => (
+                                                    <li key={idx} className="flex items-start gap-2">
+                                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                                        <span>{s}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+
+                                    {Array.isArray(codeReview.suggestions) && codeReview.suggestions.length > 0 && (
+                                        <div className="space-y-1.5">
+                                            <div className="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                                                Idiom Suggestions
+                                            </div>
+                                            <ul className="space-y-1 text-xs sm:text-sm text-text-secondary">
+                                                {codeReview.suggestions.map((s, idx) => (
+                                                    <li key={idx} className="flex items-start gap-2">
+                                                        <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                                        <span>{s}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+
+                                    {codeReview.pythonic_tip && (
+                                        <div className="rounded-xl border border-border-default bg-bg-surface p-3.5 text-xs sm:text-sm text-text-secondary">
+                                            <span className="font-bold text-accent-primary">Pythonic Tip: </span>
+                                            {codeReview.pythonic_tip}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     )}
 
                     {success && nextLesson && (
@@ -2694,6 +2815,11 @@ export default function Classroom() {
                                 nextChallenge={challengeIndex + 1 < (currentLesson?.practice_challenges?.length || 0) ? challengeIndex + 1 : null}
                                 onNextChallenge={() => handleSelectChallenge(challengeIndex + 1)}
                                 lessonId={currentLesson?.id}
+                                challengePrompt={resolveText(
+                                    (currentLesson?.practice_challenges?.[challengeIndex] || currentLesson?.challenge)?.prompt ||
+                                        (currentLesson?.practice_challenges?.[challengeIndex] || currentLesson?.challenge)?.instruction,
+                                    language
+                                )}
                                 onOpenRelated={handleSelectLesson}
                                 submittedCode={code}
                                 traceable={!(currentLesson?.sandbox_files && Object.keys(currentLesson.sandbox_files).length > 0)}
@@ -2727,7 +2853,9 @@ export default function Classroom() {
                         <div className="fixed bottom-36 lg:bottom-24 right-4 sm:right-6 z-50 w-[min(94vw,400px)] max-h-[65vh] lg:max-h-[70vh] flex flex-col pointer-events-auto rounded-2xl border border-border-default bg-bg-surface backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.28)] overflow-hidden">
                             <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border-default flex-shrink-0">
                                 <div className="flex items-center gap-2 min-w-0">
-                                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-xs flex-shrink-0">{'\u{1F9D1}‍\u{1F3EB}'}</div>
+                                    <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center text-xs flex-shrink-0">
+                                        <img src={VaathiyaarGlyph} alt="" className="w-4 h-4" />
+                                    </div>
                                     <span className="text-sm font-bold text-text-primary truncate">Ask Vaathiyaar</span>
                                 </div>
                                 <button onClick={() => setChatOpen(false)} className="p-1.5 rounded-lg hover:bg-bg-elevated text-text-muted hover:text-text-secondary flex-shrink-0" aria-label="Close chat">

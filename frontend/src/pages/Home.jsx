@@ -13,15 +13,17 @@ import SupportModal from '../components/SupportModal';
 import HowALessonWorks from '../components/landing/HowALessonWorks';
 import { isAndroidWebView } from '../lib/playBilling';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
+import VaathiyaarGlyph from '../assets/vaathiyaar-glyph.svg';
 // Official OpenEDG partnership badge (edube.org partner resources), used unaltered per the Python Institute
 // brand guideline: never recoloured or stretched, always on a light panel with clear space around it.
 import OpenEdgEducationBadge from '../assets/openedg-education-partner.png';
 
 const PI_CERT_PATH = 'https://pythoninstitute.org/certification-tracks';
-const PLAY_STORE_TESTING_URL = 'https://play.google.com/apps/testing/net.pymasters.app';
 const PLAY_STORE_LISTING_URL = 'https://play.google.com/store/apps/details?id=net.pymasters.app';
 const ANDROID_APK_DOWNLOAD_URL = 'https://pymasters-mobile-977064896391.us-central1.run.app/download/PyMasters.apk';
 const TELEGRAM_SUPPORT_URL = 'https://t.me/boost/PyMasterscommunity';
+const YOUTUBE_URL = 'https://www.youtube.com/@Py-Masters';
+const LINKEDIN_URL = 'https://www.linkedin.com/company/113061910/';
 import PymastersHero from '../assets/pymasters-hero.svg';
 
 /* ─── Tracks ─────────────────────────────────────────────────────────────── */
@@ -418,7 +420,7 @@ export default function Home() {
                         {!inAndroidApp && (
                             <>
                                 <a
-                                    href={PLAY_STORE_TESTING_URL}
+                                    href={PLAY_STORE_LISTING_URL}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-4 py-2 font-semibold text-emerald-200 hover:bg-emerald-500/20 hover:border-emerald-300/60 transition-colors"
@@ -490,10 +492,7 @@ export default function Home() {
                             {stats.tracks} Tracks · {roundedDown(stats.lessons)} Lessons
                         </span>
                         <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">
-                            Your complete{' '}
-                            <span>
-                                learning path
-                            </span>
+                            Your complete learning path
                         </h2>
                         <p className="text-slate-400 max-w-2xl mx-auto leading-relaxed">
                             From your first line of Python to training transformers — and how to build it all with AI, responsibly. Every step is guided.
@@ -521,10 +520,7 @@ export default function Home() {
                                     Meet Your Teacher
                                 </span>
                                 <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-5">
-                                    Say hello to{' '}
-                                    <span>
-                                        Vaathiyaar
-                                    </span>
+                                    Say hello to Vaathiyaar
                                 </h2>
                                 <p className="text-slate-300/90 leading-relaxed mb-7">
                                     <span className="italic">Vaathiyaar</span> means <span className="italic">teacher</span> in Tamil. Our AI isn't a chatbot —
@@ -551,7 +547,7 @@ export default function Home() {
                                 <div className="relative rounded-2xl bg-[#0d1117] border border-white/10 overflow-hidden shadow-2xl">
                                     <div className="h-11 border-b border-white/10 flex items-center px-4 gap-2.5 bg-slate-800/50">
                                         <div className="w-6 h-6 rounded-md flex items-center justify-center bg-gradient-to-br from-purple-600 to-cyan-500">
-                                            <img src={PymastersGlyph} alt="" className="w-3.5 h-3.5" />
+                                            <img src={VaathiyaarGlyph} alt="" className="w-3.5 h-3.5" />
                                         </div>
                                         <span className="text-white text-sm font-semibold font-display">Vaathiyaar</span>
                                         <span className="ml-auto text-xs text-emerald-400 flex items-center gap-1.5">
@@ -562,7 +558,7 @@ export default function Home() {
                                     <div className="p-5 space-y-4 text-sm">
                                         <div className="flex gap-2.5">
                                             <div className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-cyan-500">
-                                                <img src={PymastersGlyph} alt="" className="w-4 h-4" />
+                                                <img src={VaathiyaarGlyph} alt="" className="w-4 h-4" />
                                             </div>
                                             <div className="bg-white/[0.04] border border-white/10 rounded-2xl rounded-tl-sm px-4 py-2.5 text-slate-200 max-w-[80%] leading-relaxed">
                                                 Vanakkam! What concept would you like to master today?
@@ -575,7 +571,7 @@ export default function Home() {
                                         </div>
                                         <div className="flex gap-2.5">
                                             <div className="w-7 h-7 shrink-0 rounded-full flex items-center justify-center bg-gradient-to-br from-purple-600 to-cyan-500">
-                                                <img src={PymastersGlyph} alt="" className="w-4 h-4" />
+                                                <img src={VaathiyaarGlyph} alt="" className="w-4 h-4" />
                                             </div>
                                             <div className="bg-white/[0.04] border border-white/10 rounded-2xl rounded-tl-sm px-4 py-2.5 text-slate-200 max-w-[80%] leading-relaxed">
                                                 A decorator is a function that wraps another — adding behavior without changing the original code...
@@ -603,10 +599,7 @@ export default function Home() {
                                     For Schools, Universities & Enterprise
                                 </span>
                                 <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display leading-tight mb-5">
-                                    Bring PyMasters to your{' '}
-                                    <span>
-                                        organization
-                                    </span>
+                                    Bring PyMasters to your organization
                                 </h2>
                                 <p className="text-slate-300/90 leading-relaxed mb-6">
                                     Roll out PyMasters to your students or team. Manage cohorts, track mastery,
@@ -687,10 +680,7 @@ export default function Home() {
                             For Students
                         </span>
                         <h2 className="text-white text-2xl sm:text-3xl font-bold font-display leading-tight mb-3">
-                            Are you a student?{' '}
-                            <span>
-                                It's free.
-                            </span>
+                            Are you a student? It's free.
                         </h2>
                         <p className="text-slate-300/90 text-sm leading-relaxed mb-6">
                             Upload your <span className="text-white font-semibold">School ID (Class 6–12) or College / University ID</span> and get <span className="text-white font-semibold">3 months of full access, completely free</span> —
@@ -712,10 +702,7 @@ export default function Home() {
                             Live Tutoring
                         </span>
                         <h2 className="text-white text-2xl sm:text-3xl font-bold font-display leading-tight mb-3">
-                            Prefer a{' '}
-                            <span>
-                                human touch?
-                            </span>
+                            Prefer a human touch?
                         </h2>
                         <p className="text-slate-300/90 text-sm leading-relaxed mb-6">
                             Book a <span className="text-white font-semibold">live 1-on-1 session</span> with a PyMasters tutor —
@@ -769,10 +756,7 @@ export default function Home() {
                         style={{ filter: 'drop-shadow(0 0 16px rgba(168,85,247,0.7))' }}
                     />
                     <h2 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold font-display mb-4">
-                        Ready to start your{' '}
-                        <span>
-                            Python journey?
-                        </span>
+                        Ready to start your Python journey?
                     </h2>
                     <p className="text-slate-300/90 mb-8 leading-relaxed">
                         With Vaathiyaar by your side. Free to start.
@@ -811,7 +795,7 @@ export default function Home() {
                             </div>
                             <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto shrink-0">
                                 <a
-                                    href={PLAY_STORE_TESTING_URL}
+                                    href={PLAY_STORE_LISTING_URL}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 transition-colors"
@@ -895,9 +879,13 @@ export default function Home() {
                         </span>
                     </div>
                     <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-slate-400" aria-label="Footer">
+                        <Link to="/guides" className="hover:text-cyan-400 transition-colors">Python Guides</Link>
+                        <Link to="/explains" className="hover:text-cyan-400 transition-colors">Visual Essays</Link>
                         {!inAndroidApp && (
                             <a href={PLAY_STORE_LISTING_URL} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-300 transition-colors">Android App</a>
                         )}
+                        <a href={YOUTUBE_URL} target="_blank" rel="noopener noreferrer" className="hover:text-red-400 transition-colors">YouTube</a>
+                        <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer" className="hover:text-sky-300 transition-colors">LinkedIn</a>
                         <a href={TELEGRAM_SUPPORT_URL} target="_blank" rel="noopener noreferrer" className="hover:text-sky-300 transition-colors">Telegram Support</a>
                         <Link to="/pricing" className="hover:text-cyan-400 transition-colors">Pricing</Link>
                         <Link to="/terms" className="hover:text-cyan-400 transition-colors">Terms</Link>

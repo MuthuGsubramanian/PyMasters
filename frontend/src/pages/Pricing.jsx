@@ -141,7 +141,7 @@ export default function Pricing() {
 
   async function handleAndroidTierAction(planKey) {
     if (!user?.id) {
-      navigate('/login');
+      navigate('/login?mode=signup&next=%2Fdashboard%2Fupgrade');
       return;
     }
     setBillingError('');
@@ -279,7 +279,7 @@ export default function Pricing() {
                     /* Checkout is live on Web: route into the Upgrade page
                        (visitors sign in first). */
                     <button
-                      onClick={() => navigate(user ? '/dashboard/upgrade' : '/login')}
+                      onClick={() => navigate(user ? '/dashboard/upgrade' : '/login?mode=signup&next=%2Fdashboard%2Fupgrade')}
                       className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold text-slate-200 border border-white/15 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/25 transition-colors"
                     >
                       {cta.label} <ArrowRight size={14} aria-hidden="true" />

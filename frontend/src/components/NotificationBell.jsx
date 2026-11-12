@@ -3,8 +3,9 @@ import { Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../api';
 import { useNavigate } from 'react-router-dom';
+import clsx from 'clsx';
 
-export default function NotificationBell() {
+export default function NotificationBell({ align = 'right' }) {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState([]);
@@ -14,16 +15,16 @@ export default function NotificationBell() {
 
     useEffect(() => {
         if (!user?.id) return;
-        const fetch = () => {
+        const fetchAll = () => {
             getNotifications(user.id)
-                .then(r => {
+                .then((r) => {
                     setNotifications(r.data.notifications || []);
                     setUnreadCount(r.data.unread_count || 0);
                 })
                 .catch(() => {});
         };
-        fetch();
-        const interval = setInterval(fetch, 30000);
+        fetchAll();
+        const interval = setInterval(fetchAll, 30000);
         return () => clearInterval(interval);
     }, [user?.id]);
 
@@ -47,12 +48,12 @@ export default function NotificationBell() {
         if (!notif.read) {
             try {
                 await markNotificationRead(notif.id, user.id);
-                setUnreadCount(c => Math.max(0, c - 1));
-                setNotifications(prev =>
-                    prev.map(n => n.id === notif.id ? { ...n, read: true } : n)
+                setUnreadCount((c) => Math.max(0, c - 1));
+                setNotifications((prev) =>
+                    prev.map((n) => (n.id === notif.id ? { ...n, read: true } : n))
                 );
-            } catch (err) {
-                console.error('Failed to mark notification as read:', err);
+            } catch {
+                // silent
             }
         }
         if (notif.link) navigate(notif.link);
@@ -63,9 +64,9 @@ export default function NotificationBell() {
         try {
             await markAllNotificationsRead(user.id);
             setUnreadCount(0);
-            setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-        } catch (err) {
-            console.error('Failed to mark all notifications as read:', err);
+            setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+        } catch {
+            // silent
         }
     };
 
@@ -74,27 +75,34 @@ export default function NotificationBell() {
     return (
         <div className="relative" ref={ref}>
             <button
+                type="button"
                 onClick={() => setOpen(!open)}
                 aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
                 aria-expanded={open}
-                className="relative p-2 rounded-lg hover:bg-bg-elevated transition-colors text-text-secondary"
+                className="relative min-w-10 min-h-10 p-2 rounded-lg hover:bg-bg-elevated transition-colors text-text-secondary flex items-center justify-center"
             >
-                <Bell size={20} aria-hidden="true" />
+                <Bell size={18} aria-hidden="true" />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute top-0.5 right-0.5 min-w-4 h-4 px-1 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center leading-none">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
             </button>
 
             {open && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-bg-surface rounded-xl shadow-lg border border-slate-200 dark:border-border-default overflow-hidden z-50">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-border-default">
-                        <span className="text-sm font-bold text-slate-800 dark:text-text-primary">Notifications</span>
+                <div
+                    className={clsx(
+                        'absolute mt-2 w-80 max-w-[calc(100vw-1.5rem)] bg-bg-surface backdrop-blur-xl rounded-xl shadow-elegant border border-border-default overflow-hidden z-50',
+                        align === 'left' ? 'left-0' : 'right-0'
+                    )}
+                >
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border-default">
+                        <span className="text-sm font-bold text-text-primary">Notifications</span>
                         {unreadCount > 0 && (
                             <button
+                                type="button"
                                 onClick={handleMarkAllRead}
-                                className="text-xs text-purple-600 hover:text-purple-800 font-medium"
+                                className="text-xs text-accent-primary hover:underline font-semibold"
                             >
                                 Mark all read
                             </button>
@@ -102,35 +110,39 @@ export default function NotificationBell() {
                     </div>
                     <div className="max-h-80 overflow-y-auto">
                         {notifications.length === 0 ? (
-                            <div className="px-4 py-8 text-center text-sm text-slate-400 dark:text-text-muted">
+                            <div className="px-4 py-8 text-center text-sm text-text-muted">
                                 No notifications yet
                             </div>
                         ) : (
-                            notifications.map(notif => (
+                            notifications.map((notif) => (
                                 <button
                                     key={notif.id}
+                                    type="button"
                                     onClick={() => handleClick(notif)}
-                                    className={`w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-bg-elevated transition-colors border-b border-slate-50 dark:border-border-default/60 ${
-                                        !notif.read ? 'bg-purple-50/50 dark:bg-accent-subtle' : ''
-                                    }`}
+                                    className={clsx(
+                                        'w-full text-left px-4 py-3 hover:bg-bg-elevated transition-colors border-b border-border-default/60',
+                                        !notif.read && 'bg-accent-subtle'
+                                    )}
                                 >
                                     <div className="flex items-start gap-3">
                                         {!notif.read && (
-                                            <div className="w-2 h-2 rounded-full bg-purple-500 mt-1.5 flex-shrink-0" />
+                                            <div className="w-2 h-2 rounded-full bg-accent-primary mt-1.5 shrink-0" />
                                         )}
                                         <div className={!notif.read ? '' : 'ml-5'}>
-                                            <p className="text-sm font-medium text-slate-800 dark:text-text-primary">{notif.title}</p>
-                                            <p className="text-xs text-slate-500 dark:text-text-muted mt-0.5 line-clamp-2">{notif.message}</p>
-                                            <p className="text-xs text-slate-400 dark:text-text-disabled mt-1">{(() => {
-    const d = new Date(notif.created_at);
-    const now = new Date();
-    const diff = Math.floor((now - d) / 1000);
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-    return d.toLocaleDateString();
-})()}</p>
+                                            <p className="text-sm font-medium text-text-primary">{notif.title}</p>
+                                            <p className="text-xs text-text-muted mt-0.5 line-clamp-2">{notif.message}</p>
+                                            <p className="text-xs text-text-disabled mt-1">
+                                                {(() => {
+                                                    const d = new Date(notif.created_at);
+                                                    const now = new Date();
+                                                    const diff = Math.floor((now - d) / 1000);
+                                                    if (diff < 60) return 'Just now';
+                                                    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+                                                    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+                                                    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+                                                    return d.toLocaleDateString();
+                                                })()}
+                                            </p>
                                         </div>
                                     </div>
                                 </button>

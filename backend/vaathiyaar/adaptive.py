@@ -149,7 +149,7 @@ def scaffolding_for(db_path: str, user_id: str) -> dict:
             [user_id],
         ).fetchall()
         game_rows = conn.execute(
-            "SELECT value FROM learning_signals WHERE user_id = ? AND signal_type = 'game_round' "
+            "SELECT value FROM learning_signals WHERE user_id = ? AND signal_type IN ('game_round', 'arcade_session') "
             "AND created_at > datetime('now', '-14 days') ORDER BY created_at DESC LIMIT 20",
             [user_id],
         ).fetchall()
@@ -204,6 +204,10 @@ def scaffolding_for(db_path: str, user_id: str) -> dict:
         "recent_fail_rate": round(fail_rate, 2) if fail_rate is not None else None,
         "recent_emotions": emotions[:5],
     }
+
+
+# Alias for callers referencing compute_scaffold
+compute_scaffold = scaffolding_for
 
 
 # ───────────────────────────── loop 2: learner notes ───────────────────────
@@ -262,27 +266,36 @@ def _learner_material(db_path: str, user_id: str, days: int = 7) -> dict:
         msg = out.get("message") if isinstance(out, dict) else str(p["output_text"])
         turns.append({"student": (p["input_text"] or "")[-500:], "tutor": (str(msg) or "")[:500],
                       "outcome": p["quality_score"], "at": p["created_at"]})
-    plain = [s for s in signals if s["signal_type"] != "game_round"]
+    plain = [s for s in signals if s["signal_type"] not in ("game_round", "arcade_session")]
     return {
         "profile": dict(prof) if prof else {},
         "mastery": [dict(m) for m in mastery],
         "signals": [{"type": s["signal_type"], "topic": s["topic"], "value": (s["value"] or "")[:160], "at": s["created_at"]} for s in plain],
-        "games": _game_summary([dict(s) for s in signals if s["signal_type"] == "game_round"]),
+        "games": _game_summary([dict(s) for s in signals if s["signal_type"] in ("game_round", "arcade_session")]),
         "turns": turns,
         "existing_notes": [n["note"] for n in learner_notes(db_path, user_id)],
     }
 
 
 def _game_summary(signals: list, limit: int = 8) -> list:
-    """Fold game_round signals into 'misconception: N misses in <game> (last <date>)' lines."""
+    """Fold game_round / arcade_session signals into 'misconception: N misses in <game> (last <date>)' lines."""
     try:
         from games.catalog import GAMES
     except Exception:
         GAMES = {}
+    try:
+        from routes.arcade import GAME_META as ARCADE_GAMES
+    except Exception:
+        ARCADE_GAMES = {}
     agg = {}
     for s in signals:
         v = _loads(s.get("value"), {})
-        game = (GAMES.get(s.get("topic") or "") or {}).get("title") or (s.get("topic") or "a game")
+        topic_key = s.get("topic") or ""
+        game = (
+            (GAMES.get(topic_key) or {}).get("title")
+            or (ARCADE_GAMES.get(topic_key) or {}).get("title")
+            or (topic_key or "a game")
+        )
         day = str(s.get("created_at") or "")[:10]
         for it in v.get("items") or []:
             if not isinstance(it, dict) or it.get("correct") or not it.get("misconception"):

@@ -17,6 +17,11 @@ ROUTES = [
     Route("reset_password_bad_token", "/reset-password/:token", "/reset-password/not-a-real-token", "public", (400, 404)),
     Route("verify_email_bad_token", "/verify-email/:token", "/verify-email/not-a-real-token", "public", (400, 404)),
     Route("pricing", "/pricing", "/pricing", "public", ()),
+    Route("explains_public", "/explains", "/explains", "public", ()),
+    Route("explain_essay_public", "/explains/:slug", "/explains/gradient-descent", "public", ()),
+    Route("guides", "/guides", "/guides", "public", ()),
+    Route("guide_detail", "/guides/:slug", "/guides/run-qwen3-0-6b-llm-on-any-laptop", "public", ()),
+    Route("verify_credential", "/verify/:credId", "/verify/PYM-0000-NOTFOUND", "public", (404,)),
     Route("terms", "/terms", "/terms", "public", ()),
     Route("privacy", "/privacy", "/privacy", "public", ()),
     Route("security", "/security", "/security", "public", ()),
@@ -55,6 +60,7 @@ REDIRECTS = {
     "/signup": "/login", "/register": "/login", "/playground": "/dashboard/playground",
     "learn": "/dashboard/classroom", "learn/:id": "/dashboard/classroom",
     "evolution": "/dashboard/paths", "evolution/:pathId": "/dashboard/paths/x",   # keeps the path id (test uses x)
+    "vaathiyaar": "/dashboard/live-tutor",
 }
 # The "/dashboard" layout route itself renders only through its children.
 LAYOUTS = {"/dashboard"}

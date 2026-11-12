@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     User, Mail, Phone, FileText, Globe, BookOpen, Clock, Target,
@@ -17,6 +17,7 @@ import clsx from 'clsx';
 import LanguageSelector from '../components/LanguageSelector';
 import VaathiyaarMemoryCard from '../components/VaathiyaarMemoryCard';
 import { Card, StatCard, Button, Badge, Avatar, FormField, GlassCard, SectionHeading } from '../components/ui';
+import { getRankInfo } from '../utils/xpRank';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -98,21 +99,6 @@ const ACHIEVEMENTS = [
 function getInitials(name) {
     if (!name) return '?';
     return name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
-}
-
-function getRankInfo(xp) {
-    // `floor` is the current tier's lower XP bound. It is required to draw the
-    // XP progress bar as progress *within the current tier* (floor → next),
-    // not as an absolute fraction of `next`. Without it a user who has only just
-    // reached a rank (e.g. 1000 XP = Advanced, next 2000) would show ~50% filled
-    // instead of ~0%, overstating progress at every tier. `next` and the other
-    // fields are unchanged; `floor` is purely additive.
-    if (xp >= 5000) return { rank: 'Master', color: 'from-amber-400 to-yellow-500', floor: 5000, next: null };
-    if (xp >= 2000) return { rank: 'Expert', color: 'from-purple-400 to-violet-500', floor: 2000, next: 5000 };
-    if (xp >= 1000) return { rank: 'Advanced', color: 'from-blue-400 to-cyan-500', floor: 1000, next: 2000 };
-    if (xp >= 500)  return { rank: 'Intermediate', color: 'from-green-400 to-emerald-500', floor: 500, next: 1000 };
-    if (xp >= 100)  return { rank: 'Apprentice', color: 'from-teal-400 to-cyan-500', floor: 100, next: 500 };
-    return { rank: 'Novice', color: 'from-slate-400 to-slate-500', floor: 0, next: 100 };
 }
 
 function formatDate(dateStr) {
@@ -324,8 +310,10 @@ export default function Profile() {
         timeSpent: 0,
     });
 
-    // ─── Achievements ───────────────────────────────────────────────────────
+    // ─── Achievements & Verifiable Credentials ──────────────────────────────
     const [unlockedBadges, setUnlockedBadges] = useState([]);
+    const [credentialsData, setCredentialsData] = useState({ issued: [], claimable: [], in_progress: [] });
+    const [claimingTargetId, setClaimingTargetId] = useState(null);
 
     // ─── Dirty tracking ─────────────────────────────────────────────────────
     const [isDirty, setIsDirty] = useState(false);
@@ -349,7 +337,7 @@ export default function Profile() {
                 // the profile-page load path. Promise.all overlaps them. The
                 // achievements call is allowed to fail softly (-> null) without
                 // blocking the profile render.
-                const [res, ar, sr] = await Promise.all([
+                const [res, ar, sr, cr] = await Promise.all([
                     getProfile(user.id),
                     api.get(`/profile/${user.id}/achievements`).catch(() => null),
                     // Stats (XP, modules, streak, time) live on a DEDICATED /stats
@@ -359,6 +347,7 @@ export default function Profile() {
                     // Fetch /stats in parallel and use it as the authoritative source.
                     // Allowed to fail softly (-> null) without blocking the render.
                     api.get(`/profile/${user.id}/stats`).catch(() => null),
+                    api.get('/credentials/mine').catch(() => null),
                 ]);
                 // GET /profile/{id} returns { profile, onboarding_completed, created_at }.
                 // Read the wrapped profile object (falling back to res.data for safety).
@@ -425,6 +414,14 @@ export default function Profile() {
                     setUnlockedBadges(list.filter((a) => a.earned).map((a) => a.id));
                 } catch {
                     setUnlockedBadges([]);
+                }
+
+                if (cr?.data) {
+                    setCredentialsData({
+                        issued: Array.isArray(cr.data.issued) ? cr.data.issued : [],
+                        claimable: Array.isArray(cr.data.claimable) ? cr.data.claimable : [],
+                        in_progress: Array.isArray(cr.data.in_progress) ? cr.data.in_progress : [],
+                    });
                 }
 
                 setIsDirty(false);
@@ -590,6 +587,34 @@ export default function Profile() {
             setToast({ message: e?.response?.data?.detail || 'Failed to update password', type: 'error' });
         } finally {
             setPwSaving(false);
+        }
+    };
+
+    const handleClaimCredential = async (item) => {
+        const targetId = item?.target_id || item?.path_id || item?.id;
+        if (!targetId) return;
+        setClaimingTargetId(targetId);
+        try {
+            await api.post('/credentials/claim', {
+                kind: item?.kind || 'path',
+                target_id: targetId,
+            });
+            const refreshed = await api.get('/credentials/mine').catch(() => null);
+            if (refreshed?.data) {
+                setCredentialsData({
+                    issued: Array.isArray(refreshed.data.issued) ? refreshed.data.issued : [],
+                    claimable: Array.isArray(refreshed.data.claimable) ? refreshed.data.claimable : [],
+                    in_progress: Array.isArray(refreshed.data.in_progress) ? refreshed.data.in_progress : [],
+                });
+            }
+            setToast({ message: `Credential issued for ${item.title || targetId}!`, type: 'success' });
+        } catch (err) {
+            setToast({
+                message: err?.response?.data?.detail || 'Could not claim credential right now',
+                type: 'error',
+            });
+        } finally {
+            setClaimingTargetId(null);
         }
     };
 
@@ -1128,6 +1153,192 @@ export default function Profile() {
                 <VaathiyaarMemoryCard userId={user.id} Card={GlassCard} Heading={SectionHeading} />
 
                 {/* ═══════════════════════════════════════════════════════════ */}
+                {/* 5c. Earned Credentials & Path Milestones                   */}
+                {/* ═══════════════════════════════════════════════════════════ */}
+                <GlassCard index={5}>
+                    <SectionHeading
+                        icon={Award}
+                        title="Earned Credentials & Path Milestones"
+                        subtitle="Verifiable Learning Path credentials and progress toward your next milestone"
+                    />
+
+                    <div className="space-y-5">
+                        {/* Claimable 100%-completed Paths */}
+                        {credentialsData.claimable.length > 0 && (
+                            <div className="space-y-3">
+                                <div className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                                    Ready to Claim
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {credentialsData.claimable.map((item) => {
+                                        const targetId = item.target_id || item.path_id || item.id;
+                                        const lessonsCount = item.lessons_completed ?? item.completed_lessons ?? item.total_lessons;
+                                        return (
+                                            <div
+                                                key={targetId}
+                                                className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 flex flex-col justify-between gap-3"
+                                            >
+                                                <div>
+                                                    <div className="flex items-center gap-2 text-sm font-bold text-text-primary">
+                                                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                                                        <span>{item.title || item.path_title || targetId}</span>
+                                                    </div>
+                                                    <p className="text-xs text-text-secondary mt-1">
+                                                        100% completed{lessonsCount ? ` · ${lessonsCount} lessons mastered` : ''}
+                                                    </p>
+                                                </div>
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => handleClaimCredential(item)}
+                                                    disabled={claimingTargetId === targetId}
+                                                    className="min-h-11"
+                                                >
+                                                    <Award size={15} />
+                                                    <span>
+                                                        {claimingTargetId === targetId ? 'Issuing…' : 'Claim Credential'}
+                                                    </span>
+                                                </Button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Issued Credentials */}
+                        {credentialsData.issued.length > 0 && (
+                            <div className="space-y-3">
+                                <div className="text-xs font-bold uppercase tracking-wider text-text-muted">
+                                    Issued Verifiable Credentials
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {credentialsData.issued.map((cred) => {
+                                        const credId = cred.cred_id || cred.id;
+                                        const verifyUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://pymasters.net'}/verify/${encodeURIComponent(credId)}`;
+                                        const linkedInUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(cred.title || 'PyMasters Path Credential')}&organizationId=113061910&certUrl=${encodeURIComponent(verifyUrl)}&certId=${encodeURIComponent(credId)}`;
+                                        return (
+                                            <div
+                                                key={credId}
+                                                className="rounded-xl border border-border-default bg-bg-elevated p-4 flex flex-col justify-between gap-3"
+                                            >
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <span className="font-mono text-xs font-semibold text-accent-primary">
+                                                            {credId}
+                                                        </span>
+                                                        {cred.issued_at && (
+                                                            <span className="text-xs text-text-muted">
+                                                                {formatDate(cred.issued_at)}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <h4 className="font-display text-base font-bold text-text-primary">
+                                                        {cred.title || cred.path_title}
+                                                    </h4>
+                                                    {cred.lessons_completed != null && (
+                                                        <p className="text-xs text-text-secondary">
+                                                            {cred.lessons_completed} lessons verified
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-wrap items-center gap-2 pt-1">
+                                                    <RouterLink
+                                                        to={`/verify/${encodeURIComponent(credId)}`}
+                                                        className="inline-flex items-center gap-1.5 min-h-10 px-3 py-1.5 rounded-lg border border-border-default bg-bg-surface hover:border-border-strong text-xs font-semibold text-text-primary transition-colors"
+                                                    >
+                                                        <ExternalLink size={13} />
+                                                        <span>Verify Link</span>
+                                                    </RouterLink>
+                                                    <a
+                                                        href={linkedInUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1.5 min-h-10 px-3 py-1.5 rounded-lg bg-accent-primary text-white text-xs font-bold hover:opacity-90 transition-opacity"
+                                                    >
+                                                        <ExternalLink size={13} />
+                                                        <span>Add to LinkedIn</span>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* In-Progress Paths */}
+                        {credentialsData.in_progress.length > 0 && (
+                            <div className="space-y-3">
+                                <div className="text-xs font-bold uppercase tracking-wider text-text-muted">
+                                    In-Progress Learning Paths
+                                </div>
+                                <div className="space-y-2.5">
+                                    {credentialsData.in_progress.map((item) => {
+                                        const targetId = item.target_id || item.path_id || item.id;
+                                        const done = Number(item.lessons_completed ?? item.completed_lessons ?? item.completed ?? 0);
+                                        const total = Math.max(1, Number(item.total_lessons ?? item.lessons_total ?? item.total ?? 1));
+                                        const rawPct = item.percent ?? item.progress_pct;
+                                        const pct = rawPct != null
+                                            ? Math.min(100, Math.max(0, Math.round(Number(rawPct))))
+                                            : Math.min(100, Math.max(0, Math.round((done / total) * 100)));
+                                        return (
+                                            <div
+                                                key={targetId}
+                                                className="rounded-xl border border-border-default bg-bg-elevated p-4 space-y-2"
+                                            >
+                                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                                    <div>
+                                                        <div className="text-sm font-bold text-text-primary">
+                                                            {item.title || item.path_title || targetId}
+                                                        </div>
+                                                        <div className="text-xs text-text-muted">
+                                                            {done} of {total} lessons completed ({pct}%)
+                                                        </div>
+                                                    </div>
+                                                    <RouterLink
+                                                        to={`/dashboard/paths/${encodeURIComponent(targetId)}`}
+                                                        className="text-xs font-bold text-accent-primary hover:underline"
+                                                    >
+                                                        Continue Path →
+                                                    </RouterLink>
+                                                </div>
+                                                <div className="h-2 rounded-full bg-bg-inset overflow-hidden">
+                                                    <div
+                                                        className="h-full rounded-full bg-gradient-primary transition-all duration-300"
+                                                        style={{ width: `${pct}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {credentialsData.issued.length === 0 &&
+                            credentialsData.claimable.length === 0 &&
+                            credentialsData.in_progress.length === 0 && (
+                                <div className="rounded-xl border border-dashed border-border-default bg-bg-elevated p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-semibold text-text-primary">
+                                            Complete a Learning Path to earn a verifiable PyMasters credential
+                                        </p>
+                                        <p className="text-xs text-text-muted">
+                                            Every completed path unlocks a public registry verification link and 1-click LinkedIn badge.
+                                        </p>
+                                    </div>
+                                    <RouterLink
+                                        to="/dashboard/paths"
+                                        className="inline-flex items-center gap-1.5 min-h-10 px-4 py-2 rounded-xl bg-accent-subtle text-accent-primary border border-border-strong text-xs font-bold shrink-0 hover:bg-bg-surface transition-colors"
+                                    >
+                                        <span>Explore Learning Paths →</span>
+                                    </RouterLink>
+                                </div>
+                            )}
+                    </div>
+                </GlassCard>
+
+                {/* ═══════════════════════════════════════════════════════════ */}
                 {/* 6. Achievements                                           */}
                 {/* ═══════════════════════════════════════════════════════════ */}
                 <GlassCard index={5}>
@@ -1269,7 +1480,7 @@ export default function Profile() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 20 }}
-                            className="fixed bottom-6 left-1/2 -translate-x-1/2 md:hidden z-40"
+                            className="fixed bottom-20 left-1/2 -translate-x-1/2 lg:hidden z-40"
                         >
                             <Button
                                 size="lg"

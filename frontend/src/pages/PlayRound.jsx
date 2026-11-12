@@ -34,6 +34,9 @@ export default function PlayRound() {
 
   useEffect(() => { setVaathiyaarHidden?.(false); }, [setVaathiyaarHidden]);
   useEffect(() => {
+    document.title = title ? `${title} — PyMasters` : 'Play — PyMasters';
+  }, [title]);
+  useEffect(() => {
     // title from the catalog when available (keeps UI copy in one place server-side)
     getPlayCatalog().then((r) => {
       const g = (r.data?.games || []).find((x) => x.id === gameId);

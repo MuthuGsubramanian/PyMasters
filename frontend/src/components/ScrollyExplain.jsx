@@ -186,18 +186,28 @@ export function ScrollyBody({ steps, Visual }) {
     );
 }
 
-export default function ScrollyExplain({ title, subtitle, minutes, steps, Visual, takeaway }) {
+export default function ScrollyExplain({
+    title,
+    subtitle,
+    minutes,
+    steps,
+    Visual,
+    takeaway,
+    backTo = '/dashboard/explains',
+    backLabel = 'All Explains',
+}) {
     const navigate = useNavigate();
 
     return (
         <div className="max-w-6xl mx-auto">
             {/* Header */}
             <button
-                onClick={() => navigate('/dashboard/explains')}
+                type="button"
+                onClick={() => navigate(backTo)}
                 className="flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-accent-primary transition-colors mb-4 cursor-pointer"
             >
                 <ArrowLeft size={14} />
-                All Explains
+                {backLabel}
             </button>
             <header className="mb-6 max-w-2xl">
                 <h1 className="text-3xl lg:text-4xl font-bold font-display text-text-primary tracking-tight">{title}</h1>

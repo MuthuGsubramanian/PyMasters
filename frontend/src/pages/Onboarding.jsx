@@ -191,8 +191,14 @@ const ORG_QUESTIONS = [
 // Helpers
 // ---------------------------------------------------------------------------
 function isAnswered(q, answers) {
-    // Optional question types never block submission.
-    if (q.type === 'social' || q.type === 'contact' || q.type === 'language') return true;
+    // Optional question types never block submission (requiredQuestions only checks 'choice').
+    if (q.type === 'language') return true;
+    if (q.type === 'social') {
+        return Boolean((answers.linkedin_url || '').trim() || (answers.github_url || '').trim());
+    }
+    if (q.type === 'contact') {
+        return Boolean((answers.email || '').trim() || (answers.whatsapp || '').trim());
+    }
     const v = answers[q.key];
     if (q.multi) return Array.isArray(v) && v.length > 0;
     return !!v;

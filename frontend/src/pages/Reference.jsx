@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ErrorState } from '../components/StateViews';
 import {
@@ -18,29 +18,31 @@ import RunnableCode from '../components/RunnableCode';
 // Reference `section.content` is full markdown (fenced code blocks + GFM tables).
 // Rendering it as a plain <p> collapsed newlines and showed raw ``` fences /
 // pipe-tables. These theme-token components render it correctly in light + dark.
-const referenceMarkdownComponents = {
-  h2: ({ children }) => <h2 className="text-base font-bold text-text-primary mt-3 mb-1">{children}</h2>,
-  h3: ({ children }) => <h3 className="text-sm font-bold text-text-primary mt-2 mb-1">{children}</h3>,
-  p: ({ children }) => <p className="text-sm text-text-secondary mb-2 leading-relaxed">{children}</p>,
-  ul: ({ children }) => <ul className="list-disc list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ul>,
-  ol: ({ children }) => <ol className="list-decimal list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ol>,
-  li: ({ children }) => <li className="text-sm text-text-secondary leading-relaxed">{children}</li>,
-  code: ({ children, className }) => className
-    ? <RunnableCode className={className}>{children}</RunnableCode>
-    : <code className="bg-bg-inset text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
-  table: ({ children }) => (
-    <div className="overflow-x-auto my-3 rounded-lg border border-border-default">
-      <table className="text-sm w-full">{children}</table>
-    </div>
-  ),
-  thead: ({ children }) => <thead className="bg-purple-500/10">{children}</thead>,
-  tbody: ({ children }) => <tbody className="divide-y divide-border-default">{children}</tbody>,
-  tr: ({ children }) => <tr className="hover:bg-bg-elevated transition-colors">{children}</tr>,
-  th: ({ children }) => <th className="px-3 py-2 text-left text-xs font-bold text-purple-600 dark:text-purple-300 uppercase tracking-wider">{children}</th>,
-  td: ({ children }) => <td className="px-3 py-2 text-sm text-text-secondary">{children}</td>,
-  strong: ({ children }) => <strong className="font-bold text-text-primary">{children}</strong>,
-  a: ({ children, href }) => <a href={href} className="text-cyan-500 hover:underline" target="_blank" rel="noreferrer">{children}</a>,
-};
+function buildReferenceMarkdownComponents(onOpenPlayground) {
+  return {
+    h2: ({ children }) => <h2 className="text-base font-bold text-text-primary mt-3 mb-1">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-sm font-bold text-text-primary mt-2 mb-1">{children}</h3>,
+    p: ({ children }) => <p className="text-sm text-text-secondary mb-2 leading-relaxed">{children}</p>,
+    ul: ({ children }) => <ul className="list-disc list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ul>,
+    ol: ({ children }) => <ol className="list-decimal list-inside text-sm text-text-secondary mb-2 space-y-1">{children}</ol>,
+    li: ({ children }) => <li className="text-sm text-text-secondary leading-relaxed">{children}</li>,
+    code: ({ children, className }) => className
+      ? <RunnableCode className={className} onOpenPlayground={onOpenPlayground}>{children}</RunnableCode>
+      : <code className="bg-bg-inset text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>,
+    table: ({ children }) => (
+      <div className="overflow-x-auto my-3 rounded-lg border border-border-default">
+        <table className="text-sm w-full">{children}</table>
+      </div>
+    ),
+    thead: ({ children }) => <thead className="bg-purple-500/10">{children}</thead>,
+    tbody: ({ children }) => <tbody className="divide-y divide-border-default">{children}</tbody>,
+    tr: ({ children }) => <tr className="hover:bg-bg-elevated transition-colors">{children}</tr>,
+    th: ({ children }) => <th className="px-3 py-2 text-left text-xs font-bold text-purple-600 dark:text-purple-300 uppercase tracking-wider">{children}</th>,
+    td: ({ children }) => <td className="px-3 py-2 text-sm text-text-secondary">{children}</td>,
+    strong: ({ children }) => <strong className="font-bold text-text-primary">{children}</strong>,
+    a: ({ children, href }) => <a href={href} className="text-cyan-500 hover:underline" target="_blank" rel="noreferrer">{children}</a>,
+  };
+}
 
 // ─── Categories ─────────────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -153,9 +155,13 @@ function TopicCard({ topic, onClick }) {
 function TopicDetail({ topic, data, onBack, loading: detailLoading }) {
   const navigate = useNavigate();
   const colors = CATEGORY_COLORS[topic.category] || CATEGORY_COLORS['python-basics'];
-  const openPlayground = (snippet) => {
+  const openPlayground = useCallback((snippet) => {
     navigate(`/dashboard/playground?code=${encodeURIComponent(snippet)}`);
-  };
+  }, [navigate]);
+  const markdownComponents = useMemo(
+    () => buildReferenceMarkdownComponents(openPlayground),
+    [openPlayground]
+  );
 
   if (detailLoading) {
     return (
@@ -228,7 +234,7 @@ function TopicDetail({ topic, data, onBack, loading: detailLoading }) {
             <div className="p-6 space-y-4">
               {section.content && (
                 <div className="reference-md text-sm text-text-secondary leading-relaxed">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={referenceMarkdownComponents}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                     {section.content}
                   </ReactMarkdown>
                 </div>
@@ -259,6 +265,8 @@ function TopicDetail({ topic, data, onBack, loading: detailLoading }) {
 // ─── Main component ─────────────────────────────────────────────────────────
 export default function Reference() {
   useEffect(() => { document.title = 'Reference — PyMasters'; }, []);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const topicParam = searchParams.get('topic') || '';
   const [topics, setTopics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -267,6 +275,21 @@ export default function Reference() {
   const [selectedTopic, setSelectedTopic] = useState(null);
   const [topicData, setTopicData] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  const handleSelectTopic = useCallback((topic) => {
+    setSelectedTopic(topic);
+    const key = topic?.slug || topic?.id;
+    if (key) {
+      setSearchParams({ topic: String(key) }, { replace: true });
+    }
+  }, [setSearchParams]);
+
+  const handleClearTopic = useCallback(() => {
+    setSelectedTopic(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete('topic');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // Fetch topics (extracted so the error state can retry)
   const loadTopics = useCallback(async () => {
@@ -284,7 +307,30 @@ export default function Reference() {
 
   useEffect(() => {
     loadTopics();
-  }, []);
+  }, [loadTopics]);
+
+  // Sync ?topic= query param with selectedTopic / search filter
+  useEffect(() => {
+    if (!topicParam) {
+      setSelectedTopic(null);
+      return;
+    }
+    if (topics.length === 0) return;
+    const normalized = topicParam.trim().toLowerCase();
+    const matched = topics.find((t) => {
+      const slug = String(t.slug || t.id || '').toLowerCase();
+      const title = String(t.title || t.name || '').toLowerCase();
+      return slug === normalized || title === normalized;
+    });
+    if (matched) {
+      setSelectedTopic((prev) =>
+        (prev?.slug || prev?.id) === (matched.slug || matched.id) ? prev : matched
+      );
+    } else {
+      setSelectedTopic(null);
+      setSearch(topicParam);
+    }
+  }, [topicParam, topics]);
 
   // Fetch detail when topic selected
   useEffect(() => {
@@ -342,7 +388,7 @@ export default function Reference() {
               topic={selectedTopic}
               data={topicData}
               loading={detailLoading}
-              onBack={() => setSelectedTopic(null)}
+              onBack={handleClearTopic}
             />
           ) : (
             <motion.div key="grid" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -419,7 +465,7 @@ export default function Reference() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.2 + i * 0.04 }}
                     >
-                      <TopicCard topic={topic} onClick={() => setSelectedTopic(topic)} />
+                      <TopicCard topic={topic} onClick={() => handleSelectTopic(topic)} />
                     </motion.div>
                   ))}
                 </motion.div>

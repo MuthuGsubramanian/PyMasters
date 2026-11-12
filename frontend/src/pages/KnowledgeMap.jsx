@@ -368,10 +368,19 @@ export default function KnowledgeMap() {
                   ) : (
                     <ul className="space-y-1.5">
                       {gaps.map((g) => (
-                        <li key={g.id} className="flex items-center gap-2 rounded-lg bg-bg-elevated px-3 py-2 text-sm text-text-secondary">
-                          <Lock className="h-3.5 w-3.5 shrink-0 text-text-muted" aria-hidden="true" />
-                          <span className="truncate">{g.name}</span>
-                          <span className="ml-auto text-xs text-text-muted">{Math.round((g.mastery ?? 0) * 100)}%</span>
+                        <li key={g.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const targetNode = (mapData?.nodes || []).find((n) => n.id === g.id) || g;
+                              setSelected(targetNode);
+                            }}
+                            className="w-full flex items-center gap-2 rounded-lg bg-bg-elevated hover:bg-bg-inset border border-transparent hover:border-border-strong px-3 py-2 text-left text-sm text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+                          >
+                            <Lock className="h-3.5 w-3.5 shrink-0 text-text-muted" aria-hidden="true" />
+                            <span className="truncate">{g.name}</span>
+                            <span className="ml-auto text-xs text-text-muted">{Math.round((g.mastery ?? 0) * 100)}%</span>
+                          </button>
                         </li>
                       ))}
                     </ul>

@@ -5,6 +5,7 @@ import { trackVisit, trackPing } from './api';
 import { ProfileProvider } from './context/ProfileContext';
 import Home from './pages/Home';
 import ErrorBoundary from './components/ErrorBoundary';
+import { RouteMetaSync } from './utils/usePageMeta';
 
 // Code-split everything except the landing page + app shell so the initial
 // JS payload stays small. Each page (and its heavy deps — CodeMirror, animations,
@@ -75,6 +76,8 @@ const LiveTutor = lazyRetry(() => import('./pages/LiveTutor'), 'LiveTutor');
 const Play = lazyRetry(() => import('./pages/Play'), 'Play');
 const PlayRound = lazyRetry(() => import('./pages/PlayRound'), 'PlayRound');
 const ArcadeGame = lazyRetry(() => import('./pages/ArcadeGame'), 'ArcadeGame');
+const Guides = lazyRetry(() => import('./pages/Guides'), 'Guides');
+const VerifyCredential = lazyRetry(() => import('./pages/VerifyCredential'), 'VerifyCredential');
 
 function PageLoader() {
   return (
@@ -147,6 +150,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <RouteMetaSync />
         <TelemetryBeacon />
         <ProfileProvider>
           <Suspense fallback={<PageLoader />}>
@@ -162,6 +166,11 @@ export default function App() {
             <Route path="/reset-password/:token" element={<ErrorBoundary><ResetPassword /></ErrorBoundary>} />
             <Route path="/verify-email/:token" element={<ErrorBoundary><VerifyEmail /></ErrorBoundary>} />
               <Route path="/pricing" element={<ErrorBoundary><Pricing /></ErrorBoundary>} />
+              <Route path="/explains" element={<ErrorBoundary><Explains publicMode /></ErrorBoundary>} />
+              <Route path="/explains/:slug" element={<ErrorBoundary><Explains publicMode /></ErrorBoundary>} />
+              <Route path="/guides" element={<ErrorBoundary><Guides /></ErrorBoundary>} />
+              <Route path="/guides/:slug" element={<ErrorBoundary><Guides /></ErrorBoundary>} />
+              <Route path="/verify/:credId" element={<ErrorBoundary><VerifyCredential /></ErrorBoundary>} />
               <Route path="/terms" element={<ErrorBoundary><Terms /></ErrorBoundary>} />
               <Route path="/privacy" element={<ErrorBoundary><Privacy /></ErrorBoundary>} />
               <Route path="/delete-account" element={<Navigate to="/privacy#account-deletion" replace />} />
@@ -198,6 +207,7 @@ export default function App() {
                 <Route path="explains/generated/:id" element={<ErrorBoundary><GeneratedExplain /></ErrorBoundary>} />
                 <Route path="explains/:slug" element={<ErrorBoundary><Explains /></ErrorBoundary>} />
                 <Route path="live-tutor" element={<ErrorBoundary><LiveTutor /></ErrorBoundary>} />
+                <Route path="vaathiyaar" element={<Navigate to="/dashboard/live-tutor" replace />} />
                 <Route path="profile" element={<ErrorBoundary><Profile /></ErrorBoundary>} />
                 <Route path="org/setup" element={<ErrorBoundary><OrgSetup /></ErrorBoundary>} />
                 <Route path="org" element={<ErrorBoundary><OrgDashboard /></ErrorBoundary>} />

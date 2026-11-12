@@ -627,51 +627,65 @@ KINDS = {"plot": scene_plot, "title": scene_title, "code": scene_code, "output":
 
 
 # ---------- overlays ----------
-# Option 4 PyMasters mark ("Modern FinTech Mobius P Ribbon"): continuous folded gradient ribbon forming a slanted P
-# (indigo/violet -> electric cyan -> luminous emerald) with three ascending white mastery bars inside the bowl.
-_MOBIUS_INNER = [(27, 64), (34, 33), (42, 20), (56, 15), (69, 19), (77, 30), (75, 44), (66, 55), (50, 57), (38, 57),
-                 (42, 42), (48, 29), (58, 24), (67, 29), (68, 40), (60, 48), (35, 56)]
-_MOBIUS_ARCH = [(25, 66), (32, 32), (38, 19), (52, 13), (67, 15), (76, 21), (80, 32), (73, 22), (61, 19),
-                (47, 20), (39, 28), (35, 41), (29, 63)]
-_MOBIUS_SWEEP = [(67, 15), (77, 20), (82, 32), (80, 46), (74, 58), (61, 64), (45, 65), (33, 69), (22, 86),
-                 (34, 84), (39, 73), (49, 69), (65, 66), (76, 59), (81, 45), (82, 31), (76, 19)]
-_MOBIUS_TAIL = [(22, 86), (27, 74), (35, 67), (44, 65), (39, 73), (34, 84)]
-_MOBIUS_BARS = [
-    [(44, 52), (49.5, 51.4), (53, 41), (47.5, 41.6)],
-    [(52, 51.1), (57.5, 50.5), (63, 34), (57.5, 34.6)],
-    [(60, 50.2), (65.5, 49.6), (73, 27), (67.5, 27.6)],
+# PyMasters PYM Shield-Monogram Crest: brushed platinum-silver P & Y + chevron + center-right pillar,
+# electric sapphire-cyan V bevel, and royal champagne-gold diagonal M beam + flanking pillars.
+_CREST_SAPPHIRE = [(35.8, 59.2), (45.8, 54.0), (50.0, 58.2), (75.5, 32.7), (75.5, 46.2), (50.0, 75.4)]
+_CREST_PLAT = [
+    [(10.0, 14.0), (33.2, 14.0), (44.0, 16.8), (51.5, 24.5), (54.2, 35.0), (51.5, 45.5), (44.0, 53.2),
+     (33.2, 56.0), (22.0, 56.0), (22.0, 72.5), (13.0, 63.5), (13.0, 21.8), (22.0, 30.8), (22.0, 47.4),
+     (33.0, 47.4), (41.2, 44.5), (45.4, 35.0), (41.2, 25.5), (33.0, 22.6), (18.6, 22.6)],
+    [(24.6, 26.2), (32.2, 26.2), (40.8, 35.0), (32.2, 43.8), (24.6, 43.8), (33.3, 35.0)],
+    [(44.6, 14.0), (56.6, 14.0), (64.8, 22.2), (58.5, 28.5)],
+    [(78.0, 14.0), (90.0, 14.0), (53.6, 50.4), (58.0, 34.0)],
+    [(65.2, 61.0), (74.5, 51.7), (74.5, 76.2), (65.2, 85.5)],
+]
+_CREST_GOLD = [
+    [(38.0, 59.2), (46.4, 55.8), (50.0, 59.4), (89.0, 20.4), (89.0, 33.0), (50.0, 71.6)],
+    [(25.5, 59.2), (33.6, 59.2), (34.8, 60.4), (34.8, 85.5), (25.5, 76.2)],
+    [(78.2, 48.4), (87.4, 39.2), (87.4, 63.5), (78.2, 72.7)],
 ]
 _BADGE_CACHE = {}
 
 
 def brand_badge(size):
-    """Dark navy rounded badge with the Option 4 Modern FinTech Mobius 'P' Ribbon mark + 3 ascending white mastery bars,
-    as RGBA. Uses the high-resolution master mark asset (with vector polygon fallback); cached per size."""
+    """Midnight obsidian rounded badge featuring the PyMasters PYM Shield-Monogram Crest with cyan/gold chrome accents,
+    as RGBA. Uses the high-resolution transparent crest asset (with vector polygon fallback); cached per size."""
     if size in _BADGE_CACHE:
         return _BADGE_CACHE[size]
     from pathlib import Path
-    mark_path = Path(__file__).resolve().parent.parent / "assets" / "pymasters_logo_opt4_mark.png"
+    assets_dir = Path(__file__).resolve().parent.parent / "assets"
+    crest_path = assets_dir / "pymasters_logo_opt4_transparent.png"
+    mark_path = assets_dir / "pymasters_logo_opt4_mark.png"
     S = 4
     n = size * S
     k = n / 100
-    if mark_path.exists():
+    body = Image.new("RGBA", (n, n), (6, 11, 25, 255))
+    d = ImageDraw.Draw(body)
+    d.rounded_rectangle([1.5 * k, 1.5 * k, n - 1.5 * k, n - 1.5 * k], radius=22 * k,
+                        outline=(56, 189, 248, 175), width=max(1, int(2.2 * k)))
+    d.rounded_rectangle([3.5 * k, 3.5 * k, n - 3.5 * k, n - 3.5 * k], radius=20 * k,
+                        outline=(229, 190, 103, 120), width=max(1, int(1.2 * k)))
+    if crest_path.exists():
+        crest = Image.open(crest_path).convert("RGBA")
+        bbox = crest.getbbox()
+        if bbox:
+            crest = crest.crop(bbox)
+        target = int(n * 0.78)
+        cw, ch = crest.size
+        sc = target / max(cw, ch)
+        nw, nh = max(1, int(round(cw * sc))), max(1, int(round(ch * sc)))
+        crest_resized = crest.resize((nw, nh), Image.LANCZOS)
+        body.alpha_composite(crest_resized, ((n - nw) // 2, (n - nh) // 2 + int(1.5 * k)))
+    elif mark_path.exists():
         body = Image.open(mark_path).convert("RGBA").resize((n, n), Image.LANCZOS)
-        d = ImageDraw.Draw(body)
-        d.rounded_rectangle([1.5 * k, 1.5 * k, n - 1.5 * k, n - 1.5 * k], radius=22.5 * k,
-                            outline=(34, 211, 238, 175), width=max(1, int(2.6 * k)))
     else:
-        body = Image.new("RGBA", (n, n), (7, 11, 24, 255))
-        d = ImageDraw.Draw(body)
-        d.rounded_rectangle([1.5 * k, 1.5 * k, n - 1.5 * k, n - 1.5 * k], radius=22.5 * k,
-                            outline=(34, 211, 238, 150), width=max(1, int(2.6 * k)))
-        d.polygon([(x * k, y * k) for x, y in _MOBIUS_INNER], fill=(30, 58, 138, 255))
-        d.polygon([(x * k, y * k) for x, y in _MOBIUS_ARCH], fill=(99, 102, 241, 255))
-        d.polygon([(x * k, y * k) for x, y in _MOBIUS_SWEEP], fill=(34, 211, 238, 255))
-        d.polygon([(x * k, y * k) for x, y in _MOBIUS_TAIL], fill=(16, 185, 129, 255))
-        for i, bar in enumerate(_MOBIUS_BARS):
-            d.polygon([(x * k, y * k) for x, y in bar], fill=(255, 255, 255, 225 + 15 * i))
+        d.polygon([(x * k, y * k) for x, y in _CREST_SAPPHIRE], fill=(29, 78, 216, 255))
+        for poly in _CREST_PLAT:
+            d.polygon([(x * k, y * k) for x, y in poly], fill=(226, 232, 240, 255))
+        for poly in _CREST_GOLD:
+            d.polygon([(x * k, y * k) for x, y in poly], fill=(229, 190, 103, 255))
     mask = Image.new("L", (n, n), 0)
-    ImageDraw.Draw(mask).rounded_rectangle([0, 0, n - 1, n - 1], radius=24 * k, fill=255)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, n - 1, n - 1], radius=23 * k, fill=255)
     body.putalpha(ImageChops.multiply(body.getchannel("A"), mask))
     _BADGE_CACHE[size] = body.resize((size, size), Image.LANCZOS)
     return _BADGE_CACHE[size]
@@ -680,13 +694,17 @@ def brand_badge(size):
 def chrome(img, F, progress, brand=True):
     d = ImageDraw.Draw(img)
     if brand:
-        f = T.font(T.FONT_SANS_BOLD, F.px(30))
-        badge = brand_badge(F.px(44))
-        img.paste(badge, (F.pad, F.px(34)), badge)
-        x = F.pad + F.px(58)
-        d.text((x, F.px(38)), "Py", font=f, fill=T.TEXT)
-        d.text((x + d.textlength("Py", font=f), F.px(38)), "Masters", font=f, fill=(165, 243, 252))
-    d.rectangle([0, 0, int(F.w * progress), F.px(8)], fill=T.CYAN)
+        f = T.font(T.FONT_SANS_BOLD, F.px(31))
+        badge = brand_badge(F.px(48))
+        img.paste(badge, (F.pad, F.px(32)), badge)
+        x = F.pad + F.px(62)
+        d.text((x, F.px(38)), "Py", font=f, fill=(248, 250, 252))
+        d.text((x + d.textlength("Py", font=f), F.px(38)), "Masters", font=f, fill=(229, 190, 103))
+    bar_w = int(F.w * max(0.0, min(1.0, progress)))
+    if bar_w > 0:
+        d.rectangle([0, 0, bar_w, F.px(8)], fill=T.CYAN)
+        tip_w = min(bar_w, F.px(42))
+        d.rectangle([bar_w - tip_w, 0, bar_w, F.px(8)], fill=(229, 190, 103))
 
 
 _GROUP_CACHE = {}

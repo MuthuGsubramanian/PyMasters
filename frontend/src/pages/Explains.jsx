@@ -1,7 +1,10 @@
-import { useEffect, useState, useMemo } from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
-import { Lightbulb, Clock, ArrowRight, Search, X } from 'lucide-react';
+import { Children, cloneElement, isValidElement, useEffect, useState, useMemo } from 'react';
+import { Link, useParams, useNavigate, Navigate } from 'react-router-dom';
+import { Lightbulb, Clock, ArrowRight, Search, X, BookOpen } from 'lucide-react';
 import ScrollyExplain from '../components/ScrollyExplain';
+import DarkModeToggle from '../components/DarkModeToggle';
+import PymastersGlyph from '../assets/pymasters-glyph.svg';
+import { usePageMeta } from '../utils/usePageMeta';
 import GradientDescentVisual from '../components/explains/GradientDescentVisual';
 import TrainTestSplitVisual from '../components/explains/TrainTestSplitVisual';
 import Code from '../components/explains/Code';
@@ -193,8 +196,11 @@ const GRADIENT_DESCENT = {
                 <Code>Adam</Code> are, at heart, gradient descent with an adaptively tuned step size.
             </p>
             <p>
-                Want to feel it in code? Open the <strong>Playground</strong> and ask Vaathiyaar to demonstrate
-                gradient descent in NumPy — it can run the example live.
+                Want to feel it in code? Open the{' '}
+                <Link to="/dashboard/playground" className="font-semibold text-accent-primary underline underline-offset-2 hover:opacity-80">
+                    Playground
+                </Link>{' '}
+                and ask Vaathiyaar to demonstrate gradient descent in NumPy — it can run the example live.
             </p>
         </>
     ),
@@ -328,9 +334,16 @@ const TRAIN_TEST_SPLIT = {
                 learning: small gap = it generalised; large gap = it memorised (<Code>overfitting</Code>).
             </p>
             <p>
-                Want to build it? The <strong>Classroom</strong> lesson “Train/Test Split” has you implement the
-                split in code — and Vaathiyaar can extend it to a real <Code>scikit-learn</Code> example in the
-                Playground.
+                Want to build it? The{' '}
+                <Link to="/dashboard/classroom" className="font-semibold text-accent-primary underline underline-offset-2 hover:opacity-80">
+                    Classroom
+                </Link>{' '}
+                lesson “Train/Test Split” has you implement the split in code — and Vaathiyaar can extend it to a real{' '}
+                <Code>scikit-learn</Code> example in the{' '}
+                <Link to="/dashboard/playground" className="font-semibold text-accent-primary underline underline-offset-2 hover:opacity-80">
+                    Playground
+                </Link>
+                .
             </p>
         </>
     ),
@@ -414,11 +427,115 @@ const EXPLAIN_CATEGORIES = [
     'Deep Learning & LLMs',
 ];
 
+function linkifyTextSegment(text, keyPrefix) {
+    const parts = text.split(/\b(Playground|Classroom)\b/g);
+    if (parts.length === 1) return text;
+    return parts.map((part, idx) => {
+        if (part === 'Playground') {
+            return (
+                <Link
+                    key={`${keyPrefix}-pg-${idx}`}
+                    to="/dashboard/playground"
+                    className="font-semibold text-accent-primary underline underline-offset-2 hover:opacity-80"
+                >
+                    Playground
+                </Link>
+            );
+        }
+        if (part === 'Classroom') {
+            return (
+                <Link
+                    key={`${keyPrefix}-cr-${idx}`}
+                    to="/dashboard/classroom"
+                    className="font-semibold text-accent-primary underline underline-offset-2 hover:opacity-80"
+                >
+                    Classroom
+                </Link>
+            );
+        }
+        return part;
+    });
+}
+
+function linkifyTakeaway(node, keyPrefix = 'tk') {
+    if (node == null || typeof node === 'boolean') return node;
+    if (typeof node === 'string') return linkifyTextSegment(node, keyPrefix);
+    if (Array.isArray(node)) {
+        return node.map((child, i) => linkifyTakeaway(child, `${keyPrefix}-${i}`));
+    }
+    if (!isValidElement(node)) return node;
+    if (node.type === Link || node.type === 'a' || node.type === Code) {
+        return node;
+    }
+    if (node.type === 'strong' && typeof node.props?.children === 'string') {
+        const trimmed = node.props.children.trim();
+        if (trimmed === 'Playground' || trimmed === 'Classroom') {
+            return (
+                <Link
+                    key={keyPrefix}
+                    to={trimmed === 'Playground' ? '/dashboard/playground' : '/dashboard/classroom'}
+                    className="font-semibold text-accent-primary underline underline-offset-2 hover:opacity-80"
+                >
+                    {trimmed}
+                </Link>
+            );
+        }
+    }
+    if (!node.props?.children) return node;
+    const mappedChildren = Children.map(node.props.children, (child, i) =>
+        linkifyTakeaway(child, `${keyPrefix}-${i}`)
+    );
+    return cloneElement(node, undefined, mappedChildren);
+}
+
+function PublicExplainsShell({ children }) {
+    return (
+        <div className="min-h-screen bg-bg-base text-text-secondary flex flex-col">
+            <header className="sticky top-0 z-30 border-b border-border-default bg-bg-surface/90 backdrop-blur-xl">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-5 min-w-0">
+                        <Link to="/" className="inline-flex items-center gap-2.5 min-h-11 shrink-0 group">
+                            <div className="w-8 h-8 rounded-xl bg-gradient-primary flex items-center justify-center shadow-sm">
+                                <img src={PymastersGlyph} alt="" aria-hidden="true" className="w-4 h-4" />
+                            </div>
+                            <span className="font-display font-bold text-base text-text-primary tracking-tight">
+                                PyMasters
+                            </span>
+                        </Link>
+                        <nav aria-label="Public Explains navigation" className="hidden md:flex items-center gap-4 text-sm font-medium">
+                            <Link to="/explains" className="text-accent-primary font-semibold transition-colors">
+                                All Visual Essays
+                            </Link>
+                            <Link to="/guides" className="text-text-secondary hover:text-text-primary transition-colors inline-flex items-center gap-1.5">
+                                <BookOpen size={14} />
+                                <span>Python Guides</span>
+                            </Link>
+                        </nav>
+                    </div>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                        <DarkModeToggle />
+                        <Link
+                            to="/login?mode=signup"
+                            className="inline-flex items-center gap-1.5 min-h-11 px-4 py-2 rounded-xl bg-gradient-primary text-white text-xs sm:text-sm font-bold shadow-sm hover:opacity-95 transition-opacity"
+                        >
+                            <span>Start Practicing Free →</span>
+                        </Link>
+                    </div>
+                </div>
+            </header>
+            <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
+                {children}
+            </main>
+        </div>
+    );
+}
+
 // ── Index page ────────────────────────────────────────────────────────────────
-function ExplainsIndex() {
+function ExplainsIndex({ publicMode = false }) {
     const navigate = useNavigate();
     const [activeCategory, setActiveCategory] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
+    const basePath = publicMode ? '/explains' : '/dashboard/explains';
     useEffect(() => { document.title = 'Explains — PyMasters'; }, []);
 
     const filteredEssays = useMemo(() => {
@@ -492,7 +609,8 @@ function ExplainsIndex() {
                 {filteredEssays.map((essay) => (
                     <button
                         key={essay.slug}
-                        onClick={() => navigate(`/dashboard/explains/${essay.slug}`)}
+                        type="button"
+                        onClick={() => navigate(`${basePath}/${essay.slug}`)}
                         className="panel panel-hover rounded-2xl p-5 text-left group cursor-pointer"
                     >
                         {/* Thumbnail: miniature of the essay's visual, step 6 (converged) */}
@@ -532,26 +650,46 @@ function ExplainsIndex() {
 }
 
 // ── Essay view ────────────────────────────────────────────────────────────────
-export default function Explains() {
+export default function Explains({ publicMode = false }) {
     const { slug } = useParams();
+    const basePath = publicMode ? '/explains' : '/dashboard/explains';
+    const activeEssay = useMemo(() => ESSAYS.find((e) => e.slug === slug) || null, [slug]);
+
+    usePageMeta({
+        title: activeEssay ? `${activeEssay.title} — PyMasters` : 'Explains — PyMasters',
+        description: activeEssay
+            ? activeEssay.subtitle
+            : '32 interactive, scroll-driven visual essays on Python, machine learning, statistics, and LLMs — by PyMasters.',
+        canonicalPath: publicMode ? (slug ? `/explains/${slug}` : '/explains') : undefined,
+    });
+
     useEffect(() => {
-        const essay = ESSAYS.find((e) => e.slug === slug);
-        document.title = essay ? `${essay.title} — PyMasters Explains` : 'Explains — PyMasters';
-        window.scrollTo(0, 0);
-    }, [slug]);
+        document.title = activeEssay ? `${activeEssay.title} — PyMasters` : 'Explains — PyMasters';
+        const scrollContainer = document.querySelector('main') || window;
+        if (typeof scrollContainer.scrollTo === 'function') {
+            scrollContainer.scrollTo({ top: 0, behavior: 'instant' });
+        }
+    }, [slug, activeEssay]);
 
-    if (!slug) return <ExplainsIndex />;
-    const essay = ESSAYS.find((e) => e.slug === slug);
-    if (!essay) return <Navigate to="/dashboard/explains" replace />;
+    if (!slug) {
+        const indexView = <ExplainsIndex publicMode={publicMode} />;
+        return publicMode ? <PublicExplainsShell>{indexView}</PublicExplainsShell> : indexView;
+    }
 
-    return (
+    if (!activeEssay) return <Navigate to={basePath} replace />;
+
+    const essayView = (
         <ScrollyExplain
-            title={essay.title}
-            subtitle={essay.subtitle}
-            minutes={essay.minutes}
-            steps={essay.steps}
-            Visual={essay.Visual}
-            takeaway={essay.takeaway}
+            title={activeEssay.title}
+            subtitle={activeEssay.subtitle}
+            minutes={activeEssay.minutes}
+            steps={activeEssay.steps}
+            Visual={activeEssay.Visual}
+            takeaway={linkifyTakeaway(activeEssay.takeaway)}
+            backTo={basePath}
+            backLabel={publicMode ? 'All Visual Essays' : 'All Explains'}
         />
     );
+
+    return publicMode ? <PublicExplainsShell>{essayView}</PublicExplainsShell> : essayView;
 }

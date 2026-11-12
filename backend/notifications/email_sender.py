@@ -61,21 +61,37 @@ def send_email(to_email: str, subject: str, body_text: str, body_html: str = Non
     return False
 
 
+def _brand_header(subtitle: str, title: str = "PyMasters") -> str:
+    """Shared dark obsidian/sapphire/gold header with the PyMasters crest icon."""
+    logo_url = "https://pymasters.net/icon-192.png"
+    return f"""
+        <div style="background: linear-gradient(135deg, #060b19 0%, #0f256e 65%, #1d4ed8 100%); color: #f8fafc; padding: 20px 22px; border-radius: 12px 12px 0 0; border-bottom: 2px solid #e0b95e;">
+            <table role="presentation" style="border-collapse: collapse; width: 100%;">
+                <tr>
+                    <td style="width: 52px; vertical-align: middle; padding-right: 12px;">
+                        <img src="{logo_url}" width="40" height="40" alt="PyMasters" style="display: block; width: 40px; height: 40px; border-radius: 9px; border: 1px solid rgba(224, 185, 94, 0.55);" />
+                    </td>
+                    <td style="vertical-align: middle;">
+                        <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #f8fafc; letter-spacing: 0.2px;">{_esc(title)}</h2>
+                        <p style="margin: 3px 0 0; color: #f5d78e; font-size: 13px; font-weight: 600;">{_esc(subtitle)}</p>
+                    </td>
+                </tr>
+            </table>
+        </div>"""
+
+
 def build_lesson_ready_email(title: str, topic: str, reason: str, link: str) -> tuple:
     """Build email content for lesson-ready notification. Returns (text, html)."""
     text = f"Vanakkam!\n\nYour custom lesson \"{title}\" is ready on PyMasters.\n\n{reason}\n\nStart learning: {link}\n\n— Vaathiyaar"
 
     html = f"""
-    <div style="font-family: -apple-system, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; padding: 20px; border-radius: 12px 12px 0 0;">
-            <h2 style="margin: 0;">Vaathiyaar</h2>
-            <p style="margin: 4px 0 0; opacity: 0.9; font-size: 14px;">PyMasters</p>
-        </div>
-        <div style="background: white; padding: 24px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
-            <p style="color: #334155; font-size: 16px;">Vanakkam!</p>
-            <p style="color: #475569;">Your custom lesson <strong>"{_esc(title)}"</strong> is ready.</p>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px;">
+        {_brand_header("PyMasters · Vaathiyaar AI Tutor")}
+        <div style="background: #ffffff; padding: 26px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
+            <p style="color: #0f172a; font-size: 16px; margin-top: 0;">Vanakkam!</p>
+            <p style="color: #334155;">Your custom lesson <strong>"{_esc(title)}"</strong> is ready.</p>
             <p style="color: #64748b; font-size: 14px;">{_esc(reason)}</p>
-            <a href="{link}" style="display: inline-block; background: #7c3aed; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;">Start Learning</a>
+            <a href="{link}" style="display: inline-block; background: linear-gradient(135deg, #0f256e, #1d4ed8); color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 700; margin-top: 16px; border: 1px solid #e0b95e;">Start Learning</a>
         </div>
     </div>
     """
@@ -91,16 +107,13 @@ def build_reset_email(name: str, reset_link: str) -> tuple:
         f"If you didn't request this, you can safely ignore this email.\n\n— PyMasters"
     )
     html = f"""
-    <div style="font-family: -apple-system, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 22px; border-radius: 12px 12px 0 0;">
-            <h2 style="margin: 0;">PyMasters</h2>
-            <p style="margin: 4px 0 0; opacity: 0.9; font-size: 14px;">Password reset</p>
-        </div>
-        <div style="background: white; padding: 26px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
-            <p style="color: #334155; font-size: 16px;">{_esc(greeting)}</p>
-            <p style="color: #475569;">We received a request to reset your PyMasters password.</p>
-            <a href="{reset_link}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 13px 26px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 12px;">Reset Password</a>
-            <p style="color: #94a3b8; font-size: 12px; margin-top: 18px;">This link expires in 1 hour. If you didn't request it, ignore this email.<br><span style="color:#475569;">{reset_link}</span></p>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px;">
+        {_brand_header("Password reset")}
+        <div style="background: #ffffff; padding: 26px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
+            <p style="color: #0f172a; font-size: 16px; margin-top: 0;">{_esc(greeting)}</p>
+            <p style="color: #334155;">We received a request to reset your PyMasters password.</p>
+            <a href="{reset_link}" style="display: inline-block; background: linear-gradient(135deg, #0f256e, #1d4ed8); color: #ffffff; padding: 13px 26px; border-radius: 8px; text-decoration: none; font-weight: 700; margin-top: 12px; border: 1px solid #e0b95e;">Reset Password</a>
+            <p style="color: #64748b; font-size: 12px; margin-top: 18px;">This link expires in 1 hour. If you didn't request it, ignore this email.<br><span style="color:#475569;">{reset_link}</span></p>
         </div>
     </div>
     """
@@ -108,22 +121,19 @@ def build_reset_email(name: str, reset_link: str) -> tuple:
 
 
 def _admin_card(header_sub: str, title: str, rows: list, footer: str = "") -> str:
-    """Shared inline-styled HTML card for owner/admin notification emails."""
+    """Shared inline-styled HTML card for owner/admin and transactional notification emails."""
     row_html = "".join(
         f'<tr><td style="padding:4px 10px 4px 0; color:#64748b; font-size:13px; vertical-align:top; white-space:nowrap;">{_esc(str(k))}</td>'
         f'<td style="padding:4px 0; color:#334155; font-size:13px;">{_esc(str(v))}</td></tr>'
         for k, v in rows if v
     )
     return f"""
-    <div style="font-family: -apple-system, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #7c3aed, #6d28d9); color: white; padding: 22px; border-radius: 12px 12px 0 0;">
-            <h2 style="margin: 0;">PyMasters</h2>
-            <p style="margin: 4px 0 0; opacity: 0.9; font-size: 14px;">{header_sub}</p>
-        </div>
-        <div style="background: white; padding: 26px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
-            <p style="color: #334155; font-size: 16px; margin-top: 0;"><strong>{_esc(title)}</strong></p>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px;">
+        {_brand_header(header_sub)}
+        <div style="background: #ffffff; padding: 26px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
+            <p style="color: #0f172a; font-size: 16px; margin-top: 0;"><strong>{_esc(title)}</strong></p>
             <table style="border-collapse: collapse;">{row_html}</table>
-            {f'<p style="color: #94a3b8; font-size: 12px; margin-top: 18px;">{footer}</p>' if footer else ''}
+            {f'<p style="color: #64748b; font-size: 12px; margin-top: 18px;">{footer}</p>' if footer else ''}
         </div>
     </div>
     """
@@ -255,17 +265,14 @@ def build_invite_email(org_name: str, role: str, invite_link: str, inviter: str 
         f"This link expires in 7 days.\n\n— Vaathiyaar, PyMasters"
     )
     html = f"""
-    <div style="font-family: -apple-system, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 22px; border-radius: 12px 12px 0 0;">
-            <h2 style="margin: 0;">PyMasters</h2>
-            <p style="margin: 4px 0 0; opacity: 0.9; font-size: 14px;">Learn Python & AI with Vaathiyaar</p>
-        </div>
-        <div style="background: white; padding: 26px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
-            <p style="color: #334155; font-size: 16px;">Vanakkam!</p>
-            <p style="color: #475569;">{_esc(who)} to join <strong>{_esc(org_name)}</strong> on PyMasters as a <strong>{_esc(role)}</strong>.</p>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 520px; margin: 0 auto; padding: 20px;">
+        {_brand_header("Learn Python & AI with Vaathiyaar")}
+        <div style="background: #ffffff; padding: 26px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 12px 12px;">
+            <p style="color: #0f172a; font-size: 16px; margin-top: 0;">Vanakkam!</p>
+            <p style="color: #334155;">{_esc(who)} to join <strong>{_esc(org_name)}</strong> on PyMasters as a <strong>{_esc(role)}</strong>.</p>
             <p style="color: #64748b; font-size: 14px;">PyMasters is an AI-powered platform to master Python and AI, guided by your personal tutor Vaathiyaar.</p>
-            <a href="{invite_link}" style="display: inline-block; background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 13px 26px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;">Accept Invite &amp; Join</a>
-            <p style="color: #94a3b8; font-size: 12px; margin-top: 18px;">This invitation link expires in 7 days. If the button doesn't work, paste this into your browser:<br><span style="color:#475569;">{invite_link}</span></p>
+            <a href="{invite_link}" style="display: inline-block; background: linear-gradient(135deg, #0f256e, #1d4ed8); color: #ffffff; padding: 13px 26px; border-radius: 8px; text-decoration: none; font-weight: 700; margin-top: 16px; border: 1px solid #e0b95e;">Accept Invite &amp; Join</a>
+            <p style="color: #64748b; font-size: 12px; margin-top: 18px;">This invitation link expires in 7 days. If the button doesn't work, paste this into your browser:<br><span style="color:#475569;">{invite_link}</span></p>
         </div>
     </div>
     """

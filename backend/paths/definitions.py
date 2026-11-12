@@ -443,7 +443,68 @@ PATH_DEFINITIONS = [
         ],
         ["regex", "files", "json", "csv", "dates", "async", "concurrency"],
     ),
+
+    # ── Flagship AI, Agents & Modern Deep Learning Paths ──
+
+    _p(
+        "ai_engineering_pro",
+        "AI Engineering & Production LLMs",
+        "Ship production-grade LLM systems — structured outputs, prompt caching, dense embeddings, chunking & reranking RAG, systematic evals, quantization, and local model deployment.",
+        "sparkles",
+        "intermediate", "advanced",
+        "ai",
+        28,
+        [
+            "llm_apis", "structured_outputs", "llm_json_extraction",
+            "llm_sampling_decoding", "context_window_budgeting", "prompt_caching_read_savings",
+            "minilm_semantic_search_scratch", "minilm_mean_pooling",
+            "rag_chunking", "rag_cosine_retrieval", "minilm_local_rag",
+            "rag_reranking", "cross_encoder_reranking",
+            "eval_driven_dev", "minilm_production_embeddings",
+            "llm_memory_math", "qwen3_0_6b",
+        ],
+        ["llm", "structured_outputs", "embeddings", "rag", "reranking", "evaluation", "quantization", "deployment"],
+    ),
+
+    _p(
+        "autonomous_ai_agents",
+        "Autonomous AI Agents & Tool Use",
+        "Design reliable autonomous agents from scratch — tool dispatch, ReAct loops, type-safe outputs, MCP servers, short/long-term memory, LangGraph state machines, multi-agent DAGs, and budget guardrails.",
+        "bot",
+        "intermediate", "advanced",
+        "ai",
+        24,
+        [
+            "agent_fundamentals", "tool_calling_dispatch", "agent_tool_loop_from_scratch",
+            "typesafe_agent_output", "pydantic_ai", "code_action_agents",
+            "mcp_protocol", "agent_memory_short_and_long", "agentic_rag",
+            "agent_state_graph", "langgraph_basics", "plan_and_execute_dag",
+            "multi_agent_systems", "tool_retry_backoff_idempotency", "agent_budget_guardrails",
+        ],
+        ["ai_agents", "tool_calling", "react_loop", "pydantic_ai", "mcp", "agent_memory", "langgraph", "multi_agent", "guardrails"],
+    ),
+
+    _p(
+        "modern_python_dl",
+        "Modern Python & Deep Learning",
+        "Bridge cutting-edge Python — structural pattern matching, template strings, free-threading, modern tooling — directly into PyTorch tensors, autograd, neural networks, and transformer architectures.",
+        "layers",
+        "intermediate", "advanced",
+        "deep_learning",
+        26,
+        [
+            "structural_pattern_matching", "python314_tstrings", "modern_tooling",
+            "free_threading", "subinterpreters",
+            "nn_perceptrons", "nn_activation", "nn_forward_pass",
+            "bp_loss_functions", "bp_gradient_descent",
+            "pt_tensors", "pt_autograd", "pt_training",
+            "transformer_self_attention", "transformer_architecture",
+        ],
+        ["pattern_matching", "modern_python", "concurrency", "neural_network", "gradient_descent", "tensors", "autograd", "pytorch", "self_attention", "transformers"],
+    ),
 ]
+
+PATHS = PATH_DEFINITIONS
 
 
 # ── Seed function ────────────────────────────────────────────────────────

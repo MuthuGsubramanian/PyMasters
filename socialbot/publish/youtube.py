@@ -50,20 +50,34 @@ def _playlist_id(yt, title):
     return yt.playlists().insert(part="snippet,status", body=body).execute()["id"]
 
 
-def upload(item: dict) -> dict:
-    """Upload as private with publishAt (YouTube releases it on schedule). Returns {id, url}."""
-    from googleapiclient.http import MediaFileUpload
-    d, media, kind = item["draft"], item["media"], item["kind"]
-    desc = d["description"].strip()
+PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=net.pymasters.app"
+TELEGRAM_COMMUNITY_URL = "https://t.me/boost/PyMasterscommunity"
+
+
+def build_description(d: dict, media: dict, kind: str) -> str:
+    """Build YouTube video description with Web, Google Play, and Telegram community links."""
+    desc = (d.get("description") or "").strip()
     if media.get("space_url") and media["space_url"] not in desc:
         desc += f"\n\nTry the live Hugging Face Space: {media['space_url']}"
     if media.get("lesson_url") and media["lesson_url"] not in desc:
         desc += f"\n\nFull interactive lesson (free): {media['lesson_url']}"
     if kind == "long" and media.get("chapters_text"):
         desc += "\n\nChapters\n" + media["chapters_text"]
-    desc += "\n\nPyMasters: learn Python and AI engineering by doing. " + config.SITE
+    desc += (
+        f"\n\nPyMasters — learn Python and AI engineering by doing: {config.SITE}"
+        f"\nGet PyMasters on Google Play: {PLAY_STORE_URL}"
+        f"\nTelegram Support & Discussion: {TELEGRAM_COMMUNITY_URL}"
+    )
     if kind == "short":
-        desc += "\n#Shorts #Python"
+        desc += "\n#Shorts #Python #PyMasters"
+    return desc
+
+
+def upload(item: dict) -> dict:
+    """Upload as private with publishAt (YouTube releases it on schedule). Returns {id, url}."""
+    from googleapiclient.http import MediaFileUpload
+    d, media, kind = item["draft"], item["media"], item["kind"]
+    desc = build_description(d, media, kind)
     publish_at = item.get("publish_at")
     status = {"privacyStatus": "private", "selfDeclaredMadeForKids": False, "containsSyntheticMedia": True,
               "embeddable": True, "license": "youtube"}

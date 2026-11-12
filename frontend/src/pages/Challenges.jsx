@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Trophy, Clock, Code2, Zap, Star, ChevronRight, Send, Award,
-  Flame, Lock, CheckCircle2, AlertCircle, Loader2, Users
+  Flame, Lock, CheckCircle2, AlertCircle, Loader2, Users, Terminal
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
@@ -215,7 +216,14 @@ function ChallengeArchive({ onSelectChallenge, activeId }) {
 // ─── Main component ─────────────────────────────────────────────────────────
 export default function Challenges() {
   useEffect(() => { document.title = 'Challenges — PyMasters'; }, []);
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const scrollMainToTop = () => {
+    const target = document.querySelector('main') || window;
+    if (typeof target.scrollTo === 'function') {
+      target.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
   const [challenge, setChallenge] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
   const [code, setCode] = useState('');
@@ -454,15 +462,31 @@ export default function Challenges() {
               transition={{ delay: 0.2 }}
               className="overflow-hidden"
             >
-              <div className="flex items-center justify-between px-5 py-3 border-b border-border-default">
+              <div className="flex items-center justify-between gap-2 px-5 py-3 border-b border-border-default">
                 <div className="flex items-center gap-2 text-text-secondary">
                   <Code2 size={16} className="text-purple-500" />
                   <span className="text-sm font-semibold">Your Solution</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-red-400" />
-                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                  <div className="w-3 h-3 rounded-full bg-green-400" />
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(
+                        `/dashboard/playground?code=${encodeURIComponent(
+                          code || challenge?.starter_code || ''
+                        )}`
+                      )
+                    }
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-accent-primary bg-accent-subtle border border-border-strong hover:bg-bg-elevated transition-colors"
+                  >
+                    <Terminal size={12} />
+                    <span>Open in Playground</span>
+                  </button>
+                  <div className="hidden sm:flex items-center gap-1.5" aria-hidden="true">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
                 </div>
               </div>
 
@@ -609,7 +633,7 @@ export default function Challenges() {
                       }));
                       setCode(pc.starter_code || `# Solution for ${pc.title}\n`);
                       setResult(null);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      scrollMainToTop();
                     }}
                     className={clsx(
                       'flex items-center gap-3 px-4 py-3 rounded-xl transition-colors cursor-pointer',
@@ -698,7 +722,7 @@ export default function Challenges() {
             }));
             setCode(c.starter_code || `# Write your solution for ${c.title}\n`);
             setResult(null);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            scrollMainToTop();
           }}
         />
       </div>

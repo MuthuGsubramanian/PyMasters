@@ -461,7 +461,7 @@ export default function App() {
     } catch {
       setMessages((m) => [
         ...m,
-        { role: 'ai', text: 'Check your connection or open pymasters.net/dashboard/vaathiyaar.' },
+        { role: 'ai', text: 'Check your connection or open https://pymasters.net/dashboard/live-tutor.' },
       ]);
     } finally {
       setAsking(false);

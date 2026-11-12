@@ -6,7 +6,7 @@ import { safeErrorMsg } from '../utils/errorUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Lock, Mail, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkles, Building2, GraduationCap, School, Briefcase, Users, ChevronLeft, Linkedin, Github } from 'lucide-react';
 import clsx from 'clsx';
-import PymastersGlyph from '../assets/pymasters-glyph.svg';
+import PymastersGlyph from '../assets/pymasters-glyph.svg?no-inline';
 import { rememberReturnTo, takeReturnTo } from '../utils/returnTo';
 
 export default function Login() {
@@ -207,15 +207,27 @@ export default function Login() {
             >
                 {/* Logo & Header */}
                 <div className="text-center mb-8">
+                    <div className="mb-4">
+                        <Link
+                            to="/"
+                            className="min-h-11 px-3 inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg"
+                        >
+                            ← Back to PyMasters
+                        </Link>
+                    </div>
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ duration: 0.5, delay: 0.1 }}
                         className="inline-block mb-6"
                     >
-                        <div className="w-16 h-16 rounded-2xl bg-purple-600 flex items-center justify-center shadow-elegant">
+                        <Link
+                            to="/"
+                            aria-label="PyMasters home"
+                            className="w-16 h-16 min-h-11 rounded-2xl bg-purple-600 flex items-center justify-center shadow-elegant hover:bg-purple-700 transition-colors"
+                        >
                             <img src={PymastersGlyph} alt="PyMasters" className="w-9 h-9" />
-                        </div>
+                        </Link>
                     </motion.div>
 
                     <AnimatePresence mode="wait">
@@ -546,6 +558,20 @@ export default function Login() {
                                         )}
                                     </button>
 
+                                    {!isLogin && (
+                                        <p className="text-xs text-text-secondary text-center">
+                                            By creating an account, you agree to our{' '}
+                                            <Link to="/terms" className="min-h-11 px-1 inline-flex items-center text-accent-primary font-semibold hover:underline">
+                                                Terms
+                                            </Link>{' '}
+                                            and{' '}
+                                            <Link to="/privacy" className="min-h-11 px-1 inline-flex items-center text-accent-primary font-semibold hover:underline">
+                                                Privacy Policy
+                                            </Link>
+                                            .
+                                        </p>
+                                    )}
+
                                     {(linkedinEnabled || githubEnabled) && (isLogin || accountType === 'individual') && (
                                         <>
                                             <div className="flex items-center gap-3 my-1">
@@ -601,7 +627,7 @@ export default function Login() {
                             href="https://t.me/boost/PyMasterscommunity"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-sky-700 dark:text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 transition-colors"
+                            className="min-h-11 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-sky-700 dark:text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/25 transition-colors"
                         >
                             Need help? Telegram Support &amp; Community ↗
                         </a>

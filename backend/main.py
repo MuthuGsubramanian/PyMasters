@@ -865,6 +865,11 @@ def init_db():
         _ensure_arcade(DB_PATH)
     except Exception as _exc:
         print(f"[init_db] arcade tables: {_exc}")
+    try:
+        from database import ensure_credentials_table as _ensure_credentials
+        _ensure_credentials(DB_PATH)
+    except Exception as _exc:
+        print(f"[init_db] credentials table: {_exc}")
 
 # --- App Lifecycle ---
 @asynccontextmanager
@@ -957,8 +962,12 @@ app.include_router(org_requests_router)
 app.include_router(org_curriculum_router)
 from routes.email_verify import router as email_verify_router
 from routes.misconceptions import router as misconceptions_router
+from routes.guides import router as guides_router
+from routes.certificates import router as certificates_router
 app.include_router(email_verify_router)
 app.include_router(misconceptions_router)
+app.include_router(guides_router)
+app.include_router(certificates_router)
 
 # --- CORS ---
 # NB: no "*" here. With allow_credentials=True, a wildcard makes Starlette echo

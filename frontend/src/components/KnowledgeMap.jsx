@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Brain } from 'lucide-react';
 import gsap from 'gsap';
 
 // ─── Color helpers ──────────────────────────────────────────────────────────
@@ -117,27 +118,27 @@ export default function KnowledgeMap({ data }) {
 
     if (nodes.length === 0) {
         return (
-            <div className="rounded-2xl border border-black/[0.04] bg-white/80 backdrop-blur-sm p-8 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4 text-2xl select-none">
-                    {'🧠'}
+            <div className="rounded-2xl border border-border-default bg-bg-surface backdrop-blur-sm p-8 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-bg-elevated border border-border-default flex items-center justify-center mx-auto mb-4 select-none">
+                    <Brain className="w-8 h-8 text-accent-primary" aria-hidden="true" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 font-display mb-2">Knowledge Map</h3>
-                <p className="text-sm text-slate-500">Complete lessons to build your knowledge graph.</p>
+                <h3 className="text-lg font-bold text-text-primary font-display mb-2">Knowledge Map</h3>
+                <p className="text-sm text-text-muted">Complete lessons to build your knowledge graph.</p>
             </div>
         );
     }
 
     return (
-        <div className="rounded-2xl border border-black/[0.04] bg-white/80 backdrop-blur-sm overflow-hidden">
+        <div className="rounded-2xl border border-border-default bg-bg-surface backdrop-blur-sm overflow-hidden">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-black/[0.04] flex items-center justify-between">
+            <div className="px-6 py-4 border-b border-border-default flex items-center justify-between flex-wrap gap-3">
                 <div>
-                    <h3 className="text-lg font-bold text-slate-800 font-display">Knowledge Map</h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <h3 className="text-lg font-bold text-text-primary font-display">Knowledge Map</h3>
+                    <p className="text-xs text-text-muted mt-0.5">
                         {nodes.length} concepts across {categories.length} categories
                     </p>
                 </div>
-                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-text-secondary">
                     <span className="flex items-center gap-1.5">
                         <span className="w-2.5 h-2.5 rounded-full bg-green-500" /> Strong
                     </span>
@@ -151,13 +152,14 @@ export default function KnowledgeMap({ data }) {
             </div>
 
             {/* Category tabs */}
-            <div className="px-6 py-3 border-b border-black/[0.04] flex gap-2 overflow-x-auto">
+            <div className="px-6 py-3 border-b border-border-default flex gap-2 overflow-x-auto">
                 <button
+                    type="button"
                     onClick={() => setActiveCategory('all')}
                     className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-200 whitespace-nowrap ${
                         activeCategory === 'all'
-                            ? 'bg-cyan-50 text-cyan-700 border border-cyan-200'
-                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 border border-transparent'
+                            ? 'bg-accent-subtle text-accent-primary border border-border-strong'
+                            : 'text-text-muted hover:text-text-primary hover:bg-bg-elevated border border-transparent'
                     }`}
                 >
                     All
@@ -165,11 +167,12 @@ export default function KnowledgeMap({ data }) {
                 {categories.map(cat => (
                     <button
                         key={cat}
+                        type="button"
                         onClick={() => setActiveCategory(cat)}
                         className={`text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-200 whitespace-nowrap ${
                             activeCategory === cat
-                                ? 'bg-cyan-50 text-cyan-700 border border-cyan-200'
-                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 border border-transparent'
+                                ? 'bg-accent-subtle text-accent-primary border border-border-strong'
+                                : 'text-text-muted hover:text-text-primary hover:bg-bg-elevated border border-transparent'
                         }`}
                     >
                         {cat}
@@ -198,10 +201,10 @@ export default function KnowledgeMap({ data }) {
                                 key={`edge-${idx}`}
                                 d={edgePath(source.x, source.y, target.x, target.y)}
                                 fill="none"
-                                stroke={highlighted ? '#06b6d4' : '#e2e8f0'}
+                                stroke={highlighted ? '#06b6d4' : 'var(--border-strong, #64748b)'}
                                 strokeWidth={highlighted ? 2.5 : 1.5}
                                 strokeDasharray={highlighted ? 'none' : '4 4'}
-                                opacity={selectedNode && !highlighted ? 0.2 : 0.8}
+                                opacity={selectedNode && !highlighted ? 0.2 : 0.7}
                                 className="transition-all duration-300"
                             />
                         );
@@ -251,7 +254,7 @@ export default function KnowledgeMap({ data }) {
                                     cy={node.y}
                                     r={isSelected ? 16 : 12}
                                     fill={color}
-                                    stroke="white"
+                                    stroke="var(--bg-surface, #0f172a)"
                                     strokeWidth={2}
                                     className="transition-all duration-300"
                                 />
@@ -260,7 +263,7 @@ export default function KnowledgeMap({ data }) {
                                     x={node.x}
                                     y={node.y + (isSelected ? 28 : 24)}
                                     textAnchor="middle"
-                                    className="text-xs font-bold fill-slate-500 select-none"
+                                    className="text-xs font-bold fill-current text-text-secondary select-none"
                                 >
                                     {(node.name || node.concept || node.id).length > 14
                                         ? (node.name || node.concept || node.id).slice(0, 12) + '...'

@@ -458,9 +458,8 @@ export default function Playground() {
     const remainingPct = total > 0 ? Math.min((remaining / total) * 100, 100) : 0;
 
     return (
-        // Height = viewport minus Layout's shell (p-6 container = 3rem; mobile adds
-        // the fixed 3.5rem header) — avoids page-level double scroll.
-        <div className="h-[calc(100dvh-6.5rem)] lg:h-[calc(100dvh-3rem)] flex flex-col overflow-hidden">
+        // Height = viewport minus Layout's shell (header + mobile bottom nav) — avoids page-level double scroll.
+        <div className="h-[calc(100dvh-8.5rem)] lg:h-[calc(100dvh-6.5rem)] flex flex-col overflow-hidden">
             <VaathiyaarMessage />
 
             {/* ── Toolbar: title, credits meter, voice — one compact row ──── */}

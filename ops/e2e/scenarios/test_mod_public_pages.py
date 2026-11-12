@@ -109,6 +109,11 @@ def test_public_apis():
     assert s.post(f"{BASE}/api/track/visit", json={"path": "/pricing"}, timeout=30).status_code == 200
     mods = s.get(f"{BASE}/api/content/modules", timeout=30)
     assert mods.status_code == 200, mods.text[:200]
+    guides = s.get(f"{BASE}/api/guides", timeout=30)
+    assert guides.status_code == 200 and len(guides.json().get("guides", [])) >= 6, guides.text[:200]
+    guide = s.get(f"{BASE}/api/guides/run-qwen3-0-6b-llm-on-any-laptop", timeout=30)
+    assert guide.status_code == 200 and guide.json().get("slug") == "run-qwen3-0-6b-llm-on-any-laptop"
+    assert s.get(f"{BASE}/api/credentials/verify/PYM-0000-NOTFOUND", timeout=30).status_code == 404
     for provider in ("/api/auth/github/config", "/api/auth/linkedin/config"):
         assert s.get(f"{BASE}{provider}", timeout=30).json()["enabled"] is False
 
@@ -118,6 +123,15 @@ def test_learner_side_apis():
     s = api(u["ip"], u["token"])
     assert s.get(f"{BASE}/api/misconceptions", timeout=30).status_code == 200
     assert s.get(f"{BASE}/api/trending/personalized/{u['id']}", timeout=30).status_code == 200
+    creds = s.get(f"{BASE}/api/credentials/mine", timeout=30)
+    assert creds.status_code == 200 and "earned" in creds.json(), creds.text[:200]
+    rev = s.post(f"{BASE}/api/classroom/code-review", json={"code": "def add(a, b):\n    return a + b\n"}, timeout=30)
+    assert rev.status_code == 200 and "strengths" in rev.json(), rev.text[:200]
+    tb = s.post(f"{BASE}/api/classroom/teach-back", json={
+        "concept": "Variables",
+        "explanation": "A variable binds a name to an object in memory, for example x = 42 assigns 42 so we can reuse x instead of mutating raw addresses.",
+    }, timeout=60)
+    assert tb.status_code == 200 and "clarity_score" in tb.json(), tb.text[:200]
     voice = s.post(f"{BASE}/api/voice/transcribe", files={"audio": ("clip.webm", b"\x1aE\xdf\xa3" + b"\0" * 64, "audio/webm")},
                    data={"language": "en"}, timeout=60)
     assert voice.status_code < 500 or voice.status_code == 503, voice.text[:200]   # no speech model in CI: 4xx/503 ok

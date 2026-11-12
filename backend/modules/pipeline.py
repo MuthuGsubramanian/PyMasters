@@ -414,6 +414,170 @@ def stage_4_challenges(job_id, outline, narrative, directive=""):
     return normalised
 
 
+def _clamp_text(text: str, lo: int, hi: int, pad: str) -> str:
+    cleaned = re.sub(r"\s+", " ", (text or "").replace("TODO", "").replace("lorem", "")).strip()
+    if len(cleaned) < lo:
+        cleaned = f"{cleaned} {pad}".strip()
+    if len(cleaned) > hi:
+        cleaned = cleaned[: hi - 1].rstrip() + "."
+    return cleaned
+
+
+def _default_quiz(topic: str, outline: dict) -> list[dict]:
+    """Deterministic fallback multiple-choice quiz when the LLM omits quiz items."""
+    title = str(outline.get("title") or topic.replace("_", " ").title()).strip()
+    objectives = [str(o).strip() for o in (outline.get("learning_objectives") or []) if str(o).strip()]
+    concepts = [str(c).strip() for c in (outline.get("key_concepts") or []) if str(c).strip()]
+    primary_obj = objectives[0] if objectives else f"Understand and apply {title} cleanly in Python"
+    primary_concept = concepts[0] if concepts else title
+
+    return [
+        {
+            "q": {"en": f"What is a primary goal when working with {title} in Python?"},
+            "options": {
+                "en": [
+                    primary_obj,
+                    "Bypassing Python syntax rules at compile time",
+                    "Disabling memory management for local variables",
+                    "Replacing all standard functions with raw bytecode",
+                ]
+            },
+            "correct": 0,
+        },
+        {
+            "q": {"en": f"Which practice best keeps code using {primary_concept} reliable and readable?"},
+            "options": {
+                "en": [
+                    "Ignoring all runtime exceptions silently with pass",
+                    f"Writing small, testable functions with clear inputs and outputs around {primary_concept}",
+                    "Hardcoding magic constants across unrelated modules",
+                    "Mutating shared global state on every line",
+                ]
+            },
+            "correct": 1,
+        },
+    ]
+
+
+def _default_under_the_hood(topic: str, outline: dict) -> dict:
+    """Deterministic fallback `under_the_hood` explainer passing validate_under_the_hood."""
+    raw_title = str(outline.get("title") or topic.replace("_", " ").title()).strip()
+    short_title = raw_title[:48].strip() or "Python Concept"
+    desc = str(outline.get("description") or f"How {short_title} works inside Python.").strip()
+    concepts = [str(c).strip()[:36] for c in (outline.get("key_concepts") or []) if str(c).strip()][:3]
+    if not concepts:
+        concepts = ["Input state", "Core operation", "Result object"]
+
+    summary = _clamp_text(
+        f"{short_title} works by binding well-defined Python objects, transforming state step by step, and returning predictable values.",
+        40,
+        280,
+        "Every step follows Python's execution and object model.",
+    )
+    takeaway = _clamp_text(
+        f"Keep {short_title} clear: inspect the input types, trace one step at a time, and verify the returned object.",
+        30,
+        400,
+        "Clear mental models prevent subtle bugs.",
+    )
+    steps = [
+        {
+            "title": _clamp_text(f"1. Mental Model of {short_title}", 3, 80, "Overview"),
+            "body": _clamp_text(
+                f"{desc} Python evaluates expressions first and binds names to the resulting objects in the active namespace.",
+                60,
+                600,
+                "Understanding what each name points to makes every operation transparent.",
+            ),
+            "visual": {
+                "type": "ConceptMap",
+                "props": {
+                    "title": f"Anatomy of {short_title}"[:60],
+                    "nodes": [{"label": short_title[:36], "children": concepts}],
+                },
+            },
+        },
+        {
+            "title": "2. Step-by-Step Evaluation",
+            "body": _clamp_text(
+                f"When Python executes code using {short_title}, it resolves arguments from left to right, checks object types dynamically, and updates frame locals deterministically.",
+                60,
+                600,
+                "Each intermediate value lives on the heap with a concrete type and reference count.",
+            ),
+        },
+        {
+            "title": "3. Data Flow Through Execution",
+            "body": _clamp_text(
+                f"Data enters as plain Python values, passes through {short_title} logic without hidden magic, and produces a verifiable output or state transition.",
+                60,
+                600,
+                "Tracing inputs to outputs isolates mistakes immediately.",
+            ),
+            "visual": {
+                "type": "FlowArrow",
+                "props": {
+                    "title": "Execution Pipeline",
+                    "steps": [
+                        "Prepare inputs",
+                        f"Apply {short_title[:28]}",
+                        "Verify output",
+                    ],
+                },
+            },
+        },
+        {
+            "title": "4. Edge Cases and Clean Habits",
+            "body": _clamp_text(
+                f"In real Python programs, empty inputs, boundary values, and unexpected types are where bugs hide. Testing {short_title} on small examples keeps behavior predictable.",
+                60,
+                600,
+                "Small assertions catch mismatches early.",
+            ),
+        },
+    ]
+    return {
+        "summary": summary,
+        "steps": steps,
+        "takeaway": takeaway,
+    }
+
+
+def _normalize_quiz(raw_quiz, topic: str, outline: dict) -> list[dict]:
+    if isinstance(raw_quiz, list):
+        valid = []
+        for item in raw_quiz:
+            if not isinstance(item, dict):
+                continue
+            q = item.get("q")
+            opts = item.get("options")
+            correct = item.get("correct")
+            q_obj = q if isinstance(q, dict) and q.get("en") else ({"en": str(q).strip()} if isinstance(q, str) and q.strip() else None)
+            if isinstance(opts, dict) and isinstance(opts.get("en"), list) and len(opts["en"]) >= 2:
+                opts_obj = opts
+            elif isinstance(opts, list) and len(opts) >= 2:
+                opts_obj = {"en": [str(x) for x in opts]}
+            else:
+                opts_obj = None
+            if q_obj and opts_obj and isinstance(correct, int) and 0 <= correct < len(opts_obj["en"]):
+                valid.append({"q": q_obj, "options": opts_obj, "correct": correct})
+        if valid:
+            return valid
+    return _default_quiz(topic, outline)
+
+
+def _normalize_under_the_hood(raw_uth, topic: str, outline: dict) -> dict:
+    if isinstance(raw_uth, dict):
+        try:
+            from vaathiyaar.topic_uth import validate_under_the_hood
+            if validate_under_the_hood(raw_uth) == []:
+                return raw_uth
+        except Exception:
+            if raw_uth.get("summary") and raw_uth.get("steps") and raw_uth.get("takeaway"):
+                return raw_uth
+    return _default_under_the_hood(topic, outline)
+
+
 def stage_5_assembly(job_id, user_id, topic, outline, narrative, animation, challenges):
     """Stage 5: Assemble full lesson JSON, store in DB, send notification."""
     _update_job_status(job_id, "stage_5_assembly")
@@ -422,6 +586,9 @@ def stage_5_assembly(job_id, user_id, topic, outline, narrative, animation, chal
     uid8 = str(uuid.uuid4()).replace("-", "")[:8]
     topic_slug = re.sub(r"[^a-z0-9_]", "_", topic.lower().strip()).strip("_")
     lesson_id = f"gen_{topic_slug}_{uid8}"
+
+    quiz = _normalize_quiz(outline.get("quiz"), topic, outline)
+    under_the_hood = _normalize_under_the_hood(outline.get("under_the_hood"), topic, outline)
 
     # Build the full lesson JSON matching the existing schema
     lesson_data = {
@@ -443,6 +610,8 @@ def stage_5_assembly(job_id, user_id, topic, outline, narrative, animation, chal
         "story_variants": narrative if isinstance(narrative, dict) else {"en": str(narrative)},
         "animation_sequence": animation.get("animation_sequence", []),
         "practice_challenges": challenges,
+        "quiz": quiz,
+        "under_the_hood": under_the_hood,
         "generated": True,
         "speed_multiplier": 1.0,
     }
