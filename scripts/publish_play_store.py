@@ -128,6 +128,16 @@ def main() -> int:
         edit = edits.insert(body={}, packageName=args.package).execute()
         edit_id = edit["id"]
 
+        edits.details().update(
+            packageName=args.package,
+            editId=edit_id,
+            body={
+                "defaultLanguage": locales[0] if locales else "en-GB",
+                "contactEmail": "muthu@pymasters.net",
+                "contactWebsite": "https://pymasters.net",
+            },
+        ).execute()
+
         meta_dir = Path(args.metadata_dir)
         if meta_dir.is_dir():
             title = (meta_dir / "title.txt").read_text(encoding="utf-8").strip()[:30]
