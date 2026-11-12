@@ -23,15 +23,16 @@ val hasReleaseKeystore = !ksPath.isNullOrBlank() && !ksPassword.isNullOrBlank() 
 
 android {
     namespace = "net.pymasters.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "net.pymasters.app"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
 
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "BASE_URL", "\"https://pymasters.net\"")
         vectorDrawables.useSupportLibrary = true
     }
@@ -99,4 +100,7 @@ dependencies {
     implementation(libs.androidx.browser)
 
     testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
 }

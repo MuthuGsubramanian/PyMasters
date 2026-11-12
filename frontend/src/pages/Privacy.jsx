@@ -156,15 +156,15 @@ export default function Privacy() {
                     </section>
 
                     {/* 5 */}
-                    <section>
+                    <section id="account-deletion" className="scroll-mt-24">
                         <h2 className="text-xl font-bold text-slate-800 mb-3 flex items-center gap-2">
                             <span className="w-7 h-7 rounded-md bg-purple-50 border border-purple-200 text-purple-700 text-xs font-bold flex items-center justify-center">5</span>
-                            Your Rights
+                            Your Rights &amp; Account Deletion
                         </h2>
-                        <p className="mb-3">You have the following rights with respect to your personal data:</p>
+                        <p className="mb-3">You have the following rights with respect to your personal data on PyMasters (web and Android app):</p>
                         <ul className="list-disc list-inside space-y-2 pl-2">
                             <li><strong className="text-slate-700">Access:</strong> You can view your profile data, learning history, and account information directly within the platform.</li>
-                            <li><strong className="text-slate-700">Deletion:</strong> You can request permanent deletion of your account and associated data by contacting <a href="mailto:legal@pymasters.net" className="text-cyan-600 hover:underline">legal@pymasters.net</a>.</li>
+                            <li><strong className="text-slate-700">Account &amp; Data Deletion:</strong> To permanently delete your PyMasters account, email <a href="mailto:legal@pymasters.net?subject=Delete%20My%20PyMasters%20Account" className="text-cyan-600 hover:underline font-medium">legal@pymasters.net</a> from your registered email address with the subject <em>"Delete My PyMasters Account"</em>. Upon verification, we permanently erase your account credentials, profile, learning progress, code submissions, and Vaathiyaar chat history within 30 days (no personal data is retained after deletion except legally required billing/security audit logs).</li>
                             <li><strong className="text-slate-700">Notification opt-out:</strong> You can manage or disable email and WhatsApp notifications from your profile preferences at any time.</li>
                             <li><strong className="text-slate-700">Training data opt-out:</strong> If you do not wish your anonymized interactions to be used for AI training, you may request this exclusion by contacting us.</li>
                         </ul>

@@ -1,9 +1,26 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const backendOrigin = globalThis.process?.env?.PYMASTERS_BACKEND_ORIGIN || 'http://127.0.0.1:8001'
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    host: '0.0.0.0',
+    allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: backendOrigin,
+        changeOrigin: true,
+        secure: true,
+      },
+    },
+  },
+  preview: {
+    host: '0.0.0.0',
+    allowedHosts: true,
+  },
   build: {
     rollupOptions: {
       output: {

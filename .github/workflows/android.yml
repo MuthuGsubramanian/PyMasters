@@ -58,6 +58,16 @@ jobs:
           name: PyMasters-Android-AAB
           path: android/app/build/outputs/bundle/release/*.aab
 
+      - name: Publish Signed AAB & Metadata to Google Play Store (when Play Console is linked)
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && secrets.PLAY_SERVICE_ACCOUNT_JSON != ''
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          pip install --quiet google-api-python-client google-auth
+          python3 scripts/publish_play_store.py \
+            --aab android/app/build/outputs/bundle/release/app-release.aab \
+            --track production
+
       - name: Bundle APK into Mobile Companion PWA
         run: |
           mkdir -p mobile-companion/public/download

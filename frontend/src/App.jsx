@@ -164,6 +164,7 @@ export default function App() {
               <Route path="/pricing" element={<ErrorBoundary><Pricing /></ErrorBoundary>} />
               <Route path="/terms" element={<ErrorBoundary><Terms /></ErrorBoundary>} />
               <Route path="/privacy" element={<ErrorBoundary><Privacy /></ErrorBoundary>} />
+              <Route path="/delete-account" element={<Navigate to="/privacy#account-deletion" replace />} />
               <Route path="/security" element={<ErrorBoundary><Security /></ErrorBoundary>} />
               <Route path="/onboarding" element={<PrivateRoute><ErrorBoundary><Onboarding /></ErrorBoundary></PrivateRoute>} />
               {/* Legacy/shared-link alias: the Playground lives inside the dashboard shell */}
