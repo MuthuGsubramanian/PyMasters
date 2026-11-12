@@ -21,6 +21,7 @@ const PI_CERT_PATH = 'https://pythoninstitute.org/certification-tracks';
 const PLAY_STORE_TESTING_URL = 'https://play.google.com/apps/testing/net.pymasters.app';
 const PLAY_STORE_LISTING_URL = 'https://play.google.com/store/apps/details?id=net.pymasters.app';
 const ANDROID_APK_DOWNLOAD_URL = 'https://pymasters-mobile-977064896391.us-central1.run.app/download/PyMasters.apk';
+const TELEGRAM_BOOST_URL = 'https://t.me/boost/PyMasterscommunity';
 import PymastersHero from '../assets/pymasters-hero.svg';
 
 /* ─── Tracks ─────────────────────────────────────────────────────────────── */
@@ -413,26 +414,37 @@ export default function Home() {
                         </button>
                     </div>
 
-                    {!inAndroidApp && (
-                        <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 text-xs sm:text-sm">
-                            <a
-                                href={PLAY_STORE_TESTING_URL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-4 py-2 font-semibold text-emerald-200 hover:bg-emerald-500/20 hover:border-emerald-300/60 transition-colors"
-                            >
-                                <Smartphone size={15} className="text-emerald-300" aria-hidden="true" />
-                                Get Android App on Google Play
-                            </a>
-                            <a
-                                href={ANDROID_APK_DOWNLOAD_URL}
-                                className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-2 font-medium text-slate-200 hover:bg-white/[0.08] hover:border-white/30 transition-colors"
-                            >
-                                <Download size={14} className="text-cyan-300" aria-hidden="true" />
-                                Download APK
-                            </a>
-                        </div>
-                    )}
+                    <div className="mt-5 flex flex-wrap items-center justify-center gap-2.5 text-xs sm:text-sm">
+                        {!inAndroidApp && (
+                            <>
+                                <a
+                                    href={PLAY_STORE_TESTING_URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-4 py-2 font-semibold text-emerald-200 hover:bg-emerald-500/20 hover:border-emerald-300/60 transition-colors"
+                                >
+                                    <Smartphone size={15} className="text-emerald-300" aria-hidden="true" />
+                                    Get Android App on Google Play
+                                </a>
+                                <a
+                                    href={ANDROID_APK_DOWNLOAD_URL}
+                                    className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-2 font-medium text-slate-200 hover:bg-white/[0.08] hover:border-white/30 transition-colors"
+                                >
+                                    <Download size={14} className="text-cyan-300" aria-hidden="true" />
+                                    Download APK
+                                </a>
+                            </>
+                        )}
+                        <a
+                            href={TELEGRAM_BOOST_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 rounded-full border border-sky-400/35 bg-sky-500/10 px-4 py-2 font-semibold text-sky-200 hover:bg-sky-500/20 hover:border-sky-300/60 transition-colors"
+                        >
+                            <MessageSquare size={15} className="text-sky-300" aria-hidden="true" />
+                            Boost PyMasters on Telegram
+                        </a>
+                    </div>
 
                     <nav aria-label="Who PyMasters is for" className="mt-8 flex flex-wrap justify-center gap-2 text-sm">
                         {[
@@ -749,47 +761,74 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* ── ANDROID MOBILE APP ── */}
-            {!inAndroidApp && (
-                <section id="android-app" aria-labelledby="android-app-title" className="relative px-4 sm:px-6 pb-12">
-                    <div className="max-w-5xl mx-auto rounded-2xl border border-emerald-400/20 bg-white/[0.03] p-5 sm:p-7 flex flex-col lg:flex-row items-center justify-between gap-6">
+            {/* ── ANDROID MOBILE APP & TELEGRAM COMMUNITY ── */}
+            <section id="android-app" aria-labelledby="android-app-title" className="relative px-4 sm:px-6 pb-12">
+                <div className="max-w-5xl mx-auto space-y-4">
+                    {!inAndroidApp && (
+                        <div className="rounded-2xl border border-emerald-400/20 bg-white/[0.03] p-5 sm:p-7 flex flex-col lg:flex-row items-center justify-between gap-6">
+                            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+                                <div className="shrink-0 w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center">
+                                    <Smartphone size={24} className="text-emerald-300" aria-hidden="true" />
+                                </div>
+                                <div>
+                                    <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-200 mb-2">
+                                        Synced across Web &amp; Mobile
+                                    </div>
+                                    <h2 id="android-app-title" className="text-white text-xl sm:text-2xl font-bold font-display">
+                                        Learn Python anywhere with the PyMasters Android App
+                                    </h2>
+                                    <p className="text-slate-300/90 text-sm leading-relaxed mt-1.5 max-w-xl">
+                                        Your lessons, XP, streaks, playground code, and Vaathiyaar AI progress stay automatically synced in real time between <span className="text-white font-medium">pymasters.net</span> and your Android phone.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto shrink-0">
+                                <a
+                                    href={PLAY_STORE_TESTING_URL}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 transition-colors"
+                                >
+                                    <Smartphone size={17} aria-hidden="true" />
+                                    Google Play Access
+                                </a>
+                                <a
+                                    href={ANDROID_APK_DOWNLOAD_URL}
+                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.05] hover:bg-white/[0.10] px-5 py-3 text-sm font-semibold text-white transition-colors"
+                                >
+                                    <Download size={16} aria-hidden="true" />
+                                    Direct APK
+                                </a>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="rounded-2xl border border-sky-400/25 bg-white/[0.03] p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-5">
                         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
-                            <div className="shrink-0 w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center">
-                                <Smartphone size={24} className="text-emerald-300" aria-hidden="true" />
+                            <div className="shrink-0 w-11 h-11 rounded-2xl bg-sky-500/15 border border-sky-400/30 flex items-center justify-center">
+                                <MessageSquare size={22} className="text-sky-300" aria-hidden="true" />
                             </div>
                             <div>
-                                <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-200 mb-2">
-                                    Synced across Web &amp; Mobile
-                                </div>
-                                <h2 id="android-app-title" className="text-white text-xl sm:text-2xl font-bold font-display">
-                                    Learn Python anywhere with the PyMasters Android App
+                                <h2 id={inAndroidApp ? 'android-app-title' : undefined} className="text-white text-lg sm:text-xl font-bold font-display">
+                                    Join &amp; Boost the PyMasters Telegram Community
                                 </h2>
-                                <p className="text-slate-300/90 text-sm leading-relaxed mt-1.5 max-w-xl">
-                                    Your lessons, XP, streaks, playground code, and Vaathiyaar AI progress stay automatically synced in real time between <span className="text-white font-medium">pymasters.net</span> and your Android phone.
+                                <p className="text-slate-300/90 text-sm leading-relaxed mt-1 max-w-xl">
+                                    Connect with fellow Python &amp; AI learners, get daily coding drops, and boost our official Telegram channel.
                                 </p>
                             </div>
                         </div>
-                        <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto shrink-0">
-                            <a
-                                href={PLAY_STORE_TESTING_URL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5 py-3 text-sm font-bold text-slate-950 transition-colors"
-                            >
-                                <Smartphone size={17} aria-hidden="true" />
-                                Google Play Access
-                            </a>
-                            <a
-                                href={ANDROID_APK_DOWNLOAD_URL}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/[0.05] hover:bg-white/[0.10] px-5 py-3 text-sm font-semibold text-white transition-colors"
-                            >
-                                <Download size={16} aria-hidden="true" />
-                                Direct APK
-                            </a>
-                        </div>
+                        <a
+                            href={TELEGRAM_BOOST_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full sm:w-auto shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-sky-400 hover:bg-sky-300 px-5 py-3 text-sm font-bold text-slate-950 transition-colors"
+                        >
+                            <Zap size={16} aria-hidden="true" />
+                            Boost on Telegram
+                        </a>
                     </div>
-                </section>
-            )}
+                </div>
+            </section>
 
             {/* ── PARTNERSHIP ── */}
             <section id="partners" aria-labelledby="partners-title" className="relative px-4 sm:px-6 pb-12">
@@ -832,6 +871,7 @@ export default function Home() {
                         {!inAndroidApp && (
                             <a href={PLAY_STORE_LISTING_URL} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-300 transition-colors">Android App</a>
                         )}
+                        <a href={TELEGRAM_BOOST_URL} target="_blank" rel="noopener noreferrer" className="hover:text-sky-300 transition-colors">Telegram Community</a>
                         <Link to="/pricing" className="hover:text-cyan-400 transition-colors">Pricing</Link>
                         <Link to="/terms" className="hover:text-cyan-400 transition-colors">Terms</Link>
                         <Link to="/privacy" className="hover:text-cyan-400 transition-colors">Privacy</Link>

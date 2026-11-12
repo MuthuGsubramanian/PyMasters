@@ -775,6 +775,36 @@ export function Overview() {
                         </div>
                     </Card>
                     </motion.div>
+
+                    {/* ─── Telegram Community Boost Card (Web + Android App Main Screen) ─── */}
+                    <motion.div variants={itemVariants}>
+                    <Card className="shadow-sm overflow-hidden border border-sky-500/25 bg-gradient-to-br from-sky-500/10 via-bg-surface to-cyan-500/10">
+                        <div className="p-4 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                    <MessageCircle size={19} aria-hidden="true" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-sm font-bold text-text-primary font-display truncate">
+                                        PyMasters Telegram Community
+                                    </h3>
+                                    <p className="text-xs text-text-secondary leading-snug">
+                                        Join &amp; boost our official learner channel
+                                    </p>
+                                </div>
+                            </div>
+                            <a
+                                href="https://t.me/boost/PyMasterscommunity"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="shrink-0 inline-flex items-center gap-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 px-3.5 py-2 text-xs font-bold text-slate-950 transition-colors"
+                            >
+                                <Zap size={13} aria-hidden="true" />
+                                Boost
+                            </a>
+                        </div>
+                    </Card>
+                    </motion.div>
                 </div>
             </div>
 

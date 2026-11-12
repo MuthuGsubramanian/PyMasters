@@ -421,7 +421,16 @@ export default function Layout() {
                         </button>
                         <DarkModeToggle />
                     </div>
-                    <div className={clsx("flex items-center justify-center gap-3", collapsed && "lg:hidden")}>
+                    <div className={clsx("flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1", collapsed && "lg:hidden")}>
+                        <a
+                            href="https://t.me/boost/PyMasterscommunity"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:underline transition-colors"
+                        >
+                            Telegram
+                        </a>
+                        <span className="text-text-muted text-xs" aria-hidden="true">&middot;</span>
                         <Link to="/terms" className="text-xs text-text-muted hover:text-accent-primary transition-colors">Terms</Link>
                         <span className="text-text-muted text-xs" aria-hidden="true">&middot;</span>
                         <Link to="/privacy" className="text-xs text-text-muted hover:text-accent-primary transition-colors">Privacy</Link>

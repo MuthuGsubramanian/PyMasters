@@ -42,11 +42,21 @@ export default function Community() {
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-8">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold text-text-primary font-display flex items-center gap-2">
-                    <Trophy className="text-amber-500 dark:text-amber-400" size={24} /> Community
-                </h1>
-                <p className="text-text-muted text-sm mt-1">See where you rank and connect with other PyMasters learners.</p>
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-text-primary font-display flex items-center gap-2">
+                        <Trophy className="text-amber-500 dark:text-amber-400" size={24} /> Community
+                    </h1>
+                    <p className="text-text-muted text-sm mt-1">See where you rank and connect with other PyMasters learners.</p>
+                </div>
+                <a
+                    href="https://t.me/boost/PyMasterscommunity"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 hover:bg-sky-400 px-4 py-2.5 text-xs font-bold text-slate-950 transition-colors shrink-0"
+                >
+                    Boost Telegram Community ↗
+                </a>
             </div>
 
             <div className="flex gap-2 mb-6">

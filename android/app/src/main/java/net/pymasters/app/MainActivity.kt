@@ -354,8 +354,12 @@ class MainActivity : ComponentActivity() {
 
     private fun openExternalUri(uri: Uri) {
         val scheme = uri.scheme?.lowercase().orEmpty()
+        val host = uri.host?.lowercase().orEmpty()
+        val preferNativeApp = host in setOf("t.me", "telegram.me", "play.google.com")
         try {
-            if (scheme == "https" || scheme == "http") {
+            if (preferNativeApp) {
+                startActivity(Intent(Intent.ACTION_VIEW, uri))
+            } else if (scheme == "https" || scheme == "http") {
                 val customTabs = CustomTabsIntent.Builder()
                     .setShowTitle(true)
                     .build()
@@ -364,6 +368,13 @@ class MainActivity : ComponentActivity() {
                 startActivity(Intent(Intent.ACTION_VIEW, uri))
             }
         } catch (_: ActivityNotFoundException) {
+            if (preferNativeApp && (scheme == "https" || scheme == "http")) {
+                try {
+                    CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(this, uri)
+                    return
+                } catch (_: ActivityNotFoundException) {
+                }
+            }
             Toast.makeText(this, "No app installed to open this link", Toast.LENGTH_SHORT).show()
         }
     }

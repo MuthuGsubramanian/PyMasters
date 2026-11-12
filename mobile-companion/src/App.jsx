@@ -656,6 +656,14 @@ export default function App() {
                     ⬇ Download Android APK
                   </a>
                 )}
+                <a
+                  className="btn btn-outline"
+                  href="https://t.me/boost/PyMasterscommunity"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  🚀 Boost Telegram Community ↗
+                </a>
                 {installPrompt && (
                   <button
                     type="button"
