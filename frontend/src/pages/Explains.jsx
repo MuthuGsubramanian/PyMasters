@@ -39,6 +39,7 @@ import NEURAL_NETWORK from '../components/explains/essays/neuralNetworkEssay';
 import BOOTSTRAP from '../components/explains/essays/bootstrapEssay';
 import AB_TESTING from '../components/explains/essays/abTestEssay';
 import QUANTIZATION from '../components/explains/essays/quantizationEssay';
+import BPE_TOKENIZATION from '../components/explains/essays/bpeEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -382,6 +383,7 @@ export const ESSAYS = [
     BOOTSTRAP,
     AB_TESTING,
     QUANTIZATION,
+    BPE_TOKENIZATION,
 ];
 
 const ESSAY_CATEGORY_MAP = {
@@ -417,6 +419,7 @@ const ESSAY_CATEGORY_MAP = {
     'embeddings': 'Deep Learning & LLMs',
     'attention': 'Deep Learning & LLMs',
     'quantization': 'Deep Learning & LLMs',
+    'bpe-tokenization': 'Deep Learning & LLMs',
 };
 
 const EXPLAIN_CATEGORIES = [
