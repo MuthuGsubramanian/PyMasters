@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pymasters-pocket-v1';
+const CACHE_NAME = 'pymasters-pocket-v2';
 const SHELL = ['/', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -20,7 +20,22 @@ self.addEventListener('fetch', (e) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/download/')) return;
 
-  if (url.pathname.startsWith('/assets/') || /\.(png|svg|css|js)$/.test(url.pathname)) {
+  if (/^\/(icon-|apple-touch-icon|favicon\.|manifest\.webmanifest)/.test(url.pathname)) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  if (url.pathname.startsWith('/assets/') || /\.(css|js)$/.test(url.pathname)) {
     e.respondWith(
       caches.match(request).then((hit) => hit || fetch(request).then((res) => {
         if (res && res.status === 200) {

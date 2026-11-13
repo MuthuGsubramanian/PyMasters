@@ -80,4 +80,14 @@ class MainActivityInstrumentedTest {
             }
         }
     }
+
+    @Test
+    fun loadsLauncherAndSplashDrawablesWithoutMissingResources() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        assertNotNull(context.getDrawable(R.mipmap.ic_launcher))
+        assertNotNull(context.getDrawable(R.mipmap.ic_launcher_round))
+        assertNotNull(context.getDrawable(R.mipmap.ic_launcher_foreground))
+        assertNotNull(context.getDrawable(R.drawable.ic_launcher_background))
+        assertNotNull(context.getDrawable(R.drawable.splash_logo))
+    }
 }

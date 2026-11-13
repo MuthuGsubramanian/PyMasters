@@ -3,7 +3,7 @@
 // - Cache-first for hashed /assets/* and app icons (immutable).
 // - Network-first for HTML navigation with cached shell fallback when briefly offline.
 
-const CACHE_NAME = 'pymasters-shell-v1';
+const CACHE_NAME = 'pymasters-shell-v2';
 const PRECACHE_URLS = [
   '/',
   '/manifest.webmanifest',
@@ -35,8 +35,26 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith('/api/') || url.pathname === '/health') return;
 
-  // Hashed static bundles & icons: cache-first
-  if (url.pathname.startsWith('/assets/') || /\.(png|svg|woff2?)$/.test(url.pathname)) {
+  // Unhashed brand icons & manifest: network-first so updated crests invalidate cleanly across PWAs/WebViews
+  if (
+    /^\/(icon-|favicon\.|logo|apple-touch-icon|og-image|manifest\.webmanifest)/.test(url.pathname)
+  ) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Immutable hashed bundles & fonts: cache-first
+  if (url.pathname.startsWith('/assets/') || /\.woff2?$/.test(url.pathname)) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
