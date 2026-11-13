@@ -372,7 +372,7 @@ async function cmdReleaseTrack(s, opts) {
     for (let i = 0; i < 60; i++) {
       await sleep(2000);
       const txt = await s.js('document.body?.innerText || ""');
-      if (vCode && (txt.includes(`${vCode} (${vName})`) || new RegExp(`\\b${vCode}\\b`).test(txt))) {
+      if (vCode && (txt.includes(`${vCode} (${vName})`) || txt.includes(`Version code ${vCode}`))) {
         console.log(`AAB processed in ${(i + 1) * 2}s`);
         break;
       }
@@ -404,12 +404,12 @@ async function cmdReleaseTrack(s, opts) {
     let sub = null;
     for (let i = 0; i < 25; i++) {
       await sleep(1000);
-      sub = await s.clickButton('(Submit|Send) .*changes for review', { preferLast: true });
+      sub = await s.clickButton('(Submit|Send) .*changes? for review', { preferLast: true });
       if (sub) break;
     }
     if (sub) {
       await sleep(2500);
-      console.log('Confirmed review submission:', await s.clickButton('^(Submit changes for review|Send changes for review|Submit|Send)$', { preferLast: true }));
+      console.log('Confirmed review submission:', await s.clickButton('^(Submit (\\d+ )?changes? for review|Send (\\d+ )?changes? for review|Submit|Send)$', { preferLast: true }));
       await sleep(4000);
     } else {
       console.log('WARNING: Submit button still disabled on /publishing. Summary:');
