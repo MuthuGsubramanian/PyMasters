@@ -54,7 +54,7 @@ def drive():
     else:
         print(f"Opening Google consent in Eighty via gcloud for {target} (with Drive access, keeping active gcloud account unchanged).")
         subprocess.run(
-            ["gcloud", "auth", "login", target, "--enable-gdrive-access", "--no-activate"],
+            ["gcloud", "auth", "login", target, "--enable-gdrive-access", "--no-activate", "--force"],
             check=True,
         )
         gd.TOKEN_FILE.write_text(json.dumps({
@@ -63,7 +63,11 @@ def drive():
             "quota_project": gd.DEFAULT_QUOTA_PROJECT,
         }, indent=2))
         gd.TOKEN_FILE.chmod(0o600)
-    email = gd.account_email()
+    try:
+        email = gd.account_email()
+    except Exception:
+        gd.TOKEN_FILE.unlink(missing_ok=True)
+        raise
     print(f"Authorised Google Drive account: {email}")
     if target and email.lower() != target.lower():
         raise SystemExit(f"Authorised account {email!r} does not match expected {target!r}; re-run and pick {target}.")
