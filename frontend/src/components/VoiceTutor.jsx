@@ -85,7 +85,7 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
         wasSpeaking.current = tts.isSpeaking;
     }, [tts.isSpeaking, thinking, listening, transcribing, startListen]);
 
-    useEffect(() => { scrollRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, interim, thinking, transcribing]);
+    useEffect(() => { scrollRef.current?.scrollIntoView?.({ behavior: 'smooth' }); }, [messages, interim, thinking, transcribing]);
 
     useEffect(() => {
         if (!open) { stopListen(); tts.stop(); }
@@ -128,16 +128,30 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
         <AnimatePresence>
             <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+                className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4"
                 onClick={onClose}
             >
                 <motion.div
                     ref={panelRef} role="dialog" aria-modal="true" aria-label="Voice Tutor" tabIndex={-1}
-                    initial={{ opacity: 0, scale: 0.94, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.94 }}
+                    data-testid="voice-tutor-drawer"
+                    initial={{ opacity: 0, y: 48 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 48 }}
+                    drag="y"
+                    dragConstraints={{ top: 0, bottom: 260 }}
+                    dragElastic={{ top: 0, bottom: 0.35 }}
+                    onDragEnd={(_, info) => {
+                        if (info.offset.y > 90 || info.velocity.y > 400) {
+                            onClose?.();
+                        }
+                    }}
                     onClick={(e) => e.stopPropagation()}
-                    className="relative w-full max-w-lg rounded-3xl bg-bg-surface border border-border-default shadow-2xl overflow-hidden flex flex-col focus:outline-none"
-                    style={{ maxHeight: '85vh' }}
+                    className="relative w-full max-w-lg rounded-t-3xl sm:rounded-3xl bg-bg-surface border border-border-default shadow-2xl overflow-hidden flex flex-col focus:outline-none"
+                    style={{ maxHeight: '85dvh' }}
                 >
+                    <div className="sm:hidden flex justify-center pt-2.5 pb-1 cursor-grab active:cursor-grabbing" aria-hidden="true">
+                        <span className="w-10 h-1.5 rounded-full bg-border-strong" />
+                    </div>
                     <div className="flex items-center justify-between px-5 py-4 border-b border-border-default bg-gradient-to-r from-purple-600/10 to-cyan-500/10">
                         <div className="flex items-center gap-2.5">
                             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center">
@@ -176,7 +190,7 @@ export default function VoiceTutor({ open, onClose, user, lessonContext = null, 
                         <div ref={scrollRef} />
                     </div>
 
-                    <div className="px-5 py-5 border-t border-border-default flex flex-col items-center gap-3">
+                    <div className="px-5 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom,0px))] border-t border-border-default flex flex-col items-center gap-3">
                         <button
                             onClick={toggleMic}
                             disabled={!inputSupported || thinking || transcribing}

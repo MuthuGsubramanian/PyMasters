@@ -83,11 +83,16 @@
     --shadow-glow: 0 0 50px -12px oklch(0.55 0.22 295 / 0.40);
     --shadow-cyan: 0 0 40px -10px oklch(0.62 0.16 215 / 0.35);
     --shadow-elegant: 0 24px 70px -28px oklch(0.30 0.05 285 / 0.30);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   body {
     @apply bg-bg-base text-text-secondary antialiased selection:bg-cyan-500/30 selection:text-text-primary;
     font-family: var(--font-sans);
+    max-width: 100%;
+    overflow-x: clip;
+    overscroll-behavior-y: none;
     background-image:
       radial-gradient(circle at 15% 50%, oklch(0.65 0.24 295 / 0.06), transparent 25%),
       radial-gradient(circle at 85% 30%, oklch(0.78 0.15 215 / 0.06), transparent 25%);
@@ -111,12 +116,6 @@
   /* Smooth scroll, mobile viewport width clamp & disable pull-to-refresh bounce */
   html {
     scroll-behavior: smooth;
-    max-width: 100%;
-    overflow-x: clip;
-    overscroll-behavior-y: none;
-  }
-
-  body {
     max-width: 100%;
     overflow-x: clip;
     overscroll-behavior-y: none;

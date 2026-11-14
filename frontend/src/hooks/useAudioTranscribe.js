@@ -44,12 +44,20 @@ export default function useAudioTranscribe({ language = 'en', userId, onFinal } 
             setRecording(false);
             clearTimeout(maxTimerRef.current);
             stream.getTracks().forEach((t) => t.stop());
-            const blob = new Blob(chunksRef.current, { type: mr.mimeType || 'audio/webm' });
+            const mime = mr.mimeType || 'audio/webm';
+            const blob = new Blob(chunksRef.current, { type: mime });
             if (blob.size < 1500) { setError('no-speech'); return; } // too short / silence
+            const ext = mime.includes('mp4') || mime.includes('m4a')
+                ? 'mp4'
+                : mime.includes('ogg')
+                ? 'ogg'
+                : mime.includes('wav')
+                ? 'wav'
+                : 'webm';
             setTranscribing(true);
             try {
                 const fd = new FormData();
-                fd.append('audio', blob, 'speech.webm');
+                fd.append('audio', blob, `speech.${ext}`);
                 fd.append('user_id', userId || 'anon');
                 fd.append('language', language || 'en');
                 const res = await api.post('/voice/transcribe', fd, { headers: { 'Content-Type': 'multipart/form-data' } });

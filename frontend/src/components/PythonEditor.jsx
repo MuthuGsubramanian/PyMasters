@@ -1,14 +1,33 @@
-import { Component, useCallback, useState, lazy, Suspense } from 'react';
+import { Component, useCallback, useState, useRef, lazy, Suspense } from 'react';
+
+const PYTHON_QUICK_SYMBOLS = [
+    { label: ':', insert: ':', cursorOffset: 1 },
+    { label: '()', insert: '()', cursorOffset: 1 },
+    { label: '[]', insert: '[]', cursorOffset: 1 },
+    { label: '_', insert: '_', cursorOffset: 1 },
+    { label: 'Tab', insert: '    ', cursorOffset: 4 },
+    { label: '=', insert: ' = ', cursorOffset: 3 },
+    { label: '->', insert: ' -> ', cursorOffset: 4 },
+];
+
+export function insertPythonSymbol(value, selectionStart, selectionEnd, sym) {
+    const start = Math.max(0, selectionStart ?? value.length);
+    const end = Math.max(start, selectionEnd ?? start);
+    const nextValue = value.slice(0, start) + sym.insert + value.slice(end);
+    const nextCursor = start + (sym.cursorOffset ?? sym.insert.length);
+    return { nextValue, nextCursor };
+}
 
 // ── Fallback editor — always available, no external dependencies ────────────
-function FallbackEditor({ value, onChange, onRun, placeholder, height, readOnly }) {
+function FallbackEditor({ value, onChange, onRun, placeholder, height, readOnly, textareaRef }) {
     return (
         <div className="relative rounded-lg overflow-hidden border border-slate-700/50" style={{ height }}>
             <div className="flex items-center justify-between px-3 py-1 bg-[#161b22] border-b border-slate-700/50">
-                <span className="text-xs text-slate-500 font-mono">Python</span>
-                <span className="text-xs text-slate-600 font-mono">Ctrl+Enter to run</span>
+                <span className="text-xs text-slate-400 font-mono">Python</span>
+                <span className="text-xs text-slate-500 font-mono">Ctrl+Enter to run</span>
             </div>
             <textarea
+                ref={textareaRef}
                 value={value}
                 onChange={(e) => onChange?.(e.target.value)}
                 onKeyDown={(e) => {
@@ -61,13 +80,13 @@ const CodeMirrorEditor = lazy(() =>
     import('@uiw/react-codemirror').then(async (mod) => {
         const { python } = await import('@codemirror/lang-python');
         const { oneDark } = await import('@codemirror/theme-one-dark');
-        const { keymap } = await import('@codemirror/view');
+        const { keymap, EditorView } = await import('@codemirror/view');
         const { indentUnit } = await import('@codemirror/language');
         const { Prec } = await import('@codemirror/state');
 
         const CodeMirror = mod.default;
 
-        function CMEditor({ value, onChange, onRun, readOnly, height, placeholder }) {
+        function CMEditor({ value, onChange, onRun, readOnly, height, placeholder, viewRef }) {
             const handleChange = useCallback((val) => onChange?.(val), [onChange]);
 
             // Prec.highest: basicSetup's default keymap binds Mod-Enter to insertBlankLine, which otherwise
@@ -81,6 +100,9 @@ const CodeMirrorEditor = lazy(() =>
                 <CodeMirror
                     value={value}
                     onChange={handleChange}
+                    onCreateEditor={(view) => {
+                        if (viewRef) viewRef.current = view;
+                    }}
                     height={height}
                     theme={oneDark}
                     readOnly={readOnly}
@@ -95,7 +117,7 @@ const CodeMirrorEditor = lazy(() =>
                         foldGutter: false,
                         tabSize: 4,
                     }}
-                    extensions={[python(), indentUnit.of('    '), runKeymap]}
+                    extensions={[python(), indentUnit.of('    '), EditorView.lineWrapping, runKeymap]}
                     // A % height applies to .cm-editor inside the library's own wrapper div; that wrapper must
                     // fill its parent too, or the editor collapses to its content (47px on a phone, 2026-11-03).
                     className={`rounded-lg overflow-hidden border border-slate-700/50 text-sm ${String(height).endsWith('%') ? 'h-full' : ''}`}
@@ -111,21 +133,79 @@ const CodeMirrorEditor = lazy(() =>
 );
 
 // ── Main export ─────────────────────────────────────────────────────────────
-export default function PythonEditor(props) {
+export default function PythonEditor({ showQuickSymbols = true, ...props }) {
     const [cmFailed, setCmFailed] = useState(false);
+    const viewRef = useRef(null);
+    const textareaRef = useRef(null);
 
-    if (cmFailed) {
-        return <FallbackEditor {...props} />;
+    const handleInsertSymbol = useCallback((sym) => {
+        if (props.readOnly) return;
+        const view = viewRef.current;
+        if (view && view.state && typeof view.dispatch === 'function') {
+            const sel = view.state.selection.main;
+            view.dispatch({
+                changes: { from: sel.from, to: sel.to, insert: sym.insert },
+                selection: { anchor: sel.from + (sym.cursorOffset ?? sym.insert.length) },
+            });
+            view.focus();
+            return;
+        }
+        const el = textareaRef.current;
+        const current = props.value ?? '';
+        const isFocused = el && document.activeElement === el;
+        const start = el && (isFocused || el.selectionStart > 0) ? el.selectionStart : current.length;
+        const end = el && (isFocused || el.selectionEnd > 0) ? el.selectionEnd : start;
+        const { nextValue, nextCursor } = insertPythonSymbol(current, start, end, sym);
+        props.onChange?.(nextValue);
+        if (el) {
+            requestAnimationFrame(() => {
+                el.focus();
+                el.selectionStart = nextCursor;
+                el.selectionEnd = nextCursor;
+            });
+        }
+    }, [props]);
+
+    const editorNode = cmFailed ? (
+        <FallbackEditor {...props} textareaRef={textareaRef} />
+    ) : (
+        <EditorErrorBoundary
+            onError={() => setCmFailed(true)}
+            fallback={<FallbackEditor {...props} textareaRef={textareaRef} />}
+        >
+            <Suspense fallback={<FallbackEditor {...props} textareaRef={textareaRef} />}>
+                <CodeMirrorEditor {...props} viewRef={viewRef} textareaRef={textareaRef} />
+            </Suspense>
+        </EditorErrorBoundary>
+    );
+
+    if (!showQuickSymbols || props.readOnly) {
+        return editorNode;
     }
 
     return (
-        <EditorErrorBoundary
-            onError={() => setCmFailed(true)}
-            fallback={<FallbackEditor {...props} />}
-        >
-            <Suspense fallback={<FallbackEditor {...props} />}>
-                <CodeMirrorEditor {...props} />
-            </Suspense>
-        </EditorErrorBoundary>
+        <div className="flex flex-col">
+            {editorNode}
+            {/* Sticky Python quick-symbol bar above mobile keyboard */}
+            <div
+                role="toolbar"
+                aria-label="Python quick symbols"
+                data-testid="python-quick-symbols"
+                className="lg:hidden sticky bottom-0 z-20 flex items-center gap-1.5 px-2.5 py-2 bg-[#161b22] border-t border-slate-700/60 overflow-x-auto"
+            >
+                {PYTHON_QUICK_SYMBOLS.map((sym) => (
+                    <button
+                        key={sym.label}
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleInsertSymbol(sym)}
+                        aria-label={`Insert ${sym.label}`}
+                        className="min-w-10 min-h-9 px-2.5 py-1 rounded-lg bg-[#0d1117] border border-slate-700/80 text-slate-200 hover:border-cyan-400/60 hover:text-cyan-300 font-mono text-xs font-semibold shrink-0 active:scale-95 transition-transform"
+                    >
+                        {sym.label}
+                    </button>
+                ))}
+            </div>
+        </div>
     );
 }

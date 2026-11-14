@@ -44,6 +44,7 @@ import TopicUnderTheHood from '../components/animations/TopicUnderTheHood';
 import { useTranslation } from '../i18n';
 import { registerAndroidBackHandler } from '../lib/androidBack';
 import ConceptStudyView from '../components/ConceptStudyView';
+import MobileLessonFlow from '../components/MobileLessonFlow';
 
 // Display labels for the F5 "not available in your language yet" notice.
 const LANG_LABELS = {
@@ -960,6 +961,77 @@ export function LessonFlowVisual({ stepIndex, totalSections, executionViz, loopV
             <VisualCaption title={caption?.title} />
             {inner}
             <VisualCaption description={caption?.description} />
+        </div>
+    );
+}
+
+function MobileTraceCard({ lesson, language }) {
+    const [traceStep, setTraceStep] = useState(0);
+    const sequence = Array.isArray(lesson?.animation_sequence) ? lesson.animation_sequence : [];
+    const visualFlowTypes = new Set(['ExecutionVisualizer', 'execution_visualizer', 'FlowDiagram', 'flow_diagram', 'LoopVisualizer', 'loop_visualizer']);
+    const executionViz = sequence.find((i) => i.type === 'ExecutionVisualizer' || i.type === 'execution_visualizer');
+    const loopViz = sequence.find((i) => i.type === 'LoopVisualizer' || i.type === 'loop_visualizer');
+    const flowDiagram = sequence.find((i) => i.type === 'FlowDiagram' || i.type === 'flow_diagram');
+    const stepper = sequence.find((i) => !visualFlowTypes.has(i.type) && (i.type === 'CodeStepper' || i.type === 'code_stepper'));
+    const conceptMap = sequence.find((i) => i.type === 'ConceptMap');
+
+    const totalSteps = executionViz
+        ? Math.max(1, (normalizeProps('ExecutionVisualizer', executionViz, language).executionSteps || []).length)
+        : loopViz
+        ? Math.max(1, getStepTotal('LoopVisualizer', normalizeProps('LoopVisualizer', loopViz, language)))
+        : flowDiagram
+        ? Math.max(1, (normalizeProps('FlowDiagram', flowDiagram, language).executionPath || []).length)
+        : stepper
+        ? Math.max(1, (normalizeProps('CodeStepper', stepper, language).highlightSequence || []).length)
+        : 1;
+
+    useEffect(() => {
+        setTraceStep(0);
+    }, [lesson?.id]);
+
+    const visual = (
+        <LessonFlowVisual
+            stepIndex={traceStep}
+            totalSections={totalSteps}
+            executionViz={executionViz}
+            loopViz={loopViz}
+            stepper={stepper}
+            flowDiagram={flowDiagram}
+            conceptMap={conceptMap}
+            language={language}
+        />
+    );
+
+    if (!executionViz && !loopViz && !flowDiagram && !stepper && !conceptMap) {
+        return null;
+    }
+
+    return (
+        <div className="rounded-2xl surface-code p-3.5 space-y-3 border border-white/[0.08]">
+            <div className="flex items-center justify-between gap-2">
+                <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Watch It Run</span>
+                {totalSteps > 1 && (
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            type="button"
+                            onClick={() => setTraceStep((s) => Math.max(0, s - 1))}
+                            disabled={traceStep === 0}
+                            className="min-h-8 px-2.5 rounded-lg bg-white/10 text-xs font-semibold text-white disabled:opacity-40"
+                        >
+                            Prev
+                        </button>
+                        <span className="text-xs font-mono text-slate-300">{traceStep + 1}/{totalSteps}</span>
+                        <button
+                            type="button"
+                            onClick={() => setTraceStep((s) => (s + 1) % totalSteps)}
+                            className="min-h-8 px-2.5 rounded-lg bg-cyan-500/20 text-xs font-semibold text-cyan-200"
+                        >
+                            Next
+                        </button>
+                    </div>
+                )}
+            </div>
+            <div className="dark max-h-[52vh] overflow-y-auto dark-scrollbar">{visual}</div>
         </div>
     );
 }
@@ -2035,6 +2107,7 @@ export default function Classroom() {
         profile?.preferred_language ||
         user?.preferred_language ||
         'en';
+    const { t } = useTranslation(language);
 
     // Keep the TTS engine's voice/language in step with the learner's language so
     // spoken Vaathiyaar feedback (tts.speak below) uses the right voice — e.g.
@@ -2073,6 +2146,25 @@ export default function Classroom() {
     const [podcastOpen, setPodcastOpen] = useState(false);
     const [voiceOpen, setVoiceOpen] = useState(false);
     const [chatOpen, setChatOpen] = useState(false);
+    const [isMobileViewport, setIsMobileViewport] = useState(() =>
+        typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+            ? window.matchMedia('(max-width: 1023px)').matches
+            : false
+    );
+    useEffect(() => {
+        if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+        const mq = window.matchMedia('(max-width: 1023px)');
+        const onChange = (e) => setIsMobileViewport(e.matches);
+        setIsMobileViewport(mq.matches);
+        mq.addEventListener?.('change', onChange);
+        return () => mq.removeEventListener?.('change', onChange);
+    }, []);
+    useEffect(() => {
+        if (phase === 'select') return undefined;
+        const onOpenVoice = () => setVoiceOpen(true);
+        window.addEventListener('pm:open-vaathiyaar-voice', onOpenVoice);
+        return () => window.removeEventListener('pm:open-vaathiyaar-voice', onOpenVoice);
+    }, [phase]);
     // Topic carried in from a Trending "Explore Topic" deep-link when it doesn't
     // match an existing lesson — used to pre-fill the "Learn anything" box. Default
     // '' keeps the box empty (today's behaviour) for every non-deep-linked visit.
@@ -2745,7 +2837,64 @@ export default function Classroom() {
                             }}
                         />
                     )}
-                    {phase === 'intro' && currentLesson && currentLesson.pedagogy_mode !== 'concept_study' && (
+                    {isMobileViewport && phase !== 'select' && currentLesson && currentLesson.pedagogy_mode !== 'concept_study' && (
+                        <MobileLessonFlow
+                            lesson={currentLesson}
+                            language={language}
+                            t={t}
+                            headerMeta={lessonHeaderMeta}
+                            storyContent={currentLesson.active_story || resolveText(currentLesson.story_variants, language)}
+                            traceNode={<MobileTraceCard lesson={currentLesson} language={language} />}
+                            practiceNode={(
+                                <ErrorBoundary><PracticePhase
+                                    lesson={currentLesson}
+                                    language={language}
+                                    code={code}
+                                    setCode={setCode}
+                                    output={output}
+                                    hintIndex={hintIndex}
+                                    onHint={handleHint}
+                                    onRun={handleRun}
+                                    running={running}
+                                    chatMessages={chatMessages}
+                                    executionTime={executionTime}
+                                    onClearOutput={() => { setOutput(''); setExecutionTime(null); }}
+                                    challengeIndex={challengeIndex}
+                                    onSelectChallenge={handleSelectChallenge}
+                                    userId={user?.id}
+                                /></ErrorBoundary>
+                            )}
+                            feedbackNode={evalResult ? (
+                                <ErrorBoundary><FeedbackPhase
+                                    evalResult={evalResult}
+                                    language={language}
+                                    attemptCount={attemptCount}
+                                    onContinue={handleContinue}
+                                    onRetry={handleRetry}
+                                    nextLesson={nextLesson}
+                                    onNext={handleNextLesson}
+                                    nextChallenge={challengeIndex + 1 < (currentLesson?.practice_challenges?.length || 0) ? challengeIndex + 1 : null}
+                                    onNextChallenge={() => handleSelectChallenge(challengeIndex + 1)}
+                                    lessonId={currentLesson?.id}
+                                    challengePrompt={resolveText(
+                                        (currentLesson?.practice_challenges?.[challengeIndex] || currentLesson?.challenge)?.prompt ||
+                                            (currentLesson?.practice_challenges?.[challengeIndex] || currentLesson?.challenge)?.instruction,
+                                        language
+                                    )}
+                                    onOpenRelated={handleSelectLesson}
+                                    submittedCode={code}
+                                    traceable={!(currentLesson?.sandbox_files && Object.keys(currentLesson.sandbox_files).length > 0)}
+                                    userId={user?.id}
+                                /></ErrorBoundary>
+                            ) : null}
+                            evalResult={evalResult}
+                            onEnterPractice={() => { if (phase === 'intro') setPhase('practice'); }}
+                            onContinue={handleContinue}
+                            nextLesson={nextLesson}
+                            onNextLesson={handleNextLesson}
+                        />
+                    )}
+                    {!isMobileViewport && phase === 'intro' && currentLesson && currentLesson.pedagogy_mode !== 'concept_study' && (
                         <motion.div
                             key="intro"
                             variants={pageVariants}
@@ -2796,7 +2945,7 @@ export default function Classroom() {
                         </motion.div>
                     )}
 
-                    {phase === 'practice' && currentLesson && (
+                    {!isMobileViewport && phase === 'practice' && currentLesson && (
                         <motion.div
                             key="practice"
                             variants={pageVariants}
@@ -2825,7 +2974,7 @@ export default function Classroom() {
                         </motion.div>
                     )}
 
-                    {phase === 'feedback' && evalResult && (
+                    {!isMobileViewport && phase === 'feedback' && evalResult && (
                         <motion.div
                             key="feedback"
                             variants={pageVariants}
@@ -2969,7 +3118,7 @@ export default function Classroom() {
                     {/* Floating toggle icon — opens/closes the chat popover above */}
                     <button
                         onClick={() => setChatOpen((o) => !o)}
-                        className="fixed bottom-20 lg:bottom-6 right-4 sm:right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
+                        className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] lg:bottom-6 right-4 sm:right-6 z-30 flex items-center justify-center w-12 h-12 lg:w-14 lg:h-14 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
                         title="Ask Vaathiyaar"
                         aria-label={chatOpen ? 'Close Vaathiyaar chat' : 'Open Vaathiyaar chat'}
                     >
@@ -2981,13 +3130,11 @@ export default function Classroom() {
                 </>
             )}
 
-            {/* On the lesson list, offer voice tutoring as a floating action */}
+            {/* On the lesson list (desktop only — mobile uses "Ask Vaar" tab in bottom bar) */}
             {phase === 'select' && !voiceOpen && (
                 <button
                     onClick={() => setVoiceOpen(true)}
-                    // right-20/right-24 keeps this clear of the global Vaathiyaar chat
-                    // launcher shown on the selector, and bottom-20 clears mobile nav.
-                    className="fixed bottom-20 right-20 lg:bottom-6 lg:right-24 z-50 flex items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
+                    className="hidden lg:flex fixed bottom-6 right-24 z-40 items-center gap-2 px-4 py-3 rounded-full bg-gradient-to-br from-purple-600 to-cyan-500 text-white shadow-xl shadow-purple-500/30 hover:scale-105 transition-transform"
                     title="Talk to Vaathiyaar (voice)"
                 >
                     <Mic size={18} /> <span className="text-sm font-semibold hidden sm:inline">Talk to Vaathiyaar</span>

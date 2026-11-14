@@ -23,7 +23,9 @@ import {
     Brain,
     Lightbulb,
     MessageCircle,
-    Search
+    Search,
+    Terminal,
+    Mic
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -210,14 +212,12 @@ export default function Layout() {
         window.dispatchEvent(new CustomEvent('pymasters:open-search'));
     };
 
+    const openVoiceDrawer = () => {
+        setSidebarOpen(false);
+        window.dispatchEvent(new CustomEvent('pm:open-vaathiyaar-voice'));
+    };
+
     const mobileQuickTabs = [
-        {
-            key: 'home',
-            label: t('nav.mobile.home', 'Home'),
-            icon: LayoutDashboard,
-            path: '/dashboard',
-            active: location.pathname === '/dashboard',
-        },
         {
             key: 'learn',
             label: t('nav.mobile.learn', 'Learn'),
@@ -226,33 +226,39 @@ export default function Layout() {
             active: location.pathname.startsWith('/dashboard/classroom'),
         },
         {
-            key: 'paths',
-            label: t('nav.mobile.paths', 'Paths'),
-            icon: Map,
-            path: '/dashboard/paths',
-            active: location.pathname.startsWith('/dashboard/paths'),
-        },
-        {
-            key: 'code',
-            label: t('nav.mobile.code', 'Code'),
-            icon: Sparkles,
+            key: 'practice',
+            label: t('nav.mobile.practice', 'Practice'),
+            icon: Terminal,
             path: '/dashboard/playground',
             active: location.pathname.startsWith('/dashboard/playground'),
         },
+        {
+            key: 'ask_vaar',
+            label: t('nav.mobile.askVaar', 'Ask Vaar'),
+            icon: Mic,
+            action: openVoiceDrawer,
+            active: false,
+        },
+        {
+            key: 'profile',
+            label: t('nav.mobile.profile', 'Profile'),
+            icon: User,
+            path: '/dashboard/profile',
+            active: location.pathname.startsWith('/dashboard/profile'),
+        },
     ];
-    const isSecondaryMobileRoute =
-        !mobileQuickTabs.some((tab) => tab.active) && location.pathname.startsWith('/dashboard');
 
     return (
         <div className="flex min-h-[100dvh] lg:h-[100dvh] w-full max-w-full overflow-x-clip lg:overflow-hidden bg-bg-base text-text-secondary font-sans">
-            {/* Mobile header bar */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-bg-surface/95 backdrop-blur-xl border-b border-border-default flex items-center justify-between px-3 gap-2">
+            {/* Mobile top bar (safe-area aware, 44x44 touch targets) */}
+            <header className="lg:hidden fixed top-0 left-0 right-0 z-40 pt-[env(safe-area-inset-top,0px)] min-h-14 bg-bg-surface/95 backdrop-blur-xl border-b border-border-default flex items-center justify-between px-3 gap-2">
                 <button
+                    type="button"
                     onClick={() => setSidebarOpen(true)}
-                    className="min-w-10 min-h-10 p-2 rounded-lg hover:bg-bg-elevated transition-colors flex items-center justify-center shrink-0"
+                    className="min-w-11 min-h-11 p-2 rounded-lg hover:bg-bg-elevated transition-colors flex items-center justify-center shrink-0"
                     aria-label="Open menu"
                 >
-                    <Menu size={20} className="text-text-muted" />
+                    <Menu size={20} className="text-text-secondary" />
                 </button>
                 <button
                     type="button"
@@ -272,7 +278,7 @@ export default function Layout() {
                         <Search size={18} aria-hidden="true" />
                     </button>
                     <NotificationBell align="right" />
-                    <span className="hidden sm:inline-flex text-xs font-mono text-text-muted items-center gap-1 px-2 py-1 rounded-full bg-bg-elevated border border-border-default" title="XP">
+                    <span className="hidden sm:inline-flex text-xs font-mono text-text-secondary items-center gap-1 px-2 py-1 rounded-full bg-bg-elevated border border-border-default" title="XP">
                         <Trophy size={12} className="text-amber-500" aria-hidden="true" />
                         {points}
                     </span>
@@ -280,7 +286,7 @@ export default function Layout() {
                         type="button"
                         onClick={() => navigate('/dashboard/profile')}
                         aria-label="Open profile"
-                        className="min-w-9 min-h-9 flex items-center justify-center rounded-full"
+                        className="min-w-11 min-h-11 flex items-center justify-center rounded-full"
                     >
                         <span className="w-7 h-7 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-500 via-blue-500 to-purple-500 block">
                             <span className="w-full h-full rounded-full bg-bg-surface flex items-center justify-center text-text-secondary font-bold text-xs">
@@ -289,11 +295,11 @@ export default function Layout() {
                         </span>
                     </button>
                 </div>
-            </div>
+            </header>
 
             {/* Mobile overlay */}
             {sidebarOpen && (
-                <div className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+                <div className="lg:hidden fixed inset-0 z-[45] bg-black/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
             )}
 
             {/* Sidebar */}
@@ -475,7 +481,7 @@ export default function Layout() {
             {/* Main Content Area — mobile uses native document scroll so Android WebView.scrollY stays accurate; desktop uses locked flex scroll */}
             <main
                 ref={mainRef}
-                className="flex-1 min-w-0 lg:overflow-y-auto overflow-x-clip overscroll-y-none lg:overscroll-y-contain [-webkit-overflow-scrolling:touch] relative bg-gradient-to-b from-bg-elevated via-bg-base to-bg-base pt-14 pb-20 lg:pt-0 lg:pb-0"
+                className="flex-1 min-w-0 lg:overflow-y-auto overflow-x-clip overscroll-y-none lg:overscroll-y-contain [-webkit-overflow-scrolling:touch] relative bg-gradient-to-b from-bg-elevated via-bg-base to-bg-base pt-[calc(3.5rem+env(safe-area-inset-top,0px))] pb-[calc(5.25rem+env(safe-area-inset-bottom,0px))] lg:pt-0 lg:pb-0"
             >
                 <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
                     style={{
@@ -486,15 +492,15 @@ export default function Layout() {
                         backgroundSize: '60px 60px',
                     }}
                 />
-                <div className="px-3.5 py-4 sm:p-6 max-w-7xl mx-auto relative z-10 min-h-full">
+                <div className="px-3.5 py-4 sm:p-6 max-w-7xl mx-auto relative min-h-full">
                     <Outlet context={{ sidebarCollapsed: collapsed, setSidebarCollapsed: setCollapsed, setVaathiyaarHidden }} />
                 </div>
             </main>
 
-            {/* Mobile Thumb-Zone Bottom Quick Navigation Bar */}
+            {/* Mobile Thumb-Zone Bottom Quick Navigation Bar (4 ergonomic tabs) */}
             <nav
                 aria-label="Mobile quick navigation"
-                className="lg:hidden fixed bottom-0 left-0 right-0 z-40 h-16 bg-bg-surface/95 backdrop-blur-xl border-t border-border-default grid grid-cols-5 items-stretch px-1"
+                className="lg:hidden fixed bottom-0 left-0 right-0 z-40 min-h-[4rem] pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom,0px))] bg-bg-surface/95 backdrop-blur-xl border-t border-border-default grid grid-cols-4 items-stretch px-1.5 gap-1"
             >
                 {mobileQuickTabs.map((tab) => {
                     const TabIcon = tab.icon;
@@ -503,15 +509,19 @@ export default function Layout() {
                             key={tab.key}
                             type="button"
                             onClick={() => {
-                                setSidebarOpen(false);
-                                navigate(tab.path);
+                                if (tab.action) {
+                                    tab.action();
+                                } else {
+                                    setSidebarOpen(false);
+                                    navigate(tab.path);
+                                }
                             }}
                             aria-current={tab.active ? 'page' : undefined}
                             className={clsx(
-                                'flex flex-col items-center justify-center gap-0.5 rounded-xl my-1 transition-colors',
+                                'flex flex-col items-center justify-center gap-0.5 rounded-xl min-h-[48px] min-w-[44px] py-1 transition-colors',
                                 tab.active
                                     ? 'text-accent-primary bg-accent-subtle font-semibold'
-                                    : 'text-text-muted hover:text-text-secondary'
+                                    : 'text-text-secondary hover:text-text-primary'
                             )}
                         >
                             <TabIcon size={18} aria-hidden="true" />
@@ -519,20 +529,6 @@ export default function Layout() {
                         </button>
                     );
                 })}
-                <button
-                    type="button"
-                    onClick={() => setSidebarOpen((open) => !open)}
-                    aria-expanded={sidebarOpen}
-                    className={clsx(
-                        'flex flex-col items-center justify-center gap-0.5 rounded-xl my-1 transition-colors',
-                        sidebarOpen || isSecondaryMobileRoute
-                            ? 'text-accent-primary bg-accent-subtle font-semibold'
-                            : 'text-text-muted hover:text-text-secondary'
-                    )}
-                >
-                    <Menu size={18} aria-hidden="true" />
-                    <span className="text-xs leading-tight truncate max-w-full px-1">{t('nav.mobile.more', 'More')}</span>
-                </button>
             </nav>
 
             <GlobalSearch />

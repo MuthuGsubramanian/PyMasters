@@ -3,11 +3,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { X, MessageCircle, Eraser, Terminal, Play, Sparkles, Zap, CheckCircle2, HelpCircle } from 'lucide-react';
+import { X, MessageCircle, Eraser, Terminal, Play, Sparkles, Zap, CheckCircle2, HelpCircle, Mic } from 'lucide-react';
 import VaathiyaarGlyph from '../assets/vaathiyaar-glyph.svg';
 import { useAuth } from '../context/AuthContext';
 import api, { getAuthHeaders } from '../api';
 import ChatBar from './ChatBar';
+import VoiceTutor from './VoiceTutor';
 import { parseSSELine, extractMessageFromJSON } from '../utils/streaming';
 import { registerAndroidBackHandler } from '../lib/androidBack';
 import { safeErrorMsg } from '../utils/errorUtils';
@@ -151,6 +152,7 @@ export default function VaathiyaarPanel() {
     const location = useLocation();
     const navigate = useNavigate();
     const [open, setOpen] = useState(() => localStorage.getItem(OPEN_KEY) === '1');
+    const [voiceOpen, setVoiceOpen] = useState(false);
     const [mode, setMode] = useState('chat'); // 'chat' | 'teach-back'
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -216,7 +218,19 @@ export default function VaathiyaarPanel() {
             handleSendRef.current?.(msg);
         };
         window.addEventListener('pm:vaathiyaar-ask', onAsk);
-        return () => window.removeEventListener('pm:vaathiyaar-ask', onAsk);
+        const onOpenVoice = () => setVoiceOpen(true);
+        const onOpenTeachBack = (e) => {
+            if (e?.detail?.concept) setTbConcept(e.detail.concept);
+            setMode('teach-back');
+            setOpen(true);
+        };
+        window.addEventListener('pm:open-vaathiyaar-voice', onOpenVoice);
+        window.addEventListener('pm:open-vaathiyaar-teachback', onOpenTeachBack);
+        return () => {
+            window.removeEventListener('pm:vaathiyaar-ask', onAsk);
+            window.removeEventListener('pm:open-vaathiyaar-voice', onOpenVoice);
+            window.removeEventListener('pm:open-vaathiyaar-teachback', onOpenTeachBack);
+        };
     }, []);
 
     const handleSend = useCallback(async (message) => {
@@ -324,13 +338,13 @@ export default function VaathiyaarPanel() {
 
     return (
         <>
-            {/* Floating toggle */}
+            {/* Floating toggle — desktop only (mobile uses "Ask Vaar" in the 4-tab bottom bar) */}
             {!open && (
                 <button
                     onClick={() => setOpen(true)}
                     aria-label="Open Vaathiyaar chat"
                     title="Chat with Vaathiyaar"
-                    className="fixed bottom-20 right-4 lg:bottom-5 lg:right-5 z-40 w-12 h-12 rounded-full bg-gradient-primary shadow-glow flex items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95"
+                    className="hidden lg:flex fixed bottom-5 right-5 z-40 w-12 h-12 rounded-full bg-gradient-primary shadow-glow items-center justify-center cursor-pointer transition-transform duration-200 hover:scale-105 active:scale-95"
                 >
                     <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[55%] h-[55%]" />
                 </button>
@@ -359,6 +373,15 @@ export default function VaathiyaarPanel() {
                                         Sees: {pageLabel.split('—')[0].trim()}
                                     </p>
                                 </div>
+                                <button
+                                    type="button"
+                                    onClick={() => { setOpen(false); setVoiceOpen(true); }}
+                                    aria-label="Open voice tutor"
+                                    title="Ask by voice"
+                                    className="p-2 rounded-lg text-text-muted hover:text-accent-primary hover:bg-bg-elevated transition-colors cursor-pointer"
+                                >
+                                    <Mic size={15} />
+                                </button>
                                 {mode === 'chat' && messages.length > 0 && (
                                     <button
                                         onClick={() => { setMessages([]); setConversationId(null); sessionStorage.removeItem(CONV_KEY); }}
@@ -565,6 +588,13 @@ export default function VaathiyaarPanel() {
                     </motion.aside>
                 )}
             </AnimatePresence>
+            <VoiceTutor
+                open={voiceOpen}
+                onClose={() => setVoiceOpen(false)}
+                user={user}
+                language={user?.preferred_language || 'en'}
+                lessonContext={{ topic: pageLabel.split('—')[0].trim(), route: location.pathname }}
+            />
         </>
     );
 }

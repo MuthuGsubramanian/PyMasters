@@ -832,7 +832,7 @@ export default function Profile() {
                                 icon={Mail}
                             />
                             {email && !emailVerified && (
-                                <div className="-mt-2 flex flex-wrap items-center gap-2 text-xs text-amber-600">
+                                <div className="-mt-2 flex flex-wrap items-center gap-2 text-xs text-amber-700 dark:text-amber-300">
                                     <span>Not confirmed yet.</span>
                                     <button
                                         type="button"
@@ -1480,7 +1480,7 @@ export default function Profile() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 20 }}
-                            className="fixed bottom-20 left-1/2 -translate-x-1/2 lg:hidden z-40"
+                            className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] left-1/2 -translate-x-1/2 lg:hidden z-30"
                         >
                             <Button
                                 size="lg"
