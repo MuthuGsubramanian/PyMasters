@@ -163,3 +163,87 @@ def produce(kind, lesson_key=None):
     except Exception as e:
         log.warning("drive sync skipped for #%s: %s", item_id, e)
     return item_id
+
+
+def produce_influencer(lesson_key=None, bilingual_hook=False, presenter_mp4=None):
+    """Run the 4-stage human-influencer explainer pipeline:
+    1) Script synthesis (Vaathiyaar conversational script)
+    2) Presenter video via pluggable avatar API (or provided presenter_mp4)
+    3) Headless Playwright 1080p60 'Watch It Run' code B-roll capture
+    4) FFmpeg presenter+PiP + dynamic ASS captions + -14 LUFS loudness composite + Drive sync.
+    """
+    from socialbot import avatar, broll_capture
+    from socialbot.render import influencer
+
+    if lesson_key:
+        les = next((l for l in sources.candidates() if l["key"] == lesson_key), None)
+        if not les:
+            raise ValueError(f"unknown lesson {lesson_key}")
+    else:
+        picks = sources.pick("long", 1)
+        if not picks:
+            raise RuntimeError("no fresh lesson material left for influencer")
+        les = picks[0]
+
+    plan = influencer.synthesize_influencer_script(les, bilingual_hook=bilingual_hook)
+    item_id = store.add_item("influencer", les["key"], plan["title"], "drafted", draft=plan)
+    out_dir = config.RENDERS_DIR / f"{datetime.now():%Y%m%d}-influencer-{item_id}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        broll_path = out_dir / "broll_1080p60.mp4"
+        broll_capture.capture_watch_it_run_broll(
+            title=plan["title"],
+            code_lines=plan["code_lines"],
+            steps=plan["trace_steps"],
+            out_mp4=broll_path,
+            duration_s=12.0,
+            stdout_text=plan["stdout_text"],
+            caption=plan["segments"][2]["narration"][:140],
+        )
+
+        pres_path = Path(presenter_mp4) if presenter_mp4 else (out_dir / "presenter.mp4")
+        avatar_meta = {}
+        if not pres_path.exists():
+            res = avatar.render_talking_head(
+                plan["script_text"],
+                pres_path,
+                title=plan["title"],
+            )
+            avatar_meta = {"provider": res.provider, "job_id": res.job_id}
+
+        ass_path = influencer.generate_ass_subtitles(plan["segments"], out_dir / "captions.ass")
+        final_mp4 = influencer.composite_influencer_video(
+            presenter_mp4=pres_path,
+            broll_mp4=broll_path,
+            segments=plan["segments"],
+            out_mp4=out_dir / "influencer.mp4",
+            subtitle_ass=ass_path,
+        )
+        thumb = video.thumbnail(
+            plan["title"],
+            les["title"][:34],
+            "\n".join(plan["code_lines"]),
+            out_dir / "thumb.jpg",
+        )
+        media = {
+            "video": str(final_mp4),
+            "broll": str(broll_path),
+            "subtitles": str(ass_path),
+            "thumbnail": str(thumb),
+            "lesson_url": les["url"],
+            "avatar": avatar_meta,
+        }
+        store.update_item(item_id, status="rendered", media=media)
+    except Exception as exc:
+        log.exception("influencer render failed")
+        store.update_item(item_id, status="failed", error=f"influencer: {exc}"[:500])
+        return item_id
+
+    try:
+        from socialbot.publish import drive
+        if drive.is_authorised():
+            drive.sync_item(store.get_item(item_id))
+    except Exception as e:
+        log.warning("drive sync skipped for influencer #%s: %s", item_id, e)
+    return item_id

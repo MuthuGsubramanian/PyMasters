@@ -69,6 +69,21 @@ LINKEDIN_STYLES = LINKEDIN_BUSINESS_STYLES + LINKEDIN_TECH_STYLES
 HF_SPACE_SHARE = 0.10        # occasional spotlight on our live Hugging Face Spaces (explained simply)
 TREND_SHARE = 0.20           # occasional live trend spotlight broken down in simple everyday terms
 
+# Human-influencer YouTube pipeline (Phase 3)
+INFLUENCER_ENABLED = os.getenv("PMSOCIAL_INFLUENCER_ENABLED", "1") == "1"
+AVATAR_PROVIDER = os.getenv("PMSOCIAL_AVATAR_PROVIDER", "heygen").strip().lower()
+HEYGEN_API_KEY = os.getenv("HEYGEN_API_KEY", "").strip()
+HEYGEN_AVATAR_ID = os.getenv("HEYGEN_AVATAR_ID", "Aditya_public_1").strip()
+HEYGEN_VOICE_ID = os.getenv("HEYGEN_VOICE_ID", "").strip()
+TAVUS_API_KEY = os.getenv("TAVUS_API_KEY", "").strip()
+TAVUS_REPLICA_ID = os.getenv("TAVUS_REPLICA_ID", "").strip()
+SYNTHESIA_API_KEY = os.getenv("SYNTHESIA_API_KEY", "").strip()
+SYNTHESIA_AVATAR_ID = os.getenv("SYNTHESIA_AVATAR_ID", "").strip()
+PLAYWRIGHT_PYTHON = os.getenv(
+    "PMSOCIAL_PLAYWRIGHT_PYTHON",
+    str(Path.home() / "pymasters-ops/e2e-venv/bin/python"),
+)
+
 
 def ensure_dirs():
     for d in (STATE_DIR, CONFIG_DIR, RENDERS_DIR, MUSIC_DIR, HF_HOME):

@@ -27,6 +27,7 @@ CATEGORY_FOLDERS = {
     "thematic": "Posts",
     "short": "Shorts",
     "long": "Videos",
+    "influencer": "Videos",
 }
 MIME_TYPES = {
     ".txt": "text/plain",

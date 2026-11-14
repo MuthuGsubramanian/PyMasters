@@ -21,7 +21,7 @@ def main(argv=None):
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     ap = argparse.ArgumentParser(prog="pmsocial")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("produce"); p.add_argument("kind", choices=["short", "long", "linkedin", "thematic"]); p.add_argument("--lesson")
+    p = sub.add_parser("produce"); p.add_argument("kind", choices=["short", "long", "linkedin", "thematic", "influencer"]); p.add_argument("--lesson"); p.add_argument("--bilingual", action="store_true"); p.add_argument("--presenter")
     p = sub.add_parser("publish"); p.add_argument("--dry-run", action="store_true")
     sub.add_parser("tick")
     p = sub.add_parser("status"); p.add_argument("--limit", type=int, default=15)
@@ -33,7 +33,10 @@ def main(argv=None):
 
     if a.cmd == "produce":
         from socialbot import pipeline
-        item_id = pipeline.produce(a.kind, a.lesson)
+        if a.kind == "influencer":
+            item_id = pipeline.produce_influencer(a.lesson, bilingual_hook=a.bilingual, presenter_mp4=a.presenter)
+        else:
+            item_id = pipeline.produce(a.kind, a.lesson)
         it = store.get_item(item_id)
         print(json.dumps({k: it[k] for k in ("id", "kind", "status", "score", "topic", "error")}, indent=1))
         print(json.dumps(it.get("media"), indent=1))
