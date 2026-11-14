@@ -35,23 +35,34 @@ def youtube():
 
 
 def drive():
-    from google_auth_oauthlib.flow import InstalledAppFlow
-    cfile = gd.client_file()
-    if not cfile.exists():
-        raise SystemExit(f"Missing {cfile}: create a Desktop OAuth client in GCP project pymasters-app "
-                         "and save its JSON there.")
-    flow = InstalledAppFlow.from_client_secrets_file(str(cfile), gd.SCOPES)
+    import subprocess
     target = config.GOOGLE_DRIVE_EMAIL
-    print(f"Opening Google consent in the browser. Sign in with {target} to approve Google Drive backup.")
-    creds = flow.run_local_server(
-        port=8767,
-        prompt="consent select_account",
-        login_hint=target,
-        open_browser=True,
-        success_message="PyMasters bot: Google Drive access saved. You can close this tab.",
-    )
-    gd.TOKEN_FILE.write_text(creds.to_json())
-    gd.TOKEN_FILE.chmod(0o600)
+    cfile = gd.client_file()
+    if cfile.exists():
+        from google_auth_oauthlib.flow import InstalledAppFlow
+        flow = InstalledAppFlow.from_client_secrets_file(str(cfile), gd.SCOPES)
+        print(f"Opening Google consent in the browser. Sign in with {target} to approve Google Drive backup.")
+        creds = flow.run_local_server(
+            port=8767,
+            prompt="consent select_account",
+            login_hint=target,
+            open_browser=True,
+            success_message="PyMasters bot: Google Drive access saved. You can close this tab.",
+        )
+        gd.TOKEN_FILE.write_text(creds.to_json())
+        gd.TOKEN_FILE.chmod(0o600)
+    else:
+        print(f"Opening Google consent in Eighty via gcloud for {target} (with Drive access, keeping active gcloud account unchanged).")
+        subprocess.run(
+            ["gcloud", "auth", "login", target, "--enable-gdrive-access", "--no-activate"],
+            check=True,
+        )
+        gd.TOKEN_FILE.write_text(json.dumps({
+            "mode": "gcloud",
+            "account": target,
+            "quota_project": gd.DEFAULT_QUOTA_PROJECT,
+        }, indent=2))
+        gd.TOKEN_FILE.chmod(0o600)
     email = gd.account_email()
     print(f"Authorised Google Drive account: {email}")
     if target and email.lower() != target.lower():

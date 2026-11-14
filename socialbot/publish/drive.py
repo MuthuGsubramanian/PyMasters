@@ -4,6 +4,8 @@ import json
 import logging
 import os
 import re
+import subprocess
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from socialbot import config, store
@@ -15,6 +17,8 @@ SCOPES = [
     "https://www.googleapis.com/auth/userinfo.email",
     "openid",
 ]
+GCLOUD_DRIVE_SCOPE = "https://www.googleapis.com/auth/drive"
+DEFAULT_QUOTA_PROJECT = os.getenv("PMSOCIAL_DRIVE_QUOTA_PROJECT", "pymasters-app")
 TOKEN_FILE = config.CONFIG_DIR / "drive_token.json"
 CATEGORY_FOLDERS = {
     "linkedin": "Posts",
@@ -36,14 +40,50 @@ MIME_TYPES = {
 
 
 def client_file() -> Path:
-    """Return the Desktop OAuth client JSON path (drive_client.json if present, else youtube_client.json)."""
-    dedicated = config.CONFIG_DIR / "drive_client.json"
-    return dedicated if dedicated.exists() else config.CONFIG_DIR / "youtube_client.json"
+    """Return the external Desktop OAuth client JSON path (`drive_client.json`), if configured."""
+    return config.CONFIG_DIR / "drive_client.json"
 
 
 def is_authorised() -> bool:
-    """Return True if Google Drive OAuth credentials exist on disk."""
+    """Return True if Google Drive credentials (OAuth token or gcloud Drive mode) are configured."""
     return TOKEN_FILE.exists()
+
+
+def _gcloud_access_token(account: str) -> str:
+    """Fetch a fresh Google Drive access token via gcloud without changing the active gcloud account."""
+    cmd = ["gcloud", "auth", "print-access-token", f"--account={account}", f"--scopes={GCLOUD_DRIVE_SCOPE}"]
+    try:
+        tok = subprocess.check_output(cmd, text=True, stderr=subprocess.PIPE, timeout=20).strip()
+        if tok:
+            return tok
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            f"Google Drive gcloud token unavailable for {account}: {(e.stderr or '').strip()[:240]}"
+        ) from e
+    raise RuntimeError(f"Empty access token returned by gcloud for {account}")
+
+
+def _gcloud_credentials(account: str, quota_project: str = DEFAULT_QUOTA_PROJECT):
+    from google.auth import credentials as ga_creds
+
+    class _GcloudDriveCreds(ga_creds.Credentials):
+        def __init__(self):
+            super().__init__()
+            self._quota_project_id = quota_project
+            self.token = None
+            self.expiry = None
+
+        @property
+        def quota_project_id(self):
+            return self._quota_project_id
+
+        def refresh(self, request):
+            self.token = _gcloud_access_token(account)
+            self.expiry = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=50)
+
+    c = _GcloudDriveCreds()
+    c.refresh(None)
+    return c
 
 
 def _creds():
@@ -54,6 +94,10 @@ def _creds():
         raise RuntimeError(
             "Google Drive is not authorised yet: run `python -m socialbot auth drive`"
         )
+    raw = json.loads(TOKEN_FILE.read_text())
+    if raw.get("mode") == "gcloud":
+        account = raw.get("account") or config.GOOGLE_DRIVE_EMAIL
+        return _gcloud_credentials(account, raw.get("quota_project") or DEFAULT_QUOTA_PROJECT)
     creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
     if not creds.valid:
         creds.refresh(Request())
