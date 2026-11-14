@@ -43,6 +43,7 @@ import UnderTheHood from '../components/animations/UnderTheHood';
 import TopicUnderTheHood from '../components/animations/TopicUnderTheHood';
 import { useTranslation } from '../i18n';
 import { registerAndroidBackHandler } from '../lib/androidBack';
+import ConceptStudyView from '../components/ConceptStudyView';
 
 // Display labels for the F5 "not available in your language yet" notice.
 const LANG_LABELS = {
@@ -2053,6 +2054,7 @@ export default function Classroom() {
     const [lessonNotFound, setLessonNotFound] = useState(null); // id that failed to resolve
     const [profileHint, setProfileHint] = useState('general');
     const [primaryTracks, setPrimaryTracks] = useState(null);
+    const [schoolScope, setSchoolScope] = useState(null);
 
     const [chatMessages, setChatMessages] = useState([]);
     const [chatLoading, setChatLoading] = useState(false);
@@ -2119,6 +2121,7 @@ export default function Classroom() {
                 setLessons(r.data.lessons ?? r.data);
                 if (r.data.profile_hint) setProfileHint(r.data.profile_hint);
                 if (r.data.primary_tracks) setPrimaryTracks(r.data.primary_tracks);
+                if (r.data.school_scope) setSchoolScope(r.data.school_scope);
             })
             .catch(() => setLessons([]))
             .finally(() => setLessonsLoading(false));
@@ -2699,7 +2702,24 @@ export default function Classroom() {
                             exit="exit"
                             transition={{ duration: 0.3, ease: 'easeOut' }}
                         >
-                            {user?.id && (
+                            {schoolScope?.org_name && (
+                                <div className="max-w-5xl mx-auto mb-4 rounded-2xl border border-accent-primary/30 bg-accent-subtle px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                                    <div className="flex items-center gap-2 font-semibold text-text-primary">
+                                        <GraduationCap size={16} className="text-accent-primary" />
+                                        <span>
+                                            {schoolScope.org_name} · {schoolScope.board} Grade {schoolScope.grade} ({schoolScope.cohort_name})
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {(schoolScope.subjects || []).map((s) => (
+                                            <span key={s.id} className="px-2 py-0.5 rounded-full bg-bg-surface border border-border-default text-text-secondary">
+                                                {s.subject_name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {user?.id && !schoolScope?.scoped && (
                                 <div id="learn-anything-panel" className="max-w-5xl mx-auto mb-5">
                                     <LearnAnything userId={user.id} onLessonReady={handleGeneratedLessonReady} onOpenLesson={handleSelectLesson} initialTopic={deepLinkTopic} autoStart={autoLearnTopic} />
                                 </div>
@@ -2716,7 +2736,16 @@ export default function Classroom() {
                         </motion.div>
                     )}
 
-                    {phase === 'intro' && currentLesson && (
+                    {phase === 'intro' && currentLesson && currentLesson.pedagogy_mode === 'concept_study' && (
+                        <ConceptStudyView
+                            lesson={currentLesson}
+                            onBack={handleContinue}
+                            onCompleted={(lid) => {
+                                setCompletedLessons((prev) => new Set([...prev, lid]));
+                            }}
+                        />
+                    )}
+                    {phase === 'intro' && currentLesson && currentLesson.pedagogy_mode !== 'concept_study' && (
                         <motion.div
                             key="intro"
                             variants={pageVariants}

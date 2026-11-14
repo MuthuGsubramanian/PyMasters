@@ -123,14 +123,23 @@ export default function OrgSetup() {
       };
 
       if (members.length > 0) {
-        try {
-          await bulkInviteToOrg(org.id, {
-            emails: members.map((m) => m.email),
-            role: 'member',
-            user_id: user.id,
-          });
-        } catch {
-          // Invites are non-critical — org is already created
+        // Group invites by selected role so per-member role choices are preserved.
+        const byRole = members.reduce((acc, m) => {
+          const r = m.role || 'member';
+          if (!acc[r]) acc[r] = [];
+          acc[r].push(m.email);
+          return acc;
+        }, {});
+        for (const [role, emails] of Object.entries(byRole)) {
+          try {
+            await bulkInviteToOrg(org.id, {
+              emails,
+              role,
+              user_id: user.id,
+            });
+          } catch {
+            // Invites are non-critical — org is already created
+          }
         }
       }
 

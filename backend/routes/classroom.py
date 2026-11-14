@@ -215,6 +215,15 @@ def _load_lesson_from_dir(lesson_id: str, lessons_dir: str = None) -> dict | Non
             return json.loads(row[0])
     except Exception:
         pass
+
+    # Check seeded school concept-study lessons
+    try:
+        from school_provisioning import get_school_lesson
+        school_lesson = get_school_lesson(_get_db_path(), lesson_id)
+        if school_lesson is not None:
+            return school_lesson
+    except Exception:
+        pass
     return None
 
 
@@ -831,6 +840,48 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
         if not has_enterprise_access(_get_db_path(), verified_user_id):
             lessons = [l for l in lessons if l.get("track") not in ENTERPRISE_TRACKS]
 
+        # Multi-tenant school cohort scoping: add school concept lessons, tag
+        # pedagogy_mode / subject / term metadata, and optionally hide unrelated
+        # public tracks when the school admin enabled strict syllabus focus.
+        school_scope = None
+        try:
+            from school_provisioning import get_school_lesson, get_user_school_scope
+            school_scope = get_user_school_scope(_get_db_path(), verified_user_id)
+            if school_scope:
+                existing_ids = {l.get("id") for l in lessons}
+                meta_map = school_scope.get("lesson_meta", {})
+                for lid in school_scope.get("lesson_ids", []):
+                    if lid not in existing_ids:
+                        s_les = get_school_lesson(_get_db_path(), lid)
+                        if s_les:
+                            lessons.append({
+                                "id": s_les.get("id"),
+                                "title": s_les.get("title", {}),
+                                "description": s_les.get("description", {}),
+                                "xp_reward": s_les.get("xp_reward", 50),
+                                "topic": s_les.get("topic"),
+                                "track": s_les.get("track") or f"school_{s_les.get('subject_code', 'study')}",
+                                "module": s_les.get("module"),
+                                "order": s_les.get("order", 1),
+                                "pedagogy_mode": s_les.get("pedagogy_mode", "concept_study"),
+                                "school_seeded": True,
+                            })
+                            existing_ids.add(lid)
+                allowed_ids = set(school_scope.get("lesson_ids", []))
+                enriched = []
+                for l in lessons:
+                    lid = l.get("id")
+                    meta = meta_map.get(lid)
+                    if school_scope.get("hide_public_tracks") and lid not in allowed_ids and not l.get("assigned"):
+                        continue
+                    if meta:
+                        enriched.append({**l, **meta})
+                    else:
+                        enriched.append({**l, "pedagogy_mode": l.get("pedagogy_mode") or "coding_ide"})
+                lessons = enriched
+        except Exception:
+            school_scope = None
+
         # ?lang= (2026-11-02): keep only that language + English in title/description. The catalogue
         # is the biggest response on a slow India -> us-central1 path (-33% gzip for English).
         # Copies, never mutating the cached lesson dicts.
@@ -1058,12 +1109,13 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                         "lessons": lessons,
                         "profile_hint": profile_hint,
                         "primary_tracks": primary_tracks,
+                        **({"school_scope": school_scope} if school_scope else {}),
                         **path_info,
                     }
             except Exception as e:
                 print(f"Profile lookup failed: {e}")
 
-        return {"lessons": lessons}
+        return {"lessons": lessons, **({"school_scope": school_scope} if school_scope else {})}
     except Exception:
         return {"lessons": []}
 
@@ -2148,27 +2200,42 @@ def _evaluate_teach_back_rubric(concept: str, explanation: str, lesson: Optional
         verdict = "needs_detail"
 
     clean_concept = concept.strip()
+    is_concept_study = bool(lesson and lesson.get("pedagogy_mode") == "concept_study")
     if score >= 5:
         what_landed = (
             f"You nailed both the 'why' ({causal_hits[0]}) and a concrete illustration of {clean_concept} — "
             "that combination proves genuine mental-model mastery."
         )
         follow_up = (
-            f"Stretch question: what subtle edge case or performance trade-off would bite a teammate misusing {clean_concept} in production?"
+            f"Stretch question: how would this principle of {clean_concept} change if one key condition in your real-world example were reversed?"
+            if is_concept_study
+            else f"Stretch question: what subtle edge case or performance trade-off would bite a teammate misusing {clean_concept} in production?"
         )
     elif score == 4:
         if has_example:
             what_landed = f"Your concrete example grounded {clean_concept} clearly and made the mechanics easy to follow."
-            follow_up = f"Under the hood, WHY does Python behave that way when {clean_concept} runs, and what happens on an empty or invalid input?"
+            follow_up = (
+                f"What happens step by step in your example if we double or remove the main driving factor in {clean_concept}?"
+                if is_concept_study
+                else f"Under the hood, WHY does Python behave that way when {clean_concept} runs, and what happens on an empty or invalid input?"
+            )
         else:
             what_landed = f"You explained the core mechanism behind {clean_concept} clearly using cause-and-effect reasoning."
-            follow_up = f"Can you sketch a 2-line Python snippet showing {clean_concept} in action on a real value?"
+            follow_up = (
+                f"Give one everyday scenario from home, nature, or daily life where {clean_concept} shows up clearly."
+                if is_concept_study
+                else f"Can you sketch a 2-line Python snippet showing {clean_concept} in action on a real value?"
+            )
     elif score == 3:
         what_landed = f"You captured the high-level purpose of {clean_concept} in your own words."
         follow_up = f"Walk me one level deeper: what goes in, what happens step by step, and what concrete example shows {clean_concept}?"
     else:
         what_landed = f"Good start naming {clean_concept} — let's flesh out how it actually works."
-        follow_up = f"In 2–3 sentences, explain WHEN you would use {clean_concept}, WHY it helps, and give one tiny code example."
+        follow_up = (
+            f"In 2–3 sentences, explain HOW {clean_concept} works, WHY it happens, and share one everyday example."
+            if is_concept_study
+            else f"In 2–3 sentences, explain WHEN you would use {clean_concept}, WHY it helps, and give one tiny code example."
+        )
 
     return {
         "clarity_score": int(score),
@@ -2297,4 +2364,90 @@ def teach_back(request: TeachBackRequest, caller: str = Depends(get_current_user
     return {
         **result,
         "xp_awarded": xp_awarded,
+    }
+
+
+class ConceptCheckRequest(BaseModel):
+    lesson_id: str = Field(..., min_length=1, max_length=160)
+    check_id: str = Field(default="", max_length=120)
+    selected_index: Optional[int] = None
+    answer_text: str = Field(default="", max_length=1000)
+
+
+@router.post("/concept-check")
+def evaluate_concept_check(
+    request: ConceptCheckRequest,
+    caller: str = Depends(get_current_user_id),
+):
+    """Evaluate a non-coding (`concept_study`) interactive check without invoking any Python sandbox."""
+    db_path = _get_db_path()
+    lesson = _load_lesson_from_dir(request.lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=404, detail=f"Lesson '{request.lesson_id}' not found.")
+
+    checks = lesson.get("concept_checks") or lesson.get("quiz") or []
+    if not checks:
+        raise HTTPException(status_code=422, detail="This lesson does not define concept checks.")
+
+    target_check = checks[0]
+    if request.check_id:
+        for ch in checks:
+            if ch.get("id") == request.check_id:
+                target_check = ch
+                break
+
+    correct = False
+    explanation = target_check.get("explanation") or ""
+    if "correct_index" in target_check and request.selected_index is not None:
+        correct = int(request.selected_index) == int(target_check["correct_index"])
+    elif "correct_answer" in target_check and request.answer_text.strip():
+        expected = str(target_check["correct_answer"]).strip().lower()
+        actual = request.answer_text.strip().lower()
+        correct = actual == expected
+    else:
+        raise HTTPException(status_code=422, detail="Provide a valid selection or answer.")
+
+    topic = lesson.get("topic") or lesson.get("subject_code") or request.lesson_id
+    xp_awarded = 0
+    if correct:
+        reward = int(lesson.get("xp_reward") or 50)
+        from progress import award_xp, ensure_tables
+        ensure_tables(db_path)
+        conn = sqlite3.connect(db_path, timeout=10.0)
+        try:
+            conn.execute("PRAGMA busy_timeout = 10000")
+            xp_awarded = award_xp(conn, caller, reward, "lesson", request.lesson_id)
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO lesson_completions (user_id, lesson_id, xp_awarded)
+                VALUES (?, ?, ?)
+                """,
+                [caller, request.lesson_id, xp_awarded],
+            )
+            conn.commit()
+        finally:
+            conn.close()
+        try:
+            from streaks import record_activity
+            record_activity(db_path, caller)
+        except Exception:
+            pass
+
+    try:
+        update_mastery(db_path, caller, topic, mastered=correct)
+        record_signal(
+            db_path,
+            caller,
+            "concept_check_pass" if correct else "concept_check_miss",
+            topic,
+            json.dumps({"lesson_id": request.lesson_id, "correct": correct}),
+        )
+    except Exception:
+        pass
+
+    return {
+        "passed": correct,
+        "explanation": explanation,
+        "xp_earned": xp_awarded,
+        "pedagogy_mode": lesson.get("pedagogy_mode", "concept_study"),
     }

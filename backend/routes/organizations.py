@@ -1019,52 +1019,71 @@ def list_groups(org_id: str, caller: str = Depends(get_current_user_id)):
 
 @router.get("/{org_id}/analytics")
 def org_analytics(org_id: str, caller: str = Depends(get_current_user_id)):
-    """Aggregated org stats. Requires manager+."""
+    """Aggregated org stats. Requires manager+ (teachers scoped to assigned cohorts if configured)."""
     member = require_org_role(DB_PATH, org_id, caller, "manager")
+    from school_provisioning import teacher_allowed_cohorts
+    allowed_cohorts = teacher_allowed_cohorts(DB_PATH, org_id, caller, member["role"])
+
     conn = sqlite3.connect(DB_PATH)
+    cohort_filter = ""
+    cohort_params: list = [org_id]
+    if allowed_cohorts is not None:
+        if not allowed_cohorts:
+            conn.close()
+            return {
+                "total_members": 0, "avg_xp": 0, "top_xp": 0,
+                "active_7d": 0, "lessons_completed": 0,
+                "roles": {}, "departments": {}, "teacher_scoped": True,
+            }
+        ph = ",".join("?" * len(allowed_cohorts))
+        cohort_filter = f" AND om.user_id IN (SELECT user_id FROM org_member_groups WHERE org_id = ? AND group_name IN ({ph}))"
+        cohort_params = [org_id, org_id, *allowed_cohorts]
 
     # Member count
-    total = conn.execute("SELECT COUNT(*) FROM org_members WHERE org_id = ?", [org_id]).fetchone()[0]
+    total = conn.execute(
+        f"SELECT COUNT(*) FROM org_members om WHERE om.org_id = ?{cohort_filter}",
+        cohort_params,
+    ).fetchone()[0]
 
     # Avg XP
-    avg_xp = conn.execute("""
+    avg_xp = conn.execute(f"""
         SELECT COALESCE(AVG(u.points), 0)
         FROM org_members om JOIN users u ON u.id = om.user_id
-        WHERE om.org_id = ?
-    """, [org_id]).fetchone()[0]
+        WHERE om.org_id = ?{cohort_filter}
+    """, cohort_params).fetchone()[0]
 
     # Top XP
-    top_xp = conn.execute("""
+    top_xp = conn.execute(f"""
         SELECT COALESCE(MAX(u.points), 0)
         FROM org_members om JOIN users u ON u.id = om.user_id
-        WHERE om.org_id = ?
-    """, [org_id]).fetchone()[0]
+        WHERE om.org_id = ?{cohort_filter}
+    """, cohort_params).fetchone()[0]
 
     # Active learners (last 7 days)
-    active = conn.execute("""
+    active = conn.execute(f"""
         SELECT COUNT(DISTINCT ls.user_id)
         FROM learning_signals ls
         JOIN org_members om ON om.user_id = ls.user_id
-        WHERE om.org_id = ? AND ls.created_at > datetime('now', '-7 days')
-    """, [org_id]).fetchone()[0]
+        WHERE om.org_id = ? AND ls.created_at > datetime('now', '-7 days'){cohort_filter}
+    """, cohort_params).fetchone()[0]
 
     # Lessons completed
-    lessons = conn.execute("""
+    lessons = conn.execute(f"""
         SELECT COUNT(*)
         FROM lesson_completions lc
         JOIN org_members om ON om.user_id = lc.user_id
-        WHERE om.org_id = ?
-    """, [org_id]).fetchone()[0]
+        WHERE om.org_id = ?{cohort_filter}
+    """, cohort_params).fetchone()[0]
 
     # Role distribution
-    roles = conn.execute("""
-        SELECT role, COUNT(*) FROM org_members WHERE org_id = ? GROUP BY role
-    """, [org_id]).fetchall()
+    roles = conn.execute(f"""
+        SELECT om.role, COUNT(*) FROM org_members om WHERE om.org_id = ?{cohort_filter} GROUP BY om.role
+    """, cohort_params).fetchall()
 
     # Department distribution
-    depts = conn.execute("""
-        SELECT department, COUNT(*) FROM org_members WHERE org_id = ? AND department != '' GROUP BY department
-    """, [org_id]).fetchall()
+    depts = conn.execute(f"""
+        SELECT om.department, COUNT(*) FROM org_members om WHERE om.org_id = ? AND om.department != ''{cohort_filter} GROUP BY om.department
+    """, cohort_params).fetchall()
 
     conn.close()
     return {
@@ -1074,7 +1093,8 @@ def org_analytics(org_id: str, caller: str = Depends(get_current_user_id)):
         "active_7d": active,
         "lessons_completed": lessons,
         "roles": {r[0]: r[1] for r in roles},
-        "departments": {d[0]: d[1] for d in depts} if depts else {}
+        "departments": {d[0]: d[1] for d in depts} if depts else {},
+        "teacher_scoped": allowed_cohorts is not None,
     }
 
 
@@ -1082,8 +1102,14 @@ def org_analytics(org_id: str, caller: str = Depends(get_current_user_id)):
 def org_progress(org_id: str, group: Optional[str] = None, caller: str = Depends(get_current_user_id)):
     """Per-student progress for teachers/admins. Requires manager+.
     Optional `group` filters by tag; `__ungrouped__` returns untagged members.
+    Teachers with assigned cohorts only see members in their assigned cohorts.
     Each student includes a `groups` list."""
-    require_org_role(DB_PATH, org_id, caller, "manager")
+    member = require_org_role(DB_PATH, org_id, caller, "manager")
+    from school_provisioning import teacher_allowed_cohorts
+    allowed_cohorts = teacher_allowed_cohorts(DB_PATH, org_id, caller, member["role"])
+    if allowed_cohorts is not None and not allowed_cohorts:
+        return {"students": [], "count": 0, "teacher_scoped": True}
+
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     try:
@@ -1098,6 +1124,10 @@ def org_progress(org_id: str, group: Optional[str] = None, caller: str = Depends
             WHERE om.org_id = ?
         """
         params = [org_id]
+        if allowed_cohorts is not None:
+            ph = ",".join("?" * len(allowed_cohorts))
+            query += f" AND u.id IN (SELECT user_id FROM org_member_groups WHERE org_id = ? AND group_name IN ({ph}))"
+            params.extend([org_id, *allowed_cohorts])
         if group == "__ungrouped__":
             query += " AND u.id NOT IN (SELECT user_id FROM org_member_groups WHERE org_id = ?)"
             params.append(org_id)
@@ -1125,7 +1155,10 @@ def org_progress(org_id: str, group: Optional[str] = None, caller: str = Depends
 @router.get("/{org_id}/students/{member_id}")
 def student_detail(org_id: str, member_id: str, caller: str = Depends(get_current_user_id)):
     """Drill-down detail for one student. Requires manager+. Target must be an org member."""
-    require_org_role(DB_PATH, org_id, caller, "manager")
+    member = require_org_role(DB_PATH, org_id, caller, "manager")
+    from school_provisioning import teacher_allowed_cohorts
+    allowed_cohorts = teacher_allowed_cohorts(DB_PATH, org_id, caller, member["role"])
+
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     try:
@@ -1142,6 +1175,8 @@ def student_detail(org_id: str, member_id: str, caller: str = Depends(get_curren
         groups = [r[0] for r in conn.execute(
             "SELECT group_name FROM org_member_groups WHERE org_id = ? AND user_id = ? ORDER BY group_name",
             [org_id, member_id]).fetchall()]
+        if allowed_cohorts is not None and not (set(groups) & set(allowed_cohorts)):
+            raise HTTPException(status_code=403, detail="Teacher is not assigned to this student's cohort.")
         lessons_completed = conn.execute(
             "SELECT COUNT(*) FROM lesson_completions WHERE user_id = ?", [member_id]).fetchone()[0]
         struggle_total = conn.execute(

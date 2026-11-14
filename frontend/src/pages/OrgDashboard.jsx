@@ -10,6 +10,7 @@ import StudentDrawer from '../components/StudentDrawer';
 import OrgRequestsPanel from '../components/OrgRequestsPanel';
 import OrgCurriculumPanel from '../components/OrgCurriculumPanel';
 import OrgBrandingPanel from '../components/OrgBrandingPanel';
+import SchoolProvisioningWizard from '../components/SchoolProvisioningWizard';
 import useOrgBranding from '../hooks/useOrgBranding';
 import { audienceFor } from '../hooks/useAudience';
 import { pointsLabels } from '../utils/orgStatLabels';
@@ -1361,7 +1362,18 @@ export default function OrgDashboard() {
           )}
 
           {tab === 'curriculum' && isAdmin && (
-            <OrgCurriculumPanel orgId={orgId} groups={groups.map((g) => g.name)} />
+            <div className="space-y-6">
+              <SchoolProvisioningWizard
+                orgId={orgId}
+                orgType={org?.type}
+                teachers={members.filter((m) => m.role === 'manager' || m.role === 'admin')}
+                onProvisioned={() => {
+                  loadGroups();
+                  loadOrg();
+                }}
+              />
+              <OrgCurriculumPanel orgId={orgId} groups={groups.map((g) => g.name)} />
+            </div>
           )}
 
           {tab === 'requests' && myRole === 'super_admin' && (

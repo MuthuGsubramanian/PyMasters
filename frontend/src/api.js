@@ -384,6 +384,17 @@ export const unpublishOrgLessonItem = (orgId, setId, itemId) =>
     api.post(`/org/${orgId}/lesson-sets/${setId}/items/${itemId}/unpublish`);
 export const deleteOrgLessonSet = (orgId, setId) => api.delete(`/org/${orgId}/lesson-sets/${setId}`);
 
+// School provisioning (boards, grades, cohort subjects, teacher scoping, concept checks)
+export const getSchoolTemplates = (params = {}) => api.get('/schools/templates', { params });
+export const getSchoolConfig = (orgId) => api.get(`/org/${orgId}/school-config`);
+export const updateSchoolConfig = (orgId, data) => api.put(`/org/${orgId}/school-config`, data);
+export const provisionCohortSyllabus = (orgId, data) => api.post(`/org/${orgId}/cohorts/provision`, data);
+export const getOrgCohorts = (orgId) => api.get(`/org/${orgId}/cohorts`);
+export const assignTeacherCohorts = (orgId, memberId, data) =>
+    api.put(`/org/${orgId}/teachers/${memberId}/cohorts`, data);
+export const evaluateConceptCheck = (data) => api.post('/classroom/concept-check', data);
+export const teachBack = (data) => api.post('/classroom/teach-back', data);
+
 // Platform settings (super-admin)
 export const getNotificationEmails = () => api.get('/admin/settings/notification-emails');
 export const setNotificationEmails = (emails) => api.put('/admin/settings/notification-emails', { emails });
