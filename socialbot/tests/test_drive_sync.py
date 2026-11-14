@@ -163,3 +163,64 @@ def test_verify_account_rejects_wrong_google_email(tmp_path, monkeypatch):
     monkeypatch.setattr(drive, "client", lambda: wrong_svc)
     with pytest.raises(RuntimeError, match="muthu.g.subramanian@gmail.com"):
         drive.sync_all()
+
+
+def test_future_generated_items_auto_sync_in_produce_and_tick(tmp_path, monkeypatch):
+    from socialbot import pipeline, scheduler
+
+    # 1) pipeline.produce() immediately syncs newly rendered item into Drive manifest
+    monkeypatch.setattr(config, "DRIVE_MANIFEST_PATH", tmp_path / "drive_sync.json")
+    monkeypatch.setattr(config, "RENDERS_DIR", tmp_path / "renders")
+    monkeypatch.setattr(config, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(config, "ensure_dirs", lambda: None)
+
+    video_path = tmp_path / "renders" / "video.mp4"
+    video_path.parent.mkdir(parents=True)
+    video_path.write_bytes(b"future_short_mp4")
+
+    les = {
+        "key": "lesson:python_fundamentals/variables_intro",
+        "title": "Variables Simply Explained",
+        "url": "https://pymasters.net/dashboard/classroom/variables_intro",
+    }
+    monkeypatch.setattr(pipeline.sources, "candidates", lambda: [les])
+    monkeypatch.setattr(
+        pipeline,
+        "write_until_good",
+        lambda kind, l: (
+            True,
+            {"title": "Variables", "hook": "Think of a box.", "scenes": [], "cta": "pymasters.net", "description": "pymasters.net", "tags": ["Python"]},
+            9.0,
+            {},
+            [],
+            0.0,
+        ),
+    )
+    monkeypatch.setattr(pipeline, "render", lambda kind, d, l, out_dir: {"video": str(video_path)})
+
+    stored = {}
+    monkeypatch.setattr(pipeline.store, "add_item", lambda kind, key, title, status, **kw: stored.update({
+        "id": 999, "kind": kind, "source_key": key, "topic": title, "status": status,
+        "created_at": "2026-11-15T10:00:00+00:00", **kw
+    }) or 999)
+    monkeypatch.setattr(pipeline.store, "update_item", lambda item_id, **kw: stored.update(kw))
+    monkeypatch.setattr(pipeline.store, "get_item", lambda item_id: dict(stored))
+
+    fake_svc = _FakeDriveService("muthu.g.subramanian@gmail.com")
+    monkeypatch.setattr(drive, "is_authorised", lambda: True)
+    monkeypatch.setattr(drive, "client", lambda: fake_svc)
+
+    item_id = pipeline.produce("short", lesson_key=les["key"])
+    assert item_id == 999
+    synced_names = {f["name"] for f in fake_svc.files_db.values()}
+    assert {"PyMasters Social Content", "Shorts", "script.txt", "metadata.json", "video.mp4"}.issubset(synced_names)
+
+    # 2) scheduler.tick() calls sync_drive() to keep future generated/published items synced
+    tick_calls = []
+    for name in ("refresh_daily_trends", "resume_interrupted", "publish_due", "refresh_metrics"):
+        monkeypatch.setattr(scheduler, name, lambda: None)
+    monkeypatch.setattr(scheduler, "produce_ahead", lambda ahead=2, kinds=(): None)
+    monkeypatch.setattr(scheduler, "sync_drive", lambda: tick_calls.append("sync_drive"))
+    scheduler.tick()
+    assert tick_calls == ["sync_drive"]
+

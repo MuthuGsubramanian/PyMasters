@@ -1,10 +1,12 @@
 """Google Drive backup & sync for generated PyMasters posts, YouTube Shorts, and Videos."""
+import fcntl
 import hashlib
 import json
 import logging
 import os
 import re
 import subprocess
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -151,6 +153,19 @@ def _save_manifest(manifest: dict):
     tmp = config.DRIVE_MANIFEST_PATH.with_suffix(".tmp")
     tmp.write_text(json.dumps(manifest, indent=2, sort_keys=True))
     os.replace(tmp, config.DRIVE_MANIFEST_PATH)
+
+
+@contextmanager
+def _sync_lock():
+    config.ensure_dirs()
+    config.DRIVE_MANIFEST_PATH.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = config.DRIVE_MANIFEST_PATH.with_suffix(".lock")
+    with open(lock_path, "w") as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(lf, fcntl.LOCK_UN)
 
 
 def _escape_q(val: str) -> str:
@@ -345,15 +360,26 @@ def _upsert_media(svc, name: str, parent_id: str, mime: str, media_body, known_i
     return created["id"]
 
 
-def sync_item(item: dict, svc=None, manifest: dict | None = None, force: bool = False) -> dict:
+def sync_item(item: dict, svc=None, manifest: dict | None = None, force: bool = False, verify: bool = True) -> dict:
     """Sync one rendered/scheduled/published item to Google Drive idempotently."""
     from googleapiclient.http import MediaFileUpload, MediaInMemoryUpload
 
     svc = svc or client()
-    _verify_account(svc)
+    if verify:
+        _verify_account(svc)
     own_manifest = manifest is None
-    if manifest is None:
-        manifest = _load_manifest()
+    if own_manifest:
+        with _sync_lock():
+            manifest = _load_manifest()
+            stats = _sync_item_locked(item, svc, manifest, force=force)
+            _save_manifest(manifest)
+            return stats
+    return _sync_item_locked(item, svc, manifest, force=force)
+
+
+def _sync_item_locked(item: dict, svc, manifest: dict, force: bool = False) -> dict:
+    from googleapiclient.http import MediaFileUpload, MediaInMemoryUpload
+
     folders = _ensure_category_folders(svc, manifest)
 
     category = CATEGORY_FOLDERS.get(item.get("kind"), "Posts")
@@ -412,8 +438,6 @@ def sync_item(item: dict, svc=None, manifest: dict | None = None, force: bool = 
         files_state[fname] = {"id": fid, "sha256": digest}
 
     item_rec["drive_url"] = f"https://drive.google.com/drive/folders/{folder_id}"
-    if own_manifest:
-        _save_manifest(manifest)
     return stats
 
 
@@ -421,32 +445,33 @@ def sync_all(statuses=("rendered", "scheduled", "published"), limit: int = 500, 
     """Sync all generated posts, shorts, and videos matching `statuses` to Google Drive."""
     svc = client()
     email = _verify_account(svc)
-    manifest = _load_manifest()
-    folders = _ensure_category_folders(svc, manifest)
+    with _sync_lock():
+        manifest = _load_manifest()
+        folders = _ensure_category_folders(svc, manifest)
 
-    items_to_sync = []
-    seen_ids = set()
-    for st in statuses:
-        for it in store.items(status=st, limit=limit):
-            if it["id"] not in seen_ids:
-                seen_ids.add(it["id"])
-                items_to_sync.append(it)
-    items_to_sync.sort(key=lambda x: x["id"])
+        items_to_sync = []
+        seen_ids = set()
+        for st in statuses:
+            for it in store.items(status=st, limit=limit):
+                if it["id"] not in seen_ids:
+                    seen_ids.add(it["id"])
+                    items_to_sync.append(it)
+        items_to_sync.sort(key=lambda x: x["id"])
 
-    summary = {
-        "account": email or config.GOOGLE_DRIVE_EMAIL,
-        "root_folder": config.DRIVE_ROOT_FOLDER,
-        "root_url": f"https://drive.google.com/drive/folders/{folders['root']}",
-        "items": 0,
-        "uploaded": 0,
-        "updated": 0,
-        "skipped": 0,
-    }
-    for it in items_to_sync:
-        res = sync_item(it, svc=svc, manifest=manifest, force=force)
-        _save_manifest(manifest)
-        summary["items"] += 1
-        summary["uploaded"] += res["uploaded"]
-        summary["updated"] += res["updated"]
-        summary["skipped"] += res["skipped"]
-    return summary
+        summary = {
+            "account": email or config.GOOGLE_DRIVE_EMAIL,
+            "root_folder": config.DRIVE_ROOT_FOLDER,
+            "root_url": f"https://drive.google.com/drive/folders/{folders['root']}",
+            "items": 0,
+            "uploaded": 0,
+            "updated": 0,
+            "skipped": 0,
+        }
+        for it in items_to_sync:
+            res = sync_item(it, svc=svc, manifest=manifest, force=force, verify=False)
+            _save_manifest(manifest)
+            summary["items"] += 1
+            summary["uploaded"] += res["uploaded"]
+            summary["updated"] += res["updated"]
+            summary["skipped"] += res["skipped"]
+        return summary

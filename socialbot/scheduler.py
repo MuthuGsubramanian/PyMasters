@@ -187,6 +187,12 @@ def resume_interrupted():
             media = pipeline.render(it["kind"], it["draft"], les, out_dir)
             media["lesson_url"] = les["url"]
             store.update_item(it["id"], status="rendered", media=media, error=None)
+            try:
+                from socialbot.publish import drive
+                if drive.is_authorised():
+                    drive.sync_item(store.get_item(it["id"]))
+            except Exception as e:
+                log.warning("drive sync skipped for resumed #%s: %s", it["id"], e)
         except Exception as e:
             log.exception("resume render failed")
             store.update_item(it["id"], status="failed", error=f"render: {e}"[:500])
