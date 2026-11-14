@@ -222,6 +222,17 @@ def tick():
         if hour == 5:
             refresh_metrics()
         publish_due()
+        sync_drive()
     finally:
         fcntl.flock(lock_file, fcntl.LOCK_UN)
         lock_file.close()
+
+
+def sync_drive():
+    """Back up any new or updated rendered/published items to Google Drive when authorised."""
+    try:
+        from socialbot.publish import drive
+        if drive.is_authorised():
+            drive.sync_all()
+    except Exception as e:
+        log.warning("drive sync: %s", e)

@@ -11,6 +11,7 @@ import webbrowser
 import requests
 
 from socialbot import config
+from socialbot.publish import drive as gd
 from socialbot.publish import linkedin as li
 from socialbot.publish import youtube as yt
 
@@ -31,6 +32,30 @@ def youtube():
     print(f"Authorised for channel: {ch.get('snippet', {}).get('title')} ({ch.get('id')})")
     if ch.get("id") != config.YOUTUBE_CHANNEL_ID:
         print(f"WARNING: expected channel {config.YOUTUBE_CHANNEL_ID}; re-run and pick the PyMasters channel.")
+
+
+def drive():
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    cfile = gd.client_file()
+    if not cfile.exists():
+        raise SystemExit(f"Missing {cfile}: create a Desktop OAuth client in GCP project pymasters-app "
+                         "and save its JSON there.")
+    flow = InstalledAppFlow.from_client_secrets_file(str(cfile), gd.SCOPES)
+    target = config.GOOGLE_DRIVE_EMAIL
+    print(f"Opening Google consent in the browser. Sign in with {target} to approve Google Drive backup.")
+    creds = flow.run_local_server(
+        port=8767,
+        prompt="consent select_account",
+        login_hint=target,
+        open_browser=True,
+        success_message="PyMasters bot: Google Drive access saved. You can close this tab.",
+    )
+    gd.TOKEN_FILE.write_text(creds.to_json())
+    gd.TOKEN_FILE.chmod(0o600)
+    email = gd.account_email()
+    print(f"Authorised Google Drive account: {email}")
+    if target and email.lower() != target.lower():
+        raise SystemExit(f"Authorised account {email!r} does not match expected {target!r}; re-run and pick {target}.")
 
 
 def linkedin(profile=None):

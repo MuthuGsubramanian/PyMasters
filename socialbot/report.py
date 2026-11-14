@@ -44,6 +44,8 @@ def text():
         if d is not None:
             out.append(f"- {name} expires in {d} days" + ("  <-- ACTION: re-run `python -m socialbot auth linkedin`" if d < 10 else ""))
     out.append(f"- YouTube authorised: {'yes' if yt.TOKEN_FILE.exists() else 'NO'}")
+    from socialbot.publish import drive as gd
+    out.append(f"- Google Drive backup ({config.GOOGLE_DRIVE_EMAIL}): {'yes' if gd.is_authorised() else 'not authorised (run `python -m socialbot auth drive`)'}")
     with store.db() as c:
         rows = c.execute("SELECT i.kind, i.topic, m.views, m.likes, m.comments FROM metrics m JOIN items i ON i.id=m.item_id "
                          "WHERE m.taken_at=(SELECT MAX(taken_at) FROM metrics) ORDER BY COALESCE(m.views,0) DESC LIMIT 5").fetchall()

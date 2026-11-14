@@ -21,12 +21,15 @@ RENDERS_DIR = MEDIA_DIR / "renders"
 MUSIC_DIR = MEDIA_DIR / "music"          # optional royalty-free beds (*.mp3/*.wav); none = no music
 HF_HOME = MEDIA_DIR / "hf"
 DB_PATH = STATE_DIR / "state.db"
+DRIVE_MANIFEST_PATH = STATE_DIR / "drive_sync.json"
 
 SITE = "https://pymasters.net"
 YOUTUBE_CHANNEL_ID = "UCH8b9RG8cx8HnFlOJ8-zs1Q"   # PyMasters (@Py-Masters)
 LINKEDIN_ORG_URN = os.getenv("PMSOCIAL_LINKEDIN_ORG_URN", "urn:li:organization:113061910")  # PyMasters page
 LINKEDIN_ORG_NAME = os.getenv("PMSOCIAL_LINKEDIN_ORG_NAME", "PyMasters")
 LINKEDIN_ORG_MENTION = f"@[{LINKEDIN_ORG_NAME}]({LINKEDIN_ORG_URN})"
+GOOGLE_DRIVE_EMAIL = os.getenv("PMSOCIAL_DRIVE_EMAIL", "muthu.g.subramanian@gmail.com")
+DRIVE_ROOT_FOLDER = os.getenv("PMSOCIAL_DRIVE_FOLDER", "PyMasters Social Content")
 
 # Owner decisions (2026-11-14): keep YouTube focused (daily Short + weekly Long); minimize LinkedIn to 1 post/week.
 CADENCE = {

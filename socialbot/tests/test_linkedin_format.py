@@ -220,7 +220,7 @@ def test_tick_keeps_linkedin_to_single_slot_and_youtube_ahead(monkeypatch, tmp_p
     calls = []
     monkeypatch.setattr(config, "STATE_DIR", tmp_path)
     monkeypatch.setattr(config, "ensure_dirs", lambda: None)
-    for name in ("refresh_daily_trends", "resume_interrupted", "publish_due", "refresh_metrics"):
+    for name in ("refresh_daily_trends", "resume_interrupted", "publish_due", "refresh_metrics", "sync_drive"):
         monkeypatch.setattr(scheduler, name, lambda: None)
     monkeypatch.setattr(scheduler, "produce_ahead", lambda ahead=2, kinds=(): calls.append((tuple(kinds), ahead)))
     _freeze(monkeypatch, datetime(2026, 11, 10, 14, 0, tzinfo=scheduler.TZ))

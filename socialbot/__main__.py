@@ -4,7 +4,8 @@
   python -m socialbot publish [--dry-run]                             publish due rendered items
   python -m socialbot tick                                            scheduled run: produce what the cadence needs, publish what is due
   python -m socialbot status                                          recent items
-  python -m socialbot auth {youtube|linkedin}                         one-time OAuth in Eighty
+  python -m socialbot auth {youtube|linkedin|drive}                   one-time OAuth in Eighty
+  python -m socialbot sync-drive [--limit N] [--force]                back up all generated posts, shorts & videos to Google Drive
   python -m socialbot metrics                                         refresh views/engagement
 """
 import argparse
@@ -24,7 +25,8 @@ def main(argv=None):
     p = sub.add_parser("publish"); p.add_argument("--dry-run", action="store_true")
     sub.add_parser("tick")
     p = sub.add_parser("status"); p.add_argument("--limit", type=int, default=15)
-    p = sub.add_parser("auth"); p.add_argument("service", choices=["youtube", "linkedin", "linkedin-page"])
+    p = sub.add_parser("auth"); p.add_argument("service", choices=["youtube", "linkedin", "linkedin-page", "drive"])
+    p = sub.add_parser("sync-drive"); p.add_argument("--limit", type=int, default=500); p.add_argument("--force", action="store_true")
     sub.add_parser("metrics")
     sub.add_parser("report")
     a = ap.parse_args(argv)
@@ -48,7 +50,10 @@ def main(argv=None):
     elif a.cmd == "auth":
         from socialbot import auth
         {"youtube": auth.youtube, "linkedin": lambda: auth.linkedin("member"),
-         "linkedin-page": lambda: auth.linkedin("org")}[a.service]()
+         "linkedin-page": lambda: auth.linkedin("org"), "drive": auth.drive}[a.service]()
+    elif a.cmd == "sync-drive":
+        from socialbot.publish import drive
+        print(json.dumps(drive.sync_all(limit=a.limit, force=a.force), indent=1))
     elif a.cmd == "report":
         from socialbot import report
         print(report.text())

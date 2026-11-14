@@ -156,4 +156,10 @@ def produce(kind, lesson_key=None):
     if les.get("space_url"):
         media["space_url"] = les["space_url"]
     store.update_item(item_id, status="rendered", media=media)
+    try:
+        from socialbot.publish import drive
+        if drive.is_authorised():
+            drive.sync_item(store.get_item(item_id))
+    except Exception as e:
+        log.warning("drive sync skipped for #%s: %s", item_id, e)
     return item_id
