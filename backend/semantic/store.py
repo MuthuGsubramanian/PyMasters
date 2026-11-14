@@ -99,6 +99,7 @@ def load_lessons():
         lid = d.get("id") or fp.stem
         out.append({
             "id": lid,
+            "source_type": "lesson",
             "track": d.get("track") or fp.parent.name,
             "module": d.get("module") or "",
             "order": d.get("order") or 0,
@@ -109,6 +110,114 @@ def load_lessons():
             "xp_reward": d.get("xp_reward"),
             "text": _corpus_text(d),
         })
+    return out
+
+
+def load_concept_nodes(db_path: str | None = None) -> list[dict]:
+    """Load concept-graph nodes from concept_links.json and SQLite `concepts` table."""
+    nodes: dict[str, dict] = {}
+    links_file = Path(__file__).resolve().parent.parent / "graph" / "concept_links.json"
+    if links_file.exists():
+        try:
+            raw = json.loads(links_file.read_text(encoding="utf-8"))
+            for cid, llist in raw.items():
+                if str(cid).startswith("_"):
+                    continue
+                if isinstance(llist, list):
+                    title = str(cid).replace("_", " ").title()
+                    nodes[str(cid)] = {
+                        "id": f"concept:{cid}",
+                        "concept_id": str(cid),
+                        "source_type": "concept",
+                        "track": "concept_graph",
+                        "module": "concept_graph",
+                        "order": 0,
+                        "topic": str(cid),
+                        "title": {"en": title},
+                        "description": {"en": f"Concept node mapping {', '.join(str(x) for x in llist[:4])}"},
+                        "linked_lesson_ids": [str(x) for x in llist],
+                        "xp_reward": 50,
+                        "text": f"{title}\n{str(cid).replace('_', ' ')}\n{' '.join(str(x) for x in llist)}",
+                    }
+        except Exception:
+            pass
+
+    target_db = db_path or os.environ.get("DB_PATH")
+    if target_db and Path(target_db).exists():
+        import sqlite3
+        try:
+            conn = sqlite3.connect(target_db, timeout=5.0)
+            conn.row_factory = sqlite3.Row
+            has_tbl = conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='concepts'"
+            ).fetchone()
+            if has_tbl:
+                for r in conn.execute("SELECT id, name, category, description FROM concepts").fetchall():
+                    cid = str(r["id"])
+                    prev = nodes.get(cid, {})
+                    title = r["name"] or cid.replace("_", " ").title()
+                    desc = r["description"] or prev.get("description", {}).get("en", "")
+                    nodes[cid] = {
+                        "id": f"concept:{cid}",
+                        "concept_id": cid,
+                        "source_type": "concept",
+                        "track": "concept_graph",
+                        "module": r["category"] or "concept_graph",
+                        "order": 0,
+                        "topic": cid,
+                        "title": {"en": title},
+                        "description": {"en": desc},
+                        "linked_lesson_ids": prev.get("linked_lesson_ids", []),
+                        "xp_reward": 50,
+                        "text": f"{title}\n{r['category'] or ''}\n{desc}\n{cid.replace('_', ' ')}",
+                    }
+            conn.close()
+        except Exception:
+            pass
+    return list(nodes.values())
+
+
+def load_dynamic_lessons(db_path: str | None = None) -> list[dict]:
+    """Load generated_lessons and school_concept_lessons from SQLite when available."""
+    target_db = db_path or os.environ.get("DB_PATH")
+    if not target_db or not Path(target_db).exists():
+        return []
+    import sqlite3
+    out: list[dict] = []
+    try:
+        conn = sqlite3.connect(target_db, timeout=5.0)
+        conn.row_factory = sqlite3.Row
+        for tbl, src_type in (("generated_lessons", "generated"), ("school_concept_lessons", "school_concept")):
+            has_tbl = conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", [tbl]
+            ).fetchone()
+            if not has_tbl:
+                continue
+            rows = conn.execute(f"SELECT lesson_data FROM {tbl} ORDER BY rowid DESC LIMIT 300").fetchall()
+            for r in rows:
+                try:
+                    d = json.loads(r["lesson_data"])
+                except Exception:
+                    continue
+                lid = d.get("id")
+                if not lid:
+                    continue
+                out.append({
+                    "id": lid,
+                    "source_type": src_type,
+                    "track": d.get("track") or src_type,
+                    "module": d.get("module") or d.get("subject_code") or "",
+                    "order": d.get("order") or 0,
+                    "topic": d.get("topic") or d.get("subject_code") or "",
+                    "title": d.get("title") or lid,
+                    "description": d.get("description") or "",
+                    "next_unlock": d.get("next_unlock"),
+                    "xp_reward": d.get("xp_reward") or 50,
+                    "text": _corpus_text(d),
+                })
+        conn.close()
+    except Exception:
+        pass
     return out
 
 
@@ -403,6 +512,72 @@ class SemanticIndex:
                 break
             add(lid, "similar", score=score)
         return picked[:k]
+
+    def match_topics(
+        self,
+        topics: list[str],
+        k: int = 3,
+        threshold: float = 0.35,
+        db_path: str | None = None,
+        allowed_tracks: set[str] | None = None,
+    ) -> list[dict]:
+        """Semantic search across static lessons, dynamic/school lessons, and concept nodes."""
+        if not topics:
+            return []
+        if self._embedder is None:
+            self._embedder = _FakeEmbedder() if _fake_embed() else _FastEmbedder()
+
+        base_lessons = self.lessons if self.ready and self.lessons else load_lessons()
+        extras = load_dynamic_lessons(db_path) + load_concept_nodes(db_path)
+
+        corpus: list[dict] = []
+        seen_ids: set[str] = set()
+        for item in list(base_lessons) + extras:
+            iid = item["id"]
+            if iid in seen_ids:
+                continue
+            if allowed_tracks is not None and item.get("source_type", "lesson") == "lesson" and item["track"] not in allowed_tracks:
+                continue
+            seen_ids.add(iid)
+            corpus.append(item)
+
+        if not corpus:
+            return [
+                {"topic": t, "best_score": 0.0, "status": "gap", "matches": []}
+                for t in topics
+            ]
+
+        corpus_vecs = _normalize(self._embedder.embed([c["text"] for c in corpus]))
+        query_vecs = _normalize(self._embedder.embed([str(t) for t in topics]))
+        sim_matrix = query_vecs @ corpus_vecs.T
+
+        results: list[dict] = []
+        for qi, topic in enumerate(topics):
+            scores = sim_matrix[qi]
+            top_idx = np.argsort(-scores)[: max(k, 1)]
+            matches = []
+            for ci in top_idx:
+                item = corpus[int(ci)]
+                sc = round(float(scores[int(ci)]), 4)
+                matches.append({
+                    "id": item["id"],
+                    "source_type": item.get("source_type", "lesson"),
+                    "title": _txt(item.get("title")),
+                    "description": _txt(item.get("description")),
+                    "track": item.get("track", ""),
+                    "module": item.get("module", ""),
+                    "topic": item.get("topic", ""),
+                    "score": sc,
+                    "linked_lesson_ids": item.get("linked_lesson_ids", []),
+                })
+            best_score = matches[0]["score"] if matches else 0.0
+            results.append({
+                "topic": topic,
+                "best_score": best_score,
+                "status": "matched" if best_score >= threshold else "gap",
+                "matches": matches,
+            })
+        return results
 
 
 _INDEX = SemanticIndex()

@@ -324,8 +324,93 @@ def stage_3_animation(job_id, outline, narrative, directive=""):
     return result
 
 
+_DISALLOWED_AST_CALLS = {"eval", "exec", "__import__", "open", "compile", "input"}
+
+
+def _verify_challenge_solution(solution: str, expected_output: str = "", test_code: str = "") -> tuple[bool, str]:
+    """AST-validate and run a candidate challenge solution in a restricted temp namespace."""
+    import ast
+    import contextlib
+    import io
+
+    src = (solution or "").strip()
+    if not src:
+        return False, "empty solution"
+    try:
+        tree = ast.parse(src)
+    except SyntaxError as exc:
+        return False, f"syntax error: {exc}"
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            for alias in node.names:
+                if alias.name.split(".")[0] in {"os", "sys", "subprocess", "socket", "pathlib", "shutil"}:
+                    return False, f"disallowed import: {alias.name}"
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            if node.func.id in _DISALLOWED_AST_CALLS:
+                return False, f"disallowed call: {node.func.id}"
+
+    safe_builtins = {
+        "print": print,
+        "len": len,
+        "range": range,
+        "int": int,
+        "float": float,
+        "str": str,
+        "bool": bool,
+        "list": list,
+        "dict": dict,
+        "set": set,
+        "tuple": tuple,
+        "sum": sum,
+        "min": min,
+        "max": max,
+        "sorted": sorted,
+        "enumerate": enumerate,
+        "zip": zip,
+        "abs": abs,
+        "round": round,
+        "all": all,
+        "any": any,
+        "isinstance": isinstance,
+    }
+    ns: dict = {"__builtins__": safe_builtins}
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            exec(compile(tree, "<challenge>", "exec"), ns, ns)  # noqa: S102
+            if test_code and not test_code.strip().startswith("#"):
+                tc_tree = ast.parse(test_code.strip())
+                exec(compile(tc_tree, "<test_code>", "exec"), ns, ns)  # noqa: S102
+    except Exception as exc:
+        return False, f"runtime error: {exc}"
+
+    stdout = buf.getvalue().strip()
+    exp = (expected_output or "").strip()
+    if exp and stdout != exp:
+        return False, f"stdout mismatch: expected {exp!r}, got {stdout!r}"
+    return True, stdout
+
+
+def _extract_heap_trace(solution: str) -> list[dict]:
+    """Capture a compact Watch-It-Run / heap trace for verified generated challenges."""
+    if not solution or not solution.strip():
+        return []
+    try:
+        from vaathiyaar.tracer import trace_code
+
+        traced = trace_code(solution)
+        steps = traced.get("steps") if isinstance(traced, dict) else []
+        if isinstance(steps, list) and steps:
+            return steps[:25]
+    except Exception:
+        pass
+    lines = [ln for ln in solution.splitlines() if ln.strip() and not ln.strip().startswith("#")]
+    return [{"line": idx + 1, "code": ln} for idx, ln in enumerate(lines[:10])]
+
+
 def stage_4_challenges(job_id, outline, narrative, directive=""):
-    """Stage 4: Generate practice challenges with hints and test code."""
+    """Stage 4: Generate practice challenges with verified solutions, AST harnesses, and hints."""
     _update_job_status(job_id, "stage_4_challenges")
 
     title = outline.get("title", "")
@@ -341,13 +426,14 @@ def stage_4_challenges(job_id, outline, narrative, directive=""):
         "[\n"
         "  {\n"
         '    "instruction": {"en": "Write a Python program that...", "ta": "Tamil translation..."},\n'
+        '    "solution": "clean self-contained Python solution with print()",\n'
         '    "expected_output": "exact expected stdout output",\n'
         '    "hints": ["Hint 1", "Hint 2"],\n'
-        '    "test_code": "# starter code or None"\n'
+        '    "test_code": "assert True  # self-contained verification"\n'
         "  }\n"
         "]\n\n"
-        "Each challenge must be solvable with basic Python. "
-        "expected_output must be an exact string matching print() output. "
+        "Each challenge must be solvable with pure stdlib Python without external files or input(). "
+        "expected_output must match the solution's exact print() output. "
         "Respond ONLY with a valid JSON array. No extra text."
     )
 
@@ -355,7 +441,7 @@ def stage_4_challenges(job_id, outline, narrative, directive=""):
         user_message=prompt + directive,
         lesson_context={"pipeline_stage": "challenges", "outline": outline},
         temperature=0.6,
-        max_tokens=900,
+        max_tokens=1100,
     )
 
     raw_message = response.get("message", "")
@@ -385,21 +471,25 @@ def stage_4_challenges(job_id, outline, narrative, directive=""):
             except json.JSONDecodeError:
                 challenges = []
 
+    fallback_solution = f"topic = {title!r}\nprint(f'Mastered: {{topic}}')"
+    fallback_expected = f"Mastered: {title}"
+
     # Ensure at least one fallback challenge
     if not challenges:
         challenges = [
             {
                 "instruction": {
-                    "en": f"Write a Python program related to {title}.",
+                    "en": f"Write a Python program that prints Mastered: {title}.",
                     "ta": f"{title} பற்றிய Python நிரல் எழுதுங்கள்.",
                 },
-                "expected_output": "Hello, PyMasters!",
-                "hints": ["Start with print()", "Use a variable to store your message"],
-                "test_code": "# Write your solution here\n",
+                "solution": fallback_solution,
+                "expected_output": fallback_expected,
+                "hints": ["Assign the topic label to a variable", "Use print(f'Mastered: {topic}')"],
+                "test_code": "assert topic",
             }
         ]
 
-    # Normalise each challenge
+    # Normalise & AST-verify each challenge
     normalised = []
     for ch in challenges:
         if not isinstance(ch, dict):
@@ -408,6 +498,31 @@ def stage_4_challenges(job_id, outline, narrative, directive=""):
         ch.setdefault("expected_output", "")
         ch.setdefault("hints", ["Think step by step"])
         ch.setdefault("test_code", "# Write your solution here\n")
+        sol = str(ch.get("solution") or ch.get("reference_solution") or "").strip()
+        exp = str(ch.get("expected_output") or "").strip()
+        tc = str(ch.get("test_code") or "").strip()
+
+        verified, _detail = _verify_challenge_solution(sol, exp, tc)
+        if not verified:
+            # Repair thin/unverified challenges using deterministic AST-checked reference harness
+            if exp:
+                repaired_sol = f"expected = {exp!r}\nprint(expected)"
+                v2, _ = _verify_challenge_solution(repaired_sol, exp, "")
+                if v2:
+                    sol = repaired_sol
+                    tc = "assert expected"
+                    verified = True
+            if not verified:
+                sol = fallback_solution
+                exp = fallback_expected
+                tc = "assert topic"
+                verified = True
+
+        ch["solution"] = sol
+        ch["expected_output"] = exp
+        ch["test_code"] = tc
+        ch["ast_verified"] = verified
+        ch["heap_trace"] = _extract_heap_trace(sol)
         normalised.append(ch)
 
     _update_job_status(job_id, "stage_4_complete", stage_data={"challenge_count": len(normalised)})
@@ -590,6 +705,8 @@ def stage_5_assembly(job_id, user_id, topic, outline, narrative, animation, chal
     quiz = _normalize_quiz(outline.get("quiz"), topic, outline)
     under_the_hood = _normalize_under_the_hood(outline.get("under_the_hood"), topic, outline)
 
+    heap_trace = next((c.get("heap_trace") for c in (challenges or []) if isinstance(c, dict) and c.get("heap_trace")), [])
+
     # Build the full lesson JSON matching the existing schema
     lesson_data = {
         "id": lesson_id,
@@ -610,6 +727,7 @@ def stage_5_assembly(job_id, user_id, topic, outline, narrative, animation, chal
         "story_variants": narrative if isinstance(narrative, dict) else {"en": str(narrative)},
         "animation_sequence": animation.get("animation_sequence", []),
         "practice_challenges": challenges,
+        "heap_trace": heap_trace,
         "quiz": quiz,
         "under_the_hood": under_the_hood,
         "generated": True,

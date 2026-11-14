@@ -798,6 +798,13 @@ def init_db():
         except Exception as e:
             print(f"School syllabus seed: {e}")
 
+        # Ensure Enterprise Curriculum Studio tables
+        try:
+            from curriculum_studio import ensure_curriculum_studio_tables
+            ensure_curriculum_studio_tables(DB_PATH)
+        except Exception as e:
+            print(f"Curriculum studio schema: {e}")
+
         # Resolve SUPER_ADMIN_EMAILS into the is_super_admin column. This runs on
         # every boot, before any admin request is served, so the real owner
         # accounts are always authorized even though require_super_admin no longer
@@ -973,11 +980,13 @@ from routes.misconceptions import router as misconceptions_router
 from routes.guides import router as guides_router
 from routes.certificates import router as certificates_router
 from routes.school_provisioning import router as school_router
+from routes.curriculum_studio import router as curriculum_studio_router
 app.include_router(email_verify_router)
 app.include_router(misconceptions_router)
 app.include_router(guides_router)
 app.include_router(certificates_router)
 app.include_router(school_router)
+app.include_router(curriculum_studio_router)
 
 # --- CORS ---
 # NB: no "*" here. With allow_credentials=True, a wildcard makes Starlette echo

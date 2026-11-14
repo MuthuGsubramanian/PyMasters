@@ -395,6 +395,19 @@ export const assignTeacherCohorts = (orgId, memberId, data) =>
 export const evaluateConceptCheck = (data) => api.post('/classroom/concept-check', data);
 export const teachBack = (data) => api.post('/classroom/teach-back', data);
 
+// Enterprise & Training Center Curriculum Studio
+export const ingestCurriculumSyllabus = (orgId, formDataOrJson) =>
+    formDataOrJson instanceof FormData
+        ? api.post(`/org/${orgId}/studio/ingest`, formDataOrJson, { headers: { 'Content-Type': 'multipart/form-data' } })
+        : api.post(`/org/${orgId}/studio/ingest`, formDataOrJson);
+export const getStudioIngestions = (orgId) => api.get(`/org/${orgId}/studio/ingestions`);
+export const getStudioCurricula = (orgId) => api.get(`/org/${orgId}/studio/curricula`);
+export const createStudioCurriculum = (orgId, data) => api.post(`/org/${orgId}/studio/curricula`, data);
+export const createStudioVersion = (orgId, curriculumId, data) =>
+    api.post(`/org/${orgId}/studio/curricula/${curriculumId}/versions`, data);
+export const publishStudioDelta = (orgId, curriculumId, data = {}) =>
+    api.post(`/org/${orgId}/studio/curricula/${curriculumId}/publish-delta`, data);
+
 // Platform settings (super-admin)
 export const getNotificationEmails = () => api.get('/admin/settings/notification-emails');
 export const setNotificationEmails = (emails) => api.put('/admin/settings/notification-emails', { emails });

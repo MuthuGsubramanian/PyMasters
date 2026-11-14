@@ -522,6 +522,18 @@ def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict
         except Exception:
             pass
 
+        # Curriculum Studio cohort delta assignments (versioned enterprise curricula)
+        try:
+            from routes.curriculum_studio import studio_assigned_lesson_ids_for_user
+            assigned_map = dict(studio_assigned_lesson_ids_for_user(_get_db_path(), user_id))
+            if assigned_map:
+                for l in lessons:
+                    if l.get("id") in assigned_map:
+                        l["assigned"] = True
+                        l["assigned_set"] = assigned_map[l["id"]]
+        except Exception:
+            pass
+
     return lessons
 
 

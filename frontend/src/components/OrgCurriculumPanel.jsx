@@ -9,6 +9,7 @@ import {
 } from '../api';
 import { safeErrorMsg } from '../utils/errorUtils';
 import { Badge, Button, Card, FormField, Input } from './ui';
+import CurriculumStudioPanel from './CurriculumStudioPanel';
 
 const ITEM_BADGE = {
     generating: 'warning',
@@ -95,6 +96,7 @@ export default function OrgCurriculumPanel({ orgId, groups = [] }) {
 
     return (
         <div className="space-y-5 max-w-3xl">
+            <CurriculumStudioPanel orgId={orgId} groups={groups} />
             <Card className="p-4">
                 <h3 className="text-sm font-bold text-text-primary mb-1 flex items-center gap-2">
                     <BookPlus size={15} className="text-accent-primary" aria-hidden="true" /> New curriculum set
