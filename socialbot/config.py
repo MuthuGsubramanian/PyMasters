@@ -48,7 +48,8 @@ LLM_TIMEOUT_S = 420
 TTS_VOICE = os.getenv("PMSOCIAL_VOICE", "am_michael")
 TTS_SPEED = 1.06
 
-QUALITY_MIN_SCORE = 7.5      # calibrated critic score (8 = strong senior-engineer post) + no errors/blockers
+QUALITY_MIN_SCORE = 7.5      # calibrated critic score (8 = strong, accessible piece) + no errors/blockers
+SIMPLICITY_MIN_SCORE = 7.5   # videos must explain concepts simply enough for non-technical viewers
 MAX_ATTEMPTS = 4             # write -> critique -> rewrite rounds before a draft is dropped
 NO_REPEAT_DAYS = 120         # same lesson/topic is not reused within this window
 LINKEDIN_BUSINESS_STYLES = (
@@ -62,8 +63,8 @@ LINKEDIN_TECH_STYLES = (
     "production_code_audit", # principal-engineer bug/risk audit with verified Python fix
 )
 LINKEDIN_STYLES = LINKEDIN_BUSINESS_STYLES + LINKEDIN_TECH_STYLES
-HF_SPACE_SHARE = 0.35        # share of LinkedIn posts & YouTube Shorts showcasing our live Hugging Face Spaces one-by-one
-TREND_SHARE = 0.40           # share of LinkedIn posts & YouTube Shorts covering the 5 daily live trending pillars one-by-one
+HF_SPACE_SHARE = 0.10        # occasional spotlight on our live Hugging Face Spaces (explained simply)
+TREND_SHARE = 0.20           # occasional live trend spotlight broken down in simple everyday terms
 
 
 def ensure_dirs():

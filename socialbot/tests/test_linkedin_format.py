@@ -546,3 +546,75 @@ def test_never_uses_hindi_words_while_permitting_tamil_and_plain_english():
     normalized = linkedin.little_text("Real\u2011time latency: 50\u202fms with @PyMasters https://pymasters.net", ["#Python", "#AI", "#Risk"])
     assert "\u2011" not in normalized and "\u202f" not in normalized
     assert "Real-time latency: 50 ms" in normalized
+
+
+def test_simple_non_technical_topic_weights_and_shares():
+    assert config.SIMPLICITY_MIN_SCORE >= 7.5
+    assert config.HF_SPACE_SHARE <= 0.15
+    assert config.TREND_SHARE <= 0.25
+    assert sources.TRACK_WEIGHT["python_fundamentals"] > sources.TRACK_WEIGHT["python_internals"]
+    assert sources.TRACK_WEIGHT["ai_fundamentals"] > sources.TRACK_WEIGHT["transformers_scratch"]
+    assert sources.TRACK_WEIGHT["working_with_data"] > sources.TRACK_WEIGHT["ai_engineering"]
+
+
+def test_video_prompts_and_critic_enforce_non_technical_simplicity(monkeypatch):
+    sp = briefs.short_prompt(LES)
+    lp = briefs.long_prompt(LES)
+    assert "non-technical person" in sp.lower()
+    assert "zero technical background" in lp.lower()
+
+    sample_short = {
+        "title": "How Smart Lists Save Memory",
+        "hook": "Imagine reading a giant book one page at a time.",
+        "cta": "Learn Python in simple steps at pymasters.net.",
+        "description": "See how lazy lists work step by step at https://pymasters.net",
+        "tags": ["Python", "Beginners", "PyMasters"],
+        "scenes": [
+            {"narration": "Loading every item at once fills up your computer memory fast when lists grow very large in daily apps.",
+             "visual": {"type": "metric", "step_badge": "1 · PROBLEM", "note": "Loading all items wastes memory.",
+                        "heading": "Why Memory Fills Up",
+                        "metrics": [{"label": "ALL AT ONCE", "value": "1M items"}, {"label": "ONE BY ONE", "value": "1 item"}]}},
+            {"narration": "Instead, imagine pulling one ticket at a time from a counter dispenser only when a person asks for it.",
+             "visual": {"type": "flow", "step_badge": "2 · ANALOGY", "note": "Take only the next ticket needed.",
+                        "heading": "One Ticket At A Time",
+                        "nodes": ["Ask Next", "Give One", "Repeat"], "edges": [[0, 1, "step"], [1, 2, "next"]]}},
+            {"narration": "In Python, we just write a simple rule that hands back one clean number at a time when needed.",
+             "visual": {"type": "code", "step_badge": "3 · SIMPLE PYTHON", "note": "Creates items only when asked.",
+                        "heading": "Simple Python Example",
+                        "code": "nums = (x*2 for x in [1,2,3])\nprint(next(nums))", "output": "2"}},
+            {"narration": "Because it works step by step like a calm queue, even small laptops stay fast and never freeze up.",
+             "visual": {"type": "compare", "step_badge": "4 · IMPACT", "note": "Fast results without hogging memory.",
+                        "heading": "All At Once vs One By One", "style": "versus",
+                        "left_title": "Loads All", "right_title": "One By One",
+                        "left": "Slow startup", "right": "Instant response"}},
+            {"narration": "Give your program only the single piece it needs right now, and leave everything else waiting quietly until called.",
+             "visual": {"type": "reveal", "step_badge": "5 · RULE", "note": "Keep only what you use right now.",
+                        "heading": "Main Takeaway", "big": "Load One Item At A Time", "sub": "pymasters.net"}},
+        ],
+    }
+    assert not quality.hard_checks("short", sample_short)
+    crit = briefs.critic_prompt("short", sample_short, LES)
+    assert "non-technical" in crit.lower()
+    assert "TECHNICAL AUDIENCE track" not in crit
+
+    # Low simplicity score must reject the Short even if overall score is high
+    monkeypatch.setattr(
+        quality, "critique",
+        lambda kind, draft, les: {
+            "scores": {"hook": 8, "accuracy": 9, "specificity": 8, "clarity": 7, "originality": 8, "brand_rules": 9, "simplicity": 6.0},
+            "overall": 8.0, "factual_errors": [], "blocking_issues": [], "polish": [],
+        },
+    )
+    ok, _, _, problems = quality.verdict("short", sample_short, LES)
+    assert ok is False and any("simplicity" in p.lower() for p in problems)
+
+    # High simplicity + high overall passes cleanly
+    monkeypatch.setattr(
+        quality, "critique",
+        lambda kind, draft, les: {
+            "scores": {"hook": 8.5, "accuracy": 9, "specificity": 8.5, "clarity": 9, "originality": 8, "brand_rules": 9, "simplicity": 8.5},
+            "overall": 8.5, "factual_errors": [], "blocking_issues": [], "polish": [],
+        },
+    )
+    ok2, _, _, problems2 = quality.verdict("short", sample_short, LES)
+    assert ok2 is True and not problems2

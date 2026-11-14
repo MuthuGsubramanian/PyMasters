@@ -11,15 +11,18 @@ from datetime import date
 
 from socialbot import config, store
 
-# What the channel's own numbers say works: specific, practical, intermediate Python + AI engineering
-# (RAG 266 views, GIL 155, list comprehensions 60, agents 37) — vs. 1-5 views for kiddy metaphors.
+# Favor accessible, practical Python & AI topics that break complex ideas down simply for anyone.
 TRACK_WEIGHT = {
-    "python_internals": 3.0, "ai_engineering": 3.0, "async_concurrency": 2.5, "performance_optimization": 2.5,
-    "python_intermediate": 2.5, "python_modern": 2.5, "ai_agents": 2.5, "transformers_scratch": 2.5,
-    "functional_python": 2.0, "debugging_mastery": 2.0, "error_handling": 1.5, "regex_mastery": 1.5,
-    "testing_devops": 1.5, "working_with_data": 2.0, "machine_learning": 2.0, "deep_learning_complete": 2.0,
-    "deep_learning": 1.5, "dsa": 2.0, "trending_ai": 2.0, "vibe_coding": 1.5, "fun_automation": 1.5,
-    "web_development": 1.5, "python_fundamentals": 1.0, "ai_fundamentals": 1.0, "ai_ml_foundations": 1.0,
+    "python_fundamentals": 4.0, "ai_fundamentals": 4.0, "ai_ml_foundations": 3.5,
+    "working_with_data": 3.5, "fun_automation": 3.5, "vibe_coding": 3.0,
+    "python_intermediate": 2.5, "ai_agents": 2.2, "machine_learning": 2.2,
+    "debugging_mastery": 2.2, "error_handling": 2.0, "web_development": 2.0,
+    "dsa": 1.6, "python_modern": 1.6, "deep_learning": 1.2, "trending_ai": 1.2,
+    "regex_mastery": 1.0, "testing_devops": 1.0, "functional_python": 1.0,
+    "deep_learning_complete": 0.9, "ai_engineering": 0.7, "async_concurrency": 0.6,
+    "performance_optimization": 0.6, "transformers_scratch": 0.6, "python_internals": 0.5,
+    "frontier_ai_platforms": 0.5, "azure_ai_foundry": 0.5, "cross_cloud_architecture": 0.5,
+    "aws_enterprise": 0.5, "azure_enterprise": 0.5, "gcp_vertex_ai": 0.5,
 }
 CODE_RE = re.compile(r"```python\n(.*?)```", re.S)
 
@@ -436,7 +439,7 @@ def pick(kind: str, n: int = 1, seed=None) -> list:
             continue
         w = TRACK_WEIGHT.get(les["track"], 1.0)
         if kind == "long":
-            w *= 1.0 + min(len(les["story"]), 6000) / 6000  # long-form wants the deepest lessons
+            w *= 1.0 + min(len(les["story"]), 4500) / 9000  # gentle depth preference without burying fundamentals
         pool.append((w, les))
     while pool and len(chosen) < n:
         total = sum(w for w, _ in pool)

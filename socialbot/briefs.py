@@ -1,19 +1,20 @@
 """Writing briefs and JSON schemas: one clear brief per format, plus the critic's rubric."""
 import json
 
-BRAND = """You write for PyMasters (https://pymasters.net), an interactive engineering platform that teaches Python and AI engineering.
-Voice: a strictly professional, authoritative principal engineer / quantitative architect writing in plain, clear English for working developers, AI engineers, and business/technical leaders. Concrete over clever.
+BRAND = """You write for PyMasters (https://pymasters.net), an interactive learning platform that makes Python and AI easy for anyone to understand.
+Voice: a strictly professional, warm, crystal-clear teacher writing and speaking in simple everyday English so even a completely non-technical person understands complex tech effortlessly. Simple and concrete over clever or academic.
 Hard rules:
+- EXPLAIN IN SIMPLE TERMS FOR ANYONE: Break down every complex topic step by step as if explaining to a smart friend with zero coding or AI background. Never drop unexplained technical jargon, dense math, or acronyms (if a technical word appears in the source, replace it with an everyday word OR explain what it means in 5 plain words right away using concrete real-world comparisons like sorting mail, checking an ID at a bank counter, following a recipe, or keeping a ledger).
 - NEVER USE HINDI WORDS: Write in plain, clear English (Tamil words like "Vanakkam", "nanba", "Vaathiyaar" are permitted where relevant to PyMasters, but Hindi words and Hinglish are strictly banned—never use "chai", "samosa", "tapri", "roti", "jugaad", "namaste", "paisa", "lakh", "crore", "bhaiya", "yaar", "desi", "bazaar", "mandi", "kirana", "dabba", "tiffin", or any Devanagari script).
 - Strictly professional tone: never use casual, whimsical, or consumer-trivia scenarios (no restaurant bills, tea/coffee rotas, sports fixtures, superhero/movie/kid metaphors, or playful banter).
-- One core engineering or business mechanism per piece, backed by real runnable Python 3.11 code from the material. Never invent APIs or numbers.
+- One simple, memorable core idea per piece, grounded in real Python 3.11 behavior from the material. Never invent APIs or numbers.
 - No hype or filler: never use "game-changer", "unlock", "supercharge", "dive in", "delve", "in today's world",
   "revolutionize", "level up", "mind-blowing", "secret", "hack" (as in trick), or rhetorical "Ever wondered...?".
 - Every post and description MUST include a link to https://pymasters.net (and every LinkedIn post must mention @PyMasters so the company page is tagged).
 - Never present code as "from the lesson" unless it is verbatim; every snippet must run on its own as shown.
 - Every visual must show exactly what it claims (plots plot real functions, traces show values only after the line runs).
-The editor scores: hook, accuracy, specificity, clarity, originality, brand rules and simplicity; 8/10 is the bar.
-Before answering, check your draft against every rule above as the editor would."""
+The editor scores: hook, accuracy, specificity, clarity, originality, brand rules and simplicity; 8/10 is the bar (complex jargon without simple translation gets rejected).
+Before answering, ask yourself: would a non-technical reader understand every single sentence on the first try?"""
 
 
 def material_block(les: dict) -> str:
@@ -101,13 +102,13 @@ SCENE = {"type": "object", "properties": {"narration": {"type": "string"}, "visu
 SHORT_SCHEMA = {
     "type": "object",
     "properties": {
-        "title": {"type": "string", "description": "YouTube title <= 60 chars, specific, no clickbait, no #shorts"},
-        "hook": {"type": "string", "description": "first spoken line, <= 12 words, states the payoff or a surprising fact"},
+        "title": {"type": "string", "description": "YouTube title <= 60 chars in plain everyday English anyone understands (no intimidating jargon/acronyms, no clickbait, no #shorts)"},
+        "hook": {"type": "string", "description": "first spoken line, <= 12 words, simple everyday question or surprising fact a non-technical person gets instantly"},
         "scenes": {"type": "array", "items": SCENE, "minItems": 4, "maxItems": 7},
-        "cta": {"type": "string", "description": "last spoken line <= 14 words, mentions pymasters.net"},
-        "description": {"type": "string", "description": "2-4 sentences + the lesson URL"},
+        "cta": {"type": "string", "description": "last spoken line <= 14 words, plain English, mentions pymasters.net"},
+        "description": {"type": "string", "description": "2-4 plain-English sentences + the lesson URL"},
         "tags": {"type": "array", "items": {"type": "string"}, "maxItems": 12},
-        "thumbnail_text": {"type": "string", "description": "<= 4 words"},
+        "thumbnail_text": {"type": "string", "description": "<= 4 simple words"},
     },
     "required": ["title", "hook", "scenes", "cta", "description", "tags", "thumbnail_text"],
 }
@@ -115,17 +116,17 @@ SHORT_SCHEMA = {
 LONG_SCHEMA = {
     "type": "object",
     "properties": {
-        "title": {"type": "string", "description": "YouTube title <= 70 chars, specific and searchable"},
-        "hook": {"type": "string", "description": "opening 1-2 sentences: what the viewer will be able to do by the end"},
+        "title": {"type": "string", "description": "YouTube title <= 70 chars, plain everyday English so anyone understands without technical background"},
+        "hook": {"type": "string", "description": "opening 1-2 simple sentences: what the viewer will clearly understand by the end"},
         "chapters": {"type": "array", "minItems": 5, "maxItems": 9, "items": {
             "type": "object",
-            "properties": {"title": {"type": "string", "description": "chapter title <= 40 chars"},
+            "properties": {"title": {"type": "string", "description": "chapter title <= 40 chars in plain English"},
                            "scenes": {"type": "array", "items": SCENE, "minItems": 2, "maxItems": 6}},
             "required": ["title", "scenes"]}},
         "cta": {"type": "string"},
-        "description": {"type": "string", "description": "3-6 sentences; chapter timestamps are added automatically"},
+        "description": {"type": "string", "description": "3-6 simple plain-English sentences; chapter timestamps are added automatically"},
         "tags": {"type": "array", "items": {"type": "string"}, "maxItems": 15},
-        "thumbnail_text": {"type": "string", "description": "<= 4 words"},
+        "thumbnail_text": {"type": "string", "description": "<= 4 simple words"},
     },
     "required": ["title", "hook", "chapters", "cta", "description", "tags", "thumbnail_text"],
 }
@@ -213,58 +214,62 @@ CRITIC_SCHEMA = {
     "required": ["scores", "overall", "factual_errors", "blocking_issues", "polish"],
 }
 
-YOUTUBE_SELF_EXPLANATORY_RULES = """Self-Explanatory Visual Story Arc (CRITICAL—never make a monotonous video of just bullets or static code):
-- A viewer watching on mute must understand the entire story from the visuals alone.
+YOUTUBE_SELF_EXPLANATORY_RULES = """Simple, Non-Technical Breakdown & Self-Explanatory Visual Story Arc (CRITICAL—even someone who has never written code must understand every second):
+- Target a non-technical viewer first: break complexity down into everyday cause and effect before showing any code or technical term.
+- Never speak raw jargon, dense math symbols, or unexplained acronyms in narration (if you mention a term like 'API', 'token', 'cache', 'index', or 'model', explain it in 4-6 simple everyday words right away).
+- A viewer watching on mute must understand the entire idea from the visuals alone in plain everyday English.
 - Every scene.visual MUST include:
-  1. `step_badge` (e.g. "1 · THE PROBLEM", "2 · HOW IT WORKS", "3 · LIVE CODE", "4 · REAL IMPACT", "5 · TAKEAWAY")
-  2. `note` (<= 56 chars plain-English takeaway banner explaining what the visual proves right now)
+  1. `step_badge` (e.g. "1 · THE EVERYDAY PROBLEM", "2 · SIMPLE ANALOGY", "3 · STEP BY STEP", "4 · REAL IMPACT", "5 · ONE CLEAR RULE")
+  2. `note` (<= 56 chars plain-English takeaway banner so a non-technical viewer gets the point immediately)
 - Across the 5 scenes of a Short, you MUST use at least 3 DIFFERENT `visual.type` kinds from `["flow", "compare", "metric", "trace", "code", "timeline", "plot", "reveal"]`:
-  - Scene 1: `compare` or `metric` or `flow` — make the real-world business or engineering problem immediately visible in simple terms.
-  - Scene 2: `flow` or `timeline` or `plot` — show the visual mental model / architecture diagram so anyone understands how it works before seeing code.
-  - Scene 3: `code` (with `output`) or `trace` (with live `steps`) — show the concise Python 3.11 code (<= 7 lines, <= 30 chars/line) and its exact result.
-  - Scene 4: `metric` or `compare` or `plot` — show the measurable before-vs-after impact.
-  - Scene 5: `reveal` or `bullets` — state the 1-sentence actionable rule of thumb."""
+  - Scene 1: `compare` or `metric` or `flow` — show the relatable everyday problem in simple terms with zero jargon.
+  - Scene 2: `flow` or `compare` (`style="mapping"`) or `timeline` — show the simple real-world mental model / analogy step by step so anyone gets how it works.
+  - Scene 3: `code` (ultra-simple 3-5 line Python <= 30 chars/line with `output`) OR `trace` OR `compare` — translate that simple idea into tiny, readable Python and explain in plain English what each part does.
+  - Scene 4: `metric` or `compare` or `plot` — show the clear before-vs-after improvement in everyday terms.
+  - Scene 5: `reveal` or `bullets` — state the 1-sentence plain-English takeaway anyone can remember."""
 
 
 def short_prompt(les, feedback=None, previous=None):
     if les.get("is_hf_space"):
-        return f"""Write a self-explanatory, high-retention YouTube Short (40-50 seconds spoken, strictly 90-115 words across hook + all scenes[].narration + cta)
-teaching the real-world problem and Python/AI mechanism behind our live PyMasters Hugging Face Space ({les['title']}).
-Explain why it matters in simple terms first, then show how it works visually and in code.
-The hook must land in the first 2 seconds (<= 11 words). Use 5 scenes, each with 16-20 spoken words, and a brief cta (<= 12 words) that invites viewers to try the live Hugging Face app and pymasters.net.
+        return f"""Write a super simple, self-explanatory YouTube Short (40-50 seconds spoken, strictly 90-115 words across hook + all scenes[].narration + cta)
+breaking down what our live PyMasters app ({les['title']}) actually does so even a completely non-technical person understands it on the first watch.
+First explain the real-world problem in simple everyday words (use a concrete real-world analogy, NO intimidating acronyms in the title or hook), then walk through how it works simply before showing a tiny Python example.
+The hook must land in the first 2 seconds (<= 11 simple words). Use 5 scenes, each with 16-20 spoken words, and a brief cta (<= 12 words) inviting viewers to try the free interactive app and learn simply at pymasters.net.
 The description MUST include BOTH the Hugging Face Space link ({les['space_url']}) AND {les['url']}.
 Every number mentioned in spoken narration or shown in an output visual MUST match the exact output of the lesson code.
 {YOUTUBE_SELF_EXPLANATORY_RULES}
 {_fb(feedback, previous)}
-LESSON MATERIAL:
+LESSON MATERIAL (simplify and translate all heavy jargon into plain everyday language):
 {material_block(les)}"""
     if les.get("is_daily_trend"):
-        return f"""Write a self-explanatory, high-retention YouTube Short (40-50 seconds spoken, strictly 90-115 words across hook + all scenes[].narration + cta) on today's live
-trending topic in {les.get('pillar_label', 'AI Engineering')} ({les['title']}).
-Make the hook catchy yet unique in the first 2 seconds (<= 11 words)—frame the real-world business or engineering stakes in simple terms.
-Use 5 scenes, each with 16-20 spoken words, and end with a brief cta (<= 12 words) on how pymasters.net helps you build this.
+        return f"""Write a super simple, self-explanatory YouTube Short (40-50 seconds spoken, strictly 90-115 words across hook + all scenes[].narration + cta) breaking down today's
+trending topic in {les.get('pillar_label', 'AI Engineering')} ({les['title']}) so even a non-technical person understands how it works and why it matters.
+Make the hook catchy, relatable, and clear in the first 2 seconds (<= 11 simple words)—state the everyday problem in plain words with zero buzzwords or unexplained jargon.
+Translate the core mechanism into an everyday comparison first, then show one clear visual/code example and its real result.
+Use 5 scenes, each with 16-20 spoken words, and end with a brief cta (<= 12 words) on how pymasters.net breaks down tech in simple terms.
 {YOUTUBE_SELF_EXPLANATORY_RULES}
 {_fb(feedback, previous)}
-LESSON MATERIAL:
+LESSON MATERIAL (simplify and translate all heavy jargon into plain everyday language):
 {material_block(les)}"""
-    return f"""Write a self-explanatory, high-retention YouTube Short (40-50 seconds spoken, strictly 90-115 words across hook + all scenes[].narration + cta) teaching ONE
-specific, useful idea from this PyMasters lesson in a way that is immediately clear to both business-minded viewers and developers.
-The hook must land in the first 2 seconds (<= 11 words). Use 5 scenes, each with 16-20 spoken words, and a brief cta (<= 12 words) that mentions pymasters.net.
+    return f"""Write a super simple, self-explanatory YouTube Short (40-50 seconds spoken, strictly 90-115 words across hook + all scenes[].narration + cta) teaching ONE
+practical idea from this PyMasters lesson so clearly that even a completely non-technical person understands it immediately.
+Translate every technical term into plain everyday English and concrete real-world comparisons before showing any Python.
+The hook must land in the first 2 seconds (<= 11 simple words, zero jargon). Use 5 scenes, each with 16-20 spoken words, and a brief cta (<= 12 words) mentioning pymasters.net.
 {YOUTUBE_SELF_EXPLANATORY_RULES}
 {_fb(feedback, previous)}
-LESSON MATERIAL:
+LESSON MATERIAL (simplify and translate all heavy jargon into plain everyday language):
 {material_block(les)}"""
 
 
 def long_prompt(les, feedback=None, previous=None):
-    return f"""Write a self-explanatory 6-9 minute YouTube tutorial (about 950-1350 spoken words) that teaches this PyMasters lesson with visual variety and zero monotony:
-1. Start with the real-world business/engineering problem in plain terms (`metric` / `compare` / `flow` visuals).
-2. Build the visual mental model (`flow` / `timeline` / `plot`) before writing code.
-3. Walk through worked Python examples step by step (`trace` / `code` with `output`).
-4. Show a common production mistake vs. the fix (`compare` with `style="versus"`), and close with a crisp recap.
+    return f"""Write a super clear, beginner-friendly 6-9 minute YouTube lesson (about 950-1350 spoken words) that breaks down this PyMasters topic in simple terms so anyone—even with zero technical background—follows effortlessly from start to finish:
+1. Open with a relatable everyday problem in plain English—zero jargon (`metric` / `compare` / `flow` visuals).
+2. Build the visual mental model step by step using concrete real-world comparisons (`flow` / `compare` `style="mapping"` / `timeline`) so the viewer understands WHY and HOW it works before seeing code.
+3. Introduce tiny, clean Python examples one small step at a time (`trace` / `code` with `output`), translating every single keyword into plain English as if speaking to a first-time learner.
+4. Show a common mistake vs. the simple fix (`compare` with `style="versus"`), and close with a crystal-clear plain-English recap.
 Every scene.visual MUST include `step_badge` and a plain-English `note` banner so any frame is self-explanatory on mute, and each chapter must mix visual types (`flow`, `compare`, `metric`, `trace`, `code`, `plot`).
 {_fb(feedback, previous)}
-LESSON MATERIAL:
+LESSON MATERIAL (break down complexity and avoid unexplained jargon):
 {material_block(les)}"""
 
 
@@ -397,41 +402,54 @@ LESSON MATERIAL:
 {material_block(les)}"""
 
 
+def _video_rule(kind: str) -> str:
+    label = "YouTube Short" if kind == "short" else "YouTube tutorial"
+    return (
+        f"This is a {label} aimed at ANYONE—especially non-technical viewers with zero coding background: "
+        "demand that complexity is broken down into plain, everyday English with relatable real-world comparisons BEFORE any code appears. "
+        "Penalise `scores.simplicity` (below 7) and add a `blocking_issues` entry if the title, hook, narration, or visual labels "
+        "use unexplained technical jargon, dense acronyms, heavy math, or assume prior programming knowledge. "
+        "Every visual must be self-explanatory on mute, with clear `step_badge` and plain-English `note` banners, "
+        "and `cta`/`description` must point to https://pymasters.net."
+    )
+
+
 def _linkedin_rule(draft: dict) -> str:
     variety = draft.get("format_variety") or draft.get("style") or ""
     is_biz = variety in BUSINESS_STYLES
     if is_biz:
         base = ("This post is in our BUSINESS AUDIENCE (Simple Terms) track: demand crystal-clear, jargon-free business "
-                "explanation that executives, banking/risk leaders, and product managers find immediately interesting, "
+                "explanation that non-technical readers, executives, and product leaders understand on the first read, "
                 "backed by real numbers from the material, a link to https://pymasters.net, and a @PyMasters mention "
                 "(no raw Python code block is required in the post text). ")
     else:
-        base = ("This post is in our TECHNICAL AUDIENCE track: demand a strictly professional engineering voice, "
-                "a link to https://pymasters.net, a @PyMasters mention, and runnable Python 3.11 code whose output matches the post. ")
+        base = ("This post is in our TECHNICAL AUDIENCE track: demand a strictly professional yet simple, clear teaching voice "
+                "that explains any technical term in plain English, a link to https://pymasters.net, a @PyMasters mention, "
+                "and runnable Python 3.11 code whose output matches the post. ")
     if draft.get("style") == "thematic":
-        return base + ("For Weekly Thematic Analysis Research posts, demand a rigorous cross-domain synthesis connecting "
-                       "AI in Finance, AI in Risk, AI in Consumer Cards & Banking, AI Around the World, and AI Key Concepts, "
-                       "backed by verified Python code and a clear link to @PyMasters (https://pymasters.net).")
+        return base + ("For Weekly Thematic Analysis Research posts, demand a clear cross-domain synthesis connecting "
+                       "AI in Finance, AI in Risk, AI in Consumer Cards & Banking, AI Around the World, and AI Key Concepts "
+                       "in simple plain English, backed by verified Python code and a clear link to @PyMasters (https://pymasters.net).")
     if draft.get("style") == "hf_space":
         return base + ("For LinkedIn Hugging Face Space showcase posts, demand that the post includes both the Hugging Face "
-                       "Space URL and https://pymasters.net, and has an animation spec that visualises the Space clearly.")
+                       "Space URL and https://pymasters.net, explains what the tool does simply, and has an animation spec that visualises the Space clearly.")
     if draft.get("style") == "trend":
         return base + ("For LinkedIn Live Trending Topic posts (AI in Finance, AI in Risk, AI in Consumer Cards & Banking, "
-                       "AI Around the World, or AI Key Concepts), demand a catchy yet unique hook grounded in concrete numbers "
-                       "and a clear explanation of how @PyMasters (https://pymasters.net) helps teams master this capability.")
+                       "AI Around the World, or AI Key Concepts), demand a catchy yet simple hook grounded in plain everyday terms "
+                       "and a clear explanation of how @PyMasters (https://pymasters.net) helps anyone learn this capability.")
     return base + ("Demand that the post follows its assigned editorial format cleanly and that the animation spec is self-explanatory.")
 
 
 def critic_prompt(kind: str, draft: dict, les: dict) -> str:
     d = {k: v for k, v in draft.items() if not k.startswith("_")}
     real = draft.get("_real_outputs") or {}
+    track_rule = _video_rule(kind) if kind in ("short", "long") else _linkedin_rule(draft)
     return f"""You are the strict editor of the PyMasters channel. Score this {kind} draft 0-10 on each criterion and overall.
-Calibration: 10 = exceptional, among the best developer content you have read; 8 = a strong post a respected senior
-engineer would be proud of, publishable unchanged; 6 = competent but forgettable; 4 = generic or flawed. Do not deduct for
-nitpicks a reasonable expert reader would not raise. Be demanding about real errors, weak hooks and generic writing. Check every technical claim and every line
-of code against the lesson material and your own knowledge. Put a statement in factual_errors ONLY if it is actually
-wrong (would mislead a reader). blocking_issues are only what truly prevents publishing; everything else is polish. Penalise generic phrasing, filler,
-weak hooks, anything that breaks the brand rules, and code that would not run. {_linkedin_rule(draft)}
+Calibration: 10 = exceptional—complex idea broken down so clearly that even a completely non-technical viewer gets it immediately;
+8 = strong, crystal-clear, engaging and publishable unchanged; 6 = competent but too technical or forgettable; 4 = confusing, jargon-heavy, or flawed.
+Do not deduct for nitpicks a reasonable viewer would not raise. Check every factual claim and every line of code against the lesson material.
+Put a statement in factual_errors ONLY if it is actually wrong (would mislead a viewer). blocking_issues are what truly prevents publishing:
+unexplained jargon or complex wording a non-technical viewer cannot follow, broken code/visuals, weak hooks, or brand-rule violations. {track_rule}
 BRAND RULES:
 {BRAND}
 DRAFT:
