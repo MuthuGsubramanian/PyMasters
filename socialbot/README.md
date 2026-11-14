@@ -3,8 +3,8 @@
 Replaces the Windows-only `pipeline/` social/video automation (thin trending-item input, static slides,
 template fallbacks, no quality gate). Runs on the PyMasters ops laptop (Linux, Eternity) from a systemd user timer.
 
-**What it makes** (owner decisions, 2026-11-02): a YouTube Short and a LinkedIn post every day + 1 long
-tutorial (6–10 min) a week, auto-published when the quality gate passes.
+**What it makes** (owner decisions, 2026-11-14): a YouTube Short every day + 1 long
+tutorial (6–10 min) a week, and LinkedIn minimized to 1 post per week, auto-published when the quality gate passes.
 
 ## How a piece is made
 1. **Source** (`sources.py`): a real PyMasters lesson with substance and runnable code, weighted toward topics

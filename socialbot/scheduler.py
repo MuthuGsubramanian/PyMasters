@@ -1,10 +1,10 @@
 """Cadence: decide what to make, when it goes out, and publish what is due.
 
 `tick` runs every 15 minutes from a systemd timer:
-  - between 01:00 and 06:00 IST it renders videos ahead (heavy work at night), keeping the next 2 slots filled;
-  - LinkedIn posts go out every 5 hours around the clock, so their next 2 slots are kept filled at any hour;
+  - between 01:00 and 06:00 IST it renders videos ahead (heavy work at night), keeping the next 2 YouTube slots filled;
+  - LinkedIn is minimized to 1 post per week (only the next 1 slot is kept queued);
   - YouTube items are uploaded as soon as they are rendered, scheduled with publishAt = their slot;
-  - LinkedIn items are posted when their slot time arrives (the API has no native scheduling)."""
+  - LinkedIn items are posted when their slot time arrives (capped at 1 LinkedIn publish per ISO week)."""
 import logging
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -38,6 +38,8 @@ def _interval_slots(c, now, days, taken):
 
 def upcoming_slots(kind, days=14):
     c = config.CADENCE[kind]
+    if c["per_week"] <= 0 or not c["weekdays"]:
+        return []
     now = datetime.now(TZ)
     taken = _taken(kind)
     if c.get("interval_hours"):
@@ -95,22 +97,43 @@ def produce_ahead(ahead=AHEAD, kinds=("linkedin", "short", "long")):
         assign_slots()
 
 
+LINKEDIN_KINDS = ("linkedin", "thematic")
+
+
+def _linkedin_published_in_week(now_dt):
+    """Return True if any LinkedIn post (standard or thematic) already published in now_dt's ISO week (IST)."""
+    target_week = now_dt.astimezone(TZ).isocalendar()[:2]
+    for kind in LINKEDIN_KINDS:
+        for it in store.items(status="published", kind=kind, limit=10):
+            row = dict(it)
+            ts = row.get("publish_at") or row.get("updated_at") or row.get("created_at")
+            if ts and datetime.fromisoformat(ts).astimezone(TZ).isocalendar()[:2] == target_week:
+                return True
+    return False
+
+
 def publish_due(dry_run=False):
     assign_slots()
-    now = datetime.now(timezone.utc).isoformat()
+    now_dt = datetime.now(TZ)
+    now = now_dt.astimezone(timezone.utc).isoformat()
+    linkedin_sent_this_week = _linkedin_published_in_week(now_dt)
     for it in reversed(store.items(status="rendered", limit=50)):
         if not it["publish_at"]:
             continue
-        if it["kind"] in ("linkedin", "thematic") and it["publish_at"] > now:
-            continue
+        if it["kind"] in LINKEDIN_KINDS:
+            if config.CADENCE.get(it["kind"], {}).get("per_week", 0) <= 0:
+                continue
+            if it["publish_at"] > now or linkedin_sent_this_week:
+                continue
         if dry_run:
             log.info("would publish #%s %s %s at %s", it["id"], it["kind"], it["topic"], it["publish_at"])
             continue
         try:
-            if it["kind"] in ("linkedin", "thematic"):
+            if it["kind"] in LINKEDIN_KINDS:
                 from socialbot.publish import linkedin
                 res = linkedin.publish(it)
                 store.update_item(it["id"], status="published", remote_id=res["id"], remote_url=res["url"])
+                linkedin_sent_this_week = True
             else:
                 from socialbot.publish import youtube
                 res = youtube.upload(it)
@@ -192,9 +215,8 @@ def tick():
         resume_interrupted()
         hour = datetime.now(TZ).hour
         night = 1 <= hour < 6
-        # LinkedIn posts every 5 hours around the clock and weekly thematic research posts are light to render: keep ahead.
-        produce_ahead(ahead=AHEAD, kinds=("linkedin",))
-        produce_ahead(ahead=1, kinds=("thematic",))
+        # LinkedIn is minimized to 1 post/week: only keep the next single slot filled.
+        produce_ahead(ahead=1, kinds=("linkedin",))
         # Video rendering is heavy: fill ahead at night; by day only catch up the next immediate slot.
         produce_ahead(ahead=AHEAD if night else 1, kinds=("short", "long"))
         if hour == 5:

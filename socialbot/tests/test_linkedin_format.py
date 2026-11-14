@@ -124,7 +124,7 @@ def test_business_track_posts_allow_no_code_wall_while_tech_track_requires_runna
     assert any("technical LinkedIn format requires a non-empty runnable code_snippet" in e for e in errs)
 
 
-# ---------- 5-hour LinkedIn cadence (owner, 2026-11-10) ----------
+# ---------- Weekly LinkedIn cadence & YouTube focus (owner, 2026-11-14) ----------
 from datetime import datetime, timedelta, timezone
 
 from socialbot import config, quality, scheduler
@@ -155,57 +155,68 @@ def _secs(slots):
     return {int((b - a).total_seconds()) for a, b in zip(ts, ts[1:])}
 
 
-def test_linkedin_cadence_is_every_5_hours_all_week():
-    c = config.CADENCE["linkedin"]
-    assert c["interval_hours"] == 5 and c["per_week"] == 35 and c["weekdays"] == [0, 1, 2, 3, 4, 5, 6]
+def test_linkedin_cadence_is_minimized_to_once_per_week():
+    li = config.CADENCE["linkedin"]
+    th = config.CADENCE["thematic"]
+    assert li["per_week"] == 1
+    assert len(li["weekdays"]) == 1
+    assert "interval_hours" not in li
+    assert th["per_week"] == 0 and th["weekdays"] == []
+    assert li["per_week"] + th["per_week"] == 1
 
 
-def test_linkedin_slots_are_exactly_5_hours_apart(monkeypatch):
+def test_linkedin_slots_are_strictly_weekly_while_youtube_stays_active(monkeypatch):
     monkeypatch.setattr(scheduler, "store", _FakeStore())
-    slots = scheduler.upcoming_slots("linkedin", days=3)
-    assert len(slots) >= 14   # 72h / 5h
-    assert _secs(slots) == {18000}
+    _freeze(monkeypatch, datetime(2026, 11, 14, 10, 30, tzinfo=scheduler.TZ))
+    li_slots = scheduler.upcoming_slots("linkedin", days=14)
+    assert len(li_slots) == 2
+    assert _secs(li_slots) == {7 * 86400}
+    assert scheduler.upcoming_slots("thematic", days=14) == []
+    assert len(scheduler.upcoming_slots("short", days=7)) == 7
+    assert len(scheduler.upcoming_slots("long", days=14)) == 2
 
 
-def test_linkedin_slots_cross_midnight_on_the_fixed_grid(monkeypatch):
-    monkeypatch.setattr(scheduler, "store", _FakeStore())
-    _freeze(monkeypatch, datetime(2026, 11, 1, 3, 0, tzinfo=scheduler.TZ))
-    slots = [datetime.fromisoformat(s).astimezone(scheduler.TZ) for s in scheduler.upcoming_slots("linkedin", days=2)]
-    # 22:45 the evening before is the still-open (untaken) window, then the grid runs on in strict 5h steps
-    assert [f"{s:%H:%M}" for s in slots[:7]] == ["22:45", "03:45", "08:45", "13:45", "18:45", "23:45", "04:45"]
-    assert _secs([s.isoformat() for s in slots]) == {18000}
-    # the same grid on every run: a later run sees the same future slots
-    _freeze(monkeypatch, datetime(2026, 11, 1, 9, 0, tzinfo=scheduler.TZ))
-    later = [datetime.fromisoformat(s).astimezone(scheduler.TZ) for s in scheduler.upcoming_slots("linkedin", days=2)]
-    assert later[1:5] == slots[3:7]
-
-
-def test_open_window_is_kept_until_taken(monkeypatch):
-    now = datetime(2026, 11, 10, 10, 0, tzinfo=scheduler.TZ)   # 08:45 window is open (grid: ... 05:45, 10:45 on day 10)
+def test_open_weekly_linkedin_window_is_kept_until_taken(monkeypatch):
+    # Wednesday 10:10 IST: same-day 10:00 IST window stays open until taken by a post
+    now = datetime(2026, 11, 18, 10, 10, tzinfo=scheduler.TZ)
     _freeze(monkeypatch, now)
     monkeypatch.setattr(scheduler, "store", _FakeStore())
-    first = scheduler.upcoming_slots("linkedin", days=1)[0]
-    assert datetime.fromisoformat(first) <= now < datetime.fromisoformat(first) + timedelta(hours=5)
+    first = scheduler.upcoming_slots("linkedin", days=14)[0]
+    assert datetime.fromisoformat(first).astimezone(scheduler.TZ).date() == now.date()
     taken = _FakeStore([{"id": 1, "kind": "linkedin", "status": "published", "publish_at": first}])
     monkeypatch.setattr(scheduler, "store", taken)
-    assert scheduler.upcoming_slots("linkedin", days=1)[0] > first
+    next_slot = scheduler.upcoming_slots("linkedin", days=14)[0]
+    assert datetime.fromisoformat(next_slot) - datetime.fromisoformat(first) == timedelta(days=7)
 
 
-def test_rendered_linkedin_post_is_pulled_forward_into_the_next_free_slot(monkeypatch):
-    _freeze(monkeypatch, datetime(2026, 11, 10, 10, 0, tzinfo=scheduler.TZ))
-    monkeypatch.setattr(scheduler, "store", _FakeStore())
-    slots = scheduler.upcoming_slots("linkedin", days=3)
-    fake = _FakeStore([{"id": 7, "kind": "linkedin", "status": "rendered", "publish_at": slots[6]},
-                       {"id": 8, "kind": "linkedin", "status": "rendered", "publish_at": None},
-                       {"id": 9, "kind": "short", "status": "rendered", "publish_at": "2099-01-01T13:00:00+00:00"}])
+def test_publish_due_blocks_second_linkedin_post_in_same_iso_week(monkeypatch):
+    from socialbot.publish import linkedin as li_pub
+
+    published_calls = []
+    monkeypatch.setattr(li_pub, "publish", lambda it: published_calls.append(it["id"]) or {"id": f"urn:{it['id']}", "url": "https://lnkd.in/test"})
+    # Already published earlier in the same ISO week (2026-W46: Fri Nov 13)
+    now = datetime(2026, 11, 15, 12, 0, tzinfo=scheduler.TZ)
+    _freeze(monkeypatch, now)
+    fake = _FakeStore([
+        {"id": 1, "kind": "linkedin", "status": "published", "topic": "prev", "publish_at": "2026-11-13T05:15:00+00:00"},
+        {"id": 2, "kind": "linkedin", "status": "rendered", "topic": "extra-li", "publish_at": "2026-11-14T04:30:00+00:00"},
+        {"id": 3, "kind": "thematic", "status": "rendered", "topic": "retired-th", "publish_at": "2026-11-15T05:30:00+00:00"},
+    ])
     monkeypatch.setattr(scheduler, "store", fake)
-    scheduler.assign_slots()
-    assert fake.rows[7]["publish_at"] == slots[0]
-    assert fake.rows[8]["publish_at"] == slots[1]
-    assert fake.rows[9]["publish_at"] == "2099-01-01T13:00:00+00:00", "video slots are not reshuffled"
+    scheduler.publish_due()
+    assert published_calls == []
+    assert fake.rows[2]["status"] == "rendered"
+    assert fake.rows[3]["status"] == "rendered"
+
+    # Next ISO week (2026-W47: Wed Nov 18): eligible weekly LinkedIn post publishes once, disabled thematic stays skipped
+    _freeze(monkeypatch, datetime(2026, 11, 18, 10, 5, tzinfo=scheduler.TZ))
+    scheduler.publish_due()
+    assert published_calls == [2]
+    assert fake.rows[2]["status"] == "published"
+    assert fake.rows[3]["status"] == "rendered"
 
 
-def test_tick_keeps_linkedin_ahead_by_day_and_videos_at_night(monkeypatch, tmp_path):
+def test_tick_keeps_linkedin_to_single_slot_and_youtube_ahead(monkeypatch, tmp_path):
     calls = []
     monkeypatch.setattr(config, "STATE_DIR", tmp_path)
     monkeypatch.setattr(config, "ensure_dirs", lambda: None)
@@ -214,11 +225,11 @@ def test_tick_keeps_linkedin_ahead_by_day_and_videos_at_night(monkeypatch, tmp_p
     monkeypatch.setattr(scheduler, "produce_ahead", lambda ahead=2, kinds=(): calls.append((tuple(kinds), ahead)))
     _freeze(monkeypatch, datetime(2026, 11, 10, 14, 0, tzinfo=scheduler.TZ))
     scheduler.tick()
-    assert calls == [(("linkedin",), 2), (("thematic",), 1), (("short", "long"), 1)]
+    assert calls == [(("linkedin",), 1), (("short", "long"), 1)]
     calls.clear()
     _freeze(monkeypatch, datetime(2026, 11, 10, 3, 0, tzinfo=scheduler.TZ))
     scheduler.tick()
-    assert calls == [(("linkedin",), 2), (("thematic",), 1), (("short", "long"), 2)]
+    assert calls == [(("linkedin",), 1), (("short", "long"), 2)]
 
 
 def test_snippets_run_in_the_social_venv_so_taught_packages_import():
@@ -376,7 +387,7 @@ def test_trend_prompts_and_animation_beat_helper_scope(tmp_path, monkeypatch):
 
 def test_weekly_thematic_analysis_cadence_and_verified_research_candidates(tmp_path, monkeypatch):
     c = config.CADENCE["thematic"]
-    assert c["per_week"] == 1 and c["weekdays"] == [6]
+    assert c["per_week"] == 0 and c["weekdays"] == []
     monkeypatch.setattr(trends, "THEMATIC_DIR", tmp_path / "weekly_thematic")
     monkeypatch.setattr(trends, "OPS_THEMATIC_MD", tmp_path / "THEMATIC_WEEKLY.md")
     items = trends.capture_weekly_thematic(week_id="2026-W46", force=True, live_network=False)

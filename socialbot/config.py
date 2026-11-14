@@ -28,14 +28,14 @@ LINKEDIN_ORG_URN = os.getenv("PMSOCIAL_LINKEDIN_ORG_URN", "urn:li:organization:1
 LINKEDIN_ORG_NAME = os.getenv("PMSOCIAL_LINKEDIN_ORG_NAME", "PyMasters")
 LINKEDIN_ORG_MENTION = f"@[{LINKEDIN_ORG_NAME}]({LINKEDIN_ORG_URN})"
 
-# Owner decisions (2026-11-02): auto-publish when the quality gate passes; a post every day on both channels.
+# Owner decisions (2026-11-14): keep YouTube focused (daily Short + weekly Long); minimize LinkedIn to 1 post/week.
 CADENCE = {
     "short": {"per_week": 7, "weekdays": [0, 1, 2, 3, 4, 5, 6], "publish_hhmm": "18:30"},     # daily, IST
     "long": {"per_week": 1, "weekdays": [5], "publish_hhmm": "10:00"},                       # Saturday
-    # every 5 hours around the clock, on a fixed grid through 08:45 IST (03:45, 08:45, 13:45, ... then +5h across midnight)
-    "linkedin": {"per_week": 35, "weekdays": [0, 1, 2, 3, 4, 5, 6], "publish_hhmm": "08:45", "interval_hours": 5},
-    # weekly cross-domain thematic analysis research post on LinkedIn (Sunday 11:00 IST)
-    "thematic": {"per_week": 1, "weekdays": [6], "publish_hhmm": "11:00"},
+    # minimized to once per week (Wednesday 10:00 IST)
+    "linkedin": {"per_week": 1, "weekdays": [2], "publish_hhmm": "10:00"},
+    # retired as a separate weekly slot so LinkedIn never exceeds 1 post/week total
+    "thematic": {"per_week": 0, "weekdays": [], "publish_hhmm": "11:00"},
 }
 INTERVAL_EPOCH = (2026, 11, 1)   # day the interval grid starts from (at publish_hhmm IST); fixed so slots never shift
 TIMEZONE = "Asia/Kolkata"
