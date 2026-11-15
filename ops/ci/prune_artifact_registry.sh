@@ -53,10 +53,22 @@ PY
 echo "Keeping :latest digests for $REPO:"
 echo "$KEEP_DIGESTS"
 
+TO_DELETE=""
 ALL_DIGESTS=$(gcloud artifacts docker images list "$REPO" --format='value(version)')
 for d in $ALL_DIGESTS; do
   if ! echo "$KEEP_DIGESTS" | grep -qx "$d"; then
-    echo "Deleting older digest $REPO@$d"
-    gcloud artifacts docker images delete "$REPO@$d" --delete-tags --quiet || true
+    TO_DELETE="$TO_DELETE $d"
   fi
+done
+
+for pass in 1 2; do
+  [ -z "${TO_DELETE// /}" ] && break
+  NEXT_RETRY=""
+  for d in $TO_DELETE; do
+    echo "Deleting older digest $REPO@$d (pass $pass)"
+    if ! gcloud artifacts docker images delete "$REPO@$d" --delete-tags --quiet; then
+      NEXT_RETRY="$NEXT_RETRY $d"
+    fi
+  done
+  TO_DELETE="$NEXT_RETRY"
 done
