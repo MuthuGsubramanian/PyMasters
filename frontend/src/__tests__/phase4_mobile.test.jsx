@@ -65,8 +65,13 @@ describe('Phase 4 Mobile UI/UX Rework', () => {
     it('renders sticky Python quick-symbol row and inserts symbols at cursor', () => {
         const onChange = vi.fn();
         act(() => {
-            root.render(<PythonEditor value="for x in range" onChange={onChange} />);
+            root.render(<PythonEditor value="for x in range" height="100%" onChange={onChange} />);
         });
+
+        const shell = container.querySelector('[data-testid="python-editor-shell"]');
+        expect(shell?.className).toContain('h-full');
+        expect(shell?.className).toContain('min-h-0');
+        expect(shell?.firstElementChild?.className).toContain('flex-1');
 
         const toolbar = container.querySelector('[data-testid="python-quick-symbols"]');
         expect(toolbar).toBeTruthy();

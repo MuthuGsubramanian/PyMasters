@@ -2842,7 +2842,17 @@ export default function Classroom() {
                             lesson={currentLesson}
                             language={language}
                             t={t}
+                            phase={phase}
                             headerMeta={lessonHeaderMeta}
+                            introNode={(
+                                <IntroPhase
+                                    lesson={currentLesson}
+                                    language={language}
+                                    onComplete={handleIntroComplete}
+                                    username={user?.name || user?.username}
+                                    headerMeta={lessonHeaderMeta}
+                                />
+                            )}
                             storyContent={currentLesson.active_story || resolveText(currentLesson.story_variants, language)}
                             traceNode={<MobileTraceCard lesson={currentLesson} language={language} />}
                             practiceNode={(
@@ -2888,6 +2898,7 @@ export default function Classroom() {
                                 /></ErrorBoundary>
                             ) : null}
                             evalResult={evalResult}
+                            onEnterIntro={() => { if (phase !== 'intro') setPhase('intro'); }}
                             onEnterPractice={() => { if (phase === 'intro') setPhase('practice'); }}
                             onContinue={handleContinue}
                             nextLesson={nextLesson}

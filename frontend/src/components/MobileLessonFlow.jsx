@@ -34,12 +34,15 @@ export default function MobileLessonFlow({
     lesson,
     language = 'en',
     t,
+    phase = 'intro',
     headerMeta = null,
+    introNode = null,
     storyContent = '',
     traceNode = null,
     practiceNode = null,
     feedbackNode = null,
     evalResult = null,
+    onEnterIntro,
     onEnterPractice,
     onContinue,
     nextLesson = null,
@@ -64,6 +67,14 @@ export default function MobileLessonFlow({
         setTbResult(null);
         setTbError('');
     }, [lesson?.id, language, lesson?.active_title, lesson?.title]);
+
+    useEffect(() => {
+        if ((phase === 'practice' || phase === 'feedback') && step < 2) {
+            setStep(2);
+        } else if (phase === 'intro' && step > 1) {
+            setStep(0);
+        }
+    }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const steps = [
         {
@@ -95,7 +106,9 @@ export default function MobileLessonFlow({
     const goToStep = (nextIdx) => {
         const clamped = Math.max(0, Math.min(steps.length - 1, nextIdx));
         setStep(clamped);
-        if (clamped === 2) {
+        if (clamped === 0) {
+            onEnterIntro?.();
+        } else if (clamped === 2) {
             onEnterPractice?.();
         }
     };
@@ -150,23 +163,25 @@ export default function MobileLessonFlow({
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
         >
-            {/* Compact header */}
-            <header className="space-y-1.5">
-                <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent-subtle text-accent-primary text-xs font-bold uppercase tracking-wider">
-                        <Sparkles size={12} aria-hidden="true" />
-                        {headerMeta ? `${headerMeta.trackName} · ${headerMeta.position}/${headerMeta.total}` : 'Lesson'}
-                    </span>
-                    {lesson?.xp_reward && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold">
-                            +{lesson.xp_reward} XP
+            {/* Compact header — omitted on Step 0 when IntroPhase already renders its full header */}
+            {(!introNode || step > 0) && (
+                <header className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-accent-subtle text-accent-primary text-xs font-bold uppercase tracking-wider">
+                            <Sparkles size={12} aria-hidden="true" />
+                            {headerMeta ? `${headerMeta.trackName} · ${headerMeta.position}/${headerMeta.total}` : 'Lesson'}
                         </span>
-                    )}
-                </div>
-                <h2 className="text-lg font-bold text-text-primary font-display leading-snug">
-                    {defaultConcept}
-                </h2>
-            </header>
+                        {lesson?.xp_reward && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold">
+                                +{lesson.xp_reward} XP
+                            </span>
+                        )}
+                    </div>
+                    <h2 className="text-lg font-bold text-text-primary font-display leading-snug">
+                        {defaultConcept}
+                    </h2>
+                </header>
+            )}
 
             {/* 4-step micro-card switcher */}
             <div
@@ -200,30 +215,44 @@ export default function MobileLessonFlow({
             {/* Active single-focus micro-step card */}
             <div className="min-w-0">
                 {step === 0 && (
-                    <div className="rounded-2xl bg-bg-surface border border-border-default p-4 space-y-4 shadow-sm" data-testid="mobile-step-story">
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center shrink-0">
-                                <img src={VaathiyaarGlyph} alt="" className="w-4 h-4" />
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold text-accent-primary uppercase tracking-wider">{steps[0].title}</p>
-                                <p className="text-xs text-text-muted">Vaathiyaar explanation</p>
-                            </div>
+                    introNode ? (
+                        <div className="space-y-4" data-testid="mobile-step-story">
+                            {introNode}
+                            <button
+                                type="button"
+                                onClick={() => goToStep(1)}
+                                className="w-full min-h-11 rounded-xl border border-border-default bg-bg-surface text-text-primary text-sm font-semibold flex items-center justify-center gap-1.5"
+                            >
+                                <span>Next: {steps[1].title}</span>
+                                <ChevronRight size={16} aria-hidden="true" />
+                            </button>
                         </div>
-                        <div className="prose prose-sm dark:prose-invert max-w-none text-text-secondary leading-relaxed">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {storyContent || 'Explore how this concept works step by step.'}
-                            </ReactMarkdown>
+                    ) : (
+                        <div className="rounded-2xl bg-bg-surface border border-border-default p-4 space-y-4 shadow-sm" data-testid="mobile-step-story">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center shrink-0">
+                                    <img src={VaathiyaarGlyph} alt="" className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-accent-primary uppercase tracking-wider">{steps[0].title}</p>
+                                    <p className="text-xs text-text-muted">Vaathiyaar explanation</p>
+                                </div>
+                            </div>
+                            <div className="prose prose-sm dark:prose-invert max-w-none text-text-secondary leading-relaxed">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {storyContent || 'Explore how this concept works step by step.'}
+                                </ReactMarkdown>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => goToStep(1)}
+                                className="w-full min-h-11 rounded-xl bg-gradient-primary text-white text-sm font-bold flex items-center justify-center gap-1.5"
+                            >
+                                <span>Next: {steps[1].title}</span>
+                                <ChevronRight size={16} aria-hidden="true" />
+                            </button>
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => goToStep(1)}
-                            className="w-full min-h-11 rounded-xl bg-gradient-primary text-white text-sm font-bold flex items-center justify-center gap-1.5"
-                        >
-                            <span>Next: {steps[1].title}</span>
-                            <ChevronRight size={16} aria-hidden="true" />
-                        </button>
-                    </div>
+                    )
                 )}
 
                 {step === 1 && (
