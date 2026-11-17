@@ -81,6 +81,14 @@ def test_every_linkedin_post_tags_pymasters_page_and_links_to_pymasters_net():
     assert "@[PyMasters](urn:li:organization:113061910)" in out2
     assert "https://pymasters.net" in out2
 
+    # If the LLM already placed a trailing #Hashtag line in `post`, little_text deduplicates it so tags render once
+    out3 = linkedin.little_text(
+        "Reliable pipelines with @PyMasters https://pymasters.net\n\n#Python #Risk",
+        ["#Python", "#Risk"],
+    )
+    assert r"\#Python" not in out3
+    assert out3.count("Python") == 1
+
 
 def test_the_editor_enforces_strictly_professional_rules_and_rejects_casual_filler():
     crit = briefs.critic_prompt("linkedin", {"style": "tech_deep_dive", "post": "x"}, LES)
