@@ -80,9 +80,45 @@ LINKEDIN_STYLES = LINKEDIN_BUSINESS_STYLES + LINKEDIN_TECH_STYLES
 HF_SPACE_SHARE = 0.10        # occasional spotlight on our live Hugging Face Spaces (explained simply)
 TREND_SHARE = 0.20           # occasional live trend spotlight broken down in simple everyday terms
 
-# Human-influencer YouTube pipeline (Phase 3)
+# Human-influencer & Zero-Cost Gemini / NotebookLM Hybrid YouTube pipeline
+def _ops_env_get(key: str, default: str = "") -> str:
+    val = os.getenv(key, "").strip()
+    if val:
+        return val
+    ops_file = Path.home() / ".config/pymasters-ops/ops.env"
+    if ops_file.is_file():
+        try:
+            for line in ops_file.read_text(encoding="utf-8").splitlines():
+                s = line.strip()
+                if s and not s.startswith("#") and "=" in s:
+                    k, v = s.split("=", 1)
+                    if k.strip() == key:
+                        return v.strip().strip("'\"")
+        except OSError:
+            pass
+    return default
+
+
+# Strictly bound to unbilled project `eternity-os-11012219` (`billingEnabled: false`) -> $0.00 hard guarantee
+GEMINI_FREE_API_KEY = _ops_env_get("GEMINI_FREE_API_KEY")
+GEMINI_FREE_PROJECT = _ops_env_get("GEMINI_FREE_PROJECT", "eternity-os-11012219")
+GEMINI_TTS_MODEL = os.getenv("PMSOCIAL_GEMINI_TTS_MODEL", "gemini-2.5-flash-preview-tts")
+GEMINI_TEXT_MODEL = os.getenv("PMSOCIAL_GEMINI_TEXT_MODEL", "gemini-2.5-flash")
+GEMINI_SHORT_VOICE = os.getenv("PMSOCIAL_GEMINI_SHORT_VOICE", "Charon")
+GEMINI_LONG_SPEAKERS = (("Vaathiyaar", "Charon"), ("Ananya", "Aoede"))
+
+# Hybrid mode (owner decision, 2026-11-17):
+# - Daily 9:16 Shorts include Live AI Influencer ("Vanakkam nanba and nanbis!")
+# - Weekly 16:9 Long videos use 2-host NotebookLM/Gemini conversational audio WITHOUT an on-screen presenter
+SHORT_LIVE_INFLUENCER = os.getenv("PMSOCIAL_SHORT_INFLUENCER", "1") == "1"
+LONG_LIVE_PRESENTER = os.getenv("PMSOCIAL_LONG_PRESENTER", "0") == "1"
+LONG_CONVERSATIONAL_AUDIO = os.getenv("PMSOCIAL_LONG_CONVERSATIONAL", "1") == "1"
+CDP_URL = os.getenv("PMSOCIAL_CDP_URL", "http://127.0.0.1:9222")
+PRESENTER_ASSETS_DIR = Path(__file__).resolve().parent / "assets" / "presenter"
+PRESENTER_PLATES_DIR = MEDIA_DIR / "presenter_plates"
+
 INFLUENCER_ENABLED = os.getenv("PMSOCIAL_INFLUENCER_ENABLED", "1") == "1"
-AVATAR_PROVIDER = os.getenv("PMSOCIAL_AVATAR_PROVIDER", "heygen").strip().lower()
+AVATAR_PROVIDER = os.getenv("PMSOCIAL_AVATAR_PROVIDER", "google_zero_cost").strip().lower()
 HEYGEN_API_KEY = os.getenv("HEYGEN_API_KEY", "").strip()
 HEYGEN_AVATAR_ID = os.getenv("HEYGEN_AVATAR_ID", "Aditya_public_1").strip()
 HEYGEN_VOICE_ID = os.getenv("HEYGEN_VOICE_ID", "").strip()
@@ -97,7 +133,7 @@ PLAYWRIGHT_PYTHON = os.getenv(
 
 
 def ensure_dirs():
-    for d in (STATE_DIR, CONFIG_DIR, RENDERS_DIR, MUSIC_DIR, HF_HOME):
+    for d in (STATE_DIR, CONFIG_DIR, RENDERS_DIR, MUSIC_DIR, HF_HOME, PRESENTER_PLATES_DIR):
         d.mkdir(parents=True, exist_ok=True)
     try:
         CONFIG_DIR.chmod(0o700)

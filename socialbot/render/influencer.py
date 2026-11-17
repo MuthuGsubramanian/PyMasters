@@ -83,7 +83,7 @@ def synthesize_influencer_script(lesson: dict[str, Any], bilingual_hook: bool = 
         for idx, ln in enumerate(code_lines[:6])
     ]
 
-    greeting = "Vanakkam nanba! Today let's break down " if bilingual_hook else "Let's break down "
+    greeting = "Vanakkam nanba and nanbis! Today let's break down " if bilingual_hook else "Let's break down "
     intro_text = (
         f"{greeting}{title} in plain, everyday terms so you can follow every single idea effortlessly without any coding background. "
         f"{desc or f'At its heart, {title} helps software organize work cleanly and reliably, just like sorting mail at a post office counter step by step.'} "

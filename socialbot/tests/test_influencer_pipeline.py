@@ -56,7 +56,7 @@ def test_synthesize_influencer_script_and_ass_captions(tmp_path):
         ],
     }
     plan = influencer.synthesize_influencer_script(lesson, bilingual_hook=True)
-    assert "Vanakkam nanba" in plan["script_text"]
+    assert "Vanakkam nanba and nanbis!" in plan["script_text"]
     assert len(plan["segments"]) == 5
     assert plan["segments"][0]["layout"] == "full_presenter"
     assert plan["segments"][2]["layout"] == "pip_code"
@@ -173,3 +173,86 @@ def test_broll_html_playwright_and_ffmpeg_compositor(tmp_path):
     info = json.loads(probe)
     assert info["streams"][0]["width"] == 1280
     assert info["streams"][0]["height"] == 720
+
+
+def test_zero_cost_hybrid_short_influencer_and_long_conversational_no_presenter(tmp_path, monkeypatch):
+    import numpy as np
+    from socialbot import briefs, config, quality, tts
+    from socialbot.render import presenter_overlay as PO
+    from socialbot.render import scenes as S
+    from socialbot.render import video as V
+
+    # 1) Verify configuration matches owner's hybrid rules ($0, Short influencer ON, Long presenter OFF)
+    assert config.SHORT_LIVE_INFLUENCER is True
+    assert config.LONG_LIVE_PRESENTER is False
+    assert config.LONG_CONVERSATIONAL_AUDIO is True
+    assert isinstance(avatar.get_avatar_adapter("google_zero_cost"), avatar.GoogleZeroCostAvatarAdapter)
+
+    # 2) Verify prompts & hard_checks embrace "Vanakkam nanba and nanbis!" while keeping Hindi banned
+    les = {
+        "key": "lesson:python_intermediate/generators",
+        "title": "Generators: One Item at a Time",
+        "track": "python_intermediate",
+        "difficulty": "intermediate",
+        "description": "Stream data lazily without filling RAM.",
+        "concepts": ["generators", "yield"],
+        "story": "Generators produce one value on demand." * 25,
+        "challenges": [],
+        "url": "https://pymasters.net/dashboard/classroom/generators",
+    }
+    sp = briefs.short_prompt(les)
+    lp = briefs.long_prompt(les)
+    assert "Vanakkam nanba and nanbis!" in sp
+    assert "Vanakkam nanba and nanbis!" in lp
+    assert "Ananya:" in lp and "Vaathiyaar:" in lp
+
+    # Verify uneven indentation in LinkedIn code_snippet compiles cleanly via _normalize_code
+    uneven_code = "items = [1, 2, 3]\n    total = sum(items)\n    print(total)"
+    assert quality._compile_errors(uneven_code, "code_snippet") == []
+
+    # 3) Verify 2-speaker turn parsing & speaker-prefix stripping for burned-in captions
+    sample_turn = "Vaathiyaar: Vanakkam nanba and nanbis! Let us simplify memory streams. Ananya: Why not load everything at once?"
+    turns = tts.parse_dialogue_turns(sample_turn)
+    assert [who for who, _ in turns] == ["Vaathiyaar", "Ananya"]
+    stripped = tts.strip_speaker_labels(sample_turn)
+    assert "Vaathiyaar:" not in stripped and "Ananya:" not in stripped
+    assert "Vanakkam nanba and nanbis!" in stripped
+
+    # 4) Verify Short Hero + PiP presenter rendering (`1080x1920`) and Long 2-host no-presenter rendering (`1920x1080`)
+    def fake_gemini_tts(prompt_text, multi_speaker=False, timeout=75):  # noqa: ARG001
+        # Deterministic 1.8s synthetic speech envelope @ 24kHz so test runs fast & offline
+        t = np.linspace(0, 1.8, int(1.8 * tts.SR), endpoint=False, dtype=np.float32)
+        mod = (0.5 + 0.5 * np.sin(2 * np.pi * 4.5 * t)).astype(np.float32)
+        return (0.25 * np.sin(2 * np.pi * 220.0 * t) * mod).astype(np.float32)
+
+    monkeypatch.setattr(tts, "_call_gemini_tts", fake_gemini_tts)
+
+    # Confirm Studio Vaathiyaar assets load cleanly and render both Hero & PiP frames
+    f_short = S.Frame(1080, 1920)
+    hero_img = PO.draw_short_hero_presenter(
+        f_short.bg.copy(), f_short, {"heading": "Generators Made Simple"}, 0.5, 0.2, 0.7, 0.4
+    )
+    assert hero_img.size == (1080, 1920)
+    PO.draw_short_pip_presenter(hero_img, f_short, 0.65, 0.8)
+
+    short_segs = [
+        {"narration": "Vanakkam nanba and nanbis! Why do giant files freeze laptops?", "visual": {"type": "title", "heading": "Smart Streams"}},
+        {"narration": "Think of handing out one ticket at a time.", "visual": {"type": "flow", "heading": "One By One", "nodes": ["Ask", "Next"], "edges": [[0, 1]]}},
+        {"narration": "Practice interactively for free at pymasters.net.", "visual": {"type": "reveal", "heading": "Try It Free", "big": "pymasters.net"}},
+    ]
+    short_media = V.render_narrated(short_segs, tmp_path / "short_out", 1080, 1920, captions=True)
+    assert Path(short_media["video"]).exists()
+    short_srt = Path(short_media["srt"]).read_text(encoding="utf-8")
+    assert "nanbis!" in short_srt
+
+    long_segs = [
+        {"narration": "Vaathiyaar: Vanakkam nanba and nanbis! Welcome back. Ananya: Why do streams save RAM?",
+         "visual": {"type": "title", "heading": "Streams Deep Dive"}, "chapter": "Intro"},
+        {"narration": "Vaathiyaar: Because Python keeps only one item in memory at a time.",
+         "visual": {"type": "reveal", "heading": "Key Rule", "big": "One Item In RAM"}, "chapter": "Takeaway"},
+    ]
+    long_media = V.render_narrated(long_segs, tmp_path / "long_out", 1920, 1080, captions=True)
+    assert Path(long_media["video"]).exists()
+    long_srt = Path(long_media["srt"]).read_text(encoding="utf-8")
+    assert "Vaathiyaar:" not in long_srt and "Ananya:" not in long_srt
+    assert "nanbis!" in long_srt
