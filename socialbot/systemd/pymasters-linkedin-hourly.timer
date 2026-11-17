@@ -1,0 +1,11 @@
+[Unit]
+Description=PyMasters LinkedIn Company Page hourly post (10:00 to 23:00 IST)
+
+[Timer]
+OnCalendar=*-*-* 10..23:00:00 Asia/Kolkata
+Persistent=true
+AccuracySec=5s
+RandomizedDelaySec=10
+
+[Install]
+WantedBy=timers.target

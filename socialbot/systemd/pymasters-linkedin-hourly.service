@@ -1,0 +1,19 @@
+[Unit]
+Description=PyMasters LinkedIn hourly Complex-Topics-Simplified post (10 AM to 11 PM IST)
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/Documents/Development/PyMasters
+EnvironmentFile=%h/.config/pymasters-ops/ops.env
+Environment=PYTHONPATH=%h/Documents/Development/PyMasters
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=CLOUDSDK_CORE_DISABLE_PROMPTS=1
+UnsetEnvironment=VIRTUAL_ENV
+ExecStart=%h/pymasters-ops/social-venv/bin/python -m socialbot linkedin-hourly
+TimeoutStartSec=45m
+Nice=15
+CPUQuota=120%
+Environment=OMP_NUM_THREADS=2
+Environment=MKL_NUM_THREADS=2
+Environment=PMSOCIAL_FFMPEG_THREADS=2

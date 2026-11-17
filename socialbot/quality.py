@@ -201,10 +201,10 @@ def verdict(kind, draft, les):
     problems += [f"factual error: {e}" for e in c.get("factual_errors") or []]
     problems += [f"blocking: {e}" for e in c.get("blocking_issues") or []]
     simplicity = (c.get("scores") or {}).get("simplicity")
-    if kind in ("short", "long") and simplicity is not None and float(simplicity) < config.SIMPLICITY_MIN_SCORE:
+    if kind in ("short", "long", "linkedin") and simplicity is not None and float(simplicity) < config.SIMPLICITY_MIN_SCORE:
         problems.append(
-            f"blocking: too complex for a non-technical viewer (simplicity {simplicity} < {config.SIMPLICITY_MIN_SCORE}); "
-            "translate all jargon into everyday simple English"
+            f"blocking: complex topic is not simplified clearly enough (simplicity {simplicity} < {config.SIMPLICITY_MIN_SCORE}); "
+            "translate all jargon into everyday simple English with a clear mental model"
         )
     if score < config.QUALITY_MIN_SCORE:
         problems += [f"polish: {e}" for e in c.get("polish") or []] or [f"editor score {score} < {config.QUALITY_MIN_SCORE}"]

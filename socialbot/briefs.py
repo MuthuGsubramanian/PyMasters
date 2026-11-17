@@ -276,56 +276,61 @@ LESSON MATERIAL (break down complexity and avoid unexplained jargon):
 BUSINESS_STYLES = {"business_story", "boardroom_explainer", "executive_playbook"}
 TECH_STYLES = {"tech_deep_dive", "myth_vs_benchmark", "production_code_audit", "jargon"}
 
-# Six distinct formats: 3 Business-Audience in Simple Terms (no code wall in post text) + 3 Technical-Detail (with runnable Python).
-STYLE_BLUEPRINTS = {
-    # --- TRACK A: BUSINESS AUDIENCE IN SIMPLE TERMS (NO CODE WALL IN POST TEXT) ---
-    "business_story": """Format: Real-World Banking, Risk & Business Story (Business Audience — Simple Terms, NO raw code block in the post text).
-- Audience: Banking executives, product managers, risk leaders, founders, and tech-curious professionals.
-- Open with a vivid, concrete business situation or costly operational mistake (<= 110 chars)—e.g., customer friction, false card declines, capital exposure, or delayed decisions.
-- Explain the underlying cause and how modern AI solves it in plain, jargon-free English (2-3 short paragraphs; DO NOT put raw Python code in the post text; set `code_snippet` to `""`).
-- Give 3 crisp bullet points (`•`) stating the business & operational takeaway.
-- Close by explaining how @PyMasters ({url}) helps professionals and teams understand and build real-world AI systems.
-- Animation beats: use `metric`, `flow`, `compare`, and `reveal` to make the business story visually self-explanatory.""",
-    "boardroom_explainer": """Format: 60-Second Boardroom & Executive Explainer (Business Audience — Simple Terms, NO raw code block in the post text).
-- Audience: Decision-makers, engineering managers, finance/risk analysts, and business leaders who hear AI buzzwords daily and want the plain truth.
-- Open with a sharp question or counter-intuitive business fact about this topic (<= 110 chars).
-- Structure the body around three ultra-clear plain-English sections (no markdown headers, just clean line breaks; DO NOT put raw Python code in the post text; set `code_snippet` to `""`):
-  1. What it actually means in one plain sentence (using a sharp banking, treasury, or enterprise operations mental model).
-  2. Why companies lose money, speed, or trust when they get it wrong (cite the real numbers from the material).
-  3. The one practical question to ask your engineering or risk team this week.
-- Close by tagging @PyMasters and linking to {url}.
-- Animation beats: use `compare` (naive vs smart), `flow` (how the system works), `metric` (the numbers), and `reveal`.""",
-    "executive_playbook": """Format: Before-vs-After Industry Decision Playbook (Business Audience — Simple Terms & ROI, NO raw code block in the post text).
-- Audience: FinTech leaders, consumer banking heads, risk officers, and enterprise architects.
-- Open with the headline metric—milliseconds saved, basis points protected, or operational cost reduced (<= 110 chars).
-- Contrast `The Legacy Way:` (why manual rules or naive AI fail) against `The Modern Playbook:` (how calibrated, guarded systems work) in simple, compelling business language (DO NOT put raw Python code in the post text; set `code_snippet` to `""`).
-- State the measurable bottom-line impact and how @PyMasters ({url}) equips teams with practical AI & Python fluency.
-- Animation beats: use `compare`, `metric`, `timeline` or `flow`, and `reveal`.""",
+LINKEDIN_SIMPLIFY_MANDATE = """Editorial Mission — SIMPLIFYING COMPLEX TOPICS:
+- Every post on the @PyMasters LinkedIn page exists to take a genuinely COMPLEX, intimidating technical, AI, or systems topic and make it unmistakably SIMPLE so any smart reader grasps it on the first read.
+- Never hide behind academic math, dense acronyms, or unexplained jargon. Whenever a technical concept appears (e.g., attention heads, KV-cache, GIL contention, async event loop, idempotency, calibration, AST verification, Reciprocal Rank Fusion), translate it immediately into plain everyday English using ONE crisp, strictly professional real-world mental model (such as a bank teller ledger, airport fast-track lane, library reference card, or warehouse staging shelf—never casual trivia or Hindi words).
+- Walk the reader clearly from: (1) Why this complex topic sounds intimidating or trips teams up -> (2) What it actually means in plain words -> (3) How it works step by step -> (4) The 1-sentence mental rule they will remember tomorrow."""
 
-    # --- TRACK B: TECHNICAL & ENGINEERING AUDIENCE (DEEP DETAILS + RUNNABLE PYTHON CODE) ---
-    "tech_deep_dive": """Format: Under-the-Hood Technical Deep Dive (Technical Audience — Deep Mechanics + Runnable Python).
-- Audience: Senior software engineers, ML engineers, quant developers, and systems architects.
-- Open with a sharp technical statement on how the runtime, model, or risk engine executes this mechanism (<= 110 chars).
-- Trace the exact data transformation and mathematical/systems trade-off in 2-3 rigorous sentences.
-- Include a concise, runnable Python 3.11 snippet (indented 4 spaces, 4-8 lines, and copied into `code_snippet`) and state its exact printed output.
-- Invite engineers to practice the full implementation with @PyMasters at {url}.
-- Animation beats: mix `trace` or `code` (showing the exact output) with `flow` or `plot`.""",
-    "myth_vs_benchmark": """Format: Engineering Myth vs. Executed Benchmark (Technical Audience — Deep Details + Runnable Python).
-- Audience: Working Python developers, AI engineers, and quantitative analysts.
-- Open by challenging a widespread technical or quantitative misconception (<= 110 chars).
-- Contrast the naive assumption against what actually happens at runtime or under stress.
-- Prove the reality with a self-contained Python 3.11 snippet (indented 4 spaces, 4-8 lines, and copied into `code_snippet`) and cite its exact stdout.
-- State the production takeaway, tag @PyMasters, and link to {url}.""",
-    "production_code_audit": """Format: Principal Engineer Code & Risk Audit (Technical Audience — Deep Details + Runnable Python).
-- Audience: Production engineers, risk modelers, and technical leads.
-- Open by spotlighting a subtle production failure mode—silent drift, uncalibrated probabilities, or duplicate execution (<= 110 chars).
-- Explain in 2 sentences why standard reviews miss this defect, then show the deterministic Python 3.11 fix (indented 4 spaces, 4-8 lines, and copied into `code_snippet`) with its exact output.
-- Explain how @PyMasters trains engineers to build auditable systems at {url}.""",
-    "jargon": """Format: Executive & Practitioner Concept Distillation ("jargon, made simple").
-- Open by naming the complex technical term and stating the concrete production consequence of misapplying it (<= 110 chars).
-- Clarify the mechanism using ONE precise, strictly professional enterprise/systems comparison and note where the comparison ends.
-- Give the exact one-sentence technical definition and a runnable Python 3.11 snippet (indented 4 spaces) with its real output.
-- Close with when this matters on the job, tag @PyMasters, and link to {url}.""",
+# Six distinct formats: 3 Business-Audience in Simple Terms (no code wall in post text) + 3 Technical-Simplified (plain-English breakdown + tiny runnable Python proof).
+STYLE_BLUEPRINTS = {
+    # --- TRACK A: COMPLEX TOPICS SIMPLIFIED FOR ANY READER (NO CODE WALL IN POST TEXT) ---
+    "business_story": """Format: Complex System, Simplified Through a Real-World Enterprise Story (Simple Terms, NO raw code block in the post text).
+- Audience: Executives, product managers, risk leaders, founders, and curious professionals who want complex AI/tech explained simply.
+- Open by naming the complex concept or costly operational failure mode in plain, vivid words (<= 110 chars).
+- Simplify the complex mechanism in 2-3 short, jargon-free paragraphs using a crystal-clear real-world operational comparison (DO NOT put raw Python code in the post text; set `code_snippet` to `""`).
+- Give 3 crisp bullet points (`•`) distilling: What it is simply, Why naive approaches fail, and The 1-line rule to remember.
+- Close by explaining how @PyMasters ({url}) breaks complex AI & Python down simply for professionals and teams.
+- Animation beats: use `compare` (analogy vs real mechanism), `flow` (step-by-step boxes), `metric` (impact), and `reveal`.""",
+    "boardroom_explainer": """Format: 60-Second Complex-to-Simple Executive Explainer (Simple Terms, NO raw code block in the post text).
+- Audience: Decision-makers, managers, analysts, and non-specialists who hear intimidating AI/engineering buzzwords daily and want the plain truth.
+- Open with a sharp question or counter-intuitive truth demystifying this complex topic (<= 110 chars).
+- Structure the body around three ultra-clear plain-English sections (no markdown headers, just clean line breaks; DO NOT put raw Python code in the post text; set `code_snippet` to `""`):
+  1. In Plain English: explain the complex concept in one crystal-clear sentence using an everyday banking, ledger, or operations analogy.
+  2. Why It Matters in Practice: explain what breaks—money, speed, or accuracy—when this concept is misunderstood (cite real numbers from the material).
+  3. One Simple Takeaway: the single plain-English rule anyone can remember and apply.
+- Close by tagging @PyMasters and linking to {url}.
+- Animation beats: use `compare` (jargon vs plain meaning), `flow` (how it works simply), `metric` (the numbers), and `reveal`.""",
+    "executive_playbook": """Format: Complex Architecture Simplified — Naive Way vs. Smart Way (Simple Terms, NO raw code block in the post text).
+- Audience: Product leaders, FinTech/enterprise builders, and professionals learning how modern AI & software systems work under the hood.
+- Open with the headline contrast showing why this complex concept changes real outcomes (<= 110 chars).
+- Contrast `Why It Sounds Complicated (The Old Mental Model):` against `How It Actually Works Simply (The Clear Model):` in plain, everyday professional English (DO NOT put raw Python code in the post text; set `code_snippet` to `""`).
+- State the measurable real-world impact and how @PyMasters ({url}) makes complex Python & AI effortless to learn.
+- Animation beats: use `compare`, `flow` or `timeline`, `metric`, and `reveal`.""",
+
+    # --- TRACK B: COMPLEX MECHANICS SIMPLIFIED WITH TINY RUNNABLE PYTHON PROOF ---
+    "tech_deep_dive": """Format: Under-the-Hood Complexity, Made Simple + Tiny Python Proof (Plain-English Breakdown + Runnable Python).
+- Audience: Engineers, data practitioners, and learners who want intimidating internals/AI mechanics explained simply without textbook density.
+- Open by naming the complex mechanism and translating what it really does in one plain-English hook line (<= 110 chars).
+- Explain the step-by-step mental model in 2-3 simple, jargon-free sentences BEFORE showing code so even a newcomer follows the logic.
+- Prove how simple it really is with a tiny, clean runnable Python 3.11 snippet (indented 4 spaces, 4-7 lines, copied into `code_snippet`) and explain its exact printed output in plain words.
+- Invite readers to explore the interactive step-by-step visualiser with @PyMasters at {url}.
+- Animation beats: mix `compare` or `flow` (the simple mental model) with `trace` or `code` (exact output) and `reveal`.""",
+    "myth_vs_benchmark": """Format: Intimidating Technical Myth vs. Simple Reality + Python Proof (Plain-English Breakdown + Runnable Python).
+- Audience: Developers, AI builders, and technical learners who want confusing myths cleared up simply.
+- Open by naming a confusing technical myth or complex edge case in plain English (<= 110 chars).
+- Explain in simple everyday words why people get confused—and what actually happens step by step using a concrete mental model.
+- Show the proof in a tiny, self-contained Python 3.11 snippet (indented 4 spaces, 4-7 lines, copied into `code_snippet`) and translate its exact stdout into one plain takeaway sentence.
+- Close with the 1-line rule to remember, tag @PyMasters, and link to {url}.""",
+    "production_code_audit": """Format: Complex Production Bug, Explained Simply + Clean Fix (Plain-English Breakdown + Runnable Python).
+- Audience: Builders, engineers, and technical leads who want subtle systems/AI traps explained in crystal-clear terms.
+- Open by spotlighting a tricky hidden failure mode in plain words anyone can picture (<= 110 chars).
+- Explain in 2 simple sentences why it happens using a real-world operational analogy, then show the clean Python 3.11 fix (indented 4 spaces, 4-7 lines, copied into `code_snippet`) with its exact output.
+- Explain how @PyMasters makes complex engineering concepts intuitive at {url}.""",
+    "jargon": """Format: Complex Concept Distillation ("jargon, made simple").
+- Open by naming the complex technical term and translating why it matters in plain everyday words (<= 110 chars).
+- Simplify the mechanism using ONE precise, strictly professional real-world comparison mapped step by step (and note in one clause where the analogy ends).
+- Give the crystal-clear one-sentence plain-English definition and a tiny runnable Python 3.11 snippet (indented 4 spaces) with its real output.
+- Close with the 1-line takeaway rule, tag @PyMasters, and link to {url}.""",
 }
 
 
@@ -338,16 +343,17 @@ def linkedin_prompt(les, feedback=None, previous=None, style="jargon", sub_style
     if les.get("is_daily_trend") or style == "trend":
         return _linkedin_trend_prompt(les, feedback, previous, variety=variety)
     blueprint = STYLE_BLUEPRINTS.get(variety, STYLE_BLUEPRINTS["business_story"]).format(url=les["url"])
-    return f"""Write a strictly professional, non-monotonous LinkedIn post for the @PyMasters company page.
-Follow this specific format so our feed alternates engagingly between plain-English business insights and deep technical breakdowns (plain text; LinkedIn has no markdown; short paragraphs; no emoji walls):
+    return f"""Write a strictly professional, crystal-clear LinkedIn post for the @PyMasters company page that SIMPLIFIES A COMPLEX TOPIC.
+{LINKEDIN_SIMPLIFY_MANDATE}
+Follow this specific format so our hourly feed stays fresh and engaging (plain text; LinkedIn has no markdown; short paragraphs; no emoji walls):
 {blueprint}
 Hard requirements:
 - Include both @PyMasters and the link {les['url']} (and https://pymasters.net) in the post text.
 - Then exactly three relevant hashtags. Length 850-1300 characters in total.
 - Any code beat in `animation.beats` must be self-contained runnable Python whose `output` matches real execution.
-- Make the animation visually self-explanatory (mix `metric`, `flow`, `compare`, `timeline`, `plot`, `trace`, `code`, `reveal`).
+- Make the animation visually self-explanatory so a reader scrolling on mute grasps the complex idea in 5 seconds (mix `compare`, `flow`, `metric`, `timeline`, `plot`, `trace`, `code`, `reveal`).
 {_fb(feedback, previous)}
-LESSON MATERIAL:
+COMPLEX TOPIC MATERIAL TO SIMPLIFY:
 {material_block(les)}"""
 
 
@@ -371,9 +377,10 @@ LESSON MATERIAL:
 
 def _linkedin_trend_prompt(les, feedback=None, previous=None, variety="business_story"):
     blueprint = STYLE_BLUEPRINTS.get(variety, STYLE_BLUEPRINTS["business_story"]).format(url=les["url"])
-    return f"""Write a strictly professional LinkedIn post for the @PyMasters company page on today's live trending topic in {les.get('pillar_label', 'AI Engineering')}:
+    return f"""Write a strictly professional LinkedIn post for the @PyMasters company page that SIMPLIFIES A COMPLEX TOPIC from today's live trending signal in {les.get('pillar_label', 'AI Engineering')}:
 "{les['title']}" (live signal: {les.get('live_headline', '')}).
-Make it catchy, unique, and immediately interesting—follow the assigned format below so our feed varies between simple business impact stories and technical deep dives (plain text; LinkedIn has no markdown; short paragraphs; no emoji walls):
+{LINKEDIN_SIMPLIFY_MANDATE}
+Follow the assigned format below (plain text; LinkedIn has no markdown; short paragraphs; no emoji walls):
 {blueprint}
 Hard requirements:
 - Explicitly state how @PyMasters helps professionals and engineering/quant teams master this capability on {les['url']}.
@@ -381,14 +388,15 @@ Hard requirements:
 - Then exactly three relevant hashtags. Length 850-1300 characters in total.
 - Any code beat in `animation.beats` must be self-contained runnable Python whose `output` matches real execution.
 {_fb(feedback, previous)}
-LESSON MATERIAL:
+COMPLEX TOPIC MATERIAL TO SIMPLIFY:
 {material_block(les)}"""
 
 
 def _linkedin_hf_space_prompt(les, feedback=None, previous=None, variety="boardroom_explainer"):
     blueprint = STYLE_BLUEPRINTS.get(variety, STYLE_BLUEPRINTS["boardroom_explainer"]).format(url=les["url"])
-    return f"""Write a strictly professional LinkedIn post for the @PyMasters company page showcasing our live Hugging Face Space ({les['title']}).
-Follow the assigned format below so our posts vary between plain-English business/product value and under-the-hood technical breakdowns (plain text; LinkedIn has no markdown; short paragraphs; no emoji walls):
+    return f"""Write a strictly professional LinkedIn post for the @PyMasters company page showcasing our live Hugging Face Space ({les['title']}) by SIMPLIFYING THE COMPLEX TOPIC behind it.
+{LINKEDIN_SIMPLIFY_MANDATE}
+Follow the assigned format below (plain text; LinkedIn has no markdown; short paragraphs; no emoji walls):
 {blueprint}
 Hard requirements:
 - You MUST include @PyMasters AND BOTH links verbatim in the post text:
@@ -398,7 +406,7 @@ Hard requirements:
 - Any code beat in `animation.beats` must be self-contained runnable Python whose `output` matches real execution.
 - The animation must visualise the Space's value and mechanism step by step (`metric`, `flow`, `compare`, `trace`, `code`, `reveal`).
 {_fb(feedback, previous)}
-LESSON MATERIAL:
+COMPLEX TOPIC MATERIAL TO SIMPLIFY:
 {material_block(les)}"""
 
 
@@ -417,15 +425,25 @@ def _video_rule(kind: str) -> str:
 def _linkedin_rule(draft: dict) -> str:
     variety = draft.get("format_variety") or draft.get("style") or ""
     is_biz = variety in BUSINESS_STYLES
+    simplify_rule = (
+        "CRITICAL EDITORIAL MANDATE — SIMPLIFYING COMPLEX TOPICS: Every LinkedIn post on the @PyMasters page must take "
+        "a genuinely complex idea and simplify it into crystal-clear everyday English with a concrete professional mental "
+        "model so any smart reader grasps it effortlessly on the first read. Penalise `scores.simplicity` (below 7.5) and "
+        "add a `blocking_issues` entry if technical jargon, math, or acronyms are left unexplained. "
+    )
     if is_biz:
-        base = ("This post is in our BUSINESS AUDIENCE (Simple Terms) track: demand crystal-clear, jargon-free business "
-                "explanation that non-technical readers, executives, and product leaders understand on the first read, "
-                "backed by real numbers from the material, a link to https://pymasters.net, and a @PyMasters mention "
-                "(no raw Python code block is required in the post text). ")
+        base = simplify_rule + (
+            "This post is in our BUSINESS AUDIENCE (Simple Terms) track: demand strictly professional, jargon-free "
+            "plain-English explanation that executives, product leaders, and non-technical readers understand immediately, "
+            "backed by real numbers from the material, a link to https://pymasters.net, and a @PyMasters mention "
+            "(no raw Python code block is required in the post text). "
+        )
     else:
-        base = ("This post is in our TECHNICAL AUDIENCE track: demand a strictly professional yet simple, clear teaching voice "
-                "that explains any technical term in plain English, a link to https://pymasters.net, a @PyMasters mention, "
-                "and runnable Python 3.11 code whose output matches the post. ")
+        base = simplify_rule + (
+            "This post is in our TECHNICAL AUDIENCE track: demand a strictly professional yet simple, crystal-clear teaching voice "
+            "that explains the complex mechanism in plain English BEFORE/AROUND the code, a link to https://pymasters.net, "
+            "a @PyMasters mention, and runnable Python 3.11 code whose output matches the post. "
+        )
     if draft.get("style") == "thematic":
         return base + ("For Weekly Thematic Analysis Research posts, demand a clear cross-domain synthesis connecting "
                        "AI in Finance, AI in Risk, AI in Consumer Cards & Banking, AI Around the World, and AI Key Concepts "

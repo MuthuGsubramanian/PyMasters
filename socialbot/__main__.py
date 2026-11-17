@@ -24,6 +24,7 @@ def main(argv=None):
     p = sub.add_parser("produce"); p.add_argument("kind", choices=["short", "long", "linkedin", "thematic", "influencer"]); p.add_argument("--lesson"); p.add_argument("--bilingual", action="store_true"); p.add_argument("--presenter")
     p = sub.add_parser("publish"); p.add_argument("--dry-run", action="store_true")
     sub.add_parser("tick")
+    sub.add_parser("linkedin-hourly")
     p = sub.add_parser("status"); p.add_argument("--limit", type=int, default=15)
     p = sub.add_parser("auth"); p.add_argument("service", choices=["youtube", "linkedin", "linkedin-page", "drive"])
     p = sub.add_parser("sync-drive"); p.add_argument("--limit", type=int, default=500); p.add_argument("--force", action="store_true")
@@ -46,6 +47,9 @@ def main(argv=None):
     elif a.cmd == "tick":
         from socialbot import scheduler
         scheduler.tick()
+    elif a.cmd == "linkedin-hourly":
+        from socialbot import scheduler
+        scheduler.linkedin_hourly_tick()
     elif a.cmd == "status":
         for it in store.items(limit=a.limit):
             print(f"#{it['id']:<4} {it['kind']:<8} {it['status']:<10} {str(it['score'] or ''):<5} "
