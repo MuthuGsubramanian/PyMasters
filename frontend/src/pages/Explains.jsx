@@ -39,6 +39,7 @@ import NEURAL_NETWORK from '../components/explains/essays/neuralNetworkEssay';
 import BOOTSTRAP from '../components/explains/essays/bootstrapEssay';
 import AB_TESTING from '../components/explains/essays/abTestEssay';
 import QUANTIZATION from '../components/explains/essays/quantizationEssay';
+import CALIBRATION from '../components/explains/essays/calibrationEssay';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Explains — MLU-Explain-style visual essays: one concept, one persistent
@@ -382,6 +383,7 @@ export const ESSAYS = [
     BOOTSTRAP,
     AB_TESTING,
     QUANTIZATION,
+    CALIBRATION,
 ];
 
 const ESSAY_CATEGORY_MAP = {
@@ -397,6 +399,7 @@ const ESSAY_CATEGORY_MAP = {
     'ab-testing': 'Foundations & Evaluation',
     'bayesian-inference': 'Foundations & Evaluation',
     'fuzzy-logic': 'Foundations & Evaluation',
+    'calibration': 'Foundations & Evaluation',
     'linear-regression': 'Supervised ML & Trees',
     'logistic-regression': 'Supervised ML & Trees',
     'decision-trees': 'Supervised ML & Trees',
