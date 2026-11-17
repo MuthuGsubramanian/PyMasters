@@ -983,7 +983,7 @@ def set_member_groups(org_id: str, member_id: str, data: SetGroupsRequest,
 
 @router.get("/{org_id}/groups")
 def list_groups(org_id: str, caller: str = Depends(get_current_user_id)):
-    """Distinct group names + member counts for the org. Requires manager+."""
+    """Distinct group names + member counts for the org (including provisioned cohorts). Requires manager+."""
     require_org_role(DB_PATH, org_id, caller, "manager")
     conn = sqlite3.connect(DB_PATH)
     try:
@@ -992,6 +992,18 @@ def list_groups(org_id: str, caller: str = Depends(get_current_user_id)):
             "GROUP BY group_name ORDER BY group_name",
             [org_id],
         ).fetchall()
+        group_counts = {r[0]: r[1] for r in rows}
+        has_cohorts = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='cohort_enrollments'"
+        ).fetchone()
+        if has_cohorts:
+            cohort_rows = conn.execute(
+                "SELECT cohort_name FROM cohort_enrollments WHERE org_id = ? AND status = 'active' ORDER BY cohort_name",
+                [org_id],
+            ).fetchall()
+            for (cname,) in cohort_rows:
+                if cname and cname not in group_counts:
+                    group_counts[cname] = 0
         total = conn.execute(
             "SELECT COUNT(*) FROM org_members WHERE org_id = ?", [org_id]
         ).fetchone()[0]
@@ -1011,7 +1023,7 @@ def list_groups(org_id: str, caller: str = Depends(get_current_user_id)):
         settings = {}
     label = _effective_branding((settings_row[1] if settings_row else None) or "other", settings)["group_label"]
     return {
-        "groups": [{"name": r[0], "count": r[1]} for r in rows],
+        "groups": [{"name": k, "count": group_counts[k]} for k in sorted(group_counts)],
         "ungrouped": max(0, total - tagged),
         "group_label": label,
     }

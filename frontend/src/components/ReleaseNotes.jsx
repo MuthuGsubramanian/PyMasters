@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import { useFocusTrap } from '../hooks/useFocusTrap';
@@ -29,7 +30,7 @@ const RELEASE_NOTES = [
                 icon: Route,
                 title: 'Stage-Aware Learning Modes',
                 description:
-                    'Switch anytime between School (Class 6–12 CBSE/ICSE/State CS & AI), College & DSA Placement Prep, and Pro AI Engineering.',
+                    'Switch anytime between School (Class 6–12 STATE, MATRIC, CBSE & ICSE CS & AI), College & DSA Placement Prep, and Pro AI Engineering.',
                 color: 'from-emerald-500 to-cyan-600',
             },
             {
@@ -114,21 +115,28 @@ const RELEASE_NOTES = [
     },
 ];
 
-const STORAGE_KEY = 'pm_release_seen';
-const CURRENT_VERSION = RELEASE_NOTES[0].version;
+export const STORAGE_KEY = 'pm_release_seen';
+export const CURRENT_VERSION = RELEASE_NOTES[0].version;
 
 export default function ReleaseNotes() {
     const [visible, setVisible] = useState(false);
     const panelRef = useRef(null);
+    const location = useLocation();
 
     useEffect(() => {
+        // Never interrupt multi-step organization/school setup wizard
+        if (location.pathname.startsWith('/dashboard/org/setup')) {
+            setVisible(false);
+            return undefined;
+        }
         const seen = localStorage.getItem(STORAGE_KEY);
         if (seen !== CURRENT_VERSION) {
             // Small delay so the main UI renders first
             const timer = setTimeout(() => setVisible(true), 600);
             return () => clearTimeout(timer);
         }
-    }, []);
+        return undefined;
+    }, [location.pathname]);
 
     const dismiss = () => {
         setVisible(false);

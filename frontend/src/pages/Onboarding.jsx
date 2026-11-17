@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import PymastersGlyph from '../assets/pymasters-glyph.svg';
 import VaathiyaarGlyph from '../assets/vaathiyaar-glyph.svg';
 import LanguageSelector from '../components/LanguageSelector';
+import { STORAGE_KEY as RELEASE_SEEN_KEY, CURRENT_VERSION as CURRENT_RELEASE_VERSION } from '../components/ReleaseNotes';
 
 // ---------------------------------------------------------------------------
 // Question definitions
@@ -471,7 +472,10 @@ export default function Onboarding() {
             return;
         }
 
-        try { localStorage.removeItem(storageKey); } catch { /* ignore */ }
+        try {
+            localStorage.removeItem(storageKey);
+            localStorage.setItem(RELEASE_SEEN_KEY, CURRENT_RELEASE_VERSION);
+        } catch { /* ignore */ }
         updateUser({ onboarding_completed: true, preferred_language: payload.preferred_language || 'en' });
 
         if (isOrg) {
@@ -495,6 +499,7 @@ export default function Onboarding() {
     };
 
     const handleSkip = () => {
+        try { localStorage.setItem(RELEASE_SEEN_KEY, CURRENT_RELEASE_VERSION); } catch { /* ignore */ }
         updateUser({ onboarding_completed: true });
         api.post('/profile/onboarding/skip').catch(() => {});
         navigate(isOrg ? '/dashboard/org' : '/dashboard/classroom');

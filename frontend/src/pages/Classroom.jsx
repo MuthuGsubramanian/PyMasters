@@ -365,10 +365,10 @@ const TRACK_META = {
     },
     // Lessons an org/school admin generated and published to this member's cohort.
     assigned: {
-        name: 'Assigned by Your Organization',
+        name: 'School & Teacher Assigned Curriculum',
         icon: <GraduationCap size={16} />,
-        accent: '#7c3aed',
-        gradient: 'from-purple-500/10 to-indigo-500/5',
+        accent: '#059669',
+        gradient: 'from-emerald-500/10 to-teal-500/5',
     },
     // Enterprise cloud curriculum — only served to org/enterprise users
     // (backend-gated; these entries are inert for everyone else).
@@ -414,13 +414,51 @@ const TRACK_META = {
         gradient: 'from-amber-500/10 to-yellow-500/5',
         enterprise: true,
     },
+    school_cs_ai: {
+        name: 'Computer Science Question Bank & Viva Prep',
+        icon: <GraduationCap size={16} />,
+        accent: '#0284c7',
+        gradient: 'from-sky-500/10 to-cyan-500/5',
+    },
+    school_mathematics: {
+        name: 'Mathematics',
+        icon: <BookOpen size={16} />,
+        accent: '#7c3aed',
+        gradient: 'from-violet-500/10 to-purple-500/5',
+    },
+    school_physics: {
+        name: 'Physics',
+        icon: <Zap size={16} />,
+        accent: '#2563eb',
+        gradient: 'from-blue-500/10 to-indigo-500/5',
+    },
+    school_chemistry: {
+        name: 'Chemistry',
+        icon: <Sparkles size={16} />,
+        accent: '#d97706',
+        gradient: 'from-amber-500/10 to-orange-500/5',
+    },
+    school_biology: {
+        name: 'Biology',
+        icon: <Layers size={16} />,
+        accent: '#16a34a',
+        gradient: 'from-emerald-500/10 to-green-500/5',
+    },
+    school_social_studies: {
+        name: 'Social Studies',
+        icon: <Globe2 size={16} />,
+        accent: '#e11d48',
+        gradient: 'from-rose-500/10 to-pink-500/5',
+    },
 };
 
 const DEFAULT_TRACK_ORDER = [
     'assigned',
+    'school_cs_ai',
     'python_fundamentals', 'python_intermediate', 'fun_automation',
     'working_with_data', 'web_development', 'dsa',
     'ai_fundamentals', 'ai_ml_foundations', 'machine_learning',
+    'school_mathematics', 'school_physics', 'school_chemistry', 'school_biology', 'school_social_studies',
     'deep_learning', 'deep_learning_complete', 'transformers_scratch',
     'ai_agents', 'ai_engineering', 'vibe_coding', 'trending_ai', 'fresh',
     'python_modern', 'functional_python', 'error_handling', 'debugging_mastery',
@@ -455,7 +493,7 @@ const STAGE_TRACK_GROUPS = {
 const PROFILE_WELCOME = {
     school: {
         title: 'Your School Coding & AI Classroom (Class 6–12)',
-        subtitle: 'Master Python fundamentals, CBSE/ICSE Computer Science, logic building, and fun automation projects.',
+        subtitle: 'Master Python fundamentals, STATE / MATRIC / CBSE / ICSE Computer Science, Question Banks, and AI labs.',
         icon: <GraduationCap size={14} />,
         color: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300',
     },
@@ -500,7 +538,7 @@ const PROFILE_WELCOME = {
 // ──────────────────────────────────────────────────────────────────────────────
 // Phase: select — lesson list grouped by track
 // ──────────────────────────────────────────────────────────────────────────────
-function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint = 'general', primaryTracks = null, completedLessons = new Set() }) {
+function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint = 'general', primaryTracks = null, completedLessons = new Set(), schoolScope = null }) {
     const [searchParams] = useSearchParams();
     const initialStage = searchParams.get('stage');
     const [expandedTrack, setExpandedTrack] = useState(null);
@@ -513,11 +551,19 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
     const grouped = {};
     lessons.forEach((lesson) => {
         const track = lesson.track || 'other';
-        if (stageFilter === 'school' && !STAGE_TRACK_GROUPS.school.has(track)) return;
+        if (stageFilter === 'term_1' && lesson.term !== 'Term 1') return;
+        if (stageFilter === 'term_2' && lesson.term !== 'Term 2') return;
+        if (stageFilter === 'question_bank' && lesson.pedagogy_mode !== 'concept_study') return;
+        if (
+            stageFilter === 'school'
+            && !STAGE_TRACK_GROUPS.school.has(track)
+            && !track.startsWith('school_')
+            && !lesson.board
+        ) return;
         if (stageFilter === 'college' && !STAGE_TRACK_GROUPS.college.has(track)) return;
         if (stageFilter === 'pro' && !STAGE_TRACK_GROUPS.pro.has(track)) return;
         if (qLower) {
-            const titleStr = String(resolveText(lesson.title, language) || '').toLowerCase();
+            const titleStr = String(lesson.unit_title || resolveText(lesson.title, language) || '').toLowerCase();
             const descStr = String(resolveText(lesson.description, language) || '').toLowerCase();
             const trackStr = String(TRACK_META[track]?.name || track).toLowerCase();
             if (!titleStr.includes(qLower) && !descStr.includes(qLower) && !trackStr.includes(qLower)) {
@@ -548,8 +594,34 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
         }
     });
 
-    const activeHint = stageFilter !== 'all' && PROFILE_WELCOME[stageFilter] ? stageFilter : profileHint;
-    const welcome = PROFILE_WELCOME[activeHint] || PROFILE_WELCOME.general;
+    const activeHint = schoolScope?.scoped
+        ? 'school'
+        : stageFilter !== 'all' && PROFILE_WELCOME[stageFilter]
+        ? stageFilter
+        : profileHint;
+    const baseWelcome = PROFILE_WELCOME[activeHint] || PROFILE_WELCOME.general;
+    const welcome = schoolScope?.scoped
+        ? {
+              ...baseWelcome,
+              title: `${schoolScope.board} Class ${schoolScope.grade} Classroom`,
+              subtitle: `2026–27 ${schoolScope.org_name} (${schoolScope.cohort_name}) — Board-aligned Python 3.11 labs, Term Question Banks & Teacher-assigned AI lessons.`,
+          }
+        : baseWelcome;
+    const filterTabs = schoolScope?.scoped
+        ? [
+              { id: 'all', label: 'All Units' },
+              { id: 'term_1', label: 'Term 1' },
+              { id: 'term_2', label: 'Term 2' },
+              { id: 'question_bank', label: 'Question Bank & Viva' },
+              { id: 'in_progress', label: '⚡ In Progress' },
+          ]
+        : [
+              { id: 'all', label: 'All Tracks' },
+              { id: 'school', label: '🌱 School (Class 6–12)' },
+              { id: 'college', label: '🎓 College, DSA & Web' },
+              { id: 'pro', label: '🚀 Pro, AI & Cloud' },
+              { id: 'in_progress', label: '⚡ In Progress' },
+          ];
 
     // Auto-expand first track
     useEffect(() => {
@@ -574,18 +646,12 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                 <div className="rounded-2xl border border-border-default bg-bg-surface p-3.5 space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex flex-wrap items-center gap-1.5">
-                            {[
-                                { id: 'all', label: 'All Tracks' },
-                                { id: 'school', label: '🌱 School (Class 6–12)' },
-                                { id: 'college', label: '🎓 College, DSA & Web' },
-                                { id: 'pro', label: '🚀 Pro, AI & Cloud' },
-                                { id: 'in_progress', label: '⚡ In Progress' },
-                            ].map((tab) => (
+                            {filterTabs.map((tab) => (
                                 <button
                                     key={tab.id}
                                     type="button"
                                     onClick={() => setStageFilter(tab.id)}
-                                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                                    className={`min-h-11 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
                                         stageFilter === tab.id
                                             ? 'border-purple-500 bg-purple-500/12 text-purple-700 dark:text-purple-300 shadow-sm'
                                             : 'border-transparent bg-bg-elevated text-text-secondary hover:text-text-primary hover:border-border-default'
@@ -730,9 +796,10 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                                                 }`} style={!isDone ? { background: meta.accent, opacity: isOffPath ? 0.7 : 1 } : {}}>
                                                                     {isDone ? '✓' : idx + 1}
                                                                 </div>
-                                                                <div className="ml-auto flex items-center gap-1.5">
+                                                                <div className="ml-auto flex flex-wrap items-center gap-1.5">
                                                                     {isDone && <Badge variant="success">Done</Badge>}
                                                                     {!isDone && isOffPath && <Badge variant="neutral">Off your path</Badge>}
+                                                                    {lesson.term && <Badge variant="neutral">{lesson.term}</Badge>}
                                                                     {lesson.assigned
                                                                         ? <Badge variant="primary">Assigned</Badge>
                                                                         : lesson.generated && <Badge variant="primary">Custom</Badge>}
@@ -743,7 +810,7 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                                                             </div>
                                                             {/* Title */}
                                                             <h4 className="font-bold text-[15px] leading-snug mb-1 transition-colors text-text-primary group-hover:text-purple-600 dark:group-hover:text-purple-300">
-                                                                {resolveText(lesson.title, language)}
+                                                                {lesson.unit_title || resolveText(lesson.title, language)}
                                                             </h4>
                                                             {/* Description */}
                                                             {lesson.description && (
@@ -2739,8 +2806,8 @@ export default function Classroom() {
                         </button>
                     </div>
                 )}
-                {/* Back button when in a lesson */}
-                {phase !== 'select' && (
+                {/* Back button when in a lesson (ConceptStudyView renders its own back header) */}
+                {phase !== 'select' && currentLesson?.pedagogy_mode !== 'concept_study' && (
                     <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
                         <motion.button
                             initial={{ opacity: 0, x: -10 }}
@@ -2824,6 +2891,7 @@ export default function Classroom() {
                                 profileHint={profileHint}
                                 primaryTracks={primaryTracks}
                                 completedLessons={completedLessons}
+                                schoolScope={schoolScope}
                             />
                         </motion.div>
                     )}

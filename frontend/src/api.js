@@ -384,8 +384,9 @@ export const unpublishOrgLessonItem = (orgId, setId, itemId) =>
     api.post(`/org/${orgId}/lesson-sets/${setId}/items/${itemId}/unpublish`);
 export const deleteOrgLessonSet = (orgId, setId) => api.delete(`/org/${orgId}/lesson-sets/${setId}`);
 
-// School provisioning (boards, grades, cohort subjects, teacher scoping, concept checks)
+// School provisioning (boards, grades, cohort subjects, teacher scoping, question bank, concept checks)
 export const getSchoolTemplates = (params = {}) => api.get('/schools/templates', { params });
+export const getSchoolQuestionBank = (params = {}) => api.get('/schools/question-bank', { params });
 export const getSchoolConfig = (orgId) => api.get(`/org/${orgId}/school-config`);
 export const updateSchoolConfig = (orgId, data) => api.put(`/org/${orgId}/school-config`, data);
 export const provisionCohortSyllabus = (orgId, data) => api.post(`/org/${orgId}/cohorts/provision`, data);

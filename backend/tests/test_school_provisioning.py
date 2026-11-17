@@ -98,9 +98,9 @@ def test_seeded_board_grade_templates(client):
     res = client.get("/api/schools/templates", headers=_auth(admin))
     assert res.status_code == 200, res.text
     data = res.json()
-    assert set(data["boards"]) == {"CBSE", "ICSE", "STATE", "IB"}
+    assert set(data["boards"]) == {"STATE", "MATRIC", "CBSE", "ICSE", "IB"}
     assert data["grades"] == [6, 7, 8, 9, 10, 11, 12]
-    assert len(data["templates"]) == 28
+    assert len(data["templates"]) == 35
 
     cbse8 = client.get("/api/schools/templates?board=CBSE&grade=8", headers=_auth(admin))
     assert cbse8.status_code == 200
@@ -109,8 +109,149 @@ def test_seeded_board_grade_templates(client):
     codes = {s["subject_code"]: s for s in tpls[0]["subjects"]}
     assert {"cs_ai", "mathematics", "physics", "chemistry", "biology", "social_studies"} <= set(codes)
     assert codes["cs_ai"]["pedagogy_mode"] == "coding_ide"
+    # 5 Python IDE units + 2 Term Question Bank & Viva Prep units = 7 units
+    assert codes["cs_ai"]["unit_count"] == 7
     assert codes["physics"]["pedagogy_mode"] == "concept_study"
     assert codes["social_studies"]["pedagogy_mode"] == "concept_study"
+
+    # Board aliases ("METRIC" -> "MATRIC", "SAMACHEER" -> "STATE") resolve cleanly
+    matric10 = client.get("/api/schools/templates?board=METRIC&grade=10", headers=_auth(admin))
+    assert matric10.status_code == 200
+    assert matric10.json()["templates"][0]["board"] == "MATRIC"
+
+    state12 = client.get("/api/schools/templates?board=SAMACHEER&grade=12", headers=_auth(admin))
+    assert state12.status_code == 200
+    assert state12.json()["templates"][0]["board"] == "STATE"
+
+
+def test_four_indian_boards_question_bank_and_multi_check_flow(client):
+    admin = _register(client, org_name="Bharathiyar Matric & CBSE School")
+    org_id = admin["org"]["org_id"]
+
+    # Verify Question Bank endpoint across all 4 Indian boards + extensible non-CS subjects
+    for board_alias, expected_board, grade in [
+        ("STATE_BOARD", "STATE", 12),
+        ("METRIC", "MATRIC", 10),
+        ("CBSE", "CBSE", 12),
+        ("ICSE", "ICSE", 10),
+    ]:
+        qb = client.get(
+            f"/api/schools/question-bank?board={board_alias}&grade={grade}&subject_code=cs_ai",
+            headers=_auth(admin),
+        )
+        assert qb.status_code == 200, qb.text
+        qdata = qb.json()
+        assert qdata["board"] == expected_board
+        assert qdata["grade"] == grade
+        assert qdata["counts"]["units"] == 5
+        assert qdata["counts"]["mcqs"] == 15
+        assert qdata["counts"]["short_answers"] >= 5
+        assert qdata["counts"]["coding_labs"] == 5
+        assert qdata["official_course_code"]
+
+    # Term filter + extensible physics Question Bank fallback
+    qb_t1 = client.get(
+        "/api/schools/question-bank?board=CBSE&grade=10&subject_code=cs_ai&term=Term%201",
+        headers=_auth(admin),
+    ).json()
+    assert qb_t1["counts"]["units"] == 3
+    assert qb_t1["counts"]["mcqs"] == 9
+
+    qb_phys = client.get(
+        "/api/schools/question-bank?board=ICSE&grade=9&subject_code=physics",
+        headers=_auth(admin),
+    ).json()
+    assert qb_phys["subject_code"] == "physics"
+    assert qb_phys["counts"]["mcqs"] >= 2
+
+    # Provision MATRIC Grade 10 CS-only cohort via "MATRICULATION" alias
+    prov = client.post(
+        f"/api/org/{org_id}/cohorts/provision",
+        json={
+            "cohort_name": "Class 10 - Matric CS",
+            "board": "MATRICULATION",
+            "grade": 10,
+            "load_all_subjects": False,
+            "subject_codes": ["cs_ai"],
+            "hide_public_tracks": True,
+        },
+        headers=_auth(admin),
+    )
+    assert prov.status_code == 200, prov.text
+    assert prov.json()["cohort"]["board"] == "MATRIC"
+    assert len(prov.json()["modules"]) == 7  # 5 coding_ide + 2 concept_study Term QBs
+
+    # Provisioned cohort immediately appears in /groups even before tagging students
+    groups_before = client.get(f"/api/org/{org_id}/groups", headers=_auth(admin)).json()["groups"]
+    assert any(g["name"] == "Class 10 - Matric CS" and g["count"] == 0 for g in groups_before)
+
+    student = _add_member(client, org_id, admin, role="member", cohort="Class 10 - Matric CS")
+
+    # Open Term 1 CS Question Bank unit and evaluate check #2 and check #5 (not just index 0!)
+    qb_lesson = client.get("/api/classroom/lesson/school_matric_g10_cs_qb_t1", headers=_auth(student))
+    assert qb_lesson.status_code == 200, qb_lesson.text
+    ldata = qb_lesson.json()
+    assert len(ldata["concept_checks"]) == 9
+    assert len(ldata["short_answers"]) >= 3
+    assert len(ldata["coding_labs"]) == 3
+
+    chk_second = ldata["concept_checks"][1]
+    chk_fifth = ldata["concept_checks"][4]
+    res2 = client.post(
+        "/api/classroom/concept-check",
+        json={
+            "lesson_id": "school_matric_g10_cs_qb_t1",
+            "check_id": chk_second["id"],
+            "selected_index": chk_second["correct_index"],
+        },
+        headers=_auth(student),
+    )
+    assert res2.status_code == 200
+    assert res2.json()["passed"] is True
+    assert res2.json()["check_id"] == chk_second["id"]
+    assert res2.json()["total_checks"] == 9
+
+    res5 = client.post(
+        "/api/classroom/concept-check",
+        json={
+            "lesson_id": "school_matric_g10_cs_qb_t1",
+            "check_id": chk_fifth["id"],
+            "selected_index": (chk_fifth["correct_index"] + 1) % 4,
+        },
+        headers=_auth(student),
+    )
+    assert res5.status_code == 200
+    assert res5.json()["passed"] is False
+    assert res5.json()["check_id"] == chk_fifth["id"]
+
+    # Verify mastery was actually recorded in user_mastery for cohort analytics!
+    cohorts_after = client.get(f"/api/org/{org_id}/cohorts", headers=_auth(admin)).json()["cohorts"]
+    c_matric = next(c for c in cohorts_after if c["cohort_name"] == "Class 10 - Matric CS")
+    assert c_matric["avg_mastery_pct"] > 0
+
+    # Verify School Admin's published AI lesson appears in strictly scoped student's /api/classroom/lessons (Bearer JWT only!)
+    conn = sqlite3.connect(os.environ["DB_PATH"])
+    gen_id = "gen_school_ai_10"
+    conn.execute(
+        "INSERT INTO generated_lessons (id, user_id, job_id, topic, track, lesson_data, trigger) VALUES (?, ?, 'j1', 'SQL Joins', 'generated', ?, 'org_curriculum')",
+        [gen_id, admin["id"], '{"id": "gen_school_ai_10", "topic": "SQL Joins", "track": "generated", "title": {"en": "Matric Class 10 SQL Joins"}, "description": {"en": "Multi-table joins"}, "xp_reward": 50}'],
+    )
+    conn.execute(
+        "INSERT INTO org_lesson_sets (id, org_id, title, group_name, status, created_by) VALUES ('set_m10', ?, 'Matric Extra AI Set', 'Class 10 - Matric CS', 'ready', ?)",
+        [org_id, admin["id"]],
+    )
+    conn.execute(
+        "INSERT INTO org_lesson_set_items (id, set_id, topic, lesson_id, status) VALUES ('item_m10', 'set_m10', 'SQL Joins', ?, 'published')",
+        [gen_id],
+    )
+    conn.commit()
+    conn.close()
+
+    scoped_lessons = client.get("/api/classroom/lessons", headers=_auth(student)).json()["lessons"]
+    scoped_ids = {l["id"] for l in scoped_lessons}
+    assert gen_id in scoped_ids
+    ai_entry = next(l for l in scoped_lessons if l["id"] == gen_id)
+    assert ai_entry["assigned"] is True
 
 
 def test_load_all_vs_subset_scoping_and_concept_study_flow(client):

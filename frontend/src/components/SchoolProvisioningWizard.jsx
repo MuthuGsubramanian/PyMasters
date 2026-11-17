@@ -3,6 +3,7 @@ import {
   BookOpen,
   CheckCircle2,
   Code2,
+  FileQuestion,
   GraduationCap,
   Layers,
   Loader2,
@@ -10,22 +11,23 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react';
-import {
-  getOrgCohorts,
-  getSchoolConfig,
-  getSchoolTemplates,
-  provisionCohortSyllabus,
-  updateSchoolConfig,
-} from '../api';
+import * as api from '../api';
 import useI18n from '../hooks/useI18n';
 
-const BOARDS = ['CBSE', 'ICSE', 'STATE', 'IB'];
+const BOARDS = ['CBSE', 'ICSE', 'STATE', 'MATRIC', 'IB'];
+const BOARD_LABELS = {
+  STATE: 'STATE — State Board (Samacheer Kalvi / SCERT)',
+  MATRIC: 'MATRIC — Matriculation Mode',
+  CBSE: 'CBSE — Central Board (NEP 2026-27)',
+  ICSE: 'ICSE — CISCE (ICSE 86 / ISC 868)',
+  IB: 'IB — International Baccalaureate',
+};
 const GRADES = [6, 7, 8, 9, 10, 11, 12];
 
 /**
- * SchoolProvisioningWizard — Enables school admins to pick Board -> Grade ->
- * "Load All Subjects" or individual subject toggles for a cohort, set strict
- * school-track scoping + SSO domain defaults, and monitor cohort mastery.
+ * SchoolProvisioningWizard — Enables school admins to pick Board (STATE, MATRIC,
+ * CBSE, ICSE, IB) -> Grade (6-12) -> "Load All Subjects", "Computer Science Only",
+ * or custom subject toggles, preview the 2026-27 Question Bank, and monitor cohorts.
  */
 export default function SchoolProvisioningWizard({
   orgId,
@@ -53,17 +55,21 @@ export default function SchoolProvisioningWizard({
   const [savingSso, setSavingSso] = useState(false);
   const [banner, setBanner] = useState(null);
 
+  const [qbOpen, setQbOpen] = useState(false);
+  const [qbData, setQbData] = useState(null);
+  const [qbLoading, setQbLoading] = useState(false);
+
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
       const [tplRes, cohRes, cfgRes] = await Promise.all([
-        getSchoolTemplates({ board, grade }),
-        getOrgCohorts(orgId),
-        getSchoolConfig(orgId).catch(() => ({ data: null })),
+        api.getSchoolTemplates({ board, grade }),
+        api.getOrgCohorts(orgId),
+        api.getSchoolConfig(orgId).catch(() => ({ data: null })),
       ]);
       const tpls = tplRes.data?.templates || [];
       setTemplates(tpls);
-      if (tpls[0]?.subjects) {
+      if (tpls[0]?.subjects && loadAllSubjects) {
         setSelectedCodes(tpls[0].subjects.map((s) => s.subject_code));
       }
       setCohorts(cohRes.data?.cohorts || []);
@@ -77,19 +83,44 @@ export default function SchoolProvisioningWizard({
     } finally {
       setLoading(false);
     }
-  }, [orgId, board, grade]);
+  }, [orgId, board, grade, loadAllSubjects]);
 
   useEffect(() => {
     loadAll();
   }, [loadAll]);
 
+  useEffect(() => {
+    if (!qbOpen || typeof api.getSchoolQuestionBank !== 'function') return;
+    let active = true;
+    setQbLoading(true);
+    api
+      .getSchoolQuestionBank({ board, grade, subject_code: 'cs_ai' })
+      .then((res) => {
+        if (active) setQbData(res.data || null);
+      })
+      .catch(() => {
+        if (active) setQbData(null);
+      })
+      .finally(() => {
+        if (active) setQbLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [qbOpen, board, grade]);
+
   const activeTemplate = templates[0] || null;
   const subjects = activeTemplate?.subjects || [];
+
+  const handleBoardChange = (nextBoard) => {
+    setBoard(nextBoard);
+    setCohortName(`${nextBoard} Grade ${grade} - Section A`);
+  };
 
   const handleGradeChange = (g) => {
     const next = Number(g);
     setGrade(next);
-    setCohortName(`Grade ${next} - Section A`);
+    setCohortName(`${board} Grade ${next} - Section A`);
   };
 
   const toggleSubject = (code) => {
@@ -97,6 +128,11 @@ export default function SchoolProvisioningWizard({
     setSelectedCodes((prev) =>
       prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
     );
+  };
+
+  const selectCsOnly = () => {
+    setLoadAllSubjects(false);
+    setSelectedCodes(['cs_ai']);
   };
 
   const toggleTeacher = (id) => {
@@ -109,7 +145,7 @@ export default function SchoolProvisioningWizard({
     setSavingSso(true);
     setBanner(null);
     try {
-      await updateSchoolConfig(orgId, {
+      await api.updateSchoolConfig(orgId, {
         board,
         academic_year: '2026-27',
         sso_provider: ssoProvider,
@@ -134,7 +170,7 @@ export default function SchoolProvisioningWizard({
     setSubmitting(true);
     setBanner(null);
     try {
-      const res = await provisionCohortSyllabus(orgId, {
+      const res = await api.provisionCohortSyllabus(orgId, {
         cohort_name: cohortName.trim(),
         board,
         grade,
@@ -143,7 +179,7 @@ export default function SchoolProvisioningWizard({
         hide_public_tracks: hidePublicTracks,
         assign_teacher_ids: assignTeacherIds,
       });
-      const cnt = res.data?.modules?.length || 0;
+      const cnt = res.data?.modules?.length || res.data?.modules_count || 0;
       const subCnt = res.data?.subjects?.length || 0;
       setBanner({
         type: 'ok',
@@ -163,15 +199,15 @@ export default function SchoolProvisioningWizard({
 
   return (
     <div className="space-y-4 mb-6">
-      <div className="panel p-5 border border-border-default bg-bg-surface rounded-2xl">
+      <div className="panel p-4 sm:p-5 border border-border-default bg-bg-surface rounded-2xl">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div>
-            <h3 className="text-base font-bold text-text-primary flex items-center gap-2">
+            <h3 className="text-base font-bold text-text-primary flex flex-wrap items-center gap-2">
               <GraduationCap size={18} className="text-accent-primary" />
               {t('school.wizardTitle', 'School Syllabus & Cohort Provisioning')}
               {orgType === 'school' && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-accent-subtle text-accent-primary font-semibold">
-                  K-12 Ready
+                  2026-27 · 4-Board CS Ready
                 </span>
               )}
             </h3>
@@ -182,15 +218,27 @@ export default function SchoolProvisioningWizard({
               )}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleSaveSchoolConfig}
-            disabled={savingSso}
-            className="min-h-10 px-3 py-1.5 rounded-xl border border-border-default bg-bg-elevated hover:border-border-strong text-xs font-semibold text-text-primary flex items-center gap-1.5"
-          >
-            {savingSso ? <Loader2 size={13} className="animate-spin" /> : <ShieldCheck size={13} className="text-emerald-500" />}
-            {t('school.saveConfig', 'Save Board & SSO Policy')}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setQbOpen((o) => !o)}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border-default bg-bg-elevated hover:border-border-strong text-xs font-semibold text-text-primary inline-flex items-center gap-1.5"
+            >
+              <FileQuestion size={14} className="text-accent-primary" />
+              {qbOpen
+                ? t('school.hideQuestionBank', 'Hide Question Bank')
+                : t('school.previewQuestionBank', 'Preview Question Bank')}
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveSchoolConfig}
+              disabled={savingSso}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border-default bg-bg-elevated hover:border-border-strong text-xs font-semibold text-text-primary inline-flex items-center gap-1.5"
+            >
+              {savingSso ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} className="text-emerald-500" />}
+              {t('school.saveConfig', 'Save Board & SSO Policy')}
+            </button>
+          </div>
         </div>
 
         {banner && (
@@ -212,13 +260,13 @@ export default function SchoolProvisioningWizard({
               {t('school.boardLabel', 'Educational Board')}
               <select
                 value={board}
-                onChange={(e) => setBoard(e.target.value)}
+                onChange={(e) => handleBoardChange(e.target.value)}
                 aria-label="Educational Board"
-                className="input-neo mt-1 w-full px-3 py-2 text-sm"
+                className="input-neo min-h-11 mt-1 w-full px-3 py-2 text-sm"
               >
                 {BOARDS.map((b) => (
                   <option key={b} value={b}>
-                    {b}
+                    {BOARD_LABELS[b] || b}
                   </option>
                 ))}
               </select>
@@ -230,11 +278,11 @@ export default function SchoolProvisioningWizard({
                 value={grade}
                 onChange={(e) => handleGradeChange(e.target.value)}
                 aria-label="Grade"
-                className="input-neo mt-1 w-full px-3 py-2 text-sm"
+                className="input-neo min-h-11 mt-1 w-full px-3 py-2 text-sm"
               >
                 {GRADES.map((g) => (
                   <option key={g} value={g}>
-                    Grade {g}
+                    Grade {g} (Class {g})
                   </option>
                 ))}
               </select>
@@ -248,10 +296,49 @@ export default function SchoolProvisioningWizard({
                 onChange={(e) => setCohortName(e.target.value)}
                 placeholder="Grade 8 - Section A"
                 aria-label="Cohort Name"
-                className="input-neo mt-1 w-full px-3 py-2 text-sm"
+                className="input-neo min-h-11 mt-1 w-full px-3 py-2 text-sm"
               />
             </label>
           </div>
+
+          {qbOpen && (
+            <div className="rounded-2xl border border-accent-primary/30 bg-accent-subtle/40 p-4 space-y-3">
+              {qbLoading ? (
+                <div className="flex items-center gap-2 text-xs text-text-muted">
+                  <Loader2 size={14} className="animate-spin" /> Loading 2026–27 Question Bank…
+                </div>
+              ) : qbData ? (
+                <>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-wider text-accent-primary">
+                        {qbData.board_name} · Class {qbData.grade} ({qbData.official_course_code || qbData.academic_year})
+                      </div>
+                      <p className="text-xs text-text-secondary mt-0.5">
+                        {qbData.counts?.units || 0} Units · {qbData.counts?.mcqs || 0} Verified MCQs ·{' '}
+                        {qbData.counts?.short_answers || 0} Viva Short Answers · {qbData.counts?.coding_labs || 0} Python 3.11 Labs
+                      </p>
+                    </div>
+                  </div>
+                  {Array.isArray(qbData.units) && qbData.units.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {qbData.units.map((u) => (
+                        <div
+                          key={`${u.unit_order}-${u.unit_title}`}
+                          className="rounded-xl border border-border-default bg-bg-surface px-3 py-2 text-xs"
+                        >
+                          <span className="font-bold text-accent-primary">{u.term} · Unit {u.unit_order}: </span>
+                          <span className="font-semibold text-text-primary">{u.unit_title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-xs text-text-muted">Question bank preview unavailable for this selection.</p>
+              )}
+            </div>
+          )}
 
           <div className="rounded-xl border border-border-default bg-bg-elevated/60 p-3.5 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -259,23 +346,36 @@ export default function SchoolProvisioningWizard({
                 <Layers size={14} className="text-accent-primary" />
                 {t('school.subjectsHeader', 'Subjects & Pedagogical Tracks')}
               </span>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !loadAllSubjects;
-                  setLoadAllSubjects(next);
-                  if (next) setSelectedCodes(subjects.map((s) => s.subject_code));
-                }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                  loadAllSubjects
-                    ? 'bg-accent-primary text-primary-foreground border-transparent'
-                    : 'bg-bg-surface text-text-secondary border-border-default hover:border-border-strong'
-                }`}
-              >
-                {loadAllSubjects
-                  ? t('school.allSubjectsLoaded', 'All Subjects Selected')
-                  : t('school.loadAllSubjects', 'Load All Subjects')}
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={selectCsOnly}
+                  className={`min-h-11 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                    !loadAllSubjects && selectedCodes.length === 1 && selectedCodes[0] === 'cs_ai'
+                      ? 'bg-accent-primary text-primary-foreground border-transparent'
+                      : 'bg-bg-surface text-text-secondary border-border-default hover:border-border-strong'
+                  }`}
+                >
+                  {t('school.csOnlyBtn', 'Computer Science Only')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = !loadAllSubjects;
+                    setLoadAllSubjects(next);
+                    if (next) setSelectedCodes(subjects.map((s) => s.subject_code));
+                  }}
+                  className={`min-h-11 px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                    loadAllSubjects
+                      ? 'bg-accent-primary text-primary-foreground border-transparent'
+                      : 'bg-bg-surface text-text-secondary border-border-default hover:border-border-strong'
+                  }`}
+                >
+                  {loadAllSubjects
+                    ? t('school.allSubjectsLoaded', 'All Subjects Selected')
+                    : t('school.loadAllSubjects', 'Load All Subjects')}
+                </button>
+              </div>
             </div>
 
             {loading ? (
@@ -292,7 +392,7 @@ export default function SchoolProvisioningWizard({
                       key={sub.id}
                       type="button"
                       onClick={() => toggleSubject(sub.subject_code)}
-                      className={`text-left rounded-xl p-2.5 border transition-colors flex items-start gap-2 ${
+                      className={`min-h-11 text-left rounded-xl p-2.5 border transition-colors flex items-start gap-2 ${
                         checked
                           ? 'border-accent-primary bg-accent-subtle'
                           : 'border-border-default bg-bg-surface hover:bg-bg-elevated'
@@ -306,7 +406,7 @@ export default function SchoolProvisioningWizard({
                           {sub.subject_name}
                         </span>
                         <span className="block text-xs text-text-muted">
-                          {isCoding ? 'CodeMirror IDE + Trace' : 'Concept Cards + Socratic'} ·{' '}
+                          {isCoding ? 'Python IDE + Question Bank' : 'Concept Cards + Socratic'} ·{' '}
                           {sub.unit_count} units
                         </span>
                       </span>
@@ -324,7 +424,7 @@ export default function SchoolProvisioningWizard({
               <select
                 value={ssoProvider}
                 onChange={(e) => setSsoProvider(e.target.value)}
-                className="input-neo mt-1 w-full px-3 py-2 text-sm"
+                className="input-neo min-h-11 mt-1 w-full px-3 py-2 text-sm"
               >
                 <option value="">Email / Invite Only</option>
                 <option value="google_workspace">Google Workspace for Education</option>
@@ -340,11 +440,11 @@ export default function SchoolProvisioningWizard({
                 value={ssoDomain}
                 onChange={(e) => setSsoDomain(e.target.value)}
                 placeholder="oakridge.edu.in"
-                className="input-neo mt-1 w-full px-3 py-2 text-sm"
+                className="input-neo min-h-11 mt-1 w-full px-3 py-2 text-sm"
               />
             </label>
 
-            <label className="flex items-center gap-2 text-xs font-medium text-text-secondary py-2 cursor-pointer">
+            <label className="min-h-11 flex items-center gap-2 text-xs font-medium text-text-secondary py-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={hidePublicTracks}
@@ -366,7 +466,7 @@ export default function SchoolProvisioningWizard({
                     key={uid}
                     type="button"
                     onClick={() => toggleTeacher(uid)}
-                    className={`px-2.5 py-1 rounded-full border text-xs font-medium ${
+                    className={`min-h-11 px-3 py-1.5 rounded-full border text-xs font-medium ${
                       active
                         ? 'bg-accent-subtle border-accent-primary text-accent-primary'
                         : 'bg-bg-elevated border-border-default text-text-secondary'
@@ -383,7 +483,7 @@ export default function SchoolProvisioningWizard({
             <button
               type="submit"
               disabled={submitting || (!loadAllSubjects && selectedCodes.length === 0)}
-              className="btn-neo px-4 py-2.5 text-sm font-bold flex items-center gap-2"
+              className="btn-neo btn-neo-primary min-h-11 px-5 py-2.5 text-sm font-bold flex items-center gap-2 disabled:opacity-50"
             >
               {submitting ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
               {t('school.provisionBtn', 'Provision Cohort Syllabus')}
@@ -396,7 +496,7 @@ export default function SchoolProvisioningWizard({
         <div className="panel p-4 border border-border-default bg-bg-surface rounded-2xl">
           <h4 className="text-sm font-bold text-text-primary mb-3 flex items-center gap-2">
             <Users size={15} className="text-accent-primary" />
-            {t('school.activeCohorts', 'Provisioned Cohorts & Mastery Analytics')}
+            {t('school.activeCohorts', 'Provisioned Cohorts & Mastery Analytics')} ({cohorts.length})
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {cohorts.map((c) => (
@@ -411,7 +511,7 @@ export default function SchoolProvisioningWizard({
                       {c.board} · Grade {c.grade} · {c.subjects?.length || 0} subjects · {c.module_count} modules
                     </div>
                   </div>
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-accent-subtle text-accent-primary">
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-accent-subtle text-accent-primary shrink-0">
                     {c.completion_rate_pct}% done
                   </span>
                 </div>
