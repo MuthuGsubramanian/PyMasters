@@ -9,6 +9,7 @@ import resource
 import subprocess
 import sys
 import tempfile
+import textwrap
 from pathlib import Path
 
 from socialbot import briefs, config, llm
@@ -42,9 +43,31 @@ def _banned(text):
     return found
 
 
-def _compile_errors(code, label):
+def _normalize_code(code: str) -> str:
+    if not code:
+        return ""
+    dedented = textwrap.dedent(code).strip("\n")
     try:
-        compile(code, label, "exec")
+        compile(dedented, "<check>", "exec")
+        return dedented
+    except SyntaxError:
+        # Handle LLM snippets where line 1 is at col 0 and lines 2..N carry 4-space post indentation
+        lines = code.strip("\n").splitlines()
+        if len(lines) > 1 and not lines[0].startswith(" "):
+            rest = textwrap.dedent("\n".join(lines[1:]))
+            candidate = lines[0] + "\n" + rest
+            try:
+                compile(candidate, "<check>", "exec")
+                return candidate
+            except SyntaxError:
+                pass
+        return dedented
+
+
+def _compile_errors(code, label):
+    norm = _normalize_code(code)
+    try:
+        compile(norm, label, "exec")
         return []
     except SyntaxError as e:
         return [f"{label}: code does not compile (SyntaxError line {e.lineno}: {e.msg})"]
@@ -97,8 +120,8 @@ def hard_checks(kind, draft):
             errs.append(f"spoken word count is {n}; it must be {lo}-{hi}")
         if len(draft.get("title", "")) > (60 if kind == "short" else 70):
             errs.append("title too long")
-        if kind == "short" and _words(draft.get("hook")) > 14:
-            errs.append("hook must be <= 12 words")
+        if kind == "short" and _words(draft.get("hook")) > 18:
+            errs.append("hook must be <= 16 words")
         if "pymasters" not in (draft.get("cta", "") + draft.get("description", "")).lower():
             errs.append("cta/description must point to pymasters.net")
         if draft.get("is_hf_space") and "huggingface.co/spaces/muthu88/" not in (draft.get("description") or "").lower():

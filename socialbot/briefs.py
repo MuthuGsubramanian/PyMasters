@@ -5,7 +5,7 @@ BRAND = """You write for PyMasters (https://pymasters.net), an interactive learn
 Voice: a strictly professional, warm, crystal-clear teacher writing and speaking in simple everyday English so even a completely non-technical person understands complex tech effortlessly. Simple and concrete over clever or academic.
 Hard rules:
 - EXPLAIN IN SIMPLE TERMS FOR ANYONE: Break down every complex topic step by step as if explaining to a smart friend with zero coding or AI background. Never drop unexplained technical jargon, dense math, or acronyms (if a technical word appears in the source, replace it with an everyday word OR explain what it means in 5 plain words right away using concrete real-world comparisons like sorting mail, checking an ID at a bank counter, following a recipe, or keeping a ledger).
-- NEVER USE HINDI WORDS: Write in plain, clear English (Tamil words like "Vanakkam", "nanba", "Vaathiyaar" are permitted where relevant to PyMasters, but Hindi words and Hinglish are strictly banned—never use "chai", "samosa", "tapri", "roti", "jugaad", "namaste", "paisa", "lakh", "crore", "bhaiya", "yaar", "desi", "bazaar", "mandi", "kirana", "dabba", "tiffin", or any Devanagari script).
+- NEVER USE HINDI WORDS: Write in plain, clear English (Tamil words like "Vanakkam", "nanba", "nanbis", "Vaathiyaar" are permitted where relevant to PyMasters, but Hindi words and Hinglish are strictly banned—never use "chai", "samosa", "tapri", "roti", "jugaad", "namaste", "paisa", "lakh", "crore", "bhaiya", "yaar", "desi", "bazaar", "mandi", "kirana", "dabba", "tiffin", or any Devanagari script).
 - Strictly professional tone: never use casual, whimsical, or consumer-trivia scenarios (no restaurant bills, tea/coffee rotas, sports fixtures, superhero/movie/kid metaphors, or playful banter).
 - One simple, memorable core idea per piece, grounded in real Python 3.11 behavior from the material. Never invent APIs or numbers.
 - No hype or filler: never use "game-changer", "unlock", "supercharge", "dive in", "delve", "in today's world",
@@ -230,11 +230,16 @@ YOUTUBE_SELF_EXPLANATORY_RULES = """Simple, Non-Technical Breakdown & Self-Expla
 
 
 def short_prompt(les, feedback=None, previous=None):
+    greeting_rule = (
+        'LIVE INFLUENCER GREETING: Open `hook` warmly as our live mentor with "Vanakkam nanba and nanbis!" '
+        "followed immediately by a <= 11-word everyday question or surprising fact (<= 16 words total in `hook`)."
+    )
     if les.get("is_hf_space"):
-        return f"""Write a super simple, self-explanatory YouTube Short (40-50 seconds spoken, strictly 90-115 words across hook + all scenes[].narration + cta)
+        return f"""Write a super simple, self-explanatory YouTube Short (40-50 seconds spoken, strictly 90-120 words across hook + all scenes[].narration + cta)
 breaking down what our live PyMasters app ({les['title']}) actually does so even a completely non-technical person understands it on the first watch.
+{greeting_rule}
 First explain the real-world problem in simple everyday words (use a concrete real-world analogy, NO intimidating acronyms in the title or hook), then walk through how it works simply before showing a tiny Python example.
-The hook must land in the first 2 seconds (<= 11 simple words). Use 5 scenes, each with 16-20 spoken words, and a brief cta (<= 12 words) inviting viewers to try the free interactive app and learn simply at pymasters.net.
+Use 5 scenes, each with 16-20 spoken words, and a brief cta (<= 12 words) inviting viewers to try the free interactive app and learn simply at pymasters.net.
 The description MUST include BOTH the Hugging Face Space link ({les['space_url']}) AND {les['url']}.
 Every number mentioned in spoken narration or shown in an output visual MUST match the exact output of the lesson code.
 {YOUTUBE_SELF_EXPLANATORY_RULES}
@@ -242,19 +247,20 @@ Every number mentioned in spoken narration or shown in an output visual MUST mat
 LESSON MATERIAL (simplify and translate all heavy jargon into plain everyday language):
 {material_block(les)}"""
     if les.get("is_daily_trend"):
-        return f"""Write a super simple, self-explanatory YouTube Short (40-50 seconds spoken, strictly 90-115 words across hook + all scenes[].narration + cta) breaking down today's
+        return f"""Write a super simple, self-explanatory YouTube Short (40-50 seconds spoken, strictly 90-120 words across hook + all scenes[].narration + cta) breaking down today's
 trending topic in {les.get('pillar_label', 'AI Engineering')} ({les['title']}) so even a non-technical person understands how it works and why it matters.
-Make the hook catchy, relatable, and clear in the first 2 seconds (<= 11 simple words)—state the everyday problem in plain words with zero buzzwords or unexplained jargon.
-Translate the core mechanism into an everyday comparison first, then show one clear visual/code example and its real result.
+{greeting_rule}
+State the everyday problem in plain words with zero buzzwords or unexplained jargon, translate the core mechanism into an everyday comparison first, then show one clear visual/code example and its real result.
 Use 5 scenes, each with 16-20 spoken words, and end with a brief cta (<= 12 words) on how pymasters.net breaks down tech in simple terms.
 {YOUTUBE_SELF_EXPLANATORY_RULES}
 {_fb(feedback, previous)}
 LESSON MATERIAL (simplify and translate all heavy jargon into plain everyday language):
 {material_block(les)}"""
-    return f"""Write a super simple, self-explanatory YouTube Short (40-50 seconds spoken, strictly 90-115 words across hook + all scenes[].narration + cta) teaching ONE
+    return f"""Write a super simple, self-explanatory YouTube Short (40-50 seconds spoken, strictly 90-120 words across hook + all scenes[].narration + cta) teaching ONE
 practical idea from this PyMasters lesson so clearly that even a completely non-technical person understands it immediately.
+{greeting_rule}
 Translate every technical term into plain everyday English and concrete real-world comparisons before showing any Python.
-The hook must land in the first 2 seconds (<= 11 simple words, zero jargon). Use 5 scenes, each with 16-20 spoken words, and a brief cta (<= 12 words) mentioning pymasters.net.
+Use 5 scenes, each with 16-20 spoken words, and a brief cta (<= 12 words) mentioning pymasters.net.
 {YOUTUBE_SELF_EXPLANATORY_RULES}
 {_fb(feedback, previous)}
 LESSON MATERIAL (simplify and translate all heavy jargon into plain everyday language):
@@ -262,11 +268,13 @@ LESSON MATERIAL (simplify and translate all heavy jargon into plain everyday lan
 
 
 def long_prompt(les, feedback=None, previous=None):
-    return f"""Write a super clear, beginner-friendly 6-9 minute YouTube lesson (about 950-1350 spoken words) that breaks down this PyMasters topic in simple terms so anyone—even with zero technical background—follows effortlessly from start to finish:
+    return f"""Write a super clear, beginner-friendly 6-9 minute YouTube lesson (about 950-1350 spoken words) structured as a warm, NotebookLM-style 2-host audio explainer ("Vaathiyaar:" and curious learner "Ananya:") that breaks down this PyMasters topic in simple terms so anyone—even with zero technical background—follows effortlessly from start to finish:
+- Open `hook` warmly with: "Vaathiyaar: Vanakkam nanba and nanbis! ..." followed by Ananya asking the everyday question every beginner wonders about.
+- Across `chapters[].scenes[].narration`, write natural, engaging 2-speaker lines prefixed with `Vaathiyaar:` and `Ananya:` (1-2 short turns per scene) so Ananya asks the exact intuitive question on the viewer's mind and Vaathiyaar explains the context clearly over the visuals (no on-camera presenter is shown—the visuals carry the screen while the two voices guide the learner):
 1. Open with a relatable everyday problem in plain English—zero jargon (`metric` / `compare` / `flow` visuals).
 2. Build the visual mental model step by step using concrete real-world comparisons (`flow` / `compare` `style="mapping"` / `timeline`) so the viewer understands WHY and HOW it works before seeing code.
 3. Introduce tiny, clean Python examples one small step at a time (`trace` / `code` with `output`), translating every single keyword into plain English as if speaking to a first-time learner.
-4. Show a common mistake vs. the simple fix (`compare` with `style="versus"`), and close with a crystal-clear plain-English recap.
+4. Show a common mistake vs. the simple fix (`compare` with `style="versus"`), and close `cta` with Vaathiyaar inviting listeners to practice interactively at pymasters.net.
 Every scene.visual MUST include `step_badge` and a plain-English `note` banner so any frame is self-explanatory on mute, and each chapter must mix visual types (`flow`, `compare`, `metric`, `trace`, `code`, `plot`).
 {_fb(feedback, previous)}
 LESSON MATERIAL (break down complexity and avoid unexplained jargon):

@@ -78,19 +78,44 @@ def write_srt(words, path, per=7):
     Path(path).write_text("\n".join(lines), encoding="utf-8")
 
 
-def render_narrated(segments, out_dir: Path, w, h, captions=True):
+def render_narrated(segments, out_dir: Path, w, h, captions=True, live_influencer=None, conversational=None):
     """segments: [{"narration": str, "visual": {...}, "chapter": str|None}]
+    - Daily 9:16 Shorts (`live_influencer=True`): 1 batched `$0.00` Gemini 2.5 Flash TTS call + Live Studio Vaathiyaar
+      Hero presenter on hook/CTA ("Vanakkam nanba and nanbis!") & top-right PiP during walkthrough scenes.
+    - Weekly 16:9 Longs (`live_influencer=False`, `conversational=True`): chapter-batched 2-host (`Vaathiyaar` + `Ananya`)
+      NotebookLM-style conversational audio over visual scenes (no on-camera presenter).
     Returns dict(video, srt, duration, chapters=[(start_s, title)])."""
+    from socialbot.render import presenter_overlay as PO
+
     out_dir.mkdir(parents=True, exist_ok=True)
     F = S.Frame(w, h)
+    if live_influencer is None:
+        live_influencer = config.SHORT_LIVE_INFLUENCER if F.portrait else config.LONG_LIVE_PRESENTER
+    if conversational is None:
+        conversational = (not F.portrait) and config.LONG_CONVERSATIONAL_AUDIO
+
+    # Synthesize audio in minimal batched `$0.00` Gemini TTS calls (with automatic Kokoro-82M fallback)
+    synth_results = []
+    if conversational:
+        # Group by chapter so each chapter runs in a single 2-speaker (`Vaathiyaar` + `Ananya`) call
+        groups = []
+        for seg_ in segments:
+            if seg_.get("chapter") or not groups:
+                groups.append([seg_["narration"]])
+            else:
+                groups[-1].append(seg_["narration"])
+        for grp in groups:
+            synth_results.extend(tts.synth_segments_hybrid(grp, conversational=True))
+    else:
+        synth_results = tts.synth_segments_hybrid([s["narration"] for s in segments], conversational=False)
+
     audio_parts, all_words, timeline, chapters, t0 = [], [], [], [], 0.0
     gap = np.zeros(int(GAP * tts.SR), dtype=np.float32)
-    for seg_ in segments:
-        a, words = tts.synth(seg_["narration"])
+    for idx, (seg_, (a, words)) in enumerate(zip(segments, synth_results)):
         dur = len(a) / tts.SR
         if seg_.get("chapter"):
             chapters.append((t0, seg_["chapter"]))
-        timeline.append((t0, t0 + dur + GAP, seg_["visual"]))
+        timeline.append((t0, t0 + dur + GAP, seg_["visual"], idx))
         all_words += [(wd, s + t0, e + t0) for wd, s, e in words]
         audio_parts += [a, gap]
         t0 += dur + GAP
@@ -98,17 +123,33 @@ def render_narrated(segments, out_dir: Path, w, h, captions=True):
     voice = np.concatenate(audio_parts + [np.zeros(int(0.6 * tts.SR), dtype=np.float32)])
     sf.write(out_dir / "voice.wav", voice, tts.SR)
     _mix(out_dir / "voice.wav", out_dir / "audio.wav", total)
+    env = PO.compute_speech_envelope(voice, tts.SR, FPS) if live_influencer else None
     video = out_dir / "video.mp4"
     wr = FFmpegWriter(video, w, h, audio=out_dir / "audio.wav")
     n = int(total * FPS)
     si = 0
+    last_seg_idx = len(timeline) - 1
     for fi in range(n):
         now = fi / FPS
-        while si < len(timeline) - 1 and now >= timeline[si][1]:
+        while si < last_seg_idx and now >= timeline[si][1]:
             si += 1
-        a, b, vis = timeline[si]
+        a, b, vis, seg_idx = timeline[si]
         t = min(1.0, (now - a) / max(0.01, (b - a)))
-        wr.write(S.draw_frame(F, vis, t, now / total, words=all_words if captions else None, now=now))
+        prog = now / total
+        if live_influencer and F.portrait:
+            lvl = float(env[min(fi, len(env) - 1)])
+            if seg_idx == 0 or seg_idx == last_seg_idx:
+                frame = PO.draw_short_hero_presenter(
+                    F.bg.copy(), F, vis, t, prog, lvl, now,
+                    words=all_words if captions else None,
+                    is_cta=(seg_idx == last_seg_idx),
+                )
+            else:
+                frame = S.draw_frame(F, vis, t, prog, words=all_words if captions else None, now=now)
+                PO.draw_short_pip_presenter(frame, F, lvl, now)
+            wr.write(frame)
+        else:
+            wr.write(S.draw_frame(F, vis, t, prog, words=all_words if captions else None, now=now))
     wr.close()
     write_srt(all_words, out_dir / "captions.srt")
     (out_dir / "voice.wav").unlink(missing_ok=True)

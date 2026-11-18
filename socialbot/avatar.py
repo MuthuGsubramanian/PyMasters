@@ -176,15 +176,45 @@ class SynthesiaAdapter:
         }
 
 
+class GoogleZeroCostAvatarAdapter:
+    """Zero-extra-cost presenter adapter (`$0.00`):
+    1. Reuses any exported Google Vids / Veo AI Avatar MP4 placed in `~/GoogleDrive/PyMasters Social Content/Presenter Plates/`
+       or `config.PRESENTER_PLATES_DIR` matching the title/slug.
+    2. Otherwise renders our consistent Studio `Vaathiyaar` presenter synced to `$0.00` `gemini-2.5-flash-preview-tts`
+       (with automatic local `Kokoro-82M` fallback)."""
+
+    name = "google_zero_cost"
+
+    def render_local(self, script_text: str, out_mp4: Path, title: str = "", width: int = 1280, height: int = 720) -> AvatarRenderResult:
+        import re
+        import shutil
+        from socialbot.render import presenter_overlay as PO
+
+        slug = re.sub(r"[^a-z0-9]+", "_", (title or "").lower()).strip("_")
+        drive_plates = Path.home() / "GoogleDrive" / config.DRIVE_ROOT_FOLDER / "Presenter Plates"
+        for folder in (config.PRESENTER_PLATES_DIR, drive_plates):
+            if slug and folder.is_dir():
+                cand = folder / f"{slug}.mp4"
+                if cand.is_file():
+                    out_mp4.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(cand, out_mp4)
+                    return AvatarRenderResult(provider=self.name, job_id=f"plate:{slug}", video_path=out_mp4)
+
+        _, dur_s = PO.render_studio_presenter_mp4(script_text, out_mp4, width=width, height=height)
+        return AvatarRenderResult(provider=self.name, job_id="studio_vaathiyaar_zero_cost", video_path=out_mp4, duration_s=dur_s)
+
+
 def get_avatar_adapter(provider: Optional[str] = None):
-    name = (provider or config.AVATAR_PROVIDER or "heygen").strip().lower()
+    name = (provider or config.AVATAR_PROVIDER or "google_zero_cost").strip().lower()
+    if name in ("google_zero_cost", "gemini", "studio"):
+        return GoogleZeroCostAvatarAdapter()
     if name == "heygen":
         return HeyGenAdapter()
     if name == "tavus":
         return TavusAdapter()
     if name == "synthesia":
         return SynthesiaAdapter()
-    raise ValueError(f"Unsupported avatar provider '{name}'. Choose heygen, tavus, or synthesia.")
+    raise ValueError(f"Unsupported avatar provider '{name}'. Choose google_zero_cost, heygen, tavus, or synthesia.")
 
 
 def render_talking_head(
@@ -194,10 +224,14 @@ def render_talking_head(
     provider: Optional[str] = None,
     timeout_s: int = 360,
     poll_s: int = 5,
+    width: int = 1280,
+    height: int = 720,
 ) -> AvatarRenderResult:
-    """Create, poll, and download a talking-head MP4 via the configured avatar provider."""
+    """Create, poll, and download (or zero-cost synthesize) a talking-head MP4 via the configured avatar provider."""
     adapter = get_avatar_adapter(provider)
-    job_id = adapter.create_talk(script_text, title=title)
+    if isinstance(adapter, GoogleZeroCostAvatarAdapter):
+        return adapter.render_local(script_text, out_mp4, title=title, width=width, height=height)
+    job_id = adapter.create_talk(script_text, title=title, width=width, height=height)
     deadline = time.monotonic() + timeout_s
     while time.monotonic() < deadline:
         info = adapter.poll_status(job_id)
