@@ -11,7 +11,7 @@ from datetime import date
 
 from socialbot import config, store
 
-# Favor accessible, practical Python & AI topics that break complex ideas down simply for anyone.
+# Favor accessible, practical Python & AI topics for YouTube Shorts/Longs.
 TRACK_WEIGHT = {
     "python_fundamentals": 4.0, "ai_fundamentals": 4.0, "ai_ml_foundations": 3.5,
     "working_with_data": 3.5, "fun_automation": 3.5, "vibe_coding": 3.0,
@@ -23,6 +23,28 @@ TRACK_WEIGHT = {
     "performance_optimization": 0.6, "transformers_scratch": 0.6, "python_internals": 0.5,
     "frontier_ai_platforms": 0.5, "azure_ai_foundry": 0.5, "cross_cloud_architecture": 0.5,
     "aws_enterprise": 0.5, "azure_enterprise": 0.5, "gcp_vertex_ai": 0.5,
+}
+
+# LinkedIn hourly series ("Simplifying Complex Topics"): prioritize genuinely complex AI, ML, internals,
+# concurrency, algorithms, and systems engineering topics so each post turns an intimidating concept simple.
+LINKEDIN_COMPLEX_TRACK_WEIGHT = {
+    "transformers_scratch": 4.5, "python_internals": 4.2, "async_concurrency": 4.2,
+    "performance_optimization": 4.0, "ai_engineering": 4.0, "deep_learning_complete": 3.8,
+    "deep_learning": 3.6, "ai_agents": 3.6, "machine_learning": 3.4,
+    "dsa": 3.2, "ai_ml_foundations": 3.0, "functional_python": 2.8,
+    "debugging_mastery": 2.6, "python_modern": 2.6, "regex_mastery": 2.4,
+    "python_intermediate": 2.4, "testing_devops": 2.2, "trending_ai": 2.2,
+    "frontier_ai_platforms": 2.0, "cross_cloud_architecture": 2.0, "gcp_vertex_ai": 1.8,
+    "aws_enterprise": 1.8, "azure_enterprise": 1.8, "azure_ai_foundry": 1.8,
+    "error_handling": 1.6, "web_development": 1.5, "working_with_data": 1.4,
+    "ai_fundamentals": 1.2, "vibe_coding": 1.0, "fun_automation": 0.8,
+    "python_fundamentals": 0.5,
+}
+LINKEDIN_DIFFICULTY_MULTIPLIER = {
+    "advanced": 2.2,
+    "intermediate": 1.6,
+    "": 1.2,
+    "beginner": 0.35,
 }
 CODE_RE = re.compile(r"```python\n(.*?)```", re.S)
 
@@ -411,6 +433,18 @@ def _tokens(s: str) -> set:
     return {w for w in re.findall(r"[a-z0-9]+", s.lower()) if len(w) > 2}
 
 
+def _lesson_weight(kind: str, les: dict) -> float:
+    if kind == "linkedin":
+        w = LINKEDIN_COMPLEX_TRACK_WEIGHT.get(les["track"], 2.0)
+        w *= LINKEDIN_DIFFICULTY_MULTIPLIER.get((les.get("difficulty") or "").lower(), 1.2)
+        w *= 1.0 + min(len(les["story"]), 4500) / 9000  # favor substantive complex lessons worth simplifying
+        return w
+    w = TRACK_WEIGHT.get(les["track"], 1.0)
+    if kind == "long":
+        w *= 1.0 + min(len(les["story"]), 4500) / 9000  # gentle depth preference without burying fundamentals
+    return w
+
+
 def pick(kind: str, n: int = 1, seed=None) -> list:
     """Weighted pick of lessons, live daily trending topics across the 5 Finance/Risk/Cards/World/Concepts pillars,
     weekly cross-domain thematic analysis research posts, and one-by-one random Hugging Face Space rotation."""
@@ -428,19 +462,31 @@ def pick(kind: str, n: int = 1, seed=None) -> list:
             chosen.append(pick_hf_space(kind, rng=rng))
         if len(chosen) >= n:
             return chosen
-    used = store.recently_used_sources()
-    recent = [_tokens(t) for t in store.recent_topics()]
-    pool = []
-    for les in candidates(include_hf_spaces=False, include_trends=False):
-        if (les["key"], kind) in used:
-            continue
-        tk = _tokens(les["title"] + " " + les["topic"])
-        if any(len(tk & r) / max(1, min(len(tk), len(r))) >= 0.5 for r in recent):  # overlap vs the smaller title
-            continue
-        w = TRACK_WEIGHT.get(les["track"], 1.0)
-        if kind == "long":
-            w *= 1.0 + min(len(les["story"]), 4500) / 9000  # gentle depth preference without burying fundamentals
-        pool.append((w, les))
+    all_lessons = candidates(include_hf_spaces=False, include_trends=False)
+    repeat_days = getattr(config, "LINKEDIN_NO_REPEAT_DAYS", 18) if kind == "linkedin" else config.NO_REPEAT_DAYS
+    recent_limit = 35 if kind == "linkedin" else 60
+
+    def _build_pool(days_window: int, check_title_overlap: bool) -> list:
+        used = store.recently_used_sources(days=days_window)
+        recent = [_tokens(t) for t in store.recent_topics(limit=recent_limit)] if check_title_overlap else []
+        out = []
+        for les in all_lessons:
+            if (les["key"], kind) in used:
+                continue
+            if recent:
+                tk = _tokens(les["title"] + " " + les["topic"])
+                if any(len(tk & r) / max(1, min(len(tk), len(r))) >= 0.5 for r in recent):
+                    continue
+            out.append((_lesson_weight(kind, les), les))
+        return out
+
+    pool = _build_pool(repeat_days, check_title_overlap=True)
+    if len(pool) < (n - len(chosen)) and kind == "linkedin":
+        # At 14 posts/day, gracefully narrow the repeat window before ever running dry
+        for fallback_days, overlap in ((7, False), (2, False), (0, False)):
+            pool = _build_pool(fallback_days, check_title_overlap=overlap)
+            if len(pool) >= (n - len(chosen)):
+                break
     while pool and len(chosen) < n:
         total = sum(w for w, _ in pool)
         r, acc = rng.random() * total, 0.0

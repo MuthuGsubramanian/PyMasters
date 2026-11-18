@@ -132,7 +132,7 @@ def test_business_track_posts_allow_no_code_wall_while_tech_track_requires_runna
     assert any("technical LinkedIn format requires a non-empty runnable code_snippet" in e for e in errs)
 
 
-# ---------- Weekly LinkedIn cadence & YouTube focus (owner, 2026-11-14) ----------
+# ---------- Hourly LinkedIn cadence (10 AM to 11 PM IST) & Simplifying Complex Topics (owner, 2026-11-17) ----------
 from datetime import datetime, timedelta, timezone
 
 from socialbot import config, quality, scheduler
@@ -147,6 +147,8 @@ class _FakeStore:
         return sorted(rows, key=lambda r: -r["id"])[:limit]
 
     def update_item(self, item_id, **kw):
+        kw = dict(kw)
+        kw.setdefault("updated_at", scheduler.datetime.now(timezone.utc).replace(microsecond=0).isoformat())
         self.rows[item_id].update(kw)
 
 
@@ -163,81 +165,101 @@ def _secs(slots):
     return {int((b - a).total_seconds()) for a, b in zip(ts, ts[1:])}
 
 
-def test_linkedin_cadence_is_minimized_to_once_per_week():
+def test_linkedin_cadence_is_hourly_from_10am_to_11pm_ist():
     li = config.CADENCE["linkedin"]
     th = config.CADENCE["thematic"]
-    assert li["per_week"] == 1
-    assert len(li["weekdays"]) == 1
-    assert "interval_hours" not in li
+    assert li["interval_hours"] == 1
+    assert li["window_hours"] == (10, 23)
+    assert li["weekdays"] == [0, 1, 2, 3, 4, 5, 6]
+    assert li["per_week"] == 98   # 14 hourly slots/day * 7 days
     assert th["per_week"] == 0 and th["weekdays"] == []
-    assert li["per_week"] + th["per_week"] == 1
 
 
-def test_linkedin_slots_are_strictly_weekly_while_youtube_stays_active(monkeypatch):
+def test_linkedin_slots_are_strictly_hourly_within_10am_to_11pm_ist(monkeypatch):
     monkeypatch.setattr(scheduler, "store", _FakeStore())
-    _freeze(monkeypatch, datetime(2026, 11, 14, 10, 30, tzinfo=scheduler.TZ))
-    li_slots = scheduler.upcoming_slots("linkedin", days=14)
-    assert len(li_slots) == 2
-    assert _secs(li_slots) == {7 * 86400}
+    # Start at 09:30 IST (before 10 AM window): today should have all 14 slots (10:00..23:00 IST)
+    _freeze(monkeypatch, datetime(2026, 11, 17, 9, 30, tzinfo=scheduler.TZ))
+    li_slots = scheduler.upcoming_slots("linkedin", days=2)
+    ist_times = [datetime.fromisoformat(s).astimezone(scheduler.TZ) for s in li_slots]
+    day1_hours = [dt.hour for dt in ist_times if dt.date().day == 17]
+    assert day1_hours == list(range(10, 24))   # 10, 11, 12, ..., 23 IST (14 slots)
+    assert all(10 <= dt.hour <= 23 and dt.minute == 0 for dt in ist_times)
+    # Consecutive slots are either 1 hour apart (within day) or 11 hours apart (23:00 -> next day 10:00 IST)
+    assert _secs(li_slots[:15]) == {3600, 11 * 3600}
     assert scheduler.upcoming_slots("thematic", days=14) == []
     assert len(scheduler.upcoming_slots("short", days=7)) == 7
     assert len(scheduler.upcoming_slots("long", days=14)) == 2
 
 
-def test_open_weekly_linkedin_window_is_kept_until_taken(monkeypatch):
-    # Wednesday 10:10 IST: same-day 10:00 IST window stays open until taken by a post
-    now = datetime(2026, 11, 18, 10, 10, tzinfo=scheduler.TZ)
+def test_open_hourly_linkedin_window_is_kept_until_taken_then_advances_to_next_hour(monkeypatch):
+    # At 14:05 IST: current hour's 14:00 IST slot stays open until published, then advances to 15:00 IST
+    now = datetime(2026, 11, 17, 14, 5, tzinfo=scheduler.TZ)
     _freeze(monkeypatch, now)
     monkeypatch.setattr(scheduler, "store", _FakeStore())
-    first = scheduler.upcoming_slots("linkedin", days=14)[0]
-    assert datetime.fromisoformat(first).astimezone(scheduler.TZ).date() == now.date()
-    taken = _FakeStore([{"id": 1, "kind": "linkedin", "status": "published", "publish_at": first}])
+    first = scheduler.upcoming_slots("linkedin", days=2)[0]
+    first_ist = datetime.fromisoformat(first).astimezone(scheduler.TZ)
+    assert (first_ist.hour, first_ist.minute) == (14, 0)
+
+    taken = _FakeStore([{"id": 1, "kind": "linkedin", "status": "published", "publish_at": first, "updated_at": first}])
     monkeypatch.setattr(scheduler, "store", taken)
-    next_slot = scheduler.upcoming_slots("linkedin", days=14)[0]
-    assert datetime.fromisoformat(next_slot) - datetime.fromisoformat(first) == timedelta(days=7)
+    next_slot = scheduler.upcoming_slots("linkedin", days=2)[0]
+    assert datetime.fromisoformat(next_slot) - datetime.fromisoformat(first) == timedelta(hours=1)
 
 
-def test_publish_due_blocks_second_linkedin_post_in_same_iso_week(monkeypatch):
+def test_publish_due_enforces_once_per_hour_and_blocks_outside_10am_to_11pm_ist(monkeypatch, tmp_path):
     from socialbot.publish import linkedin as li_pub
 
+    monkeypatch.setattr(config, "STATE_DIR", tmp_path)
+    monkeypatch.setattr(config, "ensure_dirs", lambda: None)
     published_calls = []
     monkeypatch.setattr(li_pub, "publish", lambda it: published_calls.append(it["id"]) or {"id": f"urn:{it['id']}", "url": "https://lnkd.in/test"})
-    # Already published earlier in the same ISO week (2026-W46: Fri Nov 13)
-    now = datetime(2026, 11, 15, 12, 0, tzinfo=scheduler.TZ)
-    _freeze(monkeypatch, now)
+
     fake = _FakeStore([
-        {"id": 1, "kind": "linkedin", "status": "published", "topic": "prev", "publish_at": "2026-11-13T05:15:00+00:00"},
-        {"id": 2, "kind": "linkedin", "status": "rendered", "topic": "extra-li", "publish_at": "2026-11-14T04:30:00+00:00"},
-        {"id": 3, "kind": "thematic", "status": "rendered", "topic": "retired-th", "publish_at": "2026-11-15T05:30:00+00:00"},
+        {"id": 1, "kind": "linkedin", "status": "rendered", "topic": "post-1", "publish_at": "2026-11-17T04:30:00+00:00"},
+        {"id": 2, "kind": "linkedin", "status": "rendered", "topic": "post-2", "publish_at": "2026-11-17T05:30:00+00:00"},
+        {"id": 3, "kind": "thematic", "status": "rendered", "topic": "retired-th", "publish_at": "2026-11-17T04:30:00+00:00"},
     ])
     monkeypatch.setattr(scheduler, "store", fake)
+
+    # 03:00 IST (overnight, outside 10 AM - 11 PM IST): ZERO LinkedIn posts may publish
+    _freeze(monkeypatch, datetime(2026, 11, 17, 3, 0, tzinfo=scheduler.TZ))
     scheduler.publish_due()
     assert published_calls == []
-    assert fake.rows[2]["status"] == "rendered"
-    assert fake.rows[3]["status"] == "rendered"
 
-    # Next ISO week (2026-W47: Wed Nov 18): eligible weekly LinkedIn post publishes once, disabled thematic stays skipped
-    _freeze(monkeypatch, datetime(2026, 11, 18, 10, 5, tzinfo=scheduler.TZ))
+    # 10:02 IST: publishes exactly 1 post (#1) for the 10 AM slot; #2 stays queued for 11:00 IST
+    _freeze(monkeypatch, datetime(2026, 11, 17, 10, 2, tzinfo=scheduler.TZ))
     scheduler.publish_due()
-    assert published_calls == [2]
+    assert published_calls == [1]
+    assert fake.rows[1]["status"] == "published"
+    assert fake.rows[2]["status"] == "rendered"
+
+    # 10:30 IST (same hour): second run in the 10 AM hour publishes nothing
+    _freeze(monkeypatch, datetime(2026, 11, 17, 10, 30, tzinfo=scheduler.TZ))
+    scheduler.publish_due()
+    assert published_calls == [1]
+
+    # 11:01 IST (next hour): publishes #2 cleanly; retired thematic stays untouched
+    _freeze(monkeypatch, datetime(2026, 11, 17, 11, 1, tzinfo=scheduler.TZ))
+    scheduler.publish_due()
+    assert published_calls == [1, 2]
     assert fake.rows[2]["status"] == "published"
     assert fake.rows[3]["status"] == "rendered"
 
 
-def test_tick_keeps_linkedin_to_single_slot_and_youtube_ahead(monkeypatch, tmp_path):
+def test_tick_keeps_linkedin_hourly_buffer_and_youtube_ahead(monkeypatch, tmp_path):
     calls = []
     monkeypatch.setattr(config, "STATE_DIR", tmp_path)
     monkeypatch.setattr(config, "ensure_dirs", lambda: None)
     for name in ("refresh_daily_trends", "resume_interrupted", "publish_due", "refresh_metrics", "sync_drive"):
-        monkeypatch.setattr(scheduler, name, lambda: None)
+        monkeypatch.setattr(scheduler, name, lambda **kw: None)
     monkeypatch.setattr(scheduler, "produce_ahead", lambda ahead=2, kinds=(): calls.append((tuple(kinds), ahead)))
     _freeze(monkeypatch, datetime(2026, 11, 10, 14, 0, tzinfo=scheduler.TZ))
     scheduler.tick()
-    assert calls == [(("linkedin",), 1), (("short", "long"), 1)]
+    assert calls == [(("linkedin",), config.LINKEDIN_AHEAD), (("short", "long"), 1)]
     calls.clear()
     _freeze(monkeypatch, datetime(2026, 11, 10, 3, 0, tzinfo=scheduler.TZ))
     scheduler.tick()
-    assert calls == [(("linkedin",), 1), (("short", "long"), 2)]
+    assert calls == [(("linkedin",), config.LINKEDIN_AHEAD), (("short", "long"), 2)]
 
 
 def test_snippets_run_in_the_social_venv_so_taught_packages_import():
@@ -563,6 +585,38 @@ def test_simple_non_technical_topic_weights_and_shares():
     assert sources.TRACK_WEIGHT["python_fundamentals"] > sources.TRACK_WEIGHT["python_internals"]
     assert sources.TRACK_WEIGHT["ai_fundamentals"] > sources.TRACK_WEIGHT["transformers_scratch"]
     assert sources.TRACK_WEIGHT["working_with_data"] > sources.TRACK_WEIGHT["ai_engineering"]
+    # LinkedIn specifically prioritizes complex topics so each hourly post simplifies an intimidating concept
+    assert sources.LINKEDIN_COMPLEX_TRACK_WEIGHT["transformers_scratch"] > sources.LINKEDIN_COMPLEX_TRACK_WEIGHT["python_fundamentals"]
+    assert sources.LINKEDIN_COMPLEX_TRACK_WEIGHT["python_internals"] > sources.LINKEDIN_COMPLEX_TRACK_WEIGHT["python_fundamentals"]
+    assert sources.LINKEDIN_COMPLEX_TRACK_WEIGHT["async_concurrency"] > sources.LINKEDIN_COMPLEX_TRACK_WEIGHT["fun_automation"]
+    adv_les = {**LES, "track": "ai_engineering", "difficulty": "advanced", "story": "A" * 2000}
+    beg_les = {**LES, "track": "python_fundamentals", "difficulty": "beginner", "story": "A" * 2000}
+    assert sources._lesson_weight("linkedin", adv_les) > 5 * sources._lesson_weight("linkedin", beg_les)
+
+
+def test_linkedin_prompts_and_critic_enforce_simplifying_complex_topics(monkeypatch):
+    for style_name in config.LINKEDIN_STYLES:
+        p = briefs.linkedin_prompt(LES, style=style_name)
+        assert "SIMPLIFYING COMPLEX TOPICS" in p
+    sample_li = {
+        "style": "business_story",
+        "post": "A" * 900 + " @PyMasters https://pymasters.net",
+        "code_snippet": "",
+        "hashtags": ["#AI", "#Python", "#PyMasters"],
+        "animation": {"title": "Simplified Concept", "beats": [{"kind": "reveal", "caption": "ok", "big": "Simple", "sub": "ok"}]},
+    }
+    crit_prompt = briefs.critic_prompt("linkedin", sample_li, LES)
+    assert "SIMPLIFYING COMPLEX TOPICS" in crit_prompt
+
+    monkeypatch.setattr(
+        quality, "critique",
+        lambda kind, draft, les: {
+            "scores": {"hook": 8.5, "accuracy": 9, "specificity": 8, "clarity": 8, "originality": 8, "brand_rules": 9, "simplicity": 6.5},
+            "overall": 8.2, "factual_errors": [], "blocking_issues": [], "polish": [],
+        },
+    )
+    ok, _, _, problems = quality.verdict("linkedin", sample_li, LES)
+    assert ok is False and any("simplicity" in p.lower() for p in problems)
 
 
 def test_video_prompts_and_critic_enforce_non_technical_simplicity(monkeypatch):

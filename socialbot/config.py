@@ -31,13 +31,24 @@ LINKEDIN_ORG_MENTION = f"@[{LINKEDIN_ORG_NAME}]({LINKEDIN_ORG_URN})"
 GOOGLE_DRIVE_EMAIL = os.getenv("PMSOCIAL_DRIVE_EMAIL", "muthu.g.subramanian@gmail.com")
 DRIVE_ROOT_FOLDER = os.getenv("PMSOCIAL_DRIVE_FOLDER", "PyMasters Social Content")
 
-# Owner decisions (2026-11-14): keep YouTube focused (daily Short + weekly Long); minimize LinkedIn to 1 post/week.
+# Owner decisions (2026-11-17): YouTube focused (daily Short + weekly Long);
+# LinkedIn Company Page posts once every hour from 10:00 AM to 11:00 PM IST (14 slots/day, simplifying complex topics).
+LINKEDIN_WINDOW_HOURS_IST = (10, 23)   # inclusive IST hours: 10:00, 11:00, ..., 23:00 IST
+LINKEDIN_AHEAD = 3                     # keep next 3 hourly LinkedIn slots pre-rendered ahead of :00
+LINKEDIN_NO_REPEAT_DAYS = 18           # ~250 unique complex topics before cycling across 288+ lessons + trends + Spaces
+
 CADENCE = {
     "short": {"per_week": 7, "weekdays": [0, 1, 2, 3, 4, 5, 6], "publish_hhmm": "18:30"},     # daily, IST
     "long": {"per_week": 1, "weekdays": [5], "publish_hhmm": "10:00"},                       # Saturday
-    # minimized to once per week (Wednesday 10:00 IST)
-    "linkedin": {"per_week": 1, "weekdays": [2], "publish_hhmm": "10:00"},
-    # retired as a separate weekly slot so LinkedIn never exceeds 1 post/week total
+    # Hourly on the hour from 10:00 AM to 11:00 PM IST (14 posts/day, 98 posts/week)
+    "linkedin": {
+        "per_week": 98,
+        "weekdays": [0, 1, 2, 3, 4, 5, 6],
+        "publish_hhmm": "10:00",
+        "interval_hours": 1,
+        "window_hours": LINKEDIN_WINDOW_HOURS_IST,
+    },
+    # retired as a separate weekly slot so all LinkedIn posts follow the hourly schedule
     "thematic": {"per_week": 0, "weekdays": [], "publish_hhmm": "11:00"},
 }
 INTERVAL_EPOCH = (2026, 11, 1)   # day the interval grid starts from (at publish_hhmm IST); fixed so slots never shift
