@@ -3,8 +3,9 @@ Description=PyMasters production smoke (health, build, pages, catalogue, search,
 After=network-online.target
 [Service]
 Type=oneshot
+Slice=pymasters-heavy.slice
 EnvironmentFile=%h/.config/pymasters-ops/ops.env
 ExecStart=%h/pymasters-ops/e2e-venv/bin/python %h/Documents/Development/PyMasters/ops/e2e/prod_smoke.py
 TimeoutStartSec=900
-Nice=10
+Nice=15
 CPUQuota=100%
