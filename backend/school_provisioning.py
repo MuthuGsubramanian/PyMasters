@@ -1,20 +1,86 @@
 """
 school_provisioning.py — Multi-tenant school schema migrations, board/grade
-syllabus catalog seeding (CBSE, ICSE, STATE, IB across Grades 6–12), and
-cohort provisioning / subject-aware scoping helpers.
+syllabus catalog seeding (STATE, MATRIC, CBSE, ICSE, IB across Grades 6–12),
+2026–27 Computer Science & Question Bank integration, and cohort scoping helpers.
 """
 
 from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 import sqlite3
 import uuid
 from typing import Any
 
 
-BOARDS = ("CBSE", "ICSE", "STATE", "IB")
+BOARDS = ("STATE", "MATRIC", "CBSE", "ICSE", "IB")
 GRADES = (6, 7, 8, 9, 10, 11, 12)
+
+BOARD_ALIASES: dict[str, str] = {
+    "STATE": "STATE",
+    "STATE_BOARD": "STATE",
+    "STATEBOARD": "STATE",
+    "SAMACHEER": "STATE",
+    "SAMACHEER_KALVI": "STATE",
+    "TN_STATE": "STATE",
+    "SCERT": "STATE",
+    "MATRIC": "MATRIC",
+    "METRIC": "MATRIC",
+    "MATRICULATION": "MATRIC",
+    "TN_MATRIC": "MATRIC",
+    "CBSE": "CBSE",
+    "NCERT": "CBSE",
+    "ICSE": "ICSE",
+    "CISCE": "ICSE",
+    "ISC": "ICSE",
+    "IB": "IB",
+}
+
+_SUBJECT_KEY_TO_CODE: dict[str, str] = {
+    "computer_science": "cs_ai",
+    "cs_ai": "cs_ai",
+    "mathematics": "mathematics",
+    "physics": "physics",
+    "chemistry": "chemistry",
+    "biology": "biology",
+    "social_studies": "social_studies",
+}
+
+_CODE_TO_SUBJECT_KEY: dict[str, str] = {
+    "cs_ai": "computer_science",
+    "computer_science": "computer_science",
+    "mathematics": "mathematics",
+    "physics": "physics",
+    "chemistry": "chemistry",
+    "biology": "biology",
+    "social_studies": "social_studies",
+}
+
+_CS_CATALOG_PATH = Path(__file__).resolve().parent / "data" / "school_cs_syllabus_2026_27.json"
+_cs_catalog_cache: dict[str, Any] | None = None
+
+
+def normalize_board(raw: str) -> str:
+    """Normalize board code or common Indian school aliases ('METRIC', 'SAMACHEER', etc.)."""
+    key = (raw or "").strip().upper().replace("-", "_").replace(" ", "_")
+    resolved = BOARD_ALIASES.get(key)
+    if not resolved or resolved not in BOARDS:
+        raise ValueError(f"Unsupported board '{raw}'. Must be one of {', '.join(BOARDS)}.")
+    return resolved
+
+
+def _load_cs_syllabus_catalog() -> dict[str, Any]:
+    """Load the 2026–27 4-board school syllabus & question bank catalog once per process."""
+    global _cs_catalog_cache
+    if _cs_catalog_cache is not None:
+        return _cs_catalog_cache
+    if not _CS_CATALOG_PATH.exists():
+        _cs_catalog_cache = {}
+        return _cs_catalog_cache
+    with open(_CS_CATALOG_PATH, "r", encoding="utf-8") as fh:
+        _cs_catalog_cache = json.load(fh)
+    return _cs_catalog_cache
 
 # Maps school grade brackets to existing runnable Python / AI lessons in backend/lessons/
 _CS_LESSONS_BY_GRADE: dict[int, list[tuple[str, str, str]]] = {
@@ -526,123 +592,355 @@ def _build_concept_lesson_payload(
     }
 
 
+def _build_cs_term_qb_lesson_payload(
+    *,
+    lesson_id: str,
+    board: str,
+    board_name: str,
+    grade: int,
+    subject_code: str,
+    subject_name: str,
+    official_course_code: str,
+    exam_pattern: dict[str, Any],
+    term: str,
+    unit_order: int,
+    term_units: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Build a board-authentic Term Question Bank & Viva Prep concept_study lesson."""
+    unit_title = f"{term} Question Bank & Viva Prep ({official_course_code})"
+    covered_titles = [u.get("unit_title", "") for u in term_units if u.get("unit_title")]
+    summary = (
+        f"2026–27 {board_name} Class {grade} {term} Question Bank covering: "
+        + "; ".join(covered_titles)
+        + "."
+    )
+    sections_str = " · ".join(exam_pattern.get("sections") or [])
+    story_md = (
+        f"## {unit_title}\n\n"
+        f"{summary}\n\n"
+        + (f"### Official Blueprint\n{sections_str}\n" if sections_str else "")
+    )
+
+    socratic_cards: list[dict[str, Any]] = []
+    scrolly_steps: list[dict[str, Any]] = []
+    concept_checks: list[dict[str, Any]] = []
+    short_answers: list[dict[str, Any]] = []
+    coding_labs: list[dict[str, Any]] = []
+
+    for idx, unit in enumerate(term_units, start=1):
+        utitle = unit.get("unit_title", f"Unit {idx}")
+        sc = unit.get("socratic_card") or {}
+        if sc.get("question"):
+            socratic_cards.append(
+                {
+                    "id": f"{lesson_id}_card_{idx}",
+                    "unit_title": utitle,
+                    "question": f"[{utitle}] {sc['question']}",
+                    "hint": sc.get("hint", ""),
+                    "reveal": sc.get("reveal", ""),
+                    "takeaway": unit.get("summary", ""),
+                }
+            )
+        for step in unit.get("scrolly_steps") or []:
+            scrolly_steps.append(
+                {
+                    "title": f"{utitle} — {step.get('title', 'Concept')}",
+                    "body": step.get("body", ""),
+                    "visual_label": step.get("visual_label", "Key Metric"),
+                    "visual_metric": step.get("visual_metric", ""),
+                }
+            )
+        qb = unit.get("question_bank") or {}
+        for q_idx, mcq in enumerate(qb.get("mcqs") or [], start=1):
+            concept_checks.append(
+                {
+                    "id": mcq.get("id") or f"{lesson_id}_u{idx}_q{q_idx}",
+                    "type": "mcq",
+                    "unit_title": utitle,
+                    "prompt": mcq.get("prompt", ""),
+                    "options": mcq.get("options", []),
+                    "correct_index": int(mcq.get("correct_index", 0)),
+                    "difficulty": mcq.get("difficulty", "easy"),
+                    "bloom_level": mcq.get("bloom_level", "understand"),
+                    "marks": int(mcq.get("marks", 1)),
+                    "explanation": mcq.get("explanation", ""),
+                }
+            )
+        for sa_idx, sa in enumerate(qb.get("short_answers") or [], start=1):
+            short_answers.append(
+                {
+                    "id": sa.get("id") or f"{lesson_id}_u{idx}_sa{sa_idx}",
+                    "unit_title": utitle,
+                    "marks": int(sa.get("marks", 2)),
+                    "question": sa.get("question", ""),
+                    "model_answer": sa.get("model_answer", ""),
+                }
+            )
+        lab = qb.get("coding_lab")
+        if isinstance(lab, dict) and lab.get("instruction"):
+            coding_labs.append(
+                {
+                    "id": f"{lesson_id}_u{idx}_lab",
+                    "unit_title": utitle,
+                    "instruction": lab.get("instruction", ""),
+                    "starter_code": lab.get("starter_code", ""),
+                    "solution_code": lab.get("solution_code", ""),
+                    "expected_output": lab.get("expected_output", ""),
+                }
+            )
+
+    return {
+        "id": lesson_id,
+        "topic": unit_title,
+        "track": f"school_{subject_code}",
+        "module": term.lower().replace(" ", "_"),
+        "order": unit_order,
+        "pedagogy_mode": "concept_study",
+        "subject_code": subject_code,
+        "subject_name": subject_name,
+        "official_course_code": official_course_code,
+        "exam_pattern": exam_pattern,
+        "grade": grade,
+        "board": board,
+        "board_name": board_name,
+        "academic_year": "2026-27",
+        "term": term,
+        "title": {"en": unit_title},
+        "description": {"en": summary},
+        "xp_reward": 75,
+        "story_variants": {"en": story_md},
+        "socratic_cards": socratic_cards,
+        "scrolly_steps": scrolly_steps,
+        "concept_checks": concept_checks,
+        "short_answers": short_answers,
+        "coding_labs": coding_labs,
+        "teach_back_prompt": (
+            f"Pick one core concept from {board} Class {grade} {term} Computer Science "
+            f"({', '.join(covered_titles[:2])}) and explain how it works in 2–3 clear sentences "
+            "with one concrete example, just as in a board practical viva."
+        ),
+        "animation_sequence": [],
+        "practice_challenges": [],
+        "generated": False,
+        "school_seeded": True,
+        "is_question_bank": True,
+    }
+
+
+def _build_catalog_subject_unit_payload(
+    *,
+    lesson_id: str,
+    board: str,
+    grade: int,
+    subject_code: str,
+    subject_name: str,
+    unit: dict[str, Any],
+) -> dict[str, Any]:
+    """Build a concept_study unit payload from an extensible JSON catalog subject unit."""
+    unit_title = unit.get("unit_title", "Curriculum Unit")
+    term = unit.get("term", "Term 1")
+    unit_order = int(unit.get("unit_order", 1))
+    summary = unit.get("summary", "")
+    sc = unit.get("socratic_card") or {}
+    qb = unit.get("question_bank") or {}
+    mcqs = [
+        {
+            "id": m.get("id") or f"{lesson_id}_check_{i}",
+            "type": "mcq",
+            "unit_title": unit_title,
+            "prompt": m.get("prompt", ""),
+            "options": m.get("options", []),
+            "correct_index": int(m.get("correct_index", 0)),
+            "difficulty": m.get("difficulty", "easy"),
+            "bloom_level": m.get("bloom_level", "understand"),
+            "marks": int(m.get("marks", 1)),
+            "explanation": m.get("explanation", ""),
+        }
+        for i, m in enumerate(qb.get("mcqs") or [], start=1)
+    ]
+    short_answers = [
+        {
+            "id": sa.get("id") or f"{lesson_id}_sa_{i}",
+            "unit_title": unit_title,
+            "marks": int(sa.get("marks", 2)),
+            "question": sa.get("question", ""),
+            "model_answer": sa.get("model_answer", ""),
+        }
+        for i, sa in enumerate(qb.get("short_answers") or [], start=1)
+    ]
+    labs = []
+    if isinstance(qb.get("coding_lab"), dict) and qb["coding_lab"].get("instruction"):
+        labs.append({"id": f"{lesson_id}_lab", "unit_title": unit_title, **qb["coding_lab"]})
+
+    return {
+        "id": lesson_id,
+        "topic": unit_title,
+        "track": f"school_{subject_code}",
+        "module": term.lower().replace(" ", "_"),
+        "order": unit_order,
+        "pedagogy_mode": "concept_study",
+        "subject_code": subject_code,
+        "subject_name": subject_name,
+        "grade": grade,
+        "board": board,
+        "term": term,
+        "title": {"en": unit_title},
+        "description": {"en": summary},
+        "xp_reward": 50,
+        "story_variants": {"en": f"## {unit_title} ({board} Grade {grade} · {subject_name})\n\n{summary}\n"},
+        "socratic_cards": (
+            [
+                {
+                    "id": f"{lesson_id}_card_1",
+                    "question": sc.get("question", ""),
+                    "hint": sc.get("hint", ""),
+                    "reveal": sc.get("reveal", ""),
+                    "takeaway": summary,
+                }
+            ]
+            if sc.get("question")
+            else []
+        ),
+        "scrolly_steps": unit.get("scrolly_steps") or [],
+        "concept_checks": mcqs,
+        "short_answers": short_answers,
+        "coding_labs": labs,
+        "teach_back_prompt": (
+            f"Explain '{unit_title}' in 2–3 everyday sentences as if teaching a classmate, "
+            "with one real-world example."
+        ),
+        "animation_sequence": [],
+        "practice_challenges": [],
+        "generated": False,
+        "school_seeded": True,
+    }
+
+
 def seed_school_syllabi(db_path: str | None = None) -> None:
-    """Populate standard CBSE/ICSE/STATE/IB templates for Grades 6–12 idempotently."""
+    """Populate STATE, MATRIC, CBSE, ICSE, and IB templates for Grades 6–12 idempotently."""
     target = _get_db_path(db_path)
     ensure_school_schema(target)
+    catalog = _load_cs_syllabus_catalog()
+    boards_catalog = catalog.get("boards") or {}
+
     conn = sqlite3.connect(target, timeout=10.0)
     try:
         conn.execute("PRAGMA busy_timeout = 10000")
         for board in BOARDS:
             board_slug = board.lower()
+            board_entry = boards_catalog.get(board) or {}
+            board_name = board_entry.get("board_name") or board
+            framework_desc = board_entry.get("curriculum_framework") or ""
+
             for grade in GRADES:
                 template_id = f"{board_slug}_g{grade:02d}_v1"
+                grade_subjects_cat = ((board_entry.get("grades") or {}).get(str(grade)) or {}).get("subjects") or {}
+                cs_cat = grade_subjects_cat.get("computer_science")
+
+                tpl_desc = (
+                    f"2026–27 {board_name} curriculum ({framework_desc}) for Grade {grade}, combining Computer Science & Question Bank with STEM and Humanities."
+                    if framework_desc
+                    else f"Standardized {board} curriculum for Grade {grade} combining Computer Science & AI with core STEM and Humanities."
+                )
                 conn.execute(
                     """
-                    INSERT OR IGNORE INTO syllabus_templates
+                    INSERT INTO syllabus_templates
                         (id, board, grade, title, version, description, is_active)
                     VALUES (?, ?, ?, ?, '1.0', ?, 1)
+                    ON CONFLICT(board, grade, version) DO UPDATE SET
+                        title = excluded.title,
+                        description = excluded.description,
+                        is_active = 1
                     """,
                     [
                         template_id,
                         board,
                         grade,
-                        f"{board} Grade {grade} Integrated Syllabus",
-                        f"Standardized {board} curriculum for Grade {grade} combining Computer Science & AI with core STEM and Humanities.",
+                        f"{board} Grade {grade} Integrated Syllabus (2026-27)" if cs_cat else f"{board} Grade {grade} Integrated Syllabus",
+                        tpl_desc,
                     ],
                 )
 
-                # 1. Coding IDE track: Computer Science & AI
+                # 1. Computer Science & AI (2026-27 4-board researched catalog when present; fallback for IB)
                 cs_sub_id = f"{template_id}_cs_ai"
-                cs_units = _CS_LESSONS_BY_GRADE[grade]
-                conn.execute(
-                    """
-                    INSERT OR IGNORE INTO grade_subjects
-                        (id, template_id, subject_code, subject_name, pedagogy_mode, term, order_index, estimated_hours)
-                    VALUES (?, ?, 'cs_ai', 'Computer Science & AI', 'coding_ide', 'Full Year', 1, ?)
-                    """,
-                    [cs_sub_id, template_id, len(cs_units) * 5],
-                )
-                for idx, (lesson_id, term, unit_title) in enumerate(cs_units, start=1):
+                if cs_cat and cs_cat.get("units"):
+                    cat_units = cs_cat["units"]
+                    est_hours = int(cs_cat.get("estimated_hours") or len(cat_units) * 6)
                     conn.execute(
                         """
-                        INSERT OR IGNORE INTO syllabus_module_map
-                            (id, grade_subject_id, term, unit_order, unit_title, lesson_id, pedagogy_mode, is_required)
-                        VALUES (?, ?, ?, ?, ?, ?, 'coding_ide', 1)
-                        """,
-                        [
-                            f"{cs_sub_id}_u{idx}",
-                            cs_sub_id,
-                            term,
-                            idx,
-                            unit_title,
-                            lesson_id,
-                        ],
-                    )
-
-                # 2. Concept Study subjects: Math, Physics, Chemistry, Biology, Social Studies
-                for subj in _NON_CODING_SUBJECT_CATALOG:
-                    sub_id = f"{template_id}_{subj['subject_code']}"
-                    conn.execute(
-                        """
-                        INSERT OR IGNORE INTO grade_subjects
+                        INSERT INTO grade_subjects
                             (id, template_id, subject_code, subject_name, pedagogy_mode, term, order_index, estimated_hours)
-                        VALUES (?, ?, ?, ?, ?, 'Full Year', ?, ?)
+                        VALUES (?, ?, 'cs_ai', 'Computer Science & AI', 'coding_ide', 'Full Year', 1, ?)
+                        ON CONFLICT(template_id, subject_code) DO UPDATE SET
+                            estimated_hours = excluded.estimated_hours
                         """,
-                        [
-                            sub_id,
-                            template_id,
-                            subj["subject_code"],
-                            subj["subject_name"],
-                            subj["pedagogy_mode"],
-                            subj["order_index"],
-                            subj["estimated_hours"],
-                        ],
+                        [cs_sub_id, template_id, est_hours],
                     )
-                    for idx, unit_tuple in enumerate(subj["units"], start=1):
-                        (
-                            term,
-                            unit_title,
-                            summary,
-                            socratic_q,
-                            socratic_hint,
-                            socratic_reveal,
-                            scrolly_pairs,
-                            quiz_item,
-                        ) = unit_tuple
-                        lesson_id = f"school_{board_slug}_g{grade:02d}_{subj['subject_code']}_u{idx}"
-                        payload = _build_concept_lesson_payload(
-                            lesson_id=lesson_id,
+                    # Remove stale module mappings if upgrading from legacy generic tuples
+                    conn.execute("DELETE FROM syllabus_module_map WHERE grade_subject_id = ?", [cs_sub_id])
+
+                    for u in cat_units:
+                        u_order = int(u.get("unit_order") or 1)
+                        u_term = u.get("term") or "Term 1"
+                        u_title = u.get("unit_title") or f"Unit {u_order}"
+                        u_lid = u.get("mapped_pymasters_lesson_id") or "variables_intro"
+                        conn.execute(
+                            """
+                            INSERT OR IGNORE INTO syllabus_module_map
+                                (id, grade_subject_id, term, unit_order, unit_title, lesson_id, pedagogy_mode, is_required)
+                            VALUES (?, ?, ?, ?, ?, ?, 'coding_ide', 1)
+                            """,
+                            [
+                                f"{cs_sub_id}_u{u_order}",
+                                cs_sub_id,
+                                u_term,
+                                u_order,
+                                u_title,
+                                u_lid,
+                            ],
+                        )
+
+                    # Seed Term 1 & Term 2 Question Bank & Viva Prep units (concept_study)
+                    official_code = cs_cat.get("official_course_code") or f"{board}-CS-{grade:02d}"
+                    exam_pattern = cs_cat.get("exam_pattern") or {}
+                    for t_idx, term_label in enumerate(("Term 1", "Term 2"), start=1):
+                        t_units = [u for u in cat_units if (u.get("term") or "Term 1") == term_label]
+                        if not t_units:
+                            continue
+                        qb_order = len(cat_units) + t_idx
+                        qb_lesson_id = f"school_{board_slug}_g{grade:02d}_cs_qb_t{t_idx}"
+                        qb_payload = _build_cs_term_qb_lesson_payload(
+                            lesson_id=qb_lesson_id,
                             board=board,
+                            board_name=board_name,
                             grade=grade,
-                            subject_code=subj["subject_code"],
-                            subject_name=subj["subject_name"],
-                            term=term,
-                            unit_order=idx,
-                            unit_title=unit_title,
-                            summary=summary,
-                            socratic_q=socratic_q,
-                            socratic_hint=socratic_hint,
-                            socratic_reveal=socratic_reveal,
-                            scrolly_pairs=scrolly_pairs,
-                            quiz_item=quiz_item,
+                            subject_code="cs_ai",
+                            subject_name="Computer Science & AI",
+                            official_course_code=official_code,
+                            exam_pattern=exam_pattern,
+                            term=term_label,
+                            unit_order=qb_order,
+                            term_units=t_units,
                         )
                         conn.execute(
                             """
-                            INSERT OR IGNORE INTO school_concept_lessons
+                            INSERT INTO school_concept_lessons
                                 (lesson_id, board, grade, subject_code, subject_name, term, unit_order, unit_title, pedagogy_mode, lesson_data)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'concept_study', ?)
+                            VALUES (?, ?, ?, 'cs_ai', 'Computer Science & AI', ?, ?, ?, 'concept_study', ?)
+                            ON CONFLICT(lesson_id) DO UPDATE SET
+                                term = excluded.term,
+                                unit_order = excluded.unit_order,
+                                unit_title = excluded.unit_title,
+                                lesson_data = excluded.lesson_data
                             """,
                             [
-                                lesson_id,
+                                qb_lesson_id,
                                 board,
                                 grade,
-                                subj["subject_code"],
-                                subj["subject_name"],
-                                term,
-                                idx,
-                                unit_title,
-                                json.dumps(payload),
+                                term_label,
+                                qb_order,
+                                qb_payload["title"]["en"],
+                                json.dumps(qb_payload),
                             ],
                         )
                         conn.execute(
@@ -652,8 +950,34 @@ def seed_school_syllabi(db_path: str | None = None) -> None:
                             VALUES (?, ?, ?, ?, ?, ?, 'concept_study', 1)
                             """,
                             [
-                                f"{sub_id}_u{idx}",
-                                sub_id,
+                                f"{cs_sub_id}_qb_t{t_idx}",
+                                cs_sub_id,
+                                term_label,
+                                qb_order,
+                                qb_payload["title"]["en"],
+                                qb_lesson_id,
+                            ],
+                        )
+                else:
+                    cs_units = _CS_LESSONS_BY_GRADE[grade]
+                    conn.execute(
+                        """
+                        INSERT OR IGNORE INTO grade_subjects
+                            (id, template_id, subject_code, subject_name, pedagogy_mode, term, order_index, estimated_hours)
+                        VALUES (?, ?, 'cs_ai', 'Computer Science & AI', 'coding_ide', 'Full Year', 1, ?)
+                        """,
+                        [cs_sub_id, template_id, len(cs_units) * 5],
+                    )
+                    for idx, (lesson_id, term, unit_title) in enumerate(cs_units, start=1):
+                        conn.execute(
+                            """
+                            INSERT OR IGNORE INTO syllabus_module_map
+                                (id, grade_subject_id, term, unit_order, unit_title, lesson_id, pedagogy_mode, is_required)
+                            VALUES (?, ?, ?, ?, ?, ?, 'coding_ide', 1)
+                            """,
+                            [
+                                f"{cs_sub_id}_u{idx}",
+                                cs_sub_id,
                                 term,
                                 idx,
                                 unit_title,
@@ -661,7 +985,259 @@ def seed_school_syllabi(db_path: str | None = None) -> None:
                             ],
                         )
 
+                # 2. Concept Study subjects: Math, Physics, Chemistry, Biology, Social Studies
+                #    Supports board-specific JSON catalog overrides automatically when present!
+                for subj in _NON_CODING_SUBJECT_CATALOG:
+                    scode = subj["subject_code"]
+                    sub_id = f"{template_id}_{scode}"
+                    cat_subj = grade_subjects_cat.get(scode)
+                    est_hrs = int((cat_subj or {}).get("estimated_hours") or subj["estimated_hours"])
+                    conn.execute(
+                        """
+                        INSERT OR IGNORE INTO grade_subjects
+                            (id, template_id, subject_code, subject_name, pedagogy_mode, term, order_index, estimated_hours)
+                        VALUES (?, ?, ?, ?, ?, 'Full Year', ?, ?)
+                        """,
+                        [
+                            sub_id,
+                            template_id,
+                            scode,
+                            subj["subject_name"],
+                            subj["pedagogy_mode"],
+                            subj["order_index"],
+                            est_hrs,
+                        ],
+                    )
+                    if cat_subj and cat_subj.get("units"):
+                        conn.execute("DELETE FROM syllabus_module_map WHERE grade_subject_id = ?", [sub_id])
+                        for u in cat_subj["units"]:
+                            idx = int(u.get("unit_order") or 1)
+                            term = u.get("term") or "Term 1"
+                            unit_title = u.get("unit_title") or f"Unit {idx}"
+                            lesson_id = f"school_{board_slug}_g{grade:02d}_{scode}_u{idx}"
+                            payload = _build_catalog_subject_unit_payload(
+                                lesson_id=lesson_id,
+                                board=board,
+                                grade=grade,
+                                subject_code=scode,
+                                subject_name=subj["subject_name"],
+                                unit=u,
+                            )
+                            conn.execute(
+                                """
+                                INSERT INTO school_concept_lessons
+                                    (lesson_id, board, grade, subject_code, subject_name, term, unit_order, unit_title, pedagogy_mode, lesson_data)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'concept_study', ?)
+                                ON CONFLICT(lesson_id) DO UPDATE SET lesson_data = excluded.lesson_data
+                                """,
+                                [lesson_id, board, grade, scode, subj["subject_name"], term, idx, unit_title, json.dumps(payload)],
+                            )
+                            conn.execute(
+                                """
+                                INSERT OR IGNORE INTO syllabus_module_map
+                                    (id, grade_subject_id, term, unit_order, unit_title, lesson_id, pedagogy_mode, is_required)
+                                VALUES (?, ?, ?, ?, ?, ?, 'concept_study', 1)
+                                """,
+                                [f"{sub_id}_u{idx}", sub_id, term, idx, unit_title, lesson_id],
+                            )
+                    else:
+                        for idx, unit_tuple in enumerate(subj["units"], start=1):
+                            (
+                                term,
+                                unit_title,
+                                summary,
+                                socratic_q,
+                                socratic_hint,
+                                socratic_reveal,
+                                scrolly_pairs,
+                                quiz_item,
+                            ) = unit_tuple
+                            lesson_id = f"school_{board_slug}_g{grade:02d}_{scode}_u{idx}"
+                            payload = _build_concept_lesson_payload(
+                                lesson_id=lesson_id,
+                                board=board,
+                                grade=grade,
+                                subject_code=scode,
+                                subject_name=subj["subject_name"],
+                                term=term,
+                                unit_order=idx,
+                                unit_title=unit_title,
+                                summary=summary,
+                                socratic_q=socratic_q,
+                                socratic_hint=socratic_hint,
+                                socratic_reveal=socratic_reveal,
+                                scrolly_pairs=scrolly_pairs,
+                                quiz_item=quiz_item,
+                            )
+                            conn.execute(
+                                """
+                                INSERT OR IGNORE INTO school_concept_lessons
+                                    (lesson_id, board, grade, subject_code, subject_name, term, unit_order, unit_title, pedagogy_mode, lesson_data)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'concept_study', ?)
+                                """,
+                                [
+                                    lesson_id,
+                                    board,
+                                    grade,
+                                    scode,
+                                    subj["subject_name"],
+                                    term,
+                                    idx,
+                                    unit_title,
+                                    json.dumps(payload),
+                                ],
+                            )
+                            conn.execute(
+                                """
+                                INSERT OR IGNORE INTO syllabus_module_map
+                                    (id, grade_subject_id, term, unit_order, unit_title, lesson_id, pedagogy_mode, is_required)
+                                VALUES (?, ?, ?, ?, ?, ?, 'concept_study', 1)
+                                """,
+                                [
+                                    f"{sub_id}_u{idx}",
+                                    sub_id,
+                                    term,
+                                    idx,
+                                    unit_title,
+                                    lesson_id,
+                                ],
+                            )
+
         conn.commit()
+    finally:
+        conn.close()
+
+
+def get_question_bank(
+    db_path: str | None,
+    board: str,
+    grade: int,
+    subject_code: str = "cs_ai",
+    term: str | None = None,
+) -> dict[str, Any]:
+    """Return structured Question Bank (MCQs, Short Answers, Coding Labs) for any Board x Grade x Subject."""
+    norm_board = normalize_board(board)
+    raw_subj = (subject_code or "cs_ai").strip().lower()
+    norm_code = _SUBJECT_KEY_TO_CODE.get(raw_subj, raw_subj)
+    cat_key = _CODE_TO_SUBJECT_KEY.get(norm_code, norm_code)
+    term_filter = (term or "").strip()
+
+    catalog = _load_cs_syllabus_catalog()
+    board_entry = (catalog.get("boards") or {}).get(norm_board) or {}
+    cat_subj = (((board_entry.get("grades") or {}).get(str(grade)) or {}).get("subjects") or {}).get(cat_key)
+
+    if cat_subj and cat_subj.get("units"):
+        mcqs: list[dict[str, Any]] = []
+        short_answers: list[dict[str, Any]] = []
+        coding_labs: list[dict[str, Any]] = []
+        units_summary: list[dict[str, Any]] = []
+
+        for u in cat_subj["units"]:
+            u_term = u.get("term") or "Term 1"
+            if term_filter and u_term.lower() != term_filter.lower():
+                continue
+            utitle = u.get("unit_title") or ""
+            uorder = int(u.get("unit_order") or 1)
+            qb = u.get("question_bank") or {}
+            units_summary.append(
+                {
+                    "unit_order": uorder,
+                    "term": u_term,
+                    "unit_title": utitle,
+                    "topics": u.get("topics") or [],
+                    "mapped_lesson_id": u.get("mapped_pymasters_lesson_id") or "",
+                }
+            )
+            for m in qb.get("mcqs") or []:
+                mcqs.append({**m, "term": u_term, "unit_order": uorder, "unit_title": utitle})
+            for sa in qb.get("short_answers") or []:
+                short_answers.append({**sa, "term": u_term, "unit_order": uorder, "unit_title": utitle})
+            lab = qb.get("coding_lab")
+            if isinstance(lab, dict) and lab.get("instruction"):
+                coding_labs.append({**lab, "term": u_term, "unit_order": uorder, "unit_title": utitle})
+
+        return {
+            "academic_year": catalog.get("academic_year", "2026-27"),
+            "board": norm_board,
+            "board_name": board_entry.get("board_name", norm_board),
+            "grade": grade,
+            "subject_code": norm_code,
+            "subject_name": cat_subj.get("subject_name", "Computer Science & AI"),
+            "official_course_code": cat_subj.get("official_course_code", ""),
+            "exam_pattern": cat_subj.get("exam_pattern") or {},
+            "extensible_subjects": catalog.get("extensible_subject_registry") or list(_SUBJECT_KEY_TO_CODE.values()),
+            "units": units_summary,
+            "mcqs": mcqs,
+            "short_answers": short_answers,
+            "coding_labs": coding_labs,
+            "counts": {
+                "units": len(units_summary),
+                "mcqs": len(mcqs),
+                "short_answers": len(short_answers),
+                "coding_labs": len(coding_labs),
+                "total_items": len(mcqs) + len(short_answers) + len(coding_labs),
+            },
+        }
+
+    # Fallback: read seeded school_concept_lessons for non-CS subjects or IB
+    target = _get_db_path(db_path)
+    seed_school_syllabi(target)
+    conn = sqlite3.connect(target, timeout=10.0)
+    conn.row_factory = sqlite3.Row
+    try:
+        sql = "SELECT * FROM school_concept_lessons WHERE board = ? AND grade = ? AND subject_code = ?"
+        params: list[Any] = [norm_board, grade, norm_code]
+        if term_filter:
+            sql += " AND lower(term) = lower(?)"
+            params.append(term_filter)
+        sql += " ORDER BY unit_order ASC"
+        rows = conn.execute(sql, params).fetchall()
+        mcqs = []
+        short_answers = []
+        coding_labs = []
+        units_summary = []
+        subj_name = norm_code.replace("_", " ").title()
+        for r in rows:
+            subj_name = r["subject_name"] or subj_name
+            ldata = json.loads(r["lesson_data"])
+            units_summary.append(
+                {
+                    "unit_order": r["unit_order"],
+                    "term": r["term"],
+                    "unit_title": r["unit_title"],
+                    "topics": [r["unit_title"]],
+                    "mapped_lesson_id": r["lesson_id"],
+                }
+            )
+            for chk in ldata.get("concept_checks") or []:
+                mcqs.append({**chk, "term": r["term"], "unit_order": r["unit_order"], "unit_title": r["unit_title"]})
+            for sa in ldata.get("short_answers") or []:
+                short_answers.append({**sa, "term": r["term"], "unit_order": r["unit_order"], "unit_title": r["unit_title"]})
+            for lab in ldata.get("coding_labs") or []:
+                coding_labs.append({**lab, "term": r["term"], "unit_order": r["unit_order"], "unit_title": r["unit_title"]})
+
+        return {
+            "academic_year": "2026-27",
+            "board": norm_board,
+            "board_name": norm_board,
+            "grade": grade,
+            "subject_code": norm_code,
+            "subject_name": subj_name,
+            "official_course_code": f"{norm_board}-{norm_code.upper()}-{grade:02d}",
+            "exam_pattern": {},
+            "extensible_subjects": ["cs_ai", "mathematics", "physics", "chemistry", "biology", "social_studies"],
+            "units": units_summary,
+            "mcqs": mcqs,
+            "short_answers": short_answers,
+            "coding_labs": coding_labs,
+            "counts": {
+                "units": len(units_summary),
+                "mcqs": len(mcqs),
+                "short_answers": len(short_answers),
+                "coding_labs": len(coding_labs),
+                "total_items": len(mcqs) + len(short_answers) + len(coding_labs),
+            },
+        }
     finally:
         conn.close()
 

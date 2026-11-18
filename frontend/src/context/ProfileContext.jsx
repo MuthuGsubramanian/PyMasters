@@ -32,7 +32,9 @@ export function ProfileProvider({ children }) {
         try { localStorage.setItem('pm_language', lang); } catch { /* ignore */ }
       }
     } catch (err) {
-      console.error('Failed to fetch profile:', err);
+      if (err?.response?.status !== 401) {
+        console.error('Failed to fetch profile:', err);
+      }
       setProfile(null);
     } finally {
       setLoading(false);

@@ -89,22 +89,35 @@ def _spawn_generation(job_id: str, user_id: str, topic: str) -> None:
     threading.Thread(target=run_pipeline, args=(job_id, user_id, topic), daemon=True).start()
 
 
+_CSV_HEADER_LABELS = {
+    "topic", "topics", "module", "modules", "unit", "units",
+    "title", "syllabus", "subject", "chapter",
+}
+
+
 def _parse_topics(raw_lines) -> list:
     """Normalize an iterable of raw lines into a clean, deduped topic list.
     Accepts CSV (first column used) or plain text (one topic per line);
-    skips blanks and #-comments. Does NOT truncate — the caller enforces
-    MAX_TOPICS with a clear error so topics are never silently dropped."""
+    skips blanks, #-comments, and CSV header rows on the first data line.
+    Does NOT truncate — the caller enforces MAX_TOPICS with a clear error
+    so topics are never silently dropped."""
     seen, topics = set(), []
+    saw_first_data_line = False
     for line in raw_lines:
-        s = (line or "").strip()
-        if not s or s.startswith("#"):
+        raw_line = (line or "").strip()
+        if not raw_line or raw_line.startswith("#"):
             continue
+        s = raw_line
         if "," in s:  # CSV — take the first field
             s = next(csv.reader([s]))[0].strip()
         if not s:
             continue
         s = s[:200]
         key = s.lower()
+        if not saw_first_data_line:
+            saw_first_data_line = True
+            if key in _CSV_HEADER_LABELS:
+                continue
         if key not in seen:
             seen.add(key)
             topics.append(s)

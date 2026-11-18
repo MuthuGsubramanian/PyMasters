@@ -13,6 +13,7 @@ vi.mock('../hooks/useI18n', () => ({
 
 const apiMocks = vi.hoisted(() => ({
   getSchoolTemplates: vi.fn(),
+  getSchoolQuestionBank: vi.fn(),
   getOrgCohorts: vi.fn(),
   getSchoolConfig: vi.fn(),
   provisionCohortSyllabus: vi.fn(),
@@ -155,5 +156,101 @@ describe('Phase 1 School Provisioning & ConceptStudyView', () => {
       selected_index: 1,
     });
     expect(onCompleted).toHaveBeenCalledWith('school_concept_cbse_g8_physics_u1');
+  });
+
+  it('supports MATRIC / STATE boards, Question Bank preview, and multi-MCQ + Viva navigation', async () => {
+    apiMocks.getSchoolTemplates.mockResolvedValue({
+      data: {
+        boards: ['STATE', 'MATRIC', 'CBSE', 'ICSE', 'IB'],
+        grades: [6, 7, 8, 9, 10, 11, 12],
+        templates: [
+          {
+            id: 'matric_g10_v1',
+            board: 'MATRIC',
+            grade: 10,
+            subjects: [
+              { id: 's1', subject_code: 'cs_ai', subject_name: 'Computer Science & AI', pedagogy_mode: 'coding_ide', unit_count: 7 },
+              { id: 's2', subject_code: 'mathematics', subject_name: 'Mathematics', pedagogy_mode: 'concept_study', unit_count: 3 },
+            ],
+          },
+        ],
+      },
+    });
+    apiMocks.getOrgCohorts.mockResolvedValue({ data: { cohorts: [] } });
+    apiMocks.getSchoolConfig.mockResolvedValue({ data: { config: {} } });
+    apiMocks.getSchoolQuestionBank.mockResolvedValue({
+      data: {
+        board: 'MATRIC',
+        board_name: 'Matriculation Mode',
+        grade: 10,
+        official_course_code: 'TN-MATRIC-CS-10',
+        counts: { units: 5, mcqs: 15, short_answers: 5, coding_labs: 5 },
+        units: [{ unit_order: 1, term: 'Term 1', unit_title: 'JSON, CSV & File Serialization' }],
+      },
+    });
+
+    await act(async () => {
+      root.render(<SchoolProvisioningWizard orgId="org-school-2" orgType="school" />);
+    });
+
+    const boardSelect = container.querySelector('select[aria-label="Educational Board"]');
+    const optionValues = Array.from(boardSelect.querySelectorAll('option')).map((o) => o.value);
+    expect(optionValues).toEqual(expect.arrayContaining(['STATE', 'MATRIC', 'CBSE', 'ICSE', 'IB']));
+
+    const previewBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent.includes('Preview Question Bank'),
+    );
+    await act(async () => {
+      previewBtn.click();
+    });
+    expect(container.textContent).toContain('TN-MATRIC-CS-10');
+    expect(container.textContent).toContain('15 Verified MCQs');
+
+    // Render multi-question ConceptStudyView with 2 MCQs + Viva Short Answer + Coding Lab
+    apiMocks.evaluateConceptCheck.mockResolvedValue({
+      data: { passed: true, explanation: 'Correct on Q2!', xp_earned: 75 },
+    });
+
+    await act(async () => {
+      root.render(
+        <ConceptStudyView
+          onBack={() => {}}
+          lesson={{
+            id: 'school_matric_g10_cs_qb_t1',
+            board: 'MATRIC',
+            grade: 10,
+            official_course_code: 'TN-MATRIC-CS-10',
+            title: { en: 'Term 1 Question Bank & Viva Prep' },
+            pedagogy_mode: 'concept_study',
+            concept_checks: [
+              { id: 'q1', prompt: 'Question One?', options: ['A1', 'B1'], correct_index: 0, marks: 1, bloom_level: 'remember' },
+              { id: 'q2', prompt: 'Question Two?', options: ['A2', 'B2'], correct_index: 1, marks: 1, bloom_level: 'apply' },
+            ],
+            short_answers: [
+              { id: 'sa1', marks: 2, question: 'Differentiate INNER JOIN and LEFT JOIN.', model_answer: 'LEFT JOIN keeps unmatched left rows.' },
+            ],
+            coding_labs: [
+              { id: 'lab1', instruction: 'Print JSON keys', expected_output: "['id']", solution_code: "print(['id'])" },
+            ],
+          }}
+        />,
+      );
+    });
+
+    expect(container.textContent).toContain('Question 1 of 2');
+    const nextBtn = Array.from(container.querySelectorAll('button')).find((b) => b.textContent.includes('Next'));
+    await act(async () => {
+      nextBtn.click();
+    });
+    expect(container.textContent).toContain('Question 2 of 2');
+    expect(container.textContent).toContain('Question Two?');
+
+    const vivaBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent.includes('Differentiate INNER JOIN and LEFT JOIN.'),
+    );
+    await act(async () => {
+      vivaBtn.click();
+    });
+    expect(container.textContent).toContain('LEFT JOIN keeps unmatched left rows.');
   });
 });

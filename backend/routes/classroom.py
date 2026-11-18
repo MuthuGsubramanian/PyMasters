@@ -527,10 +527,40 @@ def _list_all_lessons(lessons_dir: str = None, user_id: str = None) -> list[dict
             from routes.curriculum_studio import studio_assigned_lesson_ids_for_user
             assigned_map = dict(studio_assigned_lesson_ids_for_user(_get_db_path(), user_id))
             if assigned_map:
+                seen_ids = {l.get("id") for l in lessons}
                 for l in lessons:
                     if l.get("id") in assigned_map:
                         l["assigned"] = True
                         l["assigned_set"] = assigned_map[l["id"]]
+                missing_ids = [lid for lid in assigned_map if lid and lid not in seen_ids and not lid.startswith("pending:")]
+                if missing_ids:
+                    conn = sqlite3.connect(_get_db_path())
+                    conn.row_factory = sqlite3.Row
+                    try:
+                        ph = ",".join("?" * len(missing_ids))
+                        for grow in conn.execute(
+                            f"SELECT lesson_data FROM generated_lessons WHERE id IN ({ph})",
+                            missing_ids,
+                        ).fetchall():
+                            gdata = json.loads(grow["lesson_data"])
+                            gid = gdata.get("id")
+                            if gid and gid not in seen_ids:
+                                seen_ids.add(gid)
+                                lessons.append({
+                                    "id": gid,
+                                    "title": gdata.get("title", {}),
+                                    "description": gdata.get("description", {}),
+                                    "xp_reward": gdata.get("xp_reward", 50),
+                                    "topic": gdata.get("topic"),
+                                    "track": "assigned",
+                                    "module": gdata.get("module"),
+                                    "order": 0,
+                                    "generated": True,
+                                    "assigned": True,
+                                    "assigned_set": assigned_map[gid],
+                                })
+                    finally:
+                        conn.close()
         except Exception:
             pass
 
@@ -834,21 +864,19 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
         return {"lessons": []}
 
     try:
-        lessons = _list_all_lessons(user_id=user_id)
+        # Resolve JWT-verified identity FIRST so school/org students authenticating via
+        # Bearer token always receive their cohort-published AI lessons (org_lesson_sets)
+        # and Curriculum Studio delta modules even when ?user_id= is omitted.
+        from auth import optional_user_id
+        from access import ENTERPRISE_TRACKS, has_enterprise_access
+        verified_user_id = optional_user_id(authorization)
+        effective_user_id = verified_user_id or user_id
+
+        lessons = _list_all_lessons(user_id=effective_user_id)
 
         # Enterprise-only tracks (Azure/AWS/GCP/Foundry/cross-cloud) are hidden
         # from individual accounts — org members, org accounts, enterprise-plan
         # users and super admins see them. Fails closed for anonymous callers.
-        #
-        # IDOR guard (2026-07-08): the enterprise gate MUST key off the JWT-verified
-        # identity, never the client-supplied user_id query param. The param is fine
-        # for non-sensitive personalization (track ordering below), but trusting it
-        # for access control let an anonymous caller pass ?user_id=<any org user's id>
-        # and receive the full paid B2B catalog. Derive the acting user from the
-        # token (optional_user_id → None when absent/invalid, which fails closed).
-        from auth import optional_user_id
-        from access import ENTERPRISE_TRACKS, has_enterprise_access
-        verified_user_id = optional_user_id(authorization)
         if not has_enterprise_access(_get_db_path(), verified_user_id):
             lessons = [l for l in lessons if l.get("track") not in ENTERPRISE_TRACKS]
 
@@ -903,13 +931,13 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                                 for k in ("title", "description") if isinstance(l.get(k), dict)}}
                        for l in lessons]
 
-        if user_id:
+        if effective_user_id:
             try:
                 conn = sqlite3.connect(_get_db_path())
                 conn.row_factory = sqlite3.Row
                 profile = conn.execute(
                     "SELECT skill_level, goal, motivation, user_type FROM user_profiles WHERE user_id = ?",
-                    [user_id],
+                    [effective_user_id],
                 ).fetchone()
                 conn.close()
 
@@ -1017,7 +1045,10 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                         if (
                             track in visible_tracks
                             or (module == "trending_ai" and "trending_ai" in visible_tracks)
-                            or track == "generated"
+                            or track in ("generated", "assigned")
+                            or lesson.get("assigned")
+                            or lesson.get("school_seeded")
+                            or bool(school_scope)
                         ):
                             lesson["recommended"] = True
                         else:
@@ -1087,7 +1118,7 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                                JOIN learning_paths lp ON ulp.path_id = lp.id
                                WHERE ulp.user_id = ? AND ulp.status = 'active'
                                ORDER BY ulp.last_activity DESC LIMIT 1""",
-                            [user_id],
+                            [effective_user_id],
                         ).fetchone()
                         if active_path_row:
                             seq = json.loads(active_path_row["adapted_sequence"]) if active_path_row["adapted_sequence"] else json.loads(active_path_row["lesson_sequence"])
@@ -1098,7 +1129,7 @@ def list_lessons(user_id: str = None, lang: str = None, authorization: str = Hea
                                 placeholders = ",".join("?" * len(seq))
                                 done_count = path_conn.execute(
                                     f"SELECT COUNT(*) as cnt FROM lesson_completions WHERE user_id = ? AND lesson_id IN ({placeholders})",
-                                    [user_id] + seq,
+                                    [effective_user_id] + seq,
                                 ).fetchone()["cnt"]
                             else:
                                 done_count = 0
@@ -2403,10 +2434,10 @@ def evaluate_concept_check(
 
     target_check = checks[0]
     if request.check_id:
-        for ch in checks:
-            if ch.get("id") == request.check_id:
-                target_check = ch
-                break
+        matched = next((ch for ch in checks if ch.get("id") == request.check_id), None)
+        if matched is None:
+            raise HTTPException(status_code=422, detail=f"Unknown check_id '{request.check_id}' for lesson.")
+        target_check = matched
 
     correct = False
     explanation = target_check.get("explanation") or ""
@@ -2446,20 +2477,29 @@ def evaluate_concept_check(
             pass
 
     try:
-        update_mastery(db_path, caller, topic, mastered=correct)
+        from vaathiyaar.profiler import get_mastery_map
+        cur_mastery = float(get_mastery_map(db_path, caller).get(topic, 0.0))
+        next_mastery = max(0.0, min(1.0, cur_mastery + (0.15 if correct else -0.05)))
+        update_mastery(db_path, caller, topic, next_mastery)
         record_signal(
             db_path,
             caller,
             "concept_check_pass" if correct else "concept_check_miss",
             topic,
-            json.dumps({"lesson_id": request.lesson_id, "correct": correct}),
+            {
+                "lesson_id": request.lesson_id,
+                "check_id": target_check.get("id") or "",
+                "correct": correct,
+            },
         )
     except Exception:
         pass
 
     return {
+        "check_id": target_check.get("id") or "",
         "passed": correct,
         "explanation": explanation,
         "xp_earned": xp_awarded,
+        "total_checks": len(checks),
         "pedagogy_mode": lesson.get("pedagogy_mode", "concept_study"),
     }

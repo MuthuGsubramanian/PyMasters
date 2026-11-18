@@ -199,16 +199,16 @@ def test_topic_cap_and_dedup(client, m):
 def test_upload_creates_set(client, m):
     admin = _register(client, org_name="Upload School")
     org_id = _org_of(admin)
-    csv_body = b"# my syllabus\nRecursion\nSorting, with examples\n\nRecursion\n"
+    csv_body = b"topic,term,board,grade,subject\n# my syllabus\nRecursion,Term 1,CBSE,12,Computer Science\nSorting, with examples\n\nRecursion\n"
     r = client.post(
         f"/api/org/{org_id}/lesson-sets/upload",
         data={"title": "From file", "group_name": ""},
-        files={"file": ("syllabus.txt", csv_body, "text/plain")},
+        files={"file": ("syllabus.csv", csv_body, "text/csv")},
         headers=_auth(admin))
     assert r.status_code == 200, r.text
     items = client.get(f"/api/org/{org_id}/lesson-sets", headers=_auth(admin)).json()["sets"][0]["items"]
     topics = sorted(i["topic"] for i in items)
-    # comment skipped, CSV first field taken, dedup applied
+    # CSV header ('topic,...') skipped, comment skipped, CSV first field taken, dedup applied
     assert topics == ["Recursion", "Sorting"]
 
 

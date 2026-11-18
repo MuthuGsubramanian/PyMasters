@@ -1424,6 +1424,7 @@ export default function OrgDashboard() {
           studentId={openStudentId}
           canEdit={isAdmin}
           groupLabel={groupLabel}
+          availableGroups={groups.map((g) => g.name)}
           onClose={() => setOpenStudentId(null)}
           onGroupsChanged={() => { loadGroups(); setRefreshTick((t) => t + 1); }}
         />

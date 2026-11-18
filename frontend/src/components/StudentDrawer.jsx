@@ -35,7 +35,7 @@ function masteryColor(level) {
   return 'bg-green-400';
 }
 
-export default function StudentDrawer({ orgId, userId, studentId, canEdit, groupLabel = 'Group', onClose, onGroupsChanged }) {
+export default function StudentDrawer({ orgId, userId, studentId, canEdit, groupLabel = 'Group', availableGroups = [], onClose, onGroupsChanged }) {
   const reduced = useReducedMotion();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -153,6 +153,24 @@ export default function StudentDrawer({ orgId, userId, studentId, canEdit, group
                       </span>
                     )}
                   </div>
+                  {canEdit && availableGroups.filter((g) => !tags.includes(g)).length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                      {availableGroups
+                        .filter((g) => !tags.includes(g))
+                        .slice(0, 6)
+                        .map((g) => (
+                          <button
+                            key={g}
+                            type="button"
+                            disabled={savingTags}
+                            onClick={() => persistTags([...tags, g])}
+                            className="text-xs px-2.5 py-1 rounded-full border border-border-default bg-bg-elevated hover:border-accent-primary text-text-secondary hover:text-accent-primary transition-colors"
+                          >
+                            + {g}
+                          </button>
+                        ))}
+                    </div>
+                  )}
                 </div>
                 <button onClick={onClose} className="text-text-muted hover:text-text-secondary p-1" aria-label="Close"><X size={18} /></button>
               </div>

@@ -20,6 +20,8 @@ from school_provisioning import (
     BOARDS,
     GRADES,
     ensure_school_schema,
+    get_question_bank,
+    normalize_board,
     seed_school_syllabi,
     teacher_allowed_cohorts,
 )
@@ -83,9 +85,10 @@ def list_syllabus_templates(
         sql = "SELECT * FROM syllabus_templates WHERE is_active = 1"
         params: list[Any] = []
         if board:
-            norm_board = board.strip().upper()
-            if norm_board not in BOARDS:
-                raise HTTPException(status_code=422, detail=f"Unsupported board '{board}'.")
+            try:
+                norm_board = normalize_board(board)
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
             sql += " AND board = ?"
             params.append(norm_board)
         if grade is not None:
@@ -128,6 +131,27 @@ def list_syllabus_templates(
         }
     finally:
         conn.close()
+
+
+@router.get("/api/schools/question-bank")
+def read_school_question_bank(
+    board: str = Query(default="CBSE"),
+    grade: int = Query(default=10, ge=1, le=12),
+    subject_code: str = Query(default="cs_ai"),
+    term: Optional[str] = Query(default=None),
+    caller: str = Depends(get_current_user_id),  # noqa: ARG001
+) -> dict[str, Any]:
+    """Return structured 2026–27 Question Bank (MCQs, Short-Answer Viva, Practical Labs) for any Board x Grade x Subject."""
+    try:
+        return get_question_bank(
+            db_path=_get_db_path(),
+            board=board,
+            grade=grade,
+            subject_code=subject_code,
+            term=term,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("/api/org/{org_id}/school-config")
@@ -173,9 +197,10 @@ def configure_school_tenant(
 ) -> dict[str, Any]:
     """Configure board, academic year, SSO domain/provider, and public-track policy."""
     require_org_role(_get_db_path(), org_id, caller, "admin")
-    board = body.board.strip().upper()
-    if board not in BOARDS:
-        raise HTTPException(status_code=422, detail=f"Board must be one of {', '.join(BOARDS)}.")
+    try:
+        board = normalize_board(body.board)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     provider = body.sso_provider.strip().lower()
     if provider not in ALLOWED_SSO_PROVIDERS:
         raise HTTPException(status_code=422, detail="Unsupported SSO provider.")
@@ -230,9 +255,10 @@ def provision_cohort_syllabus(
 ) -> dict[str, Any]:
     """Provision a grade cohort with All Subjects or custom subject selection."""
     require_org_role(_get_db_path(), org_id, caller, "admin")
-    board = body.board.strip().upper()
-    if board not in BOARDS:
-        raise HTTPException(status_code=422, detail=f"Board must be one of {', '.join(BOARDS)}.")
+    try:
+        board = normalize_board(body.board)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     cohort_name = body.cohort_name.strip()
     if not cohort_name:
         raise HTTPException(status_code=422, detail="Cohort name is required.")
