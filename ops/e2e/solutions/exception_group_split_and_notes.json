@@ -1,0 +1,17 @@
+{
+  "lesson_id": "exception_group_split_and_notes",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def leaf_count(exc):\n    if isinstance(exc, BaseExceptionGroup):\n        return sum(leaf_count(e) for e in exc.exceptions)\n    return 1\n\ndef retry_split(group):\n    retryable, other = group.split(lambda e: isinstance(e, TimeoutError))\n    return (leaf_count(retryable) if retryable else 0, leaf_count(other) if other else 0)\n\ndemo = ExceptionGroup(\"net\", [\n    TimeoutError(\"a\"),\n    ConnectionError(\"b\"),\n    ExceptionGroup(\"inner\", [TimeoutError(\"c\"), ValueError(\"d\")]),\n])\nprint(retry_split(demo))\n",
+      "verified_output": "(2, 2)",
+      "source": "claude sonnet 2026-11-18, verified with grade_submission"
+    },
+    {
+      "index": 1,
+      "code": "def parse_cell(cell, line):\n    try:\n        return int(cell)\n    except ValueError as exc:\n        exc.add_note(f\"line {line}: {cell!r}\")\n        raise\n\ntry:\n    parse_cell(\"abc\", 3)\nexcept ValueError as exc:\n    print(exc.__notes__)\n",
+      "verified_output": "[\"line 3: 'abc'\"]",
+      "source": "claude sonnet 2026-11-18, verified with grade_submission"
+    }
+  ]
+}
