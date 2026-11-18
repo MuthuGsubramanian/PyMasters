@@ -75,7 +75,7 @@ def verify_broadcast_presenter_mp4(mp4_path: Path, expected_min_s: float = 6.0) 
         capture_output=True,
         text=True,
         check=True,
-        timeout=30,
+        timeout=180,
     )
     meta = json.loads(pr.stdout)
     streams = meta.get("streams") or []
@@ -106,7 +106,7 @@ def verify_broadcast_presenter_mp4(mp4_path: Path, expected_min_s: float = 6.0) 
             subprocess.run(
                 ["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{ts:.2f}", "-i", str(mp4_path), "-frames:v", "1", str(out_png)],
                 check=True,
-                timeout=30,
+                timeout=180,
             )
             arr = np.asarray(Image.open(out_png).convert("L"), dtype=np.float32)
             frames_arr.append(arr)
