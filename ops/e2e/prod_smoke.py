@@ -1,6 +1,6 @@
 """Daily production smoke (spec §5): is pymasters.net up, current and teaching? Read-only apart from one tutor reply.
 
-  PYMASTERS_OPS_TOKEN=... python ops/e2e/prod_smoke.py [--json] [--base https://pymasters.net]
+  PYMASTERS_OPS_TOKEN=... (or OPS_ADMIN_TOKEN, as in ops.env) python ops/e2e/prod_smoke.py [--json] [--base https://pymasters.net]
 
 Signs in as the ops QA account (ops/pm_admin.py service login; the token is never printed) and checks:
 health + live build among the last 5 commits on main, 8 key pages render with no console errors, the catalogue has ≥ 400 lessons,

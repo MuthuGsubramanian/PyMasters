@@ -1,5 +1,6 @@
 """SQLite state: every planned, rendered and published item, so the bot never repeats itself and the
 daily email can report exactly what happened."""
+import fcntl
 import json
 import sqlite3
 from contextlib import contextmanager
@@ -38,6 +39,24 @@ CREATE TABLE IF NOT EXISTS metrics (
 
 def now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+@contextmanager
+def file_lock(name: str, blocking: bool = True):
+    """Process-level advisory flock inside STATE_DIR so concurrent timer ticks and manual CLI runs never collide."""
+    config.ensure_dirs()
+    lock_file = open(config.STATE_DIR / name, "a+")
+    flags = fcntl.LOCK_EX if blocking else (fcntl.LOCK_EX | fcntl.LOCK_NB)
+    try:
+        fcntl.flock(lock_file, flags)
+    except BaseException:
+        lock_file.close()
+        raise
+    try:
+        yield
+    finally:
+        fcntl.flock(lock_file, fcntl.LOCK_UN)
+        lock_file.close()
 
 
 @contextmanager

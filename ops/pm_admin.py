@@ -40,9 +40,11 @@ def _request(method: str, path: str, body=None, token: str | None = None):
 
 
 def admin_session() -> str:
-    ops = os.getenv("PYMASTERS_OPS_TOKEN", "").strip()
+    # The Windows vault names it PYMASTERS_OPS_TOKEN; the Linux laptop has no vault and its systemd units read
+    # ~/.config/pymasters-ops/ops.env, which carries the same token under the server's name, OPS_ADMIN_TOKEN.
+    ops = (os.getenv("PYMASTERS_OPS_TOKEN") or os.getenv("OPS_ADMIN_TOKEN") or "").strip()
     if not ops:
-        raise SystemExit("PYMASTERS_OPS_TOKEN not in vault/env")
+        raise SystemExit("PYMASTERS_OPS_TOKEN / OPS_ADMIN_TOKEN not in vault/env")
     status, out = _request("POST", "/api/admin/service-login", {"token": ops})
     if status != 200:
         raise SystemExit(f"service-login failed: {status} {out}")

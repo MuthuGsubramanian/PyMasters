@@ -4,9 +4,9 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=%h/Documents/Development/PyMasters
+WorkingDirectory=%h/pymasters-ops
 EnvironmentFile=%h/.config/pymasters-ops/ops.env
-Environment=PYTHONPATH=%h/Documents/Development/PyMasters
+Environment=PYTHONPATH=%h/pymasters-ops
 Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
 Environment=CLOUDSDK_CORE_DISABLE_PROMPTS=1
 UnsetEnvironment=VIRTUAL_ENV

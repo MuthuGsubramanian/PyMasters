@@ -146,16 +146,17 @@ def produce(kind, lesson_key=None):
     item_id = store.add_item(kind, les["key"], les["title"], "drafted", score=score, draft=draft, critique=crit,
                              cost_usd=cost)
     out_dir = config.RENDERS_DIR / f"{datetime.now():%Y%m%d}-{kind}-{item_id}"
-    try:
-        media = render(kind, draft, les, out_dir)
-    except Exception as e:  # rendering bugs must not publish anything
-        log.exception("render failed")
-        store.update_item(item_id, status="failed", error=f"render: {e}"[:500])
-        return item_id
-    media["lesson_url"] = les["url"]
-    if les.get("space_url"):
-        media["space_url"] = les["space_url"]
-    store.update_item(item_id, status="rendered", media=media)
+    with store.file_lock(f"render-{item_id}.lock", blocking=True):
+        try:
+            media = render(kind, draft, les, out_dir)
+        except Exception as e:  # rendering bugs must not publish anything
+            log.exception("render failed")
+            store.update_item(item_id, status="failed", error=f"render: {e}"[:500])
+            return item_id
+        media["lesson_url"] = les["url"]
+        if les.get("space_url"):
+            media["space_url"] = les["space_url"]
+        store.update_item(item_id, status="rendered", media=media)
     try:
         from socialbot.publish import drive
         if drive.is_authorised():
@@ -190,55 +191,56 @@ def produce_influencer(lesson_key=None, bilingual_hook=False, presenter_mp4=None
     out_dir = config.RENDERS_DIR / f"{datetime.now():%Y%m%d}-influencer-{item_id}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    try:
-        broll_path = out_dir / "broll_1080p60.mp4"
-        broll_capture.capture_watch_it_run_broll(
-            title=plan["title"],
-            code_lines=plan["code_lines"],
-            steps=plan["trace_steps"],
-            out_mp4=broll_path,
-            duration_s=12.0,
-            stdout_text=plan["stdout_text"],
-            caption=plan["segments"][2]["narration"][:140],
-        )
-
-        pres_path = Path(presenter_mp4) if presenter_mp4 else (out_dir / "presenter.mp4")
-        avatar_meta = {}
-        if not pres_path.exists():
-            res = avatar.render_talking_head(
-                plan["script_text"],
-                pres_path,
+    with store.file_lock(f"render-{item_id}.lock", blocking=True):
+        try:
+            broll_path = out_dir / "broll_1080p60.mp4"
+            broll_capture.capture_watch_it_run_broll(
                 title=plan["title"],
+                code_lines=plan["code_lines"],
+                steps=plan["trace_steps"],
+                out_mp4=broll_path,
+                duration_s=12.0,
+                stdout_text=plan["stdout_text"],
+                caption=plan["segments"][2]["narration"][:140],
             )
-            avatar_meta = {"provider": res.provider, "job_id": res.job_id}
 
-        ass_path = influencer.generate_ass_subtitles(plan["segments"], out_dir / "captions.ass")
-        final_mp4 = influencer.composite_influencer_video(
-            presenter_mp4=pres_path,
-            broll_mp4=broll_path,
-            segments=plan["segments"],
-            out_mp4=out_dir / "influencer.mp4",
-            subtitle_ass=ass_path,
-        )
-        thumb = video.thumbnail(
-            plan["title"],
-            les["title"][:34],
-            "\n".join(plan["code_lines"]),
-            out_dir / "thumb.jpg",
-        )
-        media = {
-            "video": str(final_mp4),
-            "broll": str(broll_path),
-            "subtitles": str(ass_path),
-            "thumbnail": str(thumb),
-            "lesson_url": les["url"],
-            "avatar": avatar_meta,
-        }
-        store.update_item(item_id, status="rendered", media=media)
-    except Exception as exc:
-        log.exception("influencer render failed")
-        store.update_item(item_id, status="failed", error=f"influencer: {exc}"[:500])
-        return item_id
+            pres_path = Path(presenter_mp4) if presenter_mp4 else (out_dir / "presenter.mp4")
+            avatar_meta = {}
+            if not pres_path.exists():
+                res = avatar.render_talking_head(
+                    plan["script_text"],
+                    pres_path,
+                    title=plan["title"],
+                )
+                avatar_meta = {"provider": res.provider, "job_id": res.job_id}
+
+            ass_path = influencer.generate_ass_subtitles(plan["segments"], out_dir / "captions.ass")
+            final_mp4 = influencer.composite_influencer_video(
+                presenter_mp4=pres_path,
+                broll_mp4=broll_path,
+                segments=plan["segments"],
+                out_mp4=out_dir / "influencer.mp4",
+                subtitle_ass=ass_path,
+            )
+            thumb = video.thumbnail(
+                plan["title"],
+                les["title"][:34],
+                "\n".join(plan["code_lines"]),
+                out_dir / "thumb.jpg",
+            )
+            media = {
+                "video": str(final_mp4),
+                "broll": str(broll_path),
+                "subtitles": str(ass_path),
+                "thumbnail": str(thumb),
+                "lesson_url": les["url"],
+                "avatar": avatar_meta,
+            }
+            store.update_item(item_id, status="rendered", media=media)
+        except Exception as exc:
+            log.exception("influencer render failed")
+            store.update_item(item_id, status="failed", error=f"influencer: {exc}"[:500])
+            return item_id
 
     try:
         from socialbot.publish import drive

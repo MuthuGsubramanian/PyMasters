@@ -1,7 +1,13 @@
 [Unit]
 Description=PyMasters autonomous e2e triage (fixes red test signals behind the normal gates)
-After=network-online.target
+After=network-online.target pymasters-prod-smoke.service
 [Service]
 Type=oneshot
+Slice=pymasters-heavy.slice
+Nice=15
+CPUQuota=100%
+IOSchedulingClass=idle
+Environment=OMP_NUM_THREADS=1
+Environment=PM_E2E_CGROUP_PARENT=pymasters-heavy.slice
 ExecStart=%h/pymasters-ops/e2e_triage.sh
 TimeoutStartSec=10800
