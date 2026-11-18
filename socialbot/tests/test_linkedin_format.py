@@ -580,18 +580,20 @@ def test_never_uses_hindi_words_while_permitting_tamil_and_plain_english():
 
 def test_simple_non_technical_topic_weights_and_shares():
     assert config.SIMPLICITY_MIN_SCORE >= 7.5
+    assert config.TOPIC_DEPTH_MIN_SCORE >= 7.5
     assert config.HF_SPACE_SHARE <= 0.15
     assert config.TREND_SHARE <= 0.25
-    assert sources.TRACK_WEIGHT["python_fundamentals"] > sources.TRACK_WEIGHT["python_internals"]
-    assert sources.TRACK_WEIGHT["ai_fundamentals"] > sources.TRACK_WEIGHT["transformers_scratch"]
-    assert sources.TRACK_WEIGHT["working_with_data"] > sources.TRACK_WEIGHT["ai_engineering"]
-    # LinkedIn specifically prioritizes complex topics so each hourly post simplifies an intimidating concept
+    # Both YouTube (TRACK_WEIGHT) and LinkedIn prioritize genuinely complex topics broken down clearly
+    assert sources.TRACK_WEIGHT["python_internals"] > sources.TRACK_WEIGHT["python_fundamentals"]
+    assert sources.TRACK_WEIGHT["transformers_scratch"] > sources.TRACK_WEIGHT["ai_fundamentals"]
+    assert sources.TRACK_WEIGHT["ai_engineering"] > sources.TRACK_WEIGHT["working_with_data"]
     assert sources.LINKEDIN_COMPLEX_TRACK_WEIGHT["transformers_scratch"] > sources.LINKEDIN_COMPLEX_TRACK_WEIGHT["python_fundamentals"]
     assert sources.LINKEDIN_COMPLEX_TRACK_WEIGHT["python_internals"] > sources.LINKEDIN_COMPLEX_TRACK_WEIGHT["python_fundamentals"]
     assert sources.LINKEDIN_COMPLEX_TRACK_WEIGHT["async_concurrency"] > sources.LINKEDIN_COMPLEX_TRACK_WEIGHT["fun_automation"]
     adv_les = {**LES, "track": "ai_engineering", "difficulty": "advanced", "story": "A" * 2000}
     beg_les = {**LES, "track": "python_fundamentals", "difficulty": "beginner", "story": "A" * 2000}
     assert sources._lesson_weight("linkedin", adv_les) > 5 * sources._lesson_weight("linkedin", beg_les)
+    assert sources._lesson_weight("short", adv_les) > 5 * sources._lesson_weight("short", beg_les)
 
 
 def test_linkedin_prompts_and_critic_enforce_simplifying_complex_topics(monkeypatch):

@@ -227,13 +227,15 @@ def test_zero_cost_hybrid_short_influencer_and_long_conversational_no_presenter(
 
     monkeypatch.setattr(tts, "_call_gemini_tts", fake_gemini_tts)
 
-    # Confirm Studio Vaathiyaar assets load cleanly and render both Hero & PiP frames
+    # Confirm widescreen Cinema Veo Hero & PiP overlays render cleanly
+    from PIL import Image
     f_short = S.Frame(1080, 1920)
+    sample_veo = Image.new("RGB", (1280, 720), (28, 42, 72))
     hero_img = PO.draw_short_hero_presenter(
-        f_short.bg.copy(), f_short, {"heading": "Generators Made Simple"}, 0.5, 0.2, 0.7, 0.4
+        f_short.bg.copy(), f_short, {"heading": "KV-Cache Under the Hood"}, 0.5, 0.2, 0.7, 0.4, veo_frame=sample_veo
     )
     assert hero_img.size == (1080, 1920)
-    PO.draw_short_pip_presenter(hero_img, f_short, 0.65, 0.8)
+    PO.draw_short_pip_presenter(hero_img, f_short, 0.65, 0.8, veo_frame=sample_veo)
 
     short_segs = [
         {"narration": "Vanakkam nanba and nanbis! Why do giant files freeze laptops?", "visual": {"type": "title", "heading": "Smart Streams"}},
@@ -313,3 +315,60 @@ def test_resume_interrupted_skips_actively_locked_render(tmp_path: Path, monkeyp
     scheduler.resume_interrupted()
     assert len(render_calls) == 1
     assert store.get_item(item_id)["status"] == "rendered"
+
+
+def test_broadcast_presenter_quality_gate_and_complex_topic_filter(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import numpy as np
+    import soundfile as sf
+    from PIL import Image
+
+    from socialbot import config, quality, sources, store, tts, vids_avatar
+    from socialbot.render import video as V
+
+    monkeypatch.setattr(config, "STATE_DIR", tmp_path / "state")
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "state" / "socialbot.sqlite3")
+    config.ensure_dirs()
+
+    # 1) Static/frozen video MUST be rejected by verify_broadcast_presenter_mp4
+    frozen_wav = tmp_path / "frozen.wav"
+    t = np.linspace(0, 2.2, int(2.2 * tts.SR), endpoint=False, dtype=np.float32)
+    sf.write(frozen_wav, (0.2 * np.sin(2 * np.pi * 220.0 * t)).astype(np.float32), tts.SR)
+    frozen_mp4 = tmp_path / "frozen.mp4"
+    wr = V.FFmpegWriter(frozen_mp4, 1280, 720, fps=24, audio=frozen_wav)
+    static_img = Image.new("RGB", (1280, 720), (40, 50, 70))
+    for _ in range(52):
+        wr.write(static_img)
+    wr.close()
+    with pytest.raises(vids_avatar.PresenterQualityError):
+        vids_avatar.verify_broadcast_presenter_mp4(frozen_mp4, expected_min_s=1.5)
+
+    # 2) Basic intro lessons MUST be filtered out in favor of advanced complex engineering tracks
+    monkeypatch.setattr(config, "TREND_SHARE", 0.0)
+    monkeypatch.setattr(config, "HF_SPACE_SHARE", 0.0)
+    fake_lessons = [
+        {"key": "lesson:python_fundamentals/add_list", "id": "add_list", "track": "python_fundamentals", "difficulty": "beginner",
+         "title": "Adding List Numbers", "topic": "sum", "story": "x" * 900, "code_blocks": ["print(1)"], "challenges": [], "concepts": [], "url": "https://pymasters.net"},
+        {"key": "lesson:transformers_scratch/kv_cache", "id": "kv_cache", "track": "transformers_scratch", "difficulty": "advanced",
+         "title": "KV-Cache & Grouped-Query Attention", "topic": "kv cache", "story": "x" * 2400, "code_blocks": ["print(1)"], "challenges": [], "concepts": [], "url": "https://pymasters.net"},
+    ]
+    monkeypatch.setattr(sources, "candidates", lambda **kw: fake_lessons)
+    picked = sources.pick("short", n=1, seed=42)
+    assert picked[0]["key"] == "lesson:transformers_scratch/kv_cache"
+
+    # 3) Critic topic_depth < 7.5 MUST fail quality.verdict even when simplicity is high
+    monkeypatch.setattr(quality, "hard_checks", lambda k, d: [])
+    monkeypatch.setattr(quality, "attach_real_outputs", lambda k, d: {})
+    monkeypatch.setattr(
+        quality,
+        "critique",
+        lambda k, d, l: {
+            "overall": 8.2,
+            "scores": {"hook": 8, "accuracy": 9, "specificity": 8, "clarity": 9, "originality": 8, "brand_rules": 9, "simplicity": 8.5, "topic_depth": 5.0},
+            "factual_errors": [],
+            "blocking_issues": [],
+            "polish": [],
+        },
+    )
+    ok, _sc, _crit, probs = quality.verdict("short", {"title": "Toy Math"}, fake_lessons[1])
+    assert not ok
+    assert any("topic_depth" in p for p in probs)

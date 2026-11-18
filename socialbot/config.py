@@ -63,7 +63,8 @@ TTS_VOICE = os.getenv("PMSOCIAL_VOICE", "am_michael")
 TTS_SPEED = 1.06
 
 QUALITY_MIN_SCORE = 7.5      # calibrated critic score (8 = strong, accessible piece) + no errors/blockers
-SIMPLICITY_MIN_SCORE = 7.5   # videos must explain concepts simply enough for non-technical viewers
+SIMPLICITY_MIN_SCORE = 7.5   # complex topics must be broken down with crystal-clear intuition
+TOPIC_DEPTH_MIN_SCORE = 7.5  # underlying subject must be genuinely complex/substantive (never basic/toy tasks)
 MAX_ATTEMPTS = 4             # write -> critique -> rewrite rounds before a draft is dropped
 NO_REPEAT_DAYS = 120         # same lesson/topic is not reused within this window
 LINKEDIN_BUSINESS_STYLES = (
@@ -114,6 +115,7 @@ SHORT_LIVE_INFLUENCER = os.getenv("PMSOCIAL_SHORT_INFLUENCER", "1") == "1"
 LONG_LIVE_PRESENTER = os.getenv("PMSOCIAL_LONG_PRESENTER", "0") == "1"
 LONG_CONVERSATIONAL_AUDIO = os.getenv("PMSOCIAL_LONG_CONVERSATIONAL", "1") == "1"
 CDP_URL = os.getenv("PMSOCIAL_CDP_URL", "http://127.0.0.1:9222")
+GOOGLE_VIDS_AVATAR_NAME = os.getenv("PMSOCIAL_VIDS_AVATAR", "William")
 PRESENTER_ASSETS_DIR = Path(__file__).resolve().parent / "assets" / "presenter"
 PRESENTER_PLATES_DIR = MEDIA_DIR / "presenter_plates"
 

@@ -229,6 +229,13 @@ def verdict(kind, draft, les):
             f"blocking: complex topic is not simplified clearly enough (simplicity {simplicity} < {config.SIMPLICITY_MIN_SCORE}); "
             "translate all jargon into everyday simple English with a clear mental model"
         )
+    topic_depth = (c.get("scores") or {}).get("topic_depth")
+    min_depth = getattr(config, "TOPIC_DEPTH_MIN_SCORE", 7.5)
+    if kind in ("short", "long", "linkedin") and topic_depth is not None and float(topic_depth) < min_depth:
+        problems.append(
+            f"blocking: topic_depth {topic_depth} < {min_depth} — draft teaches a basic task or trivial toy example "
+            "instead of demystifying the genuinely complex engineering/AI mechanism in the lesson"
+        )
     if score < config.QUALITY_MIN_SCORE:
         problems += [f"polish: {e}" for e in c.get("polish") or []] or [f"editor score {score} < {config.QUALITY_MIN_SCORE}"]
     return (not problems), score, c, problems
