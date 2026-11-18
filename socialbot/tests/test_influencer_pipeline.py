@@ -256,3 +256,60 @@ def test_zero_cost_hybrid_short_influencer_and_long_conversational_no_presenter(
     long_srt = Path(long_media["srt"]).read_text(encoding="utf-8")
     assert "Vaathiyaar:" not in long_srt and "Ananya:" not in long_srt
     assert "nanbis!" in long_srt
+
+
+def test_resume_interrupted_skips_actively_locked_render(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import subprocess
+    import sys
+
+    from socialbot import config, pipeline, scheduler, sources, store
+
+    monkeypatch.setattr(config, "STATE_DIR", tmp_path / "state")
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "state" / "socialbot.sqlite3")
+    monkeypatch.setattr(config, "RENDERS_DIR", tmp_path / "renders")
+    config.ensure_dirs()
+
+    fake_lesson = {
+        "key": "lesson:test/locks",
+        "title": "Render Lock Safety",
+        "url": "https://pymasters.net/dashboard/classroom/locks",
+    }
+    monkeypatch.setattr(sources, "candidates", lambda: [fake_lesson])
+    render_calls = []
+
+    def fake_render(kind, draft, les, out_dir):
+        render_calls.append((kind, out_dir))
+        return {"video": str(out_dir / "video.mp4")}
+
+    monkeypatch.setattr(pipeline, "render", fake_render)
+    item_id = store.add_item("short", fake_lesson["key"], fake_lesson["title"], "drafted", draft={"title": "T"})
+
+    # Hold `render-{item_id}.lock` in a child process to simulate an active `produce("short")` run
+    holder = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import fcntl, sys, time; "
+                f"f = open({str(config.STATE_DIR / f'render-{item_id}.lock')!r}, 'a+'); "
+                "fcntl.flock(f, fcntl.LOCK_EX); "
+                "sys.stdout.write('LOCKED\\n'); sys.stdout.flush(); "
+                "time.sleep(10)"
+            ),
+        ],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        assert holder.stdout.readline().strip() == "LOCKED"
+        scheduler.resume_interrupted()
+        assert render_calls == []
+        assert store.get_item(item_id)["status"] == "drafted"
+    finally:
+        holder.terminate()
+        holder.wait(timeout=5)
+
+    # Once the active render process exits (or crashes), resume_interrupted picks it up cleanly
+    scheduler.resume_interrupted()
+    assert len(render_calls) == 1
+    assert store.get_item(item_id)["status"] == "rendered"

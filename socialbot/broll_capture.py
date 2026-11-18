@@ -129,13 +129,19 @@ def capture_watch_it_run_broll(
         html_path.write_text(html_doc, encoding="utf-8")
 
         runner_code = (
+            "from pathlib import Path\n"
             "from playwright.sync_api import sync_playwright\n"
-            "import sys\n"
             f"url = 'file://{html_path}'\n"
             f"count = {len(step_list)}\n"
             f"out_dir = {str(tmp_dir)!r}\n"
             "with sync_playwright() as p:\n"
-            "    b = p.chromium.launch(headless=True)\n"
+            "    try:\n"
+            "        b = p.chromium.launch(headless=True)\n"
+            "    except Exception:\n"
+            "        shells = sorted(Path.home().glob('.cache/ms-playwright/chromium_headless_shell-*/*/chrome-headless-shell'))\n"
+            "        if not shells:\n"
+            "            raise\n"
+            "        b = p.chromium.launch(headless=True, executable_path=str(shells[-1]))\n"
             f"    page = b.new_page(viewport={{'width': {width}, 'height': {height}}})\n"
             "    page.goto(url)\n"
             "    for i in range(count):\n"

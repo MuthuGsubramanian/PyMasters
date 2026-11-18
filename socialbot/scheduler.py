@@ -25,17 +25,7 @@ def _iso(dt):
     return dt.astimezone(timezone.utc).replace(microsecond=0).isoformat()
 
 
-@contextmanager
-def _file_lock(name: str, blocking: bool = True):
-    config.ensure_dirs()
-    lock_file = open(config.STATE_DIR / name, "w")
-    flags = fcntl.LOCK_EX if blocking else (fcntl.LOCK_EX | fcntl.LOCK_NB)
-    fcntl.flock(lock_file, flags)
-    try:
-        yield
-    finally:
-        fcntl.flock(lock_file, fcntl.LOCK_UN)
-        lock_file.close()
+_file_lock = store.file_lock
 
 
 def _in_slot_window(c: dict, slot_dt: datetime) -> bool:
@@ -250,30 +240,40 @@ def refresh_metrics():
 
 
 def resume_interrupted(kinds=None):
-    """Re-render any item left in 'drafted' status by an interrupted run without spending new LLM tokens."""
+    """Re-render any item left in 'drafted' status by an interrupted run without spending new LLM tokens.
+    Uses a non-blocking per-item flock (`render-{id}.lock`) so a background timer tick never collides with
+    an actively rendering `produce` process."""
     from socialbot import pipeline, sources
     for it in store.items(status="drafted", limit=20):
         if kinds and it["kind"] not in kinds:
             continue
-        les = next((l for l in sources.candidates() if l["key"] == it["source_key"]), None)
-        if not les:
-            store.update_item(it["id"], status="failed", error="resume: lesson no longer exists")
-            continue
-        log.info("resuming interrupted render #%s %s", it["id"], it["kind"])
-        out_dir = config.RENDERS_DIR / f"{datetime.now():%Y%m%d}-{it['kind']}-{it['id']}"
         try:
-            media = pipeline.render(it["kind"], it["draft"], les, out_dir)
-            media["lesson_url"] = les["url"]
-            store.update_item(it["id"], status="rendered", media=media, error=None)
-            try:
-                from socialbot.publish import drive
-                if drive.is_authorised():
-                    drive.sync_item(store.get_item(it["id"]))
-            except Exception as e:
-                log.warning("drive sync skipped for resumed #%s: %s", it["id"], e)
-        except Exception as e:
-            log.exception("resume render failed")
-            store.update_item(it["id"], status="failed", error=f"render: {e}"[:500])
+            with _file_lock(f"render-{it['id']}.lock", blocking=False):
+                fresh = store.get_item(it["id"])
+                if not fresh or fresh["status"] != "drafted":
+                    continue
+                les = next((l for l in sources.candidates() if l["key"] == fresh["source_key"]), None)
+                if not les:
+                    store.update_item(fresh["id"], status="failed", error="resume: lesson no longer exists")
+                    continue
+                log.info("resuming interrupted render #%s %s", fresh["id"], fresh["kind"])
+                out_dir = config.RENDERS_DIR / f"{datetime.now():%Y%m%d}-{fresh['kind']}-{fresh['id']}"
+                try:
+                    media = pipeline.render(fresh["kind"], fresh["draft"], les, out_dir)
+                    media["lesson_url"] = les["url"]
+                    store.update_item(fresh["id"], status="rendered", media=media, error=None)
+                    try:
+                        from socialbot.publish import drive
+                        if drive.is_authorised():
+                            drive.sync_item(store.get_item(fresh["id"]))
+                    except Exception as e:
+                        log.warning("drive sync skipped for resumed #%s: %s", fresh["id"], e)
+                except Exception as e:
+                    log.exception("resume render failed")
+                    store.update_item(fresh["id"], status="failed", error=f"render: {e}"[:500])
+        except BlockingIOError:
+            log.info("skipping render #%s (%s): already rendering in another process", it["id"], it["kind"])
+            continue
 
 
 def refresh_daily_trends():
