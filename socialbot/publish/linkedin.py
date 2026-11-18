@@ -104,6 +104,12 @@ def little_text(post: str, hashtags) -> str:
     be plain English, link to https://pymasters.net, tag the PyMasters company page (@[PyMasters](urn:li:organization:...)),
     and render hashtags as {hashtag|\\#|Tag}."""
     raw = (post or "").translate(_PLAIN_MAP).rstrip()
+    # Strip trailing hashtag-only lines from body when `hashtags` are supplied separately so tags never render twice.
+    if hashtags:
+        lines = raw.splitlines()
+        while lines and (not lines[-1].strip() or all(tok.startswith("#") for tok in lines[-1].split())):
+            lines.pop()
+        raw = "\n".join(lines).rstrip()
     if config.SITE not in raw:
         raw = f"{raw}\n\n{config.SITE}".strip()
     body = _RESERVED.sub(r"\\\1", raw)
