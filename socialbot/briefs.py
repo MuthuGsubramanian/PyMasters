@@ -1,20 +1,22 @@
 """Writing briefs and JSON schemas: one clear brief per format, plus the critic's rubric."""
 import json
 
-BRAND = """You write for PyMasters (https://pymasters.net), an interactive learning platform that makes Python and AI easy for anyone to understand.
-Voice: a strictly professional, warm, crystal-clear teacher writing and speaking in simple everyday English so even a completely non-technical person understands complex tech effortlessly. Simple and concrete over clever or academic.
+BRAND = """You write for PyMasters (https://pymasters.net), an interactive engineering & AI learning platform whose signature superpower is DEMYSTIFYING GENUINELY COMPLEX TOPICS into crystal-clear intuition.
+Voice: a strictly professional, authoritative, warm principal-engineer mentor speaking in crystal-clear everyday English. Think 3Blue1Brown / ByteByteGo clarity: the SUBJECT MATTER is genuinely advanced and complex, while the EXPLANATION is effortless to grasp.
 Hard rules:
-- EXPLAIN IN SIMPLE TERMS FOR ANYONE: Break down every complex topic step by step as if explaining to a smart friend with zero coding or AI background. Never drop unexplained technical jargon, dense math, or acronyms (if a technical word appears in the source, replace it with an everyday word OR explain what it means in 5 plain words right away using concrete real-world comparisons like sorting mail, checking an ID at a bank counter, following a recipe, or keeping a ledger).
-- NEVER USE HINDI WORDS: Write in plain, clear English (Tamil words like "Vanakkam", "nanba", "nanbis", "Vaathiyaar" are permitted where relevant to PyMasters, but Hindi words and Hinglish are strictly banned—never use "chai", "samosa", "tapri", "roti", "jugaad", "namaste", "paisa", "lakh", "crore", "bhaiya", "yaar", "desi", "bazaar", "mandi", "kirana", "dabba", "tiffin", or any Devanagari script).
+- COMPLEX SUBJECT, CRYSTAL-CLEAR EXPLANATION (NEVER BASIC TASKS IN A BASIC WAY):
+  1. NEVER dumb down the topic itself into elementary programming tasks, basic syntax, or Grade-3 toy arithmetic (strictly ban "add up an invoice", "1 box = 10, 2 boxes = 13", basic list sums, or intro definitions).
+  2. ALWAYS spotlight the real, non-trivial engineering / AI / systems mechanism at the heart of the material (e.g., Speculative Decoding draft-and-verify, Transformer Q·K Self-Attention, KV-Cache memory scaling, Reciprocal Rank Fusion, Python Event-Loop scheduling, LoRA low-rank matrices, Idempotency keys, Ebbinghaus agent memory pruning).
+  3. Name the real technical concept clearly AND translate what it does immediately in 5-8 plain everyday words using ONE sharp, grown-up operational mental model (e.g., a junior drafter sketching 4 words while a senior editor verifies all 4 in one pass; an airport fast-track lane; a bank idempotency ledger).
+- NEVER USE HINDI WORDS: Write in plain, clear English (Tamil greeting words like "Vanakkam", "nanba", "nanbis", "Vaathiyaar" are permitted where specified, but Hindi words and Hinglish are strictly banned—never use "chai", "samosa", "tapri", "roti", "jugaad", "namaste", "paisa", "lakh", "crore", "bhaiya", "yaar", "desi", "bazaar", "mandi", "kirana", "dabba", "tiffin", or any Devanagari script).
 - Strictly professional tone: never use casual, whimsical, or consumer-trivia scenarios (no restaurant bills, tea/coffee rotas, sports fixtures, superhero/movie/kid metaphors, or playful banter).
-- One simple, memorable core idea per piece, grounded in real Python 3.11 behavior from the material. Never invent APIs or numbers.
+- Ground every claim in real Python 3.11 behavior and exact numbers from the material. Never invent APIs or numbers.
 - No hype or filler: never use "game-changer", "unlock", "supercharge", "dive in", "delve", "in today's world",
   "revolutionize", "level up", "mind-blowing", "secret", "hack" (as in trick), or rhetorical "Ever wondered...?".
 - Every post and description MUST include a link to https://pymasters.net (and every LinkedIn post must mention @PyMasters so the company page is tagged).
 - Never present code as "from the lesson" unless it is verbatim; every snippet must run on its own as shown.
 - Every visual must show exactly what it claims (plots plot real functions, traces show values only after the line runs).
-The editor scores: hook, accuracy, specificity, clarity, originality, brand rules and simplicity; 8/10 is the bar (complex jargon without simple translation gets rejected).
-Before answering, ask yourself: would a non-technical reader understand every single sentence on the first try?"""
+The editor scores BOTH `topic_depth` (is the underlying concept genuinely complex & non-trivial?) AND `simplicity` (is that complex mechanism made crystal-clear?); 8/10 is the bar, and basic/toy tasks get rejected immediately."""
 
 
 def material_block(les: dict) -> str:
@@ -200,70 +202,68 @@ CRITIC_SCHEMA = {
         "scores": {"type": "object", "properties": {
             "hook": {"type": "number"}, "accuracy": {"type": "number"}, "specificity": {"type": "number"},
             "clarity": {"type": "number"}, "originality": {"type": "number"}, "brand_rules": {"type": "number"},
-            "simplicity": {"type": "number", "description": "how well a complex idea is made genuinely simple"}},
-            "required": ["hook", "accuracy", "specificity", "clarity", "originality", "brand_rules", "simplicity"]},
+            "simplicity": {"type": "number", "description": "how clearly the complex mechanism is explained without unexplained jargon"},
+            "topic_depth": {"type": "number", "description": "0-10: is the underlying concept genuinely complex, architectural, and substantive (8-10) rather than a basic task, intro syntax, or trivial toy arithmetic (0-5)?"}},
+            "required": ["hook", "accuracy", "specificity", "clarity", "originality", "brand_rules", "simplicity", "topic_depth"]},
         "overall": {"type": "number", "description": "0-10; 8+ means publishable as-is"},
         "factual_errors": {"type": "array", "items": {"type": "string"},
                            "description": "statements that are wrong and would mislead a reader"},
         "blocking_issues": {"type": "array", "items": {"type": "string"},
-                            "description": "problems that make it unpublishable: broken/misleading code or visuals, "
-                                           "a weak or generic hook, brand-rule violations. Empty if publishable."},
+                            "description": "problems that make it unpublishable: basic/toy topic lacking depth, unexplained jargon, broken/misleading code or visuals, weak hook, or brand-rule violations. Empty if publishable."},
         "polish": {"type": "array", "items": {"type": "string"},
                    "description": "at most 4 optional improvements, most valuable first"},
     },
     "required": ["scores", "overall", "factual_errors", "blocking_issues", "polish"],
 }
 
-YOUTUBE_SELF_EXPLANATORY_RULES = """Simple, Non-Technical Breakdown & Self-Explanatory Visual Story Arc (CRITICAL—even someone who has never written code must understand every second):
-- Target a non-technical viewer first: break complexity down into everyday cause and effect before showing any code or technical term.
-- Never speak raw jargon, dense math symbols, or unexplained acronyms in narration (if you mention a term like 'API', 'token', 'cache', 'index', or 'model', explain it in 4-6 simple everyday words right away).
-- A viewer watching on mute must understand the entire idea from the visuals alone in plain everyday English.
+YOUTUBE_SELF_EXPLANATORY_RULES = """Complex Engineering Breakdown & Self-Explanatory Visual Story Arc (CRITICAL—tackle a genuinely HARD AI/systems mechanism and make its mental model so clear even a non-technical person grasps how it works):
+- NEVER replace a complex topic with a trivial basic task (never teach 'how to sum a list', 'how to add an invoice', or '1 box = 10, 2 boxes = 13'). Keep the REAL advanced mechanism (e.g., KV-Cache, Self-Attention, Speculative Decoding, Reciprocal Rank Fusion, Event Loop, Quantization, Idempotency) front and center, and demystify HOW it works in crisp plain English.
+- Whenever you introduce a technical term, translate what it means in 4-7 plain words right away so both engineers and newcomers get an instant 'aha!' moment.
 - Every scene.visual MUST include:
-  1. `step_badge` (e.g. "1 · THE EVERYDAY PROBLEM", "2 · SIMPLE ANALOGY", "3 · STEP BY STEP", "4 · REAL IMPACT", "5 · ONE CLEAR RULE")
-  2. `note` (<= 56 chars plain-English takeaway banner so a non-technical viewer gets the point immediately)
+  1. `step_badge` (e.g. "1 · THE BOTTLENECK", "2 · MENTAL MODEL", "3 · UNDER THE HOOD", "4 · BENCHMARK IMPACT", "5 · ARCHITECT'S RULE")
+  2. `note` (<= 56 chars crisp plain-English takeaway banner so muted viewers grasp the exact mechanism)
 - Across the 5 scenes of a Short, you MUST use at least 3 DIFFERENT `visual.type` kinds from `["flow", "compare", "metric", "trace", "code", "timeline", "plot", "reveal"]`:
-  - Scene 1: `compare` or `metric` or `flow` — show the relatable everyday problem in simple terms with zero jargon.
-  - Scene 2: `flow` or `compare` (`style="mapping"`) or `timeline` — show the simple real-world mental model / analogy step by step so anyone gets how it works.
-  - Scene 3: `code` (ultra-simple 3-5 line Python <= 30 chars/line with `output`) OR `trace` OR `compare` — translate that simple idea into tiny, readable Python and explain in plain English what each part does.
-  - Scene 4: `metric` or `compare` or `plot` — show the clear before-vs-after improvement in everyday terms.
-  - Scene 5: `reveal` or `bullets` — state the 1-sentence plain-English takeaway anyone can remember."""
+  - Scene 1: `compare` or `metric` or `timeline` — show the real systems/AI bottleneck (latency, memory explosion, hallucination, race condition) in concrete numbers.
+  - Scene 2: `flow` or `compare` (`style="mapping"`) or `timeline` — reveal the core architectural mental model step by step so anyone sees *why* it works.
+  - Scene 3: `code` (clean 4-6 line Python <= 30 chars/line showing the actual algorithm/mechanism with `output`) OR `trace` — prove the mechanism in real runnable Python.
+  - Scene 4: `metric` or `compare` or `plot` — show the real quantitative gain (e.g., 4x smaller KV-cache, 2.5x lower latency, RRF rank jump).
+  - Scene 5: `reveal` or `bullets` — state the sharp 1-sentence engineering takeaway rule."""
 
 
 def short_prompt(les, feedback=None, previous=None):
     greeting_rule = (
         'LIVE INFLUENCER GREETING: Open `hook` warmly as our live mentor with "Vanakkam nanba and nanbis!" '
-        "followed immediately by a <= 11-word everyday question or surprising fact (<= 16 words total in `hook`)."
+        "followed immediately by a sharp <= 11-word engineering bottleneck or counter-intuitive fact about this complex mechanism (<= 16 words total in `hook`)."
     )
     if les.get("is_hf_space"):
-        return f"""Write a super simple, self-explanatory YouTube Short (40-50 seconds spoken, strictly 90-120 words across hook + all scenes[].narration + cta)
-breaking down what our live PyMasters app ({les['title']}) actually does so even a completely non-technical person understands it on the first watch.
+        return f"""Write a high-impact, crystal-clear YouTube Short (40-50 seconds spoken, strictly 90-120 words across hook + all scenes[].narration + cta)
+demystifying the REAL AI/systems engineering mechanism inside our live PyMasters app ({les['title']}) so viewers grasp an intimidating concept effortlessly.
 {greeting_rule}
-First explain the real-world problem in simple everyday words (use a concrete real-world analogy, NO intimidating acronyms in the title or hook), then walk through how it works simply before showing a tiny Python example.
-Use 5 scenes, each with 16-20 spoken words, and a brief cta (<= 12 words) inviting viewers to try the free interactive app and learn simply at pymasters.net.
+Spotlight the real algorithmic bottleneck first, map the core mechanism to a sharp intuitive mental model, then prove it with a compact runnable Python snippet and exact numbers from the material.
+Use 5 scenes, each with 16-20 spoken words, and a brief cta (<= 12 words) inviting viewers to try the free interactive lab at pymasters.net.
 The description MUST include BOTH the Hugging Face Space link ({les['space_url']}) AND {les['url']}.
 Every number mentioned in spoken narration or shown in an output visual MUST match the exact output of the lesson code.
 {YOUTUBE_SELF_EXPLANATORY_RULES}
 {_fb(feedback, previous)}
-LESSON MATERIAL (simplify and translate all heavy jargon into plain everyday language):
+COMPLEX ENGINEERING MATERIAL TO DEMYSTIFY:
 {material_block(les)}"""
     if les.get("is_daily_trend"):
-        return f"""Write a super simple, self-explanatory YouTube Short (40-50 seconds spoken, strictly 90-120 words across hook + all scenes[].narration + cta) breaking down today's
-trending topic in {les.get('pillar_label', 'AI Engineering')} ({les['title']}) so even a non-technical person understands how it works and why it matters.
+        return f"""Write a high-impact, crystal-clear YouTube Short (40-50 seconds spoken, strictly 90-120 words across hook + all scenes[].narration + cta) demystifying today's
+complex architecture topic in {les.get('pillar_label', 'AI Engineering')} ({les['title']}) with crystal-clear intuition and real engineering depth.
 {greeting_rule}
-State the everyday problem in plain words with zero buzzwords or unexplained jargon, translate the core mechanism into an everyday comparison first, then show one clear visual/code example and its real result.
-Use 5 scenes, each with 16-20 spoken words, and end with a brief cta (<= 12 words) on how pymasters.net breaks down tech in simple terms.
+Expose the real production bottleneck first, explain the core mechanism through a sharp operational mental model, then prove it with a compact visual/code example and exact output.
+Use 5 scenes, each with 16-20 spoken words, and end with a brief cta (<= 12 words) pointing to pymasters.net.
 {YOUTUBE_SELF_EXPLANATORY_RULES}
 {_fb(feedback, previous)}
-LESSON MATERIAL (simplify and translate all heavy jargon into plain everyday language):
+COMPLEX ENGINEERING MATERIAL TO DEMYSTIFY:
 {material_block(les)}"""
-    return f"""Write a super simple, self-explanatory YouTube Short (40-50 seconds spoken, strictly 90-120 words across hook + all scenes[].narration + cta) teaching ONE
-practical idea from this PyMasters lesson so clearly that even a completely non-technical person understands it immediately.
+    return f"""Write a high-impact, crystal-clear YouTube Short (40-50 seconds spoken, strictly 90-120 words across hook + all scenes[].narration + cta) demystifying the MOST COMPLEX, high-value engineering/AI mechanism in this PyMasters lesson (NEVER reduce it to a basic intro task or toy arithmetic).
 {greeting_rule}
-Translate every technical term into plain everyday English and concrete real-world comparisons before showing any Python.
+Name the real concept clearly, translate how it works under the hood using a sharp intuitive mental model, and prove it with compact runnable Python and real numbers from the material.
 Use 5 scenes, each with 16-20 spoken words, and a brief cta (<= 12 words) mentioning pymasters.net.
 {YOUTUBE_SELF_EXPLANATORY_RULES}
 {_fb(feedback, previous)}
-LESSON MATERIAL (simplify and translate all heavy jargon into plain everyday language):
+COMPLEX ENGINEERING MATERIAL TO DEMYSTIFY:
 {material_block(les)}"""
 
 
@@ -421,12 +421,11 @@ COMPLEX TOPIC MATERIAL TO SIMPLIFY:
 def _video_rule(kind: str) -> str:
     label = "YouTube Short" if kind == "short" else "YouTube tutorial"
     return (
-        f"This is a {label} aimed at ANYONE—especially non-technical viewers with zero coding background: "
-        "demand that complexity is broken down into plain, everyday English with relatable real-world comparisons BEFORE any code appears. "
-        "Penalise `scores.simplicity` (below 7) and add a `blocking_issues` entry if the title, hook, narration, or visual labels "
-        "use unexplained technical jargon, dense acronyms, heavy math, or assume prior programming knowledge. "
-        "Every visual must be self-explanatory on mute, with clear `step_badge` and plain-English `note` banners, "
-        "and `cta`/`description` must point to https://pymasters.net."
+        f"This is a {label} whose mission is DEMYSTIFYING GENUINELY COMPLEX AI & SYSTEMS TOPICS so clearly that both engineers and non-technical viewers grasp the mechanism effortlessly: "
+        "1) Score `scores.topic_depth` < 7.0 and add a `blocking_issues` entry if the draft reduces the lesson to a basic programming task, "
+        "elementary syntax, or trivial toy arithmetic (e.g., 'add up an invoice', '1 box = 10, 2 boxes = 13', simple list sums). It MUST teach a real, non-trivial architectural/AI/internals mechanism. "
+        "2) Score `scores.simplicity` < 7.5 and add a `blocking_issues` entry if technical terms, acronyms, or dense formulas are dropped without an immediate plain-English mental model. "
+        "Every visual must be self-explanatory on mute with `step_badge` and `note` banners, and `cta`/`description` must point to https://pymasters.net."
     )
 
 

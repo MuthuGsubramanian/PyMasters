@@ -11,41 +11,32 @@ from datetime import date
 
 from socialbot import config, store
 
-# Favor accessible, practical Python & AI topics for YouTube Shorts/Longs.
-TRACK_WEIGHT = {
-    "python_fundamentals": 4.0, "ai_fundamentals": 4.0, "ai_ml_foundations": 3.5,
-    "working_with_data": 3.5, "fun_automation": 3.5, "vibe_coding": 3.0,
-    "python_intermediate": 2.5, "ai_agents": 2.2, "machine_learning": 2.2,
-    "debugging_mastery": 2.2, "error_handling": 2.0, "web_development": 2.0,
-    "dsa": 1.6, "python_modern": 1.6, "deep_learning": 1.2, "trending_ai": 1.2,
-    "regex_mastery": 1.0, "testing_devops": 1.0, "functional_python": 1.0,
-    "deep_learning_complete": 0.9, "ai_engineering": 0.7, "async_concurrency": 0.6,
-    "performance_optimization": 0.6, "transformers_scratch": 0.6, "python_internals": 0.5,
-    "frontier_ai_platforms": 0.5, "azure_ai_foundry": 0.5, "cross_cloud_architecture": 0.5,
-    "aws_enterprise": 0.5, "azure_enterprise": 0.5, "gcp_vertex_ai": 0.5,
+# Unified editorial mission across YouTube Shorts, YouTube Longs, and LinkedIn:
+# ALWAYS select genuinely complex, substantive AI, ML, Python internals, concurrency, distributed systems,
+# and algorithmic architecture topics — NEVER elementary syntax or basic intro tasks — and break them down clearly.
+COMPLEX_TOPIC_TRACK_WEIGHT = {
+    "transformers_scratch": 4.8, "ai_engineering": 4.6, "python_internals": 4.5,
+    "async_concurrency": 4.4, "performance_optimization": 4.2, "deep_learning_complete": 4.0,
+    "ai_agents": 4.0, "deep_learning": 3.8, "frontier_ai_platforms": 3.6,
+    "cross_cloud_architecture": 3.4, "machine_learning": 3.4, "dsa": 3.2,
+    "gcp_vertex_ai": 3.0, "aws_enterprise": 3.0, "azure_ai_foundry": 3.0,
+    "azure_enterprise": 2.8, "trending_ai": 3.2, "debugging_mastery": 2.6,
+    "functional_python": 2.6, "python_modern": 2.4, "testing_devops": 2.2,
+    "ai_ml_foundations": 1.8, "python_intermediate": 1.8, "regex_mastery": 1.8,
+    "error_handling": 1.2, "web_development": 1.2, "working_with_data": 0.6,
+    "ai_fundamentals": 0.4, "vibe_coding": 0.15, "fun_automation": 0.10,
+    "python_fundamentals": 0.05,
 }
-
-# LinkedIn hourly series ("Simplifying Complex Topics"): prioritize genuinely complex AI, ML, internals,
-# concurrency, algorithms, and systems engineering topics so each post turns an intimidating concept simple.
-LINKEDIN_COMPLEX_TRACK_WEIGHT = {
-    "transformers_scratch": 4.5, "python_internals": 4.2, "async_concurrency": 4.2,
-    "performance_optimization": 4.0, "ai_engineering": 4.0, "deep_learning_complete": 3.8,
-    "deep_learning": 3.6, "ai_agents": 3.6, "machine_learning": 3.4,
-    "dsa": 3.2, "ai_ml_foundations": 3.0, "functional_python": 2.8,
-    "debugging_mastery": 2.6, "python_modern": 2.6, "regex_mastery": 2.4,
-    "python_intermediate": 2.4, "testing_devops": 2.2, "trending_ai": 2.2,
-    "frontier_ai_platforms": 2.0, "cross_cloud_architecture": 2.0, "gcp_vertex_ai": 1.8,
-    "aws_enterprise": 1.8, "azure_enterprise": 1.8, "azure_ai_foundry": 1.8,
-    "error_handling": 1.6, "web_development": 1.5, "working_with_data": 1.4,
-    "ai_fundamentals": 1.2, "vibe_coding": 1.0, "fun_automation": 0.8,
-    "python_fundamentals": 0.5,
-}
-LINKEDIN_DIFFICULTY_MULTIPLIER = {
-    "advanced": 2.2,
-    "intermediate": 1.6,
+TRACK_WEIGHT = COMPLEX_TOPIC_TRACK_WEIGHT
+LINKEDIN_COMPLEX_TRACK_WEIGHT = COMPLEX_TOPIC_TRACK_WEIGHT
+COMPLEX_DIFFICULTY_MULTIPLIER = {
+    "advanced": 2.6,
+    "intermediate": 1.8,
     "": 1.2,
-    "beginner": 0.35,
+    "beginner": 0.04,
 }
+LINKEDIN_DIFFICULTY_MULTIPLIER = COMPLEX_DIFFICULTY_MULTIPLIER
+BASIC_INTRO_TRACKS = {"python_fundamentals", "fun_automation", "vibe_coding"}
 CODE_RE = re.compile(r"```python\n(.*?)```", re.S)
 
 # Our 5 live unified Gradio 5.23.1 Hugging Face Spaces (Muthu88/pymasters-*), posted one-by-one in random order
@@ -433,15 +424,18 @@ def _tokens(s: str) -> set:
     return {w for w in re.findall(r"[a-z0-9]+", s.lower()) if len(w) > 2}
 
 
+def _is_basic_intro_lesson(les: dict) -> bool:
+    if les.get("track") in BASIC_INTRO_TRACKS:
+        return True
+    if (les.get("difficulty") or "").lower() == "beginner":
+        return True
+    return False
+
+
 def _lesson_weight(kind: str, les: dict) -> float:
-    if kind == "linkedin":
-        w = LINKEDIN_COMPLEX_TRACK_WEIGHT.get(les["track"], 2.0)
-        w *= LINKEDIN_DIFFICULTY_MULTIPLIER.get((les.get("difficulty") or "").lower(), 1.2)
-        w *= 1.0 + min(len(les["story"]), 4500) / 9000  # favor substantive complex lessons worth simplifying
-        return w
-    w = TRACK_WEIGHT.get(les["track"], 1.0)
-    if kind == "long":
-        w *= 1.0 + min(len(les["story"]), 4500) / 9000  # gentle depth preference without burying fundamentals
+    w = COMPLEX_TOPIC_TRACK_WEIGHT.get(les["track"], 2.0)
+    w *= COMPLEX_DIFFICULTY_MULTIPLIER.get((les.get("difficulty") or "").lower(), 1.2)
+    w *= 1.0 + min(len(les["story"]), 5000) / 8000  # favor deep architectural/AI lessons worth demystifying
     return w
 
 
@@ -466,11 +460,13 @@ def pick(kind: str, n: int = 1, seed=None) -> list:
     repeat_days = getattr(config, "LINKEDIN_NO_REPEAT_DAYS", 18) if kind == "linkedin" else config.NO_REPEAT_DAYS
     recent_limit = 35 if kind == "linkedin" else 60
 
-    def _build_pool(days_window: int, check_title_overlap: bool) -> list:
+    def _build_pool(days_window: int, check_title_overlap: bool, exclude_basic: bool = True) -> list:
         used = store.recently_used_sources(days=days_window)
         recent = [_tokens(t) for t in store.recent_topics(limit=recent_limit)] if check_title_overlap else []
         out = []
         for les in all_lessons:
+            if exclude_basic and _is_basic_intro_lesson(les):
+                continue
             if (les["key"], kind) in used:
                 continue
             if recent:
@@ -480,11 +476,15 @@ def pick(kind: str, n: int = 1, seed=None) -> list:
             out.append((_lesson_weight(kind, les), les))
         return out
 
-    pool = _build_pool(repeat_days, check_title_overlap=True)
+    pool = _build_pool(repeat_days, check_title_overlap=True, exclude_basic=True)
+    if len(pool) < (n - len(chosen)):
+        pool = _build_pool(repeat_days, check_title_overlap=True, exclude_basic=False)
     if len(pool) < (n - len(chosen)) and kind == "linkedin":
         # At 14 posts/day, gracefully narrow the repeat window before ever running dry
-        for fallback_days, overlap in ((7, False), (2, False), (0, False)):
-            pool = _build_pool(fallback_days, check_title_overlap=overlap)
+        for fallback_days, overlap in ((7, True), (2, False), (0, False)):
+            pool = _build_pool(fallback_days, check_title_overlap=overlap, exclude_basic=True) or _build_pool(
+                fallback_days, check_title_overlap=overlap, exclude_basic=False
+            )
             if len(pool) >= (n - len(chosen)):
                 break
     while pool and len(chosen) < n:
