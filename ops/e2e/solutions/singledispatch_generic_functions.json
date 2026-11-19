@@ -1,0 +1,17 @@
+{
+  "lesson_id": "singledispatch_generic_functions",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from functools import singledispatch\n\n@singledispatch\ndef describe(x):\n    return f\"object: {x!r}\"\n\n@describe.register\ndef _(x: int):\n    return f\"int with {x.bit_length()} bits\"\n\n@describe.register\ndef _(x: str):\n    return f\"text of {len(x)} chars\"\n\nprint(describe(\"hello\"))\nprint(describe(255))\n",
+      "verified_output": "text of 5 chars\nint with 8 bits",
+      "source": "claude sonnet 2026-11-19, verified by grade_submission"
+    },
+    {
+      "index": 1,
+      "code": "from functools import singledispatch\n\n@singledispatch\ndef describe(x):\n    return f\"object: {x!r}\"\n\n@describe.register\ndef _(x: int):\n    return f\"int with {x.bit_length()} bits\"\n\n@describe.register(bool)\ndef _(x):\n    return \"flag on\" if x else \"flag off\"\n\nprint(describe(True))\nprint(describe(False))\nprint(describe(7))\n",
+      "verified_output": "flag on\nflag off\nint with 3 bits",
+      "source": "claude sonnet 2026-11-19, verified by grade_submission"
+    }
+  ]
+}

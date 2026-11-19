@@ -1,0 +1,17 @@
+{
+  "lesson_id": "protocol_structural_typing",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from typing import Protocol, runtime_checkable\n\nclass Dog:\n    def speak(self) -> str:\n        return \"Woof\"\n\nclass Rock:\n    pass\n\n@runtime_checkable\nclass Speaker(Protocol):\n    def speak(self) -> str: ...\n\nprint(isinstance(Dog(), Speaker))\nprint(isinstance(Rock(), Speaker))\n",
+      "verified_output": "True\nFalse",
+      "source": "claude sonnet 2026-11-19, verified by grade_submission"
+    },
+    {
+      "index": 1,
+      "code": "from typing import Protocol, runtime_checkable\n\n@runtime_checkable\nclass Speaker(Protocol):\n    def speak(self) -> str: ...\n\nclass Dog:\n    def speak(self) -> str:\n        return \"Woof\"\n\nclass Cat:\n    def speak(self) -> str:\n        return \"Meow\"\n\nclass Rock:\n    pass\n\ndef announce_all(items):\n    return [item.speak() for item in items if isinstance(item, Speaker)]\n\nprint(announce_all([Dog(), Rock(), Cat()]))\n",
+      "verified_output": "['Woof', 'Meow']",
+      "source": "claude sonnet 2026-11-19, verified by grade_submission"
+    }
+  ]
+}

@@ -1,0 +1,239 @@
+{
+  "id": "singledispatch_generic_functions",
+  "topic": "singledispatch_generic_functions",
+  "track": "python_modern",
+  "module": "modern_idioms",
+  "order": 7,
+  "title": {
+    "en": "singledispatch: One Function, Many Types"
+  },
+  "description": {
+    "en": "functools.singledispatch turns an if/elif chain of isinstance checks into a registry of small per-type functions. See how the fallback, subclass matching and the 'first argument only' rule work."
+  },
+  "xp_reward": 100,
+  "next_unlock": "exception_groups_except_star",
+  "story_variants": {
+    "en": "## One Function Name, Many Behaviours\n\nSooner or later you write a function that must act differently depending on the *type* of its argument, and you end up with this:\n\n```python\ndef describe(x):\n    if isinstance(x, bool):\n        ...\n    elif isinstance(x, int):\n        ...\n    elif isinstance(x, str):\n        ...\n    else:\n        ...\n```\n\nEvery new type means editing that one function. `functools.singledispatch` lets each type's behaviour live in its own small function instead, and anyone can add a new one later without touching the original.\n\n### The pattern\n\n```python\nfrom functools import singledispatch\n\n@singledispatch\ndef describe(x):                  # the fallback, used for any other type\n    return f\"object: {x!r}\"\n\n@describe.register\ndef _(x: int):                    # the type comes from the annotation\n    return f\"int with {x.bit_length()} bits\"\n\n@describe.register\ndef _(x: str):\n    return f\"text of {len(x)} chars\"\n\nprint(describe(\"hello\"))   # text of 5 chars\nprint(describe(255))       # int with 8 bits\nprint(describe(2.5))       # object: 2.5  (no float version, so the fallback)\n```\n\nReading `describe(255)`: Python looks at `type(255)`, finds the `int` version in a registry and calls it.\n\n### Subclasses and the most specific match\n\n`bool` is a subclass of `int`. If you only registered `int`, then `describe(True)` runs the `int` version and says `int with 1 bits`. Register `bool` too and it wins, because dispatch picks the **most specific** class in the argument's inheritance chain:\n\n```python\n@describe.register(bool)          # pass the type explicitly when you have no annotation\ndef _(x):\n    return f\"flag {'on' if x else 'off'}\"\n```\n\n### Limits you should know\n\n- Dispatch looks at the **first argument only**. For methods inside a class use `functools.singledispatchmethod`.\n- It dispatches on the argument's *class*, not its contents: a list of ints and a list of strings are both just `list`.\n- The type annotation is only used to register; Python still does not check types when calling.\n\n### Key Takeaways\n\n- `@singledispatch` turns a function into a registry of per-type implementations\n- Register with `@func.register` (type from annotation) or `@func.register(SomeType)`\n- The most specific matching class wins, falling back to the base function\n- Only the first argument decides"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "modern",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "functools.singledispatch",
+          "children": [
+            "registry of per-type functions",
+            "base function is the fallback",
+            "most specific class wins",
+            "first argument only"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "walk",
+      "language": "python",
+      "code": "from functools import singledispatch\n\n@singledispatch\ndef describe(x):\n    return f\"object: {x!r}\"\n\n@describe.register\ndef _(x: int):\n    return f\"int with {x.bit_length()} bits\"\n\n@describe.register\ndef _(x: str):\n    return f\"text of {len(x)} chars\"\n\nprint(describe(\"hello\"))\nprint(describe(255))\nprint(describe(2.5))",
+      "steps": [
+        {
+          "line": 3,
+          "explanation": "@singledispatch turns describe into a dispatcher with a registry. The function body is the fallback for unregistered types."
+        },
+        {
+          "line": 7,
+          "explanation": "register reads the annotation (int) and stores this function in the registry under int."
+        },
+        {
+          "line": 11,
+          "explanation": "Another implementation, this time stored under str."
+        },
+        {
+          "line": 15,
+          "explanation": "type('hello') is str, so the str version runs."
+        },
+        {
+          "line": 17,
+          "explanation": "No float entry exists, so Python walks float's parents, reaches object and uses the fallback."
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "text of 5 chars",
+        "int with 8 bits",
+        "object: 2.5"
+      ],
+      "duration_ms": 4000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "A dispatcher `describe` with the fallback and an `int` version is given. Register a version for `str` that returns `f\"text of {len(x)} chars\"`. Then print `describe(\"hello\")` and `describe(255)` on separate lines (expected: `text of 5 chars` then `int with 8 bits`)."
+      },
+      "starter_code": "from functools import singledispatch\n\n@singledispatch\ndef describe(x):\n    return f\"object: {x!r}\"\n\n@describe.register\ndef _(x: int):\n    return f\"int with {x.bit_length()} bits\"\n\n# Register the str version here\n\nprint(describe(\"hello\"))\nprint(describe(255))",
+      "hints": {
+        "en": [
+          "Use the same decorator as the int version: @describe.register",
+          "Annotate the parameter as str so register knows the type.",
+          "def _(x: str): return f\"text of {len(x)} chars\""
+        ]
+      },
+      "expected_output": "text of 5 chars\nint with 8 bits"
+    },
+    {
+      "instruction": {
+        "en": "`bool` is a subclass of `int`, so `describe(True)` currently uses the int version. Register a `bool` version (use `@describe.register(bool)`) that returns `'flag on'` for True and `'flag off'` for False. Print `describe(True)`, `describe(False)` and `describe(7)` on separate lines (expected: `flag on`, `flag off`, `int with 3 bits`)."
+      },
+      "starter_code": "from functools import singledispatch\n\n@singledispatch\ndef describe(x):\n    return f\"object: {x!r}\"\n\n@describe.register\ndef _(x: int):\n    return f\"int with {x.bit_length()} bits\"\n\n# Register a bool version here\n\nprint(describe(True))\nprint(describe(False))\nprint(describe(7))",
+      "hints": {
+        "en": [
+          "The decorator is @describe.register(bool) and the function takes one parameter.",
+          "Return \"flag on\" if x else \"flag off\".",
+          "bool is more specific than int, so it will win for True and False."
+        ]
+      },
+      "expected_output": "flag on\nflag off\nint with 3 bits"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Only `int` and `str` are registered (plus the fallback). What does describe([1, 2]) use?"
+      },
+      "options": {
+        "en": [
+          "The int version",
+          "The str version",
+          "The fallback function",
+          "It raises TypeError"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Only `int` is registered. Which version handles describe(True)?"
+      },
+      "options": {
+        "en": [
+          "The int version, because bool is a subclass of int",
+          "The fallback, because True is not an int",
+          "A TypeError is raised",
+          "Neither: bool dispatches randomly"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Which argument does functools.singledispatch use to choose the implementation?"
+      },
+      "options": {
+        "en": [
+          "The last argument",
+          "Any argument whose type is registered",
+          "The first argument",
+          "All arguments together"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "When two registered classes both match, which one runs?"
+      },
+      "options": {
+        "en": [
+          "The one registered first",
+          "The one registered last",
+          "The most specific class in the argument's inheritance chain",
+          "The fallback"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "singledispatch",
+      "generic_functions",
+      "type_dispatch",
+      "functools"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "classes"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "python_modern",
+    "path_memberships": [
+      "python_modern"
+    ]
+  },
+  "generated": false,
+  "uth_example": "from functools import singledispatch\n\n@singledispatch\ndef size_of(x):\n    return 1\n\n@size_of.register\ndef _(x: list):\n    return sum(size_of(item) for item in x)\n\n@size_of.register\ndef _(x: dict):\n    return sum(size_of(v) for v in x.values())\n\ndata = {\"a\": [1, 2, [3, 4]], \"b\": {\"c\": 5}, \"d\": \"txt\"}\nprint(size_of(data))\nprint(sorted(t.__name__ for t in size_of.registry))\nprint(size_of.dispatch(bool).__name__)\n",
+  "under_the_hood": {
+    "summary": "singledispatch keeps a registry mapping classes to functions. At call time it looks up type(first_argument), walking the class's inheritance chain until it finds a registered entry.",
+    "steps": [
+      {
+        "title": "The if/elif chain it replaces",
+        "body": "A function full of isinstance branches must be edited for every new type. singledispatch lets each type's behaviour be its own function, added from anywhere."
+      },
+      {
+        "title": "A registry keyed by class",
+        "body": "The decorated function becomes a dispatcher. Each .register call stores a function under a class. The original function is stored under object, the root of all classes, which makes it the fallback.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "describe.registry",
+            "data": [
+              "fallback function",
+              "int version",
+              "str version"
+            ],
+            "labels": [
+              "object",
+              "int",
+              "str"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Lookup at call time",
+        "body": "describe(2.5) takes type(2.5), which is float. float has no entry, so Python goes up float's method resolution order: float, then object. object is registered, so the fallback runs."
+      },
+      {
+        "title": "Most specific wins",
+        "body": "bool inherits from int. With only int registered, bool values use the int version. Once bool is registered it is closer in the chain, so it wins.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "bool -> int -> object   (lookup order for True)",
+              "only int registered:  describe(True) -> int version",
+              "bool registered too:  describe(True) -> bool version"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "singledispatch gives you extensible, type-based dispatch: one name, one small function per type, the most specific class wins, and the base function is the fallback. It only looks at the first argument."
+  }
+}
