@@ -31,6 +31,8 @@ def gradient(w, h):
     px = ImageDraw.Draw(img)
     for y in range(h):
         px.line([(0, y), (w, y)], fill=lerp_color(T.BG_TOP, T.BG_BOTTOM, y / max(1, h - 1)))
+    if getattr(T, "IS_LIGHT", False):
+        return img
     # soft violet glow, top-right
     glow = Image.new("RGB", (w, h), (0, 0, 0))
     gd = ImageDraw.Draw(glow)
@@ -65,7 +67,7 @@ class Frame:
 
     def __init__(self, w, h):
         self.w, self.h = w, h
-        self.portrait = h > w * 1.2
+        self.portrait = h > w * 1.5
         self.square = abs(w - h) < 10
         self.stack = h >= w * 0.95         # portrait and square: panels stack vertically
         self.s = min(w, h) / 1080          # scale unit
@@ -134,12 +136,12 @@ def draw_code_card(img, F, box, code, reveal=1.0, highlight=None, title="main.py
     ty = y0 + F.px(66)
     for i, ln in enumerate(lines, start=1):
         if highlight == i:
-            d.rectangle([x0 + F.px(4), ty - F.px(4), x1 - F.px(4), ty + lh - F.px(6)], fill=(48, 40, 84))
+            d.rectangle([x0 + F.px(4), ty - F.px(4), x1 - F.px(4), ty + lh - F.px(6)], fill=T.HIGHLIGHT_BG)
             d.rectangle([x0 + F.px(4), ty - F.px(4), x0 + F.px(10), ty + lh - F.px(6)], fill=T.CYAN)
         if plain:
             tx = x0 + F.px(34)
         else:
-            d.text((x0 + F.px(28), ty), f"{i:>2}", font=mono, fill=(90, 90, 120))
+            d.text((x0 + F.px(28), ty), f"{i:>2}", font=mono, fill=T.LINE_NUM)
             tx = x0 + F.px(28) + int(size * 2.2)
         for text, col in ln:
             if budget <= 0:
@@ -158,9 +160,11 @@ def draw_code_card(img, F, box, code, reveal=1.0, highlight=None, title="main.py
 
 def draw_terminal(img, F, box, text, reveal=1.0):
     d = ImageDraw.Draw(img)
-    rounded(d, box, F.px(18), fill=(8, 10, 16), outline=(40, 70, 60), width=max(1, F.px(2)))
+    term_fill = (15, 23, 42) if getattr(T, "IS_LIGHT", False) else (8, 10, 16)
+    term_out_col = (74, 222, 128) if getattr(T, "IS_LIGHT", False) else T.GREEN
+    rounded(d, box, F.px(18), fill=term_fill, outline=(40, 70, 60), width=max(1, F.px(2)))
     x0, y0, x1, y1 = box
-    d.text((x0 + F.px(24), y0 + F.px(14)), "output", font=T.font(T.FONT_MONO, F.px(20)), fill=(90, 140, 120))
+    d.text((x0 + F.px(24), y0 + F.px(14)), "output", font=T.font(T.FONT_MONO, F.px(20)), fill=(130, 175, 160))
     lines = (text or "").rstrip("\n").split("\n")
     longest = max([len(l) for l in lines] + [16])
     size = max(F.px(18), min(F.px(34 * F.fs), int(((x1 - x0) - F.px(50)) / (longest * 0.62)),
@@ -173,7 +177,7 @@ def draw_terminal(img, F, box, text, reveal=1.0):
             break
         piece = ln[:budget]
         budget -= max(1, len(ln))
-        d.text((x0 + F.px(24), ty), piece, font=mono, fill=T.GREEN)
+        d.text((x0 + F.px(24), ty), piece, font=mono, fill=term_out_col)
         ty += int(size * 1.5)
 
 
@@ -214,7 +218,7 @@ def _content_top(F, img, spec, t):
         tw = d.textlength(badge.upper(), font=bf)
         pw, ph = tw + F.px(44), F.px(42)
         px0 = (F.w - pw) / 2
-        rounded(d, [px0, y, px0 + pw, y + ph], F.px(21), fill=(26, 34, 62), outline=T.CYAN, width=max(1, F.px(2)))
+        rounded(d, [px0, y, px0 + pw, y + ph], F.px(21), fill=T.BADGE_BG, outline=T.CYAN, width=max(1, F.px(2)))
         d.text((px0 + F.px(22), y + F.px(7)), badge.upper(), font=bf, fill=T.CYAN)
         y += ph + F.px(18)
     if spec.get("heading"):
@@ -354,7 +358,7 @@ def scene_trace(img, F, spec, t):
             if changed:
                 fl = 1 - ease(step_t * 1.6)
                 rounded(d, [var_box[0] + F.px(14), y - F.px(6), var_box[2] - F.px(14), y + rh - F.px(14)], F.px(12),
-                        fill=lerp_color(T.SURFACE_2, (60, 50, 110), fl))
+                        fill=lerp_color(T.SURFACE_2, T.TRACE_FLASH_BG, fl))
             d.text((var_box[0] + F.px(30), y), name, font=f, fill=T.CYAN)
             vx = var_box[0] + F.px(30) + d.textlength(name + " = ", font=f)
             d.text((var_box[0] + F.px(30) + d.textlength(name, font=f), y), " = ", font=f, fill=T.MUTED)
@@ -424,7 +428,7 @@ def scene_flow(img, F, spec, t):
     for i, (box, label) in enumerate(zip(pos, nodes)):
         k = ease(seg(t, 0.0 + i * 0.05, 0.18 + i * 0.05))
         on = i in lit
-        rounded(d, box, F.px(22), fill=lerp_color(T.BG_TOP, (46, 36, 88) if on else T.SURFACE, k),
+        rounded(d, box, F.px(22), fill=lerp_color(T.BG_TOP, T.NODE_ACTIVE_BG if on else T.SURFACE, k),
                 outline=lerp_color(T.BG_TOP, T.VIOLET if on else T.BORDER, k), width=max(2, F.px(4 if on else 2)))
         lines = wrap(label, f, box[2] - box[0] - F.px(30), d)[:2]
         for j, ln in enumerate(lines):
@@ -450,7 +454,7 @@ def scene_timeline(img, F, spec, t):
     for i, lane in enumerate(lanes):
         y = y0 + i * lh
         d.text((F.pad, y + lh * 0.3), str(lane.get("label", ""))[:18], font=lf, fill=T.MUTED)
-        d.line([(x0, y + lh * 0.5), (x1, y + lh * 0.5)], fill=(45, 45, 68), width=max(1, F.px(2)))
+        d.line([(x0, y + lh * 0.5), (x1, y + lh * 0.5)], fill=T.LANE_RULE, width=max(1, F.px(2)))
         for bar in lane.get("bars") or []:
             try:
                 s, e = float(bar[0]), float(bar[1])
@@ -463,7 +467,7 @@ def scene_timeline(img, F, spec, t):
             rounded(d, [bx0, y + lh * 0.18, max(bx0 + 4, bx1), y + lh * 0.82], F.px(12), fill=palette[i % len(palette)])
             txt = str(bar[2]) if len(bar) > 2 else ""
             if txt and bx1 - bx0 > d.textlength(txt, font=bf) + F.px(16):
-                d.text((bx0 + F.px(10), y + lh * 0.36), txt, font=bf, fill=(12, 12, 20))
+                d.text((bx0 + F.px(10), y + lh * 0.36), txt, font=bf, fill=T.BAR_TEXT)
     sx = x0 + (x1 - x0) * sweep / 10
     d.line([(sx, y0 - F.px(10)), (sx, y0 + n * lh)], fill=T.TEXT, width=max(1, F.px(3)))
 
@@ -523,7 +527,7 @@ def scene_plot(img, F, spec, t):
     y0, y1 = top + F.px(20), F.h - F.bottom - F.px(110)
     X = lambda x: x0 + (x - xr[0]) / (xr[1] - xr[0]) * (x1 - x0)
     Y = lambda y: y1 - (y - yr[0]) / (yr[1] - yr[0]) * (y1 - y0)
-    axis = (70, 70, 100)
+    axis = T.AXIS_COLOR
     d.line([(x0, y1), (x1, y1)], fill=axis, width=max(1, F.px(3)))
     d.line([(x0, y0), (x0, y1)], fill=axis, width=max(1, F.px(3)))
     lf = T.font(T.FONT_MONO, F.px(24))
@@ -698,13 +702,13 @@ def chrome(img, F, progress, brand=True):
         badge = brand_badge(F.px(48))
         img.paste(badge, (F.pad, F.px(32)), badge)
         x = F.pad + F.px(62)
-        d.text((x, F.px(38)), "Py", font=f, fill=(248, 250, 252))
-        d.text((x + d.textlength("Py", font=f), F.px(38)), "Masters", font=f, fill=(229, 190, 103))
+        d.text((x, F.px(38)), "Py", font=f, fill=T.BRAND_PRIMARY)
+        d.text((x + d.textlength("Py", font=f), F.px(38)), "Masters", font=f, fill=T.BRAND_ACCENT)
     bar_w = int(F.w * max(0.0, min(1.0, progress)))
     if bar_w > 0:
         d.rectangle([0, 0, bar_w, F.px(8)], fill=T.CYAN)
         tip_w = min(bar_w, F.px(42))
-        d.rectangle([bar_w - tip_w, 0, bar_w, F.px(8)], fill=(229, 190, 103))
+        d.rectangle([bar_w - tip_w, 0, bar_w, F.px(8)], fill=T.BRAND_ACCENT)
 
 
 _GROUP_CACHE = {}
@@ -756,16 +760,17 @@ def caption_bar(img, F, text, k):
     if not text:
         return
     d = ImageDraw.Draw(img)
-    f = T.font(T.FONT_SANS, F.px(40))
+    f = T.font(T.FONT_SANS, F.px(38))
     lines = wrap(text, f, F.w - 2 * F.pad - F.px(40), d)[:2]
-    h = len(lines) * int(f.size * 1.3) + F.px(40)
+    h = len(lines) * int(f.size * 1.3) + F.px(36)
     y = F.h - F.pad - h
     d.rounded_rectangle([F.pad, y, F.w - F.pad, y + h], radius=F.px(20),
-                        fill=lerp_color(T.BG_BOTTOM, (6, 6, 12), ease(k)))
+                        fill=lerp_color(T.BG_BOTTOM, T.CAPTION_BG, ease(k)),
+                        outline=lerp_color(T.BG_BOTTOM, T.BORDER, ease(k)), width=max(1, F.px(2)))
     for i, ln in enumerate(lines):
         w = d.textlength(ln, font=f)
-        d.text(((F.w - w) / 2, y + F.px(20) + i * int(f.size * 1.3)), ln, font=f,
-               fill=lerp_color(T.BG_BOTTOM, T.TEXT, ease(k)))
+        d.text(((F.w - w) / 2, y + F.px(18) + i * int(f.size * 1.3)), ln, font=f,
+               fill=lerp_color(T.BG_BOTTOM, T.CAPTION_TEXT, ease(k)))
 
 
 def note_banner(img, F, text, k):

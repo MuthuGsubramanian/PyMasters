@@ -31,14 +31,35 @@ LINKEDIN_ORG_MENTION = f"@[{LINKEDIN_ORG_NAME}]({LINKEDIN_ORG_URN})"
 GOOGLE_DRIVE_EMAIL = os.getenv("PMSOCIAL_DRIVE_EMAIL", "muthu.g.subramanian@gmail.com")
 DRIVE_ROOT_FOLDER = os.getenv("PMSOCIAL_DRIVE_FOLDER", "PyMasters Social Content")
 
-# Owner decisions (2026-11-17): YouTube focused (daily Short + weekly Long);
-# LinkedIn Company Page posts once every hour from 10:00 AM to 11:00 PM IST (14 slots/day, simplifying complex topics).
+# Owner decisions (2026-11-19):
+# - YouTube Shorts publish AT LEAST TWICE A DAY (12:30 IST & 18:30 IST = 14 Shorts/week) with randomized Veo 3 Realistic presenters
+#   and non-repeating rotation across all 8 domains (Python, AI, Data Science, ML, Deep Learning, Algorithms, Data Structures, FinTech).
+# - LinkedIn Company Page posts once every hour from 10:00 AM to 11:00 PM IST (14 slots/day) with randomized enterprise themes & layouts.
 LINKEDIN_WINDOW_HOURS_IST = (10, 23)   # inclusive IST hours: 10:00, 11:00, ..., 23:00 IST
 LINKEDIN_AHEAD = 3                     # keep next 3 hourly LinkedIn slots pre-rendered ahead of :00
-LINKEDIN_NO_REPEAT_DAYS = 18           # ~250 unique complex topics before cycling across 288+ lessons + trends + Spaces
+LINKEDIN_NO_REPEAT_DAYS = 18           # ~250 unique complex topics before cycling across 300+ lessons + trends + Spaces
+SHORT_PUBLISH_HHMMS = [s.strip() for s in os.getenv("PMSOCIAL_SHORT_SLOTS_IST", "12:30,18:30").split(",") if s.strip()]
+SHORTS_AHEAD_NIGHT = 4                 # pre-render 2 full days (4 Shorts) overnight
+SHORTS_AHEAD_DAY = 2                   # keep both daily Short slots filled by day
+
+CONTENT_DOMAINS = (
+    "python",
+    "ai",
+    "data_science",
+    "machine_learning",
+    "deep_learning",
+    "algorithms",
+    "data_structures",
+    "fintech",
+)
 
 CADENCE = {
-    "short": {"per_week": 7, "weekdays": [0, 1, 2, 3, 4, 5, 6], "publish_hhmm": "18:30"},     # daily, IST
+    "short": {
+        "per_week": 7 * len(SHORT_PUBLISH_HHMMS),
+        "weekdays": [0, 1, 2, 3, 4, 5, 6],
+        "publish_hhmm": SHORT_PUBLISH_HHMMS[0],
+        "publish_hhmms": SHORT_PUBLISH_HHMMS,
+    },
     "long": {"per_week": 1, "weekdays": [5], "publish_hhmm": "10:00"},                       # Saturday
     # Hourly on the hour from 10:00 AM to 11:00 PM IST (14 posts/day, 98 posts/week)
     "linkedin": {
@@ -68,14 +89,16 @@ TOPIC_DEPTH_MIN_SCORE = 7.5  # underlying subject must be genuinely complex/subs
 MAX_ATTEMPTS = 4             # write -> critique -> rewrite rounds before a draft is dropped
 NO_REPEAT_DAYS = 120         # same lesson/topic is not reused within this window
 LINKEDIN_BUSINESS_STYLES = (
-    "business_story",        # real-world banking/finance/product story in plain English (no code wall)
-    "boardroom_explainer",   # 60-second executive mental model of an AI/risk concept in simple terms
-    "executive_playbook",    # before-vs-after industry decision matrix & ROI breakdown
+    "business_story",             # real-world banking/finance/product story in plain English (no code wall)
+    "boardroom_explainer",        # 60-second executive mental model of an AI/risk concept in simple terms
+    "executive_playbook",         # before-vs-after industry decision matrix & ROI breakdown
+    "architecture_tradeoff",      # enterprise tradeoff brief: when to pick approach A vs B in plain terms
 )
 LINKEDIN_TECH_STYLES = (
-    "tech_deep_dive",        # under-the-hood engineering walkthrough with runnable Python 3.11
-    "myth_vs_benchmark",     # technical misconception vs executed Python benchmark
-    "production_code_audit", # principal-engineer bug/risk audit with verified Python fix
+    "tech_deep_dive",             # under-the-hood engineering walkthrough with runnable Python 3.11
+    "myth_vs_benchmark",          # technical misconception vs executed Python benchmark
+    "production_code_audit",      # principal-engineer bug/risk audit with verified Python fix
+    "first_principles_breakdown", # 3-step complex-to-simple mental model + concise Python proof
 )
 LINKEDIN_STYLES = LINKEDIN_BUSINESS_STYLES + LINKEDIN_TECH_STYLES
 HF_SPACE_SHARE = 0.10        # occasional spotlight on our live Hugging Face Spaces (explained simply)
@@ -115,7 +138,17 @@ SHORT_LIVE_INFLUENCER = os.getenv("PMSOCIAL_SHORT_INFLUENCER", "1") == "1"
 LONG_LIVE_PRESENTER = os.getenv("PMSOCIAL_LONG_PRESENTER", "0") == "1"
 LONG_CONVERSATIONAL_AUDIO = os.getenv("PMSOCIAL_LONG_CONVERSATIONAL", "1") == "1"
 CDP_URL = os.getenv("PMSOCIAL_CDP_URL", "http://127.0.0.1:9222")
-GOOGLE_VIDS_AVATAR_NAME = os.getenv("PMSOCIAL_VIDS_AVATAR", "William")
+GOOGLE_VIDS_AVATAR_POOL = (
+    "William",
+    "Mia",
+    "Levi",
+    "Sofia",
+    "Sebastian",
+    "Finley",
+    "Jamal",
+    "Eleanor",
+)
+GOOGLE_VIDS_AVATAR_NAME = os.getenv("PMSOCIAL_VIDS_AVATAR", "random")
 PRESENTER_ASSETS_DIR = Path(__file__).resolve().parent / "assets" / "presenter"
 PRESENTER_PLATES_DIR = MEDIA_DIR / "presenter_plates"
 

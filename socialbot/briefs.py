@@ -281,8 +281,8 @@ LESSON MATERIAL (break down complexity and avoid unexplained jargon):
 {material_block(les)}"""
 
 
-BUSINESS_STYLES = {"business_story", "boardroom_explainer", "executive_playbook"}
-TECH_STYLES = {"tech_deep_dive", "myth_vs_benchmark", "production_code_audit", "jargon"}
+BUSINESS_STYLES = {"business_story", "boardroom_explainer", "executive_playbook", "architecture_tradeoff"}
+TECH_STYLES = {"tech_deep_dive", "myth_vs_benchmark", "production_code_audit", "first_principles_breakdown", "jargon"}
 
 LINKEDIN_SIMPLIFY_MANDATE = """Editorial Mission — SIMPLIFYING COMPLEX TOPICS:
 - Every post on the @PyMasters LinkedIn page exists to take a genuinely COMPLEX, intimidating technical, AI, or systems topic and make it unmistakably SIMPLE so any smart reader grasps it on the first read.
@@ -314,6 +314,15 @@ STYLE_BLUEPRINTS = {
 - Contrast `Why It Sounds Complicated (The Old Mental Model):` against `How It Actually Works Simply (The Clear Model):` in plain, everyday professional English (DO NOT put raw Python code in the post text; set `code_snippet` to `""`).
 - State the measurable real-world impact and how @PyMasters ({url}) makes complex Python & AI effortless to learn.
 - Animation beats: use `compare`, `flow` or `timeline`, `metric`, and `reveal`.""",
+    "architecture_tradeoff": """Format: Enterprise Decision Matrix — When to Use It & When Not To (Simple Terms, NO raw code block in the post text).
+- Audience: CTOs, engineering managers, FinTech/data leads, and ambitious builders evaluating technical choices.
+- Open with a crisp enterprise tradeoff statement demystifying this concept in plain English (<= 110 chars).
+- Break the post into 3 short, crystal-clear plain-English takeaways (DO NOT put raw Python code in the post text; set `code_snippet` to `""`):
+  • The Core Mechanism in One Sentence (everyday enterprise analogy)
+  • Where It Wins Big (concrete speed, cost, or risk improvement from the material)
+  • Where Teams Misuse It (the practical boundary condition to watch)
+- Close by tagging @PyMasters and linking to {url}.
+- Animation beats: mix `metric`, `compare`, `flow`, and `reveal`.""",
 
     # --- TRACK B: COMPLEX MECHANICS SIMPLIFIED WITH TINY RUNNABLE PYTHON PROOF ---
     "tech_deep_dive": """Format: Under-the-Hood Complexity, Made Simple + Tiny Python Proof (Plain-English Breakdown + Runnable Python).
@@ -334,6 +343,11 @@ STYLE_BLUEPRINTS = {
 - Open by spotlighting a tricky hidden failure mode in plain words anyone can picture (<= 110 chars).
 - Explain in 2 simple sentences why it happens using a real-world operational analogy, then show the clean Python 3.11 fix (indented 4 spaces, 4-7 lines, copied into `code_snippet`) with its exact output.
 - Explain how @PyMasters makes complex engineering concepts intuitive at {url}.""",
+    "first_principles_breakdown": """Format: First-Principles 3-Step Breakdown + Executable Python Proof (Plain-English Breakdown + Runnable Python).
+- Audience: Engineers, data scientists, quant analysts, and learners who want complex concepts stripped to first principles so anyone understands them.
+- Open with a crisp 1-line counter-intuitive insight naming the concept and what problem it solves simply (<= 110 chars).
+- Walk through `Step 1 (The Bottleneck):`, `Step 2 (The Simple Mental Model):`, and `Step 3 (The Proof):` in plain, jargon-free English, followed by a clean 4-7 line runnable Python 3.11 snippet (indented 4 spaces, copied into `code_snippet`) and its exact output.
+- Close by inviting readers to practice interactively with @PyMasters at {url}.""",
     "jargon": """Format: Complex Concept Distillation ("jargon, made simple").
 - Open by naming the complex technical term and translating why it matters in plain everyday words (<= 110 chars).
 - Simplify the mechanism using ONE precise, strictly professional real-world comparison mapped step by step (and note in one clause where the analogy ends).

@@ -372,3 +372,88 @@ def test_broadcast_presenter_quality_gate_and_complex_topic_filter(tmp_path: Pat
     ok, _sc, _crit, probs = quality.verdict("short", {"title": "Toy Math"}, fake_lessons[1])
     assert not ok
     assert any("topic_depth" in p for p in probs)
+
+
+def test_twice_daily_shorts_randomized_avatars_8_domains_and_linkedin_themes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import random
+    from PIL import Image
+
+    from socialbot import config, scheduler, sources, store, vids_avatar
+    from socialbot.render import linkedin_themes as LT
+    from socialbot.render import video as V
+
+    monkeypatch.setattr(config, "STATE_DIR", tmp_path / "state")
+    monkeypatch.setattr(config, "DB_PATH", tmp_path / "state" / "socialbot.sqlite3")
+    config.ensure_dirs()
+
+    # 1) Twice-daily YouTube Shorts cadence (12:30 IST & 18:30 IST -> >= 14/week, >= 2 slots/day)
+    assert config.CADENCE["short"]["per_week"] >= 14
+    assert len(config.CADENCE["short"]["publish_hhmms"]) >= 2
+    slots = scheduler.upcoming_slots("short", days=4)
+    assert len(slots) >= 6
+
+    # 2) Randomized Veo 3 Realistic AI Presenter avoids repeating the last 4 presenters
+    monkeypatch.setattr(config, "GOOGLE_VIDS_AVATAR_NAME", "random")
+    used_avatars = ["William", "Mia", "Levi", "Sofia"]
+    for av in reversed(used_avatars):
+        store.add_item("short", f"lesson:ai/{av}", av, "published", media={"presenter_avatar": av})
+    for seed in range(10):
+        picked_av = vids_avatar.pick_random_avatar(rng=random.Random(seed))
+        assert picked_av in config.GOOGLE_VIDS_AVATAR_POOL
+        assert picked_av not in used_avatars
+
+    # 3) Non-repeating 8-domain topic rotation across Python, AI, Data Science, ML, DL, Algorithms, Data Structures, FinTech
+    eight_cands = [
+        {"key": f"lesson:{dom}/t1", "id": f"{dom}_1", "track": "ai_engineering", "difficulty": "advanced",
+         "domain": dom, "domain_label": sources.DOMAIN_LABELS[dom],
+         "title": f"Enterprise {dom} Architecture", "topic": dom, "description": dom,
+         "story": "x" * 2200, "code_blocks": ["print(1)"], "challenges": [], "concepts": [dom], "url": "https://pymasters.net"}
+        for dom in config.CONTENT_DOMAINS
+    ]
+    monkeypatch.setattr(sources, "candidates", lambda **kw: eight_cands)
+    picks = sources.pick("short", n=6, seed=7)
+    picked_domains = [p["domain"] for p in picks]
+    assert len(set(picked_domains)) == 6
+
+    # 4) Enterprise LinkedIn Theme & Layout randomizer avoids monotony across Light & Dark palettes and aspect ratios
+    store.add_item("linkedin", "lesson:ai/1", "T1", "published", media={"design_theme": "executive_ivory", "design_layout": "portrait_brief"})
+    next_design = LT.pick_linkedin_design(rng=random.Random(3))
+    assert next_design["theme_id"] != "executive_ivory"
+    assert next_design["layout_id"] != "portrait_brief"
+    # Previous was Light (executive_ivory), so next alternates to an institutional Dark palette
+    assert next_design["theme"]["palette"]["IS_LIGHT"] is False
+
+    # Render one Light 4:5 Portrait Brief loop and one Dark 5:4 Boardroom Slide loop to verify GIF & MP4 output
+    anim = {
+        "title": "Idempotency Keys in Payment APIs",
+        "beats": [
+            {"kind": "metric", "step_badge": "1 · RISK", "caption": "Duplicate retries without keys double-charge.",
+             "metrics": [{"label": "RETRY RATE", "value": "3.2%", "sub": "Mobile timeout retries"},
+                         {"label": "DOUBLE CHARGE", "value": "0.0%", "sub": "With idempotency ledger"}]},
+            {"kind": "code", "step_badge": "2 · LEDGER", "caption": "Atomic key lookup returns cached receipt.",
+             "code": "seen = {'tx_9': 'OK'}\nprint(seen.get('tx_9'))", "output": "OK"},
+        ],
+    }
+    light_design = {
+        "theme_id": "executive_ivory",
+        "layout_id": "portrait_brief",
+        "theme": LT.ENTERPRISE_THEMES["executive_ivory"],
+        "layout": LT.ENTERPRISE_LAYOUTS["portrait_brief"],
+    }
+    m_light = V.render_loop(anim, tmp_path / "li_light", domain_label="FinTech & Payment Systems", design=light_design)
+    assert Path(m_light["gif"]).is_file()
+    with Image.open(m_light["gif"]) as g_img:
+        assert g_img.size == (720, 900)
+
+    dark_design = {
+        "theme_id": "emerald_terminal",
+        "layout_id": "boardroom_slide",
+        "theme": LT.ENTERPRISE_THEMES["emerald_terminal"],
+        "layout": LT.ENTERPRISE_LAYOUTS["boardroom_slide"],
+    }
+    m_dark = V.render_loop(anim, tmp_path / "li_dark", domain_label="Algorithms & Optimization", design=dark_design)
+    assert Path(m_dark["gif"]).is_file()
+    with Image.open(m_dark["gif"]) as g_img2:
+        assert g_img2.size == (800, 640)

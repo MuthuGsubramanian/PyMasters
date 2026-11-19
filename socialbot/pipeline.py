@@ -18,25 +18,27 @@ WRITERS = {
 
 
 def linkedin_style(rng=random):
-    """LinkedIn alternates and rotates randomly between Business-Audience (Simple Terms) formats and Technical-Detail
-    formats without ever repeating the previous post's format (owner, 2026-11-10)."""
+    """LinkedIn alternates between Business-Audience (Simple Terms) formats and Technical-Simplified
+    formats while avoiding any of the last 4 post formats so the hourly feed stays varied."""
     styles = list(config.LINKEDIN_STYLES)
-    last_variety = None
+    recent_varieties: list[str] = []
     try:
-        for it in store.items(kind="linkedin", limit=5):
+        for it in store.items(kind="linkedin", limit=10):
             if it.get("status") not in ("rejected", "failed") and isinstance(it.get("draft"), dict):
-                last_variety = it["draft"].get("format_variety") or it["draft"].get("style")
-                if last_variety in styles:
-                    break
+                v = it["draft"].get("format_variety") or it["draft"].get("style")
+                if v in styles and v not in recent_varieties:
+                    recent_varieties.append(v)
     except Exception:
         pass
+    last_variety = recent_varieties[0] if recent_varieties else None
     if last_variety in config.LINKEDIN_BUSINESS_STYLES:
-        pool = list(config.LINKEDIN_TECH_STYLES)
+        base_pool = list(config.LINKEDIN_TECH_STYLES)
     elif last_variety in config.LINKEDIN_TECH_STYLES:
-        pool = list(config.LINKEDIN_BUSINESS_STYLES)
+        base_pool = list(config.LINKEDIN_BUSINESS_STYLES)
     else:
-        pool = [s for s in styles if s != last_variety] or styles
-    return rng.choice(pool)
+        base_pool = styles
+    fresh = [s for s in base_pool if s not in recent_varieties[:4]]
+    return rng.choice(fresh or base_pool)
 
 
 def write_until_good(kind, les):
@@ -63,6 +65,9 @@ def write_until_good(kind, les):
         if style:
             draft["style"] = style   # the critic judges each format by its own rules
             draft["format_variety"] = variety
+        if les.get("domain"):
+            draft["domain"] = les["domain"]
+            draft["domain_label"] = les.get("domain_label") or sources.DOMAIN_LABELS.get(les["domain"], "")
         if les.get("is_hf_space"):
             draft["is_hf_space"] = True
             draft["space_url"] = les.get("space_url", "")
@@ -112,8 +117,9 @@ def _fmt_ts(s):
 
 
 def render(kind, draft, les, out_dir: Path):
+    domain_label = draft.get("domain_label") or les.get("domain_label") or sources.DOMAIN_LABELS.get(sources.classify_domain(les), "")
     if kind in ("linkedin", "thematic"):
-        return video.render_loop(draft["animation"], out_dir)
+        return video.render_loop(draft["animation"], out_dir, domain_label=domain_label)
     if kind == "short":
         media = video.render_narrated(_segments_short(draft), out_dir, 1080, 1920, captions=True)
     else:
@@ -121,6 +127,7 @@ def render(kind, draft, les, out_dir: Path):
         media["chapters_text"] = "\n".join(f"{_fmt_ts(t)} {title}" for t, title in media["chapters"])
     media["thumbnail"] = video.thumbnail(draft.get("thumbnail_text") or draft["title"], les["title"][:34],
                                          _first_code(draft), out_dir / "thumb.jpg")
+    media["domain"] = draft.get("domain") or les.get("domain") or sources.classify_domain(les)
     return media
 
 
