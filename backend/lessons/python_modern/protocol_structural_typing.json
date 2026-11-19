@@ -1,0 +1,256 @@
+{
+  "id": "protocol_structural_typing",
+  "topic": "protocol_structural_typing",
+  "track": "python_modern",
+  "module": "modern_idioms",
+  "order": 6,
+  "title": {
+    "en": "Protocols: Duck Typing You Can Check"
+  },
+  "description": {
+    "en": "typing.Protocol describes the shape an object must have -- its methods and signatures -- so any class with that shape qualifies without inheriting. Learn what static checkers verify, what runtime isinstance really checks, and when to pick a Protocol over an abstract base class."
+  },
+  "xp_reward": 100,
+  "next_unlock": "singledispatch_generic_functions",
+  "story_variants": {
+    "en": "## Duck Typing, Now With A Safety Net\n\nPython has always said: *if it has a `speak()` method, treat it as a speaker.* That is **duck typing**. It is flexible, but until recently you had no way to *write down* what \"speaker\" means so that a type checker or a reader could verify it.\n\n`typing.Protocol` (PEP 544) fixes that. A protocol describes the **shape** an object must have -- which methods, with which signatures -- and any class with that shape qualifies. It never has to inherit from the protocol. This is called **structural subtyping**.\n\n### Writing a protocol\n\n```python\nfrom typing import Protocol\n\nclass Speaker(Protocol):\n    def speak(self) -> str: ...\n\nclass Dog:                      # note: no (Speaker) here\n    def speak(self) -> str:\n        return \"Woof\"\n\ndef greet(s: Speaker) -> str:\n    return s.speak()\n```\n\nA static checker such as mypy or pyright accepts `greet(Dog())` because `Dog` has a matching `speak`. It rejects `greet(Rock())`. At runtime Python does **not** check annotations, so the protocol on its own changes nothing about how the program runs.\n\n### Checking at runtime: `@runtime_checkable`\n\nIf you want `isinstance` to work, add the decorator:\n\n```python\nfrom typing import Protocol, runtime_checkable\n\n@runtime_checkable\nclass Speaker(Protocol):\n    def speak(self) -> str: ...\n\nprint(isinstance(Dog(), Speaker))   # True\nprint(isinstance(Rock(), Speaker))  # False\n```\n\n**An honest caveat:** `isinstance` against a runtime-checkable protocol only checks that the *names exist*. It does not check argument lists or return types. A class with `speak = 5` passes the check even though calling `speak()` would fail. Use the static checker for the full signature check and `isinstance` for cheap \"is this the kind of thing I can call?\" tests.\n\n### Protocol vs. abstract base class\n\n| | `abc.ABC` | `Protocol` |\n|---|---|---|\n| Must the class inherit? | Yes (or be registered) | No |\n| Good for | Your own class hierarchy | Describing third-party or duck-typed objects |\n| Instantiable? | No, if it has abstract methods | Never |\n\n### Key Takeaways\n\n- A `Protocol` describes a shape; matching classes need no inheritance\n- Static type checkers verify the full signature; Python itself ignores annotations\n- `@runtime_checkable` enables `isinstance`, but only checks that the method names exist\n- You cannot create an instance of a protocol class"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "modern",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Protocol (structural typing)",
+          "children": [
+            "any class with matching methods qualifies",
+            "no inheritance required",
+            "@runtime_checkable enables isinstance",
+            "isinstance checks names only"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "walk",
+      "language": "python",
+      "code": "from typing import Protocol, runtime_checkable\n\n@runtime_checkable\nclass Speaker(Protocol):\n    def speak(self) -> str: ...\n\nclass Dog:\n    def speak(self) -> str:\n        return \"Woof\"\n\nclass Rock:\n    pass\n\nprint(isinstance(Dog(), Speaker))\nprint(isinstance(Rock(), Speaker))",
+      "steps": [
+        {
+          "line": 3,
+          "explanation": "@runtime_checkable lets isinstance() accept this protocol; without it isinstance raises TypeError."
+        },
+        {
+          "line": 4,
+          "explanation": "The protocol lists the shape: a speak method returning str. The body is just `...` because a protocol is a description, not an implementation."
+        },
+        {
+          "line": 6,
+          "explanation": "Dog never mentions Speaker. It just happens to have speak()."
+        },
+        {
+          "line": 13,
+          "explanation": "isinstance asks: does the object have a speak attribute? Dog does, so True."
+        },
+        {
+          "line": 14,
+          "explanation": "Rock has no speak attribute, so False."
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "True",
+        "False"
+      ],
+      "duration_ms": 4000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Dog and Rock are defined for you. Write the protocol `Speaker` (runtime checkable) with one method `speak(self) -> str`. Then print `isinstance(Dog(), Speaker)` and `isinstance(Rock(), Speaker)` on separate lines (expected: `True` then `False`)."
+      },
+      "starter_code": "from typing import Protocol, runtime_checkable\n\nclass Dog:\n    def speak(self) -> str:\n        return \"Woof\"\n\nclass Rock:\n    pass\n\n# Define the Speaker protocol here (decorate it so isinstance works)\n\nprint(isinstance(Dog(), Speaker))\nprint(isinstance(Rock(), Speaker))",
+      "hints": {
+        "en": [
+          "Decorate the class with @runtime_checkable and make it inherit from Protocol.",
+          "Inside the class: def speak(self) -> str: ...",
+          "Put the class above the two print lines."
+        ]
+      },
+      "expected_output": "True\nFalse"
+    },
+    {
+      "instruction": {
+        "en": "Write `announce_all(items)` that returns a list with `item.speak()` for every item that satisfies `Speaker`, skipping the rest. Then print `announce_all([Dog(), Rock(), Cat()])` (expected: `['Woof', 'Meow']`)."
+      },
+      "starter_code": "from typing import Protocol, runtime_checkable\n\n@runtime_checkable\nclass Speaker(Protocol):\n    def speak(self) -> str: ...\n\nclass Dog:\n    def speak(self) -> str:\n        return \"Woof\"\n\nclass Cat:\n    def speak(self) -> str:\n        return \"Meow\"\n\nclass Rock:\n    pass\n\ndef announce_all(items):\n    # return the speak() result of each item that is a Speaker\n    pass\n\nprint(announce_all([Dog(), Rock(), Cat()]))",
+      "hints": {
+        "en": [
+          "Use a list comprehension with an `if` filter.",
+          "The filter is isinstance(item, Speaker).",
+          "return [item.speak() for item in items if isinstance(item, Speaker)]"
+        ]
+      },
+      "expected_output": "['Woof', 'Meow']"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What makes a class match the protocol `Speaker` (which declares `speak(self) -> str`)?"
+      },
+      "options": {
+        "en": [
+          "It inherits from Speaker",
+          "It has a compatible speak method",
+          "It is registered with Speaker.register()",
+          "It is decorated with @runtime_checkable"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Given `class Fake: speak = 5` and the runtime-checkable `Speaker`, what does this print?\nprint(isinstance(Fake(), Speaker))"
+      },
+      "options": {
+        "en": [
+          "True",
+          "False",
+          "TypeError",
+          "AttributeError"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Speaker is a Protocol WITHOUT @runtime_checkable. What does `isinstance(Dog(), Speaker)` do?"
+      },
+      "options": {
+        "en": [
+          "Returns True",
+          "Returns False",
+          "Raises TypeError",
+          "Raises NameError"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What happens when you run `Speaker()` for a protocol class?"
+      },
+      "options": {
+        "en": [
+          "Creates an empty Speaker",
+          "Raises TypeError (protocols cannot be instantiated)",
+          "Returns None",
+          "Creates a Dog"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "protocol",
+      "structural_typing",
+      "runtime_checkable",
+      "duck_typing"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "classes"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "python_modern",
+    "path_memberships": [
+      "python_modern"
+    ]
+  },
+  "generated": false,
+  "uth_example": "from typing import Protocol, runtime_checkable\n\n@runtime_checkable\nclass Closeable(Protocol):\n    def close(self) -> None: ...\n\nclass Conn:\n    def close(self) -> None:\n        print(\"conn closed\")\n\nthings = [Conn(), open, \"text\", Conn]\nfor t in things:\n    print(type(t).__name__, isinstance(t, Closeable))\n\nConn().close()\nprint(issubclass(Conn, Closeable))\n",
+  "under_the_hood": {
+    "summary": "A Protocol describes the methods an object must have. Static checkers verify the whole shape; at runtime isinstance with a runtime-checkable protocol only checks that the names exist.",
+    "steps": [
+      {
+        "title": "Duck typing, written down",
+        "body": "Python code has always relied on 'if it has speak(), call it'. A Protocol lets you write that expectation as a type, so tools and readers can check it."
+      },
+      {
+        "title": "Declare the shape",
+        "body": "The protocol class lists methods with their signatures. Bodies are just `...` because nothing runs; it is a description.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "abc.ABC",
+              "code": "class Speaker(ABC): ...\nclass Dog(Speaker): ...  # must inherit"
+            },
+            "right": {
+              "label": "Protocol",
+              "code": "class Speaker(Protocol): ...\nclass Dog: ...  # no inheritance needed"
+            }
+          }
+        }
+      },
+      {
+        "title": "The checker compares shapes",
+        "body": "mypy or pyright looks at Dog, sees speak(self) -> str, and accepts it wherever Speaker is expected. Python itself ignores annotations when the program runs."
+      },
+      {
+        "title": "What isinstance really does",
+        "body": "With @runtime_checkable, isinstance(obj, Speaker) checks that obj has an attribute called speak. A class with speak = 5 passes, because only the name is checked, not whether it is callable or what it returns.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "isinstance(Dog(), Speaker)  -> True",
+              "isinstance(Rock(), Speaker) -> False",
+              "class Fake: speak = 5",
+              "isinstance(Fake(), Speaker) -> True   (names only!)"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Choose the right tool",
+        "body": "Use a Protocol to describe objects you do not control or that never share a base class. Use an ABC when you own the hierarchy and want inheritance to enforce the contract.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "checks performed",
+            "data": [
+              "method name exists",
+              "argument list",
+              "return type"
+            ],
+            "labels": [
+              "isinstance: yes",
+              "mypy: yes",
+              "mypy: yes"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "A Protocol turns duck typing into a checkable contract: any class with the right methods qualifies, no inheritance needed. Remember that isinstance only checks names; the static checker does the full signature check."
+  }
+}

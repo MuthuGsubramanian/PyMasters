@@ -1,0 +1,244 @@
+{
+  "id": "exception_groups_except_star",
+  "topic": "exception_groups_except_star",
+  "track": "python_modern",
+  "module": "modern_idioms",
+  "order": 8,
+  "title": {
+    "en": "Exception Groups and except*"
+  },
+  "description": {
+    "en": "Python 3.11 can raise several unrelated exceptions at once. Learn ExceptionGroup, how except* handles members type by type, and how split() separates them by hand."
+  },
+  "xp_reward": 100,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## When More Than One Thing Goes Wrong\n\nA normal `raise` carries exactly one exception. But sometimes several independent things fail at the same time: ten downloads run together and three of them break, or a validator wants to report *every* bad field rather than stopping at the first.\n\nPython 3.11 added **exception groups** (PEP 654) for this. An `ExceptionGroup` wraps a list of exceptions into one object that can be raised and caught like any other.\n\n### Raising a group\n\n```python\nerrors = [ValueError(\"bad value\"), TypeError(\"bad type\"), ValueError(\"another\")]\nraise ExceptionGroup(\"batch failed\", errors)\n```\n\nThe first argument is a message; the second is a non-empty list of exceptions. The traceback shows every member.\n\n### Catching with `except*`\n\nA plain `except ValueError` would not work well here: the group *itself* is an `ExceptionGroup`, not a `ValueError`. The new `except*` form looks **inside** the group:\n\n```python\ntry:\n    run_all([bad_value, bad_type, bad_value])\nexcept* ValueError as eg:\n    print(\"ValueError x\", len(eg.exceptions))   # ValueError x 2\nexcept* TypeError as eg:\n    print(\"TypeError x\", len(eg.exceptions))    # TypeError x 1\n```\n\nTwo things to notice:\n\n1. **Several `except*` clauses can run for one raise.** Each clause takes the matching members out of the group; whatever is left over goes to the next clause. Here both clauses ran.\n2. **`eg` is itself a (smaller) `ExceptionGroup`** holding only the matching exceptions, even if just one matched.\n\nIf some members are never handled, Python re-raises a group of the leftovers when the `try` finishes.\n\n### Splitting a group by hand\n\n```python\neg = ExceptionGroup(\"batch\", [ValueError(\"a\"), TypeError(\"b\"), ValueError(\"c\")])\nmatching, rest = eg.split(ValueError)\nprint(len(matching.exceptions), len(rest.exceptions))   # 2 1\n```\n\n`split` returns `(matching, rest)`; either can be `None` when it would be empty. `subgroup(ValueError)` returns just the matching part.\n\n### Caveats\n\n- You cannot mix `except` and `except*` in the same `try`.\n- `except*` cannot use `return`, `break` or `continue` inside its block.\n- Exception groups need Python 3.11+. `asyncio.TaskGroup` raises them when child tasks fail, so you will meet them there too.\n\n### Key Takeaways\n\n- `ExceptionGroup(msg, [exc, ...])` bundles several exceptions into one\n- `except* T` handles the members of type T; several clauses may run\n- Inside the handler the variable is a smaller ExceptionGroup\n- `.split(T)` returns `(matching, rest)` for manual control"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "modern",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "ExceptionGroup and except*",
+          "children": [
+            "bundle many exceptions into one",
+            "except* handles members by type",
+            "several clauses may run",
+            "split() returns (matching, rest)"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "walk",
+      "language": "python",
+      "code": "def run_all(tasks):\n    errors = []\n    for fn in tasks:\n        try:\n            fn()\n        except Exception as exc:\n            errors.append(exc)\n    if errors:\n        raise ExceptionGroup(\"batch failed\", errors)\n\ndef bad_value():\n    raise ValueError(\"bad value\")\n\ndef bad_type():\n    raise TypeError(\"bad type\")\n\ntry:\n    run_all([bad_value, bad_type, bad_value])\nexcept* ValueError as eg:\n    print(\"ValueError x\", len(eg.exceptions))\nexcept* TypeError as eg:\n    print(\"TypeError x\", len(eg.exceptions))",
+      "steps": [
+        {
+          "line": 7,
+          "explanation": "After the loop, if any task failed we bundle all the collected errors into one ExceptionGroup and raise it."
+        },
+        {
+          "line": 9,
+          "explanation": "bad_value fails with a ValueError."
+        },
+        {
+          "line": 12,
+          "explanation": "bad_type fails with a TypeError."
+        },
+        {
+          "line": 16,
+          "explanation": "run_all calls three tasks; all three fail, so a group of three exceptions is raised."
+        },
+        {
+          "line": 17,
+          "explanation": "except* ValueError takes the two ValueErrors out of the group; eg is a group of just those two."
+        },
+        {
+          "line": 19,
+          "explanation": "The remaining TypeError goes to the next except* clause. Both handlers ran for a single raise."
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "ValueError x 2",
+        "TypeError x 1"
+      ],
+      "duration_ms": 4000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Write `run_all(tasks)`: call each function in `tasks`, collecting any `Exception` raised into a list; if the list is non-empty, `raise ExceptionGroup(\"batch failed\", errors)`. Otherwise return None. The test code catches it with `except*` and prints how many of each type it got (expected: `ValueError x 2` then `TypeError x 1`)."
+      },
+      "starter_code": "def run_all(tasks):\n    # call every task, collect the exceptions, raise one ExceptionGroup at the end\n    pass\n\ndef bad_value():\n    raise ValueError(\"bad value\")\n\ndef bad_type():\n    raise TypeError(\"bad type\")\n\ntry:\n    run_all([bad_value, bad_type, bad_value])\nexcept* ValueError as eg:\n    print(\"ValueError x\", len(eg.exceptions))\nexcept* TypeError as eg:\n    print(\"TypeError x\", len(eg.exceptions))",
+      "hints": {
+        "en": [
+          "Start with errors = [] and loop over tasks inside try/except Exception as exc.",
+          "Append exc to errors instead of re-raising it.",
+          "After the loop: if errors: raise ExceptionGroup(\"batch failed\", errors)"
+        ]
+      },
+      "expected_output": "ValueError x 2\nTypeError x 1"
+    },
+    {
+      "instruction": {
+        "en": "Use `ExceptionGroup.split`. Given the group `eg` below, call `matching, rest = eg.split(ValueError)`, then print `[str(e) for e in matching.exceptions]` and `[type(e).__name__ for e in rest.exceptions]` (expected: `['a', 'c']` then `['TypeError']`)."
+      },
+      "starter_code": "eg = ExceptionGroup(\"batch\", [ValueError(\"a\"), TypeError(\"b\"), ValueError(\"c\")])\n\n# split eg into the ValueErrors and the rest, then print the two lists",
+      "hints": {
+        "en": [
+          "eg.split(ValueError) returns a pair: (matching, rest).",
+          "Both are ExceptionGroups with an .exceptions tuple.",
+          "print([str(e) for e in matching.exceptions]) and print([type(e).__name__ for e in rest.exceptions])"
+        ]
+      },
+      "expected_output": "['a', 'c']\n['TypeError']"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "A group holds two ValueErrors and one TypeError. With `except* ValueError` followed by `except* TypeError`, how many handler blocks run?"
+      },
+      "options": {
+        "en": [
+          "Only the first matching one",
+          "Two: one per exception type that is present",
+          "Three: one per exception",
+          "None: you need a plain except"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Inside `except* ValueError as eg:`, what is the type of eg?"
+      },
+      "options": {
+        "en": [
+          "ValueError",
+          "ExceptionGroup",
+          "list",
+          "tuple"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "`eg.split(OSError)` where eg contains no OSError. What is returned?"
+      },
+      "options": {
+        "en": [
+          "(None, a group holding all the original exceptions)",
+          "(a group holding all the original exceptions, None)",
+          "([], the original group)",
+          "It raises KeyError"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Can one try statement have both `except ValueError` and `except* TypeError`?"
+      },
+      "options": {
+        "en": [
+          "Yes, in any order",
+          "Yes, but except must come first",
+          "No, it is a SyntaxError",
+          "Only inside async functions"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "exception_group",
+      "except_star",
+      "error_aggregation",
+      "python_311"
+    ],
+    "concepts_required": [
+      "python_functions",
+      "classes"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "python_modern",
+    "path_memberships": [
+      "python_modern"
+    ]
+  },
+  "generated": false,
+  "uth_example": "def check_age(record):\n    if not isinstance(record[\"age\"], int):\n        raise TypeError(f\"{record['name']}: age must be int\")\n    if record[\"age\"] < 0:\n        raise ValueError(f\"{record['name']}: age is negative\")\n\nrecords = [\n    {\"name\": \"Asha\", \"age\": 30},\n    {\"name\": \"Ben\", \"age\": -4},\n    {\"name\": \"Chen\", \"age\": \"x\"},\n    {\"name\": \"Dev\", \"age\": -1},\n]\nerrors = []\nfor r in records:\n    try:\n        check_age(r)\n    except (TypeError, ValueError) as exc:\n        errors.append(exc)\n\ntry:\n    raise ExceptionGroup(\"validation\", errors)\nexcept* ValueError as eg:\n    print(\"value problems:\", [str(e) for e in eg.exceptions])\nexcept* TypeError as eg:\n    print(\"type problems:\", [str(e) for e in eg.exceptions])\n",
+  "under_the_hood": {
+    "summary": "An ExceptionGroup stores a message and a tuple of exceptions. except* compares each member against its type, hands the matches to the handler as a new smaller group, and passes the rest on to the next clause or re-raises them.",
+    "steps": [
+      {
+        "title": "One raise, one exception - until now",
+        "body": "A normal raise carries a single exception, so code that wants to report all failures has to stop at the first or invent its own container."
+      },
+      {
+        "title": "The group is a container",
+        "body": "ExceptionGroup(message, exceptions) stores a message and a tuple of exceptions. It is itself an exception, so you can raise it and it travels up the stack like any other.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "ExceptionGroup('batch failed')",
+            "data": [
+              "ValueError('bad value')",
+              "TypeError('bad type')",
+              "ValueError('bad value')"
+            ],
+            "labels": [
+              "[0]",
+              "[1]",
+              "[2]"
+            ]
+          }
+        }
+      },
+      {
+        "title": "except* filters the members",
+        "body": "For each except* clause, Python pulls out the members matching the type and builds a new group from them for the handler. Members not matched stay in the original group and move on to the next clause.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "group = [ValueError, TypeError, ValueError]",
+              "except* ValueError -> handler gets [ValueError, ValueError]",
+              "leftover           -> [TypeError]",
+              "except* TypeError  -> handler gets [TypeError]",
+              "leftover           -> []  (done)"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Unhandled leftovers are re-raised",
+        "body": "If a member matches no clause, Python raises a group of the leftovers after the try statement, so nothing is silently lost."
+      }
+    ],
+    "takeaway": "Exception groups let one raise carry several independent failures, and except* handles them type by type. Use them when you want to report everything that went wrong, not just the first problem."
+  }
+}

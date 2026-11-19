@@ -1,0 +1,17 @@
+{
+  "lesson_id": "exception_groups_except_star",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def run_all(tasks):\n    errors = []\n    for fn in tasks:\n        try:\n            fn()\n        except Exception as exc:\n            errors.append(exc)\n    if errors:\n        raise ExceptionGroup(\"batch failed\", errors)\n\ndef bad_value():\n    raise ValueError(\"bad value\")\n\ndef bad_type():\n    raise TypeError(\"bad type\")\n\ntry:\n    run_all([bad_value, bad_type, bad_value])\nexcept* ValueError as eg:\n    print(\"ValueError x\", len(eg.exceptions))\nexcept* TypeError as eg:\n    print(\"TypeError x\", len(eg.exceptions))\n",
+      "verified_output": "ValueError x 2\nTypeError x 1",
+      "source": "claude sonnet 2026-11-19, verified by grade_submission"
+    },
+    {
+      "index": 1,
+      "code": "eg = ExceptionGroup(\"batch\", [ValueError(\"a\"), TypeError(\"b\"), ValueError(\"c\")])\n\nmatching, rest = eg.split(ValueError)\nprint([str(e) for e in matching.exceptions])\nprint([type(e).__name__ for e in rest.exceptions])\n",
+      "verified_output": "['a', 'c']\n['TypeError']",
+      "source": "claude sonnet 2026-11-19, verified by grade_submission"
+    }
+  ]
+}
