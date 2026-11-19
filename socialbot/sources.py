@@ -37,6 +37,78 @@ COMPLEX_DIFFICULTY_MULTIPLIER = {
 }
 LINKEDIN_DIFFICULTY_MULTIPLIER = COMPLEX_DIFFICULTY_MULTIPLIER
 BASIC_INTRO_TRACKS = {"python_fundamentals", "fun_automation", "vibe_coding"}
+
+DOMAIN_LABELS = {
+    "python": "Python Architecture & Internals",
+    "ai": "AI Engineering & Agent Systems",
+    "data_science": "Data Science & Statistical Systems",
+    "machine_learning": "Machine Learning & Predictive Modeling",
+    "deep_learning": "Deep Learning & Neural Architectures",
+    "algorithms": "Algorithms & Optimization",
+    "data_structures": "Data Structures & Memory Indexing",
+    "fintech": "FinTech, Quant Risk & Payment Systems",
+}
+
+_FINTECH_RE = re.compile(
+    r"\b(fintech|finance|financial|portfolio|volatility|sharpe|drawdown|credit\s*risk|pd|lgd|ead|cvar|"
+    r"fraud|payment|card|banking|ledger|idempoten|settlement|treasury|reconcil|basel|arbitrage|pricing)\b",
+    re.I,
+)
+_DS_STRUCT_RE = re.compile(
+    r"\b(heap|priority\s*queue|trie|b-?tree|binary\s*tree|bst|avl|graph\s*adj|hash\s*table|hash\s*map|dict\s*internals|"
+    r"linked\s*list|stack|deque|ring\s*buffer|bloom\s*filter|lru|disjoint\s*set|union-?find|segment\s*tree|hnsw|vector\s*index)\b",
+    re.I,
+)
+_ALGO_RE = re.compile(
+    r"\b(algorithm|dynamic\s*programming|memoiz|dijkstra|a-?star|bellman|bfs|dfs|topological|binary\s*search|"
+    r"sliding\s*window|two\s*pointer|greedy|backtrack|divide\s*and\s*conquer|quicksort|mergesort|kruskal|"
+    r"consensus|raft|token\s*bucket|rate\s*limit|reciprocal\s*rank|big-?o)\b",
+    re.I,
+)
+_DATA_SCI_RE = re.compile(
+    r"\b(data\s*science|pandas|dataframe|polars|parquet|duckdb|eda|imputation|missing\s*data|outlier|time\s*series|"
+    r"cohort|ab\s*test|hypothesis|p-?value|bayesian|distribution|drift|psi|population\s*stability|aggregation|sql\s*window)\b",
+    re.I,
+)
+
+
+def classify_domain(les: dict) -> str:
+    """Map any PyMasters lesson, HF Space, or live trend into one of the 8 canonical enterprise domains."""
+    if les.get("domain") in DOMAIN_LABELS:
+        return les["domain"]
+    key = les.get("key") or ""
+    track = (les.get("track") or "").lower()
+    pid = (les.get("pillar_id") or "").lower()
+    blob = " ".join(
+        [
+            les.get("title") or "",
+            les.get("topic") or "",
+            les.get("description") or "",
+            " ".join(les.get("concepts") or []),
+        ]
+    )
+    if pid in ("ai_finance", "ai_risk", "ai_cards_banking") or key.startswith(("trend:ai_finance/", "trend:ai_risk/", "trend:ai_cards_banking/")) or _FINTECH_RE.search(blob):
+        return "fintech"
+    if track == "dsa":
+        if _DS_STRUCT_RE.search(blob):
+            return "data_structures"
+        return "algorithms"
+    if _DS_STRUCT_RE.search(blob) and track not in ("deep_learning", "deep_learning_complete", "transformers_scratch"):
+        return "data_structures"
+    if _ALGO_RE.search(blob) and track not in ("deep_learning", "deep_learning_complete", "transformers_scratch"):
+        return "algorithms"
+    if track == "working_with_data" or _DATA_SCI_RE.search(blob):
+        return "data_science"
+    if track in ("transformers_scratch", "deep_learning_complete", "deep_learning"):
+        return "deep_learning"
+    if track in ("machine_learning", "ai_ml_foundations"):
+        return "machine_learning"
+    if les.get("is_hf_space") or track in (
+        "ai_engineering", "ai_agents", "frontier_ai_platforms", "trending_ai",
+        "gcp_vertex_ai", "aws_enterprise", "azure_ai_foundry", "azure_enterprise", "ai_fundamentals",
+    ):
+        return "ai"
+    return "python"
 CODE_RE = re.compile(r"```python\n(.*?)```", re.S)
 
 # Our 5 live unified Gradio 5.23.1 Hugging Face Spaces (Muthu88/pymasters-*), posted one-by-one in random order
@@ -417,6 +489,10 @@ def candidates(include_hf_spaces: bool = True, include_trends: bool = True) -> l
         if len(les["story"]) < 700 or not les["code_blocks"]:
             continue
         out.append(les)
+    for item in out:
+        dom = classify_domain(item)
+        item["domain"] = dom
+        item["domain_label"] = DOMAIN_LABELS[dom]
     return out
 
 
@@ -439,24 +515,43 @@ def _lesson_weight(kind: str, les: dict) -> float:
     return w
 
 
+def recent_domains(kind: str, all_by_key: dict, limit: int = 5) -> list[str]:
+    """Return most recent distinct content domains used by `kind` so consecutive items always rotate across pillars."""
+    out: list[str] = []
+    try:
+        for it in store.items(kind=kind, limit=25):
+            if it.get("status") in ("rejected", "failed"):
+                continue
+            dom = ((it.get("draft") or {}).get("domain") or "").strip()
+            if dom not in DOMAIN_LABELS:
+                cand = all_by_key.get(it.get("source_key") or "")
+                if cand:
+                    dom = classify_domain(cand)
+            if dom in DOMAIN_LABELS and dom not in out:
+                out.append(dom)
+            if len(out) >= limit:
+                break
+    except Exception:
+        pass
+    return out
+
+
 def pick(kind: str, n: int = 1, seed=None) -> list:
-    """Weighted pick of lessons, live daily trending topics across the 5 Finance/Risk/Cards/World/Concepts pillars,
-    weekly cross-domain thematic analysis research posts, and one-by-one random Hugging Face Space rotation."""
+    """Non-repeating 8-domain weighted picker across Python, AI, Data Science, Machine Learning,
+    Deep Learning, Algorithms, Data Structures, and FinTech."""
     rng = random.Random(seed) if seed is not None else random.Random()
     if kind == "thematic":
         from socialbot import trends
         return [trends.pick_weekly_thematic(rng=rng) for _ in range(max(1, n))]
-    chosen = []
-    if kind in ("linkedin", "short") and n >= 1:
-        roll = rng.random()
-        if roll < config.TREND_SHARE:
-            from socialbot import trends
-            chosen.append(trends.pick_daily_trend(kind, rng=rng))
-        elif roll < config.TREND_SHARE + config.HF_SPACE_SHARE:
-            chosen.append(pick_hf_space(kind, rng=rng))
-        if len(chosen) >= n:
-            return chosen
-    all_lessons = candidates(include_hf_spaces=False, include_trends=False)
+
+    all_lessons = [c for c in candidates(include_hf_spaces=True, include_trends=True) if not c.get("is_thematic")]
+    for c in all_lessons:
+        if "domain" not in c:
+            dom = classify_domain(c)
+            c["domain"] = dom
+            c["domain_label"] = DOMAIN_LABELS[dom]
+    by_key = {c["key"]: c for c in all_lessons}
+
     repeat_days = getattr(config, "LINKEDIN_NO_REPEAT_DAYS", 18) if kind == "linkedin" else config.NO_REPEAT_DAYS
     recent_limit = 35 if kind == "linkedin" else 60
 
@@ -477,23 +572,32 @@ def pick(kind: str, n: int = 1, seed=None) -> list:
         return out
 
     pool = _build_pool(repeat_days, check_title_overlap=True, exclude_basic=True)
-    if len(pool) < (n - len(chosen)):
+    if len(pool) < n:
         pool = _build_pool(repeat_days, check_title_overlap=True, exclude_basic=False)
-    if len(pool) < (n - len(chosen)) and kind == "linkedin":
-        # At 14 posts/day, gracefully narrow the repeat window before ever running dry
+    if len(pool) < n and kind == "linkedin":
         for fallback_days, overlap in ((7, True), (2, False), (0, False)):
             pool = _build_pool(fallback_days, check_title_overlap=overlap, exclude_basic=True) or _build_pool(
                 fallback_days, check_title_overlap=overlap, exclude_basic=False
             )
-            if len(pool) >= (n - len(chosen)):
+            if len(pool) >= n:
                 break
+
+    domains_order = list(getattr(config, "CONTENT_DOMAINS", tuple(DOMAIN_LABELS)))
+    avoid_domains = set(recent_domains(kind, by_key, limit=min(5, max(1, len(domains_order) - 2))))
+    chosen = []
     while pool and len(chosen) < n:
-        total = sum(w for w, _ in pool)
+        avail_domains = {les.get("domain") for _, les in pool if les.get("domain") in domains_order}
+        fresh_domains = [d for d in domains_order if d in avail_domains and d not in avoid_domains]
+        target_domain = rng.choice(fresh_domains) if fresh_domains else (rng.choice(sorted(avail_domains)) if avail_domains else None)
+        sub_pool = [(i, w, les) for i, (w, les) in enumerate(pool) if target_domain is None or les.get("domain") == target_domain]
+        total = sum(w for _, w, _ in sub_pool)
         r, acc = rng.random() * total, 0.0
-        for i, (w, les) in enumerate(pool):
+        for pool_idx, w, les in sub_pool:
             acc += w
             if acc >= r:
                 chosen.append(les)
-                pool.pop(i)
+                if les.get("domain"):
+                    avoid_domains.add(les["domain"])
+                pool.pop(pool_idx)
                 break
     return chosen

@@ -95,17 +95,19 @@ def upcoming_slots(kind, days=14):
     taken = _taken(kind)
     if c.get("interval_hours"):
         return _interval_slots(c, now, days, taken, kind=kind)
-    hh, mm = map(int, c["publish_hhmm"].split(":"))
+    hhmms = c.get("publish_hhmms") or [c["publish_hhmm"]]
     out = []
     for i in range(days):
         day = (now + timedelta(days=i)).date()
         if day.weekday() in c["weekdays"]:
-            slot = datetime(day.year, day.month, day.day, hh, mm, tzinfo=TZ)
-            slot_iso = _iso(slot)
-            if i == 0 and slot_iso not in taken:
-                out.append(slot_iso)
-            elif slot > now + timedelta(minutes=15):
-                out.append(slot_iso)
+            for hm in hhmms:
+                hh, mm = map(int, hm.split(":"))
+                slot = datetime(day.year, day.month, day.day, hh, mm, tzinfo=TZ)
+                slot_iso = _iso(slot)
+                if slot > now + timedelta(minutes=15):
+                    out.append(slot_iso)
+                elif i == 0 and slot >= now - timedelta(hours=2) and slot_iso not in taken:
+                    out.append(slot_iso)
     return out
 
 
@@ -341,8 +343,10 @@ def tick():
             except BlockingIOError:
                 pass
             publish_due()
-            # Video rendering is heavy: fill ahead at night; by day only catch up the next immediate slot.
-            produce_ahead(ahead=AHEAD if night else 1, kinds=("short", "long"))
+            # Video rendering is heavy: fill 2 full days (4 Shorts) at night; by day keep both daily Short slots filled.
+            shorts_ahead = getattr(config, "SHORTS_AHEAD_NIGHT", 4) if night else getattr(config, "SHORTS_AHEAD_DAY", 2)
+            produce_ahead(ahead=shorts_ahead, kinds=("short",))
+            produce_ahead(ahead=AHEAD if night else 1, kinds=("long",))
             if hour == 5:
                 refresh_metrics()
             publish_due()

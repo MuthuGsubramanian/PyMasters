@@ -187,7 +187,7 @@ def test_linkedin_slots_are_strictly_hourly_within_10am_to_11pm_ist(monkeypatch)
     # Consecutive slots are either 1 hour apart (within day) or 11 hours apart (23:00 -> next day 10:00 IST)
     assert _secs(li_slots[:15]) == {3600, 11 * 3600}
     assert scheduler.upcoming_slots("thematic", days=14) == []
-    assert len(scheduler.upcoming_slots("short", days=7)) == 7
+    assert len(scheduler.upcoming_slots("short", days=7)) == 14
     assert len(scheduler.upcoming_slots("long", days=14)) == 2
 
 
@@ -255,11 +255,11 @@ def test_tick_keeps_linkedin_hourly_buffer_and_youtube_ahead(monkeypatch, tmp_pa
     monkeypatch.setattr(scheduler, "produce_ahead", lambda ahead=2, kinds=(): calls.append((tuple(kinds), ahead)))
     _freeze(monkeypatch, datetime(2026, 11, 10, 14, 0, tzinfo=scheduler.TZ))
     scheduler.tick()
-    assert calls == [(("linkedin",), config.LINKEDIN_AHEAD), (("short", "long"), 1)]
+    assert calls == [(("linkedin",), config.LINKEDIN_AHEAD), (("short",), 2), (("long",), 1)]
     calls.clear()
     _freeze(monkeypatch, datetime(2026, 11, 10, 3, 0, tzinfo=scheduler.TZ))
     scheduler.tick()
-    assert calls == [(("linkedin",), config.LINKEDIN_AHEAD), (("short", "long"), 2)]
+    assert calls == [(("linkedin",), config.LINKEDIN_AHEAD), (("short",), 4), (("long",), 2)]
 
 
 def test_snippets_run_in_the_social_venv_so_taught_packages_import():

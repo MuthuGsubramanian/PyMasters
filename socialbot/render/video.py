@@ -11,7 +11,7 @@ from pathlib import Path
 
 import numpy as np
 import soundfile as sf
-from PIL import ImageDraw
+from PIL import Image, ImageDraw
 
 from socialbot import config, tts
 from socialbot.render import scenes as S
@@ -109,16 +109,20 @@ def render_narrated(segments, out_dir: Path, w, h, captions=True, live_influence
         conversational = (not F.portrait) and config.LONG_CONVERSATIONAL_AUDIO
 
     veo_mp4_path: Path | None = None
+    chosen_avatar: str | None = None
     if live_influencer and F.portrait:
         veo_mp4_path = Path(presenter_mp4) if presenter_mp4 else (out_dir / "presenter_veo.mp4")
         if not veo_mp4_path.is_file():
+            chosen_avatar = vids_avatar.pick_random_avatar()
             if "PYTEST_CURRENT_TEST" in os.environ:
                 PO.build_offline_test_presenter_mp4(segments, veo_mp4_path, fps=FPS)
             else:
                 spoken = vids_avatar.spoken_script_for_vids(segments)
-                vids_avatar.generate_vids_avatar_mp4(spoken, veo_mp4_path, expected_min_s=18.0)
+                meta_v = vids_avatar.generate_vids_avatar_mp4(spoken, veo_mp4_path, avatar_name=chosen_avatar, expected_min_s=18.0)
+                chosen_avatar = meta_v.get("avatar_name") or chosen_avatar
         else:
             vids_avatar.verify_broadcast_presenter_mp4(veo_mp4_path, expected_min_s=1.5 if "PYTEST_CURRENT_TEST" in os.environ else 18.0)
+            chosen_avatar = vids_avatar.pick_random_avatar()
 
         raw_voice = PO.extract_presenter_audio_24k(veo_mp4_path, out_dir / "voice_raw.wav")
         timeline, all_words, chapters = PO.align_segments_to_presenter_audio(segments, raw_voice, sr=tts.SR)
@@ -195,43 +199,75 @@ def render_narrated(segments, out_dir: Path, w, h, captions=True, live_influence
     _verify_rendered_mp4(video)
     write_srt(all_words, out_dir / "captions.srt")
     (out_dir / "voice.wav").unlink(missing_ok=True)
-    return {"video": str(video), "srt": str(out_dir / "captions.srt"), "duration": round(total, 2),
-            "chapters": chapters}
+    out_media = {"video": str(video), "srt": str(out_dir / "captions.srt"), "duration": round(total, 2),
+                 "chapters": chapters}
+    if chosen_avatar:
+        out_media["presenter_avatar"] = chosen_avatar
+    return out_media
 
 
-def render_loop(anim: dict, out_dir: Path, size=1080):
-    """Silent looping explainer for LinkedIn: opening title, beats, closing brand card.
-    Returns dict(video, gif, duration)."""
+def render_loop(anim: dict, out_dir: Path, size=1080, domain_label: str = "", design: dict | None = None):
+    """Silent looping enterprise explainer for LinkedIn with randomized Executive Palettes & Layout Shells.
+    Returns dict(video, gif, duration, design_theme, design_layout)."""
+    from socialbot.render import linkedin_themes as LT
+
     out_dir.mkdir(parents=True, exist_ok=True)
-    F = S.Frame(size, size)
-    beats = [{"kind": "reveal", "big": anim.get("title", ""), "sub": "PyMasters", "caption": "", "_dur": 2.4}]
-    for b in anim.get("beats") or []:
-        b = dict(b)
-        b["_dur"] = {"trace": 2.0 + 0.9 * len(b.get("steps") or []), "timeline": 4.5, "flow": 4.5,
-                     "code": 4.8, "compare": 4.5, "reveal": 2.8}.get(b.get("kind"), 3.5)
-        beats.append(b)
-    beats.append({"kind": "reveal", "big": "pymasters.net", "sub": "Free interactive lesson", "caption": "", "_dur": 2.2})
-    total = sum(b["_dur"] for b in beats)
-    video = out_dir / "loop.mp4"
-    wr = FFmpegWriter(video, size, size, crf=18)
-    frames_for_gif = []
-    t_acc = 0.0
-    for b in beats:
-        n = int(b["_dur"] * FPS)
-        for fi in range(n):
-            t = fi / max(1, n - 1)
-            img = S.draw_frame(F, b, min(1.0, t * 1.15), (t_acc + fi / FPS) / total,
-                               caption=b.get("caption"), caption_k=S.seg(t, 0.05, 0.3))
-            wr.write(img)
-            if fi % 3 == 0:            # 10 fps for the GIF fallback
-                frames_for_gif.append(img.resize((720, 720)))
-        t_acc += b["_dur"]
-    wr.close()
+    chosen = design or LT.pick_linkedin_design()
+    theme_id = chosen["theme_id"]
+    layout_id = chosen["layout_id"]
+    lay = chosen["layout"]
+    w, h = int(lay["w"]), int(lay["h"])
+    gif_w, gif_h = int(lay["gif_w"]), int(lay["gif_h"])
+
+    with T.use_palette(chosen["theme"]["palette"]):
+        F = S.Frame(w, h)
+        F.bg = LT.decorate_canvas_background(F.bg, F, layout_id)
+
+        beats = [{"_cover": True, "title": anim.get("title", ""), "_dur": 2.4}]
+        for b in anim.get("beats") or []:
+            b = dict(b)
+            b["_dur"] = {"trace": 2.0 + 0.9 * len(b.get("steps") or []), "timeline": 4.5, "flow": 4.5,
+                         "code": 4.8, "compare": 4.5, "reveal": 2.8}.get(b.get("kind"), 3.5)
+            beats.append(b)
+        beats.append({"kind": "reveal", "big": "pymasters.net", "sub": "Enterprise AI & Python Learning", "caption": "", "_dur": 2.2})
+        total = sum(b["_dur"] for b in beats)
+        video = out_dir / "loop.mp4"
+        wr = FFmpegWriter(video, w, h, crf=18)
+        frames_for_gif = []
+        t_acc = 0.0
+        total_beats = len(beats)
+        try:
+            for b_idx, b in enumerate(beats, start=1):
+                n = int(b["_dur"] * FPS)
+                for fi in range(n):
+                    t = fi / max(1, n - 1)
+                    prog = (t_acc + fi / FPS) / total
+                    if b.get("_cover"):
+                        img = LT.draw_enterprise_cover_card(
+                            F.bg, F, b["title"], domain_label, layout_id, t, prog, total_beats
+                        )
+                    else:
+                        img = S.draw_frame(F, b, min(1.0, t * 1.15), prog,
+                                           caption=b.get("caption"), caption_k=S.seg(t, 0.05, 0.3))
+                        LT.draw_enterprise_header_badge(img, F, domain_label, b_idx, total_beats)
+                    wr.write(img)
+                    if fi % 3 == 0:            # 10 fps for the GIF
+                        frames_for_gif.append(img.resize((gif_w, gif_h), Image.Resampling.LANCZOS) if hasattr(Image, "Resampling") else img.resize((gif_w, gif_h)))
+                t_acc += b["_dur"]
+        finally:
+            wr.close()
+
     gif = out_dir / "loop.gif"
     frames_for_gif = frames_for_gif[:240]   # LinkedIn GIF limit is 250 frames
-    pal = [f.convert("P", palette=1, colors=128) for f in frames_for_gif]
+    pal = [f.convert("P", palette=1, colors=160) for f in frames_for_gif]
     pal[0].save(gif, save_all=True, append_images=pal[1:], duration=100, loop=0, optimize=True)
-    return {"video": str(video), "gif": str(gif), "duration": round(total, 2)}
+    return {
+        "video": str(video),
+        "gif": str(gif),
+        "duration": round(total, 2),
+        "design_theme": theme_id,
+        "design_layout": layout_id,
+    }
 
 
 def thumbnail(text: str, subtitle: str, code: str, path: Path, w=1280, h=720):

@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import random
 import re
 import subprocess
 import tempfile
@@ -26,6 +27,31 @@ DEFAULT_STUDIO_DOC_ID = "1qZiaGk_bjQhpw4b1nJhoiNP-xj6EVy1gi4_h5iCGdfw"
 
 class PresenterQualityError(RuntimeError):
     """Raised when presenter video generation fails or violates broadcast quality checks."""
+
+
+def pick_random_avatar(rng=None) -> str:
+    """Randomly pick one of Google Vids' Realistic Veo 3 studio presenters without repeating the last 4 Shorts."""
+    rng = rng if rng is not None else random.Random()
+    pinned = (getattr(config, "GOOGLE_VIDS_AVATAR_NAME", "random") or "random").strip()
+    pool = list(getattr(config, "GOOGLE_VIDS_AVATAR_POOL", ("William", "Mia", "Levi", "Sofia", "Sebastian", "Finley", "Jamal", "Eleanor")))
+    if pinned and pinned.lower() not in ("random", "auto", "*"):
+        return pinned
+
+    recent_avatars: list[str] = []
+    try:
+        for it in store.items(kind="short", limit=16):
+            if it.get("status") in ("rejected", "failed"):
+                continue
+            av = ((it.get("media") or {}).get("presenter_avatar") or "").strip()
+            if av in pool and av not in recent_avatars:
+                recent_avatars.append(av)
+            if len(recent_avatars) >= min(4, max(1, len(pool) - 1)):
+                break
+    except Exception:
+        pass
+
+    available = [a for a in pool if a not in recent_avatars] or pool
+    return rng.choice(available)
 
 
 def spoken_script_for_vids(segments: list[dict]) -> str:
@@ -338,7 +364,9 @@ def generate_vids_avatar_mp4(
     if not pw_python.is_file():
         raise PresenterQualityError(f"Playwright Python interpreter missing at {pw_python}")
 
-    avatar = (avatar_name or getattr(config, "GOOGLE_VIDS_AVATAR_NAME", "William") or "William").strip()
+    avatar = (avatar_name or "").strip()
+    if not avatar or avatar.lower() in ("random", "auto", "*"):
+        avatar = pick_random_avatar()
     out_mp4 = Path(out_mp4)
     doc_id_file = config.STATE_DIR / "vids_studio_doc.txt"
 
@@ -371,6 +399,7 @@ def generate_vids_avatar_mp4(
                         f"Google Vids CDP runner failed (rc={res.returncode}): {(res.stderr or res.stdout)[-500:]}"
                     )
                 q_meta = verify_broadcast_presenter_mp4(out_mp4, expected_min_s=expected_min_s)
+                q_meta["avatar_name"] = avatar
                 log.info("Verified Veo presenter MP4: %s", q_meta)
                 return q_meta
             except Exception as exc:
