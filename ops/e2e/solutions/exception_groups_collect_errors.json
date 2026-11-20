@@ -1,0 +1,11 @@
+{
+  "lesson_id": "exception_groups_collect_errors",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def parse_all(values):\n    good, errors = [], []\n    for v in values:\n        try:\n            good.append(int(v))\n        except ValueError:\n            errors.append(ValueError(f\"bad value: {v!r}\"))\n    if errors:\n        raise ExceptionGroup(\"parse failed\", errors)\n    return good\n\nprint(parse_all([\"1\", \"2\"]))\ntry:\n    parse_all([\"4\", \"x\", \"7\", \"y\"])\nexcept* ValueError as eg:\n    print(len(eg.exceptions), [str(e) for e in eg.exceptions])\n",
+      "verified_output": "[1, 2]\n2 [\"bad value: 'x'\", \"bad value: 'y'\"]",
+      "source": "claude sonnet 2026-11-20, verified with grade_submission"
+    }
+  ]
+}
