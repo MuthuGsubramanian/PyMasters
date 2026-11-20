@@ -1,0 +1,11 @@
+{
+  "lesson_id": "except_star_split_and_reraise",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def tally(eg):\n    seen = {\"value\": 0, \"key\": 0, \"left\": []}\n    try:\n        try:\n            raise eg\n        except* ValueError as g:\n            seen[\"value\"] = len(g.exceptions)\n        except* KeyError as g:\n            seen[\"key\"] = len(g.exceptions)\n    except ExceptionGroup as rest:\n        seen[\"left\"] = [type(e).__name__ for e in rest.exceptions]\n    return seen\n\nbatch = ExceptionGroup(\"batch\", [ValueError(\"a\"), KeyError(\"k\"), ValueError(\"b\"), TypeError(\"t\")])\nprint(tally(batch))\n",
+      "verified_output": "{'value': 2, 'key': 1, 'left': ['TypeError']}",
+      "source": "claude sonnet 2026-11-20, verified with grade_submission"
+    }
+  ]
+}

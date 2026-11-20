@@ -1,0 +1,286 @@
+{
+  "id": "except_star_split_and_reraise",
+  "topic": "except_star_split_and_reraise",
+  "track": "error_handling",
+  "module": "patterns",
+  "order": 5,
+  "title": {
+    "en": "except*: Handle Some Errors, Let the Rest Pass"
+  },
+  "description": {
+    "en": "A group often mixes error types. `except*` handles each type separately, anything unhandled keeps propagating, and `split()` / `subgroup()` let you do the same sorting by hand."
+  },
+  "xp_reward": 105,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## A Mixed Bag of Failures\n\nLast lesson you collected `ValueError`s. Real batches are messier: a few bad values, a missing key, one unexpected `TypeError`. You want to deal with the first two and let the surprise surface.\n\n### Step 1 - Several `except*` clauses on one try\n\n```python\nbatch = ExceptionGroup(\"batch\", [ValueError(\"a\"), KeyError(\"k\"), ValueError(\"b\"), TypeError(\"t\")])\n\ntry:\n    raise batch\nexcept* ValueError as g:\n    print(\"values:\", len(g.exceptions))   # values: 2\nexcept* KeyError as g:\n    print(\"keys:\", len(g.exceptions))     # keys: 1\n```\n\nUnlike plain `except`, **every matching clause runs** - the group is split between them. Here the ValueErrors go to the first clause and the KeyError goes to the second.\n\n### Step 2 - What happens to the TypeError?\n\nNo clause wanted it, so Python **re-raises it automatically**, wrapped in a new `ExceptionGroup` with the same message. If you wrap the whole thing in another `try`, you can see it:\n\n```python\ntry:\n    try:\n        raise batch\n    except* ValueError:\n        pass\n    except* KeyError:\n        pass\nexcept ExceptionGroup as rest:\n    print([type(e).__name__ for e in rest.exceptions])   # ['TypeError']\n```\n\nNothing is silently swallowed: unhandled errors are never lost.\n\n### Step 3 - Sorting by hand with `split` and `subgroup`\n\n```python\nmatched, rest = batch.split(ValueError)\nprint(len(matched.exceptions))                 # 2\nprint([type(e).__name__ for e in rest.exceptions])   # ['KeyError', 'TypeError']\n\nprint(batch.subgroup(KeyError).exceptions)     # (KeyError('k'),)\nprint(batch.subgroup(OSError))                 # None\n```\n\n- `split(T)` returns a pair `(matching, rest)`; either side is `None` when empty.\n- `subgroup(T)` returns just the matching part, or `None`.\n\nBoth keep the original message, which is what `except*` uses under the hood.\n\n### Honest caveats\n\n- `return`, `break` and `continue` are **not allowed** inside an `except*` block.\n- A bare `raise` inside `except*` re-raises only the errors that clause matched.\n- Always check for `None` from `split` / `subgroup` before reading `.exceptions`.\n- The handler's `g` is a group, so use `g.exceptions` rather than treating it as one error.\n\n### Key Takeaways\n\n- Multiple `except*` clauses can all run; each receives its own matching sub-group.\n- Errors no clause matches are re-raised in a group, never dropped.\n- `split(T)` gives `(matching, rest)`; `subgroup(T)` gives only the match; both may be `None`.\n- `return`, `break` and `continue` are forbidden inside `except*`.\n"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "sorting_errors_by_type",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "cm_star",
+      "nodes": [
+        {
+          "label": "except* routing",
+          "children": [
+            "every matching except* clause runs, each gets its own sub-group",
+            "unmatched errors are re-raised in a new ExceptionGroup",
+            "split(T) -> (matching, rest), either may be None",
+            "subgroup(T) -> only the matching part, or None"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "split_vs_subgroup",
+      "left": {
+        "label": "split(ValueError) -> (matching, rest)",
+        "result": true
+      },
+      "right": {
+        "label": "subgroup(ValueError) -> matching only",
+        "result": true
+      },
+      "description": {
+        "en": "Use split when you need both halves, subgroup when you only care about one type."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "split_demo",
+      "code": "eg = ExceptionGroup('batch', [ValueError('a'), KeyError('k'), ValueError('b'), TypeError('t')])\nmatched, rest = eg.split(ValueError)\nprint(len(matched.exceptions))\nprint([type(e).__name__ for e in rest.exceptions])",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {
+            "eg": "4 errors: ValueError, KeyError, ValueError, TypeError"
+          },
+          "output": "",
+          "description": "A group holding four mixed errors"
+        },
+        {
+          "line": 2,
+          "variables": {
+            "matched": "2 ValueErrors",
+            "rest": "KeyError, TypeError"
+          },
+          "output": "",
+          "description": "split sorts them into the matching group and the rest"
+        },
+        {
+          "line": 3,
+          "variables": {
+            "matched": "2 ValueErrors"
+          },
+          "output": "2",
+          "description": "Two ValueErrors matched"
+        },
+        {
+          "line": 4,
+          "variables": {
+            "rest": "KeyError, TypeError"
+          },
+          "output": "['KeyError', 'TypeError']",
+          "description": "The rest keeps the others in their original order"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Several except* clauses can all fire.",
+        "Unhandled errors are re-raised, never lost.",
+        "split(T) -> (match, rest). subgroup(T) -> match or None."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Finish `tally(eg)`. Inside the inner `try`, `raise eg` and use two `except*` clauses: `except* ValueError as g` stores `len(g.exceptions)` in `seen[\"value\"]`, and `except* KeyError as g` stores the count in `seen[\"key\"]`. Anything neither clause matches is re-raised as an ExceptionGroup - catch it in the outer `except ExceptionGroup as rest` and store the class NAMES (`type(e).__name__`) of `rest.exceptions` in `seen[\"left\"]`. Expected output: {'value': 2, 'key': 1, 'left': ['TypeError']}"
+      },
+      "starter_code": "def tally(eg):\n    seen = {\"value\": 0, \"key\": 0, \"left\": []}\n    try:\n        try:\n            raise eg\n        except* ValueError as g:\n            pass  # TODO: store how many ValueErrors arrived in seen[\"value\"]\n        # TODO: add an `except* KeyError as g:` clause that stores the count in seen[\"key\"]\n    except ExceptionGroup as rest:\n        pass  # TODO: store the class NAMES of the unhandled errors in seen[\"left\"]\n    return seen\n\n# --- demo (do not change) ---\nbatch = ExceptionGroup(\"batch\", [ValueError(\"a\"), KeyError(\"k\"), ValueError(\"b\"), TypeError(\"t\")])\nprint(tally(batch))\n",
+      "expected_output": "{'value': 2, 'key': 1, 'left': ['TypeError']}",
+      "hints": {
+        "en": [
+          "Replace the first `pass` with `seen[\"value\"] = len(g.exceptions)`.",
+          "Add a second clause right after it: `except* KeyError as g:` then `seen[\"key\"] = len(g.exceptions)`.",
+          "The outer handler gets the leftovers: `seen[\"left\"] = [type(e).__name__ for e in rest.exceptions]`.",
+          "Do not use `return` inside an `except*` block - Python forbids it. Store results in `seen` and return after the try."
+        ]
+      },
+      "test_code": "r = tally(ExceptionGroup(\"g\", [ValueError(\"1\"), ValueError(\"2\"), ValueError(\"3\")]))\nassert r == {\"value\": 3, \"key\": 0, \"left\": []}, r\nr = tally(ExceptionGroup(\"g\", [KeyError(\"a\"), KeyError(\"b\")]))\nassert r == {\"value\": 0, \"key\": 2, \"left\": []}, r\nr = tally(ExceptionGroup(\"g\", [OSError(\"x\"), KeyError(\"a\"), TypeError(\"t\"), ValueError(\"v\")]))\nassert r == {\"value\": 1, \"key\": 1, \"left\": [\"OSError\", \"TypeError\"]}, r\nr = tally(ExceptionGroup(\"g\", [ZeroDivisionError(\"z\")]))\nassert r == {\"value\": 0, \"key\": 0, \"left\": [\"ZeroDivisionError\"]}, r"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "A group holds a ValueError, a KeyError and a TypeError. You write `except* ValueError` and `except* KeyError`. What happens to the TypeError?"
+      },
+      "options": {
+        "en": [
+          "It is silently ignored",
+          "It is re-raised in a new ExceptionGroup",
+          "It becomes a ValueError",
+          "Python raises SyntaxError"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does `group.subgroup(OSError)` return when no OSError is inside?"
+      },
+      "options": {
+        "en": [
+          "An empty ExceptionGroup",
+          "An empty tuple",
+          "None",
+          "It raises LookupError"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Which statement is NOT allowed inside an `except*` block?"
+      },
+      "options": {
+        "en": [
+          "print()",
+          "return",
+          "a bare raise",
+          "assigning to a variable"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does `split(ValueError)` return?"
+      },
+      "options": {
+        "en": [
+          "Only the ValueErrors",
+          "A pair: (matching group, rest group), each possibly None",
+          "A list of strings",
+          "A dict keyed by type"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "except_star",
+      "exception_group_split",
+      "exception_group_subgroup",
+      "unhandled_errors_propagate"
+    ],
+    "concepts_required": [
+      "exception_groups_collect_errors"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "error_handling",
+    "path_memberships": []
+  },
+  "generated": false,
+  "uth_example": "eg = ExceptionGroup(\"batch\", [ValueError(\"a\"), KeyError(\"k\"), ValueError(\"b\"), TypeError(\"t\")])\n\nmatched, rest = eg.split(ValueError)\nprint(\"matched:\", [str(e) for e in matched.exceptions])\nprint(\"rest:   \", [type(e).__name__ for e in rest.exceptions])\n\nonly_keys = eg.subgroup(KeyError)\nprint(\"subgroup:\", type(only_keys).__name__, len(only_keys.exceptions))\nprint(\"no match:\", eg.subgroup(OSError))\n",
+  "under_the_hood": {
+    "summary": "except* calls the group's split method once per clause, hands each clause its matching sub-group, and re-raises whatever is left, so mixed errors are routed by type and none are lost.",
+    "steps": [
+      {
+        "title": "A mixed group to route",
+        "body": "Start with `ExceptionGroup(\"batch\", [ValueError(\"a\"), KeyError(\"k\"), ValueError(\"b\"), TypeError(\"t\")])`. Four errors, three types, one raise. The question is how each handler gets only what it understands.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "array",
+            "data": [
+              "ValueError('a')",
+              "KeyError('k')",
+              "ValueError('b')",
+              "TypeError('t')"
+            ],
+            "label": "group.exceptions"
+          }
+        }
+      },
+      {
+        "title": "split divides into match and rest",
+        "body": "`group.split(ValueError)` returns `(matching, rest)`. Matching holds both ValueErrors; rest holds the KeyError and TypeError in their original order. Both halves are new groups that keep the original message, and the original group is not modified.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "group of 4",
+                "detail": "mixed"
+              },
+              {
+                "label": "split(ValueError)",
+                "detail": "sort by type"
+              },
+              {
+                "label": "matching",
+                "detail": "2 ValueErrors"
+              },
+              {
+                "label": "rest",
+                "detail": "KeyError, TypeError"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Each except* clause takes its turn",
+        "body": "Python processes the clauses top to bottom. The first clause receives the ValueErrors; what remains is split again for the second clause, which receives the KeyError. A clause that matches nothing is skipped without running."
+      },
+      {
+        "title": "Leftovers are re-raised, not dropped",
+        "body": "After the last clause, anything still unmatched, here the TypeError, is raised again as a new ExceptionGroup with the same message. An enclosing `except ExceptionGroup` (or the interpreter's traceback) sees it. This is the safety net: unhandled means still visible.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "unhandled",
+                "values": [
+                  "4 errors",
+                  "2 errors (after ValueError clause)",
+                  "1 error: TypeError"
+                ]
+              }
+            ],
+            "caption": "What is left to re-raise after each clause"
+          }
+        }
+      },
+      {
+        "title": "Why return and break are banned",
+        "body": "Several clauses may run for the same raise, and the leftovers must still be re-raised afterwards. A `return`, `break` or `continue` would skip that bookkeeping and could hide errors, so Python rejects them in an `except*` block at compile time."
+      }
+    ],
+    "takeaway": "except* is split() in a loop: each clause takes the errors it recognises, and the remainder is re-raised in a group. Handle what you understand, and let the surprises stay loud."
+  }
+}

@@ -1,0 +1,302 @@
+{
+  "id": "exception_groups_collect_errors",
+  "topic": "exception_groups_collect_errors",
+  "track": "error_handling",
+  "module": "patterns",
+  "order": 4,
+  "title": {
+    "en": "ExceptionGroup: Report Every Failure, Not Just the First"
+  },
+  "description": {
+    "en": "A plain `raise` stops at the first problem, so a batch of 100 records tells you about one bad row at a time. Python 3.11's `ExceptionGroup` bundles many errors into one exception, and `except*` handles them by type."
+  },
+  "xp_reward": 100,
+  "next_unlock": "except_star_split_and_reraise",
+  "story_variants": {
+    "en": "## One Raise, One Error... Until 3.11\n\nImagine checking a file of 100 values. The usual loop raises on the first bad one and stops. You fix it, rerun, and meet the *second* bad one. Ninety-eight reruns later you are annoyed.\n\nThe better design is: **keep going, collect every failure, then report them all together.** Until Python 3.11 you had to invent your own container for that. Now the language has one: `ExceptionGroup`.\n\n### Step 1 - Build a group\n\n```python\nerrors = [ValueError(\"bad value: 'x'\"), ValueError(\"bad value: 'y'\")]\ngroup = ExceptionGroup(\"parse failed\", errors)\nprint(group.message)          # parse failed\nprint(len(group.exceptions))  # 2\n```\n\nAn `ExceptionGroup` takes a **message** and a **non-empty list of exceptions**. It is itself an exception, so you can `raise` it.\n\n### Step 2 - Catch it with `except*`\n\n```python\ntry:\n    raise group\nexcept* ValueError as eg:\n    print(type(eg).__name__)   # ExceptionGroup\n    print(len(eg.exceptions))  # 2\n```\n\nThe star matters. `except* ValueError` means: *pull every ValueError out of the group and give them to me as a smaller group.* Notice `eg` is **still a group**, never a single error, even when only one matched.\n\n### Step 3 - A real batch validator\n\n```python\ndef parse_all(values):\n    good, errors = [], []\n    for v in values:\n        try:\n            good.append(int(v))\n        except ValueError:\n            errors.append(ValueError(f\"bad value: {v!r}\"))\n    if errors:\n        raise ExceptionGroup(\"parse failed\", errors)\n    return good\n```\n\nThe loop never stops early. Each failure is parked in `errors`, and one group is raised at the end, so the caller sees all the bad values at once.\n\n### Honest caveats\n\n- The list must be **non-empty** - `ExceptionGroup(\"x\", [])` raises `ValueError`. That is why we only raise when `errors` is truthy.\n- Every item must be an `Exception` instance, not a class and not a `BaseException` like `KeyboardInterrupt` (use `BaseExceptionGroup` for those).\n- `except` and `except*` cannot be mixed in the same `try`.\n- Python 3.11 or newer is required. Older versions have no `ExceptionGroup` at all.\n\n### Key Takeaways\n\n- `ExceptionGroup(message, [errors])` packs many failures into one raisable exception.\n- `except* SomeError as eg` extracts all matching errors; `eg` is always a group.\n- Collect inside the loop, raise once after it, and only if something went wrong.\n- Even a single failure raised through a group stays a group.\n"
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro_card",
+      "content": "story_variant",
+      "visual_theme": "many_errors_one_exception",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "cm_groups",
+      "nodes": [
+        {
+          "label": "ExceptionGroup",
+          "children": [
+            "ExceptionGroup(message, [e1, e2, ...]) -> one raisable bundle",
+            ".message and .exceptions -> read what is inside",
+            "except* ValueError as eg -> extract matching errors, eg is a group",
+            "list must be non-empty and hold Exception instances"
+          ]
+        }
+      ],
+      "duration_ms": 3500
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "first_vs_all",
+      "left": {
+        "label": "Raise on the first error (you see 1 of 2)",
+        "result": false
+      },
+      "right": {
+        "label": "Collect, then ExceptionGroup (you see both)",
+        "result": true
+      },
+      "description": {
+        "en": "Collecting failures and raising one group gives the caller the full list in a single run, instead of one problem per rerun."
+      }
+    },
+    {
+      "type": "ExecutionVisualizer",
+      "id": "collect_loop",
+      "code": "errors = []\nfor raw in ['12', 'x', '7', 'y']:\n    try:\n        int(raw)\n    except ValueError as exc:\n        errors.append(exc)\nprint(len(errors))\ngroup = ExceptionGroup('batch failed', errors)\nprint(len(group.exceptions))",
+      "executionSteps": [
+        {
+          "line": 1,
+          "variables": {
+            "errors": "[]"
+          },
+          "output": "",
+          "description": "Start with an empty list of failures"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "raw": "'x'",
+            "errors": "[ValueError(...)]"
+          },
+          "output": "",
+          "description": "'x' is not a number: the error is caught and parked, the loop continues"
+        },
+        {
+          "line": 5,
+          "variables": {
+            "raw": "'y'",
+            "errors": "[ValueError, ValueError]"
+          },
+          "output": "",
+          "description": "'y' fails too; both failures are kept"
+        },
+        {
+          "line": 7,
+          "variables": {
+            "errors": "[ValueError, ValueError]"
+          },
+          "output": "2",
+          "description": "After the loop: two collected failures"
+        },
+        {
+          "line": 9,
+          "variables": {
+            "group": "ExceptionGroup('batch failed', 2 sub-exceptions)"
+          },
+          "output": "2\n2",
+          "description": "One group now holds both, ready to raise"
+        }
+      ],
+      "speed": "normal"
+    },
+    {
+      "type": "Terminal",
+      "id": "punchline",
+      "output": [
+        "Collect inside the loop. Raise once after it.",
+        "except* ValueError as eg -> eg is still a group.",
+        "Needs Python 3.11+."
+      ]
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "finish_effect",
+      "effect": "confetti",
+      "duration_ms": 1800
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Finish `parse_all(values)` so it converts every string with `int()` but does NOT stop at the first bad one. For each failure, store `ValueError(f\"bad value: {v!r}\")`. After the loop, if any failures were stored, raise ONE `ExceptionGroup(\"parse failed\", errors)`; otherwise return the list of ints. The demo prints the good result, then catches the group with `except*` and prints how many errors it holds and their messages. Expected output:\n[1, 2]\n2 [\"bad value: 'x'\", \"bad value: 'y'\"]"
+      },
+      "starter_code": "def parse_all(values):\n    good, errors = [], []\n    for v in values:\n        try:\n            good.append(int(v))\n        except ValueError:\n            pass  # TODO: remember the problem instead of dropping it\n    # TODO: if any errors were collected, raise ONE ExceptionGroup(\"parse failed\", errors)\n    return good\n\n# --- demo (do not change) ---\nprint(parse_all([\"1\", \"2\"]))\ntry:\n    parse_all([\"4\", \"x\", \"7\", \"y\"])\nexcept* ValueError as eg:\n    print(len(eg.exceptions), [str(e) for e in eg.exceptions])\n",
+      "expected_output": "[1, 2]\n2 [\"bad value: 'x'\", \"bad value: 'y'\"]",
+      "hints": {
+        "en": [
+          "Inside the `except ValueError:` branch, append a new `ValueError(f\"bad value: {v!r}\")` to `errors` instead of `pass`.",
+          "`{v!r}` puts quotes around the string, which is exactly what the expected output shows: 'x'.",
+          "After the for loop: `if errors: raise ExceptionGroup(\"parse failed\", errors)`.",
+          "The group must be raised only when `errors` is not empty - an empty list makes ExceptionGroup itself fail."
+        ]
+      },
+      "test_code": "assert parse_all([]) == []\nassert parse_all([\"5\", \"6\"]) == [5, 6]\ntry:\n    parse_all([\"1\", \"oops\", \"3\", \"bad\", \"z\"])\nexcept ExceptionGroup as g:\n    assert g.message == \"parse failed\", g.message\n    assert len(g.exceptions) == 3, len(g.exceptions)\n    assert all(isinstance(e, ValueError) for e in g.exceptions)\n    assert [str(e) for e in g.exceptions] == [\"bad value: 'oops'\", \"bad value: 'bad'\", \"bad value: 'z'\"]\nelse:\n    raise AssertionError(\"expected an ExceptionGroup for bad input\")\ntry:\n    parse_all([\"x\"])\nexcept ExceptionGroup as g:\n    assert len(g.exceptions) == 1   # even one problem is wrapped in a group\nelse:\n    raise AssertionError(\"a single bad value must still raise an ExceptionGroup\")"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Inside `except* ValueError as eg:`, what is `eg`?"
+      },
+      "options": {
+        "en": [
+          "A single ValueError, the first match",
+          "An ExceptionGroup holding the matching errors, even if only one matched",
+          "A list of strings",
+          "None"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What happens with `ExceptionGroup(\"batch\", [])`?"
+      },
+      "options": {
+        "en": [
+          "It creates an empty group",
+          "It returns None",
+          "It raises ValueError because the list must be non-empty",
+          "It raises KeyError"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Why collect errors in a list and raise once after the loop?"
+      },
+      "options": {
+        "en": [
+          "It is faster",
+          "The caller learns about every failure in one run instead of one per rerun",
+          "Python forbids raising inside a loop",
+          "It avoids using try"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which Python version first has `ExceptionGroup` and `except*`?"
+      },
+      "options": {
+        "en": [
+          "3.8",
+          "3.9",
+          "3.10",
+          "3.11"
+        ]
+      },
+      "correct": 3
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "exception_group",
+      "except_star",
+      "collecting_errors",
+      "batch_validation"
+    ],
+    "concepts_required": [
+      "exceptions_done_right",
+      "custom_exceptions_and_chaining"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "error_handling",
+    "path_memberships": []
+  },
+  "generated": false,
+  "uth_example": "errors = []\nfor raw in [\"12\", \"x\", \"7\", \"y\"]:\n    try:\n        print(\"ok\", int(raw))\n    except ValueError as exc:\n        errors.append(exc)\n\nprint(\"collected\", len(errors))\ntry:\n    if errors:\n        raise ExceptionGroup(\"batch failed\", errors)\nexcept* ValueError as group:\n    print(type(group).__name__, len(group.exceptions))\n    print([type(e).__name__ for e in group.exceptions])\n",
+  "under_the_hood": {
+    "summary": "An ExceptionGroup is an ordinary exception object that stores a message and a tuple of other exceptions; except* asks the group to split itself by type, so one raise can carry many failures.",
+    "steps": [
+      {
+        "title": "A group is just an exception with a tuple inside",
+        "body": "`ExceptionGroup(\"batch failed\", [e1, e2])` stores the message in `.message` and the errors, copied into a tuple, in `.exceptions`. Nothing is raised yet; it is an object like any other until you use `raise`.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "group.message",
+                "values": [
+                  "'batch failed'"
+                ]
+              },
+              {
+                "variable": "len(group.exceptions)",
+                "values": [
+                  "0",
+                  "1",
+                  "2"
+                ]
+              }
+            ],
+            "caption": "Adding errors one by one to the list before building the group"
+          }
+        }
+      },
+      {
+        "title": "Construction checks its input",
+        "body": "The constructor refuses an empty list and refuses anything that is not an exception instance. That is why validators write `if errors:` before raising: building the group is the step that fails on an empty list."
+      },
+      {
+        "title": "raise sends the whole bundle upward",
+        "body": "`raise group` unwinds the stack once. The traceback shows the group and, indented below it, every sub-exception with its own traceback, so no failure is hidden behind another.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "loop collects",
+                "detail": "2 errors"
+              },
+              {
+                "label": "ExceptionGroup built",
+                "detail": "1 object"
+              },
+              {
+                "label": "raise",
+                "detail": "one unwind"
+              },
+              {
+                "label": "except* ValueError",
+                "detail": "gets both"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "except* splits the group by type",
+        "body": "For each `except*` clause, Python asks the group for the sub-exceptions that match the type and passes them to your handler as a smaller ExceptionGroup. That is why `eg` is a group even when one error matched. Whatever no clause matched stays in the group and keeps propagating."
+      },
+      {
+        "title": "The two syntaxes cannot be mixed",
+        "body": "A `try` uses either `except` or `except*`, never both. Plain `except ValueError` would catch the whole group only if the group itself were a ValueError, which it is not, so it would let the group through.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "except ValueError",
+              "code": "try:\n    raise ExceptionGroup('g', [ValueError('a')])\nexcept ValueError:\n    print('never runs')"
+            },
+            "right": {
+              "label": "except* ValueError",
+              "code": "try:\n    raise ExceptionGroup('g', [ValueError('a')])\nexcept* ValueError as eg:\n    print(len(eg.exceptions))  # 1"
+            }
+          }
+        }
+      }
+    ],
+    "takeaway": "An ExceptionGroup is a normal exception that holds other exceptions, and except* extracts them by type. Collect failures as you go, raise once at the end, and every error reaches the caller in a single run."
+  }
+}
