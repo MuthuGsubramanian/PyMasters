@@ -1,0 +1,253 @@
+{
+  "id": "exception_group_split_and_notes",
+  "topic": "exception_group_split",
+  "track": "python_modern",
+  "module": "python314_features",
+  "order": 7,
+  "title": {
+    "en": "Splitting Exception Groups and Adding Notes"
+  },
+  "description": {
+    "en": "Use ExceptionGroup.split to divide errors into retryable and fatal piles while keeping the nesting, and add_note to attach context to an error without wrapping it."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Splitting Groups And Adding Context\n\n\"Catching by type is one way to treat a group,\" Vaathiyaar says. \"Sometimes you want the *pieces* instead: 'give me the timeouts so I can retry them, and the rest so I can report them.' That is what `split` does -- and `add_note` lets you attach context to an error without wrapping it.\"\n\n### `split` And `subgroup`\n\n```python\ngroup = ExceptionGroup(\"net\", [TimeoutError(\"a\"), ConnectionError(\"b\"),\n         ExceptionGroup(\"inner\", [TimeoutError(\"c\"), ValueError(\"d\")])])\ntimeouts, rest = group.split(TimeoutError)\n```\n\n`split` returns a pair of groups: the members that match, and the members that don't. Both **keep the nested shape and the message** of the original (`timeouts` still has an `inner` group inside, now holding just `c`). If one side is empty it is `None`, not an empty group. `group.subgroup(KeyError)` returns only the matching half -- here `None`, since nothing is a KeyError. You can pass an exception type or a function that takes an exception and returns True/False.\n\nFor this example, `timeouts` holds the leaves `a` and `c` and `rest` holds `b` and `d`.\n\n### Notes: Context Without Wrapping\n\n`exc.add_note(\"line 3: 'abc'\")` appends a string to a list called `exc.__notes__`, and the notes are printed under the traceback. The exception keeps its type and message, so callers that catch `ValueError` still work. That is the point: you can say *where* it failed on the way up, and then plain `raise` it again.\n\n> **Vaathiyaar's caveat:** notes are just a list of strings on the object. They are shown in tracebacks, but `str(exc)` does not include them, so do not parse them for logic -- use them for humans.\n\nToday you split a nested group by retryability, then annotate a parse error and re-raise it."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "split_and_annotate",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "split and add_note",
+          "children": [
+            "split(cond) returns (match, rest)",
+            "empty side is None",
+            "nesting and message are kept",
+            "add_note appends to __notes__"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "calc",
+      "steps": [
+        {
+          "line": "retryable, other = group.split(TimeoutError)",
+          "highlight": "split",
+          "explanation": {
+            "en": "Divide the leaves into matching and non-matching groups"
+          }
+        },
+        {
+          "line": "exc.add_note(f\"line {line}\")",
+          "highlight": "add_note",
+          "explanation": {
+            "en": "Attach context to the exception object"
+          }
+        },
+        {
+          "line": "raise",
+          "highlight": "raise",
+          "explanation": {
+            "en": "Re-raise the same exception with its original traceback"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "term",
+      "lines": [
+        "retry_split(demo) -> (2, 2)",
+        "parse_cell('abc', 3).__notes__ -> [\"line 3: 'abc'\"]"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "celebrate",
+      "theme": "group_split",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `retry_split(group)`: use `group.split` with a function that is true for `TimeoutError`, and return `(retryable, other)` where each number is the count of leaf errors on that side (use the provided `leaf_count`; a side that is `None` counts as 0). Then print `retry_split(demo)` (expected: `(2, 2)`)."
+      },
+      "starter_code": "def leaf_count(exc):\n    if isinstance(exc, BaseExceptionGroup):\n        return sum(leaf_count(e) for e in exc.exceptions)\n    return 1\n\ndef retry_split(group):\n    \"\"\"Return (retryable, other): how many leaf errors are TimeoutError, and how many are not.\"\"\"\n    # retryable, other = group.split(lambda e: isinstance(e, TimeoutError))\n    # split returns None for a side that matched nothing - count that side as 0\n    pass\n\ndemo = ExceptionGroup(\"net\", [\n    TimeoutError(\"a\"),\n    ConnectionError(\"b\"),\n    ExceptionGroup(\"inner\", [TimeoutError(\"c\"), ValueError(\"d\")]),\n])\nprint(retry_split(demo))\n",
+      "hints": {
+        "en": [
+          "retryable, other = group.split(lambda e: isinstance(e, TimeoutError))",
+          "split returns None for a side with no matches, so guard with `if side` before calling leaf_count",
+          "Return a tuple: (count for retryable, count for other)"
+        ]
+      },
+      "expected_output": "(2, 2)",
+      "test_code": "assert retry_split(demo) == (2, 2), f\"nested demo should give (2, 2), got {retry_split(demo)}\"\nassert retry_split(ExceptionGroup(\"only\", [TimeoutError(\"x\"), TimeoutError(\"y\"), TimeoutError(\"z\")])) == (3, 0)\nassert retry_split(ExceptionGroup(\"none\", [KeyError(\"k\")])) == (0, 1)"
+    },
+    {
+      "instruction": {
+        "en": "Implement `parse_cell(cell, line)`: return `int(cell)`. If it raises `ValueError`, add the note `f\"line {line}: {cell!r}\"` and re-raise the same error with a bare `raise`. Then call `parse_cell(\"abc\", 3)` in a try and print the exception's `__notes__` (expected: `[\"line 3: 'abc'\"]`)."
+      },
+      "starter_code": "def parse_cell(cell, line):\n    \"\"\"int(cell), but if it fails keep the ValueError and attach the note \"line <line>: <cell!r>\".\"\"\"\n    # try: return int(cell)\n    # except ValueError as exc: exc.add_note(...); raise\n    pass\n\ntry:\n    parse_cell(\"abc\", 3)\nexcept ValueError as exc:\n    print(exc.__notes__)\n",
+      "hints": {
+        "en": [
+          "try: return int(cell) / except ValueError as exc:",
+          "exc.add_note(f\"line {line}: {cell!r}\")",
+          "Finish the except block with a bare `raise`, not `raise ValueError(...)`"
+        ]
+      },
+      "expected_output": "[\"line 3: 'abc'\"]",
+      "test_code": "assert parse_cell(\"42\", 1) == 42\ntry:\n    parse_cell(\"abc\", 3)\nexcept ValueError as exc:\n    assert exc.__notes__ == [\"line 3: 'abc'\"], f\"notes were {getattr(exc, '__notes__', None)}\"\n    assert str(exc).startswith(\"invalid literal\"), \"the original error must be re-raised unchanged\"\nelse:\n    raise AssertionError(\"parse_cell should still raise ValueError\")"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "exception_group_split",
+      "add_note",
+      "exception_notes",
+      "python_311"
+    ],
+    "concepts_required": [
+      "exception_group",
+      "except_star"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "python_modern",
+    "path_memberships": [
+      "python_modern"
+    ]
+  },
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "`group.split(TimeoutError)` finds no TimeoutError anywhere in the group. What is the first value returned?"
+      },
+      "options": {
+        "en": [
+          "An empty ExceptionGroup",
+          "None",
+          "The whole original group",
+          "It raises ValueError"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "After `exc.add_note('row 7')`, what is `exc.__notes__`?"
+      },
+      "options": {
+        "en": [
+          "'row 7'",
+          "['row 7']",
+          "None until the exception is raised",
+          "('row 7',)"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Does `str(exc)` include the notes added with add_note?"
+      },
+      "options": {
+        "en": [
+          "Yes, they are appended after a newline",
+          "No, notes only show in the traceback output",
+          "Only for ExceptionGroup",
+          "Only if the note starts with a capital letter"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "uth_example": "def fetch(host):\n    if host.startswith(\"slow\"):\n        raise TimeoutError(f\"{host} timed out\")\n    raise ConnectionError(f\"{host} refused\")\n\nerrors = []\nfor host in [\"slow-1\", \"down-1\", \"slow-2\"]:\n    try:\n        fetch(host)\n    except OSError as exc:\n        exc.add_note(f\"host={host}\")\n        errors.append(exc)\n\ngroup = ExceptionGroup(\"fetch failed\", errors)\ntimeouts, rest = group.split(TimeoutError)\nprint(len(timeouts.exceptions), len(rest.exceptions))\nprint(timeouts.exceptions[0].__notes__)\nprint(group.subgroup(KeyError))\n",
+  "under_the_hood": {
+    "summary": "split and subgroup copy the tree of an exception group into matching and non-matching halves, while add_note simply appends strings to a list on the exception that the traceback printer shows below the error.",
+    "steps": [
+      {
+        "title": "split walks the whole tree",
+        "body": "`group.split(cond)` visits every leaf, checking the condition (an exception type, a tuple of types, or a function). It returns two groups, each with the original message and the original nesting, but only the leaves that did (or did not) match.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Original",
+              "code": "net\n  TimeoutError a\n  ConnectionError b\n  inner\n    TimeoutError c\n    ValueError d"
+            },
+            "right": {
+              "label": "split(TimeoutError)",
+              "code": "match: net\n  a\n  inner\n    c\nrest: net\n  b\n  inner\n    d"
+            }
+          }
+        }
+      },
+      {
+        "title": "Empty sides are None",
+        "body": "If no leaf lands on one side, that side is `None` rather than an empty group, because a group may never be empty. `subgroup(cond)` returns just the matching half, or `None`. Check before using: `if timeouts is not None:`."
+      },
+      {
+        "title": "Counting leaves needs recursion",
+        "body": "`len(group.exceptions)` counts only the top-level members, and a nested group counts as one. To count real errors, recurse: a member that is a `BaseExceptionGroup` contributes the count of its own members, anything else counts as 1.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "def leaf_count(exc):\n    if isinstance(exc, BaseExceptionGroup):\n        return sum(leaf_count(e) for e in exc.exceptions)\n    return 1",
+            "highlightSequence": [
+              1,
+              2,
+              3
+            ],
+            "stepDescriptions": [
+              {
+                "description": "Is this member itself a group?"
+              },
+              {
+                "description": "Yes: add up the leaves inside it."
+              },
+              {
+                "description": "No: it is a single error, count 1."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "add_note appends to __notes__",
+        "body": "`exc.add_note(text)` requires a string and appends it to `exc.__notes__`, creating the list on first use. Nothing else about the exception changes: its type, arguments and `str()` stay the same. The traceback printer then shows each note on its own line below the error message.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "ValueError: invalid literal for int() with base 10: 'abc'",
+              "line 3: 'abc'"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Re-raise with a bare raise",
+        "body": "The usual pattern is `except ValueError as exc: exc.add_note(...); raise`. A bare `raise` re-raises the same object, so the original traceback is kept and callers can still catch the original type. Notes also work on groups, and on every leaf you reach."
+      }
+    ],
+    "takeaway": "split divides a group by a rule while keeping its shape; add_note adds human context without changing the exception. Check for None, count leaves recursively, and use a bare raise."
+  }
+}

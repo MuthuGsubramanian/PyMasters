@@ -1,0 +1,17 @@
+{
+  "lesson_id": "exception_groups_except_star",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def parse(s):\n    if s == \"\":\n        raise ValueError(\"empty\")\n    return int(s)\n\ndef run_all(items):\n    results, errors = [], []\n    for item in items:\n        try:\n            results.append(parse(item))\n        except Exception as exc:\n            errors.append(exc)\n    if errors:\n        raise ExceptionGroup(\"batch failed\", errors)\n    return results\n\nprint(run_all([\"1\", \"2\"]))\n",
+      "verified_output": "[1, 2]",
+      "source": "claude sonnet 2026-11-18, verified with grade_submission"
+    },
+    {
+      "index": 1,
+      "code": "def parse(s):\n    if s == \"\":\n        raise ValueError(\"empty\")\n    return int(s)\n\ndef run_all(items):\n    results, errors = [], []\n    for item in items:\n        try:\n            results.append(parse(item))\n        except Exception as exc:\n            errors.append(exc)\n    if errors:\n        raise ExceptionGroup(\"batch failed\", errors)\n    return results\n\ndef summarize(items):\n    n_value = n_type = 0\n    try:\n        run_all(items)\n    except* ValueError as group:\n        n_value = len(group.exceptions)\n    except* TypeError as group:\n        n_type = len(group.exceptions)\n    return n_value, n_type\n\nprint(summarize([\"1\", \"\", \"x\", None, \"5\"]))\n",
+      "verified_output": "(2, 1)",
+      "source": "claude sonnet 2026-11-18, verified with grade_submission"
+    }
+  ]
+}
