@@ -1,0 +1,304 @@
+{
+  "id": "protocols_structural_typing",
+  "topic": "protocols",
+  "track": "python_modern",
+  "module": "typing_modern",
+  "order": 7,
+  "title": {
+    "en": "typing.Protocol: Structural Typing and Duck Typing Written Down"
+  },
+  "description": {
+    "en": "Describe the behaviour a function needs with a Protocol instead of a base class. Learn what @runtime_checkable really checks, and why signatures are the type checker's job."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Typing by Behaviour, Not by Family Tree\n\n\"Think of a power socket,\" Vaathiyaar says. \"It does not care who made the plug. It only cares that the pins fit. Python's duck typing works that way, and `typing.Protocol` lets you *write the socket down* so that tools and readers can see it.\"\n\n### A protocol is a list of required behaviour\n\n```\nfrom typing import Protocol\n\nclass Closeable(Protocol):\n    def close(self) -> None: ...\n```\n\nAny class that has a `close()` method fits `Closeable`. It does **not** inherit from it or register with it. This is called *structural* typing, in contrast to *nominal* typing (a class is a `Closeable` only if it says so).\n\n### Checking at run time\n\nA static checker such as mypy uses protocols without any extra code. For `isinstance` you must opt in:\n\n```\nfrom typing import runtime_checkable\n\n@runtime_checkable\nclass Closeable(Protocol):\n    def close(self) -> None: ...\n\nisinstance(open_file, Closeable)    # True\n```\n\n> **Vaathiyaar's honest caveat:** a runtime check only looks at whether the **attribute exists**. It does not check argument lists or return types. A class whose `close` needs three arguments still passes `isinstance`. Static checkers are the tool that compares signatures.\n\nToday you define a `Scorer` protocol and write `best()`, which picks the highest-scoring candidate and ignores objects that do not fit."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "protocol_socket",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ov",
+      "nodes": [
+        {
+          "label": "typing.Protocol",
+          "children": [
+            "structural typing",
+            "no inheritance needed",
+            "@runtime_checkable for isinstance",
+            "runtime check = attribute exists"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cs",
+      "steps": [
+        {
+          "line": "class Closeable(Protocol):",
+          "highlight": "Protocol",
+          "explanation": {
+            "en": "Name the behaviour you require"
+          }
+        },
+        {
+          "line": "def close(self) -> None: ...",
+          "highlight": "close",
+          "explanation": {
+            "en": "List the members; the body is just ..."
+          }
+        },
+        {
+          "line": "@runtime_checkable",
+          "highlight": "runtime_checkable",
+          "explanation": {
+            "en": "Opt in so isinstance can test the shape"
+          }
+        },
+        {
+          "line": "isinstance(obj, Closeable)",
+          "highlight": "isinstance",
+          "explanation": {
+            "en": "True when the attribute exists, whatever the class's ancestry"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "t",
+      "lines": [
+        "Conn True",
+        "Note False",
+        "StringIO True",
+        "BadClose True"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Define a `@runtime_checkable` `Scorer` protocol with a `score(self, text: str) -> float` method, then implement `best(candidates, text)`: keep only the candidates that are a `Scorer`, and return the class name (`type(x).__name__`) of the one whose `score(text)` is highest. Then print `best([Rogue(), VowelScorer(), LengthScorer()], \"protocols\")` (expected: `LengthScorer`, because 9 beats 3 vowels)."
+      },
+      "starter_code": "from typing import Protocol, runtime_checkable\n\n# 1. Define a runtime-checkable Protocol named Scorer with the method score(self, text: str) -> float.\n\nclass LengthScorer:\n    def score(self, text):\n        return float(len(text))\n\nclass VowelScorer:\n    def score(self, text):\n        return float(sum(ch in \"aeiou\" for ch in text))\n\nclass Rogue:\n    pass\n\ndef best(candidates, text):\n    \"\"\"Return the class name of the candidate with the highest score for text.\n    Ignore anything that is not a Scorer. (Assume no ties.)\"\"\"\n    pass\n\nprint(best([Rogue(), VowelScorer(), LengthScorer()], \"protocols\"))\n",
+      "hints": {
+        "en": [
+          "Put `@runtime_checkable` on the line above `class Scorer(Protocol):`.",
+          "Filter with `isinstance(c, Scorer)`; `Rogue` has no `score`, so it drops out.",
+          "`max(scorers, key=lambda s: s.score(text))`, then `type(winner).__name__`."
+        ]
+      },
+      "expected_output": "LengthScorer",
+      "test_code": "assert Scorer._is_protocol, \"Scorer must be a typing.Protocol\"\nassert isinstance(LengthScorer(), Scorer) and not isinstance(Rogue(), Scorer), \"Scorer must be runtime checkable and need score()\"\n\nclass Negative:\n    def score(self, text):\n        return -1.0\n\nclass Ten:\n    def score(self, text):\n        return 10.0\n\nassert isinstance(Negative(), Scorer), \"classes are accepted by shape, no inheritance needed\"\nassert best([Rogue(), Negative()], \"x\") == \"Negative\", \"non-scorers are skipped even if they come first\"\nassert best([Negative(), Ten(), Rogue()], \"x\") == \"Ten\", \"highest score wins\"\nassert best([Rogue(), LengthScorer(), VowelScorer()], \"queueing\") == \"LengthScorer\"\n"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "typing_protocol",
+      "structural_typing",
+      "runtime_checkable",
+      "duck_typing"
+    ],
+    "concepts_required": [
+      "classes",
+      "isinstance",
+      "type_hints"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "python_modern",
+    "path_memberships": [
+      "python_modern"
+    ]
+  },
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Does a class need to inherit from a Protocol to satisfy it?",
+        "ta": "ஒரு class ஒரு Protocol-ஐப் பூர்த்தி செய்ய அதிலிருந்து inherit செய்ய வேண்டுமா?"
+      },
+      "options": {
+        "en": [
+          "Yes, always",
+          "No, having the required members is enough",
+          "Only if the Protocol has attributes",
+          "Only if it is decorated with @dataclass"
+        ],
+        "ta": [
+          "ஆம், எப்போதும்",
+          "இல்லை, தேவையான உறுப்புகள் இருந்தாலே போதும்",
+          "Protocol-இல் attributes இருந்தால் மட்டும்",
+          "@dataclass இருந்தால் மட்டும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What happens with `isinstance(x, SomeProtocol)` when the protocol is not decorated with @runtime_checkable?",
+        "ta": "Protocol-க்கு @runtime_checkable இல்லாதபோது `isinstance(x, SomeProtocol)` என்ன செய்யும்?"
+      },
+      "options": {
+        "en": [
+          "Returns False",
+          "Returns True",
+          "Raises TypeError",
+          "Checks the signatures anyway"
+        ],
+        "ta": [
+          "False தரும்",
+          "True தரும்",
+          "TypeError எழும்",
+          "எப்படியும் signatures-ஐச் சரிபார்க்கும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "A class has `def close(self, a, b, c)`. The protocol says `def close(self) -> None`. What does `isinstance(obj, Closeable)` return at run time?",
+        "ta": "ஒரு class-இல் `def close(self, a, b, c)` உள்ளது. Protocol `def close(self) -> None` என்கிறது. run time-இல் `isinstance(obj, Closeable)` என்ன தரும்?"
+      },
+      "options": {
+        "en": [
+          "False, because the argument lists differ",
+          "True, because the runtime check only looks for the attribute",
+          "TypeError",
+          "None"
+        ],
+        "ta": [
+          "False, ஏனெனில் argument பட்டியல்கள் வேறுபடுகின்றன",
+          "True, ஏனெனில் run time சோதனை attribute இருக்கிறதா என்று மட்டுமே பார்க்கும்",
+          "TypeError",
+          "None"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which tool is responsible for noticing the wrong signature in the previous question?",
+        "ta": "முந்தைய கேள்வியில் தவறான signature-ஐக் கண்டறிவது எந்தக் கருவி?"
+      },
+      "options": {
+        "en": [
+          "The Python interpreter, when the module is imported",
+          "isinstance",
+          "A static type checker such as mypy or pyright",
+          "The garbage collector"
+        ],
+        "ta": [
+          "module import ஆகும்போது Python interpreter",
+          "isinstance",
+          "mypy அல்லது pyright போன்ற static type checker",
+          "garbage collector"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "uth_example": "import io\nfrom typing import Protocol, runtime_checkable\n\n@runtime_checkable\nclass Closeable(Protocol):\n    def close(self) -> None: ...\n\nclass Conn:\n    def close(self):\n        pass\n\nclass Note:\n    pass\n\nclass BadClose:\n    def close(self, a, b, c):\n        pass\n\nfor obj in [Conn(), Note(), io.StringIO(), BadClose()]:\n    print(type(obj).__name__, isinstance(obj, Closeable))\n",
+  "under_the_hood": {
+    "summary": "A Protocol names the members a type must have. Type checkers compare names and signatures statically; runtime_checkable lets isinstance test only that the attributes exist.",
+    "steps": [
+      {
+        "title": "Nominal and structural typing",
+        "body": "With nominal typing a class is a `Closeable` only if it inherits from `Closeable`. With structural typing it is one if it has the right members. Python's duck typing was always structural, but only implicit: nothing in the code said what a function expected. A `Protocol` writes that expectation down.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Nominal (inheritance)",
+              "code": "class Conn(Closeable):\n    def close(self): ...\n# must name the base class"
+            },
+            "right": {
+              "label": "Structural (Protocol)",
+              "code": "class Conn:\n    def close(self): ...\n# fits Closeable by its shape"
+            }
+          }
+        }
+      },
+      {
+        "title": "What a Protocol class contains",
+        "body": "A protocol body lists members with bodies of `...`. The class is never meant to be instantiated; calling `Closeable()` raises `TypeError`. Its job is to be read by type checkers, and (if marked) by `isinstance`. Protocols can also declare attributes, such as `name: str`."
+      },
+      {
+        "title": "The static check compares signatures",
+        "body": "A tool such as mypy or pyright checks that `close` exists, that its parameters accept the call the protocol describes, and that the return type is compatible. Python itself does none of this when running your program; type hints are ignored at run time. So a wrong signature is reported by the checker, not by the interpreter.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "Write the Protocol",
+                "detail": "names the required members"
+              },
+              {
+                "label": "Pass an object to a function that expects it",
+                "detail": "no inheritance needed"
+              },
+              {
+                "label": "Type checker (before running)",
+                "detail": "compares names and signatures"
+              },
+              {
+                "label": "Python (while running)",
+                "detail": "hints are ignored"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "What runtime_checkable adds",
+        "body": "`@runtime_checkable` lets `isinstance(obj, Closeable)` work. Python then checks only that every protocol member exists as an attribute on `obj`, using `hasattr`-style lookups. Without the decorator, `isinstance` against a protocol raises `TypeError`. That is why a class with `close(self, a, b, c)` still passes the check.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "@runtime_checkable\nclass Closeable(Protocol):\n    def close(self) -> None: ...\n\nisinstance(Conn(), Closeable)\nisinstance(Note(), Closeable)",
+            "highlightSequence": [
+              1,
+              5,
+              6
+            ],
+            "stepDescriptions": [
+              {
+                "description": "The decorator turns on isinstance support for this protocol."
+              },
+              {
+                "description": "Conn has an attribute named close, so the check passes. Its signature is not examined."
+              },
+              {
+                "description": "Note has no close attribute, so the check fails."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "When to reach for a Protocol",
+        "body": "Use one when you accept many unrelated types that share a behaviour (files, sockets, your own classes) and you do not control their base classes. Prefer an abstract base class when you want shared code or a registry of subclasses. Keep protocols small, one or two methods, so more types fit them."
+      }
+    ],
+    "takeaway": "Protocols describe the shape you need instead of the family tree. Rely on a type checker for signatures; treat a runtime isinstance check as a presence test only."
+  }
+}

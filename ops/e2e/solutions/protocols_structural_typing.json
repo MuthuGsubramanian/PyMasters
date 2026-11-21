@@ -1,0 +1,11 @@
+{
+  "lesson_id": "protocols_structural_typing",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "from typing import Protocol, runtime_checkable\n\n@runtime_checkable\nclass Scorer(Protocol):\n    def score(self, text: str) -> float: ...\n\nclass LengthScorer:\n    def score(self, text):\n        return float(len(text))\n\nclass VowelScorer:\n    def score(self, text):\n        return float(sum(ch in \"aeiou\" for ch in text))\n\nclass Rogue:\n    pass\n\ndef best(candidates, text):\n    scorers = [c for c in candidates if isinstance(c, Scorer)]\n    winner = max(scorers, key=lambda s: s.score(text))\n    return type(winner).__name__\n\nprint(best([Rogue(), VowelScorer(), LengthScorer()], \"protocols\"))\n",
+      "verified_output": "LengthScorer",
+      "source": "claude sonnet 2026-11-21, verified with grade_submission"
+    }
+  ]
+}

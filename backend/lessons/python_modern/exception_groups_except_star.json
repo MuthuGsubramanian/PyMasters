@@ -1,0 +1,317 @@
+{
+  "id": "exception_groups_except_star",
+  "topic": "exception_groups",
+  "track": "python_modern",
+  "module": "python311_features",
+  "order": 6,
+  "title": {
+    "en": "Exception Groups and except*: Many Errors at Once"
+  },
+  "description": {
+    "en": "Python 3.11 can raise several unrelated errors as one ExceptionGroup and handle each kind with except*. Learn why a plain except cannot see inside a group and how leftovers are re-raised."
+  },
+  "xp_reward": 75,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Many Things Can Go Wrong At Once\n\n\"So far, an exception has been a single thing,\" Vaathiyaar says. \"One `raise`, one `except`. But what if you run five jobs side by side and three of them fail for different reasons? Throwing only the first error hides the other two.\"\n\nPython 3.11 added **exception groups** for exactly this. An `ExceptionGroup` is an exception that *contains a list of other exceptions*.\n\n### Raising a group\n\n```\nerrors = [ValueError(\"bad row 3\"), KeyError(\"id\"), ValueError(\"bad row 6\")]\nraise ExceptionGroup(\"import failed\", errors)\n```\n\nThe first argument is a message and the second is a **non-empty** list of exceptions. Python refuses an empty list.\n\n### Catching with `except*`\n\nA normal `except ValueError` does **not** catch a group, even when the group holds a `ValueError`. The group is a different type. You need `except*`:\n\n```\ntry:\n    run_everything()\nexcept* ValueError as eg:\n    print(len(eg.exceptions), \"value errors\")\nexcept* KeyError as eg:\n    print(len(eg.exceptions), \"key errors\")\n```\n\nEach `except*` clause takes **its own slice** of the group, and `eg` is a smaller group holding only the matching errors. Every clause that has something to catch runs, not only the first. Anything left unmatched is re-raised afterwards as a group.\n\n> **Vaathiyaar's note:** `asyncio.TaskGroup` (also new in 3.11) raises an `ExceptionGroup` when several tasks fail. `except*` is how you handle it.\n\nToday you build `run_batch`, which keeps going after a failure and reports every error together. Then you flatten a nested group."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "exception_groups",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ov",
+      "nodes": [
+        {
+          "label": "Exception groups",
+          "children": [
+            "ExceptionGroup(msg, [errs])",
+            "plain except won't match",
+            "except* splits by type",
+            "leftovers are re-raised"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cs",
+      "steps": [
+        {
+          "line": "errors.append(e)",
+          "highlight": "append",
+          "explanation": {
+            "en": "Collect each failure instead of stopping at the first"
+          }
+        },
+        {
+          "line": "raise ExceptionGroup('batch', errors)",
+          "highlight": "ExceptionGroup",
+          "explanation": {
+            "en": "Bundle every error into one exception"
+          }
+        },
+        {
+          "line": "except* ValueError as eg:",
+          "highlight": "except*",
+          "explanation": {
+            "en": "Take the ValueError members as a smaller group"
+          }
+        },
+        {
+          "line": "except* TypeError as eg:",
+          "highlight": "TypeError",
+          "explanation": {
+            "en": "The next clause takes its own slice of what is left"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "t",
+      "lines": [
+        "value: ['bad 3', 'bad 6']",
+        "type: ['odd 5']"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `run_batch(funcs)`. Call each function in order without stopping at failures. If all succeed, return the list of results. If any raised, raise `ExceptionGroup(\"batch failed\", errors)` with every error, in call order, after the last function has run. The code below the function then prints how many `ValueError` and `KeyError` members the group held (expected: `ValueError: 2` then `KeyError: 1`)."
+      },
+      "starter_code": "def run_batch(funcs):\n    \"\"\"Call every function in order and keep going after failures.\n    All succeeded -> return the list of results.\n    Any failed    -> raise ExceptionGroup(\"batch failed\", errors) after trying them all.\"\"\"\n    pass\n\ndef ok():\n    return 1\n\ndef bad_value():\n    raise ValueError(\"v1\")\n\ndef bad_key():\n    raise KeyError(\"k1\")\n\ndef bad_value2():\n    raise ValueError(\"v2\")\n\ntry:\n    run_batch([ok, bad_value, bad_key, bad_value2])\nexcept* ValueError as eg:\n    print(\"ValueError:\", len(eg.exceptions))\nexcept* KeyError as eg:\n    print(\"KeyError:\", len(eg.exceptions))\n",
+      "hints": {
+        "en": [
+          "Keep two lists, `results` and `errors`, and wrap each call in try/except Exception.",
+          "Do the raise after the loop, only if `errors` is not empty.",
+          "`raise ExceptionGroup(\"batch failed\", errors)`; return `results` otherwise."
+        ]
+      },
+      "expected_output": "ValueError: 2\nKeyError: 1",
+      "test_code": "def _boom(exc):\n    def f():\n        raise exc\n    return f\n\nassert run_batch([lambda: 1, lambda: 2]) == [1, 2], \"all succeed -> return the results in order\"\nassert run_batch([]) == [], \"no functions -> empty list\"\ntry:\n    run_batch([_boom(ValueError(\"a\")), lambda: 5, _boom(KeyError(\"b\")), _boom(ValueError(\"c\"))])\nexcept ExceptionGroup as g:\n    assert g.message == \"batch failed\", \"use the message 'batch failed'\"\n    assert [type(e) for e in g.exceptions] == [ValueError, KeyError, ValueError], \"keep every error, in call order\"\nelse:\n    raise AssertionError(\"run_batch must raise an ExceptionGroup when something fails\")\n"
+    },
+    {
+      "instruction": {
+        "en": "Implement `flatten(group)`: return the exception type names (`type(e).__name__`) at the leaves of a possibly nested exception group, in order. A member that is itself a group must be searched, not listed. Then print `flatten(nested)` (expected: `['ValueError', 'KeyError', 'TypeError']`)."
+      },
+      "starter_code": "def flatten(group):\n    \"\"\"Return the names of the exception types at the leaves of a (possibly nested) group, in order.\"\"\"\n    pass\n\nnested = ExceptionGroup(\"outer\", [\n    ValueError(\"a\"),\n    ExceptionGroup(\"inner\", [KeyError(\"b\"), TypeError(\"c\")]),\n])\nprint(flatten(nested))\n",
+      "hints": {
+        "en": [
+          "`group.exceptions` is a tuple of members; loop over it.",
+          "Test a member with `isinstance(e, BaseExceptionGroup)`.",
+          "For a nested group, recurse and `extend` your list with the result."
+        ]
+      },
+      "expected_output": "['ValueError', 'KeyError', 'TypeError']",
+      "test_code": "g = ExceptionGroup(\"g\", [OSError(\"x\"), ExceptionGroup(\"h\", [ExceptionGroup(\"i\", [ValueError(\"y\")]), KeyError(\"z\")]), TypeError(\"w\")])\nassert flatten(g) == [\"OSError\", \"ValueError\", \"KeyError\", \"TypeError\"], \"recurse into nested groups and keep the order\"\nassert flatten(ExceptionGroup(\"one\", [ValueError(\"v\")])) == [\"ValueError\"]\n"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "exception_groups",
+      "except_star",
+      "python_311",
+      "error_aggregation"
+    ],
+    "concepts_required": [
+      "exceptions",
+      "try_except",
+      "lists"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "python_modern",
+    "path_memberships": [
+      "python_modern"
+    ]
+  },
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does `except ValueError:` do when `ExceptionGroup('g', [ValueError('x')])` is raised?",
+        "ta": "`ExceptionGroup('g', [ValueError('x')])` எழுப்பப்படும்போது `except ValueError:` என்ன செய்யும்?"
+      },
+      "options": {
+        "en": [
+          "It catches the ValueError inside the group",
+          "It does not match, because the group itself is not a ValueError",
+          "It catches it but only if the group has one member",
+          "It raises a SyntaxError"
+        ],
+        "ta": [
+          "குழுவுக்குள் உள்ள ValueError-ஐப் பிடிக்கும்",
+          "பொருந்தாது, ஏனெனில் குழு தானே ValueError அல்ல",
+          "குழுவில் ஒரே உறுப்பு இருந்தால் மட்டும் பிடிக்கும்",
+          "SyntaxError எழும்"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A group holds ValueError, KeyError and TypeError. The try has `except* ValueError` and `except* KeyError` only. What happens?",
+        "ta": "ஒரு குழுவில் ValueError, KeyError, TypeError உள்ளன. try-இல் `except* ValueError`, `except* KeyError` மட்டுமே உள்ளன. என்ன நடக்கும்?"
+      },
+      "options": {
+        "en": [
+          "Both clauses run, then the TypeError is re-raised inside a group",
+          "Only the first clause runs and the rest are dropped",
+          "The TypeError is silently ignored",
+          "A TypeError is raised before either clause runs"
+        ],
+        "ta": [
+          "இரண்டு clause-களும் இயங்கும், பின் TypeError ஒரு குழுவில் மீண்டும் எழுப்பப்படும்",
+          "முதல் clause மட்டும் இயங்கும், மற்றவை கைவிடப்படும்",
+          "TypeError அமைதியாகப் புறக்கணிக்கப்படும்",
+          "எந்த clause-க்கும் முன் TypeError எழும்"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does `ExceptionGroup('x', [])` do?",
+        "ta": "`ExceptionGroup('x', [])` என்ன செய்யும்?"
+      },
+      "options": {
+        "en": [
+          "Creates an empty group",
+          "Creates a group holding None",
+          "Raises ValueError, because the list must not be empty",
+          "Raises KeyError"
+        ],
+        "ta": [
+          "வெற்றுக் குழுவை உருவாக்கும்",
+          "None கொண்ட குழுவை உருவாக்கும்",
+          "பட்டியல் வெற்றாக இருக்கக்கூடாது என்பதால் ValueError எழும்",
+          "KeyError எழும்"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "Inside an `except*` block, which statement is not allowed?",
+        "ta": "`except*` தொகுதிக்குள் எந்தக் கூற்று அனுமதிக்கப்படாது?"
+      },
+      "options": {
+        "en": [
+          "print()",
+          "return",
+          "Assigning to a variable",
+          "Calling a function"
+        ],
+        "ta": [
+          "print()",
+          "return",
+          "மாறிக்கு மதிப்பிடுதல்",
+          "செயலியை அழைத்தல்"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "uth_example": "def check(n):\n    if n % 3 == 0:\n        raise ValueError(f\"bad {n}\")\n    if n % 5 == 0:\n        raise TypeError(f\"odd {n}\")\n    return n\n\nerrors = []\nfor n in [1, 3, 5, 6, 7]:\n    try:\n        check(n)\n    except Exception as e:\n        errors.append(e)\n\ntry:\n    raise ExceptionGroup(\"batch\", errors)\nexcept* ValueError as eg:\n    print(\"value:\", [str(e) for e in eg.exceptions])\nexcept* TypeError as eg:\n    print(\"type:\", [str(e) for e in eg.exceptions])\n",
+  "under_the_hood": {
+    "summary": "An ExceptionGroup bundles several exceptions into one; except* splits the group by type, runs each matching clause on its slice, and re-raises whatever nothing handled.",
+    "steps": [
+      {
+        "title": "Why one exception is not enough",
+        "body": "A normal `raise` unwinds the stack with exactly one exception object. When several independent jobs fail (concurrent tasks, a batch import, a set of validators) the first error wins and the rest are lost. An `ExceptionGroup` keeps all of them in a single object that can still travel up the stack.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "One exception",
+              "code": "raise ValueError(\"bad row 3\")\n# the other failures never surface"
+            },
+            "right": {
+              "label": "An exception group",
+              "code": "raise ExceptionGroup(\"import failed\", [\n    ValueError(\"bad row 3\"),\n    KeyError(\"id\"),\n])"
+            }
+          }
+        }
+      },
+      {
+        "title": "A group is an exception holding exceptions",
+        "body": "`ExceptionGroup(message, excs)` stores the message in `.message` and the members in `.exceptions`, a tuple. The list must be non-empty, so an empty one raises `ValueError`. Members may themselves be groups, so a group can be a tree. Members of `ExceptionGroup` must be `Exception` subclasses; for things like `KeyboardInterrupt` Python uses `BaseExceptionGroup`."
+      },
+      {
+        "title": "Plain except does not match a group",
+        "body": "`except ValueError` asks whether the raised object *is a* `ValueError`. A group is an `ExceptionGroup`, not a `ValueError`, so the clause does not match even if a `ValueError` is inside. `except*` instead asks which *members* match, and handles them.",
+        "visual": {
+          "type": "CodeStepper",
+          "props": {
+            "code": "try:\n    raise ExceptionGroup(\"g\", [ValueError(1)])\nexcept ValueError:\n    print(\"plain\")\nexcept* ValueError as eg:\n    print(\"star\")",
+            "highlightSequence": [
+              3,
+              5,
+              6
+            ],
+            "stepDescriptions": [
+              {
+                "description": "The group is not a ValueError, so a plain clause does not match. (In real code you cannot mix except and except* in one try; this shows the contrast.)"
+              },
+              {
+                "description": "except* looks inside the group for ValueError members."
+              },
+              {
+                "description": "eg is a new group with just the matching members; its .exceptions holds ValueError(1)."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Each except* takes its slice",
+        "body": "Python walks the except* clauses in order. Each one splits off the members it matches, runs its block with them, and passes the remainder to the next clause. Unlike plain `except`, more than one clause can run for one raise. Whatever nothing matched is raised again, as a group, when the `try` finishes.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "Group: ValueError, KeyError, TypeError",
+                "detail": "raised"
+              },
+              {
+                "label": "except* ValueError",
+                "detail": "takes the ValueError members"
+              },
+              {
+                "label": "except* KeyError",
+                "detail": "takes the KeyError members"
+              },
+              {
+                "label": "Leftover: TypeError",
+                "detail": "re-raised as a group"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Splitting by hand and the rules",
+        "body": "`group.split(ValueError)` returns `(matching, rest)` and `group.subgroup(ValueError)` returns only the matching part. Both keep the nesting shape and the message. Inside `except*` you cannot use `return`, `break` or `continue`, and a bare `except*` is not allowed; you must name the types. A single plain exception caught by `except*` arrives wrapped in a group with an empty message."
+      }
+    ],
+    "takeaway": "Use ExceptionGroup when several things can fail independently, and except* to handle each kind. A plain except will not see inside a group, and leftovers are re-raised, never lost."
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "lesson_id": "exception_groups_except_star",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def run_batch(funcs):\n    results = []\n    errors = []\n    for f in funcs:\n        try:\n            results.append(f())\n        except Exception as e:\n            errors.append(e)\n    if errors:\n        raise ExceptionGroup(\"batch failed\", errors)\n    return results\n\ndef ok():\n    return 1\n\ndef bad_value():\n    raise ValueError(\"v1\")\n\ndef bad_key():\n    raise KeyError(\"k1\")\n\ndef bad_value2():\n    raise ValueError(\"v2\")\n\ntry:\n    run_batch([ok, bad_value, bad_key, bad_value2])\nexcept* ValueError as eg:\n    print(\"ValueError:\", len(eg.exceptions))\nexcept* KeyError as eg:\n    print(\"KeyError:\", len(eg.exceptions))\n",
+      "verified_output": "ValueError: 2\nKeyError: 1",
+      "source": "claude sonnet 2026-11-21, verified with grade_submission"
+    },
+    {
+      "index": 1,
+      "code": "def flatten(group):\n    names = []\n    for e in group.exceptions:\n        if isinstance(e, BaseExceptionGroup):\n            names.extend(flatten(e))\n        else:\n            names.append(type(e).__name__)\n    return names\n\nnested = ExceptionGroup(\"outer\", [\n    ValueError(\"a\"),\n    ExceptionGroup(\"inner\", [KeyError(\"b\"), TypeError(\"c\")]),\n])\nprint(flatten(nested))\n",
+      "verified_output": "['ValueError', 'KeyError', 'TypeError']",
+      "source": "claude sonnet 2026-11-21, verified with grade_submission"
+    }
+  ]
+}
