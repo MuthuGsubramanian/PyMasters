@@ -1,0 +1,17 @@
+{
+  "lesson_id": "exception_notes_and_group_split",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def parse_rows(lines):\n    errors = []\n    totals = {}\n    for number, line in enumerate(lines, start=1):\n        try:\n            name, qty = line.split(\",\")\n            totals[name] = int(qty)\n        except ValueError as exc:\n            exc.add_note(f\"line {number}: {line!r}\")\n            errors.append(exc)\n    if errors:\n        raise ExceptionGroup(\"bad rows\", errors)\n    return totals\n\ntry:\n    parse_rows([\"a,1\", \"b,x\", \"c,2\", \"d,\"])\nexcept ExceptionGroup as eg:\n    for e in eg.exceptions:\n        print(e, e.__notes__)\n",
+      "verified_output": "invalid literal for int() with base 10: 'x' [\"line 2: 'b,x'\"]\ninvalid literal for int() with base 10: '' [\"line 4: 'd,'\"]",
+      "source": "claude sonnet 2026-11-22, verified with grade_submission"
+    },
+    {
+      "index": 1,
+      "code": "def split_retryable(group):\n    retryable, rest = group.split((TimeoutError, ConnectionError))\n    n_retry = len(retryable.exceptions) if retryable else 0\n    n_rest = len(rest.exceptions) if rest else 0\n    return n_retry, n_rest\n\njobs = ExceptionGroup(\"jobs\", [TimeoutError(\"a\"), KeyError(\"b\"), ConnectionError(\"c\"), ValueError(\"d\")])\nprint(split_retryable(jobs))\n",
+      "verified_output": "(2, 2)",
+      "source": "claude sonnet 2026-11-22, verified with grade_submission"
+    }
+  ]
+}

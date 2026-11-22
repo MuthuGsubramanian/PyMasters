@@ -1,0 +1,17 @@
+{
+  "lesson_id": "exception_groups_except_star",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def validate_all(record):\n    errors = []\n    if not isinstance(record.get(\"name\"), str) or not record[\"name\"]:\n        errors.append(ValueError(\"name is required\"))\n    age = record.get(\"age\")\n    if not isinstance(age, int):\n        errors.append(TypeError(\"age must be an int\"))\n    elif age < 0:\n        errors.append(ValueError(\"age must be >= 0\"))\n    if \"@\" not in str(record.get(\"email\", \"\")):\n        errors.append(ValueError(\"email must contain @\"))\n    if errors:\n        raise ExceptionGroup(\"invalid record\", errors)\n\ntry:\n    validate_all({\"name\": \"\", \"age\": -3, \"email\": \"x\"})\nexcept ExceptionGroup as eg:\n    print(eg.message, len(eg.exceptions))\n    for e in eg.exceptions:\n        print(type(e).__name__, e)\n",
+      "verified_output": "invalid record 3\nValueError name is required\nValueError age must be >= 0\nValueError email must contain @",
+      "source": "claude sonnet 2026-11-22, verified with grade_submission"
+    },
+    {
+      "index": 1,
+      "code": "def count_by_type(group):\n    counts = {\"ValueError\": 0, \"TypeError\": 0}\n    try:\n        raise group\n    except* ValueError as vg:\n        counts[\"ValueError\"] = len(vg.exceptions)\n    except* TypeError as tg:\n        counts[\"TypeError\"] = len(tg.exceptions)\n    return counts\n\ngroup = ExceptionGroup(\"mixed\", [ValueError(\"a\"), ValueError(\"b\"), TypeError(\"c\")])\nprint(count_by_type(group))\n",
+      "verified_output": "{'ValueError': 2, 'TypeError': 1}",
+      "source": "claude sonnet 2026-11-22, verified with grade_submission"
+    }
+  ]
+}
