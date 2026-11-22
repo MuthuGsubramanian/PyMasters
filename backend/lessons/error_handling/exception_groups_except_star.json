@@ -1,0 +1,255 @@
+{
+  "id": "exception_groups_except_star",
+  "topic": "exception_groups_except_star",
+  "track": "error_handling",
+  "module": "patterns",
+  "order": 4,
+  "title": {
+    "en": "Exception Groups: Report Every Failure With except*"
+  },
+  "description": {
+    "en": "A normal exception stops at the first problem. Python 3.11 added ExceptionGroup and except* so one raise can carry many unrelated errors, such as every invalid form field or every failed task in a batch, and you can handle each kind separately."
+  },
+  "xp_reward": 80,
+  "next_unlock": "exception_notes_and_group_split",
+  "story_variants": {
+    "en": "## One Raise, Many Errors\n\n\"Imagine a signup form with three mistakes,\" Vaathiyaar says. \"A normal `raise` reports the first one, the learner fixes it, resubmits, and meets the second. Three round trips for three typos. Python 3.11 added a way to report **all of them at once**: `ExceptionGroup`.\"\n\n### Building a group\n\n```python\nerrors = [ValueError(\"name is required\"), TypeError(\"age must be an int\")]\nraise ExceptionGroup(\"invalid record\", errors)\n```\n\nAn `ExceptionGroup` takes a message and a **non-empty list** of exceptions. The exceptions are stored in `.exceptions`, the message in `.message`. Passing an empty list raises `ValueError`.\n\n### Catching with except*\n\n```python\ntry:\n    raise ExceptionGroup(\"g\", [ValueError(\"a\"), TypeError(\"b\")])\nexcept* ValueError as vg:\n    print(\"values:\", len(vg.exceptions))\nexcept* TypeError as tg:\n    print(\"types:\", len(tg.exceptions))\n```\n\nBoth clauses run. A plain `except ValueError` would **not** catch the group, because the group itself is not a `ValueError`. With `except*`, each clause receives a smaller group holding only the matching exceptions. Anything that no clause matches is re-raised together afterwards.\n\n| | `except` | `except*` |\n|---|---|---|\n| Runs | first matching clause only | every clause that has a match |\n| Receives | the exception | an ExceptionGroup of the matches |\n\n> **Honest caveats:** you cannot use `return`, `break` or `continue` inside an `except*` block, and the same `try` cannot mix `except` with `except*`. Groups also appear when you use `asyncio.TaskGroup` in 3.11+, so you will meet them even if you never raise one yourself.\n\nToday you write a validator that reports every problem in a record, then a handler that counts the errors in a group by type."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "resilience",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Exception Groups",
+          "children": [
+            "ExceptionGroup(message, [errors]) - list must be non-empty",
+            "except* runs every clause that matches",
+            "plain except does NOT catch a group",
+            "unmatched errors are re-raised together"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "walk",
+      "steps": [
+        {
+          "line": "errors.append(ValueError('name is required'))",
+          "highlight": "errors.append",
+          "explanation": {
+            "en": "Do not raise yet. Collect each problem in a list so later checks still run"
+          }
+        },
+        {
+          "line": "raise ExceptionGroup('invalid record', errors)",
+          "highlight": "ExceptionGroup",
+          "explanation": {
+            "en": "Raise once, with every collected error inside one group"
+          }
+        },
+        {
+          "line": "except* ValueError as vg:",
+          "highlight": "except*",
+          "explanation": {
+            "en": "Receives a group containing only the ValueErrors"
+          }
+        },
+        {
+          "line": "except* TypeError as tg:",
+          "highlight": "except*",
+          "explanation": {
+            "en": "Also runs, in the same try, for the TypeErrors"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "out",
+      "lines": [
+        "validate_all({'name': '', 'age': -3, 'email': 'x'})",
+        "invalid record 3",
+        "ValueError name is required",
+        "ValueError age must be >= 0",
+        "ValueError email must contain @"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `validate_all(record)`: run every check, collect each problem, and raise ONE `ExceptionGroup('invalid record', errors)` if there were any (return None for a valid record). The name check is written for you; add the age and email checks from the TODOs. The demo prints the group's message and size, then each error. Expected output:\n```\ninvalid record 3\nValueError name is required\nValueError age must be >= 0\nValueError email must contain @\n```"
+      },
+      "starter_code": "def validate_all(record):\n    \"\"\"Check name, age and email. Report EVERY problem, not just the first.\"\"\"\n    errors = []\n    if not isinstance(record.get(\"name\"), str) or not record[\"name\"]:\n        errors.append(ValueError(\"name is required\"))\n    # TODO: age must be an int (TypeError(\"age must be an int\")),\n    #       and if it is an int it must be >= 0 (ValueError(\"age must be >= 0\"))\n    # TODO: email must contain \"@\" (ValueError(\"email must contain @\"))\n    # TODO: if errors is not empty, raise ExceptionGroup(\"invalid record\", errors)\n\ntry:\n    validate_all({\"name\": \"\", \"age\": -3, \"email\": \"x\"})\nexcept ExceptionGroup as eg:\n    print(eg.message, len(eg.exceptions))\n    for e in eg.exceptions:\n        print(type(e).__name__, e)\n",
+      "hints": {
+        "en": [
+          "Check the age like this: if not isinstance(age, int): append a TypeError, elif age < 0: append a ValueError.",
+          "The email check is: if '@' not in str(record.get('email', '')): append ValueError('email must contain @').",
+          "At the end: if errors: raise ExceptionGroup('invalid record', errors). Raise only once, after all checks."
+        ]
+      },
+      "expected_output": "invalid record 3\nValueError name is required\nValueError age must be >= 0\nValueError email must contain @",
+      "test_code": "ok = {\"name\": \"Asha\", \"age\": 30, \"email\": \"a@b.co\"}\nassert validate_all(ok) is None, \"a valid record should not raise\"\n\ntry:\n    validate_all({\"name\": \"\", \"age\": -3, \"email\": \"x\"})\n    raise AssertionError(\"an invalid record must raise\")\nexcept ExceptionGroup as eg:\n    assert eg.message == \"invalid record\"\n    assert [type(e) for e in eg.exceptions] == [ValueError, ValueError, ValueError]\n    assert [str(e) for e in eg.exceptions] == [\"name is required\", \"age must be >= 0\", \"email must contain @\"]\n\ntry:\n    validate_all({\"name\": \"Ravi\", \"age\": \"ten\", \"email\": \"r@x.io\"})\n    raise AssertionError(\"a bad age type must raise\")\nexcept ExceptionGroup as eg:\n    assert len(eg.exceptions) == 1 and isinstance(eg.exceptions[0], TypeError)\n\ntry:\n    validate_all({\"name\": \"Ravi\", \"age\": 5, \"email\": \"nope\"})\n    raise AssertionError(\"a bad email must raise\")\nexcept ExceptionGroup as eg:\n    assert [str(e) for e in eg.exceptions] == [\"email must contain @\"]\n"
+    },
+    {
+      "instruction": {
+        "en": "Implement `count_by_type(group)` with two `except*` clauses, one for `ValueError` and one for `TypeError`, each storing how many exceptions it received (`len(g.exceptions)`). Then the demo prints the result for a mixed group. Expected output: `{'ValueError': 2, 'TypeError': 1}`"
+      },
+      "starter_code": "def count_by_type(group):\n    \"\"\"Return {\"ValueError\": n, \"TypeError\": m} for the exceptions inside the group.\"\"\"\n    counts = {\"ValueError\": 0, \"TypeError\": 0}\n    try:\n        raise group\n    # TODO: add `except* ValueError as vg:` and store len(vg.exceptions)\n    # TODO: add `except* TypeError as tg:` and store len(tg.exceptions)\n    finally:\n        pass\n    return counts\n\ngroup = ExceptionGroup(\"mixed\", [ValueError(\"a\"), ValueError(\"b\"), TypeError(\"c\")])\nprint(count_by_type(group))\n",
+      "hints": {
+        "en": [
+          "Add `except* ValueError as vg:` between `raise group` and `finally`.",
+          "Inside it: counts['ValueError'] = len(vg.exceptions). Do the same for TypeError.",
+          "Both clauses run for a mixed group, which is exactly the difference from plain except."
+        ]
+      },
+      "expected_output": "{'ValueError': 2, 'TypeError': 1}",
+      "test_code": "assert count_by_type(ExceptionGroup(\"m\", [ValueError(\"a\"), ValueError(\"b\"), TypeError(\"c\")])) == {\"ValueError\": 2, \"TypeError\": 1}\nassert count_by_type(ExceptionGroup(\"m\", [TypeError(\"c\")])) == {\"ValueError\": 0, \"TypeError\": 1}\nassert count_by_type(ExceptionGroup(\"m\", [ValueError(\"a\"), ValueError(\"b\"), ValueError(\"c\")])) == {\"ValueError\": 3, \"TypeError\": 0}\nimport inspect\nassert \"except*\" in inspect.getsource(count_by_type), \"use except* clauses, not isinstance checks\"\n"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "exception_group",
+      "except_star",
+      "collect_then_raise",
+      "pep_654"
+    ],
+    "concepts_required": [
+      "exceptions_done_right"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "error_handling",
+    "path_memberships": [
+      "error_handling"
+    ]
+  },
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "A function raises ExceptionGroup('g', [ValueError('x')]). The caller wraps it in `try: ... except ValueError:`. What happens?"
+      },
+      "options": {
+        "en": [
+          "The ExceptionGroup is not caught and propagates",
+          "The ValueError is caught, because it is inside the group",
+          "Python converts the group to a plain ValueError",
+          "A SyntaxError is raised"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What does this print?\ntry:\n    raise ExceptionGroup('g', [ValueError('a'), TypeError('b')])\nexcept* ValueError as e:\n    print('V', len(e.exceptions))\nexcept* TypeError as e:\n    print('T', len(e.exceptions))"
+      },
+      "options": {
+        "en": [
+          "V 1 only",
+          "T 1 only",
+          "V 1 then T 1",
+          "Nothing: the group is unhandled"
+        ]
+      },
+      "correct": 2
+    },
+    {
+      "q": {
+        "en": "What happens with ExceptionGroup('g', [])?"
+      },
+      "options": {
+        "en": [
+          "It creates an empty group",
+          "ValueError: the exceptions sequence must be non-empty",
+          "TypeError: message must be a list",
+          "It returns None"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why collect errors in a list and raise one group, instead of raising at the first bad field?"
+      },
+      "options": {
+        "en": [
+          "It is faster",
+          "The caller sees every problem in one pass",
+          "Python forbids raising twice",
+          "except* needs a list"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "uth_example": "def fetch(name):\n    if name == \"bad-url\":\n        raise ConnectionError(\"cannot reach \" + name)\n    if name == \"bad-json\":\n        raise ValueError(\"not valid JSON: \" + name)\n    return name.upper()\n\nerrors = []\nfor name in [\"alpha\", \"bad-url\", \"beta\", \"bad-json\"]:\n    try:\n        print(\"ok\", fetch(name))\n    except Exception as exc:\n        errors.append(exc)\n\ntry:\n    if errors:\n        raise ExceptionGroup(\"fetch failed\", errors)\nexcept* ConnectionError as g:\n    print(\"network problems:\", [str(e) for e in g.exceptions])\nexcept* ValueError as g:\n    print(\"data problems:\", [str(e) for e in g.exceptions])\n",
+  "under_the_hood": {
+    "summary": "An ExceptionGroup wraps a list of exceptions in one raisable object, and except* splits that group by type so each handler sees only the exceptions it cares about.",
+    "steps": [
+      {
+        "title": "Why one exception is not enough",
+        "body": "A normal raise unwinds the stack at the first problem, so later problems are never discovered. Validators and batch jobs want the opposite: run everything, then report all failures together."
+      },
+      {
+        "title": "Collect, then raise once",
+        "body": "The loop catches each failure with a plain except, stores it in a list and carries on. After the loop, the list is the group's payload. Two of the four jobs fail here.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "errors list",
+            "data": [
+              "ConnectionError",
+              "ValueError"
+            ],
+            "labels": [
+              "bad-url",
+              "bad-json"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Build the group",
+        "body": "ExceptionGroup('fetch failed', errors) stores the message and the tuple of sub-exceptions. It is itself an Exception, so it propagates up the stack like any other, but plain except clauses match on the group's own type, not its contents."
+      },
+      {
+        "title": "except* splits by type",
+        "body": "Python takes the group and, for each except* clause in order, builds a smaller group containing only the matches and runs the clause with it. Every clause with a match runs, unlike a plain try.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "network problems: ['cannot reach bad-url']",
+              "data problems: ['not valid JSON: bad-json']"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Leftovers are re-raised",
+        "body": "Exceptions that matched no clause are bundled into a new group and raised again after the handlers finish. Nothing is silently dropped, which is why mixing except and except* in one try is not allowed."
+      }
+    ],
+    "takeaway": "Use an ExceptionGroup when several independent things can fail and the caller benefits from seeing all of them. Catch them by kind with except*, and remember a plain except will not match a group."
+  }
+}

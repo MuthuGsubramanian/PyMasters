@@ -1,0 +1,251 @@
+{
+  "id": "exception_notes_and_group_split",
+  "topic": "exception_notes_and_group_split",
+  "track": "error_handling",
+  "module": "patterns",
+  "order": 5,
+  "title": {
+    "en": "Exception Notes and split(): Add Context, Sort the Errors"
+  },
+  "description": {
+    "en": "add_note() attaches extra context to an exception without wrapping or replacing it, and ExceptionGroup.split() sorts a group into matching and non-matching halves. Together they make batch errors traceable and routable."
+  },
+  "xp_reward": 80,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Say Where It Happened, Then Sort the Mess\n\n\"`invalid literal for int() with base 10: 'x'` is accurate and useless,\" Vaathiyaar says. \"Which line? Which file? In 3.11 you can **add a note** to an exception without changing its type or message.\"\n\n### add_note\n\n```python\ntry:\n    int(\"x\")\nexcept ValueError as exc:\n    exc.add_note(\"line 2: 'b,x'\")\n    raise\n```\n\n`add_note(text)` appends a string to the exception's `__notes__` list. The traceback prints each note under the message, and the exception is still the same `ValueError`, so `except ValueError` elsewhere keeps working. The note must be a `str`, otherwise you get a `TypeError`.\n\n### split\n\n```python\ngroup = ExceptionGroup(\"batch\", [TimeoutError(\"t\"), KeyError(\"k\")])\ntimeouts, others = group.split(TimeoutError)\n```\n\n`split()` returns a pair of groups: the exceptions that match, and the rest. Both keep the original message. If one half would be empty, you get `None` for it, so guard before reading `.exceptions`. The original group is not changed, and the leaf exceptions are the same objects, not copies.\n\n> **Why it matters:** a retry layer can `split((TimeoutError, ConnectionError))`, retry the first half and fail loudly on the second, without writing a loop of isinstance checks.\n\nToday you combine both tools: tag each bad row with its line number, and count retryable versus fatal errors in a group."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "resilience",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Exception Notes and split()",
+          "children": [
+            "add_note(str) appends to __notes__",
+            "type and message are unchanged",
+            "split(types) -> (match, rest)",
+            "an empty half is None, original untouched"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "walk",
+      "steps": [
+        {
+          "line": "except ValueError as exc:",
+          "highlight": "exc",
+          "explanation": {
+            "en": "Catch the failure but keep a reference to it"
+          }
+        },
+        {
+          "line": "exc.add_note(f'line {number}: {line!r}')",
+          "highlight": "add_note",
+          "explanation": {
+            "en": "Attach context. The type and message stay the same"
+          }
+        },
+        {
+          "line": "retryable, rest = group.split((TimeoutError, ConnectionError))",
+          "highlight": "split",
+          "explanation": {
+            "en": "Two new groups: the matches and everything else"
+          }
+        },
+        {
+          "line": "n = len(retryable.exceptions) if retryable else 0",
+          "highlight": "if retryable",
+          "explanation": {
+            "en": "An empty half comes back as None, so guard it"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "out",
+      "lines": [
+        "parse_rows(['a,1', 'b,x', 'c,2', 'd,'])",
+        "invalid literal for int() with base 10: 'x' [\"line 2: 'b,x'\"]",
+        "invalid literal for int() with base 10: '' [\"line 4: 'd,'\"]",
+        "split_retryable(jobs) -> (2, 2)"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Finish `parse_rows(lines)`: for every bad `name,qty` line, add a note `line <number>: <repr of line>` to the caught `ValueError`, keep it, and raise one `ExceptionGroup('bad rows', errors)` at the end if any lines failed. The demo prints each error with its notes. Expected output:\n```\ninvalid literal for int() with base 10: 'x' [\"line 2: 'b,x'\"]\ninvalid literal for int() with base 10: '' [\"line 4: 'd,'\"]\n```"
+      },
+      "starter_code": "def parse_rows(lines):\n    \"\"\"Parse 'name,qty' lines. Collect every bad line into one ExceptionGroup.\"\"\"\n    errors = []\n    totals = {}\n    for number, line in enumerate(lines, start=1):\n        try:\n            name, qty = line.split(\",\")\n            totals[name] = int(qty)\n        except ValueError as exc:\n            # TODO: attach the context with exc.add_note(f\"line {number}: {line!r}\")\n            # TODO: keep the exception by appending it to errors\n            pass\n    # TODO: if errors is not empty, raise ExceptionGroup(\"bad rows\", errors)\n    return totals\n\ntry:\n    parse_rows([\"a,1\", \"b,x\", \"c,2\", \"d,\"])\nexcept ExceptionGroup as eg:\n    for e in eg.exceptions:\n        print(e, e.__notes__)\n",
+      "hints": {
+        "en": [
+          "Inside the except block: exc.add_note(f\"line {number}: {line!r}\") then errors.append(exc).",
+          "!r in an f-string uses repr, which adds the quotes you see in the expected output.",
+          "After the loop: if errors: raise ExceptionGroup('bad rows', errors)."
+        ]
+      },
+      "expected_output": "invalid literal for int() with base 10: 'x' [\"line 2: 'b,x'\"]\ninvalid literal for int() with base 10: '' [\"line 4: 'd,'\"]",
+      "test_code": "assert parse_rows([\"a,1\", \"b,2\"]) == {\"a\": 1, \"b\": 2}\n\ntry:\n    parse_rows([\"a,1\", \"b,x\", \"c,2\", \"d,\"])\n    raise AssertionError(\"bad rows must raise\")\nexcept ExceptionGroup as eg:\n    assert eg.message == \"bad rows\"\n    assert len(eg.exceptions) == 2\n    assert eg.exceptions[0].__notes__ == [\"line 2: 'b,x'\"]\n    assert eg.exceptions[1].__notes__ == [\"line 4: 'd,'\"]\n\ntry:\n    parse_rows([\"only-one-field\"])\n    raise AssertionError(\"a line without a comma must raise\")\nexcept ExceptionGroup as eg:\n    assert eg.exceptions[0].__notes__ == [\"line 1: 'only-one-field'\"]\n"
+    },
+    {
+      "instruction": {
+        "en": "Implement `split_retryable(group)`: use `group.split((TimeoutError, ConnectionError))` and return `(retryable_count, other_count)`, treating a missing half (`None`) as 0. The demo uses four jobs, two of them retryable. Expected output: `(2, 2)`"
+      },
+      "starter_code": "def split_retryable(group):\n    \"\"\"Return (how many TimeoutError/ConnectionError, how many of everything else).\"\"\"\n    # TODO: retryable, rest = group.split((TimeoutError, ConnectionError))\n    # split() returns None for a half that is empty, so guard before using .exceptions\n    return 0, 0\n\njobs = ExceptionGroup(\"jobs\", [TimeoutError(\"a\"), KeyError(\"b\"), ConnectionError(\"c\"), ValueError(\"d\")])\nprint(split_retryable(jobs))\n",
+      "hints": {
+        "en": [
+          "retryable, rest = group.split((TimeoutError, ConnectionError)) takes a tuple of types.",
+          "Either half can be None when nothing matched, so write len(x.exceptions) if x else 0.",
+          "Return the two counts as a tuple: (n_retry, n_rest)."
+        ]
+      },
+      "expected_output": "(2, 2)",
+      "test_code": "assert split_retryable(ExceptionGroup(\"j\", [TimeoutError(\"a\"), KeyError(\"b\"), ConnectionError(\"c\"), ValueError(\"d\")])) == (2, 2)\nassert split_retryable(ExceptionGroup(\"j\", [TimeoutError(\"a\"), ConnectionError(\"c\")])) == (2, 0)\nassert split_retryable(ExceptionGroup(\"j\", [KeyError(\"b\")])) == (0, 1)\nimport inspect\nassert \".split(\" in inspect.getsource(split_retryable), \"use group.split()\"\n"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "add_note",
+      "exception_notes",
+      "exception_group_split",
+      "error_routing"
+    ],
+    "concepts_required": [
+      "exceptions_done_right"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "error_handling",
+    "path_memberships": [
+      "error_handling"
+    ]
+  },
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "Where does Exception.add_note('hello') store the note?"
+      },
+      "options": {
+        "en": [
+          "In exc.args",
+          "In the exception's __notes__ list",
+          "In exc.message",
+          "In a global logger"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What does exc.add_note(5) do?"
+      },
+      "options": {
+        "en": [
+          "Stores '5'",
+          "Raises TypeError because the note must be a str",
+          "Is ignored",
+          "Raises ValueError"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "group = ExceptionGroup('g', [KeyError('k')]). What is group.split(Exception)?"
+      },
+      "options": {
+        "en": [
+          "(None, group)",
+          "(a group holding the KeyError, None)",
+          "(group, group)",
+          "It raises"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "After `m, r = group.split(TimeoutError)`, what is true of `group`?"
+      },
+      "options": {
+        "en": [
+          "It lost the matching exceptions",
+          "It is unchanged; m and r are new groups sharing the same exception objects",
+          "It is now empty",
+          "It is now a list"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "uth_example": "def load(path):\n    try:\n        int(path.split(\".\")[-1])\n    except ValueError as exc:\n        exc.add_note(\"while loading \" + path)\n        exc.add_note(\"hint: the extension must be a number\")\n        raise\n\ntry:\n    load(\"data.csv\")\nexcept ValueError as exc:\n    print(exc)\n    print(exc.__notes__)\n\ngroup = ExceptionGroup(\"batch\", [TimeoutError(\"t1\"), KeyError(\"k\"), TimeoutError(\"t2\")])\ntimeouts, others = group.split(TimeoutError)\nprint(timeouts)\nprint(others)\nprint(group)\nprint(timeouts.exceptions[0] is group.exceptions[0])\n",
+  "under_the_hood": {
+    "summary": "add_note appends strings to an exception's __notes__ list, and ExceptionGroup.split builds two new groups from the same exception objects without touching the original.",
+    "steps": [
+      {
+        "title": "The problem with bare errors",
+        "body": "int('csv') raises a ValueError that names the bad text but not which file or row produced it. Wrapping it in a new exception loses the original type, so callers catching ValueError would stop working."
+      },
+      {
+        "title": "Notes ride along",
+        "body": "add_note appends a string to exc.__notes__, creating the list on first use. The exception keeps its type, message and traceback. Printing the exception shows only the message; the notes are listed separately.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "invalid literal for int() with base 10: 'csv'",
+              "['while loading data.csv', 'hint: the extension must be a number']"
+            ]
+          }
+        }
+      },
+      {
+        "title": "split walks the group",
+        "body": "split visits each exception in the group, including those in nested groups, and sends it to the match side or the rest side. Each side is a new ExceptionGroup with the same message, built only from its members."
+      },
+      {
+        "title": "Same objects, new groups",
+        "body": "In the demo the group holds 3 exceptions. timeouts has 2, others has 1, and the original still has 3. The last line prints True because the exception in timeouts is the very object in the original group.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "batch (2 sub-exceptions)",
+              "batch (1 sub-exception)",
+              "batch (3 sub-exceptions)",
+              "True"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Empty halves are None",
+        "body": "If nothing matches, the match side is None rather than an empty group, because an ExceptionGroup may never be empty. That is why callers guard with if retryable before reading .exceptions."
+      }
+    ],
+    "takeaway": "Notes add where and why to an error without changing what it is. split() lets one handler route a group by kind: retry the transient half, escalate the rest."
+  }
+}
