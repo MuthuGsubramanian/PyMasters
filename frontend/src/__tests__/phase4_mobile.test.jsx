@@ -41,19 +41,28 @@ describe('Phase 4 Mobile UI/UX Rework', () => {
         container.remove();
     });
 
-    it('enforces 4-tab mobile bottom nav, safe-area padding, and removes Outlet stacking trap in Layout.jsx', () => {
+    it('enforces 5-tab MD3 mobile bottom nav, contextual top bar, 44px drawer targets & safe-area padding in Layout.jsx', () => {
         const layoutSrc = readFileSync(resolve(__dirname, '../components/Layout.jsx'), 'utf8');
-        expect(layoutSrc).toContain('grid-cols-4');
-        expect(layoutSrc).not.toContain('grid-cols-5');
+        expect(layoutSrc).toContain('grid-cols-5');
+        expect(layoutSrc).toContain("t('nav.mobile.home'");
         expect(layoutSrc).toContain("t('nav.mobile.learn'");
-        expect(layoutSrc).toContain("t('nav.mobile.practice'");
-        expect(layoutSrc).toContain("t('nav.mobile.askVaar'");
-        expect(layoutSrc).toContain("t('nav.mobile.profile'");
+        expect(layoutSrc).toContain("t('nav.mobile.code'");
+        expect(layoutSrc).toContain("t('nav.mobile.play'");
+        expect(layoutSrc).toContain("t('nav.mobile.tutor'");
         expect(layoutSrc).toContain('env(safe-area-inset-top');
         expect(layoutSrc).toContain('env(safe-area-inset-bottom');
         expect(layoutSrc).toContain('min-w-11 min-h-11');
-        expect(layoutSrc).toContain('pm:open-vaathiyaar-voice');
+        expect(layoutSrc).toContain('pm:open-vaathiyaar-chat');
+        expect(layoutSrc).toContain('aria-label="Go back"');
         expect(layoutSrc).not.toContain('max-w-7xl mx-auto relative z-10 min-h-full');
+
+        const panelSrc = readFileSync(resolve(__dirname, '../components/VaathiyaarPanel.jsx'), 'utf8');
+        expect(panelSrc).toContain('pm:open-vaathiyaar-chat');
+        expect(panelSrc).toContain('pm:open-vaathiyaar-voice');
+        expect(panelSrc).toContain('grid-cols-3');
+
+        const darkHookSrc = readFileSync(resolve(__dirname, '../hooks/useDarkMode.js'), 'utf8');
+        expect(darkHookSrc).toContain('setSystemTheme');
     });
 
     it('keeps Profile floating Save bar clear of safe-area bottom nav & high-contrast dark text', () => {

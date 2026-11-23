@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '../api';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
+import { registerAndroidBackHandler } from '../lib/androidBack';
 
 export default function NotificationBell({ align = 'right' }) {
     const { user } = useAuth();
@@ -41,8 +42,17 @@ export default function NotificationBell({ align = 'right' }) {
             if (e.key === 'Escape') setOpen(false);
         };
         document.addEventListener('keydown', handler);
-        return () => document.removeEventListener('keydown', handler);
-    }, []);
+        const unregisterBack = open
+            ? registerAndroidBackHandler(() => {
+                setOpen(false);
+                return true;
+            })
+            : null;
+        return () => {
+            document.removeEventListener('keydown', handler);
+            unregisterBack?.();
+        };
+    }, [open]);
 
     const handleClick = async (notif) => {
         if (!notif.read) {
@@ -79,7 +89,7 @@ export default function NotificationBell({ align = 'right' }) {
                 onClick={() => setOpen(!open)}
                 aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
                 aria-expanded={open}
-                className="relative min-w-10 min-h-10 p-2 rounded-lg hover:bg-bg-elevated transition-colors text-text-secondary flex items-center justify-center"
+                className="relative min-w-11 min-h-11 p-2 rounded-xl hover:bg-bg-elevated active:scale-95 transition-all text-text-secondary flex items-center justify-center"
             >
                 <Bell size={18} aria-hidden="true" />
                 {unreadCount > 0 && (

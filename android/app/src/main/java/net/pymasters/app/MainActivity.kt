@@ -13,9 +13,12 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.Looper
+import android.os.SystemClock
+import android.provider.Settings
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
@@ -48,6 +51,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var rootContainer: FrameLayout
     private lateinit var webView: WebView
     private lateinit var topProgress: ProgressBar
+    private lateinit var loadingOverlay: LinearLayout
     private lateinit var offlineOverlay: LinearLayout
     private lateinit var playBillingManager: PlayBillingManager
 
@@ -56,6 +60,7 @@ class MainActivity : ComponentActivity() {
 
     private var splashReady = false
     private var mainFrameFailed = false
+    private var lastRootBackPressMs = 0L
     private var pendingFileCallback: ValueCallback<Array<Uri>>? = null
     private var pendingWebPermissionRequest: PermissionRequest? = null
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
@@ -95,8 +100,10 @@ class MainActivity : ComponentActivity() {
         rootContainer = findViewById(R.id.rootContainer)
         webView = findViewById(R.id.webView)
         topProgress = findViewById(R.id.topProgress)
+        loadingOverlay = findViewById(R.id.loadingOverlay)
         offlineOverlay = findViewById(R.id.offlineOverlay)
         val retryButton: Button = findViewById(R.id.retryButton)
+        val wifiSettingsButton: Button = findViewById(R.id.wifiSettingsButton)
 
         playBillingManager = PlayBillingManager(this) {
             if (::webView.isInitialized) webView else null
@@ -118,13 +125,33 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Release splash screen within 900ms even on slow networks so the user sees live progress
-        rootContainer.postDelayed({ splashReady = true }, 900L)
+        wifiSettingsButton.setOnClickListener {
+            val settingsIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                Intent(Settings.Panel.ACTION_INTERNET_CONNECTIVITY)
+            } else {
+                Intent(Settings.ACTION_WIFI_SETTINGS)
+            }
+            try {
+                startActivity(settingsIntent)
+            } catch (_: ActivityNotFoundException) {
+                try {
+                    startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
+                } catch (_: ActivityNotFoundException) {
+                    Toast.makeText(this, "Open Android Settings to enable network", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        // Release splash screen quickly so branded loading curtain shows smoothly,
+        // and guarantee curtain dismisses even on slow networks.
+        rootContainer.postDelayed({ splashReady = true }, 650L)
+        rootContainer.postDelayed({ dismissLoadingOverlay() }, 3500L)
 
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState)
             currentMainFrameUrl = webView.url
             splashReady = true
+            loadingOverlay.visibility = View.GONE
         } else {
             val targetUrl = UrlRouter.resolveIncomingUrl(intent?.dataString, BuildConfig.BASE_URL)
             loadTargetUrl(targetUrl)
@@ -195,7 +222,8 @@ class MainActivity : ComponentActivity() {
         val nativeBridge = PyMastersBridge(
             context = this,
             billingManager = playBillingManager,
-            currentUrlProvider = ::activeFrameUrl
+            currentUrlProvider = ::activeFrameUrl,
+            onThemeChanged = ::applySystemBarTheme
         )
         webView.addJavascriptInterface(nativeBridge, "PyMastersAndroid")
         webView.addJavascriptInterface(nativeBridge, "PyMastersBilling")
@@ -241,6 +269,7 @@ class MainActivity : ComponentActivity() {
                 super.onPageCommitVisible(view, url)
                 currentMainFrameUrl = url ?: view.url
                 splashReady = true
+                dismissLoadingOverlay()
                 injectScrollHardeningCss(view)
                 if (!mainFrameFailed) {
                     offlineOverlay.visibility = View.GONE
@@ -251,6 +280,7 @@ class MainActivity : ComponentActivity() {
                 super.onPageFinished(view, url)
                 currentMainFrameUrl = url ?: view.url
                 splashReady = true
+                dismissLoadingOverlay()
                 topProgress.visibility = View.GONE
                 injectScrollHardeningCss(view)
                 CookieManager.getInstance().flush()
@@ -268,6 +298,7 @@ class MainActivity : ComponentActivity() {
                 if (request.isForMainFrame) {
                     mainFrameFailed = true
                     splashReady = true
+                    dismissLoadingOverlay()
                     topProgress.visibility = View.GONE
                     offlineOverlay.visibility = View.VISIBLE
                 }
@@ -407,13 +438,47 @@ class MainActivity : ComponentActivity() {
                     } else if (currentPath.startsWith("/dashboard/") && currentPath != "/dashboard") {
                         loadTargetUrl(BuildConfig.BASE_URL.trimEnd('/') + "/dashboard")
                     } else {
-                        isEnabled = false
-                        onBackPressedDispatcher.onBackPressed()
-                        isEnabled = true
+                        val now = SystemClock.elapsedRealtime()
+                        if (now - lastRootBackPressMs < 2000L) {
+                            isEnabled = false
+                            onBackPressedDispatcher.onBackPressed()
+                            isEnabled = true
+                        } else {
+                            lastRootBackPressMs = now
+                            Toast.makeText(
+                                this@MainActivity,
+                                getString(R.string.back_press_exit_hint),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
                 }
             }
         })
+    }
+
+    private fun dismissLoadingOverlay() {
+        if (!::loadingOverlay.isInitialized || loadingOverlay.visibility == View.GONE) return
+        loadingOverlay.animate()
+            .alpha(0f)
+            .setDuration(220L)
+            .withEndAction {
+                loadingOverlay.visibility = View.GONE
+                loadingOverlay.alpha = 1f
+            }
+            .start()
+    }
+
+    private fun applySystemBarTheme(isDark: Boolean) {
+        val bgColor = if (isDark) Color.parseColor("#020617") else Color.parseColor("#F8FAFC")
+        val barStyle = if (isDark) {
+            SystemBarStyle.dark(bgColor)
+        } else {
+            SystemBarStyle.light(bgColor, Color.parseColor("#020617"))
+        }
+        enableEdgeToEdge(statusBarStyle = barStyle, navigationBarStyle = barStyle)
+        rootContainer.setBackgroundColor(bgColor)
+        webView.setBackgroundColor(bgColor)
     }
 
     private fun injectScrollHardeningCss(view: WebView) {

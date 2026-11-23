@@ -26,6 +26,9 @@ import {
     Lightbulb,
     Rocket,
     ArrowRight,
+    Map,
+    Gamepad2,
+    Swords,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from '../context/AuthContext';
@@ -363,64 +366,70 @@ export function Overview() {
         visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 260, damping: 20 } },
     };
 
+    const rawName = String(user.name || user.username || 'Learner');
+    const shortName = rawName.includes('@') ? rawName.split('@')[0] : rawName;
+
     return (
         <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
-            className="space-y-8 pb-8"
+            className="space-y-4 sm:space-y-8 pb-8"
         >
-            {/* ─── Welcome Banner (Always First Above the Fold) ──────────── */}
+            {/* ─── Welcome Banner (Compact on Mobile so Hero Lesson stays Above the Fold) ──────────── */}
             <motion.div variants={itemVariants}>
                 <Card className="relative overflow-hidden shadow-sm">
-                <div className="relative p-6 sm:p-8 flex flex-col gap-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="relative p-4 sm:p-8 flex flex-col gap-3.5 sm:gap-5">
+                    <div className="flex items-start sm:items-center justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-text-secondary mb-2">
+                            <div className="hidden sm:flex flex-wrap items-center gap-2 text-xs text-text-secondary mb-2">
                                 <Calendar size={12} aria-hidden="true" />
                                 <span>{formatDate()}</span>
                                 {audience.orgName && (
                                     <span className="font-semibold text-text-primary" data-testid="org-identity">&middot; {audience.orgName}</span>
                                 )}
                             </div>
-                            <h1 className="text-2xl sm:text-3xl font-bold font-display text-text-primary mb-2">
-                                {getGreeting()}, {user.name || user.username}
+                            <h1 className="text-lg sm:text-3xl font-bold font-display text-text-primary leading-snug break-words sm:mb-2">
+                                {getGreeting()}, {shortName}
                             </h1>
+                            {audience.orgName && (
+                                <p className="sm:hidden text-xs font-semibold text-text-secondary mt-0.5 truncate" data-testid="org-identity-mobile">{audience.orgName}</p>
+                            )}
                             {audience.welcome ? (
                                 // The organisation's own welcome (Console -> Branding), in place of a generic quote.
-                                <p className="text-sm text-text-secondary max-w-lg" data-testid="org-welcome">{audience.welcome}</p>
+                                <p className="text-xs sm:text-sm text-text-secondary max-w-lg mt-1 sm:mt-0 line-clamp-2 sm:line-clamp-none" data-testid="org-welcome">{audience.welcome}</p>
                             ) : audience.mode !== 'professional' && (
-                                <p className="text-sm text-text-secondary italic max-w-lg">
+                                <p className="hidden sm:block text-sm text-text-secondary italic max-w-lg">
                                     &ldquo;{dailyQuote.text}&rdquo; <span className="not-italic text-text-secondary">&mdash; {dailyQuote.author}</span>
                                 </p>
                             )}
                         </div>
 
-                        {/* Streak badge */}
+                        {/* Streak + XP compact badge on mobile; full streak card on sm+ */}
                         <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
+                            initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            transition={{ delay: 0.3, type: 'spring' }}
-                            className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-orange-500/12 border border-orange-500/25 shadow-sm self-start"
+                            transition={{ delay: 0.2, type: 'spring' }}
+                            className="flex items-center gap-1.5 sm:gap-2.5 px-3 py-2 sm:px-5 sm:py-3 rounded-xl sm:rounded-2xl bg-orange-500/12 border border-orange-500/25 shadow-sm shrink-0"
                         >
-                            <Flame size={24} aria-hidden="true" className="text-orange-600 dark:text-orange-300" />
+                            <Flame size={18} aria-hidden="true" className="sm:w-6 sm:h-6 text-orange-600 dark:text-orange-300" />
                             <div>
-                                <div className="text-xl font-bold font-display text-orange-600 dark:text-orange-300">{streak}</div>
-                                <div className="text-xs font-bold uppercase tracking-wider text-orange-700 dark:text-orange-300">day streak</div>
+                                <div className="text-base sm:text-xl font-bold font-display leading-none text-orange-600 dark:text-orange-300">{streak}</div>
+                                <div className="text-xs font-bold uppercase tracking-wider text-orange-700 dark:text-orange-300 leading-tight">streak</div>
                             </div>
                         </motion.div>
                     </div>
 
-                    {/* Stage / Persona Quick Switcher */}
-                    <div className="pt-4 border-t border-border-default flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-text-muted mr-1">
+                    {/* Stage / Persona Quick Switcher — single horizontal rail on mobile */}
+                    <div className="pt-3 sm:pt-4 border-t border-border-default flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
+                        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar -mx-1 px-1">
+                            <span className="hidden sm:inline text-xs font-bold uppercase tracking-wider text-text-muted mr-1 shrink-0">
                                 Learning Stage:
                             </span>
                             {[
-                                { id: 'high_school_student', persona: 'school', label: '🌱 School (Class 6–12)' },
-                                { id: 'college_student', persona: 'college', label: '🎓 College & Placements' },
-                                { id: 'junior_developer', persona: 'professional', label: '🚀 Working Professional' },
+                                { id: 'high_school_student', persona: 'school', label: '🌱 School', fullLabel: '🌱 School (Class 6–12)' },
+                                { id: 'college_student', persona: 'college', label: '🎓 College', fullLabel: '🎓 College & Placements' },
+                                { id: 'junior_developer', persona: 'professional', label: '🚀 Pro & AI', fullLabel: '🚀 Working Professional' },
                             ].map((st) => {
                                 const active = audience.persona === st.persona;
                                 return (
@@ -429,18 +438,19 @@ export function Overview() {
                                         type="button"
                                         onClick={() => setUserPersona?.(st.id)}
                                         className={clsx(
-                                            'px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all',
+                                            'min-h-11 sm:min-h-0 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all whitespace-nowrap shrink-0',
                                             active
                                                 ? 'border-cyan-500 bg-cyan-500/12 text-cyan-700 dark:text-cyan-300 shadow-sm'
                                                 : 'border-border-default bg-bg-elevated text-text-secondary hover:border-border-strong'
                                         )}
                                     >
-                                        {st.label}
+                                        <span className="sm:hidden">{st.label}</span>
+                                        <span className="hidden sm:inline">{st.fullLabel}</span>
                                     </button>
                                 );
                             })}
                         </div>
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="hidden sm:flex flex-wrap items-center gap-3">
                             <a
                                 href="https://t.me/boost/PyMasterscommunity"
                                 target="_blank"
@@ -464,20 +474,20 @@ export function Overview() {
                 </Card>
             </motion.div>
 
-            {/* ─── Daily Recommendation Card ─────────────────────── */}
+            {/* ─── Daily Recommendation Card (Hero Above the Fold on Android) ─────────────────────── */}
             <motion.div variants={itemVariants}>
                 <Card interactive className="relative overflow-hidden shadow-sm group">
-                    <div className="relative p-6 sm:p-8">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-accent-subtle flex items-center justify-center">
-                                <Lightbulb size={20} className="text-accent-primary" />
+                    <div className="relative p-4 sm:p-8">
+                        <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-accent-subtle flex items-center justify-center shrink-0">
+                                <Lightbulb size={18} className="sm:w-5 sm:h-5 text-accent-primary" />
                             </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-text-primary font-display">Today&apos;s Recommended Lesson</h3>
+                            <div className="min-w-0">
+                                <h3 className="text-base sm:text-lg font-bold text-text-primary font-display leading-snug">Today&apos;s Recommended Lesson</h3>
                                 <p className="text-xs text-text-muted">Personalized for your learning path</p>
                             </div>
                             {(recommendation?.trending) && (
-                                <Badge variant="danger" className="ml-auto px-2.5 py-1 uppercase tracking-wider">
+                                <Badge variant="danger" className="ml-auto px-2.5 py-1 uppercase tracking-wider shrink-0">
                                     <TrendingUp size={10} />
                                     Trending
                                 </Badge>
@@ -492,14 +502,14 @@ export function Overview() {
                             </div>
                         ) : (
                             <>
-                                <h4 className="text-xl font-bold text-text-primary font-display mb-2">
+                                <h4 className="text-lg sm:text-xl font-bold text-text-primary font-display mb-1.5 sm:mb-2">
                                     {recommendation?.title || recommendation?.recommended_lesson?.title || 'Continue in the Classroom'}
                                 </h4>
-                                <p className="text-sm text-text-secondary mb-3 leading-relaxed">
+                                <p className="text-sm text-text-secondary mb-3 leading-relaxed line-clamp-3 sm:line-clamp-none">
                                     {recommendation?.description || 'Jump into hands-on lessons across every track in the Classroom.'}
                                 </p>
-                {recommendation?.reason && (
-                                    <div className="flex items-start gap-2 mb-5 p-3 rounded-xl bg-accent-subtle border border-accent-primary/20">
+                                {recommendation?.reason && (
+                                    <div className="flex items-start gap-2 mb-4 sm:mb-5 p-2.5 sm:p-3 rounded-xl bg-accent-subtle border border-accent-primary/20">
                                         <Sparkles size={14} className="text-accent-primary mt-0.5 flex-shrink-0" />
                                         <p className="text-xs text-text-secondary">{recommendation.reason}</p>
                                     </div>
@@ -507,16 +517,41 @@ export function Overview() {
                                 <Button
                                     variant="primary"
                                     onClick={() => navigate(recommendation?.link || '/dashboard/classroom')}
-                                    className="py-2.5 text-sm group/btn"
+                                    className="w-full sm:w-auto min-h-12 sm:min-h-0 py-3 sm:py-2.5 text-sm justify-center group/btn"
                                 >
-                                    <Play size={14} />
+                                    <Play size={15} />
                                     Start Learning
-                                    <ArrowRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
+                                    <ArrowRight size={15} className="group-hover/btn:translate-x-0.5 transition-transform" />
                                 </Button>
                             </>
                         )}
                     </div>
                 </Card>
+            </motion.div>
+
+            {/* ─── Mobile One-Tap Quick Hub (direct thumb access to all core pillars) ─── */}
+            <motion.div variants={itemVariants} className="lg:hidden grid grid-cols-4 gap-2">
+                {[
+                    { label: 'Paths', icon: Map, to: '/dashboard/paths', tint: 'bg-cyan-500/12 text-cyan-700 dark:text-cyan-300 border-cyan-500/25' },
+                    { label: 'Code', icon: Code2, to: '/dashboard/playground', tint: 'bg-amber-500/12 text-amber-700 dark:text-amber-300 border-amber-500/25' },
+                    { label: 'Games', icon: Gamepad2, to: '/dashboard/play', tint: 'bg-purple-500/12 text-purple-700 dark:text-purple-300 border-purple-500/25' },
+                    { label: 'Battles', icon: Swords, to: '/dashboard/challenges', tint: 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/25' },
+                ].map((tile) => {
+                    const TileIcon = tile.icon;
+                    return (
+                        <button
+                            key={tile.label}
+                            type="button"
+                            onClick={() => navigate(tile.to)}
+                            className="min-h-[68px] flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl border border-border-default bg-bg-surface active:scale-95 transition-transform shadow-sm"
+                        >
+                            <span className={clsx('w-9 h-9 rounded-xl border flex items-center justify-center', tile.tint)}>
+                                <TileIcon size={17} aria-hidden="true" />
+                            </span>
+                            <span className="text-xs font-semibold text-text-primary leading-tight">{tile.label}</span>
+                        </button>
+                    );
+                })}
             </motion.div>
 
             {/* ─── F8: Review queue & Warm-up (self-hides when nothing is due) ─── */}

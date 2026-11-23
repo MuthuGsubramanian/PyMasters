@@ -631,27 +631,27 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
     }, [presentTracks.length, stageFilter, qLower]);
 
     return (
-        <div className="animate-fade-in space-y-4 max-w-5xl mx-auto">
-            <header className="space-y-3">
-                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold tracking-wider uppercase ${welcome.color}`}>
+        <div className="animate-fade-in space-y-3 sm:space-y-4 max-w-5xl mx-auto">
+            <header className="space-y-1.5 sm:space-y-3">
+                <div className={`inline-flex items-center gap-2 px-2.5 py-1 rounded-full border text-xs font-bold tracking-wider uppercase ${welcome.color}`}>
                     {welcome.icon}
                     Classroom
                 </div>
-                <h1 className="text-3xl font-bold font-display text-text-primary">{welcome.title}</h1>
-                <p className="text-text-muted">{welcome.subtitle}</p>
+                <h1 className="text-xl sm:text-3xl font-bold font-display text-text-primary leading-tight">{welcome.title}</h1>
+                <p className="text-xs sm:text-sm text-text-muted line-clamp-2 sm:line-clamp-none">{welcome.subtitle}</p>
             </header>
 
-            {/* Stage Filter & Search Bar */}
+            {/* Stage Filter & Search Bar — horizontal pill rail on mobile so lessons stay above the fold */}
             {!loading && lessons.length > 0 && (
-                <div className="rounded-2xl border border-border-default bg-bg-surface p-3.5 space-y-3">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-1.5">
+                <div className="rounded-2xl border border-border-default bg-bg-surface p-3 sm:p-3.5 space-y-2.5 sm:space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
+                        <div className="flex flex-nowrap sm:flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1">
                             {filterTabs.map((tab) => (
                                 <button
                                     key={tab.id}
                                     type="button"
                                     onClick={() => setStageFilter(tab.id)}
-                                    className={`min-h-11 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                                    className={`min-h-11 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border whitespace-nowrap shrink-0 ${
                                         stageFilter === tab.id
                                             ? 'border-purple-500 bg-purple-500/12 text-purple-700 dark:text-purple-300 shadow-sm'
                                             : 'border-transparent bg-bg-elevated text-text-secondary hover:text-text-primary hover:border-border-default'
@@ -662,22 +662,22 @@ function LessonSelect({ lessons, onSelectLesson, loading, language, profileHint 
                             ))}
                         </div>
                         <div className="relative sm:w-64">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Search lessons or tracks..."
-                                className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-bg-elevated border border-border-default text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500"
+                                className="w-full min-h-11 sm:min-h-0 pl-9 pr-9 py-2 sm:py-1.5 rounded-xl bg-bg-elevated border border-border-default text-sm sm:text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:border-purple-500"
                             />
                             {searchQuery && (
                                 <button
                                     type="button"
                                     onClick={() => setSearchQuery('')}
                                     aria-label="Clear lesson search"
-                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                                    className="absolute right-1 top-1/2 -translate-y-1/2 min-w-10 min-h-10 sm:min-w-0 sm:min-h-0 p-1.5 flex items-center justify-center text-text-muted hover:text-text-primary"
                                 >
-                                    <X size={12} />
+                                    <X size={14} />
                                 </button>
                             )}
                         </div>
@@ -2808,12 +2808,12 @@ export default function Classroom() {
                 )}
                 {/* Back button when in a lesson (ConceptStudyView renders its own back header) */}
                 {phase !== 'select' && currentLesson?.pedagogy_mode !== 'concept_study' && (
-                    <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+                    <div className="flex items-center justify-between gap-2 mb-4 sm:mb-6 flex-wrap">
                         <motion.button
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             onClick={handleBackToSelect}
-                            className="flex items-center gap-2 text-sm text-text-muted hover:text-text-secondary transition-colors group"
+                            className="min-h-11 px-2 -ml-2 flex items-center gap-2 text-sm font-medium text-text-muted hover:text-text-secondary transition-colors group rounded-xl"
                         >
                             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                             Back to lessons
@@ -2825,11 +2825,11 @@ export default function Classroom() {
                                     onClick={handleExplainLesson}
                                     disabled={explainBusy}
                                     title="Generate a visual, scroll-driven explanation of this lesson"
-                                    className="btn-neo btn-neo-ghost inline-flex items-center gap-1.5 text-sm py-2 px-3.5 disabled:opacity-60"
+                                    className="btn-neo btn-neo-ghost min-h-11 inline-flex items-center gap-1.5 text-xs sm:text-sm py-2 px-3 sm:px-3.5 disabled:opacity-60"
                                 >
                                     {explainBusy
                                         ? <><Loader2 size={15} className="animate-spin" aria-hidden="true" /> Explaining…</>
-                                        : <><Lightbulb size={15} aria-hidden="true" /> Explain this visually</>}
+                                        : <><Lightbulb size={15} aria-hidden="true" /> Visual guide</>}
                                 </button>
                             </div>
                         )}
@@ -2879,7 +2879,7 @@ export default function Classroom() {
                                 </div>
                             )}
                             {user?.id && !schoolScope?.scoped && (
-                                <div id="learn-anything-panel" className="max-w-5xl mx-auto mb-5">
+                                <div id="learn-anything-panel" className="max-w-5xl mx-auto mb-3 sm:mb-5">
                                     <LearnAnything userId={user.id} onLessonReady={handleGeneratedLessonReady} onOpenLesson={handleSelectLesson} initialTopic={deepLinkTopic} autoStart={autoLearnTopic} />
                                 </div>
                             )}

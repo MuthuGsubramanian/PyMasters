@@ -4,10 +4,12 @@ const PYTHON_QUICK_SYMBOLS = [
     { label: ':', insert: ':', cursorOffset: 1 },
     { label: '()', insert: '()', cursorOffset: 1 },
     { label: '[]', insert: '[]', cursorOffset: 1 },
+    { label: '""', insert: '""', cursorOffset: 1 },
     { label: '_', insert: '_', cursorOffset: 1 },
     { label: 'Tab', insert: '    ', cursorOffset: 4 },
     { label: '=', insert: ' = ', cursorOffset: 3 },
     { label: '->', insert: ' -> ', cursorOffset: 4 },
+    { label: '#', insert: '# ', cursorOffset: 2 },
 ];
 
 export function insertPythonSymbol(value, selectionStart, selectionEnd, sym) {
@@ -198,7 +200,7 @@ export default function PythonEditor({ showQuickSymbols = true, ...props }) {
                 role="toolbar"
                 aria-label="Python quick symbols"
                 data-testid="python-quick-symbols"
-                className="lg:hidden sticky bottom-0 z-20 flex items-center gap-1.5 px-2.5 py-2 bg-[#161b22] border-t border-slate-700/60 overflow-x-auto"
+                className="lg:hidden sticky bottom-0 z-20 flex items-center gap-1.5 px-2.5 py-2 bg-[#161b22] border-t border-slate-700/60 overflow-x-auto no-scrollbar"
             >
                 {PYTHON_QUICK_SYMBOLS.map((sym) => (
                     <button
@@ -207,7 +209,7 @@ export default function PythonEditor({ showQuickSymbols = true, ...props }) {
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => handleInsertSymbol(sym)}
                         aria-label={`Insert ${sym.label}`}
-                        className="min-w-10 min-h-9 px-2.5 py-1 rounded-lg bg-[#0d1117] border border-slate-700/80 text-slate-200 hover:border-cyan-400/60 hover:text-cyan-300 font-mono text-xs font-semibold shrink-0 active:scale-95 transition-transform"
+                        className="min-w-11 min-h-11 px-2.5 py-1.5 rounded-xl bg-[#0d1117] border border-slate-700/80 text-slate-200 hover:border-cyan-400/60 hover:text-cyan-300 font-mono text-xs font-semibold shrink-0 active:scale-95 transition-transform"
                     >
                         {sym.label}
                     </button>
