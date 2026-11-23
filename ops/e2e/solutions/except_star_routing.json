@@ -1,0 +1,11 @@
+{
+  "lesson_id": "except_star_routing",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def summarize(group):\n    \"\"\"Count the ValueErrors and TypeErrors inside an ExceptionGroup using except*.\n\n    Any other kind of error must NOT be swallowed: let it propagate (still inside a group).\n    \"\"\"\n    counts = {}\n    try:\n        raise group\n    except* ValueError as eg:\n        counts[\"ValueError\"] = len(eg.exceptions)\n    except* TypeError as eg:\n        counts[\"TypeError\"] = len(eg.exceptions)\n    return counts\n\nbatch = ExceptionGroup(\"batch\", [ValueError(\"a\"), ValueError(\"b\"), TypeError(\"c\")])\nprint(summarize(batch))\n",
+      "verified_output": "{'ValueError': 2, 'TypeError': 1}",
+      "source": "claude 2026-11-23, verified with grade_submission"
+    }
+  ]
+}

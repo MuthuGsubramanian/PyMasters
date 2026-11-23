@@ -1,0 +1,11 @@
+{
+  "lesson_id": "exception_notes_add_note",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def validate(rows):\n    \"\"\"Check every row's qty. Bad rows get a note naming the row, then ALL are raised together.\"\"\"\n    errors = []\n    for i, row in enumerate(rows):\n        if row[\"qty\"] <= 0:\n            err = ValueError(\"qty must be positive\")\n            err.add_note(f\"row {i}: sku={row['sku']}\")\n            errors.append(err)\n    if errors:\n        raise ExceptionGroup(\"invalid rows\", errors)\n\nrows = [{\"sku\": \"A1\", \"qty\": 2}, {\"sku\": \"B7\", \"qty\": 0}, {\"sku\": \"C3\", \"qty\": -1}]\ntry:\n    validate(rows)\nexcept ExceptionGroup as eg:\n    for err in eg.exceptions:\n        print(err, err.__notes__)\n",
+      "verified_output": "qty must be positive ['row 1: sku=B7']\nqty must be positive ['row 2: sku=C3']",
+      "source": "claude 2026-11-23, verified with grade_submission"
+    }
+  ]
+}

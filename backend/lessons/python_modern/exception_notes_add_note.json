@@ -1,0 +1,278 @@
+{
+  "id": "exception_notes_add_note",
+  "topic": "exception_notes_add_note",
+  "track": "python_modern",
+  "module": "python311_errors",
+  "order": 8,
+  "title": {
+    "en": "add_note: Attach Context to an Error Without Changing It"
+  },
+  "description": {
+    "en": "Python 3.11's add_note() lets you attach extra lines of context to an exception as it travels up, and tracebacks print them. Combine notes with groups to report exactly which row failed."
+  },
+  "xp_reward": 90,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Where Did That Error Come From?\n\n\"`ValueError: qty must be positive` is correct and useless,\" Vaathiyaar says. \"Which order? Which row? The code that *noticed* the problem often does not know. The code further up the stack does. Python 3.11 gives you a clean way to hand that knowledge to the error: **`add_note()`**.\"\n\n### Notes Travel With the Exception\n\n```python\ntry:\n    raise ValueError(\"qty must be positive\")\nexcept ValueError as err:\n    err.add_note(\"while processing order 1042\")\n    err.add_note(\"customer: Asha\")\n    raise\n```\n\n`add_note(text)` appends a string to the exception's `__notes__` list (created on first use). The error's type and message are untouched, so every `except ValueError` upstream still matches. When the error finally reaches the traceback printer, **each note is printed on its own line** under the message.\n\n```python\nerr = ValueError(\"bad\")\nerr.add_note(\"row 3\")\nprint(err.__notes__)    # ['row 3']\n```\n\n### Why Not Rewrite the Message?\n\nOlder code did `raise ValueError(f\"row 3: {err}\") from err`. That builds a second exception, changes the message that tests and logs may compare against, and clutters the chain. A note adds information **without replacing anything**, and it is the right tool for context like row numbers, file names, or retry counts.\n\n### Notes Meet Groups\n\nNotes shine inside a batch: tag each error with where it came from, then raise them all as one `ExceptionGroup`. The notes stay attached to each individual error.\n\n> **Vaathiyaar's note:** `add_note` requires a **string**. Passing anything else raises `TypeError`, so format numbers with an f-string first.\n\nToday you write `validate(rows)`: for every row with `qty <= 0`, create a `ValueError`, add a note naming the row index and SKU, and raise all of them in one `ExceptionGroup`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "error_notes",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ov",
+      "nodes": [
+        {
+          "label": "add_note",
+          "children": [
+            "appends to __notes__",
+            "type and message unchanged",
+            "printed in the traceback",
+            "great inside ExceptionGroup"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cs",
+      "steps": [
+        {
+          "line": "err = ValueError('qty must be positive')",
+          "highlight": "ValueError",
+          "explanation": {
+            "en": "Create the error as usual"
+          }
+        },
+        {
+          "line": "err.add_note(f'row {i}: sku={row[\"sku\"]}')",
+          "highlight": "add_note",
+          "explanation": {
+            "en": "Attach context without changing the message"
+          }
+        },
+        {
+          "line": "errors.append(err)",
+          "highlight": "errors.append",
+          "explanation": {
+            "en": "Keep it for the group"
+          }
+        },
+        {
+          "line": "raise ExceptionGroup('invalid rows', errors)",
+          "highlight": "ExceptionGroup",
+          "explanation": {
+            "en": "Every error still carries its own note"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Rewrite the message",
+        "items": [
+          "new exception object",
+          "message text changes",
+          "log matches may break"
+        ]
+      },
+      "right": {
+        "title": "add_note()",
+        "items": [
+          "same exception object",
+          "message untouched",
+          "context printed beneath it"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "t",
+      "lines": [
+        "qty must be positive ['row 1: sku=B7']",
+        "qty must be positive ['row 2: sku=C3']"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `validate(rows)`. Loop with `enumerate(rows)`. For each row whose `qty` is `<= 0`, build `err = ValueError(\"qty must be positive\")`, call `err.add_note(f\"row {i}: sku={row['sku']}\")` and keep it. If there are any errors, `raise ExceptionGroup(\"invalid rows\", errors)`. The starter prints each error with its notes (expected: `qty must be positive ['row 1: sku=B7']` then `qty must be positive ['row 2: sku=C3']`)."
+      },
+      "starter_code": "def validate(rows):\n    \"\"\"Check every row's qty. Bad rows get a note naming the row, then ALL are raised together.\"\"\"\n    # for each (i, row): if row[\"qty\"] <= 0, make err = ValueError(\"qty must be positive\")\n    #     err.add_note(f\"row {i}: sku={row['sku']}\")  and keep it\n    # if any errors: raise ExceptionGroup(\"invalid rows\", errors)\n    pass\n\nrows = [{\"sku\": \"A1\", \"qty\": 2}, {\"sku\": \"B7\", \"qty\": 0}, {\"sku\": \"C3\", \"qty\": -1}]\ntry:\n    validate(rows)\nexcept ExceptionGroup as eg:\n    for err in eg.exceptions:\n        print(err, err.__notes__)\n",
+      "hints": {
+        "en": [
+          "Use `for i, row in enumerate(rows):` and a list called errors",
+          "err.add_note(...) takes one string; the notes are then in err.__notes__",
+          "Raise the group only after the loop, and only when errors is not empty"
+        ]
+      },
+      "expected_output": "qty must be positive ['row 1: sku=B7']\nqty must be positive ['row 2: sku=C3']",
+      "test_code": "validate([{\"sku\": \"Z\", \"qty\": 5}])\ntry:\n    validate([{\"sku\": \"A\", \"qty\": 1}, {\"sku\": \"B\", \"qty\": 0}, {\"sku\": \"C\", \"qty\": -4}])\nexcept ExceptionGroup as _eg:\n    assert _eg.message == \"invalid rows\"\n    assert [_e.__notes__ for _e in _eg.exceptions] == [[\"row 1: sku=B\"], [\"row 2: sku=C\"]], \"each error needs one note naming its row and sku\"\n    assert all(str(_e) == \"qty must be positive\" for _e in _eg.exceptions)\nelse:\n    raise AssertionError(\"bad rows must raise an ExceptionGroup\")\n"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "add_note",
+      "exception_notes",
+      "error_context",
+      "python_311"
+    ],
+    "concepts_required": [
+      "exception_groups_basics",
+      "enumerate"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "python_modern",
+    "path_memberships": [
+      "python_modern"
+    ]
+  },
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "After `e = KeyError('k'); e.add_note('a'); e.add_note('b')`, what is `e.__notes__`?"
+      },
+      "options": {
+        "en": [
+          "'ab'",
+          "['a', 'b']",
+          "['b']",
+          "AttributeError, because notes must be declared first"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What is the main advantage of `err.add_note('row 3')` over `raise ValueError(f'row 3: {err}') from err`?"
+      },
+      "options": {
+        "en": [
+          "It is faster",
+          "The original exception and its message stay exactly as they were",
+          "It hides the traceback",
+          "It converts the error to a warning"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What happens with `ValueError('x').add_note(42)`?"
+      },
+      "options": {
+        "en": [
+          "The note becomes the string '42'",
+          "It raises TypeError, because the note must be a string",
+          "It is silently ignored",
+          "It raises ValueError"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "uth_example": "def load(order_id, qty):\n    if qty <= 0:\n        raise ValueError(\"qty must be positive\")\n    return qty\n\nproblems = []\nfor order_id, qty in [(1041, 3), (1042, 0), (1043, -2)]:\n    try:\n        load(order_id, qty)\n    except ValueError as err:\n        err.add_note(f\"order {order_id}\")\n        err.add_note(f\"qty received: {qty}\")\n        problems.append(err)\n\nfor err in problems:\n    print(type(err).__name__, \"-\", err)\n    for note in err.__notes__:\n        print(\"   note:\", note)\n\ntry:\n    raise ExceptionGroup(\"orders\", problems)\nexcept* ValueError as grp:\n    print(\"handled\", len(grp.exceptions), \"errors, first notes:\", grp.exceptions[0].__notes__)\n",
+  "under_the_hood": {
+    "summary": "add_note() stores extra strings in an exception's __notes__ list, leaving its type and message untouched, and the traceback printer shows each note beneath the error.",
+    "steps": [
+      {
+        "title": "Context lives far from the failure",
+        "body": "The function that detects a bad value rarely knows which file, order or row it was called for. The caller does. Before 3.11 you could only wrap the error in a new one or rewrite its message to pass that context along."
+      },
+      {
+        "title": "A list on the exception object",
+        "body": "add_note(text) appends text to the exception's __notes__ attribute, creating the list on first use. It checks that text is a string and raises TypeError otherwise. Nothing else on the exception changes: same class, same args, same traceback.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "err",
+                "values": [
+                  "ValueError('qty must be positive')"
+                ]
+              },
+              {
+                "variable": "err.__notes__ (after 1st call)",
+                "values": [
+                  "['order 1042']"
+                ]
+              },
+              {
+                "variable": "err.__notes__ (after 2nd call)",
+                "values": [
+                  "['order 1042', 'qty received: 0']"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Handlers still match",
+        "body": "Because the exception object is the same one, every except ValueError clause up the stack still catches it and code that reads str(err) still sees the original message. A rewritten message or a second exception in a chain can break both."
+      },
+      {
+        "title": "The traceback prints the notes",
+        "body": "When an uncaught exception is shown, each entry of __notes__ is printed on its own line directly after the error line. In your own handlers you can read the same list and log it as structured data.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "ValueError - qty must be positive",
+              "   note: order 1042",
+              "   note: qty received: 0"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Notes inside a group",
+        "body": "Each exception inside an ExceptionGroup keeps its own notes, and the group can carry notes too. Tag every error where it is found, collect them, raise once, and the handler still sees which row each one came from.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "detect error"
+              },
+              {
+                "label": "add_note(row info)",
+                "detail": "same object"
+              },
+              {
+                "label": "append to list"
+              },
+              {
+                "label": "ExceptionGroup",
+                "detail": "notes preserved"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Use add_note() to say where and why an error happened without changing what it is. The exception keeps its type and message, tracebacks show the notes, and each error in a group keeps its own."
+  }
+}
