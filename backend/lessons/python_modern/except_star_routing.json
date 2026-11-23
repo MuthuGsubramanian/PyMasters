@@ -1,0 +1,281 @@
+{
+  "id": "except_star_routing",
+  "topic": "except_star_routing",
+  "track": "python_modern",
+  "module": "python311_errors",
+  "order": 7,
+  "title": {
+    "en": "except*: Handling Each Kind of Error in a Group"
+  },
+  "description": {
+    "en": "except* matches by type inside an ExceptionGroup, runs several handlers for one raise, and automatically re-raises whatever nobody handled. Learn the rules and the gotchas."
+  },
+  "xp_reward": 90,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## Many Errors, Many Handlers\n\n\"Plain `except ValueError:` catches the first matching error and stops,\" Vaathiyaar says. \"With a group of mixed errors that is the wrong tool. Python 3.11 added **`except*`** (read it 'except star'): it looks *inside* the group and can run **more than one handler** for a single `raise`.\"\n\n### How It Routes\n\n```python\ntry:\n    raise ExceptionGroup(\"batch\", [ValueError(\"a\"), ValueError(\"b\"), TypeError(\"c\")])\nexcept* ValueError as eg:\n    print(\"values:\", len(eg.exceptions))   # 2\nexcept* TypeError as eg:\n    print(\"types:\", len(eg.exceptions))    # 1\n```\n\nEach `except*` clause receives a **sub-group** holding just the errors that match its type, bound to the name after `as`. Here both clauses run. Anything **no clause matched** is bundled into a new group and **re-raised automatically** when the `try` finishes, so nothing is silently lost.\n\n### Rules Worth Memorising\n\n- A single, non-group exception that hits `except*` is wrapped into a group first, so `eg.exceptions` always works.\n- You cannot mix `except` and `except*` in the same `try`.\n- `return`, `break` and `continue` are a **SyntaxError** inside an `except*` block. Record results in a variable and return after the `try`.\n- Each error is handled by the **first** matching clause only, so order specific types before broad ones.\n\n> **Vaathiyaar's note:** the automatic re-raise is the safety net. If you only handle `ValueError`, a stray `KeyError` in the group still surfaces to your caller.\n\nToday you write `summarize(group)`: count the `ValueError`s and `TypeError`s using `except*`, and let everything else propagate."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "route_errors",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ov",
+      "nodes": [
+        {
+          "label": "except*",
+          "children": [
+            "matches inside a group",
+            "several handlers can run",
+            "unmatched errors re-raised",
+            "no return/break/continue inside"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cs",
+      "steps": [
+        {
+          "line": "raise group",
+          "highlight": "raise group",
+          "explanation": {
+            "en": "Raise the whole bundle"
+          }
+        },
+        {
+          "line": "except* ValueError as eg:",
+          "highlight": "except* ValueError",
+          "explanation": {
+            "en": "eg is a sub-group of only the ValueErrors"
+          }
+        },
+        {
+          "line": "counts['ValueError'] = len(eg.exceptions)",
+          "highlight": "len(eg.exceptions)",
+          "explanation": {
+            "en": "Count the errors this clause received"
+          }
+        },
+        {
+          "line": "except* TypeError as eg:",
+          "highlight": "except* TypeError",
+          "explanation": {
+            "en": "A second clause can run for the same raise"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "except",
+        "items": [
+          "first matching clause wins",
+          "one handler per raise",
+          "needs a single exception"
+        ]
+      },
+      "right": {
+        "title": "except*",
+        "items": [
+          "splits the group by type",
+          "several handlers can run",
+          "leftovers re-raised for you"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "t",
+      "lines": [
+        "summarize(batch)",
+        "{'ValueError': 2, 'TypeError': 1}"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `summarize(group)`. Inside a `try`, `raise group`. Use `except* ValueError as eg:` to store `counts[\"ValueError\"] = len(eg.exceptions)` and `except* TypeError as eg:` to store `counts[\"TypeError\"] = len(eg.exceptions)`. Return `counts` after the `try` (not inside an `except*` block). Errors of any other type must not be handled, so they propagate. The starter prints the result for two ValueErrors and one TypeError (expected: `{'ValueError': 2, 'TypeError': 1}`)."
+      },
+      "starter_code": "def summarize(group):\n    \"\"\"Count the ValueErrors and TypeErrors inside an ExceptionGroup using except*.\n\n    Any other kind of error must NOT be swallowed: let it propagate (still inside a group).\n    \"\"\"\n    counts = {}\n    try:\n        raise group\n    # except* ValueError as eg: counts[\"ValueError\"] = len(eg.exceptions)\n    # except* TypeError as eg: ...\n    finally:\n        pass\n    return counts\n\nbatch = ExceptionGroup(\"batch\", [ValueError(\"a\"), ValueError(\"b\"), TypeError(\"c\")])\nprint(summarize(batch))\n",
+      "hints": {
+        "en": [
+          "Replace the commented lines with real except* clauses; remove the try/finally placeholder",
+          "except* ValueError as eg: counts['ValueError'] = len(eg.exceptions)",
+          "Do not return inside an except* block; return counts at the end of the function"
+        ]
+      },
+      "expected_output": "{'ValueError': 2, 'TypeError': 1}",
+      "test_code": "assert summarize(ExceptionGroup(\"g\", [ValueError(\"a\"), ValueError(\"b\"), TypeError(\"c\")])) == {\"ValueError\": 2, \"TypeError\": 1}\nassert summarize(ExceptionGroup(\"g\", [TypeError(\"x\")])) == {\"TypeError\": 1}\ntry:\n    summarize(ExceptionGroup(\"g\", [ValueError(\"a\"), KeyError(\"k\"), OSError(\"o\")]))\nexcept ExceptionGroup as _eg:\n    assert sorted(type(_e).__name__ for _e in _eg.exceptions) == [\"KeyError\", \"OSError\"], \"unhandled types must propagate\"\nelse:\n    raise AssertionError(\"errors that no except* clause handles must propagate\")\n"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "except_star",
+      "exception_routing",
+      "auto_reraise",
+      "python_311"
+    ],
+    "concepts_required": [
+      "exception_groups_basics",
+      "dictionaries"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "python_modern",
+    "path_memberships": [
+      "python_modern"
+    ]
+  },
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does `except*` do that plain `except` does not?"
+      },
+      "options": {
+        "en": [
+          "It catches errors faster",
+          "It splits an ExceptionGroup by type and can run several handlers for one raise",
+          "It catches every exception including KeyboardInterrupt",
+          "It lets you use return inside the handler"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A group holds `[ValueError, KeyError]`. Only `except* ValueError:` is written. What happens when the try finishes?"
+      },
+      "options": {
+        "en": [
+          "The KeyError is silently dropped",
+          "A new group containing the KeyError is re-raised",
+          "The ValueError handler runs twice",
+          "A SyntaxError is raised"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which line is a SyntaxError in Python 3.11?"
+      },
+      "options": {
+        "en": [
+          "except* ValueError as eg:\n    log = len(eg.exceptions)",
+          "except* (ValueError, TypeError):\n    pass",
+          "except* KeyError:\n    return 0",
+          "try: ...\nexcept* OSError as eg:\n    print(eg)"
+        ]
+      },
+      "correct": 2
+    }
+  ],
+  "uth_example": "def classify(group):\n    notes = []\n    try:\n        raise group\n    except* ValueError as eg:\n        notes.append(f\"{len(eg.exceptions)} value problem(s)\")\n    except* (KeyError, IndexError) as eg:\n        notes.append(f\"{len(eg.exceptions)} lookup problem(s)\")\n    return notes\n\nmixed = ExceptionGroup(\"mixed\", [ValueError(\"a\"), KeyError(\"k\"), IndexError(\"i\"), ValueError(\"b\")])\nprint(classify(mixed))\n\ntry:\n    classify(ExceptionGroup(\"odd\", [ValueError(\"a\"), OSError(\"disk\")]))\nexcept ExceptionGroup as leftover:\n    print(\"propagated:\", [type(e).__name__ for e in leftover.exceptions])\n",
+  "under_the_hood": {
+    "summary": "except* inspects an ExceptionGroup, hands each clause a sub-group of the errors matching its type, can run several clauses for one raise, and re-raises any errors that no clause handled.",
+    "steps": [
+      {
+        "title": "Plain except sees one exception",
+        "body": "An ordinary except clause tests the raised object against a type. An ExceptionGroup is one object, so except ValueError would not match a group of ValueErrors: the match is on the group itself, not on what it holds."
+      },
+      {
+        "title": "except* looks inside",
+        "body": "When the raised object is a group, Python walks its members for each except* clause in order. For a clause with type T it calls split(T) on what is left: the matching part becomes a sub-group bound to the as-name, and the rest moves on to the next clause.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "group of 4 errors"
+              },
+              {
+                "label": "except* ValueError",
+                "detail": "takes its matches"
+              },
+              {
+                "label": "except* KeyError",
+                "detail": "takes its matches"
+              },
+              {
+                "label": "leftovers",
+                "detail": "re-raised as a group"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Handlers run independently",
+        "body": "Because each clause only sees its slice, several can run for one raise: in the lesson example both the ValueError clause and the TypeError clause execute. An error is claimed by the first clause whose type matches, so it is never handled twice.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "group",
+                "values": [
+                  "ValueError a",
+                  "ValueError b",
+                  "TypeError c"
+                ]
+              },
+              {
+                "variable": "except* ValueError",
+                "values": [
+                  "gets a, b"
+                ]
+              },
+              {
+                "variable": "except* TypeError",
+                "values": [
+                  "gets c"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Unhandled errors are never lost",
+        "body": "After the last clause, whatever remains is wrapped in a group of the same shape and raised again. Your caller therefore still sees a KeyError you chose not to handle. A plain exception that matches is wrapped into a group first, so eg.exceptions always exists."
+      },
+      {
+        "title": "Why return and break are banned",
+        "body": "An except* block may run more than once and the interpreter must still re-raise the leftovers afterwards. Jumping out with return, break or continue would skip that step, so Python 3.11 rejects them at compile time. Record the result in a variable and act after the try.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "['2 value problem(s)', '2 lookup problem(s)']",
+              "propagated: ['OSError']",
+              "SyntaxError: 'break', 'continue' and 'return' cannot appear in an except* block"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "Use except* when the thing you catch is a group. Each clause gets a typed sub-group, several can run for one raise, unhandled errors keep propagating, and you finish with results kept in variables rather than return."
+  }
+}

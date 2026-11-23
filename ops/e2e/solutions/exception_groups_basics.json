@@ -1,0 +1,11 @@
+{
+  "lesson_id": "exception_groups_basics",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "def parse_all(items):\n    \"\"\"Parse every string to int. If any fail, raise ONE ExceptionGroup holding all the failures.\"\"\"\n    numbers, failures = [], []\n    for item in items:\n        try:\n            numbers.append(int(item))\n        except ValueError:\n            failures.append(ValueError(f\"bad item: {item!r}\"))\n    if failures:\n        raise ExceptionGroup(\"bad items\", failures)\n    return numbers\n\ntry:\n    parse_all([\"4\", \"x\", \"9\", \"y\"])\nexcept ExceptionGroup as eg:\n    print(len(eg.exceptions))\n    print(*[str(e) for e in eg.exceptions], sep=\"\\n\")\n",
+      "verified_output": "2\nbad item: 'x'\nbad item: 'y'",
+      "source": "claude 2026-11-23, verified with grade_submission"
+    }
+  ]
+}

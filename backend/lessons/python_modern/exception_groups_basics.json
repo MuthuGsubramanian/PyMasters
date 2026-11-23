@@ -1,0 +1,271 @@
+{
+  "id": "exception_groups_basics",
+  "topic": "exception_groups_basics",
+  "track": "python_modern",
+  "module": "python311_errors",
+  "order": 6,
+  "title": {
+    "en": "ExceptionGroup: Raising Many Errors at Once"
+  },
+  "description": {
+    "en": "Python 3.11 can raise several unrelated errors as one ExceptionGroup. Learn to collect failures instead of stopping at the first, and to inspect, split and filter the bundle."
+  },
+  "xp_reward": 90,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## One Error Is Not Always the Whole Story\n\n\"A normal `raise` carries exactly one exception,\" Vaathiyaar says. \"That is fine when one thing goes wrong. But validate a form with five bad fields, or run ten tasks at once and watch three fail — which error do you raise? Before Python 3.11 you picked one and silently dropped the rest. Now you can raise **all of them together**.\"\n\n### The ExceptionGroup\n\n```python\nerrors = [ValueError(\"bad age\"), TypeError(\"name must be str\")]\nraise ExceptionGroup(\"form errors\", errors)\n```\n\nAn `ExceptionGroup` takes a **message** and a **non-empty list of exceptions**. It is itself an exception, so it can be raised, caught and passed around. You reach the bundled errors through `.exceptions` and the label through `.message`.\n\n```python\neg = ExceptionGroup(\"batch\", [ValueError(\"a\"), ValueError(\"b\"), TypeError(\"c\")])\nprint(len(eg.exceptions))   # 3\nprint(eg.message)           # batch\n```\n\n### Looking Inside Without Raising\n\nTwo methods let you filter a group by exception type:\n\n- `eg.subgroup(ValueError)` returns a **new group** with only the matching errors (or `None` if none match).\n- `eg.split(ValueError)` returns **two groups**: the matches and the leftovers.\n\nBoth keep the original message, and both return groups (never bare exceptions), even when only one error matches.\n\n> **Vaathiyaar's note:** the constructor is strict. An empty list raises `ValueError: second argument (exceptions) must be a non-empty sequence`, and every item must be an exception object, not a string.\n\n### The Collect-Then-Raise Pattern\n\nThe everyday use is a loop that **keeps going after a failure**, gathers the errors, and raises once at the end. Today you build `parse_all(items)` that converts strings to ints, collects every failure, and raises a single `ExceptionGroup` named `\"bad items\"`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "error_bundle",
+      "duration_ms": 4000
+    },
+    {
+      "type": "ConceptMap",
+      "id": "ov",
+      "nodes": [
+        {
+          "label": "ExceptionGroup",
+          "children": [
+            "message + list of errors",
+            "is itself an Exception",
+            ".exceptions holds the errors",
+            "split() / subgroup() filter by type"
+          ]
+        }
+      ],
+      "duration_ms": 3000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "cs",
+      "steps": [
+        {
+          "line": "failures.append(ValueError(...))",
+          "highlight": "failures.append",
+          "explanation": {
+            "en": "Keep the error instead of raising it right away"
+          }
+        },
+        {
+          "line": "if failures:",
+          "highlight": "if failures",
+          "explanation": {
+            "en": "After the loop, did anything go wrong?"
+          }
+        },
+        {
+          "line": "raise ExceptionGroup('bad items', failures)",
+          "highlight": "ExceptionGroup",
+          "explanation": {
+            "en": "Raise all the failures as one object"
+          }
+        },
+        {
+          "line": "except ExceptionGroup as eg:",
+          "highlight": "except ExceptionGroup",
+          "explanation": {
+            "en": "Catch the bundle; eg.exceptions lists every error"
+          }
+        }
+      ],
+      "duration_ms": 5000
+    },
+    {
+      "type": "ComparisonPanel",
+      "id": "cmp",
+      "left": {
+        "title": "Plain raise",
+        "items": [
+          "one exception",
+          "first failure stops the loop",
+          "other errors are never seen"
+        ]
+      },
+      "right": {
+        "title": "ExceptionGroup",
+        "items": [
+          "many exceptions in one",
+          "loop finishes first",
+          "caller sees every failure"
+        ]
+      },
+      "duration_ms": 4000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "t",
+      "lines": [
+        "parse_all(['4','x','9','y'])",
+        "len(eg.exceptions) -> 2",
+        "bad item: 'x'",
+        "bad item: 'y'"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "p",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "Implement `parse_all(items)`. Convert each string with `int()`. For every item that fails, create `ValueError(f\"bad item: {item!r}\")` and keep it (do not stop). After the loop, if there were failures, `raise ExceptionGroup(\"bad items\", failures)`; otherwise return the list of ints. The starter code calls it with `[\"4\", \"x\", \"9\", \"y\"]` and prints the number of errors followed by each message (expected: `2`, `bad item: 'x'`, `bad item: 'y'`)."
+      },
+      "starter_code": "def parse_all(items):\n    \"\"\"Parse every string to int. If any fail, raise ONE ExceptionGroup holding all the failures.\"\"\"\n    # 1. loop over items, try int(item), collect ValueError(f\"bad item: {item!r}\") for the failures\n    # 2. if there are failures: raise ExceptionGroup(\"bad items\", failures)\n    # 3. otherwise return the list of ints\n    pass\n\ntry:\n    parse_all([\"4\", \"x\", \"9\", \"y\"])\nexcept ExceptionGroup as eg:\n    print(len(eg.exceptions))\n    print(*[str(e) for e in eg.exceptions], sep=\"\\n\")\n",
+      "hints": {
+        "en": [
+          "Keep two lists inside the function: numbers and failures",
+          "Wrap int(item) in try/except ValueError and append a new ValueError(f\"bad item: {item!r}\") to failures",
+          "After the loop: if failures: raise ExceptionGroup(\"bad items\", failures); else return numbers"
+        ]
+      },
+      "expected_output": "2\nbad item: 'x'\nbad item: 'y'",
+      "test_code": "assert parse_all([\"1\", \"2\"]) == [1, 2], \"parse_all should return the ints when everything parses\"\ntry:\n    parse_all([\"1\", \"a\", \"3\", \"b\"])\nexcept ExceptionGroup as _eg:\n    assert _eg.message == \"bad items\", \"the group's message should be 'bad items'\"\n    assert [str(_e) for _e in _eg.exceptions] == [\"bad item: 'a'\", \"bad item: 'b'\"], \"one error per bad item, in order\"\n    assert all(isinstance(_e, ValueError) for _e in _eg.exceptions)\nelse:\n    raise AssertionError(\"parse_all should raise an ExceptionGroup when items fail to parse\")\n"
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "exception_group",
+      "collect_then_raise",
+      "split_subgroup",
+      "python_311"
+    ],
+    "concepts_required": [
+      "exceptions_basics",
+      "lists",
+      "loops"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 25,
+    "category": "python_modern",
+    "path_memberships": [
+      "python_modern"
+    ]
+  },
+  "generated": false,
+  "quiz": [
+    {
+      "q": {
+        "en": "What does this print?\neg = ExceptionGroup('batch', [ValueError('a'), TypeError('b')])\nprint(len(eg.exceptions), eg.message)"
+      },
+      "options": {
+        "en": [
+          "2 batch",
+          "1 batch",
+          "2 ValueError",
+          "It raises, because ExceptionGroup needs exactly one error"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "What happens with `ExceptionGroup('x', [])`?"
+      },
+      "options": {
+        "en": [
+          "It creates an empty group that matches nothing",
+          "It raises ValueError: the list of exceptions must be non-empty",
+          "It returns None",
+          "It raises TypeError because [] is not a string"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "`eg = ExceptionGroup('batch', [ValueError('a'), TypeError('b'), ValueError('c')])`. What does `eg.split(ValueError)` return?"
+      },
+      "options": {
+        "en": [
+          "A list of the two ValueError objects",
+          "Two groups: one with the two ValueErrors, one with the TypeError",
+          "One group with the ValueErrors; the TypeError is discarded",
+          "The first ValueError only"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "uth_example": "checks = [(\"age\", \"x\"), (\"score\", \"-3\"), (\"rank\", \"2\"), (\"level\", \"\")]\nproblems = []\nfor name, raw in checks:\n    try:\n        value = int(raw)\n        if value < 0:\n            raise ValueError(f\"{name} must not be negative\")\n    except ValueError as exc:\n        problems.append(exc)\n\nif problems:\n    group = ExceptionGroup(\"input problems\", problems)\n    print(group)\n    first, rest = group.split(lambda e: \"negative\" in str(e))\n    print(\"negative:\", [str(e) for e in first.exceptions])\n    print(\"other:\", len(rest.exceptions))\n",
+  "under_the_hood": {
+    "summary": "An ExceptionGroup is an exception that wraps a non-empty list of other exceptions, letting code report every failure from a batch at once instead of only the first one it hit.",
+    "steps": [
+      {
+        "title": "Why one exception is not enough",
+        "body": "A raise unwinds the stack with a single exception object. If ten tasks run side by side and three fail, or a validator finds five bad fields, one exception can only describe one of them. Python 3.11 (PEP 654) added a type that can hold many."
+      },
+      {
+        "title": "A group is an exception that holds exceptions",
+        "body": "ExceptionGroup(message, exceptions) stores the message in .message and a tuple of the wrapped errors in .exceptions. It subclasses Exception, so raise, try and except treat it like any other error. Nested groups are allowed, and the constructor rejects an empty list or non-exception items.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "Plain exception",
+              "code": "raise ValueError('bad age')\n# one error, one message"
+            },
+            "right": {
+              "label": "ExceptionGroup",
+              "code": "raise ExceptionGroup('form', [\n    ValueError('bad age'),\n    TypeError('name'),\n])"
+            }
+          }
+        }
+      },
+      {
+        "title": "Collect, then raise once",
+        "body": "The usual shape is a loop that catches each failure, appends it to a list and carries on. After the loop, if the list is not empty, raise one group. Every item is still processed, and the caller learns about every problem in a single pass.",
+        "visual": {
+          "type": "FlowArrow",
+          "props": {
+            "stages": [
+              {
+                "label": "try item 1",
+                "detail": "ok"
+              },
+              {
+                "label": "try item 2",
+                "detail": "fails, append error"
+              },
+              {
+                "label": "try item 3",
+                "detail": "fails, append error"
+              },
+              {
+                "label": "raise ExceptionGroup",
+                "detail": "after the loop"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "split and subgroup filter without raising",
+        "body": "subgroup(cond) returns a new group with only the errors that match cond, or None if nothing matches. split(cond) returns a pair (matching, rest). The condition can be an exception type, a tuple of types or a function. Results are always groups, even for a single error, and they keep the original message."
+      },
+      {
+        "title": "What it looks like in a run",
+        "body": "Printing a group shows only its message and the count, for example input problems (3 sub-exceptions). The individual errors are in .exceptions, and an uncaught group prints a traceback tree with every sub-exception under it.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "output": [
+              "input problems (3 sub-exceptions)",
+              "negative: ['score must not be negative']",
+              "other: 2"
+            ]
+          }
+        }
+      }
+    ],
+    "takeaway": "ExceptionGroup lets you finish a batch and report every failure at once. Build it with a message and a non-empty list, read it through .exceptions, and filter it with split() or subgroup()."
+  }
+}
