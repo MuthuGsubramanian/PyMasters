@@ -64,15 +64,20 @@ def build_linkedin_presenter_pack(
     out_dir: Path,
     mode: str = "hybrid",
     aspect: str = "4:5",
+    avatar: str = "auto",
 ) -> dict[str, Any]:
     """Generate a presenter-anchored LinkedIn visual card + metadata bundle alongside the LinkedIn loop."""
+    import random
+
     mod = _load_generator_module()
+    chosen_avatar = random.choice(("headshot", "fullbody")) if avatar == "auto" else avatar
     return mod.generate_post_pack(
         platform="linkedin",
         topic=topic,
         code=code or "",
         mode=mode,
         aspect=aspect,
+        avatar=chosen_avatar,
         out_dir=Path(out_dir) / "presenter_linkedin_pack",
     )
 

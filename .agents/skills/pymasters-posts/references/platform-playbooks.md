@@ -20,7 +20,7 @@ Always load exact counts dynamically via `python .agents/skills/pymasters-posts/
 ### LinkedIn (`1080×1350` 4:5 Portrait or `1200×627` Landscape)
 - **Structure:** Concrete engineering bottleneck or plain-English hook (≤ 110 chars) → single clear Python/AI mental model + AST-verified runnable snippet (when technical) → natural bridge to how **Vaar** or **"Watch It Run"** makes the concept click → clean CTA (`https://pymasters.net` + `@PyMasters` mention + 3 crisp hashtags).
 - **Formatting:** Plain text (LinkedIn displays markdown `**` and ```` ``` ```` literally — never emit raw markdown in LinkedIn copy), short scannable paragraphs, zero hype words (`game-changer`, `unlock`, `delve`, `supercharge`).
-- **Visual Anchor:** `avatar-headshot.jpg` (studio close-up) for teaching cards or `avatar-fullbody.jpg` for product/launch banners, composited with the PYM crest and crisp code/metric cards.
+- **Visual Cadence (Owner Policy):** Feature the founder's photo **at most once per week** on LinkedIn (`avatar-headshot.jpg` or `avatar-fullbody.jpg` composited with the PYM crest and crisp code/metric cards). All other weekly LinkedIn posts stay randomized across enterprise animated GIF themes and layouts.
 
 ### Reddit (`1200×627` Banner Optional, Text-First)
 - **Structure:** Peer-to-peer developer tone, transparent about architecture and tradeoffs, zero corporate hype. Lead with the working Python code or concrete technical lesson, explain the mental model cleanly, and share `https://pymasters.net` once at the end as an open, free-to-start resource.
@@ -30,5 +30,6 @@ Always load exact counts dynamically via `python .agents/skills/pymasters-posts/
 - **Motion Visual:** Use `avatar-stage.gif` via FFmpeg (`9:16` MP4/GIF loop) or `hybrid` presenter visual with bold 2–4 word overlay.
 
 ### YouTube Thumbnail + Description (`1280×720` 16:9)
-- **Thumbnail:** High-contrast close-up presenter expression (`avatar-headshot.jpg`), **2–4 word visual hook max**, optional 3–5 line syntax-highlighted code accent, and subtle PYM crest. Zero cluttered paragraphs on the thumbnail.
+- **Visual Cadence (Owner Policy):** Feature the founder's image (`avatar-headshot.jpg`) on **at most one YouTube Short per week**; all other twice-daily Shorts stay randomized across the Google Vids Veo 3 AI presenter pool and standard topic/code thumbnails.
+- **Thumbnail (When Founder Image Is Selected):** High-contrast close-up presenter expression (`avatar-headshot.jpg`), **2–4 word visual hook max**, optional 3–5 line syntax-highlighted code accent, and subtle PYM crest. Zero cluttered paragraphs on the thumbnail.
 - **Description:** Plain-English summary + exact chapter timestamps (for Longs) + live lesson URL + `https://pymasters.net` + `https://t.me/boost/PyMasterscommunity`.

@@ -8,7 +8,7 @@ description: Apply whenever generating or editing PyMasters social media posts, 
 When creating, editing, or reviewing any PyMasters promotional copy, social post, thumbnail, or marketing banner:
 
 1. **Load the Skill First:** Activate and follow `.agents/skills/pymasters-posts/SKILL.md`, `references/presenter-spec.md`, and `references/platform-playbooks.md`.
-2. **Anchor Every Presenter Visual:** Never generate a human presenter face from text prompts alone. Always ground human visuals strictly on `.agents/skills/pymasters-posts/assets/avatar-headshot.jpg`, `avatar-fullbody.jpg`, or `avatar-stage.gif` via `scripts/generate_post_pack.py`.
+2. **Weekly Founder-Image Cadence & Anchor Rule:** Do NOT put the founder's image on every LinkedIn post or YouTube Short. Feature the founder's image **at most once per week per channel** (1 LinkedIn post/week and 1 YouTube Short/week); all remaining posts/Shorts must use randomized enterprise visual themes/diagrams (LinkedIn) and randomized AI presenters/topic visuals (YouTube Shorts). Whenever the founder's image *is* included (weekly slot or explicit request), never generate their face from text prompts alone — always anchor strictly on `.agents/skills/pymasters-posts/assets/avatar-headshot.jpg`, `avatar-fullbody.jpg`, or `avatar-stage.gif` via `scripts/generate_post_pack.py`.
 3. **Live Metrics Only:** Fetch current track, lesson, path, concept, and locale counts dynamically from `definitions.py` / `generate_post_pack.py --stats`; never cite stale hardcoded numbers.
 4. **AST-Verified Python Code:** Validate every Python snippet with `ast.parse()` before embedding it in post copy or visual overlays.
 5. **Accurate Brand Positioning & CTAs:**

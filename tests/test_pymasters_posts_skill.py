@@ -214,3 +214,90 @@ def test_socialbot_opt_in_presenter_pack_integration(tmp_path: Path) -> None:
     )
     assert Path(tg_res["visual_path"]).is_file()
     assert "https://t.me/boost/PyMasterscommunity" in Path(tg_res["copy_path"]).read_text(encoding="utf-8")
+
+
+def test_weekly_founder_avatar_once_per_week_policy_and_linkedin_publish(monkeypatch) -> None:
+    from datetime import datetime, timedelta, timezone
+
+    from socialbot import config, pipeline
+    from socialbot.publish import linkedin
+
+    monkeypatch.setattr(config, "USE_PRESENTER_AVATAR", False)
+    monkeypatch.setattr(config, "FOUNDER_AVATAR_WEEKLY", True)
+    monkeypatch.setattr(config, "FOUNDER_AVATAR_INTERVAL_DAYS", 7)
+
+    fake_rows: list[dict] = []
+
+    class _FakeStore:
+        def items(self, status=None, kind=None, limit=100):
+            return [r for r in fake_rows if (kind is None or r["kind"] == kind)][:limit]
+
+    monkeypatch.setattr(pipeline, "store", _FakeStore())
+
+    day0 = datetime(2026, 11, 23, 10, 0, tzinfo=timezone.utc)
+    # 1) Fresh week -> both linkedin and short allow 1 founder-image item independently
+    assert pipeline.should_use_founder_avatar("linkedin", now=day0) is True
+    assert pipeline.should_use_founder_avatar("short", now=day0) is True
+
+    # 2) Rejected/failed items must NOT consume the weekly founder slot
+    fake_rows.append({
+        "id": 1,
+        "kind": "linkedin",
+        "status": "failed",
+        "created_at": day0.isoformat(),
+        "media": {"used_founder_avatar": True, "presenter_card": "/tmp/failed.png"},
+    })
+    assert pipeline.should_use_founder_avatar("linkedin", now=day0 + timedelta(hours=1)) is True
+
+    # 3) Once 1 LinkedIn post uses the founder image, the rest of the 7-day week stays randomized (False)
+    fake_rows.append({
+        "id": 2,
+        "kind": "linkedin",
+        "status": "published",
+        "created_at": day0.isoformat(),
+        "media": {"used_founder_avatar": True, "presenter_card": "/tmp/founder.png", "gif": "/tmp/loop.gif"},
+    })
+    assert pipeline.should_use_founder_avatar("linkedin", now=day0 + timedelta(hours=2)) is False
+    assert pipeline.should_use_founder_avatar("linkedin", now=day0 + timedelta(days=6, hours=23)) is False
+    # Shorts channel is tracked independently (still eligible for its own 1/week founder slot)
+    assert pipeline.should_use_founder_avatar("short", now=day0 + timedelta(days=1)) is True
+
+    # 4) Once 1 Short uses the founder image, remaining Shorts in the same 7-day week stay randomized
+    fake_rows.append({
+        "id": 3,
+        "kind": "short",
+        "status": "rendered",
+        "created_at": (day0 + timedelta(days=1)).isoformat(),
+        "media": {"used_founder_avatar": True, "thumbnail": "/tmp/thumb.jpg"},
+    })
+    assert pipeline.should_use_founder_avatar("short", now=day0 + timedelta(days=2)) is False
+    assert pipeline.should_use_founder_avatar("short", now=day0 + timedelta(days=7)) is False
+
+    # 5) After 7 full days, the weekly quota resets cleanly for each channel
+    assert pipeline.should_use_founder_avatar("linkedin", now=day0 + timedelta(days=7, minutes=1)) is True
+    assert pipeline.should_use_founder_avatar("short", now=day0 + timedelta(days=8, minutes=1)) is True
+
+    # 6) LinkedIn publisher uploads presenter_card ONLY for the weekly founder post, and gif for all others
+    calls: list[tuple[str, str]] = []
+    monkeypatch.setattr(linkedin, "_upload_image", lambda p: calls.append(("image", p)) or "urn:li:image:1")
+    monkeypatch.setattr(linkedin, "_post", lambda txt, urn, title: calls.append(("post", urn)) or "urn:li:share:1")
+    monkeypatch.setattr(linkedin, "active_profile", lambda: "org")
+
+    weekly_item = {
+        "topic": "Recursion",
+        "draft": {"post": "Hook https://pymasters.net", "hashtags": ["#Python"], "animation": {"title": "Recursion"}},
+        "media": {"gif": "/tmp/loop.gif", "presenter_card": "/tmp/founder.png", "used_founder_avatar": True},
+    }
+    res_weekly = linkedin.publish(weekly_item)
+    assert res_weekly["media"] == "presenter_card"
+    assert ("image", "/tmp/founder.png") in calls
+
+    calls.clear()
+    regular_item = {
+        "topic": "Generators",
+        "draft": {"post": "Hook https://pymasters.net", "hashtags": ["#Python"], "animation": {"title": "Generators"}},
+        "media": {"gif": "/tmp/loop.gif", "used_founder_avatar": False},
+    }
+    res_regular = linkedin.publish(regular_item)
+    assert res_regular["media"] == "gif"
+    assert ("image", "/tmp/loop.gif") in calls

@@ -55,5 +55,8 @@ Confirm every output satisfies:
 - Channel-appropriate CTAs (`https://pymasters.net` everywhere; `https://t.me/boost/PyMasterscommunity` for Telegram, Shorts/YouTube descriptions, and community announcements).
 - Zero Hindi/Hinglish words, zero unverified claims, zero raw markdown in LinkedIn copy, and zero leaked secrets inside `.agents/skills/pymasters-posts/`.
 
-## Step 5: Optional `socialbot` Opt-In Integration
-Automated `socialbot` runs support presenter-anchored thumbnails and visuals via `PMSOCIAL_USE_PRESENTER_AVATAR=1` (`config.USE_PRESENTER_AVATAR`) or CLI flag `--presenter-avatar` without disturbing existing systemd timers or the 80°C thermal guard.
+## Step 5: `socialbot` Once-Per-Week Founder-Image Cadence
+Automated `socialbot` runs enforce the owner's weekly cadence automatically (`PMSOCIAL_FOUNDER_AVATAR_WEEKLY=1`, `PMSOCIAL_FOUNDER_AVATAR_DAYS=7`):
+- **At most once every 7 days per channel** (1 LinkedIn post/week + 1 YouTube Short/week) includes the founder's reference avatar (`media.used_founder_avatar = true`).
+- **All remaining posts and Shorts** in that 7-day window stay randomized — randomized enterprise GIF themes/layouts on LinkedIn and randomized Google Vids Veo 3 AI presenters + standard thumbnails on YouTube Shorts.
+- Use `PMSOCIAL_USE_PRESENTER_AVATAR=1` or `--presenter-avatar` only when explicitly overriding a single manual run, without disturbing existing systemd timers or the 80°C thermal guard.

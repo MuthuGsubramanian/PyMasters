@@ -1,7 +1,7 @@
 """Produce one piece of content end to end: pick lesson -> write -> gate (rewrite up to MAX_ATTEMPTS) -> render."""
 import logging
 import random
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from socialbot import briefs, config, llm, quality, sources, store
@@ -116,11 +116,49 @@ def _fmt_ts(s):
     return f"{s // 60}:{s % 60:02d}"
 
 
+def should_use_founder_avatar(kind: str, now: datetime | None = None) -> bool:
+    """Owner policy (2026-11-23): include the founder's image at most ONCE per week per channel
+    (LinkedIn and YouTube Shorts independently); all remaining posts stay randomized."""
+    if config.USE_PRESENTER_AVATAR:
+        return True
+    if not getattr(config, "FOUNDER_AVATAR_WEEKLY", True):
+        return False
+    channel = "linkedin" if kind in ("linkedin", "thematic") else kind
+    if channel not in ("linkedin", "short"):
+        return False
+    interval_days = max(1, int(getattr(config, "FOUNDER_AVATAR_INTERVAL_DAYS", 7)))
+    ref_now = now or datetime.now(timezone.utc)
+    if ref_now.tzinfo is None:
+        ref_now = ref_now.replace(tzinfo=timezone.utc)
+    cutoff = ref_now - timedelta(days=interval_days)
+    try:
+        recent = store.items(kind=channel, limit=150)
+    except Exception:
+        recent = []
+    for it in recent:
+        if it.get("status") in ("rejected", "failed"):
+            continue
+        media = it.get("media") if isinstance(it.get("media"), dict) else {}
+        if not (media.get("used_founder_avatar") or media.get("presenter_card")):
+            continue
+        ts_raw = it.get("publish_at") or it.get("created_at") or ""
+        try:
+            ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00"))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+        if ts >= cutoff:
+            return False
+    return True
+
+
 def render(kind, draft, les, out_dir: Path, use_presenter_avatar: bool | None = None):
     domain_label = draft.get("domain_label") or les.get("domain_label") or sources.DOMAIN_LABELS.get(sources.classify_domain(les), "")
-    want_presenter = config.USE_PRESENTER_AVATAR if use_presenter_avatar is None else bool(use_presenter_avatar)
+    want_presenter = should_use_founder_avatar(kind) if use_presenter_avatar is None else bool(use_presenter_avatar)
     if kind in ("linkedin", "thematic"):
         media = video.render_loop(draft["animation"], out_dir, domain_label=domain_label)
+        media["used_founder_avatar"] = False
         if want_presenter:
             try:
                 from socialbot import presenter_pack
@@ -133,6 +171,7 @@ def render(kind, draft, les, out_dir: Path, use_presenter_avatar: bool | None = 
                 )
                 media["presenter_card"] = pack["visual_path"]
                 media["presenter_metadata"] = pack["metadata_path"]
+                media["used_founder_avatar"] = True
             except Exception as exc:
                 log.warning("presenter_pack LinkedIn card skipped: %s", exc)
         return media
@@ -141,6 +180,7 @@ def render(kind, draft, les, out_dir: Path, use_presenter_avatar: bool | None = 
     else:
         media = video.render_narrated(_segments_long(draft), out_dir, 1920, 1080, captions=True)
         media["chapters_text"] = "\n".join(f"{_fmt_ts(t)} {title}" for t, title in media["chapters"])
+    media["used_founder_avatar"] = False
     if want_presenter:
         try:
             from socialbot import presenter_pack
@@ -153,6 +193,7 @@ def render(kind, draft, les, out_dir: Path, use_presenter_avatar: bool | None = 
                 mode=getattr(config, "PRESENTER_AVATAR_MODE", "hybrid"),
             )
             media["thumbnail"] = str(thumb)
+            media["used_founder_avatar"] = True
         except Exception as exc:
             log.warning("presenter_pack thumbnail fallback to default: %s", exc)
             media["thumbnail"] = video.thumbnail(draft.get("thumbnail_text") or draft["title"], les["title"][:34],

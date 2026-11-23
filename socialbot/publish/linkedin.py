@@ -190,8 +190,14 @@ def publish(item: dict) -> dict:
     d, media = item["draft"], item["media"]
     text = little_text(d["post"], d.get("hashtags") or [])
     title = (d.get("animation") or {}).get("title") or item["topic"]
-    # LinkedIn gets the animated GIF (the visualised concept) only; videos and Shorts are for YouTube (owner,
-    # 2026-11-04). No video fallback: a missing GIF fails the post instead of publishing a video.
+    # Once-per-week founder-image LinkedIn slot publishes the studio presenter card via /rest/images (never video).
+    if media.get("used_founder_avatar") and media.get("presenter_card"):
+        urn = _upload_image(media["presenter_card"])
+        post_urn = _post(text, urn, title)
+        return {"id": post_urn, "url": f"https://www.linkedin.com/feed/update/{post_urn}/", "media": "presenter_card",
+                "as": active_profile()}
+    # All other LinkedIn posts get the randomized enterprise animated GIF only; videos and Shorts are for YouTube
+    # (owner, 2026-11-04). No video fallback: a missing GIF fails the post instead of publishing a video.
     if not media.get("gif"):
         raise LinkedInError("LinkedIn posts need the animated GIF; none was rendered")
     urn = _upload_image(media["gif"])
