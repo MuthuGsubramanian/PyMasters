@@ -27,15 +27,19 @@ class MainActivityInstrumentedTest {
         assertTrue(bridge.isAndroidApp())
         assertEquals(BuildConfig.VERSION_NAME, bridge.getAppVersion())
         bridge.haptic(25)
+        bridge.setSystemTheme(true)
+        bridge.setSystemTheme(false)
 
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 val rootContainer = activity.findViewById<FrameLayout>(R.id.rootContainer)
                 val webView = activity.findViewById<WebView>(R.id.webView)
+                val loading = activity.findViewById<LinearLayout>(R.id.loadingOverlay)
                 val offline = activity.findViewById<LinearLayout>(R.id.offlineOverlay)
 
                 assertNotNull(rootContainer)
                 assertNotNull(webView)
+                assertNotNull(loading)
                 assertNotNull(offline)
                 assertSame(rootContainer, webView.parent)
                 assertTrue(webView.isVerticalScrollBarEnabled)

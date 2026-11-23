@@ -182,9 +182,9 @@ function PathCard({ path, index, onClick, isRecommended }) {
 
                 <div className="flex items-center justify-between">
                     <DifficultyBadge level={path.difficulty_start || 'beginner'} />
-                    <button className="text-xs font-bold text-cyan-600 dark:text-cyan-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
-                        {started ? 'Continue' : 'Start'} <ChevronRight size={12} />
-                    </button>
+                    <span className="text-xs font-bold text-cyan-600 dark:text-cyan-300 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                        {started ? 'Continue' : 'Start'} <ChevronRight size={13} />
+                    </span>
                 </div>
             </div>
 
@@ -344,9 +344,11 @@ function PathList() {
 
             {/* All Paths */}
             <section>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="text-lg font-bold text-text-primary font-display mr-2">All Paths</h2>
+                <div className="flex flex-col gap-2.5 sm:gap-3 mb-4">
+                    <div className="flex items-center justify-between gap-2">
+                        <h2 className="text-lg font-bold text-text-primary font-display">All Paths</h2>
+                    </div>
+                    <div className="flex flex-nowrap sm:flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1">
                         {[
                             { id: 'all', label: 'All Stages' },
                             { id: 'school', label: '🌱 School (Class 6–12)' },
@@ -358,27 +360,27 @@ function PathList() {
                                 type="button"
                                 onClick={() => setStageFilter(st.id)}
                                 className={clsx(
-                                    'text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-200 border',
+                                    'min-h-11 sm:min-h-0 whitespace-nowrap shrink-0 text-xs font-bold px-3 py-1.5 rounded-xl sm:rounded-lg transition-all duration-200 border',
                                     stageFilter === st.id
                                         ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/15 dark:text-purple-300 dark:border-purple-500/30'
-                                        : 'text-text-muted hover:text-text-secondary hover:bg-bg-elevated border-transparent'
+                                        : 'bg-bg-elevated/60 sm:bg-transparent text-text-secondary sm:text-text-muted hover:text-text-secondary hover:bg-bg-elevated border-border-default sm:border-transparent'
                                 )}
                             >
                                 {st.label}
                             </button>
                         ))}
                     </div>
-                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                        <Filter size={14} className="text-text-muted" />
+                    <div className="flex flex-nowrap sm:flex-wrap items-center gap-1.5 overflow-x-auto no-scrollbar -mx-1 px-1">
+                        <Filter size={14} className="text-text-muted shrink-0" />
                         {['all', 'beginner', 'intermediate', 'advanced'].map(f => (
                             <button
                                 key={f}
                                 onClick={() => setFilter(f)}
                                 className={clsx(
-                                    'text-xs font-bold px-3 py-1.5 rounded-lg transition-all duration-200',
+                                    'min-h-11 sm:min-h-0 whitespace-nowrap shrink-0 text-xs font-bold px-3 py-1.5 rounded-xl sm:rounded-lg transition-all duration-200 border',
                                     filter === f
-                                        ? 'bg-cyan-50 text-cyan-700 border border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-300 dark:border-cyan-500/30'
-                                        : 'text-text-muted hover:text-text-secondary hover:bg-bg-elevated border border-transparent'
+                                        ? 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-300 dark:border-cyan-500/30'
+                                        : 'bg-bg-elevated/60 sm:bg-transparent text-text-secondary sm:text-text-muted hover:text-text-secondary hover:bg-bg-elevated border-border-default sm:border-transparent'
                                 )}
                             >
                                 {f === 'all' ? 'All Levels' : f.charAt(0).toUpperCase() + f.slice(1)}
@@ -526,7 +528,7 @@ function PathDetail() {
             {/* Back */}
             <button
                 onClick={() => navigate('/dashboard/paths')}
-                className="mb-6 flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors group"
+                className="mb-4 sm:mb-6 min-h-11 px-2 -ml-2 flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors group rounded-xl"
             >
                 <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
                 Back to Learning Paths
@@ -536,14 +538,14 @@ function PathDetail() {
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl overflow-hidden border border-border-default bg-bg-surface backdrop-blur-sm shadow-sm mb-8"
+                className="rounded-2xl overflow-hidden border border-border-default bg-bg-surface backdrop-blur-sm shadow-sm mb-6 sm:mb-8"
             >
-                <div className="relative h-36 bg-gradient-to-r from-cyan-50 via-blue-50 to-purple-50 dark:from-cyan-500/10 dark:via-blue-500/10 dark:to-purple-500/10 border-b border-border-default p-8 flex items-end overflow-hidden">
+                <div className="relative min-h-[8.5rem] sm:h-36 bg-gradient-to-r from-cyan-50 via-blue-50 to-purple-50 dark:from-cyan-500/10 dark:via-blue-500/10 dark:to-purple-500/10 border-b border-border-default p-5 sm:p-8 flex items-end overflow-hidden">
                     <div className="absolute top-0 right-0 w-60 h-60 bg-gradient-to-br from-cyan-200/20 to-blue-200/20 dark:from-cyan-500/10 dark:to-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
-                    <div className="relative z-10 flex-1">
-                        <h1 className="text-3xl font-bold text-text-primary font-display">{path.name || path.title}</h1>
+                    <div className="relative z-10 flex-1 min-w-0">
+                        <h1 className="text-2xl sm:text-3xl font-bold text-text-primary font-display leading-tight">{path.name || path.title}</h1>
                         <p className="text-sm text-text-secondary mt-1 max-w-2xl line-clamp-2">{path.description}</p>
-                        <div className="flex items-center gap-3 mt-2">
+                        <div className="flex flex-wrap items-center gap-3 mt-2">
                             <DifficultyBadge level={path.difficulty_start || 'beginner'} />
                             <span className="text-xs font-mono text-text-muted flex items-center gap-1">
                                 <BookOpen size={12} />
@@ -566,8 +568,8 @@ function PathDetail() {
                 </div>
 
                 {/* Progress bar */}
-                <div className="px-8 py-4 flex items-center justify-between">
-                    <div className="flex-1 mr-6">
+                <div className="px-5 sm:px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex-1 sm:mr-6">
                         <div className="flex justify-between text-xs font-mono text-text-muted mb-1">
                             <span>{completedIds.size} / {lessons.length} completed</span>
                             {remainingHours && <span>~{remainingHours}h remaining</span>}
@@ -585,7 +587,7 @@ function PathDetail() {
                         <button
                             onClick={handleStart}
                             disabled={starting}
-                            className="btn-neo btn-neo-primary py-2.5 text-sm disabled:opacity-50"
+                            className="btn-neo btn-neo-primary min-h-11 w-full sm:w-auto py-2.5 text-sm disabled:opacity-50"
                         >
                             {starting ? 'Starting...' : 'Start Path'}
                             <Play size={14} className="ml-1" />

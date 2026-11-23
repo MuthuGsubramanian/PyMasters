@@ -20,12 +20,14 @@ import android.widget.Toast
 class PyMastersBridge(
     private val context: Context,
     private val billingManager: PlayBillingManager?,
-    private val currentUrlProvider: () -> String?
+    private val currentUrlProvider: () -> String?,
+    private val onThemeChanged: ((Boolean) -> Unit)? = null
 ) {
     constructor(context: Context) : this(
         context = context,
         billingManager = null,
-        currentUrlProvider = { null }
+        currentUrlProvider = { null },
+        onThemeChanged = null
     )
 
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -35,6 +37,15 @@ class PyMastersBridge(
 
     @JavascriptInterface
     fun getAppVersion(): String = BuildConfig.VERSION_NAME
+
+    @JavascriptInterface
+    fun setSystemTheme(isDark: Boolean) {
+        val cb = onThemeChanged ?: return
+        mainHandler.post {
+            if (!UrlRouter.isTrustedBridgeOrigin(currentUrlProvider())) return@post
+            cb(isDark)
+        }
+    }
 
     @JavascriptInterface
     fun isPlayBillingAvailable(): Boolean {

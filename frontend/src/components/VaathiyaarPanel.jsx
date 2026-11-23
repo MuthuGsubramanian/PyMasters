@@ -186,6 +186,9 @@ export default function VaathiyaarPanel() {
 
     useEffect(() => { localStorage.setItem(OPEN_KEY, open ? '1' : '0'); }, [open]);
     useEffect(() => {
+        window.dispatchEvent(new CustomEvent('pm:vaathiyaar-state', { detail: { open: open || voiceOpen } }));
+    }, [open, voiceOpen]);
+    useEffect(() => {
         if (conversationId) sessionStorage.setItem(CONV_KEY, conversationId);
     }, [conversationId]);
     useEffect(() => () => controllerRef.current?.abort(), []);
@@ -218,16 +221,27 @@ export default function VaathiyaarPanel() {
             handleSendRef.current?.(msg);
         };
         window.addEventListener('pm:vaathiyaar-ask', onAsk);
-        const onOpenVoice = () => setVoiceOpen(true);
+        const onOpenChat = () => {
+            setVoiceOpen(false);
+            setMode('chat');
+            setOpen((prev) => !prev);
+        };
+        const onOpenVoice = () => {
+            setOpen(false);
+            setVoiceOpen(true);
+        };
         const onOpenTeachBack = (e) => {
             if (e?.detail?.concept) setTbConcept(e.detail.concept);
+            setVoiceOpen(false);
             setMode('teach-back');
             setOpen(true);
         };
+        window.addEventListener('pm:open-vaathiyaar-chat', onOpenChat);
         window.addEventListener('pm:open-vaathiyaar-voice', onOpenVoice);
         window.addEventListener('pm:open-vaathiyaar-teachback', onOpenTeachBack);
         return () => {
             window.removeEventListener('pm:vaathiyaar-ask', onAsk);
+            window.removeEventListener('pm:open-vaathiyaar-chat', onOpenChat);
             window.removeEventListener('pm:open-vaathiyaar-voice', onOpenVoice);
             window.removeEventListener('pm:open-vaathiyaar-teachback', onOpenTeachBack);
         };
@@ -359,77 +373,78 @@ export default function VaathiyaarPanel() {
                         transition={{ type: 'spring', stiffness: 380, damping: 34 }}
                         role="complementary"
                         aria-label="Vaathiyaar chat panel"
-                        className="fixed top-0 right-0 z-50 h-full w-full sm:w-[400px] flex flex-col bg-bg-surface backdrop-blur-2xl border-l border-border-default shadow-elegant"
+                        className="fixed top-0 right-0 z-50 h-full w-full sm:w-[400px] pt-[env(safe-area-inset-top,0px)] flex flex-col bg-bg-surface backdrop-blur-2xl border-l border-border-default shadow-elegant"
                     >
                         {/* Header */}
                         <div className="px-4 py-3 border-b border-border-default flex-shrink-0 space-y-2.5">
-                            <div className="flex items-center gap-2.5">
-                                <div className="w-8 h-8 rounded-xl bg-gradient-primary flex items-center justify-center select-none shadow-glow flex-shrink-0">
+                            <div className="flex items-center gap-2">
+                                <div className="w-9 h-9 rounded-xl bg-gradient-primary flex items-center justify-center select-none shadow-glow flex-shrink-0">
                                     <img src={VaathiyaarGlyph} alt="" aria-hidden="true" className="w-[60%] h-[60%]" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-text-primary font-display leading-tight">Vaathiyaar</p>
+                                    <p className="text-sm font-bold text-text-primary font-display leading-tight">Vaathiyaar AI</p>
                                     <p className="text-xs text-text-muted truncate" title={pageLabel}>
                                         Sees: {pageLabel.split('—')[0].trim()}
                                     </p>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => { setOpen(false); setVoiceOpen(true); }}
-                                    aria-label="Open voice tutor"
-                                    title="Ask by voice"
-                                    className="p-2 rounded-lg text-text-muted hover:text-accent-primary hover:bg-bg-elevated transition-colors cursor-pointer"
-                                >
-                                    <Mic size={15} />
-                                </button>
                                 {mode === 'chat' && messages.length > 0 && (
                                     <button
                                         onClick={() => { setMessages([]); setConversationId(null); sessionStorage.removeItem(CONV_KEY); }}
                                         aria-label="Clear conversation"
                                         title="Clear conversation"
-                                        className="p-2 rounded-lg text-text-muted hover:text-text-secondary hover:bg-bg-elevated transition-colors cursor-pointer"
+                                        className="min-w-11 min-h-11 lg:min-w-0 lg:min-h-0 p-2 rounded-xl text-text-muted hover:text-text-secondary hover:bg-bg-elevated transition-colors cursor-pointer flex items-center justify-center"
                                     >
-                                        <Eraser size={15} />
+                                        <Eraser size={16} />
                                     </button>
                                 )}
                                 <button
                                     onClick={() => setOpen(false)}
                                     aria-label="Close Vaathiyaar chat"
-                                    className="p-2 rounded-lg text-text-muted hover:text-text-secondary hover:bg-bg-elevated transition-colors cursor-pointer"
+                                    className="min-w-11 min-h-11 lg:min-w-0 lg:min-h-0 p-2 rounded-xl text-text-muted hover:text-text-secondary hover:bg-bg-elevated transition-colors cursor-pointer flex items-center justify-center"
                                 >
-                                    <X size={16} />
+                                    <X size={18} />
                                 </button>
                             </div>
 
-                            {/* Mode Switcher Pills */}
-                            <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-bg-elevated border border-border-default" role="tablist" aria-label="Vaathiyaar mode">
+                            {/* Unified 3-Mode Switcher Pills (Chat | Voice | Teach Back) */}
+                            <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-bg-elevated border border-border-default" role="tablist" aria-label="Vaathiyaar mode">
                                 <button
                                     type="button"
                                     role="tab"
                                     aria-selected={mode === 'chat'}
                                     onClick={() => setMode('chat')}
-                                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 ${
+                                    className={`min-h-10 lg:min-h-0 py-1.5 px-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 ${
                                         mode === 'chat'
                                             ? 'bg-bg-surface text-accent-primary shadow-sm border border-border-default'
                                             : 'text-text-muted hover:text-text-primary'
                                     }`}
                                 >
                                     <MessageCircle size={13} />
-                                    <span>Ask Tutor</span>
+                                    <span>Chat</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setOpen(false); setVoiceOpen(true); }}
+                                    aria-label="Open voice tutor"
+                                    title="Ask by voice"
+                                    className="min-h-10 lg:min-h-0 py-1.5 px-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 text-text-muted hover:text-accent-primary hover:bg-bg-surface/60"
+                                >
+                                    <Mic size={13} />
+                                    <span>Voice</span>
                                 </button>
                                 <button
                                     type="button"
                                     role="tab"
                                     aria-selected={mode === 'teach-back'}
                                     onClick={() => setMode('teach-back')}
-                                    className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 ${
+                                    className={`min-h-10 lg:min-h-0 py-1.5 px-2 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 ${
                                         mode === 'teach-back'
                                             ? 'bg-bg-surface text-accent-primary shadow-sm border border-border-default'
                                             : 'text-text-muted hover:text-text-primary'
                                     }`}
                                 >
                                     <Sparkles size={13} />
-                                    <span>Teach It Back</span>
+                                    <span>Teach Back</span>
                                 </button>
                             </div>
                         </div>
@@ -485,7 +500,7 @@ export default function VaathiyaarPanel() {
                                 </div>
 
                                 {/* Input */}
-                                <div className="flex-shrink-0 p-3 border-t border-border-default">
+                                <div className="flex-shrink-0 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] border-t border-border-default">
                                     <ChatBar onSend={handleSend} loading={loading} placeholder="Ask about this page, or anything…" />
                                 </div>
                             </>

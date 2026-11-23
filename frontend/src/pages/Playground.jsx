@@ -147,6 +147,7 @@ export default function Playground() {
     const [trace, setTrace] = useState(null);
     const [tracing, setTracing] = useState(false);
     const [executionTime, setExecutionTime] = useState(null);
+    const outputSectionRef = useRef(null);
 
     // CodeMirror defers external `value` updates behind a typing latch driven by
     // a 1ms setInterval; in hidden/throttled tabs that latch can take minutes to
@@ -386,6 +387,12 @@ export default function Playground() {
             }
             if (!out) out = '(no output)';
             setOutput(out);
+            try { window.PyMastersAndroid?.haptic?.(14); } catch { /* ignore */ }
+            if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                requestAnimationFrame(() => {
+                    outputSectionRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
+                });
+            }
         } catch (err) {
             setExecutionTime(Math.round(performance.now() - startTime));
             setOutput(`Execution error: ${safeErrorMsg(err, 'Unknown error')}`);
@@ -595,8 +602,8 @@ export default function Playground() {
                     </div>
 
                     {/* Starter templates bar — 1-click runnable code for School, College & Pro */}
-                    <div className="flex items-center gap-2 px-3 sm:px-4 py-2 border-b border-border-strong surface-code overflow-x-auto flex-shrink-0">
-                        <span className="text-xs font-semibold text-code-foreground/70 whitespace-nowrap">Starter Templates:</span>
+                    <div className="flex items-center gap-2 px-3 sm:px-4 py-2 border-b border-border-strong surface-code overflow-x-auto no-scrollbar flex-shrink-0">
+                        <span className="text-xs font-semibold text-code-foreground/70 whitespace-nowrap">Templates:</span>
                         {STARTER_TEMPLATES.map((tpl) => (
                             <button
                                 key={tpl.id}
@@ -606,7 +613,7 @@ export default function Playground() {
                                     setCurrentFile(null);
                                     setSavedCode(null);
                                 }}
-                                className="min-h-11 lg:min-h-0 whitespace-nowrap text-xs font-medium text-code-foreground/70 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 hover:bg-white/10 hover:text-code-foreground transition-all"
+                                className="min-h-11 lg:min-h-0 whitespace-nowrap shrink-0 text-xs font-medium text-code-foreground/75 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 hover:bg-white/10 hover:text-code-foreground transition-all"
                             >
                                 {tpl.label}
                             </button>
@@ -619,23 +626,23 @@ export default function Playground() {
                     <div className="flex-1 lg:min-h-0 flex flex-col lg:flex-row lg:overflow-hidden">
                         {/* Left column — editor + toolbar + package installer */}
                         <div className="flex flex-col flex-none lg:min-h-0 lg:flex-1 lg:w-3/5 lg:border-r border-border-strong">
-                            <div className="h-[50vh] lg:h-auto lg:flex-1 min-h-[180px] overflow-hidden">
+                            <div className="h-[46vh] lg:h-auto lg:flex-1 min-h-[310px] overflow-hidden">
                                 <PythonEditor
                                     key={docVersion}
                                     value={code}
                                     onChange={setCode}
                                     onRun={handleRunCode}
                                     height="100%"
-                                    placeholder="# Write Python code here...&#10;# Press Ctrl+Enter to run"
+                                    placeholder="# Write Python code here...&#10;# Tap Run Code to execute"
                                 />
                             </div>
 
                             {/* Action buttons */}
-                            <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-t border-border-strong surface-code flex-shrink-0">
+                            <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 border-t border-border-strong surface-code flex-shrink-0">
                                 <button
                                     onClick={handleRunCode}
                                     disabled={running || !code.trim()}
-                                    className={`${TAP} flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-white rounded-xl px-4 py-2 transition-colors ${
+                                    className={`${TAP} flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-white rounded-xl px-3.5 sm:px-4 py-2 transition-colors ${
                                         running
                                             ? 'bg-green-700 animate-pulse cursor-wait'
                                             : 'bg-green-700 hover:bg-green-800'
@@ -650,14 +657,15 @@ export default function Playground() {
                                     disabled={tracing || !code.trim()}
                                     title="Step through your code line by line and watch the variables change"
                                     aria-label="Visualize"
-                                    className="min-h-11 min-w-11 justify-center lg:min-h-0 lg:min-w-0 flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-cyan-200 bg-cyan-500/10 border border-cyan-400/30 rounded-xl px-3 py-2 hover:bg-cyan-500/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="min-h-11 min-w-11 justify-center lg:min-h-0 lg:min-w-0 flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-cyan-200 bg-cyan-500/10 border border-cyan-400/30 rounded-xl px-2.5 sm:px-3 py-2 hover:bg-cyan-500/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
-                                    {tracing ? <Loader2 size={13} className="animate-spin" /> : <History size={13} />}
+                                    {tracing ? <Loader2 size={13} className="animate-spin shrink-0" /> : <History size={13} className="shrink-0" />}
+                                    <span className="sm:hidden">{tracing ? '…' : 'Trace'}</span>
                                     <span className="hidden sm:inline">{tracing ? 'Tracing...' : 'Visualize'}</span>
                                 </button>
                                 <button
                                     onClick={handleClearTerminal}
-                                    className="min-h-11 lg:min-h-0 flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-code-foreground/70 bg-white/5 border border-white/10 rounded-xl px-3 py-2 hover:bg-white/10 hover:text-code-foreground transition-all duration-200"
+                                    className="min-h-11 lg:min-h-0 flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-code-foreground/70 bg-white/5 border border-white/10 rounded-xl px-2.5 sm:px-3 py-2 hover:bg-white/10 hover:text-code-foreground transition-all duration-200"
                                 >
                                     <Trash2 size={13} />
                                     Clear
@@ -668,7 +676,7 @@ export default function Playground() {
                                     disabled={!code.trim()}
                                     title="Open Vaathiyaar and ask for a review of this code"
                                     aria-label="Send to Vaathiyaar"
-                                    className="min-h-11 min-w-11 justify-center lg:min-h-0 lg:min-w-0 flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-violet-200 bg-violet-500/15 border border-violet-400/40 rounded-xl px-3 py-2 hover:bg-violet-500/25 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                                    className="min-h-11 min-w-11 justify-center lg:min-h-0 lg:min-w-0 flex items-center gap-1.5 whitespace-nowrap text-xs font-bold text-violet-200 bg-violet-500/15 border border-violet-400/40 rounded-xl px-2.5 sm:px-3 py-2 hover:bg-violet-500/25 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                                 >
                                     <Send size={13} />
                                     <span className="hidden sm:inline">Send to Vaathiyaar</span>
@@ -698,7 +706,7 @@ export default function Playground() {
                         </div>
 
                         {/* Right column — output pane */}
-                        <div className="flex flex-col min-h-[16rem] lg:min-h-0 flex-1 lg:w-2/5 border-t lg:border-t-0 border-border-strong surface-code">
+                        <div ref={outputSectionRef} className="flex flex-col min-h-[16rem] lg:min-h-0 flex-1 lg:w-2/5 border-t lg:border-t-0 border-border-strong surface-code">
                             <OutputPanel
                                 output={output}
                                 error=""

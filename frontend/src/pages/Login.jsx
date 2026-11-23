@@ -8,6 +8,7 @@ import { User, Lock, Mail, ArrowRight, Loader2, AlertCircle, Eye, EyeOff, Sparkl
 import clsx from 'clsx';
 import PymastersGlyph from '../assets/pymasters-glyph.svg?no-inline';
 import { rememberReturnTo, takeReturnTo } from '../utils/returnTo';
+import { isAndroidWebView } from '../lib/playBilling';
 
 export default function Login() {
     useEffect(() => { document.title = 'Sign In — PyMasters'; }, []);
@@ -197,6 +198,8 @@ export default function Login() {
     const solidBtn = 'bg-purple-600 hover:bg-purple-700 text-white';
     const waitBtn = 'bg-bg-inset text-text-muted';
 
+    const inAndroidApp = isAndroidWebView();
+
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-bg-base text-text-secondary">
             <motion.div
@@ -206,20 +209,22 @@ export default function Login() {
                 className="w-full max-w-md relative z-10"
             >
                 {/* Logo & Header */}
-                <div className="text-center mb-8">
-                    <div className="mb-4">
-                        <Link
-                            to="/"
-                            className="min-h-11 px-3 inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg"
-                        >
-                            ← Back to PyMasters
-                        </Link>
-                    </div>
+                <div className={clsx('text-center', inAndroidApp ? 'mb-5' : 'mb-8')}>
+                    {!inAndroidApp && (
+                        <div className="mb-4">
+                            <Link
+                                to="/"
+                                className="min-h-11 px-3 inline-flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors rounded-lg"
+                            >
+                                ← Back to PyMasters
+                            </Link>
+                        </div>
+                    )}
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         transition={{ duration: 0.5, delay: 0.1 }}
-                        className="inline-block mb-6"
+                        className={clsx('inline-block', inAndroidApp ? 'mb-4' : 'mb-6')}
                     >
                         <Link
                             to="/"

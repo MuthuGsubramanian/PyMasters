@@ -20,6 +20,11 @@ export default function useDarkMode() {
         } else {
             document.documentElement.classList.remove('dark');
         }
+        try {
+            window.PyMastersAndroid?.setSystemTheme?.(Boolean(isDark));
+        } catch {
+            // Non-Android or older shell without setSystemTheme
+        }
     }, [isDark]);
 
     const toggle = () => setIsDark(d => !d);

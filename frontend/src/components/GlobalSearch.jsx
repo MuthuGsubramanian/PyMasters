@@ -14,6 +14,7 @@ import {
   GraduationCap,
 } from 'lucide-react';
 import { semanticSearch } from '../api';
+import { registerAndroidBackHandler } from '../lib/androidBack';
 
 // Lesson titles arrive as locale maps ({en, ta, …}); the palette shows English.
 const en = (v) => (typeof v === 'string' ? v : (v && (v.en || Object.values(v).find((x) => typeof x === 'string'))) || '');
@@ -192,6 +193,15 @@ export default function GlobalSearch() {
       window.removeEventListener('pymasters:open-search', onOpenEvent);
     };
   }, []);
+
+  // Close GlobalSearch on Android System Back before navigating history
+  useEffect(() => {
+    if (!open) return undefined;
+    return registerAndroidBackHandler(() => {
+      setOpen(false);
+      return true;
+    });
+  }, [open]);
 
   // Focus input when opening
   useEffect(() => {

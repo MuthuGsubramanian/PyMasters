@@ -25,7 +25,9 @@ import {
     MessageCircle,
     Search,
     Terminal,
-    Mic
+    Mic,
+    Home,
+    ArrowLeft
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import clsx from 'clsx';
@@ -87,6 +89,12 @@ export default function Layout() {
     // panel to hide via the Outlet context, so learners never see two
     // overlapping chat launchers.
     const [vaathiyaarHidden, setVaathiyaarHidden] = useState(false);
+    const [vaathiyaarOpen, setVaathiyaarOpen] = useState(false);
+    useEffect(() => {
+        const onState = (e) => setVaathiyaarOpen(Boolean(e?.detail?.open));
+        window.addEventListener('pm:vaathiyaar-state', onState);
+        return () => window.removeEventListener('pm:vaathiyaar-state', onState);
+    }, []);
     const [isSuper, setIsSuper] = useState(false);
     useEffect(() => {
         if (user?.id) getAdminCheck(user.id).then((r) => setIsSuper(!!r.data?.is_super_admin)).catch(() => {});
@@ -207,90 +215,161 @@ export default function Layout() {
     const rankInfo = getRankInfo(points);
     const rankLabel = formatRankLabel(points, audience.mode);
     const displayName = String(user.name || user.username || '');
+    const friendlyName = displayName.includes('@') ? displayName.split('@')[0] : displayName;
+    const triggerHaptic = (ms = 10) => {
+        try { window.PyMastersAndroid?.haptic?.(ms); } catch { /* ignore */ }
+    };
     const openSearch = () => {
+        triggerHaptic(8);
         setSidebarOpen(false);
         window.dispatchEvent(new CustomEvent('pymasters:open-search'));
     };
 
-    const openVoiceDrawer = () => {
+    const openTutorSheet = () => {
+        triggerHaptic(10);
         setSidebarOpen(false);
-        window.dispatchEvent(new CustomEvent('pm:open-vaathiyaar-voice'));
+        window.dispatchEvent(new CustomEvent('pm:open-vaathiyaar-chat'));
     };
 
+    // Contextual mobile top-bar title & nested-route back target
+    const mobileHeaderMeta = (() => {
+        const p = location.pathname;
+        if (p === '/dashboard' || p === '/dashboard/') return { title: portalName, isBrand: true, backTo: null };
+        if (p.startsWith('/dashboard/classroom/')) return { title: t('nav.classroom', 'Classroom'), isBrand: false, backTo: '/dashboard/classroom' };
+        if (p.startsWith('/dashboard/classroom')) return { title: t('nav.classroom', 'Classroom'), isBrand: false, backTo: null };
+        if (p.startsWith('/dashboard/playground')) return { title: t('nav.playground', 'Playground'), isBrand: false, backTo: null };
+        if (p.startsWith('/dashboard/play/')) return { title: t('nav.play', 'Play'), isBrand: false, backTo: '/dashboard/play' };
+        if (p === '/dashboard/play') return { title: t('nav.play', 'Play'), isBrand: false, backTo: null };
+        if (p.startsWith('/dashboard/paths/')) return { title: t('nav.evolution', 'Learning Paths'), isBrand: false, backTo: '/dashboard/paths' };
+        if (p.startsWith('/dashboard/paths')) return { title: t('nav.evolution', 'Learning Paths'), isBrand: false, backTo: null };
+        if (p.startsWith('/dashboard/knowledge')) return { title: t('nav.knowledge', 'Knowledge Map'), isBrand: false, backTo: null };
+        if (p.startsWith('/dashboard/challenges')) return { title: t('nav.challenges', 'Challenges'), isBrand: false, backTo: null };
+        if (p.startsWith('/dashboard/explains/')) return { title: t('nav.explains', 'Explains'), isBrand: false, backTo: '/dashboard/explains' };
+        if (p.startsWith('/dashboard/explains')) return { title: t('nav.explains', 'Explains'), isBrand: false, backTo: null };
+        if (p.startsWith('/dashboard/reference')) return { title: t('nav.reference', 'Reference'), isBrand: false, backTo: null };
+        if (p.startsWith('/dashboard/trending')) return { title: t('nav.trending', 'Trending'), isBrand: false, backTo: null };
+        if (p.startsWith('/dashboard/community')) return { title: t('nav.community', 'Community'), isBrand: false, backTo: null };
+        if (p.startsWith('/dashboard/live-tutor')) return { title: t('nav.live_tutor', 'Live Tutor'), isBrand: false, backTo: null };
+        if (p.startsWith('/dashboard/profile')) return { title: t('nav.profile', 'Profile'), isBrand: false, backTo: '/dashboard' };
+        if (p.startsWith('/dashboard/upgrade')) return { title: 'Upgrade', isBrand: false, backTo: '/dashboard' };
+        if (p.startsWith('/dashboard/org')) return { title: t('nav.org_console', '{group} console').replace('{group}', audience.labels.group), isBrand: false, backTo: null };
+        if (p.startsWith('/dashboard/admin')) return { title: t('nav.super_admin', 'Super Admin'), isBrand: false, backTo: null };
+        return { title: portalName, isBrand: true, backTo: null };
+    })();
+
     const mobileQuickTabs = [
+        {
+            key: 'home',
+            label: t('nav.mobile.home', 'Home'),
+            icon: Home,
+            path: '/dashboard',
+            active: location.pathname === '/dashboard' || location.pathname === '/dashboard/',
+        },
         {
             key: 'learn',
             label: t('nav.mobile.learn', 'Learn'),
             icon: GraduationCap,
             path: '/dashboard/classroom',
-            active: location.pathname.startsWith('/dashboard/classroom'),
+            active:
+                location.pathname.startsWith('/dashboard/classroom') ||
+                location.pathname.startsWith('/dashboard/paths') ||
+                location.pathname.startsWith('/dashboard/knowledge'),
         },
         {
-            key: 'practice',
-            label: t('nav.mobile.practice', 'Practice'),
+            key: 'code',
+            label: t('nav.mobile.code', 'Code'),
             icon: Terminal,
             path: '/dashboard/playground',
             active: location.pathname.startsWith('/dashboard/playground'),
         },
         {
-            key: 'ask_vaar',
-            label: t('nav.mobile.askVaar', 'Ask Vaar'),
-            icon: Mic,
-            action: openVoiceDrawer,
-            active: false,
+            key: 'play',
+            label: t('nav.mobile.play', 'Play'),
+            icon: Gamepad2,
+            path: '/dashboard/play',
+            active:
+                location.pathname === '/dashboard/play' ||
+                location.pathname.startsWith('/dashboard/play/') ||
+                location.pathname.startsWith('/dashboard/challenges'),
         },
         {
-            key: 'profile',
-            label: t('nav.mobile.profile', 'Profile'),
-            icon: User,
-            path: '/dashboard/profile',
-            active: location.pathname.startsWith('/dashboard/profile'),
+            key: 'tutor',
+            label: t('nav.mobile.tutor', 'Tutor'),
+            icon: Sparkles,
+            action: openTutorSheet,
+            active: vaathiyaarOpen || location.pathname.startsWith('/dashboard/live-tutor'),
         },
     ];
 
+    const isProfileRoute = location.pathname.startsWith('/dashboard/profile');
+
     return (
         <div className="flex min-h-[100dvh] lg:h-[100dvh] w-full max-w-full overflow-x-clip lg:overflow-hidden bg-bg-base text-text-secondary font-sans">
-            {/* Mobile top bar (safe-area aware, 44x44 touch targets) */}
-            <header className="lg:hidden fixed top-0 left-0 right-0 z-40 pt-[env(safe-area-inset-top,0px)] min-h-14 bg-bg-surface/95 backdrop-blur-xl border-b border-border-default flex items-center justify-between px-3 gap-2">
-                <button
-                    type="button"
-                    onClick={() => setSidebarOpen(true)}
-                    className="min-w-11 min-h-11 p-2 rounded-lg hover:bg-bg-elevated transition-colors flex items-center justify-center shrink-0"
-                    aria-label="Open menu"
-                >
-                    <Menu size={20} className="text-text-secondary" />
-                </button>
-                <button
-                    type="button"
-                    onClick={() => navigate('/dashboard')}
-                    className="font-display font-bold text-sm sm:text-base text-text-primary tracking-tight truncate max-w-[38vw]"
-                >
-                    {portalName}
-                </button>
-                <div className="flex items-center gap-1 shrink-0">
+            {/* Mobile top bar (Material Design 3 contextual header, safe-area aware, 44x44 touch targets) */}
+            <header className="lg:hidden fixed top-0 left-0 right-0 z-40 pt-[env(safe-area-inset-top,0px)] min-h-14 bg-bg-surface/95 backdrop-blur-xl border-b border-border-default flex items-center justify-between px-2 gap-1.5">
+                <div className="flex items-center gap-1 min-w-0 flex-1">
+                    {mobileHeaderMeta.backTo ? (
+                        <button
+                            type="button"
+                            onClick={() => { triggerHaptic(8); navigate(mobileHeaderMeta.backTo); }}
+                            className="min-w-11 min-h-11 p-2 rounded-xl hover:bg-bg-elevated active:scale-95 transition-all flex items-center justify-center shrink-0 text-text-primary"
+                            aria-label="Go back"
+                        >
+                            <ArrowLeft size={20} aria-hidden="true" />
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => { triggerHaptic(8); setSidebarOpen(true); }}
+                            className="min-w-11 min-h-11 p-2 rounded-xl hover:bg-bg-elevated active:scale-95 transition-all flex items-center justify-center shrink-0"
+                            aria-label="Open menu"
+                        >
+                            <Menu size={20} className="text-text-secondary" />
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => { triggerHaptic(8); navigate('/dashboard'); }}
+                        className="min-h-11 px-1.5 flex items-center gap-2 rounded-xl text-left min-w-0"
+                    >
+                        {mobileHeaderMeta.isBrand && (
+                            portalLogo ? (
+                                <img src={portalLogo} alt="" aria-hidden="true" className="w-6 h-6 rounded-lg object-contain bg-bg-elevated border border-border-default shrink-0" />
+                            ) : (
+                                <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-600 to-cyan-500 flex items-center justify-center shrink-0 shadow-sm">
+                                    <img src={PymastersGlyph} alt="" aria-hidden="true" className="w-3.5 h-3.5" />
+                                </span>
+                            )
+                        )}
+                        <span className="font-display font-bold text-sm sm:text-base text-text-primary tracking-tight truncate">
+                            {mobileHeaderMeta.title}
+                        </span>
+                    </button>
+                </div>
+                <div className="flex items-center gap-0.5 shrink-0">
                     <button
                         type="button"
                         onClick={openSearch}
                         aria-label="Search"
-                        title="Search (⌘K)"
-                        className="min-w-11 min-h-11 p-2 rounded-lg hover:bg-bg-elevated transition-colors flex items-center justify-center text-text-secondary"
+                        title="Search"
+                        className="min-w-11 min-h-11 p-2 rounded-xl hover:bg-bg-elevated active:scale-95 transition-all flex items-center justify-center text-text-secondary"
                     >
                         <Search size={18} aria-hidden="true" />
                     </button>
                     <NotificationBell align="right" />
-                    <span className="hidden sm:inline-flex text-xs font-mono text-text-secondary items-center gap-1 px-2 py-1 rounded-full bg-bg-elevated border border-border-default" title="XP">
-                        <Trophy size={12} className="text-amber-500" aria-hidden="true" />
-                        {points}
-                    </span>
                     <button
                         type="button"
-                        onClick={() => navigate('/dashboard/profile')}
+                        onClick={() => { triggerHaptic(8); navigate('/dashboard/profile'); }}
                         aria-label="Open profile"
-                        className="min-w-11 min-h-11 flex items-center justify-center rounded-full"
+                        aria-current={isProfileRoute ? 'page' : undefined}
+                        className={clsx(
+                            "min-w-11 min-h-11 flex items-center justify-center rounded-full active:scale-95 transition-all",
+                            isProfileRoute && "bg-accent-subtle"
+                        )}
                     >
                         <span className="w-7 h-7 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-500 via-blue-500 to-purple-500 block">
                             <span className="w-full h-full rounded-full bg-bg-surface flex items-center justify-center text-text-secondary font-bold text-xs">
-                                {displayName.substring(0, 2).toUpperCase()}
+                                {friendlyName.substring(0, 2).toUpperCase()}
                             </span>
                         </span>
                     </button>
@@ -299,21 +378,21 @@ export default function Layout() {
 
             {/* Mobile overlay */}
             {sidebarOpen && (
-                <div className="lg:hidden fixed inset-0 z-[45] bg-black/50 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+                <div className="lg:hidden fixed inset-0 z-[45] bg-black/55 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
             )}
 
             {/* Sidebar */}
             <aside className={clsx(
-                "fixed lg:relative z-50 lg:z-auto w-[270px] flex flex-col border-r border-border-default bg-bg-surface backdrop-blur-xl h-full transition-all duration-300",
+                "fixed lg:relative z-50 lg:z-auto w-[288px] max-w-[85vw] flex flex-col border-r border-border-default bg-bg-surface backdrop-blur-xl h-full pt-[env(safe-area-inset-top,0px)] lg:pt-0 transition-transform lg:transition-all duration-300",
                 collapsed ? "lg:w-[74px]" : "lg:w-[270px]",
                 sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
             )}>
                 {/* Brand */}
-                <div className={clsx("h-14 flex items-center gap-3 border-b border-border-default", collapsed ? "px-5 lg:px-0 lg:justify-center" : "px-5")}>
-                    <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1.5 rounded-lg hover:bg-bg-elevated transition-colors mr-1" aria-label="Close menu">
-                        <X size={18} className="text-text-muted" />
+                <div className={clsx("h-14 flex items-center gap-2.5 border-b border-border-default shrink-0", collapsed ? "px-3 lg:px-0 lg:justify-center" : "px-3 lg:px-5")}>
+                    <button onClick={() => setSidebarOpen(false)} className="lg:hidden min-w-11 min-h-11 p-2 rounded-xl hover:bg-bg-elevated active:scale-95 transition-all flex items-center justify-center shrink-0" aria-label="Close menu">
+                        <X size={20} className="text-text-secondary" />
                     </button>
-                    <button type="button" onClick={() => navigate('/')} aria-label="PyMasters home" className="relative group cursor-pointer">
+                    <button type="button" onClick={() => { setSidebarOpen(false); navigate('/dashboard'); }} aria-label="PyMasters home" className="relative group cursor-pointer min-w-11 min-h-11 lg:min-w-0 lg:min-h-0 flex items-center justify-center">
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-cyan-500 blur-xl opacity-20 group-hover:opacity-40 transition-opacity duration-500 scale-150" aria-hidden="true" />
                         {portalLogo ? (
                             <img src={portalLogo} alt={portalName} className="relative w-8 h-8 rounded-xl object-contain bg-bg-elevated border border-border-default" />
@@ -335,42 +414,44 @@ export default function Layout() {
                 </div>
 
                 {/* Compact User Row */}
-                <div className={clsx("py-3 border-b border-border-default", collapsed ? "px-4 lg:px-0" : "px-4")}>
+                <div className={clsx("py-3 border-b border-border-default shrink-0", collapsed ? "px-4 lg:px-0" : "px-4")}>
                     <div className={clsx("flex items-center gap-2.5", collapsed && "lg:justify-center lg:gap-0")}>
-                        <button type="button" onClick={() => navigate('/dashboard/profile')} aria-label="Your profile" className="relative cursor-pointer">
-                            <div className="w-7 h-7 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-500 via-blue-500 to-purple-500">
+                        <button type="button" onClick={() => { setSidebarOpen(false); navigate('/dashboard/profile'); }} aria-label="Your profile" className="relative cursor-pointer min-w-11 min-h-11 lg:min-w-0 lg:min-h-0 flex items-center justify-center shrink-0">
+                            <div className="w-9 h-9 lg:w-7 lg:h-7 rounded-full p-[1.5px] bg-gradient-to-tr from-cyan-500 via-blue-500 to-purple-500">
                                 <div className="w-full h-full rounded-full bg-bg-surface flex items-center justify-center text-text-secondary font-bold text-xs">
-                                    {displayName.substring(0, 2).toUpperCase()}
+                                    {friendlyName.substring(0, 2).toUpperCase()}
                                 </div>
                             </div>
-                            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-[1.5px] border-bg-surface" aria-hidden="true" />
+                            <div className="absolute bottom-0.5 right-0.5 lg:-bottom-0.5 lg:-right-0.5 w-2.5 h-2.5 rounded-full bg-green-400 border-[1.5px] border-bg-surface" aria-hidden="true" />
                         </button>
                         <div className={clsx("flex-1 min-w-0", collapsed && "lg:hidden")}>
-                            <div className="text-text-primary font-bold text-sm truncate" title={user.username}>{displayName}</div>
-                        </div>
-                        {audience.mode !== 'professional' && (
-                            <div className={clsx("inline-flex items-center gap-1 text-xs tracking-wide font-bold px-2 py-0.5 rounded-full border", rankInfo.badgeBg, rankInfo.badgeText, rankInfo.badgeBorder, collapsed && "lg:hidden")}>
-                                <Zap size={10} aria-hidden="true" />
-                                {rankLabel}
+                            <div className="text-text-primary font-bold text-sm truncate" title={user.username}>{friendlyName}</div>
+                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                {audience.mode !== 'professional' && (
+                                    <span className={clsx("inline-flex items-center gap-1 text-xs tracking-wide font-bold px-2 py-0.5 rounded-full border", rankInfo.badgeBg, rankInfo.badgeText, rankInfo.badgeBorder)}>
+                                        <Zap size={10} aria-hidden="true" />
+                                        {rankLabel}
+                                    </span>
+                                )}
+                                <span className="text-xs font-mono text-text-muted inline-flex items-center gap-0.5" title="XP">
+                                    <Trophy size={11} className="text-amber-500" aria-hidden="true" />
+                                    {points} XP
+                                </span>
                             </div>
-                        )}
-                        <span className={clsx("text-xs font-mono text-text-muted flex items-center gap-0.5", collapsed && "lg:hidden")} title="XP">
-                            <Trophy size={11} className="text-amber-500" aria-hidden="true" />
-                            {points}
-                        </span>
+                        </div>
                     </div>
                     {/* 7-day trial countdown (individual users only; hidden for
                         org/admin/assigned-plan users whose status is "active") */}
                     {access?.status === 'trial' && (
                         <button
                             type="button"
-                            onClick={() => navigate('/dashboard/upgrade')}
+                            onClick={() => { setSidebarOpen(false); navigate('/dashboard/upgrade'); }}
                             className={clsx(
-                                "mt-2 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-400/10 px-2 py-1 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 hover:bg-amber-400/20 transition-colors",
+                                "mt-2.5 w-full min-h-11 lg:min-h-0 inline-flex items-center justify-center gap-1.5 rounded-xl border border-amber-400/40 bg-amber-400/10 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 hover:bg-amber-400/20 transition-colors",
                                 collapsed && "lg:hidden"
                             )}
                         >
-                            <Zap size={9} aria-hidden="true" />
+                            <Zap size={11} aria-hidden="true" />
                             Trial · {access.trial_days_left} day{access.trial_days_left === 1 ? '' : 's'} left
                         </button>
                     )}
@@ -385,12 +466,13 @@ export default function Layout() {
                         )}
                     >
                         <Search size={15} aria-hidden="true" className="shrink-0 text-accent-primary" />
-                        <span className={clsx("flex-1 text-left truncate", collapsed && "lg:hidden")}>Search · ⌘K</span>
+                        <span className={clsx("flex-1 text-left truncate lg:hidden", collapsed && "lg:hidden")}>Search lessons &amp; pages…</span>
+                        <span className={clsx("hidden lg:inline flex-1 text-left truncate", collapsed && "lg:hidden")}>Search · ⌘K</span>
                     </button>
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto" aria-label="Primary">
+                <nav className="flex-1 px-3 py-2 pb-4 space-y-0.5 overflow-y-auto overscroll-contain" aria-label="Primary">
                     <div className={clsx("flex items-center mb-1.5 mt-1", collapsed ? "px-3 lg:px-0 lg:justify-center" : "px-3")}>
                         <span className={clsx("text-xs font-bold text-text-muted uppercase tracking-widest", collapsed && "lg:hidden")}>Navigation</span>
                         <button
@@ -404,7 +486,7 @@ export default function Layout() {
                         </button>
                     </div>
                     {navGroups.map((group, gi) => (
-                        <div key={group.key} role="group" aria-labelledby={`nav-group-${group.key}`} className={clsx(gi > 0 && "pt-2")}>
+                        <div key={group.key} role="group" aria-labelledby={`nav-group-${group.key}`} className={clsx(gi > 0 && "pt-2.5 lg:pt-2")}>
                             <h2 id={`nav-group-${group.key}`}
                                 className={clsx("px-3 pt-1 pb-1 text-xs font-semibold uppercase tracking-wider text-text-muted", collapsed && "lg:sr-only")}>
                                 {group.title}
@@ -415,27 +497,27 @@ export default function Layout() {
                                 return (
                                     <button
                                         key={item.path}
-                                        onClick={() => { navigate(item.path); setSidebarOpen(false); }}
+                                        onClick={() => { triggerHaptic(8); navigate(item.path); setSidebarOpen(false); }}
                                         aria-current={isActive ? 'page' : undefined}
                                         title={item.desc}
                                         className={clsx(
-                                            "w-full flex items-center gap-2.5 py-1.5 rounded-lg text-sm transition-all duration-200 group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60",
+                                            "w-full min-h-11 lg:min-h-0 flex items-center gap-3 lg:gap-2.5 py-2.5 lg:py-1.5 rounded-xl lg:rounded-lg text-sm transition-all duration-200 group relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-primary/60",
                                             collapsed ? "px-3 lg:px-0 lg:justify-center" : "px-3",
                                             isActive
                                                 ? "bg-accent-subtle text-accent-primary font-semibold"
-                                                : "hover:bg-bg-elevated text-text-muted hover:text-text-secondary"
+                                                : "hover:bg-bg-elevated text-text-secondary lg:text-text-muted hover:text-text-primary lg:hover:text-text-secondary"
                                         )}
                                     >
                                         {isActive && (
                                             <motion.div
                                                 layoutId="sidebar-active"
-                                                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-gradient-primary shadow-[0_0_6px_rgba(124,58,237,0.5)]"
+                                                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 lg:h-5 rounded-r-full bg-gradient-primary shadow-[0_0_6px_rgba(124,58,237,0.5)]"
                                                 transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                                             />
                                         )}
-                                        <item.icon size={16} className="transition-transform duration-200 group-hover:scale-110 shrink-0" />
-                                        <span className={clsx("text-sm font-medium leading-tight", collapsed && "lg:hidden")}>{item.label}</span>
-                                        {isActive && <ChevronRight size={13} className={clsx("text-accent-primary ml-auto", collapsed && "lg:hidden")} />}
+                                        <item.icon size={18} className="lg:w-4 lg:h-4 transition-transform duration-200 group-hover:scale-110 shrink-0" />
+                                        <span className={clsx("text-sm font-medium leading-tight truncate", collapsed && "lg:hidden")}>{item.label}</span>
+                                        {isActive && <ChevronRight size={14} className={clsx("text-accent-primary ml-auto shrink-0", collapsed && "lg:hidden")} />}
                                     </button>
                                 );
                             })}
@@ -444,36 +526,36 @@ export default function Layout() {
                 </nav>
 
                 {/* Footer */}
-                <div className="px-3 py-2.5 border-t border-border-default space-y-1.5">
+                <div className="px-3 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] lg:pb-2.5 border-t border-border-default space-y-2 lg:space-y-1.5 shrink-0">
                     <a
                         href="https://t.me/boost/PyMasterscommunity"
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Telegram Community & Support"
                         className={clsx(
-                            "w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-500/12 hover:bg-sky-500/20 border border-sky-500/30 transition-colors",
+                            "w-full min-h-11 lg:min-h-0 flex items-center justify-center gap-1.5 py-2 lg:py-1.5 px-2.5 rounded-xl lg:rounded-lg text-xs font-bold text-sky-700 dark:text-sky-300 bg-sky-500/12 hover:bg-sky-500/20 border border-sky-500/30 transition-colors",
                             collapsed && "lg:px-0"
                         )}
                     >
-                        <MessageCircle size={13} aria-hidden="true" className="shrink-0" />
+                        <MessageCircle size={14} aria-hidden="true" className="shrink-0" />
                         <span className={clsx("truncate", collapsed && "lg:hidden")}>Telegram Community</span>
                     </a>
                     <div className={clsx("flex items-center gap-2", collapsed && "lg:flex-col")}>
                         <button
                             onClick={logout}
                             title="Sign Out"
-                            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold text-text-muted hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all duration-200 border border-transparent hover:border-red-200 dark:hover:border-red-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
+                            className="flex-1 min-h-11 lg:min-h-0 flex items-center justify-center gap-1.5 py-2 lg:py-1.5 rounded-xl lg:rounded-lg text-xs font-bold text-text-muted hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all duration-200 border border-transparent hover:border-red-200 dark:hover:border-red-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50"
                         >
-                            <LogOut size={13} /> <span className={clsx(collapsed && "lg:hidden")}>Sign Out</span>
+                            <LogOut size={14} /> <span className={clsx(collapsed && "lg:hidden")}>Sign Out</span>
                         </button>
                         <DarkModeToggle />
                     </div>
                     <div className={clsx("flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1", collapsed && "lg:hidden")}>
-                        <Link to="/terms" className="text-xs text-text-muted hover:text-accent-primary transition-colors">Terms</Link>
+                        <Link to="/terms" onClick={() => setSidebarOpen(false)} className="text-xs text-text-muted hover:text-accent-primary transition-colors">Terms</Link>
                         <span className="text-text-muted text-xs" aria-hidden="true">&middot;</span>
-                        <Link to="/privacy" className="text-xs text-text-muted hover:text-accent-primary transition-colors">Privacy</Link>
+                        <Link to="/privacy" onClick={() => setSidebarOpen(false)} className="text-xs text-text-muted hover:text-accent-primary transition-colors">Privacy</Link>
                         <span className="text-text-muted text-xs" aria-hidden="true">&middot;</span>
-                        <Link to="/security" className="text-xs text-text-muted hover:text-accent-primary transition-colors">Security</Link>
+                        <Link to="/security" onClick={() => setSidebarOpen(false)} className="text-xs text-text-muted hover:text-accent-primary transition-colors">Security</Link>
                     </div>
                 </div>
             </aside>
@@ -497,10 +579,10 @@ export default function Layout() {
                 </div>
             </main>
 
-            {/* Mobile Thumb-Zone Bottom Quick Navigation Bar (4 ergonomic tabs) */}
+            {/* Material Design 3 Thumb-Zone Bottom Navigation Bar (5 core destinations) */}
             <nav
                 aria-label="Mobile quick navigation"
-                className="lg:hidden fixed bottom-0 left-0 right-0 z-40 min-h-[4rem] pt-1 pb-[max(0.25rem,env(safe-area-inset-bottom,0px))] bg-bg-surface/95 backdrop-blur-xl border-t border-border-default grid grid-cols-4 items-stretch px-1.5 gap-1"
+                className="lg:hidden fixed bottom-0 left-0 right-0 z-40 min-h-[4.25rem] pt-1.5 pb-[max(0.35rem,env(safe-area-inset-bottom,0px))] bg-bg-surface/95 backdrop-blur-xl border-t border-border-default grid grid-cols-5 items-stretch px-1 gap-0.5 shadow-[0_-4px_20px_rgba(0,0,0,0.12)]"
             >
                 {mobileQuickTabs.map((tab) => {
                     const TabIcon = tab.icon;
@@ -509,6 +591,7 @@ export default function Layout() {
                             key={tab.key}
                             type="button"
                             onClick={() => {
+                                triggerHaptic(10);
                                 if (tab.action) {
                                     tab.action();
                                 } else {
@@ -518,14 +601,21 @@ export default function Layout() {
                             }}
                             aria-current={tab.active ? 'page' : undefined}
                             className={clsx(
-                                'flex flex-col items-center justify-center gap-0.5 rounded-xl min-h-[48px] min-w-[44px] py-1 transition-colors',
+                                'flex flex-col items-center justify-center gap-0.5 rounded-xl min-h-[52px] min-w-[44px] py-1 active:scale-95 transition-all',
                                 tab.active
-                                    ? 'text-accent-primary bg-accent-subtle font-semibold'
+                                    ? 'text-accent-primary font-semibold'
                                     : 'text-text-secondary hover:text-text-primary'
                             )}
                         >
-                            <TabIcon size={18} aria-hidden="true" />
-                            <span className="text-xs leading-tight truncate max-w-full px-1">{tab.label}</span>
+                            <span
+                                className={clsx(
+                                    'flex items-center justify-center w-12 h-7 rounded-full transition-colors',
+                                    tab.active ? 'bg-accent-primary/15 text-accent-primary' : 'bg-transparent'
+                                )}
+                            >
+                                <TabIcon size={19} aria-hidden="true" />
+                            </span>
+                            <span className="text-xs leading-tight truncate max-w-full px-0.5">{tab.label}</span>
                         </button>
                     );
                 })}

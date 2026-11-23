@@ -125,6 +125,7 @@
   @media (max-width: 1023px) {
     body {
       background-attachment: scroll;
+      -webkit-tap-highlight-color: transparent;
     }
   }
 
@@ -330,6 +331,15 @@
 /* Perspective utility */
 .perspective-800 {
   perspective: 800px;
+}
+
+/* Hide scrollbars cleanly on horizontal mobile chip rails */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* ── F4: reduced motion ───────────────────────────────────────────────────────

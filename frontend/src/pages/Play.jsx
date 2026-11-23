@@ -149,7 +149,7 @@ export default function Play() {
               return (
                 <li key={`${r.game_id}-${r.topic}`} className="rounded-xl border border-border-default bg-bg-surface p-3 flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-sm font-semibold text-text-primary"><Icon size={16} className="text-accent-primary" /> {g?.title || r.game_id}</div>
-                  <p className="text-xs text-text-muted"><span className="font-medium text-text-secondary">{topicLabel(r.topic)}</span> · {r.reason}</p>
+                  <p className="text-xs text-text-muted"><span className="font-medium text-text-secondary">{topicLabel(r.topic)}</span> · {topicLabel(r.reason)}</p>
                   {hasComponent(r.game_id) ? (
                     <Button as={Link} to={`/dashboard/play/${r.game_id}?level=${r.level}`} size="sm" className="min-h-11 mt-auto">{t('play.play_level', 'Play level {level}', { level: r.level })}</Button>
                   ) : (
