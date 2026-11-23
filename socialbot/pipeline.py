@@ -116,22 +116,55 @@ def _fmt_ts(s):
     return f"{s // 60}:{s % 60:02d}"
 
 
-def render(kind, draft, les, out_dir: Path):
+def render(kind, draft, les, out_dir: Path, use_presenter_avatar: bool | None = None):
     domain_label = draft.get("domain_label") or les.get("domain_label") or sources.DOMAIN_LABELS.get(sources.classify_domain(les), "")
+    want_presenter = config.USE_PRESENTER_AVATAR if use_presenter_avatar is None else bool(use_presenter_avatar)
     if kind in ("linkedin", "thematic"):
-        return video.render_loop(draft["animation"], out_dir, domain_label=domain_label)
+        media = video.render_loop(draft["animation"], out_dir, domain_label=domain_label)
+        if want_presenter:
+            try:
+                from socialbot import presenter_pack
+
+                pack = presenter_pack.build_linkedin_presenter_pack(
+                    topic=les.get("title") or draft.get("title") or "PyMasters",
+                    code=draft.get("code_snippet") or "",
+                    out_dir=out_dir,
+                    mode=getattr(config, "PRESENTER_AVATAR_MODE", "hybrid"),
+                )
+                media["presenter_card"] = pack["visual_path"]
+                media["presenter_metadata"] = pack["metadata_path"]
+            except Exception as exc:
+                log.warning("presenter_pack LinkedIn card skipped: %s", exc)
+        return media
     if kind == "short":
         media = video.render_narrated(_segments_short(draft), out_dir, 1080, 1920, captions=True)
     else:
         media = video.render_narrated(_segments_long(draft), out_dir, 1920, 1080, captions=True)
         media["chapters_text"] = "\n".join(f"{_fmt_ts(t)} {title}" for t, title in media["chapters"])
-    media["thumbnail"] = video.thumbnail(draft.get("thumbnail_text") or draft["title"], les["title"][:34],
-                                         _first_code(draft), out_dir / "thumb.jpg")
+    if want_presenter:
+        try:
+            from socialbot import presenter_pack
+
+            thumb = presenter_pack.build_presenter_thumbnail(
+                title=draft.get("thumbnail_text") or draft["title"],
+                topic=les["title"],
+                code=_first_code(draft),
+                out_dir=out_dir,
+                mode=getattr(config, "PRESENTER_AVATAR_MODE", "hybrid"),
+            )
+            media["thumbnail"] = str(thumb)
+        except Exception as exc:
+            log.warning("presenter_pack thumbnail fallback to default: %s", exc)
+            media["thumbnail"] = video.thumbnail(draft.get("thumbnail_text") or draft["title"], les["title"][:34],
+                                                 _first_code(draft), out_dir / "thumb.jpg")
+    else:
+        media["thumbnail"] = video.thumbnail(draft.get("thumbnail_text") or draft["title"], les["title"][:34],
+                                             _first_code(draft), out_dir / "thumb.jpg")
     media["domain"] = draft.get("domain") or les.get("domain") or sources.classify_domain(les)
     return media
 
 
-def produce(kind, lesson_key=None):
+def produce(kind, lesson_key=None, use_presenter_avatar: bool | None = None):
     """Make one item. Returns the item id (status 'rendered' on success, 'rejected' if the gate never passed)."""
     if lesson_key:
         les = next((l for l in sources.candidates() if l["key"] == lesson_key), None)
@@ -155,7 +188,10 @@ def produce(kind, lesson_key=None):
     out_dir = config.RENDERS_DIR / f"{datetime.now():%Y%m%d}-{kind}-{item_id}"
     with store.file_lock(f"render-{item_id}.lock", blocking=True):
         try:
-            media = render(kind, draft, les, out_dir)
+            if use_presenter_avatar is None:
+                media = render(kind, draft, les, out_dir)
+            else:
+                media = render(kind, draft, les, out_dir, use_presenter_avatar=use_presenter_avatar)
         except Exception as e:  # rendering bugs must not publish anything
             log.exception("render failed")
             store.update_item(item_id, status="failed", error=f"render: {e}"[:500])

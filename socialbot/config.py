@@ -153,6 +153,8 @@ PRESENTER_ASSETS_DIR = Path(__file__).resolve().parent / "assets" / "presenter"
 PRESENTER_PLATES_DIR = MEDIA_DIR / "presenter_plates"
 
 INFLUENCER_ENABLED = os.getenv("PMSOCIAL_INFLUENCER_ENABLED", "1") == "1"
+USE_PRESENTER_AVATAR = os.getenv("PMSOCIAL_USE_PRESENTER_AVATAR", "0") == "1"
+PRESENTER_AVATAR_MODE = os.getenv("PMSOCIAL_PRESENTER_AVATAR_MODE", "hybrid").strip().lower()
 AVATAR_PROVIDER = os.getenv("PMSOCIAL_AVATAR_PROVIDER", "google_zero_cost").strip().lower()
 HEYGEN_API_KEY = os.getenv("HEYGEN_API_KEY", "").strip()
 HEYGEN_AVATAR_ID = os.getenv("HEYGEN_AVATAR_ID", "Aditya_public_1").strip()
