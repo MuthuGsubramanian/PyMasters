@@ -1,0 +1,271 @@
+{
+  "id": "lean_objects_with_slots",
+  "topic": "lean_objects_with_slots",
+  "track": "performance_optimization",
+  "module": "practice",
+  "order": 6,
+  "title": {
+    "en": "Lean Objects: __slots__ and Memory per Instance"
+  },
+  "description": {
+    "en": "Every ordinary Python object carries a hidden dictionary for its attributes. When you create a million small records, that dictionary is most of the cost. Measure it, then remove it with __slots__."
+  },
+  "xp_reward": 90,
+  "next_unlock": null,
+  "story_variants": {
+    "en": "## The Hidden Dictionary\n\nA normal class stores each object's attributes in a dictionary called `__dict__`. It is wonderfully flexible — you can add `p.colour = \"red\"` to any object at any time — and that flexibility costs memory on every instance.\n\n```python\nclass Particle:\n    def __init__(self, x, y, mass):\n        self.x, self.y, self.mass = x, y, mass\n\nhasattr(Particle(1, 2, 3), \"__dict__\")     # True\n```\n\nIf you create a handful of objects, nobody cares. If you create **a million small records** — particles, rows, graph nodes, events — it adds up.\n\n### Declare the fields up front\n\n`__slots__` tells Python *exactly* which attributes the class has, so it can store them in fixed positions inside the object instead of a dictionary:\n\n```python\nclass Particle:\n    __slots__ = (\"x\", \"y\", \"mass\")\n    def __init__(self, x, y, mass):\n        self.x, self.y, self.mass = x, y, mass\n```\n\nSame code to use, but now there is no `__dict__`, and assigning an undeclared attribute raises `AttributeError` — a typo like `p.mas = 1` is caught instead of silently creating a new field.\n\nSince Python 3.10 a dataclass can do it for you: `@dataclass(slots=True)`.\n\n### What it really saves (measured)\n\nWe built 100,000 instances of each version on Python 3.11 and asked `tracemalloc` how much memory they held:\n\n| Version | Memory for 100,000 instances |\n|---|---|\n| plain class, 3 attributes | about 10.4 MB (~104 bytes each) |\n| `__slots__`, 3 attributes | about 6.4 MB (~64 bytes each) |\n\nRoughly **40% less** here. Your numbers will differ with the Python version and the number of attributes, so measure your own case rather than trusting ours.\n\n### The catches\n\n- You lose dynamic attributes — fine for records, wrong for objects that need to grow fields.\n- A subclass that doesn't declare its own `__slots__` gets a `__dict__` again, undoing the saving.\n- It saves *memory* first; attribute access speed changes only a little. Don't add it to a class you create ten of.\n\n> **Vaathiyaar's note:** use `__slots__` for many small, fixed-shape objects. Everywhere else, the plain class is the better default.\n\nYour turn: add `__slots__` to `Particle` so its instances have no `__dict__`. The program should then print `False`."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "slim_boxes",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "__slots__",
+          "children": [
+            "normal object = header + __dict__",
+            "slots = fixed fields, no dict",
+            "~40% less memory (measured)",
+            "undeclared attributes raise AttributeError"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "walkthrough",
+      "steps": [
+        {
+          "line": "class Particle:",
+          "highlight": "class",
+          "explanation": {
+            "en": "A plain class: every instance gets its own __dict__."
+          }
+        },
+        {
+          "line": "    __slots__ = ('x', 'y', 'mass')",
+          "highlight": "__slots__",
+          "explanation": {
+            "en": "Declare the field names once, on the class."
+          }
+        },
+        {
+          "line": "p = Particle(1.0, 2.0, 0.5)",
+          "highlight": "Particle(",
+          "explanation": {
+            "en": "Instances store the three values in fixed slots."
+          }
+        },
+        {
+          "line": "print(hasattr(p, '__dict__'))",
+          "highlight": "__dict__",
+          "explanation": {
+            "en": "There is no per-object dictionary any more: False."
+          }
+        }
+      ],
+      "duration_ms": 6000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "result",
+      "lines": [
+        "hasattr(plain, '__dict__') -> True",
+        "hasattr(slotted, '__dict__') -> False",
+        "slotted.colour = 'red'  -> AttributeError",
+        "100,000 instances: ~10.4 MB vs ~6.4 MB (Python 3.11)"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "done",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "`Particle` stores `x`, `y` and `mass`, and every instance carries a hidden `__dict__`. Add `__slots__` declaring exactly those three names so instances no longer have one. A hidden check confirms the attributes still read and write, that `p.__dict__` no longer exists, and that assigning an undeclared attribute raises `AttributeError`. The program must print `False`."
+      },
+      "starter_code": "class Particle:\n    \"\"\"A tiny record we will create in huge numbers.\"\"\"\n    def __init__(self, x, y, mass):\n        self.x = x\n        self.y = y\n        self.mass = mass\n\np = Particle(1.0, 2.0, 0.5)\n# Every Particle carries its own hidden attribute dictionary (__dict__).\nprint(hasattr(p, \"__dict__\"))",
+      "expected_output": "False",
+      "hints": {
+        "en": [
+          "`__slots__` goes in the class body, before `__init__`.",
+          "It is a tuple of attribute names as strings: `(\"x\", \"y\", \"mass\")`.",
+          "Don't remove the `self.x = x` lines — the slots only reserve the storage.",
+          "Declare exactly the three names; a typo in a slot name breaks `__init__`."
+        ]
+      },
+      "test_code": "p = Particle(1.0, 2.0, 0.5)\nassert (p.x, p.y, p.mass) == (1.0, 2.0, 0.5), \"the three attributes must still work\"\np.x = 9.0\nassert p.x == 9.0, \"attributes must stay writable\"\nassert not hasattr(p, \"__dict__\"), \"instances must not have a per-object __dict__ (use __slots__)\"\ntry:\n    p.colour = \"red\"\nexcept AttributeError:\n    pass\nelse:\n    raise AssertionError(\"a slotted class refuses attributes that are not declared\")\nassert set(Particle.__slots__) == {\"x\", \"y\", \"mass\"}, \"declare exactly x, y and mass in __slots__\""
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "What does a normal Python object use to store its attributes?"
+      },
+      "options": {
+        "en": [
+          "A tuple",
+          "A per-object dictionary called `__dict__`",
+          "A shared global table",
+          "A C array"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "What happens when you assign an attribute not listed in `__slots__`?"
+      },
+      "options": {
+        "en": [
+          "It is created silently",
+          "`AttributeError` is raised",
+          "`KeyError` is raised",
+          "It is stored in the class"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Which situation benefits most from `__slots__`?"
+      },
+      "options": {
+        "en": [
+          "Ten configuration objects",
+          "A million small, same-shaped records",
+          "A class that adds fields at runtime",
+          "A script that runs once"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "A subclass of a slotted class declares no `__slots__` of its own. What follows?"
+      },
+      "options": {
+        "en": [
+          "Its instances get a `__dict__` again",
+          "It cannot be created",
+          "It is faster than the parent",
+          "Python raises SyntaxError"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Why did the lesson report memory measured with `tracemalloc`?"
+      },
+      "options": {
+        "en": [
+          "Because the saving depends on Python version and fields, so claims need measuring",
+          "Because tracemalloc makes objects smaller",
+          "Because sys.getsizeof is deprecated",
+          "Because slots only work with tracemalloc"
+        ]
+      },
+      "correct": 0
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "__slots__",
+      "per_instance_memory",
+      "dataclass_slots",
+      "tracemalloc"
+    ],
+    "concepts_required": [
+      "classes_and_objects"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 18,
+    "category": "performance",
+    "path_memberships": []
+  },
+  "generated": false,
+  "uth_example": "import tracemalloc\n\nclass Plain:\n    def __init__(self, x, y, z):\n        self.x, self.y, self.z = x, y, z\n\nclass Slim:\n    __slots__ = (\"x\", \"y\", \"z\")\n    def __init__(self, x, y, z):\n        self.x, self.y, self.z = x, y, z\n\nfor cls in (Plain, Slim):\n    tracemalloc.start()\n    keep = [cls(1, 2, 3) for _ in range(10000)]\n    used, _ = tracemalloc.get_traced_memory()\n    tracemalloc.stop()\n    print(cls.__name__, \"has __dict__:\", hasattr(keep[0], \"__dict__\"), \"bytes per object ~\", round(used / 10000))",
+  "under_the_hood": {
+    "summary": "A normal object stores attributes in a per-instance dict; __slots__ swaps that dict for fixed positions inside the object. The saving appears when you create very many small objects of the same shape.",
+    "steps": [
+      {
+        "title": "Instances own a dictionary",
+        "body": "When `Particle(1.0, 2.0, 0.5)` runs `self.x = x`, Python stores the name `'x'` and its value in that object's `__dict__`. Each instance therefore holds its own mapping, even though every particle uses the same three names.",
+        "visual": {
+          "type": "VariableBox",
+          "props": {
+            "variables": [
+              {
+                "variable": "p.__dict__",
+                "values": [
+                  "{'x': 1.0, 'y': 2.0, 'mass': 0.5}"
+                ]
+              },
+              {
+                "variable": "q.__dict__",
+                "values": [
+                  "{'x': 4.0, 'y': 1.0, 'mass': 0.7}"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "title": "Slots fix the layout in the class",
+        "body": "`__slots__ = ('x', 'y', 'mass')` makes the class remember the three names once. Each instance then reserves three fixed positions after its header, and `self.x = x` writes straight into position 0, with no dictionary involved."
+      },
+      {
+        "title": "The dict is gone",
+        "body": "With no `__dict__`, a slotted instance cannot grow new attributes. `p.colour = 'red'` raises `AttributeError`, which is why a misspelled field name now fails loudly instead of creating a stray attribute.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "plain class",
+              "code": "p.colour = 'red'   # works\\np.__dict__         # exists"
+            },
+            "right": {
+              "label": "with __slots__",
+              "code": "p.colour = 'red'   # AttributeError\\np.__dict__         # no such attribute"
+            }
+          }
+        }
+      },
+      {
+        "title": "What it saved, measured",
+        "body": "On Python 3.11, 100,000 three-attribute instances held about 10.4 MB as plain objects and about 6.4 MB with `__slots__` — roughly 104 against 64 bytes each. The exact figures depend on the version and the number of attributes, so measure yours.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "Plain  ~104 bytes/object",
+              "Slim   ~ 64 bytes/object",
+              "100,000 instances, Python 3.11"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Where the saving disappears",
+        "body": "A subclass that does not declare `__slots__` regains a `__dict__`, so every class in the chain must declare its own. And adding slots to a class you create only a few times saves nothing noticeable while removing flexibility."
+      }
+    ],
+    "takeaway": "Plain objects pay for a dictionary each. For many small records of fixed shape, __slots__ removes it — about 40% less memory in our 3.11 measurement — at the price of no dynamic attributes."
+  }
+}

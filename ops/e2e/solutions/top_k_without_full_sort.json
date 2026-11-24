@@ -1,0 +1,11 @@
+{
+  "lesson_id": "top_k_without_full_sort",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "import heapq\n\ndef top_k(scores, k):\n    \"\"\"Return the k largest scores, largest first.\"\"\"\n    # nlargest keeps a heap of only k items, so it never sorts everything.\n    return heapq.nlargest(k, scores)\n\nprint(top_k([41, 87, 15, 93, 62, 78, 30, 99, 54, 71], 3))",
+      "verified_output": "[99, 93, 87]",
+      "source": "claude 2026-11-24, verified with grade_submission"
+    }
+  ]
+}

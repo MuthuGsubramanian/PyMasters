@@ -1,0 +1,265 @@
+{
+  "id": "top_k_without_full_sort",
+  "topic": "top_k_without_full_sort",
+  "track": "performance_optimization",
+  "module": "practice",
+  "order": 5,
+  "title": {
+    "en": "Top-K Without Sorting Everything: heapq.nlargest"
+  },
+  "description": {
+    "en": "Sorting a million numbers to keep the best five is mostly wasted work. See how a small heap finds the top K with a fraction of the comparisons — and count them for real."
+  },
+  "xp_reward": 90,
+  "next_unlock": "lean_objects_with_slots",
+  "story_variants": {
+    "en": "## You Only Wanted Five\n\n\"Show the top 5 scores.\" The obvious code is `sorted(scores, reverse=True)[:5]`. It is correct, short, and does far more work than the question needs: it puts **every** score in order, then throws almost all of that ordering away.\n\nWhen K is small and N is large, there is a cheaper way. Keep a tiny **heap** of the best K seen so far. Each new score is compared against the *weakest* of those K; most scores lose that one comparison and are forgotten. Python packages this as `heapq.nlargest(k, items)` (and `nsmallest`).\n\n```python\nimport heapq\nheapq.nlargest(3, [41, 87, 15, 93, 62, 78, 30, 99, 54, 71])   # [99, 93, 87]\n```\n\n### Don't guess — count\n\nWe can measure the work without a stopwatch (timings change from machine to machine, counts don't). Wrap each number in a class whose `<` operator adds one to a counter, then run both approaches on the same 1,000 pseudo-random scores:\n\n| Approach | Comparisons for top 5 of 1,000 |\n|---|---|\n| `sorted(...)[:5]` | 8,644 |\n| `heapq.nlargest(5, ...)` | 1,073 |\n\nWith 10,000 scores the gap widens: 119,833 against 10,121. The heap's cost grows roughly in step with N (every item is looked at about once); a full sort grows like N log N.\n\n### When it is *not* the right tool\n\n- If K is close to N (say, half the data), `sorted` is simpler and about as fast.\n- If you need the top 1, use `max(...)` — it is the K=1 case.\n- If you need *all* the results ordered, you want a sort anyway.\n- The heap approach changes nothing about the answer: ties and order match a full sort. Only the work differs.\n\n> **Vaathiyaar's note:** the habit to build is asking *\"how much of this ordering do I actually use?\"* If the answer is \"a few items\", don't pay for the rest.\n\nYour turn: `top_k` below sorts everything. Rewrite it so it passes the answer check **and** a comparison-count check on 1,000 scores."
+  },
+  "animation_sequence": [
+    {
+      "type": "StoryCard",
+      "id": "intro",
+      "content": "story_variant",
+      "visual_theme": "heap_pile",
+      "duration_ms": 4500
+    },
+    {
+      "type": "ConceptMap",
+      "id": "overview",
+      "nodes": [
+        {
+          "label": "Top-K",
+          "children": [
+            "sorted() orders everything: ~N log N",
+            "heapq keeps only K items",
+            "count comparisons, not seconds",
+            "K near N? just sort"
+          ]
+        }
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "CodeStepper",
+      "id": "walkthrough",
+      "steps": [
+        {
+          "line": "scores = [41, 87, 15, 93, 62, 78, 30, 99, 54, 71]",
+          "highlight": "scores",
+          "explanation": {
+            "en": "Ten scores; we want the best three."
+          }
+        },
+        {
+          "line": "heap = [41, 87, 15]; heapq.heapify(heap)",
+          "highlight": "heapify",
+          "explanation": {
+            "en": "Start with the first K scores in a min-heap: heap[0] is the weakest of the current best."
+          }
+        },
+        {
+          "line": "93 > heap[0]  ->  replace the weakest with 93",
+          "highlight": "heap[0]",
+          "explanation": {
+            "en": "A new score only matters if it beats the weakest of the K. Most don't, and cost one comparison."
+          }
+        },
+        {
+          "line": "return sorted(heap, reverse=True)",
+          "highlight": "sorted(heap",
+          "explanation": {
+            "en": "Only K items remain, so ordering them at the end is cheap."
+          }
+        }
+      ],
+      "duration_ms": 6000
+    },
+    {
+      "type": "TerminalOutput",
+      "id": "result",
+      "lines": [
+        "top_k([41, 87, 15, 93, 62, 78, 30, 99, 54, 71], 3)",
+        "[99, 93, 87]",
+        "comparisons, 1,000 scores, k=5: sorted 8,644 vs nlargest 1,073"
+      ],
+      "duration_ms": 4000
+    },
+    {
+      "type": "ParticleEffect",
+      "id": "done",
+      "theme": "solved",
+      "duration_ms": 2000
+    }
+  ],
+  "practice_challenges": [
+    {
+      "instruction": {
+        "en": "`top_k(scores, k)` returns the k largest scores, largest first — but it sorts ALL of them. Rewrite it with the `heapq` module so it keeps only k items in play. A hidden check counts comparisons on 1,000 scores (a full sort takes about 8,600; yours must stay under 4,000) and also tries edge cases: k larger than the list, an empty list, k = 0 and ties. With the sample scores, the program must print `[99, 93, 87]`."
+      },
+      "starter_code": "def top_k(scores, k):\n    \"\"\"Return the k largest scores, largest first.\"\"\"\n    # This works, but it sorts ALL the scores just to keep k of them.\n    return sorted(scores, reverse=True)[:k]\n\nprint(top_k([41, 87, 15, 93, 62, 78, 30, 99, 54, 71], 3))",
+      "expected_output": "[99, 93, 87]",
+      "hints": {
+        "en": [
+          "`import heapq` — it has a ready-made `nlargest(k, iterable)`.",
+          "`heapq.nlargest(k, scores)` already returns the items largest first.",
+          "It handles k bigger than the list and an empty list for you.",
+          "Keep the signature `top_k(scores, k)` and the print at the bottom."
+        ]
+      },
+      "test_code": "class _Counted:\n    comparisons = 0\n    def __init__(self, v):\n        self.v = v\n    def __lt__(self, other):\n        _Counted.comparisons += 1\n        return self.v < other.v\n\ndef _data(n):\n    x, out = 12345, []\n    for _ in range(n):\n        x = (x * 1103515245 + 12345) % 2**31\n        out.append(x % 100000)\n    return out\n\nassert [int(v) for v in top_k([41, 87, 15, 93, 62, 78, 30, 99, 54, 71], 3)] == [99, 93, 87]\nassert list(top_k([5, 1], 5)) == [5, 1]\nassert list(top_k([], 3)) == []\nassert list(top_k([4, 9, 9, 2], 2)) == [9, 9]\nassert list(top_k([4, 9, 2], 0)) == []\n\n_vals = _data(1000)\n_items = [_Counted(v) for v in _vals]\n_Counted.comparisons = 0\n_got = top_k(_items, 5)\nassert [c.v for c in _got] == sorted(_vals, reverse=True)[:5], \"wrong answer on 1000 scores\"\nassert _Counted.comparisons < 4000, (\n    f\"{_Counted.comparisons} comparisons on 1000 scores: sorting everything costs about 8600; \"\n    \"keep only k items in a heap instead\")"
+    }
+  ],
+  "quiz": [
+    {
+      "q": {
+        "en": "Why is `sorted(scores, reverse=True)[:5]` wasteful on a million scores?"
+      },
+      "options": {
+        "en": [
+          "Python's sort is incorrect for large lists",
+          "It orders every score, then discards nearly all of that ordering",
+          "It cannot return fewer than all items",
+          "Slicing copies the whole list twice"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "In the lesson's count of 1,000 scores with k=5, roughly how many comparisons did `heapq.nlargest` need?"
+      },
+      "options": {
+        "en": [
+          "About 1,073",
+          "About 8,644",
+          "About 100,000",
+          "Exactly 5"
+        ]
+      },
+      "correct": 0
+    },
+    {
+      "q": {
+        "en": "Which call is the K=1 special case of the top-K problem?"
+      },
+      "options": {
+        "en": [
+          "`min(scores)`",
+          "`max(scores)`",
+          "`sorted(scores)[1]`",
+          "`len(scores)`"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "When is plain `sorted(...)` the better choice?"
+      },
+      "options": {
+        "en": [
+          "When K is tiny and N is huge",
+          "When you need most or all items in order",
+          "When the list is empty",
+          "Never — heaps are always faster"
+        ]
+      },
+      "correct": 1
+    },
+    {
+      "q": {
+        "en": "Why does the lesson count comparisons instead of timing the code?"
+      },
+      "options": {
+        "en": [
+          "Counting is more fun",
+          "Timings vary by machine and load; the count is the same every run",
+          "Python cannot measure time",
+          "Comparisons are the only cost in Python"
+        ]
+      },
+      "correct": 1
+    }
+  ],
+  "tags": {
+    "concepts_taught": [
+      "heapq_nlargest",
+      "top_k_selection",
+      "counting_operations",
+      "n_log_n_vs_n"
+    ],
+    "concepts_required": [
+      "choosing_data_structures",
+      "measure_dont_guess"
+    ],
+    "difficulty": "intermediate",
+    "engagement_type": "hands_on",
+    "estimated_minutes": 20,
+    "category": "performance",
+    "path_memberships": []
+  },
+  "generated": false,
+  "uth_example": "import heapq\n\nclass Counted:\n    comparisons = 0\n    def __init__(self, v):\n        self.v = v\n    def __lt__(self, other):\n        Counted.comparisons += 1\n        return self.v < other.v\n\nx, vals = 7, []\nfor _ in range(500):\n    x = (x * 1103515245 + 12345) % 2**31\n    vals.append(x % 10000)\n\ndef cost(fn):\n    Counted.comparisons = 0\n    fn([Counted(v) for v in vals])\n    return Counted.comparisons\n\nprint(\"sorted:\", cost(sorted))\nprint(\"min:\", cost(min))\nprint(\"nsmallest(3):\", cost(lambda items: heapq.nsmallest(3, items)))",
+  "under_the_hood": {
+    "summary": "Selecting the best K of N items does not need N items in order. A heap of size K keeps just the current best, so each item costs about one comparison instead of a full sort's log N.",
+    "steps": [
+      {
+        "title": "A full sort orders everything",
+        "body": "`sorted` runs Timsort over all N items. That takes on the order of N log N comparisons, because every item must end up in its exact position — even the ones you will throw away right after taking `[:k]`.",
+        "visual": {
+          "type": "ComparisonPanel",
+          "props": {
+            "left": {
+              "label": "sorted(...)[:5]",
+              "code": "sorted(items)\\n# every item placed\\n# ~8,644 comparisons for N=1,000"
+            },
+            "right": {
+              "label": "heapq.nlargest(5, items)",
+              "code": "heap of 5\\n# most items lose 1 test\\n# ~1,073 comparisons for N=1,000"
+            }
+          }
+        }
+      },
+      {
+        "title": "A heap keeps the weakest on top",
+        "body": "A min-heap is a list arranged so `heap[0]` is always the smallest item. If the heap holds the K best so far, `heap[0]` is the *weakest of the best* — the bar a newcomer has to clear. Reading it costs nothing.",
+        "visual": {
+          "type": "DataStructure",
+          "props": {
+            "structure": "array",
+            "data": [
+              41,
+              87,
+              62
+            ],
+            "label": "min-heap of the best 3: heap[0] = 41"
+          }
+        }
+      },
+      {
+        "title": "Each new item makes one test",
+        "body": "For each remaining item, compare it with `heap[0]`. If it is not larger, drop it: one comparison, done. If it is larger, swap it in and let it sink to its place, which costs about log K more steps — but this becomes rare as the heap fills with strong items."
+      },
+      {
+        "title": "Finish by ordering only K items",
+        "body": "After the pass the heap holds exactly the K winners, unordered. Sorting those K items at the end costs K log K — tiny when K is small. `nlargest` does this for you and returns them largest first.",
+        "visual": {
+          "type": "TerminalOutput",
+          "props": {
+            "lines": [
+              "N = 1,000  k = 5",
+              "sorted:   8,644 comparisons",
+              "nlargest: 1,073 comparisons",
+              "same 5 numbers either way"
+            ]
+          }
+        }
+      },
+      {
+        "title": "Why counting beats timing here",
+        "body": "Wall-clock times shift with the machine, other programs and caching. A counter inside `__lt__` gives the same number every run, so it shows the *algorithmic* difference and cannot be blamed on noise. Real code should still be timed too — see the measuring lesson."
+      }
+    ],
+    "takeaway": "Ask how much of the ordering you actually use. If you want a handful of winners out of a large pile, a size-K heap does about N work instead of N log N, with an identical answer."
+  }
+}

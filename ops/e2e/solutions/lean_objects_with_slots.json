@@ -1,0 +1,11 @@
+{
+  "lesson_id": "lean_objects_with_slots",
+  "challenges": [
+    {
+      "index": 0,
+      "code": "class Particle:\n    \"\"\"A tiny record we will create in huge numbers.\"\"\"\n    __slots__ = (\"x\", \"y\", \"mass\")\n\n    def __init__(self, x, y, mass):\n        self.x = x\n        self.y = y\n        self.mass = mass\n\np = Particle(1.0, 2.0, 0.5)\n# __slots__ replaces the per-object dict with fixed storage slots.\nprint(hasattr(p, \"__dict__\"))",
+      "verified_output": "False",
+      "source": "claude 2026-11-24, verified with grade_submission"
+    }
+  ]
+}
