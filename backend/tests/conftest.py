@@ -1,7 +1,21 @@
 """Shared test setup."""
+import os
 import sys
 
 import pytest
+
+
+@pytest.fixture(autouse=True)
+def _block_live_smtp(monkeypatch):
+    """Never send real SMTP emails during pytest runs (prevents bounces to example.com/x.edu)."""
+    for var in ("SMTP_USER", "SMTP_PASS", "SMTP_BACKUP_USER", "SMTP_BACKUP_PASS"):
+        monkeypatch.delenv(var, raising=False)
+    mod = sys.modules.get("notifications.email_sender")
+    if mod is not None:
+        for attr in ("SMTP_USER", "SMTP_PASS", "SMTP_BACKUP_USER", "SMTP_BACKUP_PASS"):
+            monkeypatch.setattr(mod, attr, "", raising=False)
+        monkeypatch.setattr(mod, "_smtp_send", lambda *a, **kw: None, raising=False)
+    yield
 
 
 @pytest.fixture(autouse=True)

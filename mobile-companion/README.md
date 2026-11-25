@@ -3,7 +3,7 @@
 Lightweight mobile-first PWA & Android APK companion for **PyMasters** (`https://pymasters.net`).
 
 ## Highlights
-- **Google AI Studio Compatible (`metadata.json` + `@google/genai`)**: Works out of the box with `GEMINI_API_KEY` in Google AI Studio OR keyless Vertex AI (`gemini-2.5-flash`) on Google Cloud Run.
+- **Google AI Studio Compatible (`metadata.json` + `@google/genai`)**: Works out of the box with `GEMINI_API_KEY` in Google AI Studio OR keyless Vertex AI (`gemini-3.5-flash-lite`) on Google Cloud Run.
 - **4 Mobile-First Tabs**:
   1. **Home**: Quick-launch into Classroom & 13 Arcade games, PWA install prompt, and one-tap **Download Android APK (`418 KB`)**.
   2. **Drills**: Instant 60-second Python output & Big-O drills with explanations and XP tracking.

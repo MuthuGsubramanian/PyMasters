@@ -127,7 +127,7 @@ def _ops_env_get(key: str, default: str = "") -> str:
 GEMINI_FREE_API_KEY = _ops_env_get("GEMINI_FREE_API_KEY")
 GEMINI_FREE_PROJECT = _ops_env_get("GEMINI_FREE_PROJECT", "eternity-os-11012219")
 GEMINI_TTS_MODEL = os.getenv("PMSOCIAL_GEMINI_TTS_MODEL", "gemini-2.5-flash-preview-tts")
-GEMINI_TEXT_MODEL = os.getenv("PMSOCIAL_GEMINI_TEXT_MODEL", "gemini-2.5-flash")
+GEMINI_TEXT_MODEL = os.getenv("PMSOCIAL_GEMINI_TEXT_MODEL", "gemini-3.5-flash-lite")
 GEMINI_SHORT_VOICE = os.getenv("PMSOCIAL_GEMINI_SHORT_VOICE", "Charon")
 GEMINI_LONG_SPEAKERS = (("Vaathiyaar", "Charon"), ("Ananya", "Aoede"))
 

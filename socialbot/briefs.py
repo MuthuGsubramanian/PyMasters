@@ -115,17 +115,29 @@ SHORT_SCHEMA = {
     "required": ["title", "hook", "scenes", "cta", "description", "tags", "thumbnail_text"],
 }
 
+LONG_SCENE = {
+    "type": "object",
+    "properties": {
+        "narration": {
+            "type": "string",
+            "description": "55-85 spoken words of natural 2-speaker dialogue prefixed with `Vaathiyaar:` and `Ananya:` (2-4 substantive turns per scene so the full script totals 950-1350 spoken words)",
+        },
+        "visual": VISUAL,
+    },
+    "required": ["narration", "visual"],
+}
+
 LONG_SCHEMA = {
     "type": "object",
     "properties": {
         "title": {"type": "string", "description": "YouTube title <= 70 chars, plain everyday English so anyone understands without technical background"},
-        "hook": {"type": "string", "description": "opening 1-2 simple sentences: what the viewer will clearly understand by the end"},
-        "chapters": {"type": "array", "minItems": 5, "maxItems": 9, "items": {
+        "hook": {"type": "string", "description": "opening 30-50 words (2-speaker intro): what the viewer will clearly understand by the end"},
+        "chapters": {"type": "array", "minItems": 5, "maxItems": 8, "items": {
             "type": "object",
             "properties": {"title": {"type": "string", "description": "chapter title <= 40 chars in plain English"},
-                           "scenes": {"type": "array", "items": SCENE, "minItems": 2, "maxItems": 6}},
+                           "scenes": {"type": "array", "items": LONG_SCENE, "minItems": 3, "maxItems": 5}},
             "required": ["title", "scenes"]}},
-        "cta": {"type": "string"},
+        "cta": {"type": "string", "description": "closing 20-40 words inviting listeners to practice at pymasters.net"},
         "description": {"type": "string", "description": "3-6 simple plain-English sentences; chapter timestamps are added automatically"},
         "tags": {"type": "array", "items": {"type": "string"}, "maxItems": 15},
         "thumbnail_text": {"type": "string", "description": "<= 4 simple words"},
@@ -268,14 +280,15 @@ COMPLEX ENGINEERING MATERIAL TO DEMYSTIFY:
 
 
 def long_prompt(les, feedback=None, previous=None):
-    return f"""Write a super clear, beginner-friendly 6-9 minute YouTube lesson (about 950-1350 spoken words) structured as a warm, NotebookLM-style 2-host audio explainer ("Vaathiyaar:" and curious learner "Ananya:") that breaks down this PyMasters topic in simple terms so anyone—even with zero technical background—follows effortlessly from start to finish:
+    return f"""Write a super clear, beginner-friendly 6-9 minute YouTube lesson structured as a warm, NotebookLM-style 2-host audio explainer ("Vaathiyaar:" and curious learner "Ananya:") that breaks down this PyMasters topic in simple terms so anyone—even with zero technical background—follows effortlessly from start to finish:
+- STRICT WORD COUNT BUDGET (HARD GATE): Total spoken words across `hook` + every `chapters[].scenes[].narration` + `cta` MUST be between 950 and 1,350 words (the quality gate rejects drafts under 850 or over 1,500 words). Plan **6 chapters × 3 scenes = 18 scenes**, with **55–80 spoken words per scene** (2–4 substantive back-and-forth turns between Vaathiyaar and Ananya per scene—never 1-2 brief sentences), plus a ~40-word `hook` and ~30-word `cta`.
 - Open `hook` warmly with: "Vaathiyaar: Vanakkam nanba and nanbis! ..." followed by Ananya asking the everyday question every beginner wonders about.
-- Across `chapters[].scenes[].narration`, write natural, engaging 2-speaker lines prefixed with `Vaathiyaar:` and `Ananya:` (1-2 short turns per scene) so Ananya asks the exact intuitive question on the viewer's mind and Vaathiyaar explains the context clearly over the visuals (no on-camera presenter is shown—the visuals carry the screen while the two voices guide the learner):
+- Across `chapters[].scenes[].narration`, write natural, engaging 2-speaker lines prefixed with `Vaathiyaar:` and `Ananya:` (2–4 turns per scene, 55–80 words per scene) so Ananya asks the exact intuitive question on the viewer's mind and Vaathiyaar walks through the intuition, concrete numbers, and step-by-step mechanics over the visuals (no on-camera presenter is shown—the visuals carry the screen while the two voices guide the learner):
 1. Open with a relatable everyday problem in plain English—zero jargon (`metric` / `compare` / `flow` visuals).
 2. Build the visual mental model step by step using concrete real-world comparisons (`flow` / `compare` `style="mapping"` / `timeline`) so the viewer understands WHY and HOW it works before seeing code.
-3. Introduce tiny, clean Python examples one small step at a time (`trace` / `code` with `output`), translating every single keyword into plain English as if speaking to a first-time learner.
+3. Introduce tiny, clean Python examples one small step at a time (`trace` / `code` with `output`; every code snippet must be valid Python <= 12 lines), translating every single keyword into plain English as if speaking to a first-time learner.
 4. Show a common mistake vs. the simple fix (`compare` with `style="versus"`), and close `cta` with Vaathiyaar inviting listeners to practice interactively at pymasters.net.
-Every scene.visual MUST include `step_badge` and a plain-English `note` banner so any frame is self-explanatory on mute, and each chapter must mix visual types (`flow`, `compare`, `metric`, `trace`, `code`, `plot`).
+Every scene.visual MUST include `step_badge` and a plain-English `note` banner so any frame is self-explanatory on mute, and each chapter must mix visual types (`flow`, `compare`, `metric`, `trace`, `code`, `plot`—for `plot`, `fn` must be a valid single Python expression in `x` using `math.*`, e.g. `1/(1+math.exp(-x))`).
 {_fb(feedback, previous)}
 LESSON MATERIAL (break down complexity and avoid unexplained jargon):
 {material_block(les)}"""

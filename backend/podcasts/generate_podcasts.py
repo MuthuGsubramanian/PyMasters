@@ -18,7 +18,7 @@ Prereqs (user, offline):
   - for parler langs: `pip install parler-tts transformers torch soundfile` and accept the
     gated model terms at https://hf.co/ai4bharat/indic-parler-tts (huggingface-cli login)
   - for piper langs: the `piper` binary + per-language .onnx voices (PIPER_VOICES_JSON)
-  - ffmpeg (+ ffprobe); gsutil auth; a public gs://pymasters-podcasts bucket
+  - ffmpeg (+ ffprobe); gcloud storage auth; a public gs://pymasters-podcasts bucket
 
 Env:
   LOCAL_OLLAMA_URL        default http://localhost:11434
@@ -345,7 +345,7 @@ def write_script(source, lang_name):
 
 
 def synth_and_upload(script, lang, content_id):
-    """Synthesize (engine per language: parler|piper) -> ffmpeg MP3 -> captions -> gsutil upload.
+    """Synthesize (engine per language: parler|piper) -> ffmpeg MP3 -> captions -> gcloud storage upload.
     Returns (audio_url, transcript_url, duration, captions_url) or raises."""
     engine = _engine_map().get(lang, "piper")
     safe_id = content_id.replace(":", "_")
@@ -370,15 +370,15 @@ def synth_and_upload(script, lang, content_id):
         except Exception:
             pass
         base = f"gs://{PODCAST_BUCKET}/{lang}/{safe_id}"
-        subprocess.run(["gsutil", "cp", "-a", "public-read", mp3, base + ".mp3"], check=True)
-        subprocess.run(["gsutil", "cp", "-a", "public-read", txt, base + ".txt"], check=True)
+        subprocess.run(["gcloud", "storage", "cp", "--predefined-acl=publicRead", mp3, base + ".mp3"], check=True)
+        subprocess.run(["gcloud", "storage", "cp", "--predefined-acl=publicRead", txt, base + ".txt"], check=True)
         captions_url = None
         try:
             vtt_text = build_captions(mp3, script, lang, dur)
             vtt = os.path.join(tmp, f"{safe_id}.vtt")
             with open(vtt, "w", encoding="utf-8") as f:
                 f.write(vtt_text)
-            subprocess.run(["gsutil", "cp", "-a", "public-read", vtt, base + ".vtt"], check=True)
+            subprocess.run(["gcloud", "storage", "cp", "--predefined-acl=publicRead", vtt, base + ".vtt"], check=True)
             captions_url = f"{PUBLIC_BASE}/{lang}/{safe_id}.vtt"
         except Exception as e:
             print(f"    captions: skipped ({e})")

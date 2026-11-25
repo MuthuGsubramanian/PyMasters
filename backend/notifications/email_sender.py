@@ -40,8 +40,32 @@ def _smtp_send(host: str, port: int, user: str, pwd: str, msg) -> None:
         server.send_message(msg)
 
 
+_RESERVED_TEST_DOMAINS = frozenset({
+    "example.com",
+    "example.org",
+    "example.net",
+    "x.edu",
+    "test",
+    "invalid",
+    "localhost",
+})
+
+
+def _is_test_recipient(to_email: str) -> bool:
+    """Return True if to_email targets an RFC 2606 / synthetic test domain."""
+    if not to_email or "@" not in to_email:
+        return True
+    domain = to_email.rsplit("@", 1)[-1].strip().lower()
+    if domain in _RESERVED_TEST_DOMAINS:
+        return True
+    return any(domain.endswith("." + d) for d in _RESERVED_TEST_DOMAINS)
+
+
 def send_email(to_email: str, subject: str, body_text: str, body_html: str = None) -> bool:
     """Send an email, trying the primary SMTP then a backup provider. Returns True on success."""
+    if os.environ.get("PYTEST_CURRENT_TEST") or _is_test_recipient(to_email):
+        return False
+
     providers = []
     if SMTP_USER and SMTP_PASS:
         providers.append(("primary", SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS))
