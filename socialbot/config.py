@@ -153,6 +153,12 @@ PRESENTER_ASSETS_DIR = Path(__file__).resolve().parent / "assets" / "presenter"
 PRESENTER_PLATES_DIR = MEDIA_DIR / "presenter_plates"
 
 INFLUENCER_ENABLED = os.getenv("PMSOCIAL_INFLUENCER_ENABLED", "1") == "1"
+# Owner policy (2026-11-23): Feature the founder's image at most ONCE per week per channel (LinkedIn & YouTube Shorts);
+# all remaining posts/Shorts stay randomized (enterprise GIF themes/layouts on LinkedIn; randomized Veo 3 AI avatars on Shorts).
+FOUNDER_AVATAR_WEEKLY = os.getenv("PMSOCIAL_FOUNDER_AVATAR_WEEKLY", "1") == "1"
+FOUNDER_AVATAR_INTERVAL_DAYS = int(os.getenv("PMSOCIAL_FOUNDER_AVATAR_DAYS", "7"))
+USE_PRESENTER_AVATAR = os.getenv("PMSOCIAL_USE_PRESENTER_AVATAR", "0") == "1"
+PRESENTER_AVATAR_MODE = os.getenv("PMSOCIAL_PRESENTER_AVATAR_MODE", "hybrid").strip().lower()
 AVATAR_PROVIDER = os.getenv("PMSOCIAL_AVATAR_PROVIDER", "google_zero_cost").strip().lower()
 HEYGEN_API_KEY = os.getenv("HEYGEN_API_KEY", "").strip()
 HEYGEN_AVATAR_ID = os.getenv("HEYGEN_AVATAR_ID", "Aditya_public_1").strip()
